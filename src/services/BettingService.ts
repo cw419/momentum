@@ -119,11 +119,12 @@ export class BettingService {
         };
       }
 
-      // 调用数据库函数下注
+      // 调用数据库函数下注 - 使用新的参数名称
       const { data, error } = await supabase!.rpc('place_task_bet', {
-        target_user_id: user.id,
-        target_session_id: betRequest.session_id,
-        bet_amount: betRequest.bet_amount
+        p_user_id: user.id,
+        p_session_id: betRequest.session_id,
+        p_bet_amount: betRequest.bet_amount,
+        p_write_session_token: null // 显式传递null以确保兼容性
       });
 
       if (error) {
@@ -351,15 +352,18 @@ export class BettingService {
         return 0;
       }
 
-      // 计算今日已下注金额
-      const today = new Date().toISOString().split('T')[0]; // 获取今日日期 YYYY-MM-DD
+      // 计算今日已下注金额 - 修复时区问题
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 本地时间的今天开始
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1); // 本地时间的明天开始
       
       const { data, error } = await supabase!
         .from('task_bets')
         .select('bet_amount')
         .eq('user_id', user.id)
-        .gte('created_at', `${today}T00:00:00.000Z`)
-        .lt('created_at', `${today}T23:59:59.999Z`)
+        .gte('created_at', today.toISOString())
+        .lt('created_at', tomorrow.toISOString())
         .not('bet_status', 'in', '(cancelled,refunded)');
 
       if (error) {
@@ -552,13 +556,19 @@ export class BettingService {
         };
       }
 
-      // SECURITY: 每日限制验证（关键防欺诈检查）
+      // SECURITY: 每日限制验证（关键防欺诈检查）- 修复时区问题
       if (settings?.daily_bet_limit) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
         const { data: dailyTotal } = await supabase!
           .from('task_bets')
           .select('bet_amount')
           .eq('user_id', user.id)
-          .gte('created_at', new Date().toISOString().split('T')[0] + 'T00:00:00Z')
+          .gte('created_at', today.toISOString())
+          .lt('created_at', tomorrow.toISOString())
           .neq('bet_status', 'cancelled')
           .neq('bet_status', 'refunded');
 
