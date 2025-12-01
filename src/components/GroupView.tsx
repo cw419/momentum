@@ -5,6 +5,7 @@ import { getGroupProgress, getGroupUnitProgress, getNextUnitInGroup, getChainTyp
 import { formatTime, getTimeRemaining } from '../utils/time';
 import { getGroupTimeStatus } from '../utils/timeLimit';
 import { ImportUnitsModal } from './ImportUnitsModal';
+import { soundManager } from '../utils/soundManager';
 
 interface GroupViewProps {
   group: ChainTreeNode;
@@ -50,6 +51,7 @@ const UnitCard: React.FC<{
   onViewDetail
 }) => {
   const [timeRemaining, setTimeRemaining] = React.useState<number>(0);
+  const lastPlayedExpiresAtRef = React.useRef<number | null>(null);
   const unitTypeConfig = getChainTypeConfig(unit.type);
   const requiredRepeats = unit.taskRepeatCount || 1;
   const isCompleted = unit.currentStreak >= requiredRepeats;
@@ -57,10 +59,20 @@ const UnitCard: React.FC<{
   const currentRepeatCount = unit.taskRepeatCount || 1;
 
   React.useEffect(() => {
-    if (!scheduledSession) return;
+    if (!scheduledSession) {
+      lastPlayedExpiresAtRef.current = null;
+      return;
+    }
+    
     const updateTimer = () => {
       const remaining = getTimeRemaining(scheduledSession.expiresAt);
       setTimeRemaining(remaining);
+
+      // Play sound when timer reaches 0, but only once per session
+      if (remaining <= 0 && lastPlayedExpiresAtRef.current !== scheduledSession.expiresAt.getTime()) {
+        soundManager.playTimerFinished();
+        lastPlayedExpiresAtRef.current = scheduledSession.expiresAt.getTime();
+      }
     };
     updateTimer();
     const interval = setInterval(updateTimer, 1000);

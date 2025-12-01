@@ -26,6 +26,7 @@ import { forwardTimerManager } from './utils/forwardTimer';
 import { initializeRuleSystem } from './utils/initializeRuleSystem';
 import { runMigration } from './utils/migration';
 import { realTimeSyncService } from './services/RealTimeSyncService';
+import { soundManager } from './utils/soundManager';
 
 // ENHANCED: Import restore function tester for development debugging
 if (process.env.NODE_ENV === 'development') {
@@ -483,6 +484,9 @@ function App() {
         );
         
         if (expiredSessions.length > 0) {
+          // Play sound for expired sessions
+          soundManager.playTimerFinished();
+
           // 为每个过期的会话显示失败通知
           expiredSessions.forEach(session => {
             const chain = prev.chains.find(c => c.id === session.chainId);

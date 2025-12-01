@@ -5,6 +5,7 @@ import { formatTime, getTimeRemaining, formatDuration, formatTimeDescription } f
 import { getChainTypeConfig } from '../utils/chainTree';
 import { notificationManager } from '../utils/notifications';
 import { storage } from '../utils/storage';
+import { soundManager } from '../utils/soundManager';
 
 interface ChainCardProps {
   chain: Chain | ChainTreeNode;
@@ -33,6 +34,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
   const [showMenu, setShowMenu] = useState(false);
   const [hasShownWarning, setHasShownWarning] = useState(false);
   const [lastCompletionTime, setLastCompletionTime] = useState<number | null>(null);
+  const lastPlayedExpiresAtRef = React.useRef<number | null>(null);
   
   // 获取实际的链条数据，确保显示最新的时长信息 - memoized for performance
   const actualChain = useMemo(() => {
@@ -58,7 +60,10 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
     return Math.min(thresholdMinutes, 1) * 60; // 转换为秒，最多1分钟
   };
   useEffect(() => {
-    if (!scheduledSession) return;
+    if (!scheduledSession) {
+      lastPlayedExpiresAtRef.current = null;
+      return;
+    }
 
     const notificationThreshold = getNotificationThreshold(chain.auxiliaryDuration);
 
@@ -79,6 +84,12 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
       if (remaining <= 0) {
         // 预约失败通知
         notificationManager.notifyScheduleFailed(chain.name);
+        
+        // Play sound when timer reaches 0, but only once per session
+        if (lastPlayedExpiresAtRef.current !== scheduledSession.expiresAt.getTime()) {
+          soundManager.playTimerFinished();
+          lastPlayedExpiresAtRef.current = scheduledSession.expiresAt.getTime();
+        }
       }
     };
 
