@@ -2,7 +2,7 @@ import React from 'react';
 import { ChainTreeNode, ScheduledSession } from '../types';
 import { ArrowLeft, Play, Plus, Users, Target, Import, Pencil, X, Hash } from 'lucide-react';
 import { getGroupProgress, getGroupUnitProgress, getNextUnitInGroup, getChainTypeConfig } from '../utils/chainTree';
-import { formatTime } from '../utils/time';
+import { formatTime, getTimeRemaining } from '../utils/time';
 import { getGroupTimeStatus } from '../utils/timeLimit';
 import { ImportUnitsModal } from './ImportUnitsModal';
 
@@ -19,7 +19,197 @@ interface GroupViewProps {
   onImportUnits: (unitIds: string[], groupId: string, mode?: 'move' | 'copy') => void;
   onUpdateTaskRepeatCount?: (chainId: string, repeatCount: number) => void;
   onReorderUnit?: (groupId: string, unitId: string, direction: 'up' | 'down') => void;
+  onViewDetail: (chainId: string) => void;
 }
+
+const UnitCard: React.FC<{
+  unit: ChainTreeNode;
+  index: number;
+  group: ChainTreeNode;
+  scheduledSession?: ScheduledSession;
+  nextUnit?: ChainTreeNode;
+  onStartChain: (id: string) => void;
+  onScheduleChain: (id: string) => void;
+  onEditChain: (id: string) => void;
+  onDeleteChain: (id: string) => void;
+  onReorderUnit?: (groupId: string, unitId: string, direction: 'up' | 'down') => void;
+  onOpenRepeatModal: (unit: ChainTreeNode) => void;
+  onViewDetail: (id: string) => void;
+}> = ({
+  unit,
+  index,
+  group,
+  scheduledSession,
+  nextUnit,
+  onStartChain,
+  onScheduleChain,
+  onEditChain,
+  onDeleteChain,
+  onReorderUnit,
+  onOpenRepeatModal,
+  onViewDetail
+}) => {
+  const [timeRemaining, setTimeRemaining] = React.useState<number>(0);
+  const unitTypeConfig = getChainTypeConfig(unit.type);
+  const requiredRepeats = unit.taskRepeatCount || 1;
+  const isCompleted = unit.currentStreak >= requiredRepeats;
+  const isNext = nextUnit?.id === unit.id;
+  const currentRepeatCount = unit.taskRepeatCount || 1;
+
+  React.useEffect(() => {
+    if (!scheduledSession) return;
+    const updateTimer = () => {
+      const remaining = getTimeRemaining(scheduledSession.expiresAt);
+      setTimeRemaining(remaining);
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledSession]);
+
+  const formatCountdown = (seconds: number) => {
+    if (seconds <= 0) return '00:00';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div
+      className={`bento-card transition-all duration-300 relative cursor-pointer hover:shadow-md ${
+        isNext ? 'ring-2 ring-primary-500 ring-opacity-50' : ''
+      } ${isCompleted ? 'bg-green-50 dark:bg-green-900/10' : ''}`}
+      onClick={() => onViewDetail(unit.id)}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4 flex-1">
+          {/* 序号 */}
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+            isCompleted 
+              ? 'bg-green-500 text-white' 
+              : isNext 
+                ? 'bg-primary-500 text-white'
+                : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400'
+          }`}>
+            {isCompleted ? <i className="fas fa-check text-xs"></i> : index + 1}
+          </div>
+
+          {/* 单元信息 */}
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-1">
+              <div className={`w-6 h-6 rounded-lg ${unitTypeConfig.bgColor} flex items-center justify-center`}>
+                <i className={`${unitTypeConfig.icon} ${unitTypeConfig.color} text-xs`}></i>
+              </div>
+              <h4 className="font-bold font-chinese text-gray-900 dark:text-slate-100">
+                {unit.name}
+              </h4>
+              {isNext && (
+                <span className="px-2 py-1 bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs rounded-full font-chinese">
+                  下一个
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
+              {unit.description}
+            </p>
+            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-slate-400">
+              <span className="flex items-center space-x-1">
+                <i className="fas fa-clock"></i>
+                <span>{formatTime(unit.duration)}</span>
+              </span>
+              <span className="flex items-center space-x-1" title="完成次数">
+                <i className="fas fa-fire"></i>
+                <span>#{unit.currentStreak}</span>
+              </span>
+              <span className="flex items-center space-x-1" title="预约次数">
+                <i className="fas fa-calendar-check"></i>
+                <span>{unit.auxiliaryStreak || 0}</span>
+              </span>
+              <span className="font-chinese">{unitTypeConfig.name}</span>
+            </div>
+          </div>
+
+          {/* 操作按钮 */}
+          <div className="flex items-center space-x-2" onClick={e => e.stopPropagation()}>
+            {scheduledSession && timeRemaining > 0 && (
+              <span className="px-2 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs rounded-full font-chinese font-mono animate-pulse">
+                {formatCountdown(timeRemaining)}
+              </span>
+            )}
+
+            {/* 排序按钮 */}
+            <div className="flex items-center">
+              <button
+                onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'up')}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+                title="上移"
+                disabled={index === 0}
+              >
+                <i className="fas fa-arrow-up text-sm"></i>
+              </button>
+              <button
+                onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'down')}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+                title="下移"
+                disabled={index === (group.children.length - 1)}
+              >
+                <i className="fas fa-arrow-down text-sm"></i>
+              </button>
+            </div>
+
+            <button
+              onClick={() => onEditChain(unit.id)}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+              title="编辑单元"
+            >
+              <i className="fas fa-edit text-sm"></i>
+            </button>
+            <button
+              onClick={() => onDeleteChain(unit.id)}
+              className="p-2 text-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="删除单元"
+            >
+              <i className="fas fa-trash text-sm"></i>
+            </button>
+
+            {!isCompleted && (
+              <>
+                <button
+                  onClick={() => onScheduleChain(unit.id)}
+                  className="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm transition-colors font-chinese"
+                  disabled={!!scheduledSession}
+                >
+                  预约
+                </button>
+                <button
+                  onClick={() => onStartChain(unit.id)}
+                  className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors font-chinese"
+                >
+                  开始
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* 重复次数按钮 - 右下角 */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onOpenRepeatModal(unit); }}
+        className="absolute bottom-3 right-3 flex items-center space-x-1 px-2 py-1 
+                   bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 
+                   hover:bg-slate-700 dark:hover:bg-slate-300 
+                   rounded-md text-xs font-bold transition-all duration-200 
+                   shadow-md hover:shadow-lg border border-slate-600 dark:border-slate-400
+                   hover:scale-105"
+        title={`设置重复次数 (当前: ${currentRepeatCount})`}
+      >
+        <X size={12} className="opacity-90" />
+        <span>{currentRepeatCount}</span>
+      </button>
+    </div>
+  );
+};
 
 export const GroupView: React.FC<GroupViewProps> = ({
   group,
@@ -34,6 +224,7 @@ export const GroupView: React.FC<GroupViewProps> = ({
   onImportUnits,
   onUpdateTaskRepeatCount,
   onReorderUnit,
+  onViewDetail,
 }) => {
   const progress = getGroupProgress(group);
   const unitProgress = getGroupUnitProgress(group);
@@ -61,147 +252,6 @@ export const GroupView: React.FC<GroupViewProps> = ({
     }
     setShowRepeatModal(false);
     setSelectedUnitId('');
-  };
-
-  const renderUnit = (unit: ChainTreeNode, index: number) => {
-    const unitTypeConfig = getChainTypeConfig(unit.type);
-    const scheduledSession = getScheduledSession(unit.id);
-    const requiredRepeats = unit.taskRepeatCount || 1;
-    const isCompleted = unit.currentStreak >= requiredRepeats;
-    const isNext = nextUnit?.id === unit.id;
-    const currentRepeatCount = unit.taskRepeatCount || 1;
-
-    return (
-      <div
-        key={unit.id}
-        className={`bento-card transition-all duration-300 relative ${
-          isNext ? 'ring-2 ring-primary-500 ring-opacity-50' : ''
-        } ${isCompleted ? 'bg-green-50 dark:bg-green-900/10' : ''}`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 flex-1">
-            {/* 序号 */}
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              isCompleted 
-                ? 'bg-green-500 text-white' 
-                : isNext 
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400'
-            }`}>
-              {isCompleted ? <i className="fas fa-check text-xs"></i> : index + 1}
-            </div>
-
-            {/* 单元信息 */}
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
-                <div className={`w-6 h-6 rounded-lg ${unitTypeConfig.bgColor} flex items-center justify-center`}>
-                  <i className={`${unitTypeConfig.icon} ${unitTypeConfig.color} text-xs`}></i>
-                </div>
-                <h4 className="font-bold font-chinese text-gray-900 dark:text-slate-100">
-                  {unit.name}
-                </h4>
-                {isNext && (
-                  <span className="px-2 py-1 bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs rounded-full font-chinese">
-                    下一个
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
-                {unit.description}
-              </p>
-              <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-slate-400">
-                <span className="flex items-center space-x-1">
-                  <i className="fas fa-clock"></i>
-                  <span>{formatTime(unit.duration)}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <i className="fas fa-fire"></i>
-                  <span>#{unit.currentStreak}</span>
-                </span>
-                <span className="font-chinese">{unitTypeConfig.name}</span>
-              </div>
-            </div>
-
-            {/* 操作按钮 */}
-            <div className="flex items-center space-x-2">
-              {scheduledSession && (
-                <span className="px-2 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs rounded-full font-chinese">
-                  已预约
-                </span>
-              )}
-
-              {/* 排序按钮 */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'up')}
-                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-                  title="上移"
-                  disabled={index === 0}
-                >
-                  <i className="fas fa-arrow-up text-sm"></i>
-                </button>
-                <button
-                  onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'down')}
-                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-                  title="下移"
-                  disabled={index === (group.children.length - 1)}
-                >
-                  <i className="fas fa-arrow-down text-sm"></i>
-                </button>
-              </div>
-
-              <button
-                onClick={() => onEditChain(unit.id)}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-                title="编辑单元"
-              >
-                <i className="fas fa-edit text-sm"></i>
-              </button>
-              <button
-                onClick={() => onDeleteChain(unit.id)}
-                className="p-2 text-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                title="删除单元"
-              >
-                <i className="fas fa-trash text-sm"></i>
-              </button>
-
-              {!isCompleted && (
-                <>
-                  <button
-                    onClick={() => onScheduleChain(unit.id)}
-                    className="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm transition-colors font-chinese"
-                    disabled={!!scheduledSession}
-                  >
-                    预约
-                  </button>
-                  <button
-                    onClick={() => onStartChain(unit.id)}
-                    className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors font-chinese"
-                  >
-                    开始
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* 重复次数按钮 - 右下角 */}
-        <button
-          onClick={() => handleOpenRepeatModal(unit)}
-          className="absolute bottom-3 right-3 flex items-center space-x-1 px-2 py-1 
-                     bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 
-                     hover:bg-slate-700 dark:hover:bg-slate-300 
-                     rounded-md text-xs font-bold transition-all duration-200 
-                     shadow-md hover:shadow-lg border border-slate-600 dark:border-slate-400
-                     hover:scale-105"
-          title={`设置重复次数 (当前: ${currentRepeatCount})`}
-        >
-          <X size={12} className="opacity-90" />
-          <span>{currentRepeatCount}</span>
-        </button>
-      </div>
-    );
   };
 
   return (
@@ -408,7 +458,23 @@ export const GroupView: React.FC<GroupViewProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {group.children.map((unit, index) => renderUnit(unit, index))}
+              {group.children.map((unit, index) => (
+                <UnitCard
+                  key={unit.id}
+                  unit={unit}
+                  index={index}
+                  group={group}
+                  scheduledSession={getScheduledSession(unit.id)}
+                  nextUnit={nextUnit || undefined}
+                  onStartChain={onStartChain}
+                  onScheduleChain={onScheduleChain}
+                  onEditChain={onEditChain}
+                  onDeleteChain={onDeleteChain}
+                  onReorderUnit={onReorderUnit}
+                  onOpenRepeatModal={handleOpenRepeatModal}
+                  onViewDetail={onViewDetail}
+                />
+              ))}
             </div>
           )}
         </div>
