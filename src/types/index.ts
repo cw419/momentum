@@ -110,6 +110,9 @@ export interface RSIPNode {
   // 可选的计时配置（参考神圣座位预约时长逻辑）
   useTimer?: boolean;
   timerMinutes?: number; // 倒计时分钟数
+  // 新增：用于UI展示的emoji
+  emoji?: string;
+  type?: string; // 国策类型
 }
 
 export interface RSIPTreeNode extends RSIPNode {
