@@ -241,6 +241,7 @@ function App() {
               onBack={handleBackToDashboard}
               onStartChain={handleStartChain}
               onScheduleChain={handleScheduleChain}
+              onViewDetail={handleViewChainDetail}
               onEditChain={(chainId) => handleEditChain(chainId)}
               onDeleteChain={handleDeleteChain}
               onAddUnit={() => handleCreateChain(state.viewingChainId!)}
@@ -579,9 +580,10 @@ function App() {
     }
   };
 
-  const handleSaveChain = async (chainData: Omit<Chain, 'id' | 'currentStreak' | 'auxiliaryStreak' | 'totalCompletions' | 'totalFailures' | 'auxiliaryFailures' | 'createdAt' | 'lastCompletedAt'>) => {
+  const handleSaveChain = async (chainData: Omit<Chain, 'id' | 'currentStreak' | 'auxiliaryStreak' | 'totalCompletions' | 'totalFailures' | 'auxiliaryFailures' | 'createdAt' | 'lastCompletedAt'>, isCopy: boolean = false) => {
     console.log('Starting to save chain data...', chainData);
     console.log('Currently editing chain:', state.editingChain);
+    console.log('Is Copy Mode:', isCopy);
     console.log('当前所有链条:', state.chains.map(c => ({ id: c.id, name: c.name })));
     
     try {
@@ -596,7 +598,7 @@ function App() {
       
       let updatedActiveChains: Chain[];
       
-      if (state.editingChain) {
+      if (state.editingChain && !isCopy) {
         // Editing existing chain
         console.log('编辑模式 - 原始链条数据:', state.editingChain);
         console.log('新的链条数据:', chainData);
@@ -610,7 +612,7 @@ function App() {
         const editedChain = updatedActiveChains.find(c => c.id === state.editingChain!.id);
         console.log('编辑后的链数据:', editedChain);
       } else {
-        // Creating new chain
+        // Creating new chain (or copying)
         const newChain: Chain = {
           id: crypto.randomUUID(),
           ...chainData,
@@ -621,7 +623,14 @@ function App() {
           auxiliaryFailures: 0,
           createdAt: new Date(),
         };
-        console.log('创建新链:', newChain);
+        if (isCopy) {
+          // If copying, append " (副本)" to name if not already present
+          // But chainData.name comes from the form, which the user might have edited.
+          // So we just use chainData as is.
+          console.log('复制链条:', newChain);
+        } else {
+          console.log('创建新链:', newChain);
+        }
         updatedActiveChains = [...state.chains, newChain];
         console.log('添加新链后的活跃链数组长度:', updatedActiveChains.length);
       }

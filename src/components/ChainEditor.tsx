@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Chain, ChainType } from '../types';
-import { ArrowLeft, Save, Headphones, Code, BookOpen, Dumbbell, Coffee, Target, Clock, Bell, Tag, Layers, Flame, Calendar, AlignLeft } from 'lucide-react';
+import { ArrowLeft, Save, Headphones, Code, BookOpen, Dumbbell, Coffee, Target, Clock, Bell, Tag, Layers, Flame, Calendar, AlignLeft, Copy } from 'lucide-react';
 import { PureDOMSlider } from './PureDOMSlider';
 import { ResponsiveContainer } from './ResponsiveContainer';
 import { SettingSection } from './SettingSection';
@@ -11,7 +11,7 @@ interface ChainEditorProps {
   chain?: Chain;
   isEditing: boolean;
   initialParentId?: string;
-  onSave: (chain: Omit<Chain, 'id' | 'currentStreak' | 'auxiliaryStreak' | 'totalCompletions' | 'totalFailures' | 'auxiliaryFailures' | 'createdAt' | 'lastCompletedAt'>) => void;
+  onSave: (chain: Omit<Chain, 'id' | 'currentStreak' | 'auxiliaryStreak' | 'totalCompletions' | 'totalFailures' | 'auxiliaryFailures' | 'createdAt' | 'lastCompletedAt'>, isCopy?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -44,10 +44,14 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
 }) => {
   const [name, setName] = useState(chain?.name || '');
   const [type, setType] = useState<ChainType>(chain?.type || 'unit');
-  const [parentId] = useState(chain?.parentId || initialParentId || undefined);
+  const [parentId, setParentId] = useState(chain?.parentId || initialParentId || undefined);
   const [sortOrder] = useState(chain?.sortOrder || Math.floor(Date.now() / 1000));
-  const [trigger, setTrigger] = useState(chain?.trigger || '');
-  const [customTrigger, setCustomTrigger] = useState('');
+  
+  // Fix: Check if trigger is custom on init
+  const isCustomTriggerValue = chain?.trigger && !TRIGGER_TEMPLATES.some(t => t.text === chain.trigger);
+  const [trigger, setTrigger] = useState(isCustomTriggerValue ? '自定义触发器' : (chain?.trigger || ''));
+  const [customTrigger, setCustomTrigger] = useState(isCustomTriggerValue ? chain!.trigger : '');
+  
   const [duration, setDuration] = useState(chain?.duration || 45);
   const [isCustomDuration, setIsCustomDuration] = useState(
     chain?.duration ? !DURATION_PRESETS.includes(chain.duration) : false
@@ -60,8 +64,11 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
   const [description, setDescription] = useState(chain?.description || '');
   
   // 辅助链状态
-  const [auxiliarySignal, setAuxiliarySignal] = useState(chain?.auxiliarySignal || '');
-  const [customAuxiliarySignal, setCustomAuxiliarySignal] = useState('');
+  // Fix: Check if auxiliarySignal is custom on init
+  const isCustomAuxiliarySignalValue = chain?.auxiliarySignal && !AUXILIARY_SIGNAL_TEMPLATES.some(t => t.text === chain.auxiliarySignal);
+  const [auxiliarySignal, setAuxiliarySignal] = useState(isCustomAuxiliarySignalValue ? '自定义信号' : (chain?.auxiliarySignal || ''));
+  const [customAuxiliarySignal, setCustomAuxiliarySignal] = useState(isCustomAuxiliarySignalValue ? chain!.auxiliarySignal : '');
+  
   const [auxiliaryDuration, setAuxiliaryDuration] = useState(chain?.auxiliaryDuration || 15);
   const [isCustomAuxiliaryDuration, setIsCustomAuxiliaryDuration] = useState(
     chain?.auxiliaryDuration ? !AUXILIARY_DURATION_PRESETS.includes(chain.auxiliaryDuration) : false
@@ -70,6 +77,7 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
     chain?.auxiliaryCompletionTrigger || ''
   );
 
+  const [isCopyMode, setIsCopyMode] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +133,7 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
       console.log('ChainEditor - 原始链条数据:', chain);
     }
     
-    onSave(chainData);
+    onSave(chainData, isCopyMode);
   };
 
   const handleTriggerSelect = (triggerText: string) => {
@@ -233,6 +241,46 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
                 <option value="quartermaster">炊事单元（备餐做饭）</option>
               </select>
             </div>
+
+            {/* Parent Chain Info (Move Out) */}
+            {parentId && (
+              <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in bg-blue-50/50 dark:bg-blue-900/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Layers className="text-blue-500" size={24} />
+                    <div>
+                      <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">任务群归属</h4>
+                      <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
+                        当前属于一个任务群
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setParentId(undefined);
+                        setIsCopyMode(true);
+                      }}
+                      className="px-3 py-2 bg-white dark:bg-slate-800 text-indigo-500 hover:text-indigo-600 rounded-xl shadow-sm text-sm font-medium transition-colors border border-gray-200 dark:border-slate-700 flex items-center space-x-1"
+                      title="复制此任务并移出任务群（原任务保留）"
+                    >
+                      <Copy size={14} />
+                      <span>复制出群</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setParentId(undefined)}
+                      className="px-3 py-2 bg-white dark:bg-slate-800 text-red-500 hover:text-red-600 rounded-xl shadow-sm text-sm font-medium transition-colors border border-gray-200 dark:border-slate-700 flex items-center space-x-1"
+                      title="将此任务移出任务群"
+                    >
+                      <Layers size={14} className="rotate-180" />
+                      <span>移出</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </SettingSection>
           {/* 主链设置区 */}
           <SettingSection
@@ -601,12 +649,24 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
             >
               <span>取消</span>
             </button>
+            
+            {isEditing && (
+              <button
+                type="submit"
+                onClick={() => setIsCopyMode(true)}
+                className={`mobile-touch-target flex-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-3 ${mobileInfo.touchSupport ? 'active:scale-98' : 'hover:scale-105'} font-chinese ${mobileInfo.isMobile ? 'min-h-[48px] text-base' : ''}`}
+              >
+                <Copy size={20} />
+                <span>另存为副本</span>
+              </button>
+            )}
+
             <button
               type="submit"
               className={`mobile-touch-target flex-1 gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-3 ${mobileInfo.touchSupport ? 'active:scale-98' : 'hover:scale-105'} shadow-lg font-chinese ${mobileInfo.isMobile ? 'min-h-[48px] text-base' : ''}`}
             >
               <Save size={20} />
-              <span>{isEditing ? '保存更改' : '创建链条'}</span>
+              <span>{isCopyMode ? '创建副本' : (isEditing ? '保存更改' : '创建链条')}</span>
             </button>
           </div>
         </form>
