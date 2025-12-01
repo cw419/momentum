@@ -44,7 +44,9 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
 }) => {
   const [name, setName] = useState(chain?.name || '');
   const [type, setType] = useState<ChainType>(chain?.type || 'unit');
-  const [parentId, setParentId] = useState(chain?.parentId || initialParentId || undefined);
+  // Fix: Only use initialParentId when creating a new chain (chain is undefined)
+  // When editing an existing chain, respect its parentId (even if undefined)
+  const [parentId, setParentId] = useState(chain ? chain.parentId : initialParentId);
   const [sortOrder] = useState(chain?.sortOrder || Math.floor(Date.now() / 1000));
   
   // Fix: Check if trigger is custom on init
