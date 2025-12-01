@@ -11,6 +11,7 @@ import { UserFeedbackDisplay } from './UserFeedbackDisplay';
 import { userFeedbackHandler } from '../services/UserFeedbackHandler';
 import { errorRecoveryManager } from '../services/ErrorRecoveryManager';
 import { EnhancedExceptionRuleException } from '../types';
+import { soundManager } from '../utils/soundManager';
 
 interface FocusModeProps {
   session: ActiveSession;
@@ -35,6 +36,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
 }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [hasShownWarning, setHasShownWarning] = useState(false);
+  const hasPlayedSoundRef = React.useRef(false);
   
   // 例外规则系统状态
   const [showRuleSelection, setShowRuleSelection] = useState(false);
@@ -151,6 +153,10 @@ export const FocusMode: React.FC<FocusModeProps> = ({
 
       if (remaining <= 0) {
         setShowCompletionDialog(true);
+        if (!hasPlayedSoundRef.current) {
+          soundManager.playTimerFinished();
+          hasPlayedSoundRef.current = true;
+        }
       }
     };
 
@@ -162,6 +168,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
   // 重置警告状态当会话改变时
   useEffect(() => { 
     setHasShownWarning(false); 
+    hasPlayedSoundRef.current = false;
   }, [session.startedAt, session.chainId]);
 
   const elapsedSeconds = isDurationless
