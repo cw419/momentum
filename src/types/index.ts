@@ -80,3 +80,158 @@ export interface AppState {
   viewingChainId: string | null;
   completionHistory: CompletionHistory[];
 }
+
+export enum ExceptionRuleType {
+  PAUSE_ONLY = 'pause_only',
+  EARLY_COMPLETION_ONLY = 'early_completion_only',
+  BOTH = 'both'
+}
+
+export type RuleScope = 'global' | 'chain';
+
+export interface ExceptionRule {
+  id: string;
+  name: string;
+  type: ExceptionRuleType;
+  description?: string;
+  scope: RuleScope;
+  chainId?: string;
+  createdAt: Date;
+  lastUsedAt?: Date;
+  usageCount: number;
+  isActive: boolean;
+  isArchived?: boolean;
+}
+
+export interface RuleUsageRecord {
+  id: string;
+  ruleId: string;
+  chainId: string;
+  sessionId: string;
+  usedAt: Date;
+  actionType: 'pause' | 'early_completion';
+  taskElapsedTime: number;
+  taskRemainingTime: number;
+  pauseDuration?: number;
+  autoResume?: boolean;
+  ruleScope?: RuleScope;
+}
+
+export interface SessionContext {
+  sessionId: string;
+  chainId: string;
+  chainName: string;
+  startedAt: Date;
+  elapsedTime: number;
+  remainingTime: number;
+  isDurationless: boolean;
+}
+
+export interface PauseOptions {
+  duration?: number;
+  autoResume?: boolean;
+}
+
+export interface RuleUsageStats {
+  ruleId: string;
+  totalUsage: number;
+  pauseUsage: number;
+  earlyCompletionUsage: number;
+  lastUsedAt?: Date;
+  averageTaskElapsedTime: number;
+  mostUsedWithChains: Array<{ chainId: string; chainName: string; count: number }>;
+}
+
+export interface OverallUsageStats {
+  totalRules: number;
+  totalUsage: number;
+  pauseUsage: number;
+  earlyCompletionUsage: number;
+  mostUsedRules: Array<{ ruleId: string; ruleName: string; count: number }>;
+}
+
+export interface ExceptionRuleStorage {
+  rules: ExceptionRule[];
+  usageRecords: RuleUsageRecord[];
+  lastSyncAt: Date;
+}
+
+export enum ExceptionRuleError {
+  STORAGE_ERROR = 'STORAGE_ERROR',
+  RULE_NOT_FOUND = 'RULE_NOT_FOUND',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  DUPLICATE_RULE_NAME = 'DUPLICATE_RULE_NAME',
+  INVALID_RULE_TYPE = 'INVALID_RULE_TYPE',
+  RULE_TYPE_MISMATCH = 'RULE_TYPE_MISMATCH',
+  DATA_INTEGRITY_ERROR = 'DATA_INTEGRITY_ERROR',
+  NETWORK_ERROR = 'NETWORK_ERROR',
+  RULE_STATE_INCONSISTENT = 'RULE_STATE_INCONSISTENT'
+}
+
+export class ExceptionRuleException extends Error {
+  type: ExceptionRuleError;
+  cause?: unknown;
+
+  constructor(type: ExceptionRuleError, message: string, cause?: unknown) {
+    super(message);
+    this.name = 'ExceptionRuleException';
+    this.type = type;
+    this.cause = cause;
+  }
+}
+
+export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export class EnhancedExceptionRuleException extends ExceptionRuleException {
+  userFriendlyMessage: string;
+  technicalMessage: string;
+  context?: Record<string, unknown>;
+  suggestedActions: string[];
+  recoverable: boolean;
+  severity: ErrorSeverity;
+  metadata: Record<string, unknown>;
+
+  constructor(
+    type: ExceptionRuleError,
+    message: string,
+    context?: unknown,
+    recoverable: boolean = true,
+    recommendedActions: string[] = [],
+    severity: ErrorSeverity = 'medium',
+    userFriendlyMessage?: string,
+    metadata: Record<string, unknown> = {}
+  ) {
+    super(type, message, context);
+    this.name = 'EnhancedExceptionRuleException';
+    this.userFriendlyMessage = userFriendlyMessage || message;
+    this.technicalMessage = message;
+    this.context = context as Record<string, unknown>;
+    this.suggestedActions = recommendedActions;
+    this.recoverable = recoverable;
+    this.severity = severity;
+    this.metadata = metadata;
+  }
+
+  static createUserFriendly(
+    type: ExceptionRuleError,
+    userMessage: string,
+    technicalMessage: string,
+    context?: Record<string, unknown>
+  ): EnhancedExceptionRuleException {
+    return new EnhancedExceptionRuleException(
+      type,
+      technicalMessage,
+      context,
+      true,
+      [],
+      'medium',
+      userMessage,
+      {}
+    );
+  }
+
+  addSuggestedAction(action: string): this {
+    this.suggestedActions.push(action);
+    return this;
+  }
+}

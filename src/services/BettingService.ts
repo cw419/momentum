@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, getCurrentUser } from '../lib/supabase';
+import { WriteSessionService } from './WriteSessionService';
 
 export interface BetPlacementRequest {
   session_id: string;
@@ -98,11 +99,12 @@ export class BettingService {
    * @returns Promise<BetPlacementResult> 下注结果
    */
   static async placeBet(betRequest: BetPlacementRequest): Promise<BetPlacementResult> {
+    let writeSessionToken: string | null = null;
+
     try {
       console.log('[BettingService] 开始下注...', betRequest);
       this.ensureSupabaseConfigured();
 
-      // 获取当前用户
       const user = await getCurrentUser();
       if (!user) {
         throw new Error('User not authenticated. Please log in to place bets.');
@@ -110,7 +112,6 @@ export class BettingService {
 
       console.log(`[BettingService] 为用户 ${user.id} 在会话 ${betRequest.session_id} 上下注 ${betRequest.bet_amount} 积分`);
 
-      // 验证下注金额
       if (betRequest.bet_amount <= 0) {
         return {
           success: false,
@@ -119,12 +120,24 @@ export class BettingService {
         };
       }
 
-      // 调用数据库函数下注 - 使用新的参数名称
+      const writeSession = await WriteSessionService.createBettingSession();
+      if (!writeSession.success || !writeSession.session_token) {
+        console.error('[BettingService] 创建写入会话失败:', writeSession.error);
+        return {
+          success: false,
+          message: writeSession.error || 'Failed to create betting session',
+          error_code: 'WRITE_SESSION_CREATION_FAILED'
+        };
+      }
+
+      writeSessionToken = writeSession.session_token;
+      console.log('[BettingService] 写入会话已创建:', writeSessionToken);
+
       const { data, error } = await supabase!.rpc('place_task_bet', {
         p_user_id: user.id,
         p_session_id: betRequest.session_id,
         p_bet_amount: betRequest.bet_amount,
-        p_write_session_token: null // 显式传递null以确保兼容性
+        p_write_session_token: writeSessionToken
       });
 
       if (error) {
@@ -133,10 +146,21 @@ export class BettingService {
       }
 
       console.log('[BettingService] 下注成功:', data);
+
+      await WriteSessionService.completeSession(writeSessionToken);
+      console.log('[BettingService] 写入会话已完成');
+
       return data as BetPlacementResult;
 
     } catch (error) {
       console.error('[BettingService] 下注过程中发生错误:', error);
+
+      if (writeSessionToken) {
+        await WriteSessionService.completeSession(writeSessionToken).catch(e =>
+          console.error('[BettingService] 清理写入会话失败:', e)
+        );
+      }
+
       throw error;
     }
   }
