@@ -7,52 +7,29 @@
     <meta name="description" content="Momentum - 心理学驱动的专注力应用，帮助您建立高效的工作习惯，通过任务链和专注模式提升生产力。" />
     <title>Momentum - 心理学驱动的专注力应用</title>
 
-    <!-- 关键 CSS - 内联以避免 FOUC，使用系统字体作为fallback -->
+    <!-- 移动端性能优化：100%使用系统字体，节省556KB字体下载，显著提升FCP/LCP -->
     <style>
       :root {
-        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-        --font-chinese: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
-        --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        --font-chinese: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', system-ui, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
       }
       body {
         font-family: var(--font-sans);
         margin: 0;
         padding: 0;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       .font-chinese { font-family: var(--font-chinese); }
       .font-mono { font-family: var(--font-mono); }
-      h1, h2, h3 { font-family: var(--font-chinese); }
+      h1, h2, h3 { font-family: var(--font-chinese); font-weight: 700; }
+      #root { min-height: 100vh; }
+      .gradient-primary { background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%); }
     </style>
-
-    <!-- 预连接字体服务 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <!-- 移动端性能优化：首屏仅加载小体积西文字体，中文字体延迟加载 -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-    </noscript>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- 中文字体延迟加载：首屏渲染后异步加载，减少约200KB首屏负载 -->
-    <script>
-      (function(){
-        var loadChinese = function() {
-          var link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap';
-          document.head.appendChild(link);
-        };
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(loadChinese, { timeout: 3000 });
-        } else {
-          setTimeout(loadChinese, 2000);
-        }
-      })();
-    </script>
   </body>
 </html>
