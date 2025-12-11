@@ -11,13 +11,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // 核心 React 库
+          // 核心 React 库 - 最小化分块
           'vendor-react': ['react', 'react-dom'],
-          // Supabase 客户端
+          // Supabase 客户端 - 懒加载优先
           'vendor-supabase': ['@supabase/supabase-js'],
-          // 图标库（较大）
+          // 图标库 - 按需加载
           'vendor-icons': ['lucide-react'],
-          // 动画库
+          // 动画库 - 延迟加载
           'vendor-animation': ['animejs'],
         }
       }
@@ -28,16 +28,30 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // 生产环境移除 console
+        drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+        passes: 2,
+      },
+      mangle: {
+        safari10: true,
+      },
+      format: {
+        comments: false,
       },
     },
-    // 启用源码映射用于调试（生产可关闭）
+    // 禁用源码映射以减小体积
     sourcemap: false,
+    // 启用CSS代码分割
+    cssCodeSplit: true,
+    // 设置目标浏览器以减少polyfill
+    target: 'es2020',
+    // 资源内联阈值 - 小于4KB的资源内联
+    assetsInlineLimit: 4096,
   },
   // 预构建优化
   esbuild: {
-    // 移除生产环境的 console 和 debugger
     drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    legalComments: 'none',
   },
 });

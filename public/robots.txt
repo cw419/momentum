@@ -1,0 +1,6 @@
+# Momentum - Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://momentumctdp.netlify.app/sitemap.xml

@@ -1,22 +1,23 @@
-import React, { useMemo, useCallback, useEffect, useState } from 'react';
+import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { Chain, ScheduledSession, CompletionHistory, ChainTreeNode } from '../types';
 import { ChainCard } from './ChainCard';
 import { GroupCard } from './GroupCard';
 import { ThemeToggle } from './ThemeToggle';
-import { ImportExportModal } from './ImportExportModal';
 import { VirtualizedChainList } from './VirtualizedChainList';
 import { buildChainTree, getTopLevelChains } from '../utils/chainTree';
 import { queryOptimizer } from '../utils/queryOptimizer';
 import { getNextUnitInGroup } from '../utils/chainTree';
 import { Download, TreePine, Trash2, Rocket, Link, Plus, Layers, User } from 'lucide-react';
 import { NotificationToggle } from './NotificationToggle';
-import { RecycleBinModal } from './RecycleBinModal';
 import { RecycleBinService } from '../services/RecycleBinService';
-import { AccountModal } from './AccountModal';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { PerformanceMonitor } from './PerformanceMonitor';
 import { DailyCheckin } from './DailyCheckin';
 import { DailyCheckinDemo } from './DailyCheckinDemo';
+
+const ImportExportModal = lazy(() => import('./ImportExportModal').then(m => ({ default: m.ImportExportModal })));
+const RecycleBinModal = lazy(() => import('./RecycleBinModal').then(m => ({ default: m.RecycleBinModal })));
+const AccountModal = lazy(() => import('./AccountModal').then(m => ({ default: m.AccountModal })));
+const PerformanceMonitor = lazy(() => import('./PerformanceMonitor').then(m => ({ default: m.PerformanceMonitor })));
 
 interface DashboardProps {
   chains: Chain[];
@@ -315,40 +316,48 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
       
       {/* Import/Export Modal */}
       {showImportExport && (
-        <ImportExportModal
-          chains={chains}
-          history={history}
-          rsipNodes={rsipNodes}
-          rsipMeta={rsipMeta}
-          onImport={handleImport}
-          onClose={handleHideImportExport}
-        />
+        <Suspense fallback={null}>
+          <ImportExportModal
+            chains={chains}
+            history={history}
+            rsipNodes={rsipNodes}
+            rsipMeta={rsipMeta}
+            onImport={handleImport}
+            onClose={handleHideImportExport}
+          />
+        </Suspense>
       )}
 
       {/* Recycle Bin Modal */}
       {showRecycleBin && (
-        <RecycleBinModal
-          isOpen={showRecycleBin}
-          onClose={handleHideRecycleBin}
-          onRestore={handleRestore}
-          onPermanentDelete={handlePermanentDelete}
-          refreshTrigger={recycleBinRefreshTrigger}
-        />
+        <Suspense fallback={null}>
+          <RecycleBinModal
+            isOpen={showRecycleBin}
+            onClose={handleHideRecycleBin}
+            onRestore={handleRestore}
+            onPermanentDelete={handlePermanentDelete}
+            refreshTrigger={recycleBinRefreshTrigger}
+          />
+        </Suspense>
       )}
 
       {/* Account Modal */}
       {showAccountModal && (
-        <AccountModal
-          isOpen={showAccountModal}
-          onClose={handleHideAccountModal}
-        />
+        <Suspense fallback={null}>
+          <AccountModal
+            isOpen={showAccountModal}
+            onClose={handleHideAccountModal}
+          />
+        </Suspense>
       )}
       {/* Performance Monitor (Development) */}
       {process.env.NODE_ENV === 'development' && (
-        <PerformanceMonitor
-          isVisible={showPerformanceMonitor}
-          onToggle={() => setShowPerformanceMonitor(!showPerformanceMonitor)}
-        />
+        <Suspense fallback={null}>
+          <PerformanceMonitor
+            isVisible={showPerformanceMonitor}
+            onToggle={() => setShowPerformanceMonitor(!showPerformanceMonitor)}
+          />
+        </Suspense>
       )}
     </div>
   );
