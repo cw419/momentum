@@ -1,15 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AppState, Chain, ScheduledSession, ActiveSession, CompletionHistory, RSIPNode, RSIPMeta } from './types';
+
+// 首屏关键组件 - 同步导入
 import { Dashboard } from './components/Dashboard';
-import { RSIPView } from './components/RSIPView';
 import { AuthWrapper } from './components/AuthWrapper';
-import { ChainEditor } from './components/ChainEditor';
-import { FocusMode } from './components/FocusMode';
-import { ChainDetail } from './components/ChainDetail';
-import { GroupView } from './components/GroupView';
-import { TaskGroupEditor } from './components/TaskGroupEditor';
-import { AuxiliaryJudgment } from './components/AuxiliaryJudgment';
-import { BettingModal } from './components/BettingModal';
+
+// 非首屏组件 - 懒加载以优化首屏性能
+const RSIPView = lazy(() => import('./components/RSIPView').then(m => ({ default: m.RSIPView })));
+const ChainEditor = lazy(() => import('./components/ChainEditor').then(m => ({ default: m.ChainEditor })));
+const FocusMode = lazy(() => import('./components/FocusMode').then(m => ({ default: m.FocusMode })));
+const ChainDetail = lazy(() => import('./components/ChainDetail').then(m => ({ default: m.ChainDetail })));
+const GroupView = lazy(() => import('./components/GroupView').then(m => ({ default: m.GroupView })));
+const TaskGroupEditor = lazy(() => import('./components/TaskGroupEditor').then(m => ({ default: m.TaskGroupEditor })));
+const AuxiliaryJudgment = lazy(() => import('./components/AuxiliaryJudgment').then(m => ({ default: m.AuxiliaryJudgment })));
+const BettingModal = lazy(() => import('./components/BettingModal').then(m => ({ default: m.BettingModal })));
+
+// 加载状态组件
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+      </div>
+      <p className="text-gray-500 dark:text-slate-400 text-sm">加载中...</p>
+    </div>
+  </div>
+);
 import { UserSettingsService } from './services/UserSettingsService';
 import { BetPlacementResult } from './services/BettingService';
 import { SessionService } from './services/SessionService';
@@ -66,29 +82,39 @@ function App() {
 
   // Determine storage source immediately based on Supabase configuration
   const storage = isSupabaseConfigured ? supabaseStorage : localStorageUtils;
-  
-  useEffect(() => {
-    // Storage source determined based on Supabase configuration
-    
-    // 初始化规则系统
-    initializeRuleSystem().then(result => {
-      if (!result.success) {
-        console.error('Rule system initialization failed:', result.message);
-      }
-    }).catch(error => {
-      console.error('Rule system initialization error:', error);
-    });
 
-    // 运行迁移脚本
-    runMigration();
-    
+  useEffect(() => {
+    // 立即设置初始化完成，让首屏尽快渲染
     setIsInitialized(true);
-    
-    // Initialize performance monitoring for development
-    if (process.env.NODE_ENV === 'development') {
-      setTimeout(() => {
-        performanceDashboard.displayConsoleReport();
-      }, 5000);
+
+    // 延迟执行非关键初始化，不阻塞首屏渲染
+    const initializeNonCritical = () => {
+      // 初始化规则系统（非关键路径）
+      initializeRuleSystem().then(result => {
+        if (!result.success) {
+          console.error('Rule system initialization failed:', result.message);
+        }
+      }).catch(error => {
+        console.error('Rule system initialization error:', error);
+      });
+
+      // 运行迁移脚本（非关键路径）
+      runMigration();
+
+      // Initialize performance monitoring for development
+      if (process.env.NODE_ENV === 'development') {
+        setTimeout(() => {
+          performanceDashboard.displayConsoleReport();
+        }, 5000);
+      }
+    };
+
+    // 使用 requestIdleCallback 延迟非关键初始化
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(initializeNonCritical, { timeout: 2000 });
+    } else {
+      // 降级方案：使用 setTimeout
+      setTimeout(initializeNonCritical, 100);
     }
   }, []);
 
@@ -126,10 +152,11 @@ function App() {
       );
     }
 
+    // 使用 Suspense 包装懒加载组件
     switch (state.currentView) {
       case 'editor':
         return (
-          <>
+          <Suspense fallback={<LoadingFallback />}>
             <ChainEditor
               chain={state.editingChain || undefined}
               isEditing={!!state.editingChain}
@@ -145,12 +172,12 @@ function App() {
                 onCancel={() => setShowAuxiliaryJudgment(null)}
               />
             )}
-          </>
+          </Suspense>
         );
 
       case 'taskgroup-editor':
         return (
-          <>
+          <Suspense fallback={<LoadingFallback />}>
             <TaskGroupEditor
               chain={state.editingChain || undefined}
               isEditing={!!state.editingChain}
@@ -158,7 +185,7 @@ function App() {
               onSave={handleSaveChain}
               onCancel={handleBackToDashboard}
             />
-          </>
+          </Suspense>
         );
 
       case 'focus': {
@@ -168,7 +195,7 @@ function App() {
           return null;
         }
         return (
-          <>
+          <Suspense fallback={<LoadingFallback />}>
             <FocusMode
               session={state.activeSession}
               chain={activeChain}
@@ -187,7 +214,7 @@ function App() {
                 onCancel={() => setShowAuxiliaryJudgment(null)}
               />
             )}
-          </>
+          </Suspense>
         );
       }
 
@@ -198,7 +225,7 @@ function App() {
           return null;
         }
         return (
-          <>
+          <Suspense fallback={<LoadingFallback />}>
             <ChainDetail
               chain={viewingChain}
               history={state.completionHistory}
@@ -214,7 +241,7 @@ function App() {
                 onCancel={() => setShowAuxiliaryJudgment(null)}
               />
             )}
-          </>
+          </Suspense>
         );
       }
 
@@ -224,7 +251,7 @@ function App() {
           handleBackToDashboard();
           return null;
         }
-        
+
         // 构建任务树并找到对应的群组节点
         const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains);
         const groupNode = chainTree.find(node => node.id === state.viewingChainId);
@@ -232,9 +259,9 @@ function App() {
           handleBackToDashboard();
           return null;
         }
-        
+
         return (
-          <>
+          <Suspense fallback={<LoadingFallback />}>
             <GroupView
               group={groupNode}
               scheduledSessions={state.scheduledSessions}
@@ -277,25 +304,27 @@ function App() {
                 onCancel={() => setShowAuxiliaryJudgment(null)}
               />
             )}
-          </>
+          </Suspense>
         );
       }
 
       case 'rsip':
         return (
-          <RSIPView
-            nodes={state.rsipNodes}
-            meta={state.rsipMeta}
-            onBack={handleBackToDashboard}
-            onSaveNodes={async (nodes) => {
-              await storage.saveRSIPNodes(nodes);
-              setState(prev => ({ ...prev, rsipNodes: nodes }));
-            }}
-            onSaveMeta={async (meta) => {
-              await storage.saveRSIPMeta(meta);
-              setState(prev => ({ ...prev, rsipMeta: meta }));
-            }}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <RSIPView
+              nodes={state.rsipNodes}
+              meta={state.rsipMeta}
+              onBack={handleBackToDashboard}
+              onSaveNodes={async (nodes) => {
+                await storage.saveRSIPNodes(nodes);
+                setState(prev => ({ ...prev, rsipNodes: nodes }));
+              }}
+              onSaveMeta={async (meta) => {
+                await storage.saveRSIPMeta(meta);
+                setState(prev => ({ ...prev, rsipMeta: meta }));
+              }}
+            />
+          </Suspense>
         );
 
       default:
@@ -323,12 +352,14 @@ function App() {
               recycleBinRefreshTrigger={recycleBinRefreshTrigger}
             />
             {showAuxiliaryJudgment && (
-              <AuxiliaryJudgment
-                chain={state.chains.find(c => c.id === showAuxiliaryJudgment)!}
-                onJudgmentFailure={() => handleAuxiliaryJudgmentFailure(showAuxiliaryJudgment!)}
-                onJudgmentAllow={(exceptionRule) => handleAuxiliaryJudgmentAllow(showAuxiliaryJudgment, exceptionRule)}
-                onCancel={() => setShowAuxiliaryJudgment(null)}
-              />
+              <Suspense fallback={null}>
+                <AuxiliaryJudgment
+                  chain={state.chains.find(c => c.id === showAuxiliaryJudgment)!}
+                  onJudgmentFailure={() => handleAuxiliaryJudgmentFailure(showAuxiliaryJudgment!)}
+                  onJudgmentAllow={(exceptionRule) => handleAuxiliaryJudgmentAllow(showAuxiliaryJudgment, exceptionRule)}
+                  onCancel={() => setShowAuxiliaryJudgment(null)}
+                />
+              </Suspense>
             )}
           </>
         );
@@ -1783,17 +1814,19 @@ function App() {
   return (
     <>
       {renderContent()}
-      
-      {/* Betting Modal */}
+
+      {/* Betting Modal - 懒加载 */}
       {showBettingModal && pendingChainId && currentSessionId && (
-        <BettingModal
-          isOpen={showBettingModal}
-          onClose={handleBetCancelled}
-          onBetPlaced={handleBetPlaced}
-          sessionId={currentSessionId}
-          chainName={state.chains.find(c => c.id === pendingChainId)?.name || 'Unknown Task'}
-          taskDuration={state.chains.find(c => c.id === pendingChainId)?.duration || 0}
-        />
+        <Suspense fallback={null}>
+          <BettingModal
+            isOpen={showBettingModal}
+            onClose={handleBetCancelled}
+            onBetPlaced={handleBetPlaced}
+            sessionId={currentSessionId}
+            chainName={state.chains.find(c => c.id === pendingChainId)?.name || 'Unknown Task'}
+            taskDuration={state.chains.find(c => c.id === pendingChainId)?.duration || 0}
+          />
+        </Suspense>
       )}
     </>
   );
