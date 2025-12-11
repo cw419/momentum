@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Chain, ScheduledSession, ChainTreeNode } from '../types';
-import { Play, Clock } from 'lucide-react';
+import { Play, Clock, MoreHorizontal, Trash2, Flame, Calendar, Bell, Check, AlertTriangle, TrendingUp, Settings } from 'lucide-react';
 import { formatTime, getTimeRemaining, formatDuration, formatTimeDescription } from '../utils/time';
 import { getChainTypeConfig } from '../utils/chainTree';
+import { Icon } from '../utils/iconMap';
 import { notificationManager } from '../utils/notifications';
 import { storage } from '../utils/storage';
 import { soundManager } from '../utils/soundManager';
@@ -137,7 +138,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
             }}
             className="p-2 text-gray-400 hover:text-[#161615] transition-colors rounded-lg hover:bg-gray-100"
           >
-            <i className="fas fa-ellipsis-h"></i>
+            <MoreHorizontal size={16} />
           </button>
           
           {showMenu && (
@@ -146,7 +147,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 onClick={handleDeleteClick}
                 className="w-full px-4 py-3 text-left text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
               >
-                <i className="fas fa-trash text-sm"></i>
+                <Trash2 size={14} />
                 <span className="font-chinese font-medium">删除链条</span>
               </button>
             </div>
@@ -158,7 +159,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
           <div className="flex-1 pr-4">
             <div className="flex items-center space-x-3 mb-3">
               <div className={`w-8 h-8 rounded-xl ${typeConfig.bgColor} flex items-center justify-center`}>
-                <i className={`${typeConfig.icon} ${typeConfig.color} text-sm`}></i>
+                <Icon name={typeConfig.icon} size={14} className={typeConfig.color} />
               </div>
               <div>
                 <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 group-hover:text-primary-500 transition-colors">
@@ -184,14 +185,14 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-primary-500/10 to-primary-600/5 dark:from-primary-500/20 dark:to-primary-600/10 border border-primary-200/50 dark:border-primary-400/30">
             <div className="flex items-center justify-center space-x-2 text-primary-500 mb-2">
-              <i className="fas fa-fire text-lg"></i>
+              <Flame size={18} />
               <span className="text-3xl font-bold font-mono">#{chain.currentStreak}</span>
             </div>
             <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">主链记录</div>
           </div>
           <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 dark:from-blue-500/20 dark:to-blue-600/10 border border-blue-200/50 dark:border-blue-400/30">
             <div className="flex items-center justify-center space-x-2 text-blue-500 mb-2">
-              <i className="fas fa-calendar-alt text-lg"></i>
+              <Calendar size={18} />
               <span className="text-3xl font-bold font-mono">#{chain.auxiliaryStreak}</span>
             </div>
             <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">预约链记录</div>
@@ -222,7 +223,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
           <div className="bg-gradient-to-r from-blue-500/10 to-blue-600/5 dark:from-blue-500/20 dark:to-blue-600/10 rounded-2xl p-4 mb-6 border border-blue-200/50 dark:border-blue-400/30">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2 text-blue-600">
-                <i className="fas fa-bell text-sm"></i>
+                <Bell size={14} />
                 <span className="text-sm font-chinese font-medium">预约信号: {scheduledSession.auxiliarySignal}</span>
               </div>
               <div className="text-blue-700 dark:text-blue-400 font-mono font-bold text-lg">
@@ -240,7 +241,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 }}
                 className="flex-1 bg-green-500/10 hover:bg-green-500/20 dark:bg-green-500/20 dark:hover:bg-green-500/30 text-green-600 dark:text-green-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-green-200/50 dark:border-green-400/30"
               >
-                <i className="fas fa-check"></i>
+                <Check size={14} />
                 <span className="font-chinese font-medium">完成预约</span>
               </button>
               <button
@@ -250,7 +251,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 }}
                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-red-200/50 dark:border-red-400/30"
               >
-                <i className="fas fa-exclamation-triangle"></i>
+                <AlertTriangle size={14} />
                 <span className="font-chinese font-medium">中断/规则判定</span>
               </button>
             </div>
@@ -272,7 +273,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
               onClick={() => onScheduleChain(chain.id)}
               className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
             >
-              <i className="fas fa-clock"></i>
+              <Clock size={16} />
               <span className="font-chinese font-semibold">预约</span>
             </button>
           )}
@@ -285,7 +286,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
           <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border border-gray-200/60 dark:border-slate-600/60 shadow-2xl animate-scale-in">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-6">
-                <i className="fas fa-trash text-red-500 text-2xl"></i>
+                <Trash2 size={24} className="text-red-500" />
               </div>
               <h3 className="text-2xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-3">确认删除链条</h3>
               <p className="text-gray-600 dark:text-slate-300 mb-6">
@@ -302,7 +303,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
               <div className="grid grid-cols-2 gap-4 text-red-600 dark:text-red-400 text-sm">
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
-                    <i className="fas fa-fire mr-2"></i>
+                    <Flame size={14} className="mr-2" />
                     主链数据
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
@@ -313,7 +314,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 </div>
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
-                    <i className="fas fa-calendar mr-2"></i>
+                    <Calendar size={14} className="mr-2" />
                     预约链数据
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
@@ -326,7 +327,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
               <div className="grid grid-cols-2 gap-4 text-red-600 dark:text-red-400 text-sm mt-4">
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
-                    <i className="fas fa-chart-line mr-2"></i>
+                    <TrendingUp size={14} className="mr-2" />
                     历史记录
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
@@ -337,7 +338,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 </div>
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
-                    <i className="fas fa-cog mr-2"></i>
+                    <Settings size={14} className="mr-2" />
                     规则设置
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
@@ -360,7 +361,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 onClick={handleConfirmDelete}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese"
               >
-                <i className="fas fa-trash"></i>
+                <Trash2 size={16} />
                 <span>确认删除</span>
               </button>
             </div>

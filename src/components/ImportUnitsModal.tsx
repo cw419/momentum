@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ChainTreeNode } from '../types';
-import { X, Import, Search } from 'lucide-react';
+import { X, Import, Search, Clock, Flame, CheckCircle } from 'lucide-react';
 import { getChainTypeConfig } from '../utils/chainTree';
+import { Icon } from '../utils/iconMap';
 import { formatTime } from '../utils/time';
 
 interface ImportUnitsModalProps {
@@ -171,7 +172,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <div className={`w-8 h-8 rounded-xl ${typeConfig.bgColor} flex items-center justify-center`}>
-                            <i className={`${typeConfig.icon} ${typeConfig.color} text-sm`}></i>
+                            <Icon name={typeConfig.icon} size={14} className={typeConfig.color} />
                           </div>
                           <div>
                             <h4 className="font-bold font-chinese text-gray-900 dark:text-slate-100">
@@ -187,15 +188,15 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                         </p>
                         <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-slate-400">
                           <span className="flex items-center space-x-1">
-                            <i className="fas fa-clock"></i>
+                            <Clock size={12} />
                             <span>{formatTime(unit.duration)}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <i className="fas fa-fire"></i>
+                            <Flame size={12} />
                             <span>#{unit.currentStreak}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <i className="fas fa-check-circle"></i>
+                            <CheckCircle size={12} />
                             <span>{unit.totalCompletions} 次完成</span>
                           </span>
                         </div>

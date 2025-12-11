@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Chain, ChainType } from '../types';
-import { ArrowLeft, Save, Tag, Calendar, Target, Clock, Bell, Coffee, Hash } from 'lucide-react';
+import { ArrowLeft, Save, Tag, Calendar, Target, Clock, Bell, Coffee, Hash, Hourglass, CheckCircle } from 'lucide-react';
 import { ResponsiveContainer } from './ResponsiveContainer';
 import { SettingSection } from './SettingSection';
 import { SliderContainer } from './SliderContainer';
@@ -265,7 +265,7 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
             {/* 预约信号 */}
             <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in">
               <div className="flex items-center space-x-3 mb-4">
-                <i className="fas fa-bell text-blue-500"></i>
+                <Bell className="text-blue-500" size={20} />
                 <div>
                   <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">预约信号</h4>
                   <p className="text-xs font-mono text-gray-500">BOOKING SIGNAL</p>
@@ -313,7 +313,7 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
             {/* 预约时长 */}
             <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in">
               <div className="flex items-center space-x-3 mb-4">
-                <i className="fas fa-hourglass-half text-blue-500"></i>
+                <Hourglass className="text-blue-500" size={20} />
                 <div>
                   <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">预约时长</h4>
                   <p className="text-xs font-mono text-gray-500">BOOKING DURATION</p>
@@ -378,7 +378,7 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
             {/* 预约完成条件 */}
             <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in">
               <div className="flex items-center space-x-3 mb-4">
-                <i className="fas fa-check-circle text-blue-500"></i>
+                <CheckCircle className="text-blue-500" size={20} />
                 <div>
                   <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">预约完成条件</h4>
                   <p className="text-xs font-mono text-gray-500">COMPLETION CONDITION</p>

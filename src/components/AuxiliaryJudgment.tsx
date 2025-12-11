@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Chain } from '../types';
-import { AlertTriangle, Calendar, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Calendar, CheckCircle, Bell, Clock, List } from 'lucide-react';
 
 interface AuxiliaryJudgmentProps {
   chain: Chain;
@@ -75,21 +75,21 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-blue-700 dark:text-blue-300">
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <i className="fas fa-bell text-blue-500"></i>
+                  <Bell className="text-blue-500" size={16} />
                   <span className="font-medium font-chinese">预约信号</span>
                 </div>
                 <p className="font-mono text-sm">{chain.auxiliarySignal}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <i className="fas fa-check-circle text-blue-500"></i>
+                  <CheckCircle className="text-blue-500" size={16} />
                   <span className="font-medium font-chinese">完成条件</span>
                 </div>
                 <p className="font-chinese text-sm">{chain.auxiliaryCompletionTrigger}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <i className="fas fa-clock text-blue-500"></i>
+                  <Clock className="text-blue-500" size={16} />
                   <span className="font-medium font-chinese">预约时长</span>
                 </div>
                 <p className="font-mono text-sm">{chain.auxiliaryDuration}分钟</p>
@@ -221,13 +221,13 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
         {chain.auxiliaryExceptions && chain.auxiliaryExceptions.length > 0 && (
           <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-2xl border border-gray-200 dark:border-slate-600">
             <h4 className="text-gray-900 dark:text-slate-100 font-medium mb-4 flex items-center space-x-2 font-chinese">
-              <i className="fas fa-list text-blue-500"></i>
+              <List className="text-blue-500" size={20} />
               <span>当前辅助链例外规则：</span>
             </h4>
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {[...new Set(chain.auxiliaryExceptions)].map((exception, index) => (
                 <div key={index} className="text-blue-600 dark:text-blue-400 text-sm flex items-center space-x-2">
-                  <i className="fas fa-check-circle text-xs"></i>
+                  <CheckCircle size={12} />
                   <span className="font-chinese">{exception}</span>
                 </div>
               ))}

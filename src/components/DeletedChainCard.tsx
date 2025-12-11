@@ -1,6 +1,7 @@
 import React from 'react';
 import { DeletedChain } from '../types';
 import { getChainTypeConfig } from '../utils/chainTree';
+import { Icon } from '../utils/iconMap';
 import { RotateCcw, Trash2, CheckSquare, Square } from 'lucide-react';
 
 interface DeletedChainCardProps {
@@ -51,7 +52,7 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
         {/* Chain Type and Name */}
         <div className="flex items-start space-x-3 mb-4">
           <div className={`w-12 h-12 rounded-2xl ${typeConfig.bgColor} flex items-center justify-center flex-shrink-0`}>
-            <i className={`${typeConfig.icon} ${typeConfig.color} text-lg`}></i>
+            <Icon name={typeConfig.icon} size={18} className={typeConfig.color} />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-bold font-chinese text-gray-900 dark:text-slate-100 text-lg leading-tight mb-1 truncate">

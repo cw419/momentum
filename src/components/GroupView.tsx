@@ -1,7 +1,8 @@
 import React from 'react';
 import { ChainTreeNode, ScheduledSession } from '../types';
-import { ArrowLeft, Play, Plus, Users, Target, Import, Pencil, X, Hash } from 'lucide-react';
+import { ArrowLeft, Play, Plus, Users, Target, Import, Pencil, X, Hash, Check, Clock, Flame, CalendarCheck, ArrowUp, ArrowDown, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { getGroupProgress, getGroupUnitProgress, getNextUnitInGroup, getChainTypeConfig } from '../utils/chainTree';
+import { Icon } from '../utils/iconMap';
 import { formatTime, getTimeRemaining } from '../utils/time';
 import { getGroupTimeStatus } from '../utils/timeLimit';
 import { ImportUnitsModal } from './ImportUnitsModal';
@@ -103,7 +104,7 @@ const UnitCard: React.FC<{
                 ? 'bg-primary-500 text-white'
                 : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400'
           }`}>
-            {isCompleted ? <i className="fas fa-check text-xs"></i> : index + 1}
+            {isCompleted ? <Check size={12} /> : index + 1}
           </div>
 
           {/* 单元信息 */}
@@ -126,15 +127,15 @@ const UnitCard: React.FC<{
             </p>
             <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-slate-400">
               <span className="flex items-center space-x-1">
-                <i className="fas fa-clock"></i>
+                <Clock size={12} />
                 <span>{formatTime(unit.duration)}</span>
               </span>
               <span className="flex items-center space-x-1" title="完成次数">
-                <i className="fas fa-fire"></i>
+                <Flame size={12} />
                 <span>#{unit.currentStreak}</span>
               </span>
               <span className="flex items-center space-x-1" title="预约次数">
-                <i className="fas fa-calendar-check"></i>
+                <CalendarCheck size={12} />
                 <span>{unit.auxiliaryStreak || 0}</span>
               </span>
               <span className="font-chinese">{unitTypeConfig.name}</span>
@@ -157,7 +158,7 @@ const UnitCard: React.FC<{
                 title="上移"
                 disabled={index === 0}
               >
-                <i className="fas fa-arrow-up text-sm"></i>
+                <ArrowUp size={14} />
               </button>
               <button
                 onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'down')}
@@ -165,7 +166,7 @@ const UnitCard: React.FC<{
                 title="下移"
                 disabled={index === (group.children.length - 1)}
               >
-                <i className="fas fa-arrow-down text-sm"></i>
+                <ArrowDown size={14} />
               </button>
             </div>
 
@@ -174,14 +175,14 @@ const UnitCard: React.FC<{
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
               title="编辑单元"
             >
-              <i className="fas fa-edit text-sm"></i>
+              <Edit size={14} />
             </button>
             <button
               onClick={() => onDeleteChain(unit.id)}
               className="p-2 text-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
               title="删除单元"
             >
-              <i className="fas fa-trash text-sm"></i>
+              <Trash2 size={14} />
             </button>
 
             {!isCompleted && (
@@ -280,7 +281,7 @@ export const GroupView: React.FC<GroupViewProps> = ({
             </button>
             <div className="flex items-center space-x-4">
               <div className={`w-16 h-16 rounded-3xl ${typeConfig.bgColor} flex items-center justify-center`}>
-                <i className={`${typeConfig.icon} ${typeConfig.color} text-2xl`}></i>
+                <Icon name={typeConfig.icon} size={24} className={typeConfig.color} />
               </div>
               <div>
                 <div className="flex items-center space-x-3 mb-2">
@@ -392,15 +393,15 @@ export const GroupView: React.FC<GroupViewProps> = ({
           {/* 时间限定状态 */}
           {group.timeLimitHours && (
             <div className={`mt-6 p-4 rounded-2xl border-l-4 ${
-              timeStatus.isExpired 
-                ? 'bg-red-50 dark:bg-red-900/20 border-red-500' 
+              timeStatus.isExpired
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
                 : 'bg-orange-50 dark:bg-orange-900/20 border-orange-500'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <i className={`fas fa-clock text-lg ${
+                  <Clock size={18} className={
                     timeStatus.isExpired ? 'text-red-500' : 'text-orange-500'
-                  }`}></i>
+                  } />
                   <div>
                     <h4 className={`font-bold font-chinese ${
                       timeStatus.isExpired ? 'text-red-700 dark:text-red-300' : 'text-orange-700 dark:text-orange-300'
@@ -432,10 +433,10 @@ export const GroupView: React.FC<GroupViewProps> = ({
                   </div>
                 )}
               </div>
-              
+
               {timeStatus.isExpired && (
-                <div className="mt-3 text-sm text-red-600 dark:text-red-400 font-chinese">
-                  <i className="fas fa-exclamation-triangle mr-2"></i>
+                <div className="mt-3 text-sm text-red-600 dark:text-red-400 font-chinese flex items-center">
+                  <AlertTriangle size={14} className="mr-2" />
                   任务群已超时，进度将被清空。请重新开始任务群。
                 </div>
               )}

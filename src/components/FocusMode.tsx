@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ActiveSession, Chain, ExceptionRule, ExceptionRuleType, SessionContext, PauseOptions } from '../types';
-import { CheckCircle, Settings, Maximize, Minimize, X, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Settings, Maximize, Minimize, X, AlertTriangle, Flame, Clock, Hourglass } from 'lucide-react';
 import { formatDuration, formatElapsedTime, formatTimeDescription, formatLastCompletionReference } from '../utils/time';
 import { notificationManager } from '../utils/notifications';
 import { forwardTimerManager } from '../utils/forwardTimer';
@@ -656,7 +656,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
         <div className="mb-12">
           <div className="flex items-center justify-center space-x-4 mb-6">
             <div className="w-16 h-16 rounded-3xl bg-primary-500/20 backdrop-blur-sm flex items-center justify-center border border-primary-500/30 dark:bg-primary-500/20 dark:border-primary-500/30">
-              <i className="fas fa-fire text-primary-500 text-2xl"></i>
+              <Flame className="text-primary-500" size={32} />
             </div>
             <div className="text-left">
               <h1 className="text-5xl md:text-6xl font-light font-chinese text-gray-900 dark:text-white mb-2">{chain.name}</h1>
@@ -681,7 +681,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
           
           <div className="flex items-center justify-center space-x-6 text-gray-600 dark:text-gray-400">
             <div className="flex items-center space-x-2">
-              <i className="fas fa-clock text-primary-500"></i>
+              <Clock className="text-primary-500" size={16} />
               <span className="font-mono">
                 {isDurationless
                   ? `已用时 ${formatTimeDescription(Math.ceil(elapsedSeconds / 60))}`
@@ -689,7 +689,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <i className="fas fa-fire text-primary-500"></i>
+              <Flame className="text-primary-500" size={16} />
               <span className="font-mono">#{chain.currentStreak}</span>
             </div>
           </div>
@@ -705,7 +705,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
           {isDurationless && chain.minimumDuration && chain.minimumDuration > 0 && !hasReachedMinimum && (
             <div className="mt-4 text-indigo-600 dark:text-indigo-400 text-lg font-chinese">
               <div className="flex items-center justify-center space-x-2">
-                <i className="fas fa-hourglass-half text-indigo-500"></i>
+                <Hourglass className="text-indigo-500" size={16} />
                 <span>还需 {Math.floor(minimumCountdown / 60)}分{minimumCountdown % 60}秒 达到最小时长</span>
               </div>
             </div>
@@ -715,7 +715,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
           {isDurationless && chain.minimumDuration && chain.minimumDuration > 0 && hasReachedMinimum && (
             <div className="mt-4 text-green-600 dark:text-green-400 text-lg font-chinese">
               <div className="flex items-center justify-center space-x-2">
-                <i className="fas fa-check-circle text-green-500"></i>
+                <CheckCircle className="text-green-500" size={16} />
                 <span>已达到最小时长 {chain.minimumDuration} 分钟，可以完成任务</span>
               </div>
             </div>

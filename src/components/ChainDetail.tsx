@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chain, CompletionHistory } from '../types';
-import { ArrowLeft, Flame, CheckCircle, XCircle, Calendar, Clock, AlertCircle, Trash2, Edit } from 'lucide-react';
+import { ArrowLeft, Flame, CheckCircle, XCircle, Calendar, Clock, AlertCircle, Trash2, Edit, AlignLeft, ListTodo, StickyNote } from 'lucide-react';
 import { formatTime, formatActualDuration } from '../utils/time';
 
 interface ChainDetailProps {
@@ -146,7 +146,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                 {chain.exceptions.length > 0 && (
                   <div className="mb-6">
                     <h4 className="text-[#161615] dark:text-slate-100 font-medium mb-3 font-chinese flex items-center space-x-2">
-                      <i className="fas fa-fire text-primary-500"></i>
+                      <Flame className="text-primary-500" size={20} />
                       <span>主链例外规则：</span>
                     </h4>
                     <div className="space-y-3">
@@ -162,7 +162,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                 {chain.auxiliaryExceptions.length > 0 && (
                   <div>
                     <h4 className="text-[#161615] dark:text-slate-100 font-medium mb-3 font-chinese flex items-center space-x-2">
-                      <i className="fas fa-calendar-alt text-blue-500"></i>
+                      <Calendar className="text-blue-500" size={20} />
                       <span>预约链例外规则：</span>
                     </h4>
                     <div className="space-y-3">
@@ -184,7 +184,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
             <div className="bento-card animate-scale-in">
               <h3 className="text-xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-6 flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-2xl bg-gray-500/10 flex items-center justify-center">
-                  <i className="fas fa-align-left text-gray-500"></i>
+                  <AlignLeft className="text-gray-500" size={20} />
                 </div>
                 <div>
                   <span>任务描述</span>
@@ -264,7 +264,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                             <div className="bg-white dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/50 dark:border-slate-500/30">
                               <div className="flex items-center space-x-2 mb-2">
                                 <div className="w-6 h-6 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-                                  <i className="fas fa-tasks text-blue-500 text-xs"></i>
+                                  <ListTodo className="text-blue-500" size={14} />
                                 </div>
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400 font-chinese">任务描述</span>
                               </div>
@@ -278,7 +278,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                             <div className="bg-white dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/50 dark:border-slate-500/30">
                               <div className="flex items-center space-x-2 mb-2">
                                 <div className="w-6 h-6 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center">
-                                  <i className="fas fa-sticky-note text-amber-500 text-xs"></i>
+                                  <StickyNote className="text-amber-500" size={14} />
                                 </div>
                                 <span className="text-xs font-medium text-amber-600 dark:text-amber-400 font-chinese">备注</span>
                               </div>

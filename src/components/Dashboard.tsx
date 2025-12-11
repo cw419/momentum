@@ -8,13 +8,12 @@ import { VirtualizedChainList } from './VirtualizedChainList';
 import { buildChainTree, getTopLevelChains } from '../utils/chainTree';
 import { queryOptimizer } from '../utils/queryOptimizer';
 import { getNextUnitInGroup } from '../utils/chainTree';
-import { Download, TreePine, Trash2 } from 'lucide-react';
+import { Download, TreePine, Trash2, Rocket, Link, Plus, Layers, User } from 'lucide-react';
 import { NotificationToggle } from './NotificationToggle';
 import { RecycleBinModal } from './RecycleBinModal';
 import { RecycleBinService } from '../services/RecycleBinService';
 import { AccountModal } from './AccountModal';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { User } from 'lucide-react';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import { DailyCheckin } from './DailyCheckin';
 import { DailyCheckinDemo } from './DailyCheckinDemo';
@@ -167,7 +166,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
         <header className="text-center mb-16 animate-fade-in">
           <div className="flex items-center justify-center space-x-4 mb-6">
             <div className="w-16 h-16 rounded-3xl gradient-primary flex items-center justify-center shadow-xl">
-              <i className="fas fa-rocket text-white text-xl"></i>
+              <Rocket className="text-white" size={24} />
             </div>
             <div>
               <h1 className="text-5xl md:text-6xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
@@ -215,7 +214,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
           <div className="text-center py-20 animate-slide-up">
             <div className="bento-card max-w-lg mx-auto">
               <div className="w-24 h-24 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
-                <i className="fas fa-link text-white text-2xl"></i>
+                <Link className="text-white" size={32} />
               </div>
               <h2 className="text-3xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-4">
                 创建你的第一条链
@@ -228,7 +227,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                   onClick={onCreateChain}
                   className="gradient-primary hover:shadow-2xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 hover:scale-105 shadow-xl"
                 >
-                  <i className="fas fa-plus text-lg"></i>
+                  <Plus size={18} />
                   <span className="font-chinese font-semibold">创建第一条链</span>
                 </button>
                 <button
@@ -285,7 +284,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                   onClick={onCreateChain}
                   className="gradient-dark hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                 >
-                  <i className="fas fa-plus"></i>
+                  <Plus size={16} />
                   <span className="font-chinese font-medium">新建链</span>
                 </button>
                 {onCreateTaskGroup && (
@@ -293,7 +292,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     onClick={onCreateTaskGroup}
                     className="bg-green-500 hover:bg-green-600 hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
-                    <i className="fas fa-layer-group"></i>
+                    <Layers size={16} />
                     <span className="font-chinese font-medium">新建任务群</span>
                   </button>
                 )}

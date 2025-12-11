@@ -1,5 +1,6 @@
 import { Chain, ChainTreeNode } from '../types';
 import { performanceLogger } from './performanceLogger';
+import { IconName } from './iconMap';
 
 /**
  * 验证链数据的完整性
@@ -398,16 +399,16 @@ export const getTopLevelChains = (chainTree: ChainTreeNode[]): ChainTreeNode[] =
 /**
  * 根据类型获取对应的图标和颜色
  */
-export const getChainTypeConfig = (type: Chain['type']) => {
-  const configs = {
-    unit: { icon: 'fas fa-link', color: 'text-gray-500', bgColor: 'bg-gray-500/10', name: '基础单元' },
-    group: { icon: 'fas fa-layer-group', color: 'text-blue-500', bgColor: 'bg-blue-500/10', name: '任务群' },
-    assault: { icon: 'fas fa-bolt', color: 'text-red-500', bgColor: 'bg-red-500/10', name: '突击单元' },
-    recon: { icon: 'fas fa-search', color: 'text-green-500', bgColor: 'bg-green-500/10', name: '侦查单元' },
-    command: { icon: 'fas fa-chess-king', color: 'text-purple-500', bgColor: 'bg-purple-500/10', name: '指挥单元' },
-    special_ops: { icon: 'fas fa-tools', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', name: '特勤单元' },
-    engineering: { icon: 'fas fa-dumbbell', color: 'text-orange-500', bgColor: 'bg-orange-500/10', name: '工程单元' },
-    quartermaster: { icon: 'fas fa-utensils', color: 'text-pink-500', bgColor: 'bg-pink-500/10', name: '炊事单元' },
+export const getChainTypeConfig = (type: Chain['type']): { icon: IconName; color: string; bgColor: string; name: string } => {
+  const configs: Record<Chain['type'], { icon: IconName; color: string; bgColor: string; name: string }> = {
+    unit: { icon: 'link', color: 'text-gray-500', bgColor: 'bg-gray-500/10', name: '基础单元' },
+    group: { icon: 'layers', color: 'text-blue-500', bgColor: 'bg-blue-500/10', name: '任务群' },
+    assault: { icon: 'zap', color: 'text-red-500', bgColor: 'bg-red-500/10', name: '突击单元' },
+    recon: { icon: 'search', color: 'text-green-500', bgColor: 'bg-green-500/10', name: '侦查单元' },
+    command: { icon: 'crown', color: 'text-purple-500', bgColor: 'bg-purple-500/10', name: '指挥单元' },
+    special_ops: { icon: 'wrench', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', name: '特勤单元' },
+    engineering: { icon: 'dumbbell', color: 'text-orange-500', bgColor: 'bg-orange-500/10', name: '工程单元' },
+    quartermaster: { icon: 'utensils', color: 'text-pink-500', bgColor: 'bg-pink-500/10', name: '炊事单元' },
   };
 
   return configs[type] || configs.unit;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signIn, signUp } from '../lib/supabase';
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Rocket, LogIn } from 'lucide-react';
 
 export const AuthForm: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -36,7 +36,7 @@ export const AuthForm: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="w-20 h-20 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-2xl">
-            <i className="fas fa-rocket text-white text-2xl"></i>
+            <Rocket className="text-white" size={32} />
           </div>
           <h1 className="text-4xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
             Momentum
@@ -133,7 +133,7 @@ export const AuthForm: React.FC = () => {
                 </>
               ) : (
                 <>
-                  {isSignUp ? <User size={20} /> : <i className="fas fa-sign-in-alt"></i>}
+                  {isSignUp ? <User size={20} /> : <LogIn size={20} />}
                   <span>{isSignUp ? '创建账户' : '登录'}</span>
                 </>
               )}
