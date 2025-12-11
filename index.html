@@ -28,23 +28,31 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- 字体加载优化：减少权重数量，使用display=swap确保文本立即可见 -->
-    <!-- Inter: 仅加载400和600（覆盖normal和bold需求） -->
-    <!-- JetBrains Mono: 仅加载400 -->
-    <!-- Noto Sans SC: 仅加载400和700，并使用display=swap让系统字体先显示 -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&family=Noto+Sans+SC:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- 移动端性能优化：首屏仅加载小体积西文字体，中文字体延迟加载 -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     </noscript>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- 延迟加载非关键第三方脚本 -->
+    <!-- 中文字体延迟加载：首屏渲染后异步加载，减少约200KB首屏负载 -->
     <script>
-      // 延迟加载 anime.js (已内化到 npm 包，此处作为备用)
-      // 注意: anime.js 现在通过 npm 包导入，此 CDN 脚本已移除
+      (function(){
+        var loadChinese = function() {
+          var link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap';
+          document.head.appendChild(link);
+        };
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadChinese, { timeout: 3000 });
+        } else {
+          setTimeout(loadChinese, 2000);
+        }
+      })();
     </script>
   </body>
 </html>

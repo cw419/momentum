@@ -9,15 +9,21 @@ import { queryOptimizer } from '../utils/queryOptimizer';
 import { getNextUnitInGroup } from '../utils/chainTree';
 import { Download, TreePine, Trash2, Rocket, Link, Plus, Layers, User } from 'lucide-react';
 import { NotificationToggle } from './NotificationToggle';
-import { RecycleBinService } from '../services/RecycleBinService';
+
 import { isSupabaseConfigured } from '../lib/supabase';
-import { DailyCheckin } from './DailyCheckin';
-import { DailyCheckinDemo } from './DailyCheckinDemo';
+
+
 
 const ImportExportModal = lazy(() => import('./ImportExportModal').then(m => ({ default: m.ImportExportModal })));
 const RecycleBinModal = lazy(() => import('./RecycleBinModal').then(m => ({ default: m.RecycleBinModal })));
 const AccountModal = lazy(() => import('./AccountModal').then(m => ({ default: m.AccountModal })));
 const PerformanceMonitor = lazy(() => import('./PerformanceMonitor').then(m => ({ default: m.PerformanceMonitor })));
+const DailyCheckin = lazy(() => import('./DailyCheckin').then(m => ({ default: m.DailyCheckin })));
+const DailyCheckinDemo = lazy(() => import('./DailyCheckinDemo').then(m => ({ default: m.DailyCheckinDemo })));
+
+const CheckinPlaceholder = () => (
+  <div className="max-w-2xl mx-auto h-24 bg-gray-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
+);
 
 interface DashboardProps {
   chains: Chain[];
@@ -91,9 +97,10 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
     return result;
   }, [chainTree]);
 
-  // Optimize recycle bin stats loading with useCallback and proper dependency management
+  // Optimize recycle bin stats loading - lazy load service
   const loadRecycleBinStats = useCallback(async () => {
     try {
+      const { RecycleBinService } = await import('../services/RecycleBinService');
       const stats = await RecycleBinService.getRecycleBinStats();
       setRecycleBinCount(stats.totalDeleted);
     } catch (error) {
@@ -187,13 +194,15 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
           </p>
         </header>
 
-        {/* Daily Check-in Section */}
+        {/* Daily Check-in Section - lazy loaded */}
         <div className="mb-12 animate-fade-in">
-          {isSupabaseConfigured ? (
-            <DailyCheckin className="max-w-2xl mx-auto" />
-          ) : (
-            <DailyCheckinDemo className="max-w-2xl mx-auto" />
-          )}
+          <Suspense fallback={<CheckinPlaceholder />}>
+            {isSupabaseConfigured ? (
+              <DailyCheckin className="max-w-2xl mx-auto" />
+            ) : (
+              <DailyCheckinDemo className="max-w-2xl mx-auto" />
+            )}
+          </Suspense>
         </div>
 
         {isLoading ? (
