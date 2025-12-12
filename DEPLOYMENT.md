@@ -99,9 +99,3 @@
 - 检查 Netlify 部署日志
 - 确认域名配置正确
 - 验证重定向规则
-
-## 📞 支持
-
-如有问题，请联系：
-- 邮箱: kenx@andrew.cmu.edu
-- GitHub: https://github.com/KenXiao1/momentum
