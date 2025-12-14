@@ -2,6 +2,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { realTimeSyncService } from '../../services/RealTimeSyncService';
+import { logger } from '../../utils/logger';
+import { toast } from '../../utils/toast';
 
 interface UseRecycleBinDomainParams {
   setState: Dispatch<SetStateAction<AppState>>;
@@ -36,7 +38,8 @@ export function useRecycleBinDomain({ setState, storage }: UseRecycleBinDomainPa
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`删除失败: ${errorMessage}\n\n请检查网络连接并重试。如果问题持续，请刷新页面。`);
+      logger.error('RECYCLE_BIN', 'Delete failed', { chainId }, error as Error);
+      toast.error(`删除失败: ${errorMessage}`);
 
       try {
         const currentChains = await storage.getActiveChains();
@@ -45,7 +48,7 @@ export function useRecycleBinDomain({ setState, storage }: UseRecycleBinDomainPa
           chains: currentChains,
         }));
       } catch {
-        alert('发生错误后无法恢复状态，建议刷新页面。');
+        toast.warning('发生错误后无法恢复状态，建议刷新页面。');
       }
     }
   };
@@ -69,14 +72,15 @@ export function useRecycleBinDomain({ setState, storage }: UseRecycleBinDomainPa
             chains: currentChains,
           }));
 
-          alert('部分链条恢复可能失败，请检查回收箱确认结果。如果问题持续，请刷新页面。');
+          toast.warning('部分链条恢复可能失败，请检查回收箱确认结果。');
         } catch {
-          alert('恢复操作遇到问题，请刷新页面查看最新状态。');
+          toast.warning('恢复操作遇到问题，请刷新页面查看最新状态。');
         }
         return;
       }
 
-      alert(`恢复失败: ${errorMessage}\n\n如果问题持续，请刷新页面重试。`);
+      logger.error('RECYCLE_BIN', 'Restore failed', { chainIds }, error as Error);
+      toast.error(`恢复失败: ${errorMessage}`);
     }
   };
 
@@ -90,10 +94,10 @@ export function useRecycleBinDomain({ setState, storage }: UseRecycleBinDomainPa
       }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`永久删除失败: ${errorMessage}`);
+      logger.error('RECYCLE_BIN', 'Permanent delete failed', { chainIds }, error as Error);
+      toast.error(`永久删除失败: ${errorMessage}`);
     }
   };
 
   return { handleDeleteChain, handleRestoreChains, handlePermanentDeleteChains };
 }
-

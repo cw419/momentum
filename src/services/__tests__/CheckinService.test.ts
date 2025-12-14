@@ -1,243 +1,201 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Mock Supabase before importing CheckinService
-vi.mock('../../lib/supabase', () => {
-  const mockSupabase = {
-    rpc: vi.fn(),
-    auth: {
-      getUser: vi.fn()
-    }
-  };
-
-  const mockGetCurrentUser = vi.fn();
-
-  return {
-    supabase: mockSupabase,
-    isSupabaseConfigured: true,
-    getCurrentUser: mockGetCurrentUser
-  };
-});
-
+import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { CheckinService } from '../CheckinService';
-import { supabase, getCurrentUser } from '../../lib/supabase';
+import { err, ok } from '../../domain/result';
+import type { AppError } from '../../domain/errors';
+import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 
-describe('CheckinService', () => {
+function createStorageMock(overrides?: Partial<MomentumStorage>): MomentumStorage {
+  return {
+    kind: 'supabase',
+
+    // Chains
+    getChains: vi.fn(),
+    saveChains: vi.fn(),
+    getActiveChains: vi.fn(),
+    getDeletedChains: vi.fn(),
+    softDeleteChain: vi.fn(),
+    restoreChain: vi.fn(),
+    permanentlyDeleteChain: vi.fn(),
+    cleanupExpiredDeletedChains: vi.fn(),
+
+    // Scheduled sessions
+    getScheduledSessions: vi.fn(),
+    saveScheduledSessions: vi.fn(),
+
+    // Active session
+    getActiveSession: vi.fn(),
+    saveActiveSession: vi.fn(),
+
+    // Completion history
+    getCompletionHistory: vi.fn(),
+    saveCompletionHistory: vi.fn(),
+
+    // RSIP
+    getRSIPNodes: vi.fn(),
+    saveRSIPNodes: vi.fn(),
+    getRSIPMeta: vi.fn(),
+    saveRSIPMeta: vi.fn(),
+
+    // Task time stats
+    getTaskTimeStats: vi.fn(),
+    saveTaskTimeStats: vi.fn(),
+    getLastCompletionTime: vi.fn(),
+    updateTaskTimeStats: vi.fn(),
+    getTaskAverageTime: vi.fn(),
+
+    // Compatibility / maintenance
+    migrateCompletionHistoryForTiming: vi.fn(),
+    clearCache: vi.fn(),
+
+    // Auth
+    getCurrentUser: vi.fn(),
+    waitForAuthentication: vi.fn(),
+    isUserAuthenticated: vi.fn(),
+    signUp: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    onAuthStateChange: vi.fn(),
+
+    // User settings
+    getGamblingSettings: vi.fn(),
+    toggleGamblingMode: vi.fn(),
+    isGamblingModeEnabled: vi.fn(),
+
+    // Betting
+    createBettingSession: vi.fn(),
+    deleteBettingSession: vi.fn(),
+    completeTaskWithBetting: vi.fn(),
+    placeBet: vi.fn(),
+    getUserAvailablePoints: vi.fn(),
+    getTodayBetAmount: vi.fn(),
+
+    // Daily check-in
+    performDailyCheckin: vi.fn(),
+    getUserCheckinStats: vi.fn(),
+
+    ...overrides,
+  } as unknown as MomentumStorage;
+}
+
+describe('CheckinService (storage wrapper)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('performDailyCheckin', () => {
-    it('should successfully perform daily checkin', async () => {
-      const mockUser = { id: 'test-user-123' };
-      const mockCheckinResult = {
-        success: true,
-        message: 'Check-in successful!',
-        already_checked_in: false,
-        checkin_date: '2025-01-17',
-        points_earned: 10,
-        consecutive_days: 1,
-        total_points: 10,
-        checkin_id: 'checkin-123'
-      };
+  it('performDailyCheckin forwards to storage', async () => {
+    const checkinResult: CheckinResult = {
+      success: true,
+      message: 'ok',
+      already_checked_in: false,
+      checkin_date: '2025-01-17',
+      points_earned: 10,
+      consecutive_days: 1,
+      total_points: 10,
+      checkin_id: 'checkin-1',
+    };
 
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockResolvedValue({ data: mockCheckinResult, error: null });
-
-      const result = await CheckinService.performDailyCheckin();
-
-      expect(supabase!.rpc).toHaveBeenCalledWith('perform_daily_checkin', {
-        target_user_id: mockUser.id
-      });
-      expect(result).toEqual(mockCheckinResult);
+    const storage = createStorageMock({
+      performDailyCheckin: vi.fn().mockResolvedValue(ok(checkinResult)),
     });
 
-    it('should handle already checked in today', async () => {
-      const mockUser = { id: 'test-user-123' };
-      const mockCheckinResult = {
-        success: false,
-        message: 'Already checked in today',
-        already_checked_in: true,
-        checkin_date: '2025-01-17',
-        points_earned: 0,
-        consecutive_days: 5
-      };
+    const result = await CheckinService.performDailyCheckin(storage);
 
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockResolvedValue({ data: mockCheckinResult, error: null });
-
-      const result = await CheckinService.performDailyCheckin();
-
-      expect(result).toEqual(mockCheckinResult);
-      expect(result.already_checked_in).toBe(true);
-      expect(result.points_earned).toBe(0);
-    });
-
-    it('should throw error when user not authenticated', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(null);
-
-      await expect(CheckinService.performDailyCheckin())
-        .rejects
-        .toThrow('User not authenticated. Please log in to check in.');
-    });
-
-    it('should handle database errors', async () => {
-      const mockUser = { id: 'test-user-123' };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockResolvedValue({ 
-        data: null, 
-        error: { message: 'Database connection failed' } 
-      });
-
-      await expect(CheckinService.performDailyCheckin())
-        .rejects
-        .toThrow('Check-in failed: Database connection failed');
-    });
+    expect(storage.performDailyCheckin).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(ok(checkinResult));
   });
 
-  describe('getUserStats', () => {
-    it('should return user checkin statistics', async () => {
-      const mockUser = { id: 'test-user-123' };
-      const mockStats = {
-        user_id: mockUser.id,
-        total_points: 100,
-        total_checkins: 10,
-        current_streak: 5,
-        longest_streak: 7,
-        last_checkin_date: '2025-01-17',
-        has_checked_in_today: true
-      };
-
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockResolvedValue({ data: mockStats, error: null });
-
-      const result = await CheckinService.getUserStats();
-
-      expect(supabase!.rpc).toHaveBeenCalledWith('get_user_checkin_stats', {
-        target_user_id: mockUser.id
-      });
-      expect(result).toEqual(mockStats);
-    });
-
-    it('should throw error when user not authenticated', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue(null);
-
-      await expect(CheckinService.getUserStats())
-        .rejects
-        .toThrow('User not authenticated. Please log in to view stats.');
-    });
-  });
-
-  describe('getCheckinHistory', () => {
-    it('should return paginated checkin history', async () => {
-      const mockUser = { id: 'test-user-123' };
-      const mockHistory = {
-        checkins: [
-          {
-            id: 'checkin-1',
-            checkin_date: '2025-01-17',
-            points_earned: 10,
-            consecutive_days: 1,
-            created_at: '2025-01-17T08:00:00Z'
-          }
-        ],
-        total_count: 1,
-        page_size: 20,
-        page_offset: 0,
-        has_more: false
-      };
-
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockResolvedValue({ data: mockHistory, error: null });
-
-      const result = await CheckinService.getCheckinHistory();
-
-      expect(supabase!.rpc).toHaveBeenCalledWith('get_user_checkin_history', {
-        target_user_id: mockUser.id,
-        page_size: 20,
-        page_offset: 0
-      });
-      expect(result).toEqual(mockHistory);
-    });
-
-    it('should handle custom pagination parameters', async () => {
-      const mockUser = { id: 'test-user-123' };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockResolvedValue({ data: {}, error: null });
-
-      await CheckinService.getCheckinHistory(10, 20);
-
-      expect(supabase!.rpc).toHaveBeenCalledWith('get_user_checkin_history', {
-        target_user_id: mockUser.id,
-        page_size: 10,
-        page_offset: 20
-      });
-    });
-  });
-
-  describe('convenience methods', () => {
-    const mockStats = {
-      user_id: 'test-user-123',
+  it('getUserStats forwards to storage', async () => {
+    const stats: CheckinStats = {
+      user_id: 'u1',
       total_points: 100,
       total_checkins: 10,
       current_streak: 5,
       longest_streak: 7,
       last_checkin_date: '2025-01-17',
-      has_checked_in_today: true
+      has_checked_in_today: true,
     };
 
-    beforeEach(() => {
-      const mockUser = { id: 'test-user-123' };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockResolvedValue({ data: mockStats, error: null });
+    const storage = createStorageMock({
+      getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
     });
 
-    it('should return correct hasCheckedInToday value', async () => {
-      const result = await CheckinService.hasCheckedInToday();
-      expect(result).toBe(true);
-    });
+    const result = await CheckinService.getUserStats(storage);
 
-    it('should return correct user points', async () => {
-      const result = await CheckinService.getUserPoints();
-      expect(result).toBe(100);
-    });
-
-    it('should return correct current streak', async () => {
-      const result = await CheckinService.getCurrentStreak();
-      expect(result).toBe(5);
-    });
-
-    it('should return complete dashboard data', async () => {
-      const result = await CheckinService.getCheckinDashboardData();
-      expect(result).toEqual({
-        stats: mockStats,
-        hasCheckedInToday: true
-      });
-    });
+    expect(storage.getUserCheckinStats).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(ok(stats));
   });
 
-  describe('error handling', () => {
-    it('should handle network errors gracefully', async () => {
-      const mockUser = { id: 'test-user-123' };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockRejectedValue(new Error('Network error'));
+  it('hasCheckedInToday derives from stats', async () => {
+    const stats: CheckinStats = {
+      user_id: 'u1',
+      total_points: 100,
+      total_checkins: 10,
+      current_streak: 5,
+      longest_streak: 7,
+      last_checkin_date: '2025-01-17',
+      has_checked_in_today: true,
+    };
 
-      await expect(CheckinService.performDailyCheckin())
-        .rejects
-        .toThrow('Network error');
+    const storage = createStorageMock({
+      getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
     });
 
-    it('should return default values when stats fetch fails', async () => {
-      const mockUser = { id: 'test-user-123' };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(supabase!.rpc).mockRejectedValue(new Error('Database error'));
+    const result = await CheckinService.hasCheckedInToday(storage);
 
-      const points = await CheckinService.getUserPoints();
-      const streak = await CheckinService.getCurrentStreak();
-      const hasCheckedIn = await CheckinService.hasCheckedInToday();
+    expect(storage.getUserCheckinStats).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(ok(true));
+  });
 
-      expect(points).toBe(0);
-      expect(streak).toBe(0);
-      expect(hasCheckedIn).toBe(false);
+  it('hasCheckedInToday propagates stats error', async () => {
+    const storageError: AppError = { code: 'STORAGE', message: 'boom' };
+    const storage = createStorageMock({
+      getUserCheckinStats: vi.fn().mockResolvedValue(err(storageError)),
     });
+
+    const result = await CheckinService.hasCheckedInToday(storage);
+
+    expect(result).toEqual(err(storageError));
+  });
+
+  it('getUserPoints derives from stats', async () => {
+    const stats: CheckinStats = {
+      user_id: 'u1',
+      total_points: 123,
+      total_checkins: 10,
+      current_streak: 5,
+      longest_streak: 7,
+      last_checkin_date: '2025-01-17',
+      has_checked_in_today: false,
+    };
+
+    const storage = createStorageMock({
+      getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
+    });
+
+    const result = await CheckinService.getUserPoints(storage);
+
+    expect(result).toEqual(ok(123));
+  });
+
+  it('getCurrentStreak derives from stats', async () => {
+    const stats: CheckinStats = {
+      user_id: 'u1',
+      total_points: 0,
+      total_checkins: 0,
+      current_streak: 9,
+      longest_streak: 9,
+      last_checkin_date: null,
+      has_checked_in_today: false,
+    };
+
+    const storage = createStorageMock({
+      getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
+    });
+
+    const result = await CheckinService.getCurrentStreak(storage);
+
+    expect(result).toEqual(ok(9));
   });
 });
+

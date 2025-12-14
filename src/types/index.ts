@@ -108,6 +108,7 @@ export interface ScheduledSession {
 }
 
 export interface ActiveSession {
+  id?: string;
   chainId: string;
   startedAt: Date;
   duration: number;

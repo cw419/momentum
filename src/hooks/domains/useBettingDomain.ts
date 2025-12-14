@@ -1,6 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import type { BetPlacementResult } from '../../services/BettingService';
-import { SessionService } from '../../services/SessionService';
+import type { BetPlacementResult } from '../../domain/betting';
 import { useStorage } from '../../storage/StorageContext';
 
 interface UseBettingDomainParams {
@@ -43,7 +42,10 @@ export function useBettingDomain({
   const handleBetCancelled = async () => {
     if (currentSessionId && storage.kind === 'supabase') {
       try {
-        await SessionService.deleteActiveSession(currentSessionId);
+        const result = await storage.deleteBettingSession(currentSessionId);
+        if (!result.ok) {
+          console.error('Failed to delete cancelled session:', result.error);
+        }
         console.log('已删除取消的会话记录，押注已通过触发器退款:', currentSessionId);
       } catch (error) {
         console.error('删除取消的会话记录失败:', error);

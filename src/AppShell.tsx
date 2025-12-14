@@ -27,7 +27,8 @@ const LoadingFallback = () => (
   </div>
 );
 import { useStorage } from './storage/StorageContext';
-import { isUserAuthenticated, waitForAuthentication } from './lib/supabase';
+import { logger } from './utils/logger';
+import { toast } from './utils/toast';
 import { isSessionExpired } from './utils/time';
 import { queryOptimizer } from './utils/queryOptimizer';
 import { notificationManager } from './utils/notifications';
@@ -82,10 +83,10 @@ function AppShell() {
       // 初始化规则系统（非关键路径）
       initializeRuleSystem().then(result => {
         if (!result.success) {
-          console.error('Rule system initialization failed:', result.message);
+          logger.error('APP_SHELL', `Rule system initialization failed: ${result.message}`);
         }
       }).catch(error => {
-        console.error('Rule system initialization error:', error);
+        logger.error('APP_SHELL', 'Rule system initialization error', undefined, error as Error);
       });
 
       // 运行迁移脚本（非关键路径）
@@ -350,27 +351,27 @@ function AppShell() {
   // Load data from storage on mount
   useEffect(() => {
     const loadData = async () => {
-      console.log('Starting data load, using storage type:', storage.kind);
+      logger.debug('APP_SHELL', 'Starting data load', { storage: storage.kind });
       setIsLoadingData(true);
       try {
         // 在加载数据前先执行自动清理
         try {
           const cleanedCount = await storage.cleanupExpiredDeletedChains(30);
           if (cleanedCount > 0) {
-            console.log(`Auto-cleaned ${cleanedCount} expired deleted chains`);
+            logger.info('APP_SHELL', `Auto-cleaned ${cleanedCount} expired deleted chains`);
           }
         } catch (cleanupError) {
-          console.error('Auto cleanup failed:', cleanupError);
+          logger.warn('APP_SHELL', 'Auto cleanup failed', undefined, cleanupError as Error);
         }
         const chains = await storage.getActiveChains();
         
         // 检查并修复循环引用的数据
         const hasCircularReferences = chains.some(chain => chain.parentId === chain.id);
         if (hasCircularReferences) {
-          console.log('Detected circular reference data, fixing...');
+          logger.debug('APP_SHELL', 'Detected circular reference data; fixing');
           const fixedChains = chains.map(chain => {
             if (chain.parentId === chain.id) {
-              console.log(`Fixed circular reference for chain ${chain.name}`);
+              logger.debug('APP_SHELL', `Fixed circular reference for chain ${chain.name}`);
               return { ...chain, parentId: undefined };
             }
             return chain;
@@ -378,7 +379,7 @@ function AppShell() {
           
           // 将修复后的数据保存回数据库
           await storage.saveChains(fixedChains);
-          console.log('Circular reference data fix completed and saved');
+          logger.info('APP_SHELL', 'Circular reference data fix completed and saved');
           
           // 使用修复后的数据
           setState(prev => ({
@@ -392,8 +393,8 @@ function AppShell() {
           return;
         }
         
-        console.log('Loaded chain data:', chains.length, 'items');
-        console.log('Chain data details:', chains.map(c => ({ id: c.id, name: c.name })));
+        logger.debug('APP_SHELL', 'Loaded chain data', { count: chains.length });
+        logger.debug('APP_SHELL', 'Chain data details', { chains: chains.map(c => ({ id: c.id, name: c.name })) });
         const allScheduledSessions = await storage.getScheduledSessions();
         const scheduledSessions = allScheduledSessions.filter(
           session => !isSessionExpired(session.expiresAt)
@@ -413,16 +414,16 @@ function AppShell() {
             const { dataMigrationManager } = await import('./utils/dataMigration');
             const migrationResult = await dataMigrationManager.migrateAll();
             if (!migrationResult.success || migrationResult.errors.length > 0) {
-              console.warn('Data migration completed with warnings:', migrationResult);
+              logger.warn('APP_SHELL', 'Data migration completed with warnings', { migrationResult });
             } else {
-              console.log('Data migration completed successfully');
+              logger.info('APP_SHELL', 'Data migration completed successfully');
             }
           } catch (migrationError) {
-            console.warn('Error occurred during data migration:', migrationError);
+            logger.warn('APP_SHELL', 'Error occurred during data migration', undefined, migrationError as Error);
           }
         }
 
-        console.log('Setting app state, chain count:', chains.length);
+        logger.debug('APP_SHELL', 'Setting app state', { chainCount: chains.length });
         setState(prev => ({
           ...prev,
           chains,
@@ -440,14 +441,14 @@ function AppShell() {
           await storage.saveScheduledSessions(scheduledSessions);
         }
       } catch (error) {
-        console.error('Failed to load data:', error);
+        logger.error('APP_SHELL', 'Failed to load data', undefined, error as Error);
       } finally {
         setIsLoadingData(false);
       }
     };
 
     if (isInitialized) {
-      console.log('Application initialization complete, starting data load');
+      logger.debug('APP_SHELL', 'Application initialization complete; starting data load');
       loadData();
     } else {
       setIsLoadingData(false);
@@ -588,7 +589,7 @@ function AppShell() {
       // 使用安全保存方法保持回收箱数据完整
       safelySaveChains(updatedChains).catch(error => {
       queryOptimizer.onDataChange('chains');
-        console.error('添加异常时保存链条数据失败:', error);
+        logger.error('APP_SHELL', '添加异常时保存链条数据失败', undefined, error as Error);
       });
       
       return {
@@ -632,27 +633,34 @@ function AppShell() {
     rsipMeta?: RSIPMeta;
     exceptionRules?: any[];
   }) => {
-    console.log('开始导入数据...', { chains: importedChains.length, options });
+    logger.info('APP_SHELL', '开始导入数据', { chainCount: importedChains.length, options });
     
     try {
       if (storage.kind === 'supabase') {
         // CRITICAL FIX: Additional authentication check as a safety net
-        console.log('Double-checking authentication state before import operations...');
-        const isAuth = await isUserAuthenticated();
+        logger.debug('APP_SHELL', 'Double-checking authentication state before import operations');
+        const isAuth = await storage.isUserAuthenticated();
 
-        if (!isAuth) {
-          console.log('Authentication not ready, waiting...');
-          const { user, isAuthenticated } = await waitForAuthentication(10000);
+        if (!isAuth.ok) {
+          logger.warn('IMPORT', 'isUserAuthenticated failed', {
+            code: isAuth.error.code,
+            message: isAuth.error.message,
+          });
+        }
 
-          if (!isAuthenticated || !user) {
+        if (!isAuth.ok || !isAuth.value) {
+          logger.debug('IMPORT', 'Authentication not ready; waiting');
+          const authResult = await storage.waitForAuthentication(10000);
+
+          if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
             throw new Error('Authentication failed during import. Please ensure you are logged in and try again.');
           }
 
-          console.log('Authentication confirmed after wait. User ID:', user.id);
+          logger.debug('IMPORT', 'Authentication confirmed after wait', { userId: authResult.value.user.id });
         }
       }
       
-      console.log('准备保存导入的数据到存储...');
+      logger.debug('APP_SHELL', '准备保存导入的数据到存储');
       
       // 验证导入的链条数据
       if (!Array.isArray(importedChains) || importedChains.length === 0) {
@@ -661,14 +669,14 @@ function AppShell() {
       
       // 获取当前最新的链条数据（避免使用可能过期的state.chains）
       const currentChains = await storage.getChains();
-      console.log('当前数据库中的链条数量:', currentChains.length);
-      console.log('准备导入的链条数量:', importedChains.length);
+      logger.debug('APP_SHELL', '当前数据库中的链条数量', { count: currentChains.length });
+      logger.debug('APP_SHELL', '准备导入的链条数量', { count: importedChains.length });
       
       // 检查ID冲突（双重保险）
       const existingIds = new Set(currentChains.map(c => c.id));
       const conflictingChains = importedChains.filter(c => existingIds.has(c.id));
       if (conflictingChains.length > 0) {
-        console.error('发现ID冲突的链条:', conflictingChains.map(c => c.id));
+        logger.error('APP_SHELL', '发现ID冲突的链条', { conflictingIds: conflictingChains.map(c => c.id) });
         throw new Error(`导入失败：发现${conflictingChains.length}个ID冲突的链条`);
       }
       
@@ -705,7 +713,7 @@ function AppShell() {
         await storage.saveRSIPMeta(mergedMeta);
       }
       
-      console.log('导入数据保存成功，更新UI状态');
+      logger.info('APP_SHELL', '导入数据保存成功，更新UI状态');
       
       // 更新状态
       setState(prev => ({
@@ -720,12 +728,11 @@ function AppShell() {
         rsipMeta: importedRsipMeta ? { ...prev.rsipMeta, ...importedRsipMeta } : prev.rsipMeta,
       }));
       
-      console.log('导入完成，UI状态更新完成');
+      logger.info('APP_SHELL', '导入完成，UI状态更新完成');
     } catch (error) {
-      console.error('Failed to import data:', error);
       // 提供更详细的错误信息
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      alert(`导入失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
+      logger.error('IMPORT', 'Failed to import data', { errorMessage }, error instanceof Error ? error : undefined);
       
       // 如果导入失败，重新加载数据以确保状态一致性
       try {
@@ -739,13 +746,15 @@ function AppShell() {
           rsipMeta: currentRsipMeta,
         }));
       } catch (reloadError) {
-        console.error('重新加载数据也失败了:', reloadError);
+        logger.error('IMPORT', 'Reload after import failure also failed', undefined, reloadError as Error);
       }
+
+      throw error instanceof Error ? error : new Error(errorMessage);
     }
   };
 
   const handleImportUnits = async (unitIds: string[], groupId: string, mode: 'move' | 'copy' = 'copy') => {
-    console.log('开始导入单元到任务群...', { unitIds, groupId, mode });
+    logger.info('APP_SHELL', '开始导入单元到任务群', { unitIds, groupId, mode });
     
     try {
       let updatedChains: Chain[];
@@ -784,23 +793,23 @@ function AppShell() {
         });
       }
       
-      console.log('准备保存导入后的数据到存储...');
+      logger.debug('APP_SHELL', '准备保存导入后的数据到存储');
       // Wait for data to be saved before updating UI - 使用安全保存方法
       await safelySaveChains(updatedChains);
       queryOptimizer.onDataChange('chains');
-      console.log('导入数据保存成功，更新UI状态');
+      logger.info('APP_SHELL', '导入数据保存成功，更新UI状态');
       
       // Only update state after successful save
       setState(prev => ({
         ...prev,
         chains: updatedChains,
       }));
-      console.log('导入完成，UI状态更新完成');
+      logger.info('APP_SHELL', '导入完成，UI状态更新完成');
     } catch (error) {
-      console.error('Failed to import units:', error);
+      logger.error('APP_SHELL', 'Failed to import units', undefined, error as Error);
       // 提供更详细的错误信息
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      alert(`导入失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
+      toast.error(`导入失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
       
       // 如果导入失败，重新加载数据以确保状态一致性
       try {
@@ -810,13 +819,13 @@ function AppShell() {
           chains: currentChains,
         }));
       } catch (reloadError) {
-        console.error('重新加载数据也失败了:', reloadError);
+        logger.error('APP_SHELL', '重新加载数据也失败了', undefined, reloadError as Error);
       }
     }
   };
 
   const handleUpdateTaskRepeatCount = async (chainId: string, repeatCount: number) => {
-    console.log('开始更新任务重复次数...', { chainId, repeatCount });
+    logger.debug('APP_SHELL', '开始更新任务重复次数', { chainId, repeatCount });
     
     try {
       // 找到要更新的链条
@@ -827,23 +836,23 @@ function AppShell() {
         return chain;
       });
 
-      console.log('准备保存重复次数更新到存储...');
+      logger.debug('APP_SHELL', '准备保存重复次数更新到存储');
       // Wait for data to be saved before updating UI - 使用安全保存方法
       await safelySaveChains(updatedChains);
       queryOptimizer.onDataChange('chains');
-      console.log('重复次数更新保存成功，更新UI状态');
+      logger.info('APP_SHELL', '重复次数更新保存成功，更新UI状态');
 
       // Only update state after successful save
       setState(prev => ({
         ...prev,
         chains: updatedChains,
       }));
-      console.log('重复次数更新完成，UI状态更新完成');
+      logger.info('APP_SHELL', '重复次数更新完成，UI状态更新完成');
     } catch (error) {
-      console.error('Failed to update task repeat count:', error);
+      logger.error('APP_SHELL', 'Failed to update task repeat count', undefined, error as Error);
       // 提供更详细的错误信息
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      alert(`重复次数更新失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
+      toast.error(`重复次数更新失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
       
       // 如果更新失败，重新加载数据以确保状态一致性
       try {
@@ -853,7 +862,7 @@ function AppShell() {
           chains: currentChains,
         }));
       } catch (reloadError) {
-        console.error('重新加载数据也失败了:', reloadError);
+        logger.error('APP_SHELL', '重新加载数据也失败了', undefined, reloadError as Error);
       }
     }
   };

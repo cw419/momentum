@@ -2,6 +2,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, Chain, ChainDraft, GroupChain, UnitChain } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { queryOptimizer } from '../../utils/queryOptimizer';
+import { logger } from '../../utils/logger';
+import { toast } from '../../utils/toast';
 
 export type SafelySaveChains = (updatedActiveChains: Chain[], retryCount?: number) => Promise<void>;
 
@@ -46,27 +48,26 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
     chainData: ChainDraft,
     isCopy: boolean = false
   ) => {
-    console.log('Starting to save chain data...', chainData);
-    console.log('Currently editing chain:', state.editingChain);
-    console.log('Is Copy Mode:', isCopy);
-    console.log(
-      '当前所有链条:',
-      state.chains.map(c => ({ id: c.id, name: c.name }))
-    );
+    logger.debug('CHAINS', 'Starting to save chain data', {
+      chainId: state.editingChain?.id ?? null,
+      chainName: chainData.name,
+      chainType: chainData.type,
+      isCopy,
+      chainCount: state.chains.length,
+    });
 
     try {
       const allExistingChains = await storage.getChains();
-      console.log('获取到所有现有链条（包括已删除的）:', allExistingChains.length);
+      logger.debug('CHAINS', 'Loaded existing chains (including deleted)', { count: allExistingChains.length });
 
       const activeChains = allExistingChains.filter(chain => chain.deletedAt == null);
       const deletedChains = allExistingChains.filter(chain => chain.deletedAt != null);
-      console.log('活跃链条数量:', activeChains.length, '已删除链条数量:', deletedChains.length);
+      logger.debug('CHAINS', 'Chain counts', { active: activeChains.length, deleted: deletedChains.length });
 
       let updatedActiveChains: Chain[];
 
       if (state.editingChain && !isCopy) {
-        console.log('编辑模式 - 原始链条数据:', state.editingChain);
-        console.log('新的链条数据:', chainData);
+        logger.debug('CHAINS', 'Editing existing chain', { chainId: state.editingChain.id });
 
         const editingChainId = state.editingChain.id;
         const normalizedParentId = chainData.parentId || undefined;
@@ -93,9 +94,13 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
           const updated: UnitChain = { ...chain, ...chainData, parentId: normalizedParentId };
           return updated;
         });
-        console.log('编辑现有链，更新后的活跃链数组长度:', updatedActiveChains.length);
+        logger.debug('CHAINS', 'Edited chain; updated active chains', { count: updatedActiveChains.length });
         const editedChain = updatedActiveChains.find(c => c.id === state.editingChain!.id);
-        console.log('编辑后的链数据:', editedChain);
+        logger.debug('CHAINS', 'Edited chain snapshot', {
+          chainId: editedChain?.id,
+          name: editedChain?.name,
+          type: editedChain?.type,
+        });
       } else {
         const id = crypto.randomUUID();
         const createdAt = new Date();
@@ -116,9 +121,9 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
           };
 
           if (isCopy) {
-            console.log('复制链条:', newChain);
+            logger.debug('CHAINS', 'Copy chain', { newChainId: newChain.id, type: 'group' });
           } else {
-            console.log('创建新链:', newChain);
+            logger.debug('CHAINS', 'Create chain', { newChainId: newChain.id, type: 'group' });
           }
 
           updatedActiveChains = [...state.chains, newChain];
@@ -136,20 +141,20 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
           };
 
           if (isCopy) {
-            console.log('复制链条:', newChain);
+            logger.debug('CHAINS', 'Copy chain', { newChainId: newChain.id, type: 'unit' });
           } else {
-            console.log('创建新链:', newChain);
+            logger.debug('CHAINS', 'Create chain', { newChainId: newChain.id, type: 'unit' });
           }
 
           updatedActiveChains = [...state.chains, newChain];
         }
-        console.log('添加新链后的活跃链数组长度:', updatedActiveChains.length);
+        logger.debug('CHAINS', 'Added chain; updated active chains', { count: updatedActiveChains.length });
       }
 
-      console.log('准备安全保存到存储（包含回收箱数据）...');
+      logger.debug('CHAINS', 'Saving chains');
       await safelySaveChains(updatedActiveChains);
       queryOptimizer.onDataChange('chains');
-      console.log('数据保存成功（包含回收箱数据），更新UI状态');
+      logger.debug('CHAINS', 'Save succeeded; updating UI state');
 
       setState(prev => ({
         ...prev,
@@ -157,11 +162,10 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
         currentView: 'dashboard',
         editingChain: null,
       }));
-      console.log('UI状态更新完成');
     } catch (error) {
-      console.error('Failed to save chain:', error);
+      logger.error('CHAINS', 'Failed to save chain', undefined, error as Error);
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      alert(`保存失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
+      toast.error(`保存失败: ${errorMessage}`);
 
       try {
         const currentChains = await storage.getActiveChains();
@@ -170,7 +174,7 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
           chains: currentChains,
         }));
       } catch (reloadError) {
-        console.error('重新加载数据也失败了:', reloadError);
+        logger.error('CHAINS', '重新加载数据也失败了', undefined, reloadError as Error);
       }
     }
   };

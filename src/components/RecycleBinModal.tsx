@@ -4,6 +4,8 @@ import { useStorage } from '../storage/StorageContext';
 import { DeletedChainCard } from './DeletedChainCard';
 import { ConfirmationDialog } from './ConfirmationDialog';
 import { Trash2, RotateCcw, X, CheckSquare, Square } from 'lucide-react';
+import { logger } from '../utils/logger';
+import { toast } from '../utils/toast';
 
 interface RecycleBinModalProps {
   isOpen: boolean;
@@ -42,7 +44,8 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
       setDeletedChains(chains);
       setSelectedChains(new Set()); // 清空选择
     } catch (error) {
-      console.error('加载已删除链条失败:', error);
+      logger.error('RECYCLE_BIN', '加载已删除链条失败', undefined, error as Error);
+      toast.error('加载回收箱失败，请重试');
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +126,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
     
     setIsLoading(true);
     try {
-      console.log(`[RECYCLE_BIN] Starting ${showConfirmDialog.type} operation for chains:`, showConfirmDialog.chainIds);
+      logger.debug('RECYCLE_BIN', 'Starting operation', { type: showConfirmDialog.type, chainIds: showConfirmDialog.chainIds });
       
       const startTime = Date.now();
       let operationResult: { success: boolean; message: string; details?: any } = { success: false, message: '' };
@@ -137,7 +140,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
             message: `成功恢复 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
             details: { count: showConfirmDialog.chainIds.length, duration }
           };
-          console.log(`[RECYCLE_BIN] Restore operation completed successfully:`, operationResult);
+          logger.debug('RECYCLE_BIN', 'Restore completed', operationResult.details);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '未知错误';
           operationResult = {
@@ -145,14 +148,14 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
             message: `恢复操作失败: ${errorMessage}`,
             details: { error: errorMessage, chainIds: showConfirmDialog.chainIds }
           };
-          console.error(`[RECYCLE_BIN] Restore operation failed:`, error);
+          logger.error('RECYCLE_BIN', 'Restore operation failed', operationResult.details, error as Error);
           
           // ENHANCED: Handle partial failures more gracefully
           if (errorMessage.includes('Partial restore failure') || errorMessage.includes('部分链条恢复可能失败')) {
             operationResult.message = `部分链条恢复可能失败，请检查主界面确认结果。如有问题请刷新页面。`;
-            alert(operationResult.message);
+            toast.warning(operationResult.message);
           } else {
-            alert(`恢复失败: ${errorMessage}\n\n请检查网络连接或刷新页面重试。`);
+            toast.error(`恢复失败: ${errorMessage}`);
           }
         }
       } else {
@@ -164,7 +167,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
             message: `成功永久删除 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
             details: { count: showConfirmDialog.chainIds.length, duration }
           };
-          console.log(`[RECYCLE_BIN] Permanent delete operation completed successfully:`, operationResult);
+          logger.debug('RECYCLE_BIN', 'Permanent delete completed', operationResult.details);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '未知错误';
           operationResult = {
@@ -172,40 +175,34 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
             message: `永久删除操作失败: ${errorMessage}`,
             details: { error: errorMessage, chainIds: showConfirmDialog.chainIds }
           };
-          console.error(`[RECYCLE_BIN] Permanent delete operation failed:`, error);
-          alert(`永久删除失败: ${errorMessage}\n\n请检查网络连接或刷新页面重试。`);
+          logger.error('RECYCLE_BIN', 'Permanent delete operation failed', operationResult.details, error as Error);
+          toast.error(`永久删除失败: ${errorMessage}`);
         }
       }
       
       // ENHANCED: Force reload local data after parent callbacks complete
-      console.log(`[RECYCLE_BIN] Refreshing local recycle bin data after ${showConfirmDialog.type} operation...`);
+      logger.debug('RECYCLE_BIN', 'Refreshing local recycle bin data', { type: showConfirmDialog.type });
       await loadDeletedChains();
-      console.log(`[RECYCLE_BIN] Local data refreshed successfully after ${showConfirmDialog.type} operation`);
+      logger.debug('RECYCLE_BIN', 'Local data refreshed successfully', { type: showConfirmDialog.type });
       
       // ENHANCED: Show success message for successful operations
       if (operationResult.success) {
-        console.log(`[RECYCLE_BIN] Operation completed successfully:`, operationResult.message);
+        toast.success(operationResult.message);
         
-        // Optional: Show a brief success toast or notification
-        // This could be implemented with a toast notification system
-        if (showConfirmDialog.type === 'restore') {
-          console.log(`✅ 恢复成功: ${showConfirmDialog.chainNames.join(', ')}`);
-        } else {
-          console.log(`✅ 永久删除成功: ${showConfirmDialog.chainNames.join(', ')}`);
-        }
+        logger.info('RECYCLE_BIN', 'Operation completed successfully', { type: showConfirmDialog.type, chainIds: showConfirmDialog.chainIds });
       }
       
     } catch (error) {
-      console.error(`[RECYCLE_BIN] ${showConfirmDialog.type} operation failed with unexpected error:`, error);
+      logger.error('RECYCLE_BIN', 'Operation failed with unexpected error', { type: showConfirmDialog?.type }, error as Error);
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      alert(`操作失败: ${errorMessage}\n\n请刷新页面重试，如果问题持续请检查网络连接。`);
+      toast.error(`操作失败: ${errorMessage}`);
     } finally {
       setIsLoading(false);
       setShowConfirmDialog(null);
       
       // ENHANCED: Clear selections after operation
       setSelectedChains(new Set());
-      console.log(`[RECYCLE_BIN] Operation cleanup completed, selections cleared`);
+      logger.debug('RECYCLE_BIN', 'Operation cleanup completed, selections cleared');
     }
   };
 

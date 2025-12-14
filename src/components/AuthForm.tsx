@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { signIn, signUp } from '../lib/supabase';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Rocket, LogIn } from 'lucide-react';
+import { useStorage } from '../storage/StorageContext';
+import { logger } from '../utils/logger';
 
 export const AuthForm: React.FC = () => {
+  const storage = useStorage();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,14 +18,13 @@ export const AuthForm: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = isSignUp 
-        ? await signUp(email, password)
-        : await signIn(email, password);
+      const result = isSignUp ? await storage.signUp(email, password) : await storage.signIn(email, password);
 
-      if (error) {
-        setError(error.message);
+      if (!result.ok) {
+        setError(result.error.message);
       }
-  } catch {
+    } catch (error) {
+      logger.error('AUTH', 'AuthForm submit failed', undefined, error as Error);
       setError('发生未知错误，请重试');
     } finally {
       setLoading(false);

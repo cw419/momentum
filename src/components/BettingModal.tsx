@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Dices, Star, TrendingUp, AlertCircle, Loader2, CheckCircle, Target, Zap } from 'lucide-react';
-import { BettingService, BetPlacementRequest, BetPlacementResult } from '../services/BettingService';
-import { UserSettingsService, GamblingSettings } from '../services/UserSettingsService';
+import type { BetPlacementRequest, BetPlacementResult } from '../domain/betting';
+import type { GamblingSettings } from '../domain/userSettings';
+import { useStorage } from '../storage/StorageContext';
+import { logger } from '../utils/logger';
 
 interface BettingModalProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
   chainName,
   taskDuration
 }) => {
+  const storage = useStorage();
   const [betAmount, setBetAmount] = useState<string>('');
   const [availablePoints, setAvailablePoints] = useState<number>(0);
   const [gamblingSettings, setGamblingSettings] = useState<GamblingSettings | null>(null);
@@ -34,28 +37,46 @@ export const BettingModal: React.FC<BettingModalProps> = ({
   // 加载初始数据
   const loadData = useCallback(async () => {
     if (!isOpen) return;
+    if (storage.kind !== 'supabase') {
+      setIsLoading(false);
+      setError('当前存储不支持押注功能');
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const [points, settings, todayBets] = await Promise.all([
-        BettingService.getUserAvailablePoints(),
-        UserSettingsService.getGamblingSettings(),
-        BettingService.getTodayBetAmount()
+      const [pointsResult, settingsResult, todayBetsResult] = await Promise.all([
+        storage.getUserAvailablePoints(),
+        storage.getGamblingSettings(),
+        storage.getTodayBetAmount(),
       ]);
+
+      if (!pointsResult.ok) {
+        setError(pointsResult.error.message || '加载数据失败');
+        return;
+      }
+      if (!settingsResult.ok) {
+        setError(settingsResult.error.message || '加载数据失败');
+        return;
+      }
+      if (!todayBetsResult.ok) {
+        setError(todayBetsResult.error.message || '加载数据失败');
+        return;
+      }
       
-      setAvailablePoints(points);
-      setGamblingSettings(settings);
-      setTodayBetAmount(todayBets);
+      setAvailablePoints(pointsResult.value);
+      setGamblingSettings(settingsResult.value);
+      setTodayBetAmount(todayBetsResult.value);
       
     } catch (err) {
-      console.error('Failed to load betting data:', err);
+      logger.error('BETTING', 'Failed to load betting data', undefined, err as Error);
       setError(err instanceof Error ? err.message : '加载数据失败');
     } finally {
       setIsLoading(false);
     }
-  }, [isOpen]);
+  }, [isOpen, storage]);
 
   // 验证押注金额
   const validateBetAmount = useCallback(async (amount: string): Promise<boolean> => {
@@ -118,6 +139,11 @@ export const BettingModal: React.FC<BettingModalProps> = ({
     if (!await validateBetAmount(betAmount)) {
       return;
     }
+
+    if (storage.kind !== 'supabase') {
+      setError('当前存储不支持押注功能');
+      return;
+    }
     
     const numAmount = parseFloat(betAmount);
     setIsPlacingBet(true);
@@ -129,18 +155,23 @@ export const BettingModal: React.FC<BettingModalProps> = ({
         bet_amount: numAmount
       };
       
-      const result = await BettingService.placeBet(betRequest);
+      const result = await storage.placeBet(betRequest);
       
-      if (result.success) {
-        setSuccessMessage(`押注成功！押注 ${numAmount} 积分，潜在收益 ${result.potential_payout} 积分`);
+      if (!result.ok) {
+        setError(result.error.message || '押注失败');
+        return;
+      }
+
+      if (result.value.success) {
+        setSuccessMessage(`押注成功！押注 ${numAmount} 积分，潜在收益 ${result.value.potential_payout} 积分`);
         
         // 更新可用积分
-        setAvailablePoints(result.points_after || availablePoints - numAmount);
+        setAvailablePoints(result.value.points_after ?? availablePoints - numAmount);
         setTodayBetAmount(prev => prev + numAmount);
         
         // 通知父组件
         if (onBetPlaced) {
-          onBetPlaced(result);
+          onBetPlaced(result.value);
         }
         
         // 2秒后自动关闭
@@ -149,15 +180,15 @@ export const BettingModal: React.FC<BettingModalProps> = ({
         }, 2000);
         
       } else {
-        setError(result.message || '押注失败');
+        setError(result.value.message || '押注失败');
       }
     } catch (err) {
-      console.error('Failed to place bet:', err);
+      logger.error('BETTING', 'Failed to place bet', { sessionId }, err as Error);
       setError(err instanceof Error ? err.message : '押注失败，请重试');
     } finally {
       setIsPlacingBet(false);
     }
-  }, [betAmount, sessionId, availablePoints, onBetPlaced, onClose, validateBetAmount]);
+  }, [betAmount, sessionId, availablePoints, onBetPlaced, onClose, validateBetAmount, storage]);
 
   // 组件挂载时加载数据
   useEffect(() => {

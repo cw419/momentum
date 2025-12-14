@@ -2,8 +2,6 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { ActiveSession, AppState, CompletionHistory, ScheduledSession } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
-import { UserSettingsService } from '../../services/UserSettingsService';
-import { SessionService } from '../../services/SessionService';
 import { isGroupExpired, resetGroupProgress, startGroupTimer } from '../../utils/timeLimit';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import {
@@ -14,6 +12,8 @@ import {
 } from '../../utils/chainTree';
 import { notificationManager } from '../../utils/notifications';
 import { forwardTimerManager } from '../../utils/forwardTimer';
+import { logger } from '../../utils/logger';
+import { toast } from '../../utils/toast';
 
 interface UseSessionsDomainParams {
   state: AppState;
@@ -76,8 +76,8 @@ export function useSessionsDomain({
           chains: updatedChains,
         }));
       } catch (error) {
-        console.error('Failed to schedule chain:', error);
-        alert('预约失败，请重试');
+        logger.error('SESSIONS', 'Failed to schedule chain', { chainId }, error as Error);
+        toast.error('预约失败，请重试');
       }
     };
 
@@ -87,20 +87,28 @@ export function useSessionsDomain({
   const handleStartChain = async (chainId: string) => {
     if (storage.kind === 'supabase' && !pendingChainId) {
       try {
-        const isGamblingEnabled = await UserSettingsService.isGamblingModeEnabled();
-        if (isGamblingEnabled) {
+        const isGamblingEnabled = await storage.isGamblingModeEnabled();
+        if (isGamblingEnabled.ok && isGamblingEnabled.value) {
           const chain = state.chains.find(c => c.id === chainId);
           if (!chain) return;
 
-          const sessionId = await SessionService.createActiveSession(chainId, chain.duration);
+          const sessionId = await storage.createBettingSession(chainId, chain.duration);
+          if (!sessionId.ok) {
+            logger.error('SESSIONS', 'Failed to create betting session', {
+              chainId,
+              code: sessionId.error.code,
+              message: sessionId.error.message,
+            });
+            return;
+          }
 
           setPendingChainId(chainId);
-          setCurrentSessionId(sessionId);
+          setCurrentSessionId(sessionId.value);
           setShowBettingModal(true);
           return;
         }
       } catch (error) {
-        console.error('Failed to check gambling mode:', error);
+        logger.error('SESSIONS', 'Failed to check gambling mode', undefined, error as Error);
       }
     }
 
@@ -136,12 +144,12 @@ export function useSessionsDomain({
       if (groupNode) {
         const nextUnit = getNextUnitInGroup(groupNode);
         if (nextUnit) {
-          console.log(`任务群 ${chain.name} 开始下一个任务: ${nextUnit.name}`);
+          logger.debug('SESSIONS', `任务群 ${chain.name} 开始下一个任务: ${nextUnit.name}`);
           await handleStartChain(nextUnit.id);
           return;
         }
 
-        console.log(`任务群 ${chain.name} 所有子任务已完成，开始新一轮循环`);
+        logger.debug('SESSIONS', `任务群 ${chain.name} 所有子任务已完成，开始新一轮循环`);
 
         const updatedChains = incrementGroupCompletionCount(state.chains, chainId);
         const updatedGroup = updatedChains.find(c => c.id === chainId);
@@ -166,20 +174,21 @@ export function useSessionsDomain({
 
             const firstUnit = newGroupNode ? getNextUnitInGroup(newGroupNode) : null;
             if (firstUnit) {
-              console.log(
+              logger.debug(
+                'SESSIONS',
                 `任务群 ${chain.name} 开始新一轮（第${(updatedGroup?.totalCompletions ?? 0) + 1}轮），从 ${firstUnit.name} 开始`
               );
               await handleStartChain(firstUnit.id);
             }
           }, 100);
         } catch (e) {
-          console.error('保存任务群完成计数失败:', e);
+          logger.error('SESSIONS', '保存任务群完成计数失败', undefined, e as Error);
         }
 
         return;
       }
 
-      console.error(`无法找到任务群节点: ${chainId}`);
+      logger.error('SESSIONS', '无法找到任务群节点', { chainId });
       return;
     }
 
@@ -209,7 +218,7 @@ export function useSessionsDomain({
       if (existingScheduledSession) {
         safelySaveChains(updatedChains).catch(error => {
           queryOptimizer.onDataChange('chains');
-          console.error('开始任务时保存链条数据失败:', error);
+          logger.error('SESSIONS', '开始任务时保存链条数据失败', undefined, error as Error);
         });
       }
 
@@ -269,7 +278,7 @@ export function useSessionsDomain({
 
         if (groupNode && groupNode.type === 'group') {
           if (isGroupFullyCompleted(groupNode)) {
-            console.log(`任务群 ${groupNode.name} 已完成所有任务，增加完成计数`);
+            logger.debug('SESSIONS', `任务群 ${groupNode.name} 已完成所有任务，增加完成计数`);
             updatedChains = incrementGroupCompletionCount(updatedChains, chain.parentId);
 
             const parentChain = updatedChains.find(c => c.id === chain.parentId);
@@ -288,18 +297,26 @@ export function useSessionsDomain({
 
       safelySaveChains(updatedChains).catch(error => {
         queryOptimizer.onDataChange('chains');
-        console.error('完成任务时保存链条数据失败:', error);
+        logger.error('SESSIONS', '完成任务时保存链条数据失败', undefined, error as Error);
       });
       storage.saveActiveSession(null);
 
       if (activeSessionId && storage.kind === 'supabase') {
-        SessionService.completeTaskWithBetting(activeSessionId, true, '任务完成')
+        storage
+          .completeTaskWithBetting(activeSessionId, true, '任务完成')
           .then(result => {
-            console.log('任务完成和押注结算成功:', result);
+            if (!result.ok) {
+              logger.error('SESSIONS', '完成任务和押注结算失败', {
+                code: result.error.code,
+                message: result.error.message,
+              });
+              storage.saveCompletionHistory(updatedHistory);
+              return;
+            }
             setActiveSessionId(null);
           })
           .catch(error => {
-            console.error('完成任务和押注结算失败:', error);
+            logger.error('SESSIONS', '完成任务和押注结算失败', undefined, error as Error);
             storage.saveCompletionHistory(updatedHistory);
           });
       } else {
@@ -353,7 +370,7 @@ export function useSessionsDomain({
       );
 
       if (chain.parentId && chain.type !== 'group') {
-        console.log(`任务 ${chain.name} 失败/中断，重置任务群完成计数`);
+        logger.debug('SESSIONS', `任务 ${chain.name} 失败/中断，重置任务群完成计数`);
         updatedChains = resetGroupCompletionCount(updatedChains, chain.parentId);
       }
 
@@ -361,18 +378,26 @@ export function useSessionsDomain({
 
       safelySaveChains(updatedChains).catch(error => {
         queryOptimizer.onDataChange('chains');
-        console.error('中断任务时保存链条数据失败:', error);
+        logger.error('SESSIONS', '中断任务时保存链条数据失败', undefined, error as Error);
       });
       storage.saveActiveSession(null);
 
       if (activeSessionId && storage.kind === 'supabase') {
-        SessionService.completeTaskWithBetting(activeSessionId, false, '任务中断或失败')
+        storage
+          .completeTaskWithBetting(activeSessionId, false, '任务中断或失败')
           .then(result => {
-            console.log('任务中断/失败和押注结算成功:', result);
+            if (!result.ok) {
+              logger.error('SESSIONS', '中断任务和押注结算失败', {
+                code: result.error.code,
+                message: result.error.message,
+              });
+              storage.saveCompletionHistory(updatedHistory);
+              return;
+            }
             setActiveSessionId(null);
           })
           .catch(error => {
-            console.error('中断任务和押注结算失败:', error);
+            logger.error('SESSIONS', '中断任务和押注结算失败', undefined, error as Error);
             storage.saveCompletionHistory(updatedHistory);
           });
       } else {
@@ -444,7 +469,7 @@ export function useSessionsDomain({
       storage.saveScheduledSessions(updatedScheduledSessions);
       safelySaveChains(updatedChains).catch(error => {
         queryOptimizer.onDataChange('chains');
-        console.error('完成预约时保存链条数据失败:', error);
+        logger.error('SESSIONS', '完成预约时保存链条数据失败', undefined, error as Error);
       });
 
       return {

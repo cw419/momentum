@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CheckinService, type CheckinResult, type CheckinStats } from '../../services/CheckinService';
+import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/StorageContext';
 
 export function useCheckinDomain() {
@@ -31,15 +31,20 @@ export function useCheckinDomain() {
     try {
       setError(null);
       setIsLoading(true);
-      const userStats = await CheckinService.getUserStats();
-      setStats(userStats);
+      const result = await storage.getUserCheckinStats();
+      if (!result.ok) {
+        setError(result.error.message);
+        setStats(null);
+        return;
+      }
+      setStats(result.value);
     } catch (err) {
       console.error('加载签到统计失败:', err);
       setError(err instanceof Error ? err.message : '加载签到数据失败');
     } finally {
       setIsLoading(false);
     }
-  }, [isSupabase]);
+  }, [isSupabase, storage]);
 
   const handleCheckin = useCallback(async () => {
     if (!stats || stats.has_checked_in_today || isCheckingIn) {
@@ -51,7 +56,13 @@ export function useCheckinDomain() {
       setError(null);
       setSuccessMessage(null);
 
-      const result: CheckinResult = await CheckinService.performDailyCheckin();
+      const op = await storage.performDailyCheckin();
+      if (!op.ok) {
+        setError(op.error.message);
+        return;
+      }
+
+      const result: CheckinResult = op.value;
 
       if (result.success) {
         setStats(prev =>

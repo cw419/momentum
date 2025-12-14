@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Chain, CompletionHistory, RSIPNode, RSIPMeta } from '../types';
 import { Download, Upload, X, FileText, AlertCircle, CheckCircle, Clock, Shield } from 'lucide-react';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
-import { waitForAuthentication } from '../lib/supabase';
-import { secureImportService, SecureImportOptions } from '../services/SecureImportService';
+import { useStorage } from '../storage/StorageContext';
+import { logger } from '../utils/logger';
 
 interface ExportData {
   version: string;
@@ -16,13 +16,37 @@ interface ExportData {
   exceptionRules?: any;
 }
 
+interface ImportOptions {
+  preserveStatistics: boolean;
+  preserveTimestamps: boolean;
+  importCompletionHistory: boolean;
+}
+
+const allowedChainTypes = new Set([
+  'unit',
+  'group',
+  'assault',
+  'recon',
+  'command',
+  'special_ops',
+  'engineering',
+  'quartermaster',
+]);
+
+function generateId(prefix: string) {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
 interface ImportExportModalProps {
   chains: Chain[];
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
   userPreferences?: any;
-  onImport: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: RSIPNode[]; rsipMeta?: RSIPMeta; exceptionRules?: any[] }) => void;
+  onImport: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: RSIPNode[]; rsipMeta?: RSIPMeta; exceptionRules?: any[] }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -35,11 +59,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   onImport,
   onClose,
 }) => {
+  const storage = useStorage();
+  const isSupabase = storage.kind === 'supabase';
   const [activeTab, setActiveTab] = useState<'export' | 'import'>(chains.length === 0 ? 'import' : 'export');
   const [importData, setImportData] = useState('');
   const [importStatus, setImportStatus] = useState<'idle' | 'checking-auth' | 'creating-session' | 'importing' | 'success' | 'error'>('idle');
   const [importError, setImportError] = useState('');
-  const [importOptions, setImportOptions] = useState<SecureImportOptions>({
+  const [importOptions, setImportOptions] = useState<ImportOptions>({
     preserveStatistics: false,
     preserveTimestamps: false,
     importCompletionHistory: true
@@ -89,7 +115,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('导出失败:', error);
+      logger.error('IMPORT_EXPORT', 'Export failed', undefined, error as Error);
     }
   };
 
@@ -98,18 +124,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       setImportStatus('checking-auth');
       setImportError('');
       
-      // 验证用户身份
-      console.log('Verifying authentication before import...');
-      const { user, isAuthenticated } = await waitForAuthentication(10000);
-      
-      if (!isAuthenticated || !user) {
-        throw new Error('用户身份验证失败。请确保您已正确登录，然后重试导入操作。');
+      if (isSupabase) {
+        const authResult = await storage.waitForAuthentication(10000);
+        if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
+          throw new Error('用户身份验证失败。请确保您已正确登录，然后重试导入操作。');
+        }
       }
-      
-      console.log('Authentication verified for import. User ID:', user.id);
-      
-      setImportStatus('creating-session');
-      
+
       // 解析导入数据
       const parsedData = JSON.parse(importData);
       
@@ -117,85 +138,131 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         throw new Error('导入数据格式错误：未找到有效的链条数据');
       }
 
-      // 创建导入会话
-      console.log('[SECURE_IMPORT] Creating import session...');
-      await secureImportService.createImportSession();
+      setImportStatus('creating-session');
       
-      setImportStatus('importing');
-      
-      // 处理导入数据，转换为Chain格式
-      const importChains: Chain[] = (parsedData.chains || []).map((chain: any) => ({
-        id: chain.id || crypto.randomUUID(),
-        name: String(chain.name || '未命名链条'),
-        parentId: chain.parentId || chain.parent_id || undefined,
-        type: (chain.type === 'unit' || chain.type === 'group') ? chain.type : 'unit',
-        sortOrder: Number(chain.sortOrder || chain.sort_order) || Math.floor(Date.now() / 1000),
-        trigger: String(chain.trigger || ''),
-        duration: Number(chain.duration) || 45,
-        description: String(chain.description || ''),
-        
-        // 统计数据（导入时可选择是否保留）
-        currentStreak: chain.currentStreak || 0,
-        auxiliaryStreak: chain.auxiliaryStreak || 0,
-        totalCompletions: chain.totalCompletions || 0,
-        totalFailures: chain.totalFailures || 0,
-        auxiliaryFailures: chain.auxiliaryFailures || 0,
-        
-        // 例外规则
-        exceptions: Array.isArray(chain.exceptions) ? chain.exceptions : [],
-        auxiliaryExceptions: Array.isArray(chain.auxiliaryExceptions) ? chain.auxiliaryExceptions : [],
-        
-        // 辅助任务字段
-        auxiliarySignal: chain.auxiliarySignal || undefined,
-        auxiliaryDuration: Number(chain.auxiliaryDuration) || 15,
-        auxiliaryCompletionTrigger: chain.auxiliaryCompletionTrigger || undefined,
-        
-        // 时间字段
-        createdAt: chain.createdAt ? new Date(chain.createdAt) : new Date(),
-        lastCompletedAt: chain.lastCompletedAt ? new Date(chain.lastCompletedAt) : undefined,
-        
-        // 高级字段
-        isDurationless: Boolean(chain.isDurationless ?? chain.is_durationless ?? false),
-        timeLimitHours: chain.timeLimitHours ?? chain.time_limit_hours ?? undefined,
-        timeLimitExceptions: Array.isArray(chain.timeLimitExceptions || chain.time_limit_exceptions) 
-          ? (chain.timeLimitExceptions || chain.time_limit_exceptions) : [],
-        groupStartedAt: chain.groupStartedAt ? new Date(chain.groupStartedAt) : undefined,
-        groupExpiresAt: chain.groupExpiresAt ? new Date(chain.groupExpiresAt) : undefined,
-        
-        // 确保导入的链条为活跃状态
-        deletedAt: null
-      }));
+      const toNumber = (value: unknown, fallback: number) => {
+        const n = typeof value === 'number' ? value : Number(value);
+        return Number.isFinite(n) ? n : fallback;
+      };
 
-      console.log(`[SECURE_IMPORT] Processing ${importChains.length} chains for import`);
+      const toStringArray = (value: unknown): string[] => {
+        if (!Array.isArray(value)) return [];
+        return value.map(v => String(v)).filter(v => v.length > 0);
+      };
 
-      // 执行安全导入
-      const importResult = await secureImportService.importChains(importChains, importOptions);
-      
-      if (!importResult.success) {
-        throw new Error(importResult.error || '导入失败');
+      const rawChains: any[] = parsedData.chains || [];
+
+      const chainEntries = rawChains.map((raw: any) => {
+        const sourceId = String(raw?.id ?? generateId('chain'));
+        return { raw, sourceId, newId: generateId('chain') };
+      });
+
+      const seenIds = new Set<string>();
+      for (const entry of chainEntries) {
+        if (seenIds.has(entry.sourceId)) {
+          throw new Error(`导入数据包含重复的链条ID: ${entry.sourceId}`);
+        }
+        seenIds.add(entry.sourceId);
       }
 
-      console.log(`[SECURE_IMPORT] Successfully imported ${importResult.imported_count} chains`);
+      const idMap = new Map<string, string>(chainEntries.map(e => [e.sourceId, e.newId]));
+      const preserveStatistics = Boolean(importOptions.preserveStatistics);
+      const preserveTimestamps = Boolean(importOptions.preserveTimestamps);
 
-      // 处理完成历史记录（如果需要）
-      if (importOptions.importCompletionHistory && parsedData.completionHistory) {
-        console.log('[SECURE_IMPORT] Importing completion history...');
-        
-        const importHistory: CompletionHistory[] = (parsedData.completionHistory || [])
-          .filter((h: any) => h && h.chainId) // 过滤无效记录
-          .map((h: any): CompletionHistory => ({
-            chainId: h.chainId, // 原始chainId，会被secureImportService更新
-            completedAt: new Date(h.completedAt || Date.now()),
-            duration: Math.max(0, Number(h.duration) || 0),
-            wasSuccessful: Boolean(h.wasSuccessful),
-            reasonForFailure: h.reasonForFailure ? String(h.reasonForFailure) : undefined,
-            actualDuration: Math.max(0, Number(h.actualDuration || h.duration) || 0),
-            isForwardTimed: Boolean(h.isForwardTimed || false),
-            description: h.description ? String(h.description) : undefined,
-            notes: h.notes ? String(h.notes) : undefined,
-          }));
+      const importChains: Chain[] = chainEntries.map(({ raw, sourceId: _sourceId, newId }) => {
+        void _sourceId;
 
-        await secureImportService.importCompletionHistory(importHistory, importResult.id_mapping);
+        const rawType = String(raw?.type ?? 'unit');
+        const type = allowedChainTypes.has(rawType) ? rawType : 'unit';
+
+        const stats = preserveStatistics
+          ? {
+              currentStreak: toNumber(raw?.currentStreak, 0),
+              auxiliaryStreak: toNumber(raw?.auxiliaryStreak, 0),
+              totalCompletions: toNumber(raw?.totalCompletions, 0),
+              totalFailures: toNumber(raw?.totalFailures, 0),
+              auxiliaryFailures: toNumber(raw?.auxiliaryFailures, 0),
+            }
+          : {
+              currentStreak: 0,
+              auxiliaryStreak: 0,
+              totalCompletions: 0,
+              totalFailures: 0,
+              auxiliaryFailures: 0,
+            };
+
+        const createdAt = preserveTimestamps && raw?.createdAt ? new Date(raw.createdAt) : new Date();
+        const lastCompletedAt = preserveTimestamps && raw?.lastCompletedAt ? new Date(raw.lastCompletedAt) : undefined;
+
+        const sourceParentId = raw?.parentId ?? raw?.parent_id ?? undefined;
+        const parentId =
+          sourceParentId != null && idMap.has(String(sourceParentId)) ? idMap.get(String(sourceParentId)) : undefined;
+
+        const common = {
+          id: newId,
+          name: String(raw?.name ?? '未命名链条'),
+          parentId,
+          sortOrder: toNumber(raw?.sortOrder ?? raw?.sort_order, Math.floor(Date.now() / 1000)),
+          trigger: String(raw?.trigger ?? ''),
+          duration: toNumber(raw?.duration, 45),
+          description: String(raw?.description ?? ''),
+          ...stats,
+          exceptions: toStringArray(raw?.exceptions),
+          auxiliaryExceptions: toStringArray(raw?.auxiliaryExceptions),
+          auxiliarySignal: String(raw?.auxiliarySignal ?? ''),
+          auxiliaryDuration: toNumber(raw?.auxiliaryDuration, 15),
+          auxiliaryCompletionTrigger: String(raw?.auxiliaryCompletionTrigger ?? ''),
+          timeLimitExceptions: toStringArray(raw?.timeLimitExceptions ?? raw?.time_limit_exceptions),
+          isDurationless: Boolean(raw?.isDurationless ?? raw?.is_durationless ?? false),
+          minimumDuration: raw?.minimumDuration ?? raw?.minimum_duration ?? undefined,
+          taskRepeatCount: raw?.taskRepeatCount ?? raw?.task_repeat_count ?? undefined,
+          createdAt,
+          lastCompletedAt,
+          deletedAt: null as null,
+        };
+
+        if (type === 'group') {
+          return {
+            ...common,
+            type: 'group',
+            timeLimitHours: raw?.timeLimitHours ?? raw?.time_limit_hours ?? undefined,
+            groupRepeatCount: raw?.groupRepeatCount ?? raw?.group_repeat_count ?? undefined,
+            isTaskGroup: Boolean(raw?.isTaskGroup ?? raw?.is_task_group ?? false) || undefined,
+            groupStartedAt: undefined,
+            groupExpiresAt: undefined,
+          } as Chain;
+        }
+
+        return {
+          ...common,
+          type: type as Chain['type'],
+        } as Chain;
+      });
+
+      let importHistory: CompletionHistory[] = [];
+      if (importOptions.importCompletionHistory && Array.isArray(parsedData.completionHistory)) {
+        importHistory = (parsedData.completionHistory || [])
+          .filter((h: any) => h && h.chainId)
+          .map((h: any): CompletionHistory | null => {
+            const mappedChainId = idMap.get(String(h.chainId));
+            if (!mappedChainId) return null;
+
+            const duration = Math.max(0, toNumber(h.duration, 0));
+
+            return {
+              chainId: mappedChainId,
+              completedAt: new Date(h.completedAt || Date.now()),
+              duration,
+              wasSuccessful: Boolean(h.wasSuccessful),
+              reasonForFailure: h.reasonForFailure ? String(h.reasonForFailure) : undefined,
+              actualDuration:
+                h.actualDuration != null ? Math.max(0, toNumber(h.actualDuration, duration)) : undefined,
+              isForwardTimed: Boolean(h.isForwardTimed || false),
+              description: h.description ? String(h.description) : undefined,
+              notes: h.notes ? String(h.notes) : undefined,
+            };
+          })
+          .filter((h: CompletionHistory | null): h is CompletionHistory => Boolean(h));
       }
 
       // 处理RSIP节点（保持原有逻辑，因为量较小且复杂度较低）
@@ -246,39 +313,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         importedExceptionRules = importResult.imported;
       }
 
-      // 完成导入会话
-      await secureImportService.completeSession();
+      setImportStatus('importing');
 
-      // 由于使用了安全导入，需要重新获取数据以显示导入结果
-      // 这里我们构造一个虚拟的链条数组来触发UI更新，实际数据会通过正常的数据加载流程获取
-      const virtualChains: Chain[] = Array.from({ length: importResult.imported_count }, (_, index) => ({
-        id: `imported_${index}`,
-        name: `导入的链条 ${index + 1}`,
-        type: 'unit',
-        sortOrder: 0,
-        trigger: '',
-        duration: 45,
-        description: '',
-        currentStreak: 0,
-        auxiliaryStreak: 0,
-        totalCompletions: 0,
-        totalFailures: 0,
-        auxiliaryFailures: 0,
-        exceptions: [],
-        auxiliaryExceptions: [],
-        auxiliarySignal: '',
-        auxiliaryDuration: 15,
-        auxiliaryCompletionTrigger: '',
-        timeLimitExceptions: [],
-        createdAt: new Date(),
-        deletedAt: null
-      }));
-
-      // 调用上层组件的导入回调
-      onImport(virtualChains, {
+      await onImport(importChains, {
+        history: importHistory,
         rsipNodes: importedRsipNodes,
         rsipMeta: importedRsipMeta,
-        exceptionRules: importedExceptionRules
+        exceptionRules: importedExceptionRules,
       });
       
       setImportStatus('success');
@@ -289,25 +330,23 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       }, 3000);
       
     } catch (error) {
-      console.error('安全导入失败:', error);
-      
-      // 清理导入会话
-      secureImportService.clearSession();
+      logger.error('IMPORT_EXPORT', 'Import failed', undefined, error as Error);
       
       // 提供具体的错误信息
-      let errorMessage = '导入数据格式错误';
-      if (error instanceof Error) {
-        if (error.message.includes('身份验证失败') || error.message.includes('Authentication failed') || error.message.includes('用户身份验证失败')) {
-          errorMessage = '用户身份验证失败：请确保您已正确登录，然后重试导入操作。如果问题持续存在，请刷新页面后重试。';
-        } else if (error.message.includes('session') || error.message.includes('会话')) {
-          errorMessage = '导入会话创建失败：请刷新页面后重试。如果问题持续存在，请检查网络连接。';
-        } else if (error.message.includes('JSON')) {
-          errorMessage = '导入数据格式错误：请确保上传的是有效的JSON格式文件。';
+      let errorMessage = '导入失败';
+
+      if (error instanceof SyntaxError) {
+        errorMessage = '导入数据格式错误：请确保上传的是有效的JSON格式文件。';
+      } else if (error instanceof Error) {
+        if (error.message.includes('身份验证失败') || error.message.includes('Authentication failed')) {
+          errorMessage = '用户身份验证失败：请确保您已正确登录，然后重试导入操作。';
         } else if (error.message.includes('导入数据格式错误')) {
           errorMessage = '导入数据格式错误：文件中未找到有效的链条数据。请确保文件是从Momentum导出的有效数据。';
         } else {
           errorMessage = `导入失败：${error.message}`;
         }
+      } else {
+        errorMessage = '导入失败：未知错误';
       }
       
       setImportError(errorMessage);

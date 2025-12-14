@@ -1,5 +1,7 @@
 import type { MomentumStorage } from './MomentumStorage';
 import { storage as localStorageUtils } from '../utils/storage';
+import { err, ok } from '../domain/result';
+import type { AppError } from '../domain/errors';
 
 export const localStorageAdapter: MomentumStorage = {
   kind: 'local',
@@ -44,4 +46,39 @@ export const localStorageAdapter: MomentumStorage = {
   // Compatibility / maintenance
   migrateCompletionHistoryForTiming: async () => localStorageUtils.migrateCompletionHistoryForTiming(),
   clearCache: () => localStorageUtils.clearCache(),
+
+  // Auth (not supported in local mode)
+  getCurrentUser: async () => ok(null),
+  waitForAuthentication: async () => ok({ user: null, isAuthenticated: false }),
+  isUserAuthenticated: async () => ok(false),
+  signUp: async () => err<AppError>({ code: 'NOT_SUPPORTED', message: 'Auth is not supported in local storage mode' }),
+  signIn: async () => err<AppError>({ code: 'NOT_SUPPORTED', message: 'Auth is not supported in local storage mode' }),
+  signOut: async () => err<AppError>({ code: 'NOT_SUPPORTED', message: 'Auth is not supported in local storage mode' }),
+  onAuthStateChange: () => ok(() => {}),
+
+  // User settings (not supported in local mode)
+  getGamblingSettings: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'User settings are not supported in local storage mode' }),
+  toggleGamblingMode: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'User settings are not supported in local storage mode' }),
+  isGamblingModeEnabled: async () => ok(false),
+
+  // Betting (not supported in local mode)
+  createBettingSession: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'Betting is not supported in local storage mode' }),
+  deleteBettingSession: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'Betting is not supported in local storage mode' }),
+  completeTaskWithBetting: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'Betting is not supported in local storage mode' }),
+  placeBet: async () => err<AppError>({ code: 'NOT_SUPPORTED', message: 'Betting is not supported in local storage mode' }),
+  getUserAvailablePoints: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'Betting is not supported in local storage mode' }),
+  getTodayBetAmount: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'Betting is not supported in local storage mode' }),
+
+  // Daily check-in (not supported in local mode)
+  performDailyCheckin: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'Daily check-in is not supported in local storage mode' }),
+  getUserCheckinStats: async () =>
+    err<AppError>({ code: 'NOT_SUPPORTED', message: 'Daily check-in is not supported in local storage mode' }),
 };

@@ -32,7 +32,7 @@ interface DashboardProps {
   onCancelScheduledSession?: (chainId: string) => void;
   onCompleteBooking?: (chainId: string) => void;
   onDeleteChain: (chainId: string) => void;
-  onImportChains: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: any[]; rsipMeta?: any; exceptionRules?: any[] }) => void;
+  onImportChains: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: any[]; rsipMeta?: any; exceptionRules?: any[] }) => Promise<void>;
   onRestoreChains?: (chainIds: string[]) => void;
   onPermanentDeleteChains?: (chainIds: string[]) => void;
   history?: CompletionHistory[];
@@ -136,8 +136,8 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
     }
   }, [onPermanentDeleteChains, loadRecycleBinStats]);
   
-  const handleImport = useCallback((newChains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: any[]; rsipMeta?: any; exceptionRules?: any[] }) => {
-    onImportChains(newChains, options);
+  const handleImport = useCallback(async (newChains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: any[]; rsipMeta?: any; exceptionRules?: any[] }) => {
+    await onImportChains(newChains, options);
   }, [onImportChains]);
   
   // Memoize scheduled session lookup to prevent recalculation on every render

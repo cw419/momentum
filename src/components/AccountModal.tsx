@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, LogOut, AlertCircle, Dices, Loader2 } from 'lucide-react';
-import { getCurrentUser, signOut } from '../lib/supabase';
-import { User as SupabaseUser } from '@supabase/supabase-js';
-import { UserSettingsService, GamblingSettings } from '../services/UserSettingsService';
+import type { AuthUser } from '../domain/auth';
+import type { GamblingSettings } from '../domain/userSettings';
+import { useStorage } from '../storage/StorageContext';
+import { logger } from '../utils/logger';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -10,7 +11,8 @@ interface AccountModalProps {
 }
 
 export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const storage = useStorage();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,19 +29,32 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
 
   useEffect(() => {
     if (isOpen) {
+      if (storage.kind !== 'supabase') {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       loadUser();
       loadGamblingSettings();
     }
-  }, [isOpen]);
+  }, [isOpen, storage.kind]);
 
   const loadUser = async () => {
+    if (storage.kind !== 'supabase') return;
     setLoading(true);
     setError(null);
     try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
+      const result = await storage.getCurrentUser();
+      if (!result.ok) {
+        setUser(null);
+        setError(result.error.message || '获取用户信息失败');
+        return;
+      }
+
+      setUser(result.value);
     } catch (err) {
-      console.error('Failed to get user info:', err);
+      logger.error('ACCOUNT', 'Failed to get user info', undefined, err as Error);
       setError('获取用户信息失败');
     } finally {
       setLoading(false);
@@ -48,39 +63,50 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
 
   // 加载狂赌模式设置
   const loadGamblingSettings = async () => {
+    if (storage.kind !== 'supabase') return;
     try {
       setGamblingError(null);
-      const settings = await UserSettingsService.getGamblingSettings();
-      setGamblingSettings(settings);
+      const settingsResult = await storage.getGamblingSettings();
+      if (!settingsResult.ok) {
+        setGamblingError(settingsResult.error.message || '获取设置失败');
+        return;
+      }
+      setGamblingSettings(settingsResult.value);
     } catch (err) {
-      console.error('Failed to load gambling settings:', err);
+      logger.error('ACCOUNT', 'Failed to load gambling settings', undefined, err as Error);
       setGamblingError('获取设置失败');
     }
   };
 
   // 切换狂赌模式
   const handleGamblingToggle = async () => {
+    if (storage.kind !== 'supabase') return;
     setGamblingLoading(true);
     setGamblingError(null);
     setGamblingSuccess(null);
     
     try {
-      const result = await UserSettingsService.toggleGamblingMode();
+      const result = await storage.toggleGamblingMode();
       
-      if (result.success) {
+      if (!result.ok) {
+        setGamblingError(result.error.message || '设置更新失败');
+        return;
+      }
+
+      if (result.value.success) {
         setGamblingSettings(prev => ({
           ...prev,
           gambling_mode_enabled: !prev.gambling_mode_enabled
         }));
-        setGamblingSuccess(result.message);
+        setGamblingSuccess(result.value.message);
         
         // 3秒后清除成功消息
         setTimeout(() => setGamblingSuccess(null), 3000);
       } else {
-        setGamblingError(result.message || '设置更新失败');
+        setGamblingError(result.value.message || '设置更新失败');
       }
     } catch (err) {
-      console.error('Failed to toggle gambling mode:', err);
+      logger.error('ACCOUNT', 'Failed to toggle gambling mode', undefined, err as Error);
       setGamblingError(err instanceof Error ? err.message : '设置更新失败');
     } finally {
       setGamblingLoading(false);
@@ -88,18 +114,19 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
   };
 
   const handleSignOut = async () => {
+    if (storage.kind !== 'supabase') return;
     setSigningOut(true);
     setError(null);
     try {
-      const { error } = await signOut();
-      if (error) {
-        setError(error.message);
-      } else {
-        onClose();
-        // 页面会自动重新加载到登录界面
+      const result = await storage.signOut();
+      if (!result.ok) {
+        setError(result.error.message || '退出登录失败，请重试');
+        return;
       }
+
+      onClose();
     } catch (err) {
-      console.error('Sign out failed:', err);
+      logger.error('ACCOUNT', 'Sign out failed', undefined, err as Error);
       setError('退出登录失败，请重试');
     } finally {
       setSigningOut(false);
@@ -126,7 +153,16 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
 
         {/* Content */}
         <div className="p-6">
-          {loading ? (
+          {storage.kind !== 'supabase' ? (
+            <div className="text-center py-8">
+              <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
+                <User className="text-gray-400 dark:text-slate-500" size={24} />
+              </div>
+              <p className="text-gray-600 dark:text-slate-400 font-chinese">
+                当前使用本地存储模式，无需账号登录
+              </p>
+            </div>
+          ) : loading ? (
             <div className="text-center py-8">
               <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -164,9 +200,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                   <p className="text-gray-600 dark:text-slate-400 text-sm truncate">
                     {user.email}
                   </p>
-                  {user.user_metadata?.full_name && (
+                  {(user.userMetadata as any)?.full_name && (
                     <p className="text-gray-500 dark:text-slate-500 text-xs">
-                      {user.user_metadata.full_name}
+                      {(user.userMetadata as any).full_name}
                     </p>
                   )}
                 </div>
@@ -179,7 +215,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                     注册时间
                   </span>
                   <span className="text-sm text-gray-900 dark:text-slate-100">
-                    {new Date(user.created_at).toLocaleDateString('zh-CN')}
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString('zh-CN') : '-'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
@@ -187,8 +223,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                     最后登录
                   </span>
                   <span className="text-sm text-gray-900 dark:text-slate-100">
-                    {user.last_sign_in_at 
-                      ? new Date(user.last_sign_in_at).toLocaleDateString('zh-CN')
+                    {user.lastSignInAt 
+                      ? new Date(user.lastSignInAt).toLocaleDateString('zh-CN')
                       : '首次登录'
                     }
                   </span>

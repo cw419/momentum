@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { User } from '@supabase/supabase-js';
+import type { AuthUser } from '../domain/auth';
+import { useStorage } from '../storage/StorageContext';
+import { logger } from '../utils/logger';
 import { AuthForm } from './AuthForm';
 import { Loader2 } from 'lucide-react';
 
@@ -9,60 +10,59 @@ interface AuthWrapperProps {
 }
 
 export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const storage = useStorage();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authInitialized, setAuthInitialized] = useState(false);
-  const isSupabaseEnabled = Boolean(supabase);
 
   useEffect(() => {
-    const client = supabase;
-    if (!client) {
+    if (storage.kind !== 'supabase') {
       setUser(null);
       setLoading(false);
-      setAuthInitialized(true);
       return;
     }
 
-    // Get initial session
-    const initSession = async () => {
-      try {
-        const { data: { session }, error } = await client.auth.getSession();
-        if (error) {
-          console.error('Failed to get session:', error);
-        }
-        console.log('Initial session check:', session?.user ? 'Logged in' : 'Not logged in');
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error('Session initialization error:', error);
+    let isMounted = true;
+    setLoading(true);
+
+    const unsubscribeResult = storage.onAuthStateChange((event, session) => {
+      logger.debug('AUTH', 'Auth state changed', { event, hasUser: Boolean(session.user) });
+      setUser(session.user);
+      setLoading(false);
+    });
+
+    const init = async () => {
+      const authResult = await storage.waitForAuthentication(10000);
+      if (!isMounted) return;
+
+      if (!authResult.ok) {
+        logger.warn('AUTH', 'waitForAuthentication failed', {
+          code: authResult.error.code,
+          message: authResult.error.message,
+        });
         setUser(null);
-      } finally {
         setLoading(false);
-        setAuthInitialized(true);
+        return;
       }
+
+      setUser(authResult.value.user);
+      setLoading(false);
     };
 
-    initSession();
+    init();
 
-    // Listen for auth changes
-    const { data: { subscription } } = client.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Authentication state changed:', event, session?.user ? 'Logged in' : 'Not logged in');
-        setUser(session?.user ?? null);
-        if (!authInitialized) {
-          setLoading(false);
-          setAuthInitialized(true);
-        }
+    return () => {
+      isMounted = false;
+      if (unsubscribeResult.ok) {
+        unsubscribeResult.value();
       }
-    );
+    };
+  }, [storage]);
 
-    return () => subscription.unsubscribe();
-  }, [authInitialized]);
-
-  if (!isSupabaseEnabled) {
+  if (storage.kind !== 'supabase') {
     return <>{children}</>;
   }
 
-  if (loading || !authInitialized) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
