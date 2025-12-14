@@ -2,23 +2,21 @@ import { supabase } from '../lib/supabase';
 import { logger } from './logger';
 import { schemaChecker } from './schemaChecker';
 
-interface MigrationResult {
-  success: boolean;
-  error?: string;
-  appliedMigrations: string[];
-  skippedMigrations: string[];
-}
-
 export class MigrationHelper {
   /**
    * Check if a specific migration has been applied by checking for expected columns/tables
    */
   async isMigrationApplied(migrationId: string): Promise<boolean> {
     try {
+      const client = supabase;
+      if (!client) {
+        return false;
+      }
+
       switch (migrationId) {
         case '20250730021823_winter_flame':
           // Check if basic tables exist
-          const { data: chainsTable } = await supabase
+          const { data: chainsTable } = await client
             .from('information_schema.tables')
             .select('table_name')
             .eq('table_name', 'chains')
@@ -28,7 +26,7 @@ export class MigrationHelper {
         case '20250801160754_peaceful_palace':
         case '20250801161456_fading_sunset':
           // Check if parent_id and type columns exist
-          const { data: hierarchyColumns } = await supabase
+          const { data: hierarchyColumns } = await client
             .from('information_schema.columns')
             .select('column_name')
             .eq('table_name', 'chains')
@@ -37,7 +35,7 @@ export class MigrationHelper {
 
         case '20250808000000_add_group_time_limit':
           // Check if time limit columns exist
-          const { data: timeLimitColumns } = await supabase
+          const { data: timeLimitColumns } = await client
             .from('information_schema.columns')
             .select('column_name')
             .eq('table_name', 'chains')
@@ -46,7 +44,7 @@ export class MigrationHelper {
 
         case '20250808001000_add_durationless_flag':
           // Check if is_durationless column exists
-          const { data: durationlessColumn } = await supabase
+          const { data: durationlessColumn } = await client
             .from('information_schema.columns')
             .select('column_name')
             .eq('table_name', 'chains')
@@ -55,7 +53,7 @@ export class MigrationHelper {
 
         case '20250810000000_add_rsip_tables':
           // Check if RSIP tables exist
-          const { data: rsipTables } = await supabase
+          const { data: rsipTables } = await client
             .from('information_schema.tables')
             .select('table_name')
             .eq('table_schema', 'public')
@@ -98,7 +96,6 @@ export class MigrationHelper {
    */
   async generateMigrationSQL(): Promise<string> {
     const status = await this.getMigrationStatus();
-    const schemaStatus = await schemaChecker.getSchemaStatus();
 
     let sql = '-- 自动生成的迁移SQL\n';
     sql += `-- 生成时间: ${new Date().toISOString()}\n\n`;

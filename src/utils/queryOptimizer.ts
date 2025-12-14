@@ -2,6 +2,7 @@ import { Chain, ScheduledSession, ActiveSession, CompletionHistory, ChainTreeNod
 import { buildChainTree } from './chainTree';
 import { performanceLogger } from './performanceLogger';
 import { reactPerformanceMonitor } from './reactPerformanceMonitor';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 
 /**
  * Database Query Optimizer - Reduces redundant calls and implements intelligent caching
@@ -184,7 +185,7 @@ class QueryOptimizer {
   /**
    * Batch load all related data in a single optimized operation
    */
-  async batchLoadData(storage: any): Promise<BatchedData> {
+  async batchLoadData(storage: MomentumStorage): Promise<BatchedData> {
     const cacheKey = 'batchedData';
     
     return this.deduplicateQuery(cacheKey, async () => {
@@ -214,7 +215,7 @@ class QueryOptimizer {
   /**
    * Optimized getChains with deduplication
    */
-  async getOptimizedChains(storage: any): Promise<Chain[]> {
+  async getOptimizedChains(storage: MomentumStorage): Promise<Chain[]> {
     return this.deduplicateQuery('chains:getActive', () => storage.getActiveChains());
   }
   
@@ -310,7 +311,7 @@ export const queryOptimizer = new QueryOptimizer();
 /**
  * React hook for optimized data loading
  */
-export const useOptimizedData = (storage: any) => {
+export const useOptimizedData = (storage: MomentumStorage) => {
   const loadData = async () => {
     return queryOptimizer.batchLoadData(storage);
   };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChainTreeNode, ScheduledSession } from '../types';
+import { Chain, ChainTreeNode, ScheduledSession } from '../types';
 import { ArrowLeft, Play, Plus, Users, Target, Import, Pencil, X, Hash, Check, Clock, Flame, CalendarCheck, ArrowUp, ArrowDown, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { getGroupProgress, getGroupUnitProgress, getNextUnitInGroup, getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
@@ -11,7 +11,7 @@ import { soundManager } from '../utils/soundManager';
 interface GroupViewProps {
   group: ChainTreeNode;
   scheduledSessions: ScheduledSession[];
-  availableUnits: ChainTreeNode[]; // 可导入的单元
+  availableUnits: Chain[]; // 可导入的单元
   onBack: () => void;
   onStartChain: (chainId: string) => void;
   onScheduleChain: (chainId: string) => void;

@@ -48,7 +48,12 @@ export class SecureImportService {
    */
   async createImportSession(): Promise<ImportSession> {
     try {
-      const { data, error } = await supabase.rpc('create_import_session');
+      const client = supabase;
+      if (!client) {
+        throw new Error('Supabase is not configured');
+      }
+
+      const { data, error } = await client.rpc('create_import_session');
 
       if (error) {
         throw new Error(`Failed to create import session: ${error.message}`);
@@ -95,7 +100,12 @@ export class SecureImportService {
       });
 
       // 调用安全导入函数
-      const { data, error } = await supabase.rpc('secure_import_chains', {
+      const client = supabase;
+      if (!client) {
+        throw new Error('Supabase is not configured');
+      }
+
+      const { data, error } = await client.rpc('secure_import_chains', {
         p_session_token: this.currentSession.session_token,
         chains_data: processedChains
       });
@@ -212,7 +222,12 @@ export class SecureImportService {
       }
 
       // 使用标准的Supabase插入（受现有RLS策略保护）
-      const { error } = await supabase
+      const client = supabase;
+      if (!client) {
+        throw new Error('Supabase is not configured');
+      }
+
+      const { error } = await client
         .from('completion_history')
         .insert(processedHistory);
 
@@ -238,7 +253,12 @@ export class SecureImportService {
     }
 
     try {
-      const { error } = await supabase.rpc('complete_import_session', {
+      const client = supabase;
+      if (!client) {
+        throw new Error('Supabase is not configured');
+      }
+
+      const { error } = await client.rpc('complete_import_session', {
         p_session_token: this.currentSession.session_token
       });
 

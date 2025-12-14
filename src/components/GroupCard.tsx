@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChainTreeNode, ScheduledSession } from '../types';
 import { Play, Users, MoreHorizontal, Trash2, Flame, Bell, Check, AlertTriangle, Clock, Layers, Minus } from 'lucide-react';
 import { getTimeRemaining, formatDuration } from '../utils/time';
@@ -37,7 +37,11 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
   const progress = useMemo(() => getGroupProgress(group), [group]);
   const nextUnit = useMemo(() => getNextUnitInGroup(group), [group]);
   const typeConfig = useMemo(() => getChainTypeConfig(group.type), [group.type]);
-  const isScheduled = useMemo(() => !!scheduledSession && timeRemaining > 0, [scheduledSession, timeRemaining]);
+  const activeScheduledSession = useMemo(
+    () => (scheduledSession && timeRemaining > 0 ? scheduledSession : null),
+    [scheduledSession, timeRemaining]
+  );
+  const isScheduled = !!activeScheduledSession;
 
   // 计算通知时机
   const getNotificationThreshold = (durationMinutes: number) => {
@@ -208,7 +212,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2 text-blue-600">
                 <Bell size={14} />
-              <span className="text-sm font-chinese font-medium">预约信号: {scheduledSession.auxiliarySignal}</span>
+              <span className="text-sm font-chinese font-medium">预约信号: {activeScheduledSession?.auxiliarySignal}</span>
               </div>
               <div className="text-blue-700 dark:text-blue-400 font-mono font-bold text-lg">
                 {formatDuration(timeRemaining)}
@@ -218,8 +222,8 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (scheduledSession) {
-                    onCompleteBooking?.(scheduledSession.chainId);
+                  if (activeScheduledSession) {
+                    onCompleteBooking?.(activeScheduledSession.chainId);
                   }
                 }}
                 className="flex-1 bg-green-500/10 hover:bg-green-500/20 dark:bg-green-500/20 dark:hover:bg-green-500/30 text-green-600 dark:text-green-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-green-200/50 dark:border-green-400/30"
@@ -230,8 +234,8 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (scheduledSession) {
-                    onCancelScheduledSession?.(scheduledSession.chainId);
+                  if (activeScheduledSession) {
+                    onCancelScheduledSession?.(activeScheduledSession.chainId);
                   }
                 }}
                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-red-200/50 dark:border-red-400/30"

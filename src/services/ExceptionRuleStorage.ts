@@ -230,6 +230,29 @@ export class ExceptionRuleStorageService {
   }
 
   /**
+   * 更新使用记录
+   */
+  async updateUsageRecord(updatedRecord: RuleUsageRecord): Promise<void> {
+    try {
+      const records = await this.getUsageRecords();
+      const recordIndex = records.findIndex(record => record.id === updatedRecord.id);
+
+      if (recordIndex === -1) {
+        return;
+      }
+
+      records[recordIndex] = updatedRecord;
+      await this.saveUsageRecords(records);
+    } catch (error) {
+      throw new ExceptionRuleException(
+        ExceptionRuleError.STORAGE_ERROR,
+        '更新使用记录失败',
+        error
+      );
+    }
+  }
+
+  /**
    * 获取所有使用记录
    */
   async getUsageRecords(): Promise<RuleUsageRecord[]> {

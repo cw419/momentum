@@ -3,13 +3,7 @@
  * 提供智能的错误恢复策略和用户友好的错误处理
  */
 
-import { 
-  ExceptionRule, 
-  ExceptionRuleType,
-  ExceptionRuleError, 
-  ExceptionRuleException 
-} from '../types';
-import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { ExceptionRuleError, ExceptionRuleException } from '../types';
 import { ruleStateManager } from './RuleStateManager';
 import { dataIntegrityChecker } from './DataIntegrityChecker';
 import { enhancedDuplicationHandler } from './EnhancedDuplicationHandler';
@@ -251,7 +245,7 @@ export class ErrorRecoveryManager {
       errorType: ExceptionRuleError.RULE_NOT_FOUND,
       strategy: 'auto_fix',
       priority: 100,
-      handler: async (error, context) => {
+      handler: async (error) => {
         // 尝试从临时规则中恢复
         const ruleId = this.extractRuleIdFromError(error);
         if (ruleId?.startsWith('temp_')) {
@@ -281,7 +275,7 @@ export class ErrorRecoveryManager {
       errorType: ExceptionRuleError.DUPLICATE_RULE_NAME,
       strategy: 'user_choice',
       priority: 100,
-      handler: async (error, context) => {
+      handler: async (error) => {
         return {
           success: false,
           message: '发现重复的规则名称',
@@ -296,7 +290,7 @@ export class ErrorRecoveryManager {
       errorType: ExceptionRuleError.RULE_TYPE_MISMATCH,
       strategy: 'user_choice',
       priority: 100,
-      handler: async (error, context) => {
+      handler: async (error) => {
         return {
           success: false,
           message: '规则类型与操作不匹配',
@@ -311,7 +305,7 @@ export class ErrorRecoveryManager {
       errorType: ExceptionRuleError.STORAGE_ERROR,
       strategy: 'auto_fix',
       priority: 100,
-      handler: async (error, context) => {
+      handler: async (error) => {
         // 尝试数据完整性检查
         try {
           const report = await dataIntegrityChecker.checkRuleDataIntegrity();
@@ -346,7 +340,7 @@ export class ErrorRecoveryManager {
       errorType: ExceptionRuleError.VALIDATION_ERROR,
       strategy: 'auto_fix',
       priority: 100,
-      handler: async (error, context) => {
+      handler: async (error) => {
         return {
           success: false,
           message: '验证错误需要用户确认',
@@ -370,6 +364,7 @@ export class ErrorRecoveryManager {
     error: ExceptionRuleException, 
     context: RecoveryContext
   ): Promise<RecoveryResult> {
+    void context;
     return {
       success: false,
       message: `未知错误类型: ${error.type}`,
@@ -390,6 +385,7 @@ export class ErrorRecoveryManager {
     error: ExceptionRuleException, 
     context: RecoveryContext
   ): Promise<RecoveryResult> {
+    void context;
     return {
       success: false,
       message: '所有自动恢复策略都失败了',
@@ -416,6 +412,7 @@ export class ErrorRecoveryManager {
    * 恢复操作处理器
    */
   private async handleCreateNewRule(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     // 这里应该触发创建新规则的UI流程
     return {
       success: false,
@@ -425,6 +422,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleSelectExistingRule(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     // 这里应该显示现有规则选择界面
     return {
       success: false,
@@ -481,6 +479,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleCreateCorrectType(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     return {
       success: false,
       message: '请创建正确类型的规则',
@@ -489,6 +488,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleSelectMatchingRule(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     return {
       success: false,
       message: '请选择类型匹配的规则',
@@ -497,6 +497,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleRetryOperation(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     // 简单的重试逻辑
     return {
       success: false,
@@ -506,6 +507,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleDataIntegrityCheck(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     try {
       const report = await dataIntegrityChecker.checkRuleDataIntegrity();
       
@@ -547,6 +549,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleGenericRecovery(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     // 通用恢复逻辑
     try {
       // 尝试同步规则状态
@@ -565,6 +568,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleValidationFix(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     return {
       success: false,
       message: '验证修复需要用户输入',
@@ -573,6 +577,7 @@ export class ErrorRecoveryManager {
   }
 
   private async handleSystemReset(error: ExceptionRuleException): Promise<RecoveryResult> {
+    void error;
     return {
       success: false,
       message: '系统重置是危险操作，需要用户确认',

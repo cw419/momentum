@@ -87,6 +87,8 @@ export function getOptimalTimerConfig(): TimerConfig {
   };
 
   // 检测页面可见性API支持
+  void isBatterySaverMode;
+
   const supportsVisibilityAPI = typeof document !== 'undefined' && 'visibilityState' in document;
 
   // 基础配置

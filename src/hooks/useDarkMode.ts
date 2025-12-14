@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { applyThemeWithTransition } from '../utils/theme';
 
-type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'system';
 
 interface UseDarkModeReturn {
   theme: Theme;

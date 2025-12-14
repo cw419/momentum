@@ -84,7 +84,7 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
       onChange: handleChange,
       onBlur,
       'aria-describedby': [descriptionId, errorId].filter(Boolean).join(' ') || undefined,
-      'aria-invalid': error ? 'true' : undefined,
+      'aria-invalid': error ? true : undefined,
     };
 
     switch (type) {

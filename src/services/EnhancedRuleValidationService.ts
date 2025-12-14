@@ -337,6 +337,8 @@ export class EnhancedRuleValidationService {
       : ExceptionRuleType.EARLY_COMPLETION_ONLY;
     
     const actionName = this.getActionTypeDisplayName(actionType);
+    void rule;
+    void correctType;
 
     return [
       {

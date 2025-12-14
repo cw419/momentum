@@ -1,12 +1,10 @@
 import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense } from 'react';
-import { Chain, ScheduledSession, CompletionHistory, ChainTreeNode } from '../types';
-import { ChainCard } from './ChainCard';
-import { GroupCard } from './GroupCard';
+import { Chain, ScheduledSession, CompletionHistory } from '../types';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 import { ThemeToggle } from './ThemeToggle';
 import { VirtualizedChainList } from './VirtualizedChainList';
-import { buildChainTree, getTopLevelChains } from '../utils/chainTree';
+import { getTopLevelChains } from '../utils/chainTree';
 import { queryOptimizer } from '../utils/queryOptimizer';
-import { getNextUnitInGroup } from '../utils/chainTree';
 import { Download, TreePine, Trash2, Rocket, Link, Plus, Layers, User } from 'lucide-react';
 import { NotificationToggle } from './NotificationToggle';
 
@@ -26,6 +24,7 @@ const CheckinPlaceholder = () => (
 );
 
 interface DashboardProps {
+  storage: MomentumStorage;
   chains: Chain[];
   scheduledSessions: ScheduledSession[];
   isLoading?: boolean;
@@ -49,6 +48,7 @@ interface DashboardProps {
 
 // Performance optimized Dashboard component with React.memo and proper memoization
 export const Dashboard: React.FC<DashboardProps> = React.memo(({
+  storage,
   chains,
   scheduledSessions,
   isLoading = false,
@@ -310,6 +310,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
             </div>
 
             <VirtualizedChainList
+              storage={storage}
               topLevelChains={topLevelChains}
               getScheduledSession={getScheduledSession}
               onStartChain={onStartChain}

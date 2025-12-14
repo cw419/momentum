@@ -1,10 +1,12 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { ChainTreeNode, ScheduledSession } from '../types';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 import { ChainCard } from './ChainCard';
 import { GroupCard } from './GroupCard';
 import { getNextUnitInGroup } from '../utils/chainTree';
 
 interface VirtualizedChainListProps {
+  storage: MomentumStorage;
   topLevelChains: ChainTreeNode[];
   getScheduledSession: (chainId: string) => ScheduledSession | undefined;
   onStartChain: (chainId: string) => void;
@@ -27,6 +29,7 @@ const ITEMS_PER_ROW = 3; // Default grid columns on xl screens
  * Automatically switches between regular grid and virtual scrolling based on item count
  */
 export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.memo(({
+  storage,
   topLevelChains,
   getScheduledSession,
   onStartChain,
@@ -38,7 +41,6 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
 }) => {
   const [containerHeight, setContainerHeight] = useState(600);
   const [scrollTop, setScrollTop] = useState(0);
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 0 });
 
   // Use regular grid for small lists, virtual scrolling for large lists
   const shouldVirtualize = topLevelChains.length > VIRTUALIZATION_THRESHOLD;
@@ -98,7 +100,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
   }, []);
 
   // Render individual chain item
-  const renderChainItem = useCallback((chainNode: ChainTreeNode, index: number) => {
+  const renderChainItem = useCallback((chainNode: ChainTreeNode) => {
     if (chainNode.type === 'group') {
       const nextUnit = getNextUnitInGroup(chainNode);
       const session = getScheduledSession(nextUnit ? nextUnit.id : chainNode.id);
@@ -117,6 +119,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
     } else {
       return (
         <ChainCard
+          storage={storage}
           chain={chainNode}
           scheduledSession={getScheduledSession(chainNode.id)}
           onStartChain={onStartChain}
@@ -129,6 +132,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
       );
     }
   }, [
+    storage,
     getScheduledSession,
     onStartChain,
     onScheduleChain,
@@ -144,7 +148,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {topLevelChains.map((chainNode, index) => (
           <div key={`${chainNode.id}-${index}`}>
-            {renderChainItem(chainNode, index)}
+            {renderChainItem(chainNode)}
           </div>
         ))}
       </div>
@@ -171,7 +175,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
         >
           {visibleItems.map((chainNode, index) => (
             <div key={`${chainNode.id}-${index}`}>
-              {renderChainItem(chainNode, index)}
+              {renderChainItem(chainNode)}
             </div>
           ))}
         </div>

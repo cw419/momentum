@@ -12,12 +12,21 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const isSupabaseEnabled = Boolean(supabase);
 
   useEffect(() => {
+    const client = supabase;
+    if (!client) {
+      setUser(null);
+      setLoading(false);
+      setAuthInitialized(true);
+      return;
+    }
+
     // Get initial session
     const initSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await client.auth.getSession();
         if (error) {
           console.error('Failed to get session:', error);
         }
@@ -35,7 +44,7 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     initSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = client.auth.onAuthStateChange(
       (event, session) => {
         console.log('Authentication state changed:', event, session?.user ? 'Logged in' : 'Not logged in');
         setUser(session?.user ?? null);
@@ -48,6 +57,10 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
 
     return () => subscription.unsubscribe();
   }, [authInitialized]);
+
+  if (!isSupabaseEnabled) {
+    return <>{children}</>;
+  }
 
   if (loading || !authInitialized) {
     return (

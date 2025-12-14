@@ -74,7 +74,13 @@ export class SchemaChecker {
       return cached.result;
     }
     try {
-      const { data, error } = await supabase
+      const client = supabase;
+      if (!client) {
+        this.schemaCache.set(tableName, { result: null, timestamp: now });
+        return null;
+      }
+
+      const { data, error } = await client
         .from('information_schema.columns')
         .select('column_name, data_type, is_nullable, column_default')
         .eq('table_name', tableName)

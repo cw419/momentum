@@ -18,6 +18,11 @@ interface PerformanceMetric {
   metadata?: Record<string, any>;
 }
 
+type LayoutShiftEntry = PerformanceEntry & {
+  value: number;
+  hadRecentInput: boolean;
+};
+
 interface PerformanceThresholds {
   navigation: {
     firstContentfulPaint: number;
@@ -210,7 +215,7 @@ class ResponseTimeMonitor {
           timestamp: Date.now(),
           category: 'navigation',
           metadata: {
-            element: entry.element?.tagName || 'unknown',
+            element: (entry as LargestContentfulPaint).element?.tagName || 'unknown',
             threshold: this.thresholds.navigation.largestContentfulPaint,
             status: entry.startTime <= this.thresholds.navigation.largestContentfulPaint ? 'good' : 'poor'
           }
@@ -224,7 +229,7 @@ class ResponseTimeMonitor {
     // Cumulative Layout Shift
     this.createPerformanceObserver('layout-shift', (entries) => {
       let cumulativeScore = 0;
-      for (const entry of entries) {
+      for (const entry of entries as LayoutShiftEntry[]) {
         if (!entry.hadRecentInput) {
           cumulativeScore += entry.value;
         }
@@ -250,6 +255,7 @@ class ResponseTimeMonitor {
    */
   private measureFirstInputDelay(): void {
     let firstInputTime: number | null = null;
+    const inputEvents = ['click', 'keydown', 'touchstart'] as const;
     
     const onFirstInput = (event: Event) => {
       if (firstInputTime === null) {
@@ -272,15 +278,15 @@ class ResponseTimeMonitor {
             });
             
             // 移除监听器
-            ['click', 'keydown', 'touchstart'].forEach(eventType => {
-              document.removeEventListener(eventType, onFirstInput, { capture: true, passive: true });
+            inputEvents.forEach((eventType) => {
+              document.removeEventListener(eventType, onFirstInput, true);
             });
           });
         }
       }
     };
 
-    ['click', 'keydown', 'touchstart'].forEach(eventType => {
+    inputEvents.forEach((eventType) => {
       document.addEventListener(eventType, onFirstInput, { capture: true, passive: true, once: true });
     });
   }
@@ -695,6 +701,7 @@ class ResponseTimeMonitor {
     metrics: Record<string, PerformanceMetric[]>, 
     issues: string[]
   ): string[] {
+    void metrics;
     const recommendations: string[] = [];
 
     if (issues.some(issue => issue.includes('页面加载'))) {

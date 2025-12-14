@@ -204,7 +204,6 @@ export class EnhancedDuplicationHandler {
    */
   generateNameSuggestions(baseName: string, existingNames: string[]): string[] {
     const suggestions: string[] = [];
-    const baseNameLower = baseName.toLowerCase();
     
     // 数字后缀建议
     for (let i = 2; i <= 5; i++) {

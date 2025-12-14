@@ -4,7 +4,7 @@
  */
 
 import { storage } from './storage';
-import { CompletionHistory, Chain, TaskTimeStats } from '../types';
+import { CompletionHistory, TaskTimeStats } from '../types';
 
 export interface MigrationResult {
   success: boolean;
@@ -134,7 +134,6 @@ export class DataMigrationManager {
           }
 
           const chainId = record.chainId;
-          const duration = record.actualDuration;
 
           if (statsMap.has(chainId)) {
             // 更新现有统计（但不重复计算已处理的记录）

@@ -3,9 +3,8 @@
  * 处理例外规则的分类、筛选和类型验证
  */
 
-import { ExceptionRule, ExceptionRuleType, ExceptionRuleError, ExceptionRuleException, EnhancedExceptionRuleException } from '../types';
+import { ExceptionRule, ExceptionRuleType, ExceptionRuleError, EnhancedExceptionRuleException } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
-import { enhancedRuleValidationService } from './EnhancedRuleValidationService';
 
 export class RuleClassificationService {
   /**

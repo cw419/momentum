@@ -20,6 +20,18 @@ class NotificationManager {
     this.loadEnabledState();
   }
 
+  async notifyTaskFailed(chainName: string, reason: string) {
+    if (!this.isNotificationsEnabled()) return null;
+
+    return this.showNotification({
+      title: 'ä»»åŠ¡å¤±è´¥',
+      body: `"${chainName}"${reason ? `ï¼š${reason}` : ''}`,
+      icon: '/vite.svg',
+      tag: `task-failed-${Date.now()}`,
+      requireInteraction: true,
+    });
+  }
+
   /**
    * 检查通知权限
    */
@@ -117,7 +129,6 @@ class NotificationManager {
         tag: options.tag,
         requireInteraction: options.requireInteraction || false,
         silent: options.silent || false,
-        timestamp: Date.now(),
       });
 
       // 添加点击事件处理
@@ -145,12 +156,13 @@ class NotificationManager {
   /**
    * 任务完成通知
    */
-  async notifyTaskCompleted(chainName: string, streak: number) {
+  async notifyTaskCompleted(chainName: string, streak: number, message?: string) {
     if (!this.isNotificationsEnabled()) return null;
-    
+    const messageSuffix = message ? ` ${message}` : '';
+
     return this.showNotification({
       title: '任务完成',
-      body: `"${chainName}"已完成！当前记录: #${streak}`,
+      body: `"${chainName}"已完成！${messageSuffix}当前记录: #${streak}`,
       icon: '/vite.svg',
       tag: `task-completed-${Date.now()}`, // 确保每次通知都是唯一的
       requireInteraction: false,

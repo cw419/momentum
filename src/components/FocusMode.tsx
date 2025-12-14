@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ActiveSession, Chain, ExceptionRule, ExceptionRuleType, SessionContext, PauseOptions } from '../types';
-import { CheckCircle, Settings, Maximize, Minimize, X, AlertTriangle, Flame, Clock, Hourglass } from 'lucide-react';
+import { CheckCircle, Settings, Maximize, X, AlertTriangle, Flame, Clock, Hourglass } from 'lucide-react';
 import { formatDuration, formatElapsedTime, formatTimeDescription, formatLastCompletionReference } from '../utils/time';
 import { notificationManager } from '../utils/notifications';
 import { forwardTimerManager } from '../utils/forwardTimer';
@@ -12,11 +12,12 @@ import { userFeedbackHandler } from '../services/UserFeedbackHandler';
 import { errorRecoveryManager } from '../services/ErrorRecoveryManager';
 import { EnhancedExceptionRuleException } from '../types';
 import { soundManager } from '../utils/soundManager';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 
 interface FocusModeProps {
   session: ActiveSession;
   chain: Chain;
-  storage: any;
+  storage: MomentumStorage;
   onComplete: (description?: string, notes?: string) => void;
   onInterrupt: (reason?: string) => void;
   onPause: (duration?: number) => void;
@@ -70,10 +71,12 @@ export const FocusMode: React.FC<FocusModeProps> = ({
   // 初始化上次完成时间参考
   useEffect(() => {
     if (isDurationless) {
-      const lastTime = storage.getLastCompletionTime(chain.id);
-      setLastCompletionTime(lastTime);
+      storage
+        .getLastCompletionTime(chain.id)
+        .then(setLastCompletionTime)
+        .catch(() => setLastCompletionTime(null));
     }
-  }, [chain.id, isDurationless]);
+  }, [chain.id, isDurationless, storage]);
 
   // 正向计时逻辑（无时长任务启用）
   useEffect(() => {
@@ -229,13 +232,6 @@ export const FocusMode: React.FC<FocusModeProps> = ({
     onComplete(description, notes);
   };
 
-  // 处理规则选择后的完成
-  const handleRuleBasedComplete = (description?: string, notes?: string) => {
-    setShowCompletionDialog(false);
-    // 这里我们已经有了规则选择，现在可以完成任务
-    onComplete(description, notes);
-  };
-
   // 处理规则选择（增强版本）
   const handleRuleSelected = async (rule: ExceptionRule, pauseOptions?: PauseOptions) => {
     console.log('🔧 handleRuleSelected called:', { rule, pendingActionType, ruleId: rule?.id, ruleType: typeof rule });
@@ -264,7 +260,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
       console.log('🔧 Preparing to use rule:', { ruleId: rule.id, sessionContext, actionType: pendingActionType });
       
       // 使用规则并记录统计
-      const result = await exceptionRuleManager.useRule(rule.id, sessionContext, pendingActionType, pauseOptions);
+      await exceptionRuleManager.useRule(rule.id, sessionContext, pendingActionType, pauseOptions);
       
       // 隐藏进度
       userFeedbackHandler.hideProgress();

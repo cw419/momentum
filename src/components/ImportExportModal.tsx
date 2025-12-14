@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Chain, CompletionHistory, RSIPNode, RSIPMeta } from '../types';
 import { Download, Upload, X, FileText, AlertCircle, CheckCircle, Clock, Shield } from 'lucide-react';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
-import { storage } from '../utils/storage';
-import { isUserAuthenticated, waitForAuthentication } from '../lib/supabase';
+import { waitForAuthentication } from '../lib/supabase';
 import { secureImportService, SecureImportOptions } from '../services/SecureImportService';
 
 interface ExportData {
@@ -14,7 +13,7 @@ interface ExportData {
   rsipNodes?: any[];
   rsipMeta?: any;
   userPreferences?: any;
-  exceptionRules?: any[];
+  exceptionRules?: any;
 }
 
 interface ImportExportModalProps {
@@ -69,7 +68,6 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         rsipNodes: (rsipNodes || []).map(node => ({
           ...node,
           createdAt: node.createdAt.toISOString(),
-          lastScheduledAt: node.lastScheduledAt?.toISOString(),
         })),
         rsipMeta: rsipMeta ? {
           ...rsipMeta,
@@ -93,23 +91,6 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
     } catch (error) {
       console.error('导出失败:', error);
     }
-  };
-
-  // 生成唯一ID的辅助函数
-  let idCounter = 0;
-  const generateUniqueId = () => {
-    idCounter++;
-    return `chain_${Date.now()}_${idCounter}_${Math.random().toString(36).substr(2, 9)}`;
-  };
-
-  const generateUniqueRsipId = () => {
-    idCounter++;
-    return `rsip_${Date.now()}_${idCounter}_${Math.random().toString(36).substr(2, 9)}`;
-  };
-
-  // 检查ID是否重复的函数
-  const checkIdConflict = (importedId: string, existingIds: Set<string>) => {
-    return existingIds.has(importedId);
   };
 
   const handleImport = async () => {
@@ -285,7 +266,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         auxiliaryFailures: 0,
         exceptions: [],
         auxiliaryExceptions: [],
+        auxiliarySignal: '',
         auxiliaryDuration: 15,
+        auxiliaryCompletionTrigger: '',
+        timeLimitExceptions: [],
         createdAt: new Date(),
         deletedAt: null
       }));

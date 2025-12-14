@@ -22,7 +22,6 @@ import { ruleStateManager } from './RuleStateManager';
 import { enhancedRuleValidationService } from './EnhancedRuleValidationService';
 import { dataIntegrityChecker } from './DataIntegrityChecker';
 import { errorRecoveryManager } from './ErrorRecoveryManager';
-import { userFeedbackHandler } from './UserFeedbackHandler';
 import { errorClassificationService } from './ErrorClassificationService';
 
 export class ExceptionRuleManager {
@@ -375,6 +374,7 @@ export class ExceptionRuleManager {
     rule: ExceptionRule;
   }> {
     try {
+      void pauseOptions;
       // 验证规则ID
       console.log('🔧 验证规则ID:', ruleId);
       const validation = await ruleStateManager.validateRuleId(ruleId);

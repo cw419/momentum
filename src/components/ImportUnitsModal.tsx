@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { ChainTreeNode } from '../types';
+import { Chain } from '../types';
 import { X, Import, Search, Clock, Flame, CheckCircle } from 'lucide-react';
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { formatTime } from '../utils/time';
 
 interface ImportUnitsModalProps {
-  availableUnits: ChainTreeNode[];
+  availableUnits: Chain[];
   groupId: string;
   onImport: (unitIds: string[], groupId: string, mode?: 'move' | 'copy') => void;
   onClose: () => void;

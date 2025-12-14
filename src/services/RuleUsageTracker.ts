@@ -8,7 +8,6 @@ import {
   SessionContext, 
   RuleUsageStats, 
   OverallUsageStats,
-  ExceptionRule,
   PauseOptions,
   ExceptionRuleError,
   ExceptionRuleException

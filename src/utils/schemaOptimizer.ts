@@ -20,6 +20,13 @@ export class SchemaOptimizer {
     return SchemaOptimizer.instance;
   }
 
+  private getClient(): NonNullable<typeof supabase> {
+    if (!supabase) {
+      throw new Error('Supabase not configured');
+    }
+    return supabase;
+  }
+
   /**
    * Run performance optimization checks and apply fixes if needed
    */
@@ -87,6 +94,7 @@ export class SchemaOptimizer {
   }> {
     const created: string[] = [];
     const errors: string[] = [];
+    const client = this.getClient();
     
     const performanceIndexes = [
       {
@@ -111,7 +119,7 @@ export class SchemaOptimizer {
 
     for (const index of performanceIndexes) {
       try {
-        const { error } = await supabase.rpc('exec_sql', { sql: index.definition });
+        const { error } = await client.rpc('exec_sql', { sql: index.definition });
         
         if (error) {
           if (!error.message?.includes('already exists')) {
@@ -136,10 +144,11 @@ export class SchemaOptimizer {
     error?: string;
   }> {
     try {
+      const client = this.getClient();
       const tables = ['chains', 'scheduled_sessions', 'active_sessions', 'completion_history', 'rsip_nodes', 'rsip_meta'];
       
       for (const table of tables) {
-        const { error } = await supabase.rpc('exec_sql', { 
+        const { error } = await client.rpc('exec_sql', { 
           sql: `ANALYZE ${table}` 
         });
         

@@ -111,28 +111,6 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
     };
   }, []);
 
-  // 滚动到指定项目
-  const scrollToItem = useCallback((index: number, align: 'start' | 'center' | 'end' = 'start') => {
-    if (!scrollElementRef.current) return;
-
-    const itemTop = index * itemHeight;
-    let scrollTop: number;
-
-    switch (align) {
-      case 'start':
-        scrollTop = itemTop;
-        break;
-      case 'center':
-        scrollTop = itemTop - (containerSize.height - itemHeight) / 2;
-        break;
-      case 'end':
-        scrollTop = itemTop - containerSize.height + itemHeight;
-        break;
-    }
-
-    scrollElementRef.current.scrollTop = Math.max(0, Math.min(scrollTop, totalHeight - containerSize.height));
-  }, [itemHeight, containerSize.height, totalHeight]);
-
   // 渲染创建新规则项
   const renderCreateNewItem = useCallback(() => {
     if (!onCreateNew || !searchQuery) return null;
@@ -396,7 +374,7 @@ function throttle<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
   let previous = 0;
 
   return function executedFunction(...args: Parameters<T>) {
@@ -409,12 +387,12 @@ function throttle<T extends (...args: any[]) => any>(
         timeout = null;
       }
       previous = now;
-      func.apply(this, args);
+      func(...args);
     } else if (!timeout) {
       timeout = setTimeout(() => {
         previous = Date.now();
         timeout = null;
-        func.apply(this, args);
+        func(...args);
       }, remaining);
     }
   };

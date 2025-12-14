@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Chain, ChainType } from '../types';
 import { ArrowLeft, Save, Headphones, Code, BookOpen, Dumbbell, Coffee, Target, Clock, Bell, Tag, Layers, Flame, Calendar, AlignLeft, Copy, Infinity, Hourglass, Crown, CheckCircle } from 'lucide-react';
 import { PureDOMSlider } from './PureDOMSlider';
@@ -127,6 +127,7 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
       auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
       exceptions: chain?.exceptions || [],
       auxiliaryExceptions: chain?.auxiliaryExceptions || [],
+      timeLimitExceptions: chain?.timeLimitExceptions || [],
     };
     
     console.log('ChainEditor - Chain data to save:', chainData);

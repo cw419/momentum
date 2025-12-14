@@ -18,7 +18,6 @@ export interface CompatibilityResult {
 
 export class CompatibilityChecker {
   private readonly CURRENT_VERSION = '1.1.0';
-  private readonly MIN_SUPPORTED_VERSION = '1.0.0';
 
   /**
    * 执行完整的兼容性检查
@@ -133,9 +132,9 @@ export class CompatibilityChecker {
       const { storage } = require('../utils/storage');
       
       // 测试基本的统计功能
-      const testStats = storage.getTaskTimeStats();
       const testChainId = 'compatibility-test-chain';
-      const testTime = storage.getLastCompletionTime(testChainId);
+      void storage.getTaskTimeStats();
+      void storage.getLastCompletionTime(testChainId);
 
       // 这些调用不应该抛出错误
       return true;

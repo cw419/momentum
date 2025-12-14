@@ -19,7 +19,6 @@ import {
 import { RuleSearchOptimizer, SearchResult } from '../utils/ruleSearchOptimizer';
 import { ExceptionRuleCache } from '../utils/exceptionRuleCache';
 import { useLayoutStability } from '../utils/LayoutStabilityMonitor';
-import { useAsyncOperation } from '../utils/AsyncOperationManager';
 import { VirtualizedRuleList } from './VirtualizedRuleList';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { 
@@ -63,7 +62,6 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
   // 工具实例
   const searchOptimizer = useMemo(() => new RuleSearchOptimizer(), []);
   const ruleCache = useMemo(() => new ExceptionRuleCache(), []);
-  const { optimisticUpdate } = useAsyncOperation();
   const { startMonitoring, stopMonitoring } = useLayoutStability(containerRef);
 
   // 初始化和清理

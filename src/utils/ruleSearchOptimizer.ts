@@ -337,7 +337,9 @@ export class RuleSearchOptimizer {
     if (this.searchCache.size >= this.CACHE_SIZE) {
       // 删除最旧的缓存项
       const firstKey = this.searchCache.keys().next().value;
-      this.searchCache.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.searchCache.delete(firstKey);
+      }
     }
     this.searchCache.set(key, results);
   }

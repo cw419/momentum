@@ -2,6 +2,9 @@ import React from 'react';
 import { queryOptimizer } from '../utils/queryOptimizer';
 import { supabaseStorage } from '../utils/supabaseStorage';
 import { isSupabaseConfigured } from '../lib/supabase';
+import type { MomentumStorage } from '../storage/MomentumStorage';
+import { localStorageAdapter } from '../storage/localStorageAdapter';
+import type { Chain } from '../types';
 
 /**
  * Real-time synchronization service for immediate UI updates
@@ -55,7 +58,7 @@ class RealTimeSyncService {
       
       // Fetch fresh data if not provided
       if (!data) {
-        const storage = isSupabaseConfigured ? supabaseStorage : (await import('../utils/storage')).storage;
+        const storage: MomentumStorage = isSupabaseConfigured ? supabaseStorage : localStorageAdapter;
         
         switch (dataType) {
           case 'chains':
@@ -130,14 +133,14 @@ class RealTimeSyncService {
   /**
    * Clear all cache layers immediately - critical for delete operations
    */
-  async clearAllCaches(storage?: any): Promise<void> {
+  async clearAllCaches(storage?: MomentumStorage): Promise<void> {
     console.log('[REALTIME_SYNC] Clearing all cache layers immediately');
     
     // Clear query optimizer cache
     queryOptimizer.clearCache();
     
     // Clear storage-level cache if available
-    if (storage && storage.clearCache && typeof storage.clearCache === 'function') {
+    if (storage) {
       try {
         storage.clearCache();
         console.log('[REALTIME_SYNC] Storage cache cleared');
@@ -182,7 +185,7 @@ class RealTimeSyncService {
   /**
    * Enhanced delete operation with real-time sync
    */
-  async deleteWithSync(storage: any, chainId: string): Promise<any[]> {
+  async deleteWithSync(storage: MomentumStorage, chainId: string): Promise<Chain[]> {
     console.log(`[REALTIME_SYNC] Starting delete operation for chain: ${chainId}`);
     
     // CRITICAL FIX: Clear all caches BEFORE operation to prevent stale data issues
@@ -213,9 +216,9 @@ class RealTimeSyncService {
   }
   
   /**
-   * Enhanced restore operation with real-time sync  
+   * Enhanced restore operation with real-time sync
    */
-  async restoreWithSync(storage: any, chainIds: string[]): Promise<any[]> {
+  async restoreWithSync(storage: MomentumStorage, chainIds: string[]): Promise<Chain[]> {
     console.log(`[REALTIME_SYNC] Starting restore operation for chains:`, chainIds);
     
     // CRITICAL FIX: Clear all caches BEFORE operation
@@ -283,7 +286,7 @@ class RealTimeSyncService {
   /**
    * Enhanced permanent delete operation with real-time sync
    */
-  async permanentDeleteWithSync(storage: any, chainIds: string[]): Promise<any[]> {
+  async permanentDeleteWithSync(storage: MomentumStorage, chainIds: string[]): Promise<Chain[]> {
     console.log(`[REALTIME_SYNC] Starting permanent delete operation for chains:`, chainIds);
     
     // CRITICAL FIX: Clear all caches BEFORE operation
@@ -318,7 +321,7 @@ class RealTimeSyncService {
   /**
    * Enhanced save operation with real-time sync
    */
-  async saveWithSync(storage: any, chains: any[]): Promise<any[]> {
+  async saveWithSync(storage: MomentumStorage, chains: Chain[]): Promise<Chain[]> {
     console.log(`[REALTIME_SYNC] Starting save operation for ${chains.length} chains`);
     
     // CRITICAL FIX: Clear all caches BEFORE save to prevent conflicts

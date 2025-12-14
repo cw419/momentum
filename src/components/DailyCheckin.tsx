@@ -1,89 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { CheckCircle, Gift, Calendar, Flame, Star, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { CheckinService, CheckinStats, CheckinResult } from '../services/CheckinService';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { useCheckinDomain } from '../hooks/domains/useCheckinDomain';
 
 interface DailyCheckinProps {
   className?: string;
 }
 
 export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) => {
-  const [stats, setStats] = useState<CheckinStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const {
+    stats,
+    isLoading,
+    isCheckingIn,
+    error,
+    successMessage,
+    isCollapsed,
+    clearError,
+    toggleCollapsed,
+    loadStats,
+    handleCheckin,
+  } = useCheckinDomain();
 
-  // 切换折叠状态
-  const toggleCollapsed = useCallback(() => {
-    setIsCollapsed(prev => !prev);
-  }, []);
-
-  // 加载用户签到统计
-  const loadStats = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      setError('签到功能需要登录后使用');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setError(null);
-      setIsLoading(true);
-      const userStats = await CheckinService.getUserStats();
-      setStats(userStats);
-    } catch (err) {
-      console.error('加载签到统计失败:', err);
-      setError(err instanceof Error ? err.message : '加载签到数据失败');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // 执行签到
-  const handleCheckin = useCallback(async () => {
-    if (!stats || stats.has_checked_in_today || isCheckingIn) {
-      return;
-    }
-
-    try {
-      setIsCheckingIn(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      const result: CheckinResult = await CheckinService.performDailyCheckin();
-
-      if (result.success) {
-        // 更新统计数据
-        setStats(prev => prev ? {
-          ...prev,
-          total_points: result.total_points || prev.total_points + result.points_earned,
-          total_checkins: prev.total_checkins + 1,
-          current_streak: result.consecutive_days,
-          has_checked_in_today: true,
-          last_checkin_date: result.checkin_date
-        } : null);
-
-        setSuccessMessage(`签到成功！获得 ${result.points_earned} 积分，连续签到 ${result.consecutive_days} 天`);
-        
-        // 3秒后清除成功消息
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } else {
-        setError(result.message || '签到失败');
-      }
-    } catch (err) {
-      console.error('签到失败:', err);
-      setError(err instanceof Error ? err.message : '签到失败，请重试');
-    } finally {
-      setIsCheckingIn(false);
-    }
-  }, [stats, isCheckingIn]);
-
-  // 组件挂载时加载数据
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
 
   // 如果正在加载，显示加载状态
   if (isLoading) {
@@ -259,7 +195,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
                 <p className="text-red-700 dark:text-red-300">{error}</p>
               </div>
               <button 
-                onClick={() => setError(null)}
+                onClick={clearError}
                 className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
-import { useDarkMode } from '../hooks/useDarkMode';
+import { useDarkMode, type Theme } from '../hooks/useDarkMode';
 import { AccessibilityAnnouncer, useThemeAnnouncer } from './AccessibilityAnnouncer';
 
 interface ThemeToggleProps {

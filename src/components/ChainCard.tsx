@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Chain, ScheduledSession, ChainTreeNode } from '../types';
 import { Play, Clock, MoreHorizontal, Trash2, Flame, Calendar, Bell, Check, AlertTriangle, TrendingUp, Settings } from 'lucide-react';
 import { formatTime, getTimeRemaining, formatDuration, formatTimeDescription } from '../utils/time';
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { notificationManager } from '../utils/notifications';
-import { storage } from '../utils/storage';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 import { soundManager } from '../utils/soundManager';
 
 interface ChainCardProps {
+  storage: MomentumStorage;
   chain: Chain | ChainTreeNode;
   scheduledSession?: ScheduledSession;
   onStartChain: (chainId: string) => void;
@@ -21,6 +22,7 @@ interface ChainCardProps {
 
 // Performance optimized ChainCard component with React.memo
 export const ChainCard: React.FC<ChainCardProps> = React.memo(({
+  storage,
   chain,
   scheduledSession,
   onStartChain,
@@ -48,11 +50,33 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
 
   // 获取上次完成时间（仅对无时长任务）
   useEffect(() => {
-    if (chain.isDurationless || chain.duration === 0) {
-      const lastTime = storage.getLastCompletionTime(chain.id);
-      setLastCompletionTime(lastTime);
+    let didCancel = false;
+
+    if (!chain.isDurationless && chain.duration !== 0) {
+      setLastCompletionTime(null);
+      return;
     }
-  }, [chain.id, chain.isDurationless, chain.duration]);
+
+    (async () => {
+      try {
+        const lastTime = await storage.getLastCompletionTime(chain.id);
+        if (!didCancel) {
+          setLastCompletionTime(lastTime);
+        }
+      } catch (error) {
+        if (!didCancel) {
+          setLastCompletionTime(null);
+        }
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load last completion time:', error);
+        }
+      }
+    })();
+
+    return () => {
+      didCancel = true;
+    };
+  }, [chain.id, chain.isDurationless, chain.duration, storage]);
 
   // 计算通知时机
   const getNotificationThreshold = (durationMinutes: number) => {

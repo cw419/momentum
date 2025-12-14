@@ -1,7 +1,8 @@
 import { supabase, getCurrentUser, waitForAuthentication, isUserAuthenticated } from '../lib/supabase';
 import { queryOptimizer } from './queryOptimizer';
 import { Chain, DeletedChain, ScheduledSession, ActiveSession, CompletionHistory, RSIPNode, RSIPMeta } from '../types';
-import { logger, measurePerformance } from './logger';
+import { logger } from './logger';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 
 interface SchemaVerificationResult {
   hasAllColumns: boolean;
@@ -9,11 +10,16 @@ interface SchemaVerificationResult {
   error?: string;
 }
 
-export class SupabaseStorage {
+export class SupabaseStorage implements MomentumStorage {
   private schemaCache: Map<string, SchemaVerificationResult> = new Map();
-  private lastSchemaCheck: Date | null = null;
   private sessionSchemaVerified: Set<string> = new Set(); // Track tables verified this session
-  private readonly CACHE_DURATION = 10 * 60 * 1000; // 10 minutes cache
+
+  private getClient() {
+    if (!supabase) {
+      throw new Error('Supabase not configured');
+    }
+    return supabase;
+  }
   
   /**
    * Retry a database operation with exponential backoff
@@ -40,7 +46,7 @@ export class SupabaseStorage {
         }
         
         if (attempt === maxRetries) {
-          logger.error('Database operation failed after retries', { maxRetries, error: lastError.message });
+          logger.error('SUPABASE_STORAGE', 'Database operation failed after retries', { maxRetries, error: lastError.message });
           throw lastError;
         }
         
@@ -97,7 +103,7 @@ export class SupabaseStorage {
         }
         
         if (attempt === maxRetries) {
-          logger.error('Database operation failed after retries with auth', { 
+          logger.error('SUPABASE_STORAGE', 'Database operation failed after retries with auth', { 
             maxRetries, 
             error: lastError.message,
             isAuthError 
@@ -123,7 +129,6 @@ export class SupabaseStorage {
   clearSchemaCache(): void {
     console.log('[SUPABASE_STORAGE] Clearing schema cache');
     this.schemaCache.clear();
-    this.lastSchemaCheck = null;
     this.sessionSchemaVerified.clear();
     console.log('[SUPABASE_STORAGE] Schema cache cleared - will re-verify database schema');
   }
@@ -168,7 +173,6 @@ export class SupabaseStorage {
     
     // Cache the result
     this.schemaCache.set(cacheKey, result);
-    this.lastSchemaCheck = new Date();
     this.sessionSchemaVerified.add(cacheKey);
     
     return result;
@@ -178,7 +182,7 @@ export class SupabaseStorage {
   async getChains(): Promise<Chain[]> {
     const user = await getCurrentUser();
     if (!user) {
-      logger.warn('getChains: User not authenticated');
+      logger.warn('SUPABASE_STORAGE', 'getChains: User not authenticated');
       return [];
     }
 
@@ -188,14 +192,16 @@ export class SupabaseStorage {
     }
 
     try {
-      const { data, error } = await supabase
+      const client = this.getClient();
+
+      const { data, error } = await client
         .from('chains')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        logger.error('Failed to get chains data', {
+        logger.error('SUPABASE_STORAGE', 'Failed to get chains data', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -337,7 +343,7 @@ export class SupabaseStorage {
         .sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime());
     } catch (error) {
       // 如果获取链条失败，返回空数组
-      logger.warn('Failed to get deleted chains, database may not support soft delete', { error });
+      logger.warn('SUPABASE_STORAGE', 'Failed to get deleted chains, database may not support soft delete', { error });
       return [];
     }
   }
@@ -354,7 +360,9 @@ export class SupabaseStorage {
     
     try {
       // 尝试批量软删除
-      const { error } = await supabase
+      const client = this.getClient();
+
+      const { error } = await client
         .from('chains')
         .update({ deleted_at: new Date().toISOString() })
         .in('id', chainsToDelete.map(c => c.id))
@@ -363,17 +371,17 @@ export class SupabaseStorage {
       if (error) {
         // 如果数据库不支持 deleted_at 字段，回退到永久删除
         if (error.code === '42703' || error.message?.includes('deleted_at') || error.code === 'PGRST204') {
-          logger.warn('Database does not support soft delete, executing permanent delete');
+          logger.warn('SUPABASE_STORAGE', 'Database does not support soft delete, executing permanent delete');
           await this.permanentlyDeleteChain(chainId);
           return;
         }
-        logger.error('Soft delete chain failed', { error });
+        logger.error('SUPABASE_STORAGE', 'Soft delete chain failed', { error });
         throw new Error(`Soft delete chain failed: ${error.message}`);
       }
     } catch (error) {
       // 如果是字段不存在的错误，回退到永久删除
       if (error instanceof Error && (error.message.includes('deleted_at') || error.message.includes('PGRST204'))) {
-        logger.warn('Database does not support soft delete, executing permanent delete');
+        logger.warn('SUPABASE_STORAGE', 'Database does not support soft delete, executing permanent delete');
         await this.permanentlyDeleteChain(chainId);
         return;
       }
@@ -396,10 +404,12 @@ export class SupabaseStorage {
       const chainsToRestore = this.findChainAndChildren(chainId, allChains);
       
       console.log(`[SUPABASE_STORAGE] Found ${chainsToRestore.length} chains to restore:`, chainsToRestore.map(c => ({ id: c.id, name: c.name })));
+
+      const client = this.getClient();
       
       // Enhanced batch restore with retry mechanism
       const restoreOperation = async () => {
-        const { data, error } = await supabase
+        const { data, error } = await client
           .from('chains')
           .update({ deleted_at: null })
           .in('id', chainsToRestore.map(c => c.id))
@@ -410,10 +420,10 @@ export class SupabaseStorage {
           console.error(`[SUPABASE_STORAGE] Database restore error for chain ${chainId}:`, error);
           
           // 如果数据库不支持 deleted_at 字段，说明链条已经被永久删除，无法恢复
-          if (error.code === '42703' || error.message?.includes('deleted_at') || error.code === 'PGRST204') {
-            throw new Error('Database does not support soft delete, cannot restore deleted chains');
-          }
-          logger.error('Restore chain failed', { chainId, error, chainsToRestore: chainsToRestore.map(c => c.id) });
+           if (error.code === '42703' || error.message?.includes('deleted_at') || error.code === 'PGRST204') {
+             throw new Error('Database does not support soft delete, cannot restore deleted chains');
+           }
+          logger.error('SUPABASE_STORAGE', 'Restore chain failed', { chainId, error, chainsToRestore: chainsToRestore.map(c => c.id) });
           throw new Error(`Restore chain failed: ${error.message}`);
         }
 
@@ -429,7 +439,7 @@ export class SupabaseStorage {
       };
 
       // Use retry mechanism for database operation
-      const restoredData = await this.retryOperation(restoreOperation, 2, 500);
+      await this.retryOperation(restoreOperation, 2, 500);
       
       // ENHANCED: Clear any cached data after successful restore
       this.clearSchemaCache();
@@ -458,14 +468,16 @@ export class SupabaseStorage {
     const chainsToDelete = this.findChainAndChildren(chainId, allChains);
     
     // 批量永久删除
-    const { error } = await supabase
+    const client = this.getClient();
+
+    const { error } = await client
       .from('chains')
       .delete()
       .in('id', chainsToDelete.map(c => c.id))
       .eq('user_id', user.id);
 
     if (error) {
-      logger.error('Permanent delete chain failed', { error });
+      logger.error('SUPABASE_STORAGE', 'Permanent delete chain failed', { error });
       throw new Error(`Permanent delete chain failed: ${error.message}`);
     }
   }
@@ -481,7 +493,9 @@ export class SupabaseStorage {
       cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
       // 查找过期的已删除链条
-      const { data: expiredChains, error: selectError } = await supabase
+      const client = this.getClient();
+
+      const { data: expiredChains, error: selectError } = await client
         .from('chains')
         .select('id')
         .eq('user_id', user.id)
@@ -496,7 +510,7 @@ export class SupabaseStorage {
           }
           return 0;
         }
-        logger.error('Failed to find expired chains', { error: selectError });
+        logger.error('SUPABASE_STORAGE', 'Failed to find expired chains', { error: selectError });
         throw new Error(`Failed to find expired chains: ${selectError.message}`);
       }
 
@@ -505,14 +519,14 @@ export class SupabaseStorage {
       }
 
       // 永久删除过期链条
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await client
         .from('chains')
         .delete()
         .in('id', expiredChains.map(c => c.id))
         .eq('user_id', user.id);
 
       if (deleteError) {
-        logger.error('Failed to cleanup expired chains', { error: deleteError });
+        logger.error('SUPABASE_STORAGE', 'Failed to cleanup expired chains', { error: deleteError });
         throw new Error(`Failed to cleanup expired chains: ${deleteError.message}`);
       }
 
@@ -558,7 +572,7 @@ export class SupabaseStorage {
     
     if (!isAuthenticated || !user) {
       const error = new Error('User authentication failed or timed out. Please ensure you are logged in before importing data.');
-      logger.error('Authentication check failed during saveChains', { 
+      logger.error('SUPABASE_STORAGE', 'Authentication check failed during saveChains', { 
         isAuthenticated, 
         hasUser: !!user,
         chainCount: chains.length 
@@ -678,7 +692,9 @@ export class SupabaseStorage {
     };
 
     // 查询现有ID，用于决定删除哪些已被移除的链
-    const { data: existingRows, error: existingErr } = await supabase
+    const client = this.getClient();
+
+    const { data: existingRows, error: existingErr } = await client
       .from('chains')
       .select('id')
       .eq('user_id', user.id);
@@ -693,7 +709,7 @@ export class SupabaseStorage {
     const tryUpsert = async (rows: any[]) => {
       // Use enhanced retry with authentication awareness
       return await this.retryWithAuth(async () => {
-        const { data, error } = await supabase
+        const { data, error } = await client
           .from('chains')
           .upsert(rows, { onConflict: 'id' })
           .select('id');
@@ -728,7 +744,6 @@ export class SupabaseStorage {
       try {
         const result = await tryUpsert(rowsBase);
         upsertResultIds = (result.data || []).map(r => r.id);
-        this.sessionSchemaVerified.add(schemaVerificationKey);
         
         console.log('回退保存成功，已保存 IDs:', upsertResultIds);
         if (process.env.NODE_ENV === 'development') {
@@ -751,7 +766,7 @@ export class SupabaseStorage {
       });
       throw new Error(`保存数据失败: ${upsertErr1.message}`);
     } else {
-      upsertResultIds = (upsertData1 || []).map(r => r.id);
+      upsertResultIds = (upsertData1 || []).map((r: { id: string }) => r.id);
       console.log('保存成功，使用完整字段集');
     }
 
@@ -759,7 +774,7 @@ export class SupabaseStorage {
     const newIds = new Set(chains.map(c => c.id));
     const idsToDelete = [...existingIds].filter(id => !newIds.has(id));
     if (idsToDelete.length > 0) {
-      const { error: delErr } = await supabase
+      const { error: delErr } = await client
         .from('chains')
         .delete()
         .in('id', idsToDelete)
@@ -786,7 +801,9 @@ export class SupabaseStorage {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const { data, error } = await supabase
+    const client = this.getClient();
+
+    const { data, error } = await client
       .from('scheduled_sessions')
       .select('*')
       .eq('user_id', user.id)
@@ -809,15 +826,17 @@ export class SupabaseStorage {
     const user = await getCurrentUser();
     if (!user) return;
 
+    const client = this.getClient();
+
     // Delete all existing sessions for this user
-    await supabase
+    await client
       .from('scheduled_sessions')
       .delete()
       .eq('user_id', user.id);
 
     // Insert new sessions
     if (sessions.length > 0) {
-      const { error } = await supabase
+      const { error } = await client
         .from('scheduled_sessions')
         .insert(sessions.map(session => ({
           chain_id: session.chainId,
@@ -838,7 +857,9 @@ export class SupabaseStorage {
     const user = await getCurrentUser();
     if (!user) return null;
 
-    const { data, error } = await supabase
+    const client = this.getClient();
+
+    const { data, error } = await client
       .from('active_sessions')
       .select('*')
       .eq('user_id', user.id)
@@ -867,8 +888,10 @@ export class SupabaseStorage {
     const user = await getCurrentUser();
     if (!user) return;
 
+    const client = this.getClient();
+
     // Delete existing active session
-    await supabase
+    await client
       .from('active_sessions')
       .delete()
       .eq('user_id', user.id);
@@ -877,7 +900,7 @@ export class SupabaseStorage {
     if (session) {
       // 尝试使用新字段保存，如果失败则回退到基础字段
       const tryInsertWithNewFields = async () => {
-        return await supabase
+        return await client
           .from('active_sessions')
           .insert({
             chain_id: session.chainId,
@@ -893,7 +916,7 @@ export class SupabaseStorage {
       };
 
       const tryInsertBasic = async () => {
-        return await supabase
+        return await client
           .from('active_sessions')
           .insert({
             chain_id: session.chainId,
@@ -924,7 +947,9 @@ export class SupabaseStorage {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const { data, error } = await supabase
+    const client = this.getClient();
+
+    const { data, error } = await client
       .from('completion_history')
       .select('*')
       .eq('user_id', user.id)
@@ -955,8 +980,10 @@ export class SupabaseStorage {
 
     console.log('[DEBUG] saveCompletionHistory - 输入历史记录数量:', history.length);
 
+    const client = this.getClient();
+
     // Get existing history to determine what's new
-    const { data: existingHistory } = await supabase
+    const { data: existingHistory } = await client
       .from('completion_history')
       .select('chain_id, completed_at')
       .eq('user_id', user.id);
@@ -965,7 +992,7 @@ export class SupabaseStorage {
 
     // Create more robust duplicate detection using timestamp normalization
     const existingKeys = new Set(
-      existingHistory?.map(h => {
+      existingHistory?.map((h: { chain_id: string; completed_at: string }) => {
         // Normalize timestamp to avoid precision issues
         const normalizedTime = new Date(h.completed_at).getTime();
         const key = `${h.chain_id}-${normalizedTime}`;
@@ -989,7 +1016,7 @@ export class SupabaseStorage {
     if (newHistory.length > 0) {
       // 尝试使用新字段保存，如果失败则回退到基础字段
       const tryInsertWithNewFields = async () => {
-        return await supabase
+        return await client
           .from('completion_history')
           .insert(newHistory.map(h => ({
             chain_id: h.chainId,
@@ -1006,7 +1033,7 @@ export class SupabaseStorage {
       };
 
       const tryInsertBasic = async () => {
-        return await supabase
+        return await client
           .from('completion_history')
           .insert(newHistory.map(h => ({
             chain_id: h.chainId,
@@ -1038,7 +1065,9 @@ export class SupabaseStorage {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const { data, error } = await supabase
+    const client = this.getClient();
+
+    const { data, error } = await client
       .from('rsip_nodes')
       .select('*')
       .eq('user_id', user.id)
@@ -1065,6 +1094,8 @@ export class SupabaseStorage {
     const user = await getCurrentUser();
     if (!user) return;
 
+    const client = this.getClient();
+
     // Upsert all nodes for user
     const rows = nodes.map(n => ({
       id: n.id,
@@ -1079,7 +1110,7 @@ export class SupabaseStorage {
     }));
 
     // Fetch existing ids to delete removed ones
-    const { data: existingRows, error: existingErr } = await supabase
+    const { data: existingRows, error: existingErr } = await client
       .from('rsip_nodes')
       .select('id')
       .eq('user_id', user.id);
@@ -1092,7 +1123,7 @@ export class SupabaseStorage {
     const idsToDelete = [...existingIds].filter(id => !newIds.has(id));
 
     if (idsToDelete.length > 0) {
-      const { error: delErr } = await supabase
+      const { error: delErr } = await client
         .from('rsip_nodes')
         .delete()
         .in('id', idsToDelete)
@@ -1103,7 +1134,7 @@ export class SupabaseStorage {
       }
     }
 
-    const { error } = await supabase
+    const { error } = await client
       .from('rsip_nodes')
       .upsert(rows, { onConflict: 'id' });
     if (error) {
@@ -1115,7 +1146,10 @@ export class SupabaseStorage {
   async getRSIPMeta(): Promise<RSIPMeta> {
     const user = await getCurrentUser();
     if (!user) return {};
-    const { data, error } = await supabase
+
+    const client = this.getClient();
+
+    const { data, error } = await client
       .from('rsip_meta')
       .select('*')
       .eq('user_id', user.id)
@@ -1131,7 +1165,10 @@ export class SupabaseStorage {
   async saveRSIPMeta(meta: RSIPMeta): Promise<void> {
     const user = await getCurrentUser();
     if (!user) return;
-    const { error } = await supabase
+
+    const client = this.getClient();
+
+    const { error } = await client
       .from('rsip_meta')
       .upsert({
         user_id: user.id,

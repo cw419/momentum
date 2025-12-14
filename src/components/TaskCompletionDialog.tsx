@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, CheckCircle, FileText, MessageSquare, History, RotateCcw } from 'lucide-react';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 
 interface TaskCompletionDialogProps {
   isOpen: boolean;
   chainName: string;
   chainId: string;
   isDurationless?: boolean;
-  storage: any;
+  storage: MomentumStorage;
   onComplete: (description: string, notes?: string) => void;
   onCancel: () => void;
 }

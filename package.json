@@ -1,14 +1,16 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "momentum",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "license": "GPL-3.0-only",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "test:integration": "vitest --config vitest.integration.config.ts",

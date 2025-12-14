@@ -253,7 +253,7 @@ export class DeploymentValidator {
   /**
    * 测试数据完整性功能
    */
-  private async testDataIntegrity(): TestResult {
+  private async testDataIntegrity(): Promise<TestResult> {
     const startTime = Date.now();
     
     try {
@@ -357,7 +357,8 @@ export class DeploymentValidator {
       const finalRule = await optimisticResult.promise;
       
       const duration = Date.now() - startTime;
-      const passed = finalRule && finalRule.id && !finalRule.id.startsWith('temp_');
+      const finalRuleId = finalRule?.id;
+      const passed = typeof finalRuleId === 'string' && finalRuleId.length > 0 && !finalRuleId.startsWith('temp_');
 
       // 清理测试数据
       try {

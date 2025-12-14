@@ -35,7 +35,6 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
   onRuleSelected
 }) => {
   const [rules, setRules] = useState<ExceptionRule[]>([]);
-  const [filteredRules, setFilteredRules] = useState<ExceptionRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -47,7 +46,6 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
   // 编辑状态
   const [editingRule, setEditingRule] = useState<ExceptionRule | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showStats, setShowStats] = useState(false);
   
   // 表单状态
   const [formData, setFormData] = useState({
@@ -139,14 +137,13 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
         isActive: true,
         usageCount: 0,
         createdAt: new Date(),
-        updatedAt: new Date()
       };
       
       setOptimisticUpdates(prev => new Map(prev).set(operationId, tempRule));
       setRules(prev => [...prev, tempRule]);
       
       // 异步执行实际保存操作
-      const result = await asyncOperationManager.executeOperation({
+      await asyncOperationManager.executeOperation({
         id: operationId,
         operation: () => exceptionRuleManager.createRule(
           formData.name,
@@ -233,7 +230,6 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
         name: formData.name,
         type: formData.type,
         description: formData.description || undefined,
-        updatedAt: new Date()
       };
       
       setRules(prev => prev.map(rule => 
@@ -363,6 +359,10 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
     if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`;
     return `${Math.floor(diffDays / 30)}个月前`;
   };
+
+  void getRuleTypeDisplayName;
+  void getRuleTypeColor;
+  void formatLastUsed;
 
   if (loading) {
     return (

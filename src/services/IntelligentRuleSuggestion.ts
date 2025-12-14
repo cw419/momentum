@@ -3,7 +3,7 @@
  * 基于使用模式、上下文和机器学习提供个性化规则推荐
  */
 
-import { ExceptionRule, ExceptionRuleType, SessionContext, RuleUsageRecord } from '../types';
+import { ExceptionRule, ExceptionRuleType, RuleUsageRecord } from '../types';
 import { exceptionRuleManager } from './ExceptionRuleManager';
 import { ruleScopeManager } from './RuleScopeManager';
 import { exceptionRuleCache } from '../utils/exceptionRuleCache';
@@ -39,7 +39,6 @@ export interface ContextualFactors {
 
 export class IntelligentRuleSuggestion {
   private readonly SUGGESTION_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
-  private readonly PATTERN_ANALYSIS_WINDOW = 30; // days
   private readonly MIN_CONFIDENCE_THRESHOLD = 0.3;
 
   /**
@@ -228,6 +227,7 @@ export class IntelligentRuleSuggestion {
     chainId: string,
     context?: Partial<ContextualFactors>
   ): Promise<ContextualFactors> {
+    void chainId;
     const defaultFactors: ContextualFactors = {
       currentTime: new Date(),
       sessionDuration: 0,
@@ -491,6 +491,7 @@ export class IntelligentRuleSuggestion {
    */
   private async getRecentUsageRecords(chainId: string): Promise<RuleUsageRecord[]> {
     try {
+      void chainId;
       // 这里应该从实际的存储中获取使用记录
       // 目前返回模拟数据
       return [];
@@ -532,6 +533,7 @@ export class IntelligentRuleSuggestion {
    * 分析会话时长模式
    */
   private analyzeSessionDurationPattern(records: RuleUsageRecord[]): { [range: string]: number } {
+    void records;
     // 简化实现
     return {
       'short': 0.3,
@@ -544,6 +546,7 @@ export class IntelligentRuleSuggestion {
    * 分析常见原因
    */
   private analyzeCommonReasons(records: RuleUsageRecord[]): Array<{ reason: string; frequency: number }> {
+    void records;
     // 简化实现，返回常见的中断原因
     return [
       { reason: '上厕所', frequency: 8 },

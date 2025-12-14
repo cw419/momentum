@@ -453,7 +453,7 @@ export class RuleStateManager {
 
       // 清理不存在的规则状态
       const existingIds = new Set(allRules.map(r => r.id));
-      for (const [id, state] of this.states.entries()) {
+      for (const [id] of this.states.entries()) {
         if (!id.startsWith('temp_') && !existingIds.has(id)) {
           this.states.delete(id);
         }

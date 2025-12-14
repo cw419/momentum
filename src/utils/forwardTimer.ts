@@ -32,16 +32,17 @@ export class ForwardTimerManager {
         
         if (document.hidden) {
           // 页面隐藏时记录时间戳
-          this.timers.forEach((timer, sessionId) => {
+          this.timers.forEach((timer) => {
             if (!timer.isPaused) {
               timer.lastVisibilityChange = now;
             }
           });
         } else {
           // 页面恢复可见时处理时间差
-          this.timers.forEach((timer, sessionId) => {
+          this.timers.forEach((timer) => {
             if (!timer.isPaused && timer.lastVisibilityChange) {
               const hiddenDuration = now - timer.lastVisibilityChange;
+              void hiddenDuration;
               // 如果隐藏时间超过1秒，则认为是真正的标签页切换
               // 注释掉暂停时间累积，让计时器继续运行
               // if (hiddenDuration > 1000) {
@@ -245,6 +246,7 @@ export class ForwardTimerManager {
 
       // 计算时间偏移
       const timeOffset = now - data.startTime;
+      void timeOffset;
       
       this.timers.set(sessionId, {
         startTime: data.startTime,

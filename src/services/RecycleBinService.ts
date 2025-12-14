@@ -1,5 +1,6 @@
-import { Chain, DeletedChain } from '../types';
-import { storage as localStorageUtils } from '../utils/storage';
+import { DeletedChain } from '../types';
+import type { MomentumStorage } from '../storage/MomentumStorage';
+import { localStorageAdapter } from '../storage/localStorageAdapter';
 import { supabaseStorage } from '../utils/supabaseStorage';
 import { isSupabaseConfigured } from '../lib/supabase';
 
@@ -7,8 +8,8 @@ export class RecycleBinService {
   /**
    * 获取当前使用的存储实例
    */
-  private static getStorage() {
-    return isSupabaseConfigured ? supabaseStorage : localStorageUtils;
+  private static getStorage(): MomentumStorage {
+    return isSupabaseConfigured ? supabaseStorage : localStorageAdapter;
   }
 
   /**

@@ -5,7 +5,6 @@
 
 import { Chain, ExceptionRule, ExceptionRuleType } from '../types';
 import { exceptionRuleManager } from './ExceptionRuleManager';
-import { storage } from '../utils/storage';
 
 export interface MigrationResult {
   totalChains: number;

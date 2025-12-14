@@ -46,6 +46,7 @@ export class UserFeedbackHandler {
    * 显示用户友好的错误信息
    */
   showErrorMessage(error: ExceptionRuleException, context?: any): string {
+    void context;
     const messageId = this.generateMessageId();
     const userFriendlyMessage = this.getUserFriendlyMessage(error);
     const recoveryActions = errorRecoveryManager.getRecoveryOptions(error);

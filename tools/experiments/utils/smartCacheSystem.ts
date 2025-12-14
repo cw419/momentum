@@ -140,7 +140,8 @@ class SmartCacheSystem {
       this.metrics.misses++;
       return null;
     } catch (error) {
-      logger.error('Cache get error', { key, error: error.message });
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('SMART_CACHE', 'Cache get error', { key }, errorObj);
       this.metrics.misses++;
       return null;
     }
@@ -178,7 +179,8 @@ class SmartCacheSystem {
       }
 
     } catch (error) {
-      logger.error('Cache set error', { key, error: error.message });
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('SMART_CACHE', 'Cache set error', { key }, errorObj);
     }
   }
 
@@ -244,7 +246,8 @@ class SmartCacheSystem {
 
       return data;
     } catch (error) {
-      logger.error('L2 cache get error', { key, error: error.message });
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('SMART_CACHE', 'L2 cache get error', { key }, errorObj);
       return null;
     }
   }
@@ -269,7 +272,8 @@ class SmartCacheSystem {
         localStorage.setItem(storageKey, serialized);
       }
     } catch (error) {
-      logger.error('L2 cache set error', { key, error: error.message });
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('SMART_CACHE', 'L2 cache set error', { key }, errorObj);
     }
   }
 
@@ -422,7 +426,8 @@ class SmartCacheSystem {
           }
         }
       } catch (error) {
-        logger.error('Preload error', { key, error: error.message });
+        const errorObj = error instanceof Error ? error : new Error(String(error));
+        logger.error('SMART_CACHE', 'Preload error', { key }, errorObj);
       }
     });
 
@@ -552,7 +557,8 @@ class SmartCacheSystem {
     try {
       localStorage.removeItem(this.l2CachePrefix + key);
     } catch (error) {
-      logger.error('L2 cache delete error', { key, error: error.message });
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('SMART_CACHE', 'L2 cache delete error', { key }, errorObj);
     }
 
     return l1Deleted;
@@ -614,7 +620,8 @@ class SmartCacheSystem {
         localStorage.removeItem(key);
       }
     } catch (error) {
-      logger.error('L2 cache cleanup error', { error: error.message });
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('SMART_CACHE', 'L2 cache cleanup error', {}, errorObj);
     }
   }
 
@@ -641,7 +648,8 @@ class SmartCacheSystem {
             });
           }
         } catch (error) {
-          logger.error('Cache warm-up error', { key, error: error.message });
+          const errorObj = error instanceof Error ? error : new Error(String(error));
+          logger.error('SMART_CACHE', 'Cache warm-up error', { key }, errorObj);
         }
       }
     }

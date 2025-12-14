@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle, Loader } from 'lucide-react';
-import { userFeedbackHandler, FeedbackMessage, ProgressInfo } from '../services/UserFeedbackHandler';
+import { userFeedbackHandler, FeedbackAction, FeedbackMessage, ProgressInfo } from '../services/UserFeedbackHandler';
 
 interface UserFeedbackDisplayProps {
   className?: string;
@@ -78,7 +78,7 @@ export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({ classN
     userFeedbackHandler.removeMessage(messageId);
   };
 
-  const handleActionClick = async (action: FeedbackMessage['actions'][0]) => {
+  const handleActionClick = async (action: FeedbackAction) => {
     try {
       await action.handler();
     } catch (error) {

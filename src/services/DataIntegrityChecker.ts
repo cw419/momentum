@@ -511,15 +511,11 @@ export class DataIntegrityChecker {
   }
 
   private async removeUsageRecord(recordId: string): Promise<void> {
-    // 实现删除使用记录的逻辑
-    const records = await exceptionRuleStorage.getUsageRecords();
-    const filteredRecords = records.filter(r => r.id !== recordId);
-    // 需要实现保存过滤后记录的方法
+    await exceptionRuleStorage.deleteUsageRecord(recordId);
   }
 
   private async updateUsageRecord(record: RuleUsageRecord): Promise<void> {
-    // 实现更新使用记录的逻辑
-    // 这里需要扩展 exceptionRuleStorage 的功能
+    await exceptionRuleStorage.updateUsageRecord(record);
   }
 
   /**

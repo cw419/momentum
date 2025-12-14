@@ -209,7 +209,6 @@ export class RuleDuplicationDetector {
    */
   generateNameSuggestions(baseName: string, existingNames: string[]): string[] {
     const suggestions: string[] = [];
-    const normalizedBase = this.normalizeName(baseName);
     const normalizedExisting = existingNames.map(name => this.normalizeName(name));
     
     // 添加数字后缀
