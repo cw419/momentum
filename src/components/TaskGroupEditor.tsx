@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Chain, ChainType } from '../types';
+import { Chain, ChainDraft } from '../types';
 import { ArrowLeft, Save, Tag, Calendar, Target, Clock, Bell, Coffee, Hash, Hourglass, CheckCircle } from 'lucide-react';
 import { ResponsiveContainer } from './ResponsiveContainer';
 import { SettingSection } from './SettingSection';
@@ -11,7 +11,7 @@ interface TaskGroupEditorProps {
   chain?: Chain;
   isEditing: boolean;
   initialParentId?: string;
-  onSave: (chain: Omit<Chain, 'id' | 'currentStreak' | 'auxiliaryStreak' | 'totalCompletions' | 'totalFailures' | 'auxiliaryFailures' | 'createdAt' | 'lastCompletedAt'>) => void;
+  onSave: (chain: ChainDraft) => void;
   onCancel: () => void;
 }
 
@@ -111,9 +111,9 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
       ? customAuxiliarySignal.trim() 
       : auxiliarySignal;
 
-    const chainData = {
+    const chainData: Extract<ChainDraft, { type: 'group' }> = {
       name: name.trim(),
-      type: 'group' as ChainType,
+      type: 'group',
       parentId: chain?.parentId || initialParentId,
       sortOrder: chain?.sortOrder || Math.floor(Date.now() / 1000),
       trigger: '任务群容器',

@@ -2,6 +2,8 @@ import type { MomentumStorage } from './MomentumStorage';
 import { storage as localStorageUtils } from '../utils/storage';
 
 export const localStorageAdapter: MomentumStorage = {
+  kind: 'local',
+
   // Chains
   getChains: async () => localStorageUtils.getChains(),
   saveChains: async (chains) => localStorageUtils.saveChains(chains),
@@ -43,4 +45,3 @@ export const localStorageAdapter: MomentumStorage = {
   migrateCompletionHistoryForTiming: async () => localStorageUtils.migrateCompletionHistoryForTiming(),
   clearCache: () => localStorageUtils.clearCache(),
 };
-

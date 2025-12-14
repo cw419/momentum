@@ -10,7 +10,6 @@ interface RecycleBinModalProps {
   onClose: () => void;
   onRestore: (chainIds: string[]) => void;
   onPermanentDelete: (chainIds: string[]) => void;
-  refreshTrigger?: number; // New prop to trigger external refreshes
 }
 
 export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
@@ -18,7 +17,6 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
   onClose,
   onRestore,
   onPermanentDelete,
-  refreshTrigger,
 }) => {
   const storage = useStorage();
   const [deletedChains, setDeletedChains] = useState<DeletedChain[]>([]);
@@ -36,14 +34,6 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
       loadDeletedChains();
     }
   }, [isOpen]);
-
-  // ENHANCED: Watch for external refresh triggers (e.g., when chains are deleted from main app)
-  useEffect(() => {
-    if (refreshTrigger && isOpen) {
-      console.log('[RECYCLE_BIN] External refresh triggered, reloading deleted chains...');
-      loadDeletedChains();
-    }
-  }, [refreshTrigger, isOpen]);
 
   const loadDeletedChains = async () => {
     setIsLoading(true);

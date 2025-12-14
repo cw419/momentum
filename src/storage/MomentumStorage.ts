@@ -10,6 +10,8 @@ import type {
 } from '../types';
 
 export interface MomentumStorage {
+  readonly kind: 'local' | 'supabase';
+
   // Chains
   getChains(): Promise<Chain[]>;
   saveChains(chains: Chain[]): Promise<void>;
@@ -49,4 +51,3 @@ export interface MomentumStorage {
   migrateCompletionHistoryForTiming(): Promise<void>;
   clearCache(): void;
 }
-

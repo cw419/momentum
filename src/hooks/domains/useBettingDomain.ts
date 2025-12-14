@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { BetPlacementResult } from '../../services/BettingService';
 import { SessionService } from '../../services/SessionService';
-import { isSupabaseConfigured } from '../../lib/supabase';
+import { useStorage } from '../../storage/StorageContext';
 
 interface UseBettingDomainParams {
   pendingChainId: string | null;
@@ -25,6 +25,8 @@ export function useBettingDomain({
   setShowBettingModal,
   handleStartChain,
 }: UseBettingDomainParams) {
+  const storage = useStorage();
+
   const handleBetPlaced = async (betResult: BetPlacementResult) => {
     console.log('Bet placed successfully:', betResult);
 
@@ -39,7 +41,7 @@ export function useBettingDomain({
   };
 
   const handleBetCancelled = async () => {
-    if (currentSessionId && isSupabaseConfigured) {
+    if (currentSessionId && storage.kind === 'supabase') {
       try {
         await SessionService.deleteActiveSession(currentSessionId);
         console.log('已删除取消的会话记录，押注已通过触发器退款:', currentSessionId);
@@ -56,4 +58,3 @@ export function useBettingDomain({
 
   return { handleBetPlaced, handleBetCancelled };
 }
-

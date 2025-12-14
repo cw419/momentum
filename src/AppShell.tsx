@@ -27,7 +27,7 @@ const LoadingFallback = () => (
   </div>
 );
 import { useStorage } from './storage/StorageContext';
-import { isSupabaseConfigured, isUserAuthenticated, waitForAuthentication } from './lib/supabase';
+import { isUserAuthenticated, waitForAuthentication } from './lib/supabase';
 import { isSessionExpired } from './utils/time';
 import { queryOptimizer } from './utils/queryOptimizer';
 import { notificationManager } from './utils/notifications';
@@ -63,7 +63,6 @@ function AppShell() {
   const [showAuxiliaryJudgment, setShowAuxiliaryJudgment] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [recycleBinRefreshTrigger, setRecycleBinRefreshTrigger] = useState<number>(0);
 
   // 押注相关状态
   const [showBettingModal, setShowBettingModal] = useState(false);
@@ -110,8 +109,8 @@ function AppShell() {
   }, []);
 
   const renderContent = () => {
-    if (!isSupabaseConfigured) {
-      // 没有 Supabase 配置时，直接渲染内容，不需要认证
+    if (storage.kind !== 'supabase') {
+      // 本地存储模式：直接渲染内容，不需要认证
       return renderCurrentView();
     }
     
@@ -332,7 +331,6 @@ function AppShell() {
               history={state.completionHistory}
               rsipNodes={state.rsipNodes}
               rsipMeta={state.rsipMeta}
-              recycleBinRefreshTrigger={recycleBinRefreshTrigger}
             />
             {showAuxiliaryJudgment && (
               <Suspense fallback={null}>
@@ -352,7 +350,7 @@ function AppShell() {
   // Load data from storage on mount
   useEffect(() => {
     const loadData = async () => {
-      console.log('Starting data load, using storage type:', isSupabaseConfigured ? 'Supabase' : 'LocalStorage');
+      console.log('Starting data load, using storage type:', storage.kind);
       setIsLoadingData(true);
       try {
         // 在加载数据前先执行自动清理
@@ -626,7 +624,6 @@ function AppShell() {
   const { handleDeleteChain, handleRestoreChains, handlePermanentDeleteChains } = useRecycleBinDomain({
     setState,
     storage,
-    setRecycleBinRefreshTrigger,
   });
 
   const handleImportChains = async (importedChains: Chain[], options?: { 
@@ -638,19 +635,21 @@ function AppShell() {
     console.log('开始导入数据...', { chains: importedChains.length, options });
     
     try {
-      // CRITICAL FIX: Additional authentication check as a safety net
-      console.log('Double-checking authentication state before import operations...');
-      const isAuth = await isUserAuthenticated();
-      
-      if (!isAuth) {
-        console.log('Authentication not ready, waiting...');
-        const { user, isAuthenticated } = await waitForAuthentication(10000);
-        
-        if (!isAuthenticated || !user) {
-          throw new Error('Authentication failed during import. Please ensure you are logged in and try again.');
+      if (storage.kind === 'supabase') {
+        // CRITICAL FIX: Additional authentication check as a safety net
+        console.log('Double-checking authentication state before import operations...');
+        const isAuth = await isUserAuthenticated();
+
+        if (!isAuth) {
+          console.log('Authentication not ready, waiting...');
+          const { user, isAuthenticated } = await waitForAuthentication(10000);
+
+          if (!isAuthenticated || !user) {
+            throw new Error('Authentication failed during import. Please ensure you are logged in and try again.');
+          }
+
+          console.log('Authentication confirmed after wait. User ID:', user.id);
         }
-        
-        console.log('Authentication confirmed after wait. User ID:', user.id);
       }
       
       console.log('准备保存导入的数据到存储...');

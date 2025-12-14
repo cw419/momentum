@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import type { AppState, Chain } from '../../types';
+import type { AppState, Chain, ChainDraft, GroupChain, UnitChain } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 
@@ -43,17 +43,7 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
   };
 
   const handleSaveChain = async (
-    chainData: Omit<
-      Chain,
-      | 'id'
-      | 'currentStreak'
-      | 'auxiliaryStreak'
-      | 'totalCompletions'
-      | 'totalFailures'
-      | 'auxiliaryFailures'
-      | 'createdAt'
-      | 'lastCompletedAt'
-    >,
+    chainData: ChainDraft,
     isCopy: boolean = false
   ) => {
     console.log('Starting to save chain data...', chainData);
@@ -78,38 +68,83 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
         console.log('编辑模式 - 原始链条数据:', state.editingChain);
         console.log('新的链条数据:', chainData);
 
-        updatedActiveChains = state.chains.map(chain =>
-          chain.id === state.editingChain!.id ? { ...chain, ...chainData } : chain
-        );
+        const editingChainId = state.editingChain.id;
+        const normalizedParentId = chainData.parentId || undefined;
+
+        updatedActiveChains = state.chains.map(chain => {
+          if (chain.id !== editingChainId) return chain;
+
+          if (chainData.type === 'group') {
+            if (chain.type === 'group') {
+              const updated: GroupChain = { ...chain, ...chainData, parentId: normalizedParentId, type: 'group' };
+              return updated;
+            }
+
+            const updated: GroupChain = { ...chain, ...chainData, parentId: normalizedParentId, type: 'group' };
+            return updated;
+          }
+
+          if (chain.type === 'group') {
+            const { timeLimitHours, groupStartedAt, groupExpiresAt, isTaskGroup, groupRepeatCount, ...rest } = chain;
+            const updated: UnitChain = { ...rest, ...chainData, parentId: normalizedParentId };
+            return updated;
+          }
+
+          const updated: UnitChain = { ...chain, ...chainData, parentId: normalizedParentId };
+          return updated;
+        });
         console.log('编辑现有链，更新后的活跃链数组长度:', updatedActiveChains.length);
         const editedChain = updatedActiveChains.find(c => c.id === state.editingChain!.id);
         console.log('编辑后的链数据:', editedChain);
       } else {
-        const newChain: Chain = {
-          id: crypto.randomUUID(),
-          ...chainData,
-          currentStreak: 0,
-          auxiliaryStreak: 0,
-          totalCompletions: 0,
-          totalFailures: 0,
-          auxiliaryFailures: 0,
-          createdAt: new Date(),
-        };
-        if (isCopy) {
-          console.log('复制链条:', newChain);
+        const id = crypto.randomUUID();
+        const createdAt = new Date();
+        const normalizedParentId = chainData.parentId || undefined;
+
+        if (chainData.type === 'group') {
+          const newChain: GroupChain = {
+            id,
+            ...chainData,
+            parentId: normalizedParentId,
+            type: 'group',
+            currentStreak: 0,
+            auxiliaryStreak: 0,
+            totalCompletions: 0,
+            totalFailures: 0,
+            auxiliaryFailures: 0,
+            createdAt,
+          };
+
+          if (isCopy) {
+            console.log('复制链条:', newChain);
+          } else {
+            console.log('创建新链:', newChain);
+          }
+
+          updatedActiveChains = [...state.chains, newChain];
         } else {
-          console.log('创建新链:', newChain);
+          const newChain: UnitChain = {
+            id,
+            ...chainData,
+            parentId: normalizedParentId,
+            currentStreak: 0,
+            auxiliaryStreak: 0,
+            totalCompletions: 0,
+            totalFailures: 0,
+            auxiliaryFailures: 0,
+            createdAt,
+          };
+
+          if (isCopy) {
+            console.log('复制链条:', newChain);
+          } else {
+            console.log('创建新链:', newChain);
+          }
+
+          updatedActiveChains = [...state.chains, newChain];
         }
-        updatedActiveChains = [...state.chains, newChain];
         console.log('添加新链后的活跃链数组长度:', updatedActiveChains.length);
       }
-
-      updatedActiveChains = updatedActiveChains.map(chain => ({
-        ...chain,
-        type: chain.type || 'unit',
-        sortOrder: chain.sortOrder || Math.floor(Date.now() / 1000),
-        parentId: chain.parentId || undefined,
-      }));
 
       console.log('准备安全保存到存储（包含回收箱数据）...');
       await safelySaveChains(updatedActiveChains);
@@ -147,4 +182,3 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
     handleSaveChain,
   };
 }
-

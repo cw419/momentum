@@ -4,7 +4,6 @@ import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
 import { UserSettingsService } from '../../services/UserSettingsService';
 import { SessionService } from '../../services/SessionService';
-import { isSupabaseConfigured } from '../../lib/supabase';
 import { isGroupExpired, resetGroupProgress, startGroupTimer } from '../../utils/timeLimit';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import {
@@ -86,7 +85,7 @@ export function useSessionsDomain({
   };
 
   const handleStartChain = async (chainId: string) => {
-    if (isSupabaseConfigured && !pendingChainId) {
+    if (storage.kind === 'supabase' && !pendingChainId) {
       try {
         const isGamblingEnabled = await UserSettingsService.isGamblingModeEnabled();
         if (isGamblingEnabled) {
@@ -293,7 +292,7 @@ export function useSessionsDomain({
       });
       storage.saveActiveSession(null);
 
-      if (activeSessionId && isSupabaseConfigured) {
+      if (activeSessionId && storage.kind === 'supabase') {
         SessionService.completeTaskWithBetting(activeSessionId, true, '任务完成')
           .then(result => {
             console.log('任务完成和押注结算成功:', result);
@@ -366,7 +365,7 @@ export function useSessionsDomain({
       });
       storage.saveActiveSession(null);
 
-      if (activeSessionId && isSupabaseConfigured) {
+      if (activeSessionId && storage.kind === 'supabase') {
         SessionService.completeTaskWithBetting(activeSessionId, false, '任务中断或失败')
           .then(result => {
             console.log('任务中断/失败和押注结算成功:', result);

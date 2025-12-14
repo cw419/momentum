@@ -1,5 +1,6 @@
 import { DeletedChain } from '../types';
 import type { MomentumStorage } from '../storage/MomentumStorage';
+import { logger } from '../utils/logger';
 
 export class RecycleBinService {
   private static storage: MomentumStorage | null = null;
@@ -23,13 +24,17 @@ export class RecycleBinService {
    */
   static async getDeletedChains(): Promise<DeletedChain[]> {
     try {
-      console.log('[RecycleBin] 开始获取已删除链条...');
+      logger.debug('RECYCLE_BIN', '开始获取已删除链条');
       const storage = this.getStorage();
       const deletedChains = await storage.getDeletedChains();
-      console.log(`[RecycleBin] 获取到 ${deletedChains.length} 条已删除的链条`, deletedChains.map(c => ({ id: c.id, name: c.name, deletedAt: c.deletedAt })));
+      logger.debug('RECYCLE_BIN', '获取到已删除链条', {
+        count: deletedChains.length,
+        chains: deletedChains.map(c => ({ id: c.id, name: c.name, deletedAt: c.deletedAt })),
+      });
       return deletedChains;
     } catch (error) {
-      console.error('[RecycleBin] 获取已删除链条失败:', error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('RECYCLE_BIN', '获取已删除链条失败', undefined, errorObj);
       throw new Error('获取已删除链条失败');
     }
   }
@@ -39,12 +44,13 @@ export class RecycleBinService {
    */
   static async moveToRecycleBin(chainId: string): Promise<void> {
     try {
-      console.log(`[RecycleBin] 将链条 ${chainId} 移动到回收箱`);
+      logger.info('RECYCLE_BIN', '将链条移动到回收箱', { chainId });
       const storage = this.getStorage();
       await storage.softDeleteChain(chainId);
-      console.log(`[RecycleBin] 链条 ${chainId} 已成功移动到回收箱`);
+      logger.info('RECYCLE_BIN', '链条已成功移动到回收箱', { chainId });
     } catch (error) {
-      console.error(`[RecycleBin] 移动链条 ${chainId} 到回收箱失败:`, error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('RECYCLE_BIN', '移动链条到回收箱失败', { chainId }, errorObj);
       throw new Error(`移动链条到回收箱失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -54,12 +60,13 @@ export class RecycleBinService {
    */
   static async restoreChain(chainId: string): Promise<void> {
     try {
-      console.log(`[RecycleBin] 恢复链条 ${chainId}`);
+      logger.info('RECYCLE_BIN', '恢复链条', { chainId });
       const storage = this.getStorage();
       await storage.restoreChain(chainId);
-      console.log(`[RecycleBin] 链条 ${chainId} 已成功恢复`);
+      logger.info('RECYCLE_BIN', '链条已成功恢复', { chainId });
     } catch (error) {
-      console.error(`[RecycleBin] 恢复链条 ${chainId} 失败:`, error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('RECYCLE_BIN', '恢复链条失败', { chainId }, errorObj);
       throw new Error(`恢复链条失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -69,12 +76,13 @@ export class RecycleBinService {
    */
   static async permanentlyDelete(chainId: string): Promise<void> {
     try {
-      console.log(`[RecycleBin] 永久删除链条 ${chainId}`);
+      logger.info('RECYCLE_BIN', '永久删除链条', { chainId });
       const storage = this.getStorage();
       await storage.permanentlyDeleteChain(chainId);
-      console.log(`[RecycleBin] 链条 ${chainId} 已永久删除`);
+      logger.info('RECYCLE_BIN', '链条已永久删除', { chainId });
     } catch (error) {
-      console.error(`[RecycleBin] 永久删除链条 ${chainId} 失败:`, error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('RECYCLE_BIN', '永久删除链条失败', { chainId }, errorObj);
       throw new Error(`永久删除链条失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -84,16 +92,17 @@ export class RecycleBinService {
    */
   static async bulkRestore(chainIds: string[]): Promise<void> {
     try {
-      console.log(`[RecycleBin] 批量恢复 ${chainIds.length} 条链条:`, chainIds);
+      logger.info('RECYCLE_BIN', '批量恢复链条', { chainIds });
       const storage = this.getStorage();
       
       for (const chainId of chainIds) {
         await storage.restoreChain(chainId);
       }
       
-      console.log(`[RecycleBin] 成功批量恢复 ${chainIds.length} 条链条`);
+      logger.info('RECYCLE_BIN', '成功批量恢复链条', { count: chainIds.length });
     } catch (error) {
-      console.error('[RecycleBin] 批量恢复链条失败:', error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('RECYCLE_BIN', '批量恢复链条失败', { chainIds }, errorObj);
       throw new Error(`批量恢复链条失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -103,16 +112,17 @@ export class RecycleBinService {
    */
   static async bulkPermanentDelete(chainIds: string[]): Promise<void> {
     try {
-      console.log(`[RecycleBin] 批量永久删除 ${chainIds.length} 条链条:`, chainIds);
+      logger.info('RECYCLE_BIN', '批量永久删除链条', { chainIds });
       const storage = this.getStorage();
       
       for (const chainId of chainIds) {
         await storage.permanentlyDeleteChain(chainId);
       }
       
-      console.log(`[RecycleBin] 成功批量永久删除 ${chainIds.length} 条链条`);
+      logger.info('RECYCLE_BIN', '成功批量永久删除链条', { count: chainIds.length });
     } catch (error) {
-      console.error('[RecycleBin] 批量永久删除链条失败:', error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('RECYCLE_BIN', '批量永久删除链条失败', { chainIds }, errorObj);
       throw new Error(`批量永久删除链条失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -122,15 +132,16 @@ export class RecycleBinService {
    */
   static async cleanupExpiredChains(olderThanDays: number = 30): Promise<number> {
     try {
-      console.log(`[RecycleBin] 开始清理超过 ${olderThanDays} 天的已删除链条`);
+      logger.info('RECYCLE_BIN', '开始清理过期链条', { olderThanDays });
       const storage = this.getStorage();
       
       const deletedCount = await storage.cleanupExpiredDeletedChains(olderThanDays);
       
-      console.log(`[RecycleBin] 清理完成，共删除 ${deletedCount} 条过期链条`);
+      logger.info('RECYCLE_BIN', '清理完成', { deletedCount });
       return deletedCount;
     } catch (error) {
-      console.error('[RecycleBin] 清理过期链条失败:', error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('RECYCLE_BIN', '清理过期链条失败', { olderThanDays }, errorObj);
       throw new Error(`清理过期链条失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -159,7 +170,8 @@ export class RecycleBinService {
         expiringSoon
       };
     } catch (error) {
-      console.error('[RecycleBin] 获取回收箱统计信息失败:', error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.warn('RECYCLE_BIN', '获取回收箱统计信息失败', undefined, errorObj);
       return { totalDeleted: 0, expiringSoon: 0 };
     }
   }

@@ -8,10 +8,6 @@ import { queryOptimizer } from '../utils/queryOptimizer';
 import { Download, TreePine, Trash2, Rocket, Link, Plus, Layers, User } from 'lucide-react';
 import { NotificationToggle } from './NotificationToggle';
 
-import { isSupabaseConfigured } from '../lib/supabase';
-
-
-
 const ImportExportModal = lazy(() => import('./ImportExportModal').then(m => ({ default: m.ImportExportModal })));
 const RecycleBinModal = lazy(() => import('./RecycleBinModal').then(m => ({ default: m.RecycleBinModal })));
 const AccountModal = lazy(() => import('./AccountModal').then(m => ({ default: m.AccountModal })));
@@ -42,7 +38,6 @@ interface DashboardProps {
   history?: CompletionHistory[];
   rsipNodes?: any[];
   rsipMeta?: any;
-  recycleBinRefreshTrigger?: number; // New prop to trigger RecycleBin refreshes
 }
 
 // Performance optimized Dashboard component with React.memo and proper memoization
@@ -65,7 +60,6 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
   rsipNodes,
   rsipMeta,
   onOpenRSIP,
-  recycleBinRefreshTrigger,
 }) => {
   const [showImportExport, setShowImportExport] = useState(false);
   const [showRecycleBin, setShowRecycleBin] = useState(false);
@@ -73,6 +67,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(process.env.NODE_ENV === 'development');
   const [recycleBinCount, setRecycleBinCount] = useState(0);
   const storage = useStorage();
+  const isSupabase = storage.kind === 'supabase';
   
   // Only log in development mode to improve production performance
   if (process.env.NODE_ENV === 'development') {
@@ -155,7 +150,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
       <div className="max-w-7xl mx-auto">
         {/* Theme toggle in header */}
         <div className="flex justify-end items-center space-x-4 mb-6">
-          {isSupabaseConfigured && (
+          {isSupabase && (
             <button
               onClick={handleShowAccountModal}
               className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105"
@@ -195,7 +190,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
         {/* Daily Check-in Section - lazy loaded */}
         <div className="mb-12 animate-fade-in">
           <Suspense fallback={<CheckinPlaceholder />}>
-            {isSupabaseConfigured ? (
+            {isSupabase ? (
               <DailyCheckin className="max-w-2xl mx-auto" />
             ) : (
               <DailyCheckinDemo className="max-w-2xl mx-auto" />
@@ -343,7 +338,6 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
             onClose={handleHideRecycleBin}
             onRestore={handleRestore}
             onPermanentDelete={handlePermanentDelete}
-            refreshTrigger={recycleBinRefreshTrigger}
           />
         </Suspense>
       )}

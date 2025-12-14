@@ -1,4 +1,4 @@
-export interface Chain {
+export interface ChainRecord {
   id: string;
   parentId?: string; // 父任务ID，用于构建层级关系
   type: ChainType; // 任务类型/兵种
@@ -36,6 +36,49 @@ export interface Chain {
   lastCompletedAt?: Date;
 }
 
+type GroupOnlyChainFields =
+  | 'timeLimitHours'
+  | 'groupStartedAt'
+  | 'groupExpiresAt'
+  | 'isTaskGroup'
+  | 'groupRepeatCount';
+
+export type UnitChainType = Exclude<ChainType, 'group'>;
+
+export type UnitChain = Omit<ChainRecord, GroupOnlyChainFields> & {
+  type: UnitChainType;
+  timeLimitHours?: never;
+  groupStartedAt?: never;
+  groupExpiresAt?: never;
+  isTaskGroup?: never;
+  groupRepeatCount?: never;
+};
+
+export type GroupChain = Omit<ChainRecord, 'type'> & {
+  type: 'group';
+};
+
+export type TaskGroupChain = GroupChain & {
+  isTaskGroup: true;
+  groupRepeatCount: number;
+};
+
+export type Chain = UnitChain | GroupChain;
+
+export type DistributiveOmit<T, K extends PropertyKey> = T extends any ? Omit<T, K> : never;
+
+type ChainSystemFields =
+  | 'id'
+  | 'currentStreak'
+  | 'auxiliaryStreak'
+  | 'totalCompletions'
+  | 'totalFailures'
+  | 'auxiliaryFailures'
+  | 'createdAt'
+  | 'lastCompletedAt';
+
+export type ChainDraft = DistributiveOmit<Chain, ChainSystemFields>;
+
 export type ChainType =
   | 'unit'          // 基础单元
   | 'group'         // 任务群容器
@@ -47,15 +90,15 @@ export type ChainType =
   | 'quartermaster'; // 炊事单元（备餐做饭）
 
 // 已删除的链条接口
-export interface DeletedChain extends Chain {
+export type DeletedChain = Chain & {
   deletedAt: Date; // 删除时间戳，对于已删除的链条这个字段是必需的
-}
+};
 
 // 任务树节点，用于前端渲染层级结构
-export interface ChainTreeNode extends Chain {
+export type ChainTreeNode = Chain & {
   children: ChainTreeNode[];
   depth: number;
-}
+};
 
 export interface ScheduledSession {
   chainId: string;

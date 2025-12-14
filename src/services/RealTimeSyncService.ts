@@ -1,7 +1,7 @@
 import React from 'react';
-import { queryOptimizer } from '../utils/queryOptimizer';
 import type { MomentumStorage } from '../storage/MomentumStorage';
 import type { Chain } from '../types';
+import { logger } from '../utils/logger';
 
 /**
  * Real-time synchronization service for immediate UI updates
@@ -15,9 +15,10 @@ class RealTimeSyncService {
   
   setStorage(storage: MomentumStorage | null): void {
     this.storage = storage;
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[REALTIME_SYNC] Default storage ${storage ? 'configured' : 'cleared'}`);
-    }
+    logger.debug('REALTIME_SYNC', 'Default storage updated', {
+      configured: !!storage,
+      kind: storage?.kind,
+    });
   }
 
   /**
@@ -25,7 +26,7 @@ class RealTimeSyncService {
    */
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    console.log(`[REALTIME_SYNC] ${enabled ? 'Enabled' : 'Disabled'} real-time synchronization`);
+    logger.info('REALTIME_SYNC', `${enabled ? 'Enabled' : 'Disabled'} real-time synchronization`);
   }
   
   /**
@@ -65,7 +66,7 @@ class RealTimeSyncService {
       if (!data) {
         const storage = this.storage;
         if (!storage) {
-          console.warn(`[REALTIME_SYNC] No storage configured; skipping refresh for ${dataType}`);
+          logger.warn('REALTIME_SYNC', 'No storage configured; skipping refresh', { dataType });
           return;
         }
         
@@ -87,13 +88,15 @@ class RealTimeSyncService {
         try {
           callback(data);
         } catch (error) {
-          console.error(`[REALTIME_SYNC] Error in subscriber callback:`, error);
+          const errorObj = error instanceof Error ? error : new Error(String(error));
+          logger.error('REALTIME_SYNC', 'Error in subscriber callback', { dataType }, errorObj);
         }
       });
       
-      console.log(`[REALTIME_SYNC] Notified ${callbacks.length} subscribers for ${dataType}`);
+      logger.debug('REALTIME_SYNC', 'Notified subscribers', { dataType, subscriberCount: callbacks.length });
     } catch (error) {
-      console.error(`[REALTIME_SYNC] Failed to fetch fresh data for ${dataType}:`, error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('REALTIME_SYNC', 'Failed to fetch fresh data', { dataType }, errorObj);
     }
   }
   
@@ -107,10 +110,7 @@ class RealTimeSyncService {
   ): Promise<void> {
     if (!this.isEnabled) return;
     
-    console.log(`[REALTIME_SYNC] Syncing after ${operationType} operation on ${dataType}`);
-    
-    // Clear relevant caches immediately
-    queryOptimizer.onDataChange(dataType);
+    logger.debug('REALTIME_SYNC', 'Syncing after operation', { dataType, operationType });
     
     // Notify subscribers with fresh data
     await this.notifySubscribers(dataType, freshData);
@@ -124,10 +124,7 @@ class RealTimeSyncService {
   async forceRefresh(): Promise<void> {
     if (!this.isEnabled) return;
     
-    console.log('[REALTIME_SYNC] Forcing complete data refresh');
-    
-    // Clear all caches
-    queryOptimizer.clearCache();
+    logger.debug('REALTIME_SYNC', 'Forcing complete data refresh');
     
     // Notify all subscribers to refresh their data
     await Promise.all([
@@ -143,39 +140,17 @@ class RealTimeSyncService {
    * Clear all cache layers immediately - critical for delete operations
    */
   async clearAllCaches(storage?: MomentumStorage): Promise<void> {
-    console.log('[REALTIME_SYNC] Clearing all cache layers immediately');
-    
-    // Clear query optimizer cache
-    queryOptimizer.clearCache();
-    
-    // Clear storage-level cache if available
+    // MomentumStorage implementations may maintain internal caches (e.g. schema verification).
+    // Keep this operation narrowly scoped: clear storage-level caches only.
     if (storage) {
       try {
         storage.clearCache();
-        console.log('[REALTIME_SYNC] Storage cache cleared');
       } catch (error) {
-        console.warn('[REALTIME_SYNC] Failed to clear storage cache:', error);
+        const errorObj = error instanceof Error ? error : new Error(String(error));
+        logger.warn('REALTIME_SYNC', 'Failed to clear storage cache', undefined, errorObj);
       }
     }
-    
-    // Force trigger data change events for all data types
-    this.triggerCacheInvalidation();
-    
-    console.log('[REALTIME_SYNC] All cache layers cleared successfully');
-  }
-  
-  /**
-   * Trigger cache invalidation for all data types
-   */
-  private triggerCacheInvalidation(): void {
-    console.log('[REALTIME_SYNC] Triggering cache invalidation for all data types');
-    
-    // Invalidate all cache types
-    queryOptimizer.onDataChange('chains');
-    queryOptimizer.onDataChange('sessions');
-    queryOptimizer.onDataChange('history');
-    
-    // Reset sync timestamp to force fresh data
+
     this.lastSyncTimestamp = Date.now();
   }
   
@@ -195,31 +170,16 @@ class RealTimeSyncService {
    * Enhanced delete operation with real-time sync
    */
   async deleteWithSync(storage: MomentumStorage, chainId: string): Promise<Chain[]> {
-    console.log(`[REALTIME_SYNC] Starting delete operation for chain: ${chainId}`);
-    
-    // CRITICAL FIX: Clear all caches BEFORE operation to prevent stale data issues
-    await this.clearAllCaches(storage);
-    
+    logger.info('REALTIME_SYNC', 'Starting delete operation', { chainId });
+
     // Perform database operation
     await storage.softDeleteChain(chainId);
-    
-    // CRITICAL FIX: Clear caches again immediately after delete
-    await this.clearAllCaches(storage);
-    
+
     // Get fresh data with forced cache bypass
     const freshChains = await storage.getActiveChains();
     
     // Trigger real-time sync with additional cache clearing
     await this.syncAfterOperation('chains', 'delete', freshChains);
-    
-    // ADDITIONAL FIX: Force refresh RecycleBin data to sync state
-    try {
-      console.log('[REALTIME_SYNC] Forcing RecycleBin data refresh after delete...');
-      await storage.getDeletedChains();
-      console.log('[REALTIME_SYNC] RecycleBin data refresh completed');
-    } catch (error) {
-      console.warn('[REALTIME_SYNC] RecycleBin refresh failed (non-critical):', error);
-    }
     
     return freshChains;
   }
@@ -228,10 +188,7 @@ class RealTimeSyncService {
    * Enhanced restore operation with real-time sync
    */
   async restoreWithSync(storage: MomentumStorage, chainIds: string[]): Promise<Chain[]> {
-    console.log(`[REALTIME_SYNC] Starting restore operation for chains:`, chainIds);
-    
-    // CRITICAL FIX: Clear all caches BEFORE operation
-    await this.clearAllCaches(storage);
+    logger.info('REALTIME_SYNC', 'Starting restore operation', { chainIds });
     
     const results = {
       successful: [] as string[],
@@ -241,42 +198,30 @@ class RealTimeSyncService {
     // ENHANCED: Process each chain individually with better error handling
     for (const chainId of chainIds) {
       try {
-        console.log(`[REALTIME_SYNC] Restoring chain: ${chainId}`);
+        logger.debug('REALTIME_SYNC', 'Restoring chain', { chainId });
         await storage.restoreChain(chainId);
         results.successful.push(chainId);
-        console.log(`[REALTIME_SYNC] Successfully restored chain: ${chainId}`);
+        logger.debug('REALTIME_SYNC', 'Successfully restored chain', { chainId });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         results.failed.push({ id: chainId, error: errorMessage });
-        console.error(`[REALTIME_SYNC] Failed to restore chain ${chainId}:`, errorMessage);
+        logger.warn('REALTIME_SYNC', 'Failed to restore chain', { chainId, errorMessage });
       }
     }
 
-    // CRITICAL FIX: Force clear all caches immediately after operations
-    await this.clearAllCaches(storage);
-    
     // Get fresh data immediately with forced cache bypass
-    console.log(`[REALTIME_SYNC] Fetching fresh chains data after restore operation`);
+    logger.debug('REALTIME_SYNC', 'Fetching fresh chains after restore operation');
     const freshChains = await storage.getActiveChains();
     
     // Trigger real-time sync with fresh data
     await this.syncAfterOperation('chains', 'restore', freshChains);
     
-    // ADDITIONAL FIX: Force refresh RecycleBin data to sync state
-    try {
-      console.log('[REALTIME_SYNC] Forcing RecycleBin data refresh after restore...');
-      await storage.getDeletedChains();
-      console.log('[REALTIME_SYNC] RecycleBin data refresh completed');
-    } catch (error) {
-      console.warn('[REALTIME_SYNC] RecycleBin refresh failed (non-critical):', error);
-    }
-    
     // Log operation summary
-    console.log(`[REALTIME_SYNC] Restore operation completed:`, {
+    logger.info('REALTIME_SYNC', 'Restore operation completed', {
       total: chainIds.length,
       successful: results.successful.length,
       failed: results.failed.length,
-      failures: results.failed
+      failures: results.failed,
     });
 
     // Throw error if all operations failed
@@ -286,7 +231,11 @@ class RealTimeSyncService {
     
     // Log partial failures but don't throw error
     if (results.failed.length > 0) {
-      console.warn(`[REALTIME_SYNC] Partial restore failure - ${results.failed.length} of ${chainIds.length} chains failed to restore:`, results.failed);
+      logger.warn('REALTIME_SYNC', 'Partial restore failure', {
+        failedCount: results.failed.length,
+        total: chainIds.length,
+        failures: results.failed,
+      });
     }
     
     return freshChains;
@@ -296,33 +245,18 @@ class RealTimeSyncService {
    * Enhanced permanent delete operation with real-time sync
    */
   async permanentDeleteWithSync(storage: MomentumStorage, chainIds: string[]): Promise<Chain[]> {
-    console.log(`[REALTIME_SYNC] Starting permanent delete operation for chains:`, chainIds);
-    
-    // CRITICAL FIX: Clear all caches BEFORE operation
-    await this.clearAllCaches(storage);
+    logger.info('REALTIME_SYNC', 'Starting permanent delete operation', { chainIds });
     
     // Perform database operations
     for (const chainId of chainIds) {
       await storage.permanentlyDeleteChain(chainId);
     }
-    
-    // CRITICAL FIX: Clear caches again immediately after operations
-    await this.clearAllCaches(storage);
-    
+
     // Get fresh data immediately
     const freshChains = await storage.getActiveChains();
     
     // Trigger real-time sync
     await this.syncAfterOperation('chains', 'delete', freshChains);
-    
-    // ADDITIONAL FIX: Force refresh RecycleBin data to sync state
-    try {
-      console.log('[REALTIME_SYNC] Forcing RecycleBin data refresh after permanent delete...');
-      await storage.getDeletedChains();
-      console.log('[REALTIME_SYNC] RecycleBin data refresh completed');
-    } catch (error) {
-      console.warn('[REALTIME_SYNC] RecycleBin refresh failed (non-critical):', error);
-    }
     
     return freshChains;
   }
@@ -331,17 +265,11 @@ class RealTimeSyncService {
    * Enhanced save operation with real-time sync
    */
   async saveWithSync(storage: MomentumStorage, chains: Chain[]): Promise<Chain[]> {
-    console.log(`[REALTIME_SYNC] Starting save operation for ${chains.length} chains`);
-    
-    // CRITICAL FIX: Clear all caches BEFORE save to prevent conflicts
-    await this.clearAllCaches(storage);
-    
+    logger.debug('REALTIME_SYNC', 'Starting save operation', { chainCount: chains.length });
+
     // Perform database operation
     await storage.saveChains(chains);
-    
-    // CRITICAL FIX: Clear caches again after save to ensure fresh data
-    await this.clearAllCaches(storage);
-    
+
     // Get fresh active chains
     const freshChains = await storage.getActiveChains();
     

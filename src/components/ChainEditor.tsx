@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Chain, ChainType } from '../types';
+import { Chain, ChainDraft, UnitChainType } from '../types';
 import { ArrowLeft, Save, Headphones, Code, BookOpen, Dumbbell, Coffee, Target, Clock, Bell, Tag, Layers, Flame, Calendar, AlignLeft, Copy, Infinity, Hourglass, Crown, CheckCircle } from 'lucide-react';
 import { PureDOMSlider } from './PureDOMSlider';
 import { ResponsiveContainer } from './ResponsiveContainer';
@@ -11,7 +11,7 @@ interface ChainEditorProps {
   chain?: Chain;
   isEditing: boolean;
   initialParentId?: string;
-  onSave: (chain: Omit<Chain, 'id' | 'currentStreak' | 'auxiliaryStreak' | 'totalCompletions' | 'totalFailures' | 'auxiliaryFailures' | 'createdAt' | 'lastCompletedAt'>, isCopy?: boolean) => void;
+  onSave: (chain: ChainDraft, isCopy?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -43,7 +43,9 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
   onCancel,
 }) => {
   const [name, setName] = useState(chain?.name || '');
-  const [type, setType] = useState<ChainType>(chain?.type || 'unit');
+  const [type, setType] = useState<UnitChainType>(
+    chain && chain.type !== 'group' ? chain.type : 'unit'
+  );
   // Fix: Only use initialParentId when creating a new chain (chain is undefined)
   // When editing an existing chain, respect its parentId (even if undefined)
   const [parentId, setParentId] = useState(chain ? chain.parentId : initialParentId);
@@ -232,7 +234,7 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
                 id="chain-type"
                 name="chainType"
                 value={type}
-                onChange={(e) => setType(e.target.value as ChainType)}
+                onChange={(e) => setType(e.target.value as UnitChainType)}
                 className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 transition-all duration-300 hover:border-primary-300 dark:hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 font-chinese"
               >
                 <option value="unit">基础单元</option>

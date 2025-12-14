@@ -1,6 +1,5 @@
 import { supabase, getCurrentUser, waitForAuthentication, isUserAuthenticated } from '../lib/supabase';
-import { queryOptimizer } from './queryOptimizer';
-import { Chain, DeletedChain, ScheduledSession, ActiveSession, CompletionHistory, RSIPNode, RSIPMeta } from '../types';
+import { Chain, DeletedChain, ScheduledSession, ActiveSession, CompletionHistory, RSIPNode, RSIPMeta, GroupChain, UnitChain } from '../types';
 import { logger } from './logger';
 import type { MomentumStorage } from '../storage/MomentumStorage';
 
@@ -11,6 +10,8 @@ interface SchemaVerificationResult {
 }
 
 export class SupabaseStorage implements MomentumStorage {
+  readonly kind = 'supabase' as const;
+
   private schemaCache: Map<string, SchemaVerificationResult> = new Map();
   private sessionSchemaVerified: Set<string> = new Set(); // Track tables verified this session
 
@@ -224,35 +225,59 @@ export class SupabaseStorage implements MomentumStorage {
       const chainCount = data?.length || 0;
       logger.dbOperation('getChains', true, { chainCount, userId: user.id });
       
-      const mappedChains = data.map(chain => ({
-      id: chain.id,
-      name: chain.name,
-      parentId: chain.parent_id || undefined,
-      type: chain.type as Chain['type'],
-      sortOrder: chain.sort_order,
-      trigger: chain.trigger,
-      duration: chain.duration,
-      description: chain.description,
-      currentStreak: chain.current_streak,
-      auxiliaryStreak: chain.auxiliary_streak,
-      totalCompletions: chain.total_completions,
-      totalFailures: chain.total_failures,
-      auxiliaryFailures: chain.auxiliary_failures,
-      exceptions: Array.isArray(chain.exceptions) ? chain.exceptions as string[] : [],
-      auxiliaryExceptions: Array.isArray(chain.auxiliary_exceptions) ? chain.auxiliary_exceptions as string[] : [],
-      auxiliarySignal: chain.auxiliary_signal,
-      auxiliaryDuration: chain.auxiliary_duration,
-      auxiliaryCompletionTrigger: chain.auxiliary_completion_trigger,
-      // 兼容：如果后端没有此字段，将为 undefined
-      isDurationless: (chain as any).is_durationless ?? false,
-      timeLimitHours: (chain as any).time_limit_hours ?? undefined,
-      timeLimitExceptions: Array.isArray((chain as any).time_limit_exceptions) ? (chain as any).time_limit_exceptions : [],
-      groupStartedAt: (chain as any).group_started_at ? new Date((chain as any).group_started_at) : undefined,
-      groupExpiresAt: (chain as any).group_expires_at ? new Date((chain as any).group_expires_at) : undefined,
-      deletedAt: (chain as any).deleted_at ? new Date((chain as any).deleted_at) : null,
-      createdAt: new Date(chain.created_at || Date.now()),
-      lastCompletedAt: chain.last_completed_at ? new Date(chain.last_completed_at) : undefined,
-    }));
+      const mappedChains: Chain[] = data.map((chain): Chain => {
+        const common = {
+          id: chain.id,
+          name: chain.name,
+          parentId: chain.parent_id || undefined,
+          sortOrder: chain.sort_order,
+          trigger: chain.trigger,
+          duration: chain.duration,
+          description: chain.description,
+          currentStreak: chain.current_streak,
+          auxiliaryStreak: chain.auxiliary_streak,
+          totalCompletions: chain.total_completions,
+          totalFailures: chain.total_failures,
+          auxiliaryFailures: chain.auxiliary_failures,
+          exceptions: Array.isArray(chain.exceptions) ? (chain.exceptions as string[]) : [],
+          auxiliaryExceptions: Array.isArray(chain.auxiliary_exceptions)
+            ? (chain.auxiliary_exceptions as string[])
+            : [],
+          auxiliarySignal: chain.auxiliary_signal,
+          auxiliaryDuration: chain.auxiliary_duration,
+          auxiliaryCompletionTrigger: chain.auxiliary_completion_trigger,
+          // 兼容：如果后端没有此字段，将为 undefined
+          isDurationless: (chain as any).is_durationless ?? false,
+          minimumDuration: (chain as any).minimum_duration ?? undefined,
+          taskRepeatCount: (chain as any).task_repeat_count ?? undefined,
+          timeLimitExceptions: Array.isArray((chain as any).time_limit_exceptions)
+            ? (chain as any).time_limit_exceptions
+            : [],
+          deletedAt: (chain as any).deleted_at ? new Date((chain as any).deleted_at) : null,
+          createdAt: new Date(chain.created_at || Date.now()),
+          lastCompletedAt: chain.last_completed_at ? new Date(chain.last_completed_at) : undefined,
+        };
+
+        if (chain.type === 'group') {
+          const result = {
+            ...common,
+            type: 'group',
+            timeLimitHours: (chain as any).time_limit_hours ?? undefined,
+            groupStartedAt: (chain as any).group_started_at ? new Date((chain as any).group_started_at) : undefined,
+            groupExpiresAt: (chain as any).group_expires_at ? new Date((chain as any).group_expires_at) : undefined,
+            isTaskGroup: (chain as any).is_task_group ?? (chain as any).isTaskGroup ?? undefined,
+            groupRepeatCount: (chain as any).group_repeat_count ?? (chain as any).groupRepeatCount ?? undefined,
+          } satisfies GroupChain;
+          return result;
+        }
+
+        const result = {
+          ...common,
+          type: (chain.type ?? 'unit') as UnitChain['type'],
+        } satisfies UnitChain;
+
+        return result;
+      });
     
     // Debug logging for development only
     if (process.env.NODE_ENV === 'development') {
@@ -443,7 +468,6 @@ export class SupabaseStorage implements MomentumStorage {
       
       // ENHANCED: Clear any cached data after successful restore
       this.clearSchemaCache();
-      queryOptimizer.onDataChange('chains');
       
       console.log(`[SUPABASE_STORAGE] Chain ${chainId} restore operation completed successfully`);
       
@@ -1287,34 +1311,3 @@ export const supabaseStorage = new SupabaseStorage();
 // Clear schema cache on module load to ensure fresh schema verification
 // Also clear session verification cache to handle hot reloads during development
 supabaseStorage.clearSchemaCache();
-
-// Add performance monitoring for frequent operations
-// Add query optimizer integration
-const originalGetChains = supabaseStorage.getChains.bind(supabaseStorage);
-supabaseStorage.getChains = async function() {
-  return queryOptimizer.deduplicateQuery("chains:getAll", () => originalGetChains());
-};
-
-const originalGetActiveChains = supabaseStorage.getActiveChains.bind(supabaseStorage);
-supabaseStorage.getActiveChains = async function() {
-  return queryOptimizer.deduplicateQuery("chains:getActive", () => originalGetActiveChains());
-};
-const originalSaveChains = supabaseStorage.saveChains.bind(supabaseStorage);
-supabaseStorage.saveChains = async function(chains: Chain[]) {
-  const startTime = performance.now();
-  try {
-    const result = await originalSaveChains(chains);
-    const endTime = performance.now();
-    const duration = endTime - startTime;
-    
-    if (duration > 1000) { // Log slow operations > 1 second
-      console.warn(`[PERFORMANCE] saveChains took ${duration.toFixed(2)}ms for ${chains.length} chains`);
-    }
-    
-    return result;
-  } catch (error) {
-    const endTime = performance.now();
-    console.error(`[PERFORMANCE] saveChains failed after ${(endTime - startTime).toFixed(2)}ms:`, error);
-    throw error;
-  }
-};

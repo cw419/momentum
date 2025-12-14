@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CheckinService, type CheckinResult, type CheckinStats } from '../../services/CheckinService';
-import { isSupabaseConfigured } from '../../lib/supabase';
+import { useStorage } from '../../storage/StorageContext';
 
 export function useCheckinDomain() {
+  const storage = useStorage();
+  const isSupabase = storage.kind === 'supabase';
+
   const [stats, setStats] = useState<CheckinStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
@@ -19,7 +22,7 @@ export function useCheckinDomain() {
   }, []);
 
   const loadStats = useCallback(async () => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabase) {
       setError('签到功能需要登录后使用');
       setIsLoading(false);
       return;
@@ -36,7 +39,7 @@ export function useCheckinDomain() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isSupabase]);
 
   const handleCheckin = useCallback(async () => {
     if (!stats || stats.has_checked_in_today || isCheckingIn) {
