@@ -108,14 +108,9 @@ class QueryOptimizer {
     
     this.pendingQueries.set(key, promise);
     
-    try {
-      const result = await promise;
-      this.setCachedData(key, result, [key.split(':')[0]]); // Use operation type as dependency
-      return result;
-    } catch (error) {
-      // Don't cache errors
-      throw error;
-    }
+    const result = await promise;
+    this.setCachedData(key, result, [key.split(':')[0]]); // Use operation type as dependency
+    return result;
   }
   
   /**

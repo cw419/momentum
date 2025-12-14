@@ -147,7 +147,7 @@ class NotificationManager {
       }
 
       return notification;
-    } catch (error) {
+    } catch {
       // 静默处理错误，不显示任何提示
       return null;
     }

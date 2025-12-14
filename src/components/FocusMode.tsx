@@ -12,12 +12,11 @@ import { userFeedbackHandler } from '../services/UserFeedbackHandler';
 import { errorRecoveryManager } from '../services/ErrorRecoveryManager';
 import { EnhancedExceptionRuleException } from '../types';
 import { soundManager } from '../utils/soundManager';
-import type { MomentumStorage } from '../storage/MomentumStorage';
+import { useStorage } from '../storage/StorageContext';
 
 interface FocusModeProps {
   session: ActiveSession;
   chain: Chain;
-  storage: MomentumStorage;
   onComplete: (description?: string, notes?: string) => void;
   onInterrupt: (reason?: string) => void;
   onPause: (duration?: number) => void;
@@ -28,7 +27,6 @@ interface FocusModeProps {
 export const FocusMode: React.FC<FocusModeProps> = ({
   session,
   chain,
-  storage,
   onComplete,
   onInterrupt,
   onPause,
@@ -38,6 +36,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [hasShownWarning, setHasShownWarning] = useState(false);
   const hasPlayedSoundRef = React.useRef(false);
+  const storage = useStorage();
   
   // 例外规则系统状态
   const [showRuleSelection, setShowRuleSelection] = useState(false);
@@ -845,7 +844,6 @@ export const FocusMode: React.FC<FocusModeProps> = ({
           chainName={chain.name}
           chainId={chain.id}
           isDurationless={isDurationless}
-          storage={storage}
           onComplete={handleDirectComplete}
           onCancel={handleCompletionDialogCancel}
         />

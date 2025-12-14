@@ -8,7 +8,6 @@ class SoundManager {
     // Initialize AudioContext on user interaction if possible, 
     // but we can try to create it here.
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContextClass) {
         this.audioContext = new AudioContextClass();

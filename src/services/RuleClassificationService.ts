@@ -69,13 +69,17 @@ export class RuleClassificationService {
     
     switch (actionType) {
       case 'pause':
-        const pauseMatch = rule.type === ExceptionRuleType.PAUSE_ONLY;
-        console.log(`暂停操作匹配结果: ${pauseMatch}`);
-        return pauseMatch;
+        {
+          const pauseMatch = rule.type === ExceptionRuleType.PAUSE_ONLY;
+          console.log(`暂停操作匹配结果: ${pauseMatch}`);
+          return pauseMatch;
+        }
       case 'early_completion':
-        const completionMatch = rule.type === ExceptionRuleType.EARLY_COMPLETION_ONLY;
-        console.log(`提前完成操作匹配结果: ${completionMatch}`);
-        return completionMatch;
+        {
+          const completionMatch = rule.type === ExceptionRuleType.EARLY_COMPLETION_ONLY;
+          console.log(`提前完成操作匹配结果: ${completionMatch}`);
+          return completionMatch;
+        }
       default:
         console.error(`未知的操作类型: ${actionType}`);
         return false;
@@ -235,7 +239,7 @@ export class RuleClassificationService {
 
       return { fixed, issues, actions };
 
-    } catch (error) {
+    } catch {
       return {
         fixed: false,
         issues: ['修复过程中发生错误'],

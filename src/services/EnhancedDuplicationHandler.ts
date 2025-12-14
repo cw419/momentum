@@ -60,7 +60,7 @@ export class EnhancedDuplicationHandler {
         conflictMessage: result.hasConflict ? this.getConflictMessage(result) : undefined,
         suggestions: result.suggestions
       };
-    } catch (error) {
+    } catch {
       return {
         isChecking: false,
         hasConflict: false,

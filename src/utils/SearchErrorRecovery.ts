@@ -236,7 +236,7 @@ export class LayoutErrorRecovery {
   private forceLayoutRecalculation(): void {
     requestAnimationFrame(() => {
       // 触发重排
-      document.body.offsetHeight;
+      void document.body.getBoundingClientRect();
       
       // 触发重绘
       window.dispatchEvent(new Event('resize'));

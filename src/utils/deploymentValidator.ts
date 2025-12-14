@@ -306,7 +306,7 @@ export class DeploymentValidator {
           testName,
           ExceptionRuleType.PAUSE_ONLY
         );
-      } catch (error) {
+      } catch {
         duplicateError = true;
       }
 
@@ -481,11 +481,11 @@ export class DeploymentValidator {
       try {
         const rule = await exceptionRuleManager.createRule(testName, ExceptionRuleType.PAUSE_ONLY);
         await exceptionRuleManager.deleteRule(rule.rule.id);
-      } catch (error) {
+      } catch {
         issues.push('基本功能测试失败');
       }
 
-    } catch (error) {
+    } catch {
       issues.push('验证过程失败');
     }
 

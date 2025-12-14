@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { Chain, ScheduledSession, CompletionHistory } from '../types';
-import type { MomentumStorage } from '../storage/MomentumStorage';
+import { useStorage } from '../storage/StorageContext';
 import { ThemeToggle } from './ThemeToggle';
 import { VirtualizedChainList } from './VirtualizedChainList';
 import { getTopLevelChains } from '../utils/chainTree';
@@ -24,7 +24,6 @@ const CheckinPlaceholder = () => (
 );
 
 interface DashboardProps {
-  storage: MomentumStorage;
   chains: Chain[];
   scheduledSessions: ScheduledSession[];
   isLoading?: boolean;
@@ -48,7 +47,6 @@ interface DashboardProps {
 
 // Performance optimized Dashboard component with React.memo and proper memoization
 export const Dashboard: React.FC<DashboardProps> = React.memo(({
-  storage,
   chains,
   scheduledSessions,
   isLoading = false,
@@ -74,6 +72,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(process.env.NODE_ENV === 'development');
   const [recycleBinCount, setRecycleBinCount] = useState(0);
+  const storage = useStorage();
   
   // Only log in development mode to improve production performance
   if (process.env.NODE_ENV === 'development') {
@@ -100,15 +99,14 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
   // Optimize recycle bin stats loading - lazy load service
   const loadRecycleBinStats = useCallback(async () => {
     try {
-      const { RecycleBinService } = await import('../services/RecycleBinService');
-      const stats = await RecycleBinService.getRecycleBinStats();
-      setRecycleBinCount(stats.totalDeleted);
+      const deletedChains = await storage.getDeletedChains();
+      setRecycleBinCount(deletedChains.length);
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Failed to load recycle bin statistics:', error);
       }
     }
-  }, []);
+  }, [storage]);
 
   // Only reload stats when chains count changes, not on every chain mutation
   const chainsCount = chains.length;
@@ -310,7 +308,6 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
             </div>
 
             <VirtualizedChainList
-              storage={storage}
               topLevelChains={topLevelChains}
               getScheduledSession={getScheduledSession}
               onStartChain={onStartChain}

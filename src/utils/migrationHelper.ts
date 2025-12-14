@@ -15,50 +15,60 @@ export class MigrationHelper {
 
       switch (migrationId) {
         case '20250730021823_winter_flame':
-          // Check if basic tables exist
-          const { data: chainsTable } = await client
-            .from('information_schema.tables')
-            .select('table_name')
-            .eq('table_name', 'chains')
-            .eq('table_schema', 'public');
-          return (chainsTable?.length || 0) > 0;
+          {
+            // Check if basic tables exist
+            const { data: chainsTable } = await client
+              .from('information_schema.tables')
+              .select('table_name')
+              .eq('table_name', 'chains')
+              .eq('table_schema', 'public');
+            return (chainsTable?.length || 0) > 0;
+          }
 
         case '20250801160754_peaceful_palace':
         case '20250801161456_fading_sunset':
-          // Check if parent_id and type columns exist
-          const { data: hierarchyColumns } = await client
-            .from('information_schema.columns')
-            .select('column_name')
-            .eq('table_name', 'chains')
-            .in('column_name', ['parent_id', 'type']);
-          return (hierarchyColumns?.length || 0) >= 2;
+          {
+            // Check if parent_id and type columns exist
+            const { data: hierarchyColumns } = await client
+              .from('information_schema.columns')
+              .select('column_name')
+              .eq('table_name', 'chains')
+              .in('column_name', ['parent_id', 'type']);
+            return (hierarchyColumns?.length || 0) >= 2;
+          }
 
         case '20250808000000_add_group_time_limit':
-          // Check if time limit columns exist
-          const { data: timeLimitColumns } = await client
-            .from('information_schema.columns')
-            .select('column_name')
-            .eq('table_name', 'chains')
-            .in('column_name', ['time_limit_hours', 'group_started_at', 'group_expires_at']);
-          return (timeLimitColumns?.length || 0) >= 3;
+          {
+            // Check if time limit columns exist
+            const { data: timeLimitColumns } = await client
+              .from('information_schema.columns')
+              .select('column_name')
+              .eq('table_name', 'chains')
+              .in('column_name', ['time_limit_hours', 'group_started_at', 'group_expires_at']);
+            return (timeLimitColumns?.length || 0) >= 3;
+          }
 
         case '20250808001000_add_durationless_flag':
-          // Check if is_durationless column exists
-          const { data: durationlessColumn } = await client
-            .from('information_schema.columns')
-            .select('column_name')
-            .eq('table_name', 'chains')
-            .eq('column_name', 'is_durationless');
-          return (durationlessColumn?.length || 0) > 0;
+          {
+            // Check if is_durationless column exists
+            const { data: durationlessColumn } = await client
+              .from('information_schema.columns')
+              .select('column_name')
+              .eq('table_name', 'chains')
+              .eq('column_name', 'is_durationless');
+            return (durationlessColumn?.length || 0) > 0;
+          }
 
         case '20250810000000_add_rsip_tables':
-          // Check if RSIP tables exist
-          const { data: rsipTables } = await client
-            .from('information_schema.tables')
-            .select('table_name')
-            .eq('table_schema', 'public')
-            .in('table_name', ['rsip_nodes', 'rsip_meta']);
-          return (rsipTables?.length || 0) >= 2;
+          {
+            // Check if RSIP tables exist
+            const { data: rsipTables } = await client
+              .from('information_schema.tables')
+              .select('table_name')
+              .eq('table_schema', 'public')
+              .in('table_name', ['rsip_nodes', 'rsip_meta']);
+            return (rsipTables?.length || 0) >= 2;
+          }
 
         default:
           return false;
@@ -296,8 +306,8 @@ ALTER TABLE IF EXISTS public.rsip_meta ENABLE ROW LEVEL SECURITY;
     }
 
     const unappliedMigrations = Object.entries(migrationStatus)
-      .filter(([_, applied]) => !applied)
-      .map(([migration, _]) => migration);
+      .filter(([, applied]) => !applied)
+      .map(([migration]) => migration);
 
     if (unappliedMigrations.length > 0) {
       report += '\n## 如何应用缺失的迁移\n\n';

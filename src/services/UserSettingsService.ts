@@ -325,7 +325,7 @@ export class UserSettingsService {
       console.log(`[UserSettingsService] 为用户 ${user.id} 更新设置`);
 
       // 移除不能更新的字段
-      const { user_id, created_at, ...updateData } = settingsUpdate;
+      const { user_id: _user_id, created_at: _created_at, ...updateData } = settingsUpdate;
 
       // 使用 upsert 操作
       const { data, error } = await supabase!

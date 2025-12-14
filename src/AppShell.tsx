@@ -26,9 +26,7 @@ const LoadingFallback = () => (
     </div>
   </div>
 );
-import type { MomentumStorage } from './storage/MomentumStorage';
-import { localStorageAdapter } from './storage/localStorageAdapter';
-import { supabaseStorage } from './utils/supabaseStorage';
+import { useStorage } from './storage/StorageContext';
 import { isSupabaseConfigured, isUserAuthenticated, waitForAuthentication } from './lib/supabase';
 import { isSessionExpired } from './utils/time';
 import { queryOptimizer } from './utils/queryOptimizer';
@@ -73,8 +71,7 @@ function AppShell() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null); // 跟踪数据库中的活动session UUID
 
-  // Determine storage source immediately based on Supabase configuration
-  const storage: MomentumStorage = isSupabaseConfigured ? supabaseStorage : localStorageAdapter;
+  const storage = useStorage();
   const safelySaveChains = useSafeSaveChains(storage);
 
   useEffect(() => {
@@ -193,7 +190,6 @@ function AppShell() {
             <FocusMode
               session={state.activeSession}
               chain={activeChain}
-              storage={storage}
               onComplete={handleCompleteSession}
               onInterrupt={handleInterruptSession}
               onPause={handlePauseSession}
@@ -318,7 +314,6 @@ function AppShell() {
         return (
           <>
             <Dashboard
-              storage={storage}
               chains={state.chains}
               scheduledSessions={state.scheduledSessions}
               isLoading={isLoadingData}

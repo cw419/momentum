@@ -196,7 +196,7 @@ export class SchemaOptimizer {
         recommendations.push('数据库架构完整，建议定期运行 VACUUM ANALYZE 以维护性能');
       }
       
-    } catch (error) {
+    } catch {
       recommendations.push('无法检查性能瓶颈，建议手动检查数据库状态');
     }
     

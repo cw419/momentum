@@ -540,7 +540,7 @@ export class ErrorRecoveryManager {
         }]
       };
 
-    } catch (checkError) {
+    } catch {
       return {
         success: false,
         message: '数据完整性检查失败'

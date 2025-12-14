@@ -73,6 +73,7 @@ export const PureDOMSlider: React.FC<PureDOMSliderProps> = ({
     
     // 智能触摸检测：只在真正的滑块交互时阻止默认行为
     const touch = event.touches[0];
+    if (!touch) return;
     const slider = event.currentTarget;
     const rect = slider.getBoundingClientRect();
     

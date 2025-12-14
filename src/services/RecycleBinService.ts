@@ -1,15 +1,21 @@
 import { DeletedChain } from '../types';
 import type { MomentumStorage } from '../storage/MomentumStorage';
-import { localStorageAdapter } from '../storage/localStorageAdapter';
-import { supabaseStorage } from '../utils/supabaseStorage';
-import { isSupabaseConfigured } from '../lib/supabase';
 
 export class RecycleBinService {
+  private static storage: MomentumStorage | null = null;
+
+  static setStorage(storage: MomentumStorage | null): void {
+    this.storage = storage;
+  }
+
   /**
    * 获取当前使用的存储实例
    */
   private static getStorage(): MomentumStorage {
-    return isSupabaseConfigured ? supabaseStorage : localStorageAdapter;
+    if (!this.storage) {
+      throw new Error('RecycleBinService storage is not configured');
+    }
+    return this.storage;
   }
 
   /**

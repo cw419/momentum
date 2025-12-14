@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, CheckCircle, FileText, MessageSquare, History, RotateCcw } from 'lucide-react';
-import type { MomentumStorage } from '../storage/MomentumStorage';
+import { useStorage } from '../storage/StorageContext';
 
 interface TaskCompletionDialogProps {
   isOpen: boolean;
   chainName: string;
   chainId: string;
   isDurationless?: boolean;
-  storage: MomentumStorage;
   onComplete: (description: string, notes?: string) => void;
   onCancel: () => void;
 }
@@ -17,7 +16,6 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
   chainName,
   chainId,
   isDurationless = false,
-  storage,
   onComplete,
   onCancel,
 }) => {
@@ -28,6 +26,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
   const [showQuickFill, setShowQuickFill] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement>(null);
   const notesTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const storage = useStorage();
 
   // 加载该链条的最近任务描述
   useEffect(() => {
@@ -50,7 +49,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
       
       loadRecentDescriptions();
     }
-  }, [isOpen, chainId]);
+  }, [isOpen, chainId, storage]);
 
   // Auto-focus description input when dialog opens
   useEffect(() => {

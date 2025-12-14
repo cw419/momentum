@@ -65,12 +65,9 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
-// Mock timers for more predictable testing
-vi.useFakeTimers();
-
 // Auto-cleanup after each test
 afterEach(() => {
+  vi.useRealTimers();
   vi.clearAllMocks();
-  vi.clearAllTimers();
   localStorageMock.clear();
 });

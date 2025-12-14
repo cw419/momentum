@@ -1,9 +1,6 @@
 import React from 'react';
 import { queryOptimizer } from '../utils/queryOptimizer';
-import { supabaseStorage } from '../utils/supabaseStorage';
-import { isSupabaseConfigured } from '../lib/supabase';
 import type { MomentumStorage } from '../storage/MomentumStorage';
-import { localStorageAdapter } from '../storage/localStorageAdapter';
 import type { Chain } from '../types';
 
 /**
@@ -14,7 +11,15 @@ class RealTimeSyncService {
   private syncCallbacks: Map<string, ((data: any) => void)[]> = new Map();
   private lastSyncTimestamp = Date.now();
   private isEnabled = true;
+  private storage: MomentumStorage | null = null;
   
+  setStorage(storage: MomentumStorage | null): void {
+    this.storage = storage;
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[REALTIME_SYNC] Default storage ${storage ? 'configured' : 'cleared'}`);
+    }
+  }
+
   /**
    * Enable/disable real-time sync
    */
@@ -58,7 +63,11 @@ class RealTimeSyncService {
       
       // Fetch fresh data if not provided
       if (!data) {
-        const storage: MomentumStorage = isSupabaseConfigured ? supabaseStorage : localStorageAdapter;
+        const storage = this.storage;
+        if (!storage) {
+          console.warn(`[REALTIME_SYNC] No storage configured; skipping refresh for ${dataType}`);
+          return;
+        }
         
         switch (dataType) {
           case 'chains':

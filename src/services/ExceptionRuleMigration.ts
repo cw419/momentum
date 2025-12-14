@@ -224,7 +224,7 @@ export class ExceptionRuleMigrationService {
 
       const uniqueRules = Array.from(ruleUsage.keys());
       const duplicateRules = Array.from(ruleUsage.entries())
-        .filter(([_, usage]) => usage.count > 1)
+        .filter(([, usage]) => usage.count > 1)
         .map(([rule, usage]) => ({ rule, count: usage.count, chains: usage.chains }))
         .sort((a, b) => b.count - a.count);
 

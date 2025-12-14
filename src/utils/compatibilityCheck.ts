@@ -101,6 +101,7 @@ export class CompatibilityChecker {
   private checkForwardTimerSupport(result: CompatibilityResult): boolean {
     try {
       // 检查是否能创建计时器管理器
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { ForwardTimerManager } = require('../utils/forwardTimer');
       const testManager = new ForwardTimerManager();
       
@@ -129,6 +130,7 @@ export class CompatibilityChecker {
   private checkTaskTimeStatsSupport(result: CompatibilityResult): boolean {
     try {
       // 检查存储功能
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { storage } = require('../utils/storage');
       
       // 测试基本的统计功能

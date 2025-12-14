@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DeletedChain } from '../types';
-import { RecycleBinService } from '../services/RecycleBinService';
+import { useStorage } from '../storage/StorageContext';
 import { DeletedChainCard } from './DeletedChainCard';
 import { ConfirmationDialog } from './ConfirmationDialog';
 import { Trash2, RotateCcw, X, CheckSquare, Square } from 'lucide-react';
@@ -20,6 +20,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
   onPermanentDelete,
   refreshTrigger,
 }) => {
+  const storage = useStorage();
   const [deletedChains, setDeletedChains] = useState<DeletedChain[]>([]);
   const [selectedChains, setSelectedChains] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +48,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
   const loadDeletedChains = async () => {
     setIsLoading(true);
     try {
-      const chains = await RecycleBinService.getDeletedChains();
+      const chains = await storage.getDeletedChains();
       setDeletedChains(chains);
       setSelectedChains(new Set()); // 清空选择
     } catch (error) {

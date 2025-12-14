@@ -195,7 +195,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
         }
       });
       
-    } catch (err) {
+    } catch {
       // 处理同步错误
       setRules(prev => prev.filter(rule => rule.id !== operationId));
       setOptimisticUpdates(prev => {
@@ -268,7 +268,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
         }
       });
       
-    } catch (err) {
+    } catch {
       // 回滚乐观更新
       setRules(prev => prev.map(rule => 
         rule.id === originalRule.id ? originalRule : rule
@@ -331,7 +331,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       setError('导出规则失败');
     }
   };

@@ -209,7 +209,7 @@ export class ExceptionRuleManager {
           suggestedName: s.suggestedName
         }))
       };
-    } catch (error) {
+    } catch {
       return {
         hasConflict: false,
         suggestions: []

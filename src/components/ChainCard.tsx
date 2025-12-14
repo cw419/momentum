@@ -5,11 +5,10 @@ import { formatTime, getTimeRemaining, formatDuration, formatTimeDescription } f
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { notificationManager } from '../utils/notifications';
-import type { MomentumStorage } from '../storage/MomentumStorage';
+import { useStorage } from '../storage/StorageContext';
 import { soundManager } from '../utils/soundManager';
 
 interface ChainCardProps {
-  storage: MomentumStorage;
   chain: Chain | ChainTreeNode;
   scheduledSession?: ScheduledSession;
   onStartChain: (chainId: string) => void;
@@ -22,7 +21,6 @@ interface ChainCardProps {
 
 // Performance optimized ChainCard component with React.memo
 export const ChainCard: React.FC<ChainCardProps> = React.memo(({
-  storage,
   chain,
   scheduledSession,
   onStartChain,
@@ -38,6 +36,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
   const [hasShownWarning, setHasShownWarning] = useState(false);
   const [lastCompletionTime, setLastCompletionTime] = useState<number | null>(null);
   const lastPlayedExpiresAtRef = React.useRef<number | null>(null);
+  const storage = useStorage();
   
   // 获取实际的链条数据，确保显示最新的时长信息 - memoized for performance
   const actualChain = useMemo(() => {

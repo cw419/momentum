@@ -101,7 +101,7 @@ export class SystemHealthService {
         }
       };
 
-    } catch (error) {
+    } catch {
       return {
         name: '数据完整性',
         status: 'critical',
@@ -148,7 +148,7 @@ export class SystemHealthService {
         }
       };
 
-    } catch (error) {
+    } catch {
       return {
         name: '规则状态管理',
         status: 'critical',
@@ -192,7 +192,7 @@ export class SystemHealthService {
         }
       };
 
-    } catch (error) {
+    } catch {
       return {
         name: '验证服务',
         status: 'critical',
@@ -240,7 +240,7 @@ export class SystemHealthService {
         }
       };
 
-    } catch (error) {
+    } catch {
       return {
         name: '错误处理',
         status: 'critical',
@@ -290,7 +290,7 @@ export class SystemHealthService {
         }
       };
 
-    } catch (error) {
+    } catch {
       return {
         name: '存储系统',
         status: 'critical',
@@ -396,7 +396,7 @@ export class SystemHealthService {
         score -= 25;
       }
 
-    } catch (error) {
+    } catch {
       issues.push('系统检查失败');
       score = 0;
     }

@@ -253,7 +253,7 @@ class PerformanceMonitor {
     
     try {
       performance.measure(measureName, startMark, endMark);
-    } catch (e) {
+    } catch {
       // 静默忽略测量错误
     }
 

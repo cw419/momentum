@@ -1,12 +1,10 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { ChainTreeNode, ScheduledSession } from '../types';
-import type { MomentumStorage } from '../storage/MomentumStorage';
 import { ChainCard } from './ChainCard';
 import { GroupCard } from './GroupCard';
 import { getNextUnitInGroup } from '../utils/chainTree';
 
 interface VirtualizedChainListProps {
-  storage: MomentumStorage;
   topLevelChains: ChainTreeNode[];
   getScheduledSession: (chainId: string) => ScheduledSession | undefined;
   onStartChain: (chainId: string) => void;
@@ -29,7 +27,6 @@ const ITEMS_PER_ROW = 3; // Default grid columns on xl screens
  * Automatically switches between regular grid and virtual scrolling based on item count
  */
 export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.memo(({
-  storage,
   topLevelChains,
   getScheduledSession,
   onStartChain,
@@ -119,7 +116,6 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
     } else {
       return (
         <ChainCard
-          storage={storage}
           chain={chainNode}
           scheduledSession={getScheduledSession(chainNode.id)}
           onStartChain={onStartChain}
@@ -132,7 +128,6 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
       );
     }
   }, [
-    storage,
     getScheduledSession,
     onStartChain,
     onScheduleChain,
