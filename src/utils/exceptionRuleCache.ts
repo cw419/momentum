@@ -4,6 +4,7 @@
  */
 
 import { ExceptionRule, ExceptionRuleType, RuleUsageRecord } from '../types';
+import { logger } from './logger';
 
 export interface CacheEntry<T> {
   data: T;
@@ -63,7 +64,7 @@ export class ExceptionRuleCache {
    * @deprecated 使用 getChainRules 替代
    */
   getRules(key: string = 'all_rules'): ExceptionRule[] | null {
-    console.warn('getRules is deprecated, use getChainRules instead');
+    logger.warn('EXCEPTION_RULE_CACHE', 'getRules is deprecated, use getChainRules instead');
     return this.get<ExceptionRule[]>(key);
   }
 
@@ -72,7 +73,7 @@ export class ExceptionRuleCache {
    * @deprecated 使用 setChainRules 替代
    */
   setRules(rules: ExceptionRule[], key: string = 'all_rules', ttl?: number): void {
-    console.warn('setRules is deprecated, use setChainRules instead');
+    logger.warn('EXCEPTION_RULE_CACHE', 'setRules is deprecated, use setChainRules instead');
     this.set(key, rules, ttl);
   }
 
@@ -226,7 +227,8 @@ export class ExceptionRuleCache {
         this.setRule(rule);
       }
     } catch (error) {
-      console.error('预加载数据失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('EXCEPTION_RULE_CACHE', '预加载数据失败', undefined, err);
     }
   }
 
@@ -407,7 +409,8 @@ export class ExceptionRuleCache {
       try {
         callback(chainId, rules);
       } catch (error) {
-        console.error('Subscriber notification failed:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('EXCEPTION_RULE_CACHE', 'Subscriber notification failed', undefined, err);
       }
     });
   }
@@ -430,7 +433,12 @@ export class ExceptionRuleCache {
     
     // 确保规则是链专属的
     if (rule.chainId !== chainId || rule.scope !== 'chain') {
-      console.warn('Attempting to add non-chain-specific rule to chain cache');
+      logger.warn('EXCEPTION_RULE_CACHE', 'Attempting to add non-chain-specific rule to chain cache', {
+        chainId,
+        ruleId: rule.id,
+        ruleChainId: rule.chainId,
+        ruleScope: rule.scope,
+      });
       return;
     }
     
@@ -544,7 +552,8 @@ export class ExceptionRuleCache {
         this.setRule(rule);
       }
     } catch (error) {
-      console.error(`预加载链 ${chainId} 数据失败:`, error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('EXCEPTION_RULE_CACHE', `预加载链 ${chainId} 数据失败`, undefined, err);
     }
   }
 

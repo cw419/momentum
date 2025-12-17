@@ -8,6 +8,7 @@ import {
   ExceptionRuleException 
 } from '../types';
 import { errorRecoveryManager, RecoveryAction } from './ErrorRecoveryManager';
+import { logger } from '../utils/logger';
 
 export interface FeedbackMessage {
   id: string;
@@ -440,7 +441,8 @@ export class UserFeedbackHandler {
       try {
         listener(messages);
       } catch (error) {
-        console.error('消息监听器错误:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('USER_FEEDBACK', '消息监听器错误', undefined, err);
       }
     });
   }
@@ -453,7 +455,8 @@ export class UserFeedbackHandler {
       try {
         listener(this.currentProgress);
       } catch (error) {
-        console.error('进度监听器错误:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('USER_FEEDBACK', '进度监听器错误', undefined, err);
       }
     });
   }

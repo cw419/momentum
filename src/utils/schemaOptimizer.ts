@@ -153,7 +153,7 @@ export class SchemaOptimizer {
         });
         
         if (error && !error.message?.includes('does not exist')) {
-          console.warn(`更新表 ${table} 统计信息时警告:`, error.message);
+          logger.warn('SCHEMA_OPTIMIZER', `更新表 ${table} 统计信息时警告`, { table, message: error.message });
         }
       }
       

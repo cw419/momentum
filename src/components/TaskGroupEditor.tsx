@@ -6,6 +6,8 @@ import { SettingSection } from './SettingSection';
 import { SliderContainer } from './SliderContainer';
 import { PureDOMSlider } from './PureDOMSlider';
 import { useMobileOptimization, useTouchOptimization, useVirtualKeyboardAdaptation } from '../hooks/useMobileOptimization';
+import { isDev } from '../utils/env';
+import { logger } from '../utils/logger';
 
 interface TaskGroupEditorProps {
   chain?: Chain;
@@ -62,14 +64,16 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('TaskGroupEditor - 提交表单');
-    console.log('当前表单数据:', {
-      name: name.trim(),
-      description: description.trim(),
-      auxiliarySignal: auxiliarySignal === '自定义信号' ? customAuxiliarySignal.trim() : auxiliarySignal,
-      auxiliaryDuration,
-      auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim()
-    });
+    if (isDev) {
+      logger.debug('TASK_GROUP_EDITOR', '提交表单');
+      logger.debug('TASK_GROUP_EDITOR', '当前表单数据', {
+        name: name.trim(),
+        description: description.trim(),
+        auxiliarySignal: auxiliarySignal === '自定义信号' ? customAuxiliarySignal.trim() : auxiliarySignal,
+        auxiliaryDuration,
+        auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
+      });
+    }
     
     // Clear previous errors
     setErrors({});
@@ -103,7 +107,9 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      console.warn('TaskGroupEditor - 表单验证失败:', newErrors);
+      if (isDev) {
+        logger.warn('TASK_GROUP_EDITOR', '表单验证失败', { errors: newErrors });
+      }
       return;
     }
 
@@ -133,7 +139,9 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
       timeLimitExceptions: [],
     };
     
-    console.log('TaskGroupEditor - 即将保存的任务群数据:', chainData);
+    if (isDev) {
+      logger.debug('TASK_GROUP_EDITOR', '即将保存的任务群数据', { chainData });
+    }
     onSave(chainData);
   };
 

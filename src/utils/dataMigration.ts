@@ -5,6 +5,8 @@
 
 import { storage } from './storage';
 import { CompletionHistory, TaskTimeStats } from '../types';
+import { isDev } from './env';
+import { logger } from './logger';
 
 export interface MigrationResult {
   success: boolean;
@@ -277,7 +279,8 @@ export class DataMigrationManager {
         storage.saveTaskTimeStats(validStats);
       }
     } catch (error) {
-      console.warn('清理无效数据时出错:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('DATA_MIGRATION', '清理无效数据时出错', undefined, err);
     }
   }
 
@@ -378,7 +381,7 @@ export async function migrateTimerData(): Promise<string> {
 }
 
 // 在开发环境中暴露到全局对象，方便调试
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+ if (typeof window !== 'undefined' && isDev) {
   (window as any).migrateTimerData = migrateTimerData;
   (window as any).dataMigrationManager = dataMigrationManager;
 }

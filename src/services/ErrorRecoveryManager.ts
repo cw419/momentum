@@ -7,6 +7,7 @@ import { ExceptionRuleError, ExceptionRuleException } from '../types';
 import { ruleStateManager } from './RuleStateManager';
 import { dataIntegrityChecker } from './DataIntegrityChecker';
 import { enhancedDuplicationHandler } from './EnhancedDuplicationHandler';
+import { logger } from '../utils/logger';
 
 export interface RecoveryStrategy {
   errorType: ExceptionRuleError;
@@ -83,7 +84,7 @@ export class ErrorRecoveryManager {
       retryCount: 0
     };
 
-    console.log('开始错误恢复:', { error: error.message, type: error.type, context });
+    logger.info('ERROR_RECOVERY', '开始错误恢复', { error: error.message, type: error.type, context });
 
     try {
       const strategies = this.strategies.get(error.type) || [];
@@ -106,7 +107,7 @@ export class ErrorRecoveryManager {
           });
 
           if (result.success) {
-            console.log('错误恢复成功:', result.message);
+            logger.info('ERROR_RECOVERY', '错误恢复成功', { message: result.message });
             return result;
           }
 
@@ -116,7 +117,8 @@ export class ErrorRecoveryManager {
           }
 
         } catch (strategyError) {
-          console.error('恢复策略执行失败:', strategyError);
+          const err = strategyError instanceof Error ? strategyError : new Error(String(strategyError));
+          logger.error('ERROR_RECOVERY', '恢复策略执行失败', undefined, err);
           continue;
         }
       }
@@ -125,7 +127,8 @@ export class ErrorRecoveryManager {
       return this.handleRecoveryFailure(error, recoveryContext);
 
     } catch (recoveryError) {
-      console.error('错误恢复过程失败:', recoveryError);
+      const err = recoveryError instanceof Error ? recoveryError : new Error(String(recoveryError));
+      logger.error('ERROR_RECOVERY', '错误恢复过程失败', undefined, err);
       return {
         success: false,
         message: '错误恢复过程失败',

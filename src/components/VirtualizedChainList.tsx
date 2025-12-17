@@ -3,6 +3,7 @@ import { ChainTreeNode, ScheduledSession } from '../types';
 import { ChainCard } from './ChainCard';
 import { GroupCard } from './GroupCard';
 import { getNextUnitInGroup } from '../utils/chainTree';
+import { isDev } from '../utils/env';
 
 interface VirtualizedChainListProps {
   topLevelChains: ChainTreeNode[];
@@ -177,7 +178,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
       </div>
       
       {/* Virtual scrolling indicator */}
-      {process.env.NODE_ENV === 'development' && (
+      {isDev && (
         <div className="absolute top-2 right-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs">
           Virtual: {visibleItems.length}/{topLevelChains.length} items
         </div>

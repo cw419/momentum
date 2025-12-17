@@ -23,6 +23,8 @@ import { enhancedRuleValidationService } from './EnhancedRuleValidationService';
 import { dataIntegrityChecker } from './DataIntegrityChecker';
 import { errorRecoveryManager } from './ErrorRecoveryManager';
 import { errorClassificationService } from './ErrorClassificationService';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 export class ExceptionRuleManager {
   private initialized = false;
@@ -38,14 +40,14 @@ export class ExceptionRuleManager {
       const integrityReport = await dataIntegrityChecker.checkRuleDataIntegrity();
       
       if (integrityReport.issues.length > 0) {
-        console.warn('发现数据完整性问题:', integrityReport.summary);
+        logger.warn('EXCEPTION_RULE_MANAGER', '发现数据完整性问题', { summary: integrityReport.summary });
         
         // 自动修复可修复的问题
         const autoFixableIssues = integrityReport.issues.filter(issue => issue.autoFixable);
         if (autoFixableIssues.length > 0) {
           const fixResults = await dataIntegrityChecker.autoFixIssues(autoFixableIssues);
           const successCount = fixResults.filter(r => r.success).length;
-          console.log(`已自动修复 ${successCount} 个数据问题`);
+          logger.info('EXCEPTION_RULE_MANAGER', '已自动修复数据问题', { successCount, total: autoFixableIssues.length });
         }
       }
 
@@ -57,10 +59,11 @@ export class ExceptionRuleManager {
       enhancedDuplicationHandler.cleanupExpiredCache();
 
       this.initialized = true;
-      console.log('ExceptionRuleManager 初始化完成');
+      logger.info('EXCEPTION_RULE_MANAGER', 'Initialization completed');
 
     } catch (error) {
-      console.error('ExceptionRuleManager 初始化失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MANAGER', 'Initialization failed', undefined, err);
       throw error;
     }
   }
@@ -81,7 +84,13 @@ export class ExceptionRuleManager {
 
     try {
       // 验证输入（创建模式）
-      console.log('🔧 ExceptionRuleManager.createRule 验证参数:', { name, type, description });
+      if (isDev) {
+        logger.debug('EXCEPTION_RULE_MANAGER', 'createRule params', {
+          name,
+          type,
+          descriptionLength: description?.length ?? 0,
+        });
+      }
       exceptionRuleStorage.validateRule({ name, type, description }, true);
 
       // 使用增强的重复处理机制
@@ -95,7 +104,9 @@ export class ExceptionRuleManager {
       // 验证创建的规则
       const validationResult = await enhancedRuleValidationService.validateRulesIntegrity([result.rule]);
       if (validationResult.invalidRules.length > 0) {
-        console.warn('创建的规则存在问题:', validationResult.invalidRules);
+        logger.warn('EXCEPTION_RULE_MANAGER', '创建的规则存在问题', {
+          invalidRules: validationResult.invalidRules,
+        });
       }
 
       return {
@@ -146,7 +157,14 @@ export class ExceptionRuleManager {
 
     try {
       // 验证输入
-      console.log('🔧 ExceptionRuleManager.createChainRule 验证参数:', { chainId, name, type, description });
+      if (isDev) {
+        logger.debug('EXCEPTION_RULE_MANAGER', 'createChainRule params', {
+          chainId,
+          name,
+          type,
+          descriptionLength: description?.length ?? 0,
+        });
+      }
       exceptionRuleStorage.validateRule({ name, type, description }, true);
 
       // 创建链专属规则
@@ -163,7 +181,9 @@ export class ExceptionRuleManager {
       // 验证创建的规则
       const validationResult = await enhancedRuleValidationService.validateRulesIntegrity([rule]);
       if (validationResult.invalidRules.length > 0) {
-        console.warn('创建的链专属规则存在问题:', validationResult.invalidRules);
+        logger.warn('EXCEPTION_RULE_MANAGER', '创建的链专属规则存在问题', {
+          invalidRules: validationResult.invalidRules,
+        });
       }
 
       return {
@@ -376,12 +396,16 @@ export class ExceptionRuleManager {
     try {
       void pauseOptions;
       // 验证规则ID
-      console.log('🔧 验证规则ID:', ruleId);
+      if (isDev) {
+        logger.debug('EXCEPTION_RULE_MANAGER', 'Validating ruleId', { ruleId });
+      }
       const validation = await ruleStateManager.validateRuleId(ruleId);
-      console.log('🔧 验证结果:', validation);
+      if (isDev) {
+        logger.debug('EXCEPTION_RULE_MANAGER', 'RuleId validation result', { ruleId, validation });
+      }
       
       if (!validation.isValid) {
-        console.error('❌ 规则ID验证失败:', validation);
+        logger.error('EXCEPTION_RULE_MANAGER', 'RuleId validation failed', { ruleId, validation });
         throw new ExceptionRuleException(
           ExceptionRuleError.RULE_NOT_FOUND,
           validation.error || `规则 ID ${ruleId} 无效`

@@ -41,10 +41,17 @@ export default tseslint.config(
         },
       ],
       'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-console': 'error',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
+    },
+  },
+  {
+    files: ['src/utils/logger.ts'],
+    rules: {
+      'no-console': 'off',
     },
   }
 );

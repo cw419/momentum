@@ -4,6 +4,8 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { isDev } from '../utils/env';
+import { logger } from '../utils/logger';
 
 interface OverflowInfo {
   hasHorizontalOverflow: boolean;
@@ -15,7 +17,7 @@ interface OverflowInfo {
 }
 
 export const useLayoutOverflowDetection = (
-  enabled: boolean = process.env.NODE_ENV === 'development'
+  enabled: boolean = isDev
 ) => {
   const [overflowInfo, setOverflowInfo] = useState<OverflowInfo>({
     hasHorizontalOverflow: false,
@@ -52,8 +54,8 @@ export const useLayoutOverflowDetection = (
     setOverflowInfo(newOverflowInfo);
     
     // 在开发模式下警告横向滚动
-    if (hasHorizontalOverflow && process.env.NODE_ENV === 'development') {
-      console.warn('🚨 检测到横向滚动！', {
+    if (hasHorizontalOverflow && isDev) {
+      logger.warn('LAYOUT', '检测到横向滚动', {
         scrollWidth,
         clientWidth,
         overflow: scrollWidth - clientWidth
@@ -81,8 +83,8 @@ export const useLayoutOverflowDetection = (
     
     // 监听滚动事件（可能表明有溢出）
     const handleScroll = () => {
-      if (window.scrollX > 0) {
-        console.warn('🚨 检测到横向滚动行为！scrollX:', window.scrollX);
+      if (isDev && window.scrollX > 0) {
+        logger.warn('LAYOUT', '检测到横向滚动行为', { scrollX: window.scrollX });
       }
     };
     

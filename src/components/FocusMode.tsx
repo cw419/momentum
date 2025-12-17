@@ -13,6 +13,8 @@ import { errorRecoveryManager } from '../services/ErrorRecoveryManager';
 import { EnhancedExceptionRuleException } from '../types';
 import { soundManager } from '../utils/soundManager';
 import { useStorage } from '../storage/StorageContext';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 interface FocusModeProps {
   session: ActiveSession;
@@ -233,14 +235,21 @@ export const FocusMode: React.FC<FocusModeProps> = ({
 
   // 处理规则选择（增强版本）
   const handleRuleSelected = async (rule: ExceptionRule, pauseOptions?: PauseOptions) => {
-    console.log('🔧 handleRuleSelected called:', { rule, pendingActionType, ruleId: rule?.id, ruleType: typeof rule });
+    if (isDev) {
+      logger.debug('FOCUS_MODE', 'handleRuleSelected called', {
+        pendingActionType,
+        ruleId: rule?.id,
+        ruleType: typeof rule,
+        rule,
+      });
+    }
     
     if (!pendingActionType) return;
 
     try {
       // 验证规则对象
       if (!rule || !rule.id) {
-        console.error('❌ Invalid rule object:', rule);
+        logger.error('FOCUS_MODE', 'Invalid rule object', { rule, pendingActionType });
         userFeedbackHandler.showErrorMessage(
           new EnhancedExceptionRuleException(
             'RULE_NOT_FOUND' as any,
@@ -256,7 +265,14 @@ export const FocusMode: React.FC<FocusModeProps> = ({
 
       const sessionContext = createSessionContext();
       
-      console.log('🔧 Preparing to use rule:', { ruleId: rule.id, sessionContext, actionType: pendingActionType });
+      if (isDev) {
+        logger.debug('FOCUS_MODE', 'Preparing to use rule', {
+          ruleId: rule.id,
+          actionType: pendingActionType,
+          sessionContext,
+          pauseOptions,
+        });
+      }
       
       // 使用规则并记录统计
       await exceptionRuleManager.useRule(rule.id, sessionContext, pendingActionType, pauseOptions);
@@ -299,7 +315,10 @@ export const FocusMode: React.FC<FocusModeProps> = ({
       // 隐藏进度
       userFeedbackHandler.hideProgress();
       
-      console.error('Failed to use rule:', error);
+      {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('FOCUS_MODE', 'Failed to use rule', { ruleId: rule.id, actionType: pendingActionType }, err);
+      }
       
       // 使用增强的错误处理
       await handleRuleError(error, 'use_rule', { rule, actionType: pendingActionType });
@@ -308,7 +327,9 @@ export const FocusMode: React.FC<FocusModeProps> = ({
 
   // 处理创建新规则（增强版本）
   const handleCreateNewRule = async (name: string, type: ExceptionRuleType) => {
-    console.log('🔧 handleCreateNewRule called:', { name, type, typeOf: typeof type });
+    if (isDev) {
+      logger.debug('FOCUS_MODE', 'handleCreateNewRule called', { name, type, typeOf: typeof type });
+    }
     
     try {
       // 验证参数
@@ -326,13 +347,15 @@ export const FocusMode: React.FC<FocusModeProps> = ({
       // 确保类型有效
       let validType = type;
       if (!validType || !Object.values(ExceptionRuleType).includes(validType)) {
-        console.warn('⚠️ Invalid rule type, using default type');
+        logger.warn('FOCUS_MODE', 'Invalid rule type, using default type', { type: validType });
         validType = pendingActionType === 'pause' 
           ? ExceptionRuleType.PAUSE_ONLY 
           : ExceptionRuleType.EARLY_COMPLETION_ONLY;
       }
       
-      console.log('✅ 使用的规则类型:', validType);
+      if (isDev) {
+        logger.debug('FOCUS_MODE', 'Using rule type', { validType });
+      }
       
       // 显示创建进度
       userFeedbackHandler.showProgress('正在创建规则...', 0);
@@ -383,7 +406,10 @@ export const FocusMode: React.FC<FocusModeProps> = ({
       // 隐藏进度
       userFeedbackHandler.hideProgress();
       
-      console.error('创建规则失败:', error);
+      {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('FOCUS_MODE', '创建规则失败', { name, type }, err);
+      }
       
       // 使用增强的错误处理
       await handleRuleError(error, 'create_rule', { name, type });
@@ -414,7 +440,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
           }
         } else if (recoveryResult.requiresUserAction && recoveryResult.actions) {
           // 需要用户选择恢复操作 - 这里我们只记录错误，不显示弹窗
-          console.error("需要用户操作的恢复失败:", recoveryResult);
+          logger.error('FOCUS_MODE', '需要用户操作的恢复失败', { recoveryResult, operation, context });
         }
       } else {
         // 处理普通错误
@@ -432,7 +458,10 @@ export const FocusMode: React.FC<FocusModeProps> = ({
       }
     } catch (handlingError) {
       // 错误处理本身失败了
-      console.error('错误处理失败:', handlingError);
+      {
+        const err = handlingError instanceof Error ? handlingError : new Error(String(handlingError));
+        logger.error('FOCUS_MODE', '错误处理失败', { operation, context }, err);
+      }
       userFeedbackHandler.showWarning(
         '系统错误',
         '处理错误时发生问题，请刷新页面重试'
@@ -596,7 +625,8 @@ export const FocusMode: React.FC<FocusModeProps> = ({
     try {
       await document.documentElement.requestFullscreen();
     } catch (error) {
-      console.error('Failed to enter fullscreen:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('FOCUS_MODE', 'Failed to enter fullscreen', undefined, err);
     }
   };
 
@@ -606,7 +636,8 @@ export const FocusMode: React.FC<FocusModeProps> = ({
         await document.exitFullscreen();
       }
     } catch (error) {
-      console.error('Failed to exit fullscreen:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('FOCUS_MODE', 'Failed to exit fullscreen', undefined, err);
     }
   };
 

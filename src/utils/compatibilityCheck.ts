@@ -3,6 +3,8 @@
  * 确保新的计时功能与现有系统兼容
  */
 
+import { isDev } from './env';
+
 export interface CompatibilityResult {
   isCompatible: boolean;
   version: string;
@@ -237,7 +239,7 @@ export async function checkTimerCompatibility(): Promise<string> {
 }
 
 // 在开发环境中暴露到全局对象，方便调试
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+ if (typeof window !== 'undefined' && isDev) {
   (window as any).checkTimerCompatibility = checkTimerCompatibility;
   (window as any).compatibilityChecker = compatibilityChecker;
 }

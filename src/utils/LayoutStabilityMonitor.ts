@@ -3,6 +3,18 @@
  * 监控和修复布局偏移问题
  */
 
+import { isDev } from './env';
+import { logger } from './logger';
+
+function describeElement(element: HTMLElement): { tagName: string; id?: string; className?: string } {
+  const className = typeof element.className === 'string' ? element.className : String(element.className);
+  return {
+    tagName: element.tagName,
+    id: element.id || undefined,
+    className: className || undefined,
+  };
+}
+
 interface LayoutShiftEntry {
   value: number;
   sources: any[];
@@ -47,7 +59,10 @@ export class LayoutStabilityMonitor {
         });
         this.observer.observe({ entryTypes: ['layout-shift'] });
       } catch (e) {
-        console.warn('布局偏移监控初始化失败:', e);
+        if (isDev) {
+          const err = e instanceof Error ? e : new Error(String(e));
+          logger.warn('LAYOUT', '布局偏移监控初始化失败', undefined, err);
+        }
       }
     }
 
@@ -84,8 +99,8 @@ export class LayoutStabilityMonitor {
     // 初始检查
     this.performInitialCheck(target);
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 布局稳定性监控已启动');
+    if (isDev) {
+      logger.debug('LAYOUT', '🔍 布局稳定性监控已启动', { target: describeElement(target) });
     }
   }
 
@@ -95,8 +110,8 @@ export class LayoutStabilityMonitor {
     this.mutationObserver?.disconnect();
     this.resizeObserver?.disconnect();
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('⏹️ 布局稳定性监控已停止');
+    if (isDev) {
+      logger.debug('LAYOUT', '⏹️ 布局稳定性监控已停止');
       this.reportIssues();
     }
   }
@@ -117,8 +132,16 @@ export class LayoutStabilityMonitor {
 
       this.layoutIssues.push(issue);
 
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('🚨 布局偏移:', issue);
+      if (isDev) {
+        logger.warn('LAYOUT', '🚨 布局偏移', {
+          issue: {
+            type: issue.type,
+            severity: issue.severity,
+            description: issue.description,
+            suggestedFix: issue.suggestedFix,
+            element: describeElement(issue.element),
+          },
+        });
       }
 
       if (this.autoFix) {
@@ -243,8 +266,8 @@ export class LayoutStabilityMonitor {
     element.style.maxWidth = '100%';
     element.style.boxSizing = 'border-box';
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔧 自动修复横向溢出:', element);
+    if (isDev) {
+      logger.debug('LAYOUT', '🔧 自动修复横向溢出', { element: describeElement(element) });
     }
   }
 
@@ -256,8 +279,8 @@ export class LayoutStabilityMonitor {
       element.style.maxWidth = '100%';
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔧 自动修复宽度不稳定:', element);
+    if (isDev) {
+      logger.debug('LAYOUT', '🔧 自动修复宽度不稳定', { element: describeElement(element) });
     }
   }
 
@@ -308,22 +331,23 @@ export class LayoutStabilityMonitor {
 
   private reportIssues() {
     if (this.layoutIssues.length === 0) {
-      console.log('✅ 未发现布局问题');
+      logger.debug('LAYOUT', '✅ 未发现布局问题');
       return;
     }
 
-    console.group('📊 布局稳定性报告');
-    console.log('累积布局偏移:', this.cumulativeLayoutShift.toFixed(4));
-    console.log('问题总数:', this.layoutIssues.length);
-    
-    this.layoutIssues.forEach((issue, index) => {
-      console.log(`${index + 1}. ${issue.description} (${issue.severity})`);
-      if (issue.suggestedFix) {
-        console.log(`   建议: ${issue.suggestedFix}`);
-      }
+    const issues = this.layoutIssues.map(issue => ({
+      type: issue.type,
+      severity: issue.severity,
+      description: issue.description,
+      suggestedFix: issue.suggestedFix,
+      element: describeElement(issue.element),
+    }));
+
+    logger.debug('LAYOUT', '📊 布局稳定性报告', {
+      cumulativeLayoutShift: Number(this.cumulativeLayoutShift.toFixed(4)),
+      totalIssues: this.layoutIssues.length,
+      issues,
     });
-    
-    console.groupEnd();
   }
 
   // 手动触发检查
@@ -354,7 +378,8 @@ export class LayoutStabilityMonitor {
         try {
           callback();
         } catch (error) {
-          console.error('Stabilization callback error:', error);
+          const err = error instanceof Error ? error : new Error(String(error));
+          logger.error('LAYOUT', 'Stabilization callback error', undefined, err);
         }
       });
       

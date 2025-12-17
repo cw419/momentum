@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, CheckCircle, FileText, MessageSquare, History, RotateCcw } from 'lucide-react';
 import { useStorage } from '../storage/StorageContext';
+import { logger } from '../utils/logger';
 
 interface TaskCompletionDialogProps {
   isOpen: boolean;
@@ -43,7 +44,8 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
           const uniqueDescriptions = Array.from(new Set(descriptions));
           setRecentDescriptions(uniqueDescriptions);
         } catch (error) {
-          console.error('Failed to load recent descriptions:', error);
+          const err = error instanceof Error ? error : new Error(String(error));
+          logger.error('TASK_COMPLETION', 'Failed to load recent descriptions', { chainId }, err);
         }
       };
       

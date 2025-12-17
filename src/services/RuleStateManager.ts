@@ -10,6 +10,8 @@ import {
   ExceptionRuleException 
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 export interface RuleState {
   id: string;
@@ -83,7 +85,9 @@ export class RuleStateManager {
       this.states.set(temporaryId, state);
     }
 
-    console.log(`规则状态更新: ${ruleId} -> ${status}`, { temporaryId, state });
+    if (isDev) {
+      logger.debug('RULE_STATE', 'Rule state updated', { ruleId, status, temporaryId, state });
+    }
   }
 
   /**
@@ -228,7 +232,8 @@ export class RuleStateManager {
         // 等待创建完成
         return await pending.promise;
       } catch (error) {
-        console.error('获取临时规则失败:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('RULE_STATE', '获取临时规则失败', { ruleId }, err);
         return null;
       }
     }
@@ -338,7 +343,7 @@ export class RuleStateManager {
    * 处理创建成功
    */
   private handleCreationSuccess(temporaryId: string, realRule: ExceptionRule): void {
-    console.log(`规则创建成功: ${temporaryId} -> ${realRule.id}`);
+    logger.info('RULE_STATE', '规则创建成功', { temporaryId, realId: realRule.id });
 
     // 创建ID映射
     const mapping: IdMapping = {
@@ -369,7 +374,10 @@ export class RuleStateManager {
    * 处理创建错误
    */
   private handleCreationError(temporaryId: string, error: any): void {
-    console.error(`规则创建失败: ${temporaryId}`, error);
+    {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('RULE_STATE', `规则创建失败: ${temporaryId}`, undefined, err);
+    }
 
     // 更新状态
     this.trackRuleState(temporaryId, 'error');
@@ -460,7 +468,8 @@ export class RuleStateManager {
       }
 
     } catch (error) {
-      console.error('同步规则状态失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('RULE_STATE', '同步规则状态失败', undefined, err);
     }
   }
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import type { MomentumStorage } from '../storage/MomentumStorage';
 import type { Chain } from '../types';
 import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 /**
  * Real-time synchronization service for immediate UI updates
@@ -284,7 +285,7 @@ class RealTimeSyncService {
 export const realTimeSyncService = new RealTimeSyncService();
 
 // Auto-enable in development for better debugging
-if (process.env.NODE_ENV === 'development') {
+ if (isDev) {
   realTimeSyncService.setEnabled(true);
   
   // Add global access for debugging

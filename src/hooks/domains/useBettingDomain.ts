@@ -1,6 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { BetPlacementResult } from '../../domain/betting';
 import { useStorage } from '../../storage/StorageContext';
+import { logger } from '../../utils/logger';
+import { isDev } from '../../utils/env';
 
 interface UseBettingDomainParams {
   pendingChainId: string | null;
@@ -27,7 +29,9 @@ export function useBettingDomain({
   const storage = useStorage();
 
   const handleBetPlaced = async (betResult: BetPlacementResult) => {
-    console.log('Bet placed successfully:', betResult);
+    if (isDev) {
+      logger.debug('BETTING', 'Bet placed successfully', { betResult });
+    }
 
     if (pendingChainId) {
       setActiveSessionId(currentSessionId);
@@ -44,11 +48,17 @@ export function useBettingDomain({
       try {
         const result = await storage.deleteBettingSession(currentSessionId);
         if (!result.ok) {
-          console.error('Failed to delete cancelled session:', result.error);
+          logger.error('BETTING', 'Failed to delete cancelled session', {
+            sessionId: currentSessionId,
+            error: result.error,
+          });
         }
-        console.log('已删除取消的会话记录，押注已通过触发器退款:', currentSessionId);
+        if (isDev) {
+          logger.debug('BETTING', 'Cancelled session deleted (refund handled by trigger)', { sessionId: currentSessionId });
+        }
       } catch (error) {
-        console.error('删除取消的会话记录失败:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('BETTING', '删除取消的会话记录失败', { sessionId: currentSessionId }, err);
       }
     }
 

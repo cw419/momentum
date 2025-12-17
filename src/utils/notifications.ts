@@ -2,6 +2,8 @@
  * 桌面通知工具类
  */
 
+import { logger } from './logger';
+
 export interface NotificationOptions {
   title: string;
   body: string;
@@ -61,7 +63,7 @@ class NotificationManager {
    */
   async requestPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
-      console.warn('此浏览器不支持桌面通知');
+      logger.warn('NOTIFICATIONS', '此浏览器不支持桌面通知');
       return false;
     }
 
@@ -82,7 +84,8 @@ class NotificationManager {
       this.saveEnabledState();
       return permission === 'granted';
     } catch (error) {
-      console.error('请求通知权限失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('NOTIFICATIONS', '请求通知权限失败', undefined, err);
       return false;
     }
   }

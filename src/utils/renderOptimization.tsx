@@ -4,6 +4,8 @@
  */
 
 import React, { useCallback, useRef, useEffect, useMemo } from 'react';
+import { isDev } from './env';
+import { logger } from './logger';
 
 /**
  * 防抖Hook
@@ -101,11 +103,11 @@ export const useRenderCount = (componentName: string) => {
   useEffect(() => {
     renderCount.current += 1;
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔄 ${componentName} 渲染次数:`, renderCount.current);
+    if (isDev) {
+      logger.debug('RENDER_OPT', `${componentName} 渲染次数`, { count: renderCount.current });
       
       if (renderCount.current > 10) {
-        console.warn(`⚠️ ${componentName} 渲染次数过多，可能存在性能问题`);
+        logger.warn('RENDER_OPT', `${componentName} 渲染次数过多，可能存在性能问题`, { count: renderCount.current });
       }
     }
   });
@@ -121,7 +123,7 @@ export const useWhyDidYouUpdate = (name: string, props: Record<string, any>) => 
   const previousProps = useRef<Record<string, any>>();
 
   useEffect(() => {
-    if (previousProps.current && process.env.NODE_ENV === 'development') {
+    if (previousProps.current && isDev) {
       const allKeys = Object.keys({ ...previousProps.current, ...props });
       const changedProps: Record<string, { from: any; to: any }> = {};
 
@@ -135,7 +137,7 @@ export const useWhyDidYouUpdate = (name: string, props: Record<string, any>) => 
       });
 
       if (Object.keys(changedProps).length) {
-        console.log('🔍', name, '重渲染原因:', changedProps);
+        logger.debug('RENDER_OPT', '重渲染原因', { name, changedProps });
       }
     }
 

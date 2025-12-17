@@ -11,6 +11,8 @@ import {
   ExceptionRuleException,
   ExceptionRuleType
 } from '../types';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 export class ExceptionRuleStorageService {
   private static readonly STORAGE_KEY = 'momentum_exception_rules';
@@ -327,7 +329,18 @@ export class ExceptionRuleStorageService {
    * 验证规则数据
    */
   validateRule(rule: Partial<ExceptionRule>, isCreating: boolean = false): void {
-    console.log('🔧 ExceptionRuleStorage.validateRule 调用:', { rule, isCreating });
+    if (isDev) {
+      logger.debug('EXCEPTION_RULE_STORAGE', 'validateRule called', {
+        isCreating,
+        rule: {
+          id: rule.id,
+          name: rule.name,
+          type: rule.type,
+          scope: rule.scope,
+          chainId: rule.chainId,
+        },
+      });
+    }
     
     if (!rule.name || rule.name.trim().length === 0) {
       throw new ExceptionRuleException(
@@ -345,7 +358,15 @@ export class ExceptionRuleStorageService {
 
     // 创建规则时，类型是必需的
     if (isCreating && !rule.type) {
-      console.error('❌ 规则类型验证失败:', { rule, isCreating, typeValue: rule.type, typeOf: typeof rule.type });
+      logger.error('EXCEPTION_RULE_STORAGE', '规则类型验证失败', {
+        isCreating,
+        id: rule.id,
+        name: rule.name,
+        scope: rule.scope,
+        chainId: rule.chainId,
+        typeValue: rule.type,
+        typeOf: typeof rule.type,
+      });
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
         `规则类型不能为空。接收到的类型: ${rule.type} (${typeof rule.type})`
@@ -383,7 +404,8 @@ export class ExceptionRuleStorageService {
         await this.saveUsageRecords(validRecords);
       }
     } catch (error) {
-      console.warn('清理过期数据失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('EXCEPTION_RULE_STORAGE', '清理过期数据失败', undefined, err);
     }
   }
 
@@ -481,7 +503,8 @@ export class ExceptionRuleStorageService {
         await this.saveRules(rules);
       }
     } catch (error) {
-      console.warn('更新规则使用统计失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('EXCEPTION_RULE_STORAGE', '更新规则使用统计失败', { ruleId }, err);
     }
   }
 

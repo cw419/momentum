@@ -8,6 +8,7 @@ import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { dataIntegrityChecker } from '../services/DataIntegrityChecker';
 import { enhancedRuleValidationService } from '../services/EnhancedRuleValidationService';
 import { ExceptionRuleType, EnhancedExceptionRuleException } from '../types';
+import { logger } from './logger';
 
 export interface ValidationResult {
   passed: boolean;
@@ -30,7 +31,7 @@ export class DeploymentValidator {
    * 运行完整的部署验证
    */
   async runFullValidation(): Promise<ValidationResult> {
-    console.log('开始部署验证...');
+    logger.info('DEPLOYMENT_VALIDATOR', '开始部署验证...');
     
     const tests: TestResult[] = [];
     const startTime = Date.now();
@@ -52,7 +53,13 @@ export class DeploymentValidator {
     const summary = this.generateSummary(passed, score, tests, totalDuration);
     const recommendations = this.generateRecommendations(tests);
 
-    console.log(`部署验证完成: ${passed ? '通过' : '失败'} (${score}%)`);
+    logger.info('DEPLOYMENT_VALIDATOR', `部署验证完成: ${passed ? '通过' : '失败'} (${score}%)`, {
+      passed,
+      score,
+      passedTests,
+      totalTests: tests.length,
+      totalDuration,
+    });
 
     return {
       passed,

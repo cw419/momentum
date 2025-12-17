@@ -3,6 +3,8 @@
  * 用于管理无时长任务的正向计时功能
  */
 
+import { logger } from './logger';
+
 interface TimerState {
   startTime: number;
   pausedTime: number;
@@ -221,7 +223,8 @@ export class ForwardTimerManager {
 
       localStorage.setItem(`momentum_timer_${sessionId}`, JSON.stringify(persistData));
     } catch (error) {
-      console.warn('Failed to persist timer state:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('FORWARD_TIMER', 'Failed to persist timer state', { sessionId }, err);
     }
   }
 
@@ -257,7 +260,8 @@ export class ForwardTimerManager {
 
       return true;
     } catch (error) {
-      console.warn('Failed to restore timer state:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('FORWARD_TIMER', 'Failed to restore timer state', { sessionId }, err);
       this.removePersistedState(sessionId);
       return false;
     }
@@ -271,7 +275,8 @@ export class ForwardTimerManager {
     try {
       localStorage.removeItem(`momentum_timer_${sessionId}`);
     } catch (error) {
-      console.warn('Failed to remove persisted timer state:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('FORWARD_TIMER', 'Failed to remove persisted timer state', { sessionId }, err);
     }
   }
 
@@ -300,7 +305,8 @@ export class ForwardTimerManager {
         }
       });
     } catch (error) {
-      console.warn('Failed to cleanup expired timer states:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('FORWARD_TIMER', 'Failed to cleanup expired timer states', undefined, err);
     }
   }
 

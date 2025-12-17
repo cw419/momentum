@@ -1,6 +1,8 @@
 import React from 'react';
 import { Chain } from '../types';
 import { getGroupTimeStatus, startGroupTimer, isGroupExpired } from '../utils/timeLimit';
+import { isDev } from '../utils/env';
+import { logger } from '../utils/logger';
 
 interface TimeLimitTestProps {
   group: Chain;
@@ -11,12 +13,16 @@ export const TimeLimitTest: React.FC<TimeLimitTestProps> = ({ group }) => {
   
   const handleStartTimer = () => {
     const updatedGroup = startGroupTimer(group);
-    console.log('启动计时器:', updatedGroup);
+    if (isDev) {
+      logger.debug('TIME_LIMIT_TEST', '启动计时器', { updatedGroup });
+    }
   };
 
   const handleCheckExpired = () => {
     const expired = isGroupExpired(group);
-    console.log('是否过期:', expired);
+    if (isDev) {
+      logger.debug('TIME_LIMIT_TEST', '是否过期', { expired });
+    }
   };
 
   return (

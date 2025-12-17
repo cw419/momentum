@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
+import { logger } from '../utils/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -23,7 +24,8 @@ export const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     return user;
   } catch (error) {
-    console.warn('Failed to get current user:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.warn('SUPABASE', 'Failed to get current user', undefined, err);
     return null;
   }
 };
@@ -45,7 +47,8 @@ export const waitForAuthentication = async (maxWaitTime: number = 10000): Promis
       // Check authentication session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
-        console.warn('Session check error:', sessionError);
+        const err = sessionError instanceof Error ? sessionError : new Error(String(sessionError));
+        logger.warn('SUPABASE', 'Session check error', undefined, err);
         await new Promise(resolve => setTimeout(resolve, checkInterval));
         continue;
       }
@@ -54,7 +57,7 @@ export const waitForAuthentication = async (maxWaitTime: number = 10000): Promis
         // Double-check with getUser to ensure RLS will work
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (user && !userError) {
-          console.log('Authentication confirmed for user:', user.id);
+          logger.debug('SUPABASE', 'Authentication confirmed', { userId: user.id });
           return { user, isAuthenticated: true };
         }
       }
@@ -62,12 +65,13 @@ export const waitForAuthentication = async (maxWaitTime: number = 10000): Promis
       // Wait before next check
       await new Promise(resolve => setTimeout(resolve, checkInterval));
     } catch (error) {
-      console.warn('Authentication check failed:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('SUPABASE', 'Authentication check failed', undefined, err);
       await new Promise(resolve => setTimeout(resolve, checkInterval));
     }
   }
   
-  console.warn('Authentication wait timeout reached');
+  logger.warn('SUPABASE', 'Authentication wait timeout reached');
   return { user: null, isAuthenticated: false };
 };
 
@@ -85,7 +89,8 @@ export const isUserAuthenticated = async (): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     return !!user;
   } catch (error) {
-    console.warn('Authentication check failed:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.warn('SUPABASE', 'Authentication check failed', undefined, err);
     return false;
   }
 };

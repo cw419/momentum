@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/StorageContext';
+import { logger } from '../../utils/logger';
 
 export function useCheckinDomain() {
   const storage = useStorage();
@@ -39,7 +40,8 @@ export function useCheckinDomain() {
       }
       setStats(result.value);
     } catch (err) {
-      console.error('加载签到统计失败:', err);
+      const errorObj = err instanceof Error ? err : new Error(String(err));
+      logger.error('CHECKIN', '加载签到统计失败', undefined, errorObj);
       setError(err instanceof Error ? err.message : '加载签到数据失败');
     } finally {
       setIsLoading(false);
@@ -84,7 +86,8 @@ export function useCheckinDomain() {
         setError(result.message || '签到失败');
       }
     } catch (err) {
-      console.error('签到失败:', err);
+      const errorObj = err instanceof Error ? err : new Error(String(err));
+      logger.error('CHECKIN', '签到失败', undefined, errorObj);
       setError(err instanceof Error ? err.message : '签到失败，请重试');
     } finally {
       setIsCheckingIn(false);

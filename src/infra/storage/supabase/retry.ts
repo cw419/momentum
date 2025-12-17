@@ -1,4 +1,5 @@
 import { logger } from '../../../utils/logger';
+import { isDev } from '../../../utils/env';
 
 const NON_RETRYABLE_ERROR_CODES = new Set(['PGRST204', 'PGRST116', '42703', '42P01']);
 
@@ -31,7 +32,7 @@ export async function retryOperation<T>(
       }
 
       const delay = baseDelay * Math.pow(2, attempt);
-      if (process.env.NODE_ENV === 'development') {
+      if (isDev) {
         logger.warn('SUPABASE_STORAGE', 'Operation failed; retrying', {
           delay,
           attempt: attempt + 1,
@@ -94,7 +95,7 @@ export async function retryWithAuth<T>(
       }
 
       const delay = baseDelay * Math.pow(2, attempt);
-      if (process.env.NODE_ENV === 'development') {
+      if (isDev) {
         logger.warn('SUPABASE_STORAGE', 'Auth-aware retry', {
           delay,
           attempt: attempt + 1,
@@ -110,4 +111,3 @@ export async function retryWithAuth<T>(
 
   throw lastError ?? new Error('Retry with auth failed');
 }
-

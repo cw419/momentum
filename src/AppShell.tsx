@@ -28,6 +28,7 @@ const LoadingFallback = () => (
 );
 import { useStorage } from './storage/StorageContext';
 import { logger } from './utils/logger';
+import { isDev } from './utils/env';
 import { toast } from './utils/toast';
 import { isSessionExpired } from './utils/time';
 import { queryOptimizer } from './utils/queryOptimizer';
@@ -93,7 +94,7 @@ function AppShell() {
       runMigration();
 
       // Initialize performance monitoring for development
-      if (process.env.NODE_ENV === 'development') {
+      if (isDev) {
         setTimeout(() => {
           performanceDashboard.displayConsoleReport();
         }, 5000);
@@ -409,7 +410,7 @@ function AppShell() {
         storage.migrateCompletionHistoryForTiming();
         
         // 执行完整的数据迁移（仅在开发环境中记录详细信息）
-        if (process.env.NODE_ENV === 'development') {
+        if (isDev) {
           try {
             const { dataMigrationManager } = await import('./utils/dataMigration');
             const migrationResult = await dataMigrationManager.migrateAll();

@@ -3,6 +3,7 @@ import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
 import { queryOptimizer } from '../../utils/queryOptimizer';
+import { logger } from '../../utils/logger';
 
 interface UseRulesDomainParams {
   setState: Dispatch<SetStateAction<AppState>>;
@@ -28,7 +29,8 @@ export function useRulesDomain({ setState, storage, safelySaveChains, setShowAux
 
       safelySaveChains(updatedChains).catch(error => {
         queryOptimizer.onDataChange('chains');
-        console.error('辅助判断失败时保存链条数据失败:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('RULES_DOMAIN', '辅助判断失败时保存链条数据失败', { chainId }, err);
       });
       storage.saveScheduledSessions(updatedScheduledSessions);
 
@@ -54,7 +56,8 @@ export function useRulesDomain({ setState, storage, safelySaveChains, setShowAux
 
       safelySaveChains(updatedChains).catch(error => {
         queryOptimizer.onDataChange('chains');
-        console.error('辅助判断允许时保存链条数据失败:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('RULES_DOMAIN', '辅助判断允许时保存链条数据失败', { chainId }, err);
       });
       storage.saveScheduledSessions(updatedScheduledSessions);
 
@@ -70,4 +73,3 @@ export function useRulesDomain({ setState, storage, safelySaveChains, setShowAux
 
   return { handleAuxiliaryJudgmentFailure, handleAuxiliaryJudgmentAllow };
 }
-

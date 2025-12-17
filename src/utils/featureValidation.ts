@@ -6,6 +6,7 @@
 import { forwardTimerManager } from './forwardTimer';
 import { storage } from './storage';
 import { formatElapsedTime, formatTimeDescription, formatActualDuration, formatLastCompletionReference } from './time';
+import { isDev } from './env';
 
 export interface ValidationResult {
   feature: string;
@@ -318,6 +319,6 @@ export async function validateTimerFeatures(): Promise<string> {
 }
 
 // 在开发环境中暴露到全局对象，方便调试
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+ if (typeof window !== 'undefined' && isDev) {
   (window as any).validateTimerFeatures = validateTimerFeatures;
 }

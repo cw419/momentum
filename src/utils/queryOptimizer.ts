@@ -219,7 +219,7 @@ class QueryOptimizer {
    */
   clearCache(): void {
     const preStats = this.getCacheStats();
-    console.log(`[QUERY_OPTIMIZER] Clearing all caches - current state:`, preStats);
+    performanceLogger.debug('[QUERY_OPTIMIZER] Clearing all caches - current state:', preStats);
     
     this.cache.clear();
     this.pendingQueries.clear();
@@ -229,7 +229,7 @@ class QueryOptimizer {
     this.setCachedData(`${this.TREE_CACHE_KEY}_structural`, '');
     
     const postStats = this.getCacheStats();
-    console.log(`[QUERY_OPTIMIZER] All caches cleared successfully:`, postStats);
+    performanceLogger.debug('[QUERY_OPTIMIZER] All caches cleared successfully:', postStats);
     performanceLogger.debug('[QUERY_OPTIMIZER] Cache cleared');
   }
   
@@ -280,23 +280,23 @@ class QueryOptimizer {
    * Invalidate caches when data changes
    */
   onDataChange(dataType: 'chains' | 'sessions' | 'history'): void {
-    console.log(`[QUERY_OPTIMIZER] Data change detected for: ${dataType}, invalidating relevant caches`);
+    performanceLogger.debug(`[QUERY_OPTIMIZER] Data change detected for: ${dataType}, invalidating relevant caches`);
     performanceLogger.debug(`[QUERY_OPTIMIZER] Invalidating caches for: ${dataType}`);
     
     if (dataType === 'chains') {
-      console.log(`[QUERY_OPTIMIZER] Chains data changed - clearing chain cache and tree cache`);
+      performanceLogger.debug('[QUERY_OPTIMIZER] Chains data changed - clearing chain cache and tree cache');
       this.invalidateCache('chains');
       this.cache.delete(this.TREE_CACHE_KEY);
       this.lastChainHash = '';
-      console.log(`[QUERY_OPTIMIZER] Chain caches cleared, lastChainHash reset`);
+      performanceLogger.debug('[QUERY_OPTIMIZER] Chain caches cleared, lastChainHash reset');
     }
     
-    console.log(`[QUERY_OPTIMIZER] Clearing batched data cache`);
+    performanceLogger.debug('[QUERY_OPTIMIZER] Clearing batched data cache');
     this.invalidateCache('batchedData');
     
     // Log current cache state for debugging
     const stats = this.getCacheStats();
-    console.log(`[QUERY_OPTIMIZER] Post-invalidation cache stats:`, stats);
+    performanceLogger.debug('[QUERY_OPTIMIZER] Post-invalidation cache stats:', stats);
   }
 }
 

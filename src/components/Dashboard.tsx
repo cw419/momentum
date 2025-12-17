@@ -7,6 +7,8 @@ import { getTopLevelChains } from '../utils/chainTree';
 import { queryOptimizer } from '../utils/queryOptimizer';
 import { Download, TreePine, Trash2, Rocket, Link, Plus, Layers, User } from 'lucide-react';
 import { NotificationToggle } from './NotificationToggle';
+import { isDev } from '../utils/env';
+import { logger } from '../utils/logger';
 
 const ImportExportModal = lazy(() => import('./ImportExportModal').then(m => ({ default: m.ImportExportModal })));
 const RecycleBinModal = lazy(() => import('./RecycleBinModal').then(m => ({ default: m.RecycleBinModal })));
@@ -64,20 +66,23 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
   const [showImportExport, setShowImportExport] = useState(false);
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
-  const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(process.env.NODE_ENV === 'development');
+  const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(isDev);
   const [recycleBinCount, setRecycleBinCount] = useState(0);
   const storage = useStorage();
   const isSupabase = storage.kind === 'supabase';
   
   // Only log in development mode to improve production performance
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Dashboard - Received chains:', chains.length, chains.map(c => ({ id: c.id, name: c.name, type: c.type, parentId: c.parentId })));
+  if (isDev) {
+    logger.debug('DASHBOARD', 'Received chains', {
+      chainCount: chains.length,
+      chains: chains.map(c => ({ id: c.id, name: c.name, type: c.type, parentId: c.parentId })),
+    });
   }
   
   // Optimize chain tree building with deep memoization
   const chainTree = useMemo(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Dashboard - Rebuilding chainTree, chains count:', chains.length);
+    if (isDev) {
+      logger.debug('DASHBOARD', 'Rebuilding chainTree', { chainCount: chains.length });
     }
     return queryOptimizer.memoizedBuildChainTree(chains);
   }, [chains]);
@@ -85,8 +90,11 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
   // Memoize top level chains calculation
   const topLevelChains = useMemo(() => {
     const result = getTopLevelChains(chainTree);
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Dashboard - Top-level chains:', result.length, result.map(c => ({ id: c.id, name: c.name, type: c.type })));
+    if (isDev) {
+      logger.debug('DASHBOARD', 'Top-level chains', {
+        topLevelCount: result.length,
+        chains: result.map(c => ({ id: c.id, name: c.name, type: c.type })),
+      });
     }
     return result;
   }, [chainTree]);
@@ -97,8 +105,9 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
       const deletedChains = await storage.getDeletedChains();
       setRecycleBinCount(deletedChains.length);
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to load recycle bin statistics:', error);
+      if (isDev) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('DASHBOARD', 'Failed to load recycle bin statistics', undefined, err);
       }
     }
   }, [storage]);
@@ -123,7 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
       await onRestoreChains(chainIds);
       // Force reload of recycle bin stats after successful restore
       await loadRecycleBinStats();
-      console.log(`[DASHBOARD] Restored ${chainIds.length} chains, stats updated`);
+      logger.info('DASHBOARD', 'Restored chains and updated stats', { restoredCount: chainIds.length });
     }
   }, [onRestoreChains, loadRecycleBinStats]);
   
@@ -132,7 +141,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
       await onPermanentDeleteChains(chainIds);
       // Force reload of recycle bin stats after successful permanent deletion
       await loadRecycleBinStats();
-      console.log(`[DASHBOARD] Permanently deleted ${chainIds.length} chains, stats updated`);
+      logger.info('DASHBOARD', 'Permanently deleted chains and updated stats', { deletedCount: chainIds.length });
     }
   }, [onPermanentDeleteChains, loadRecycleBinStats]);
   
@@ -352,7 +361,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
         </Suspense>
       )}
       {/* Performance Monitor (Development) */}
-      {process.env.NODE_ENV === 'development' && (
+      {isDev && (
         <Suspense fallback={null}>
           <PerformanceMonitor
             isVisible={showPerformanceMonitor}

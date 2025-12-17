@@ -4,6 +4,8 @@
  */
 
 import React, { ReactNode, useEffect, useRef } from 'react';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 interface ResponsiveContainerProps {
   children: ReactNode;
@@ -30,7 +32,9 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
     // 检测并修复横向溢出
     const checkOverflow = () => {
       if (container.scrollWidth > container.clientWidth) {
-        console.warn('检测到横向溢出，应用修复样式');
+        if (isDev) {
+          logger.warn('LAYOUT', '检测到横向溢出，应用修复样式');
+        }
         container.style.overflowX = 'hidden';
         container.style.maxWidth = '100%';
         container.style.boxSizing = 'border-box';

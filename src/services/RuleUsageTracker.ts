@@ -13,6 +13,8 @@ import {
   ExceptionRuleException
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 export class RuleUsageTracker {
   /**
@@ -421,7 +423,9 @@ export class RuleUsageTracker {
       if (removedCount > 0) {
         // 这里需要实现保存过滤后记录的方法
         // 由于当前存储服务没有直接的批量更新方法，这里先返回计数
-        console.log(`将清理 ${removedCount} 条过期记录`);
+        if (isDev) {
+          logger.debug('RULE_USAGE', '将清理过期记录', { removedCount, retentionDays });
+        }
       }
 
       return removedCount;

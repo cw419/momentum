@@ -7,6 +7,8 @@ import { Icon } from '../utils/iconMap';
 import { notificationManager } from '../utils/notifications';
 import { useStorage } from '../storage/StorageContext';
 import { soundManager } from '../utils/soundManager';
+import { isDev } from '../utils/env';
+import { logger } from '../utils/logger';
 
 interface ChainCardProps {
   chain: Chain | ChainTreeNode;
@@ -66,8 +68,9 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
         if (!didCancel) {
           setLastCompletionTime(null);
         }
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Failed to load last completion time:', error);
+        if (isDev) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          logger.warn('CHAIN_CARD', 'Failed to load last completion time', { chainId: chain.id }, err);
         }
       }
     })();

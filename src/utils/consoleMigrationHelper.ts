@@ -7,8 +7,7 @@
  */
 
 import { logger } from './logger';
-
-const isDevelopment = process.env.NODE_ENV === 'development';
+import { isDev } from './env';
 
 /**
  * Development-only console wrapper that automatically routes to logger
@@ -16,13 +15,13 @@ const isDevelopment = process.env.NODE_ENV === 'development';
  */
 export const devConsole = {
   log: (message: string, ...args: any[]) => {
-    if (isDevelopment) {
+    if (isDev) {
       logger.debug('DEV', message, args.length > 0 ? { args } : undefined);
     }
   },
   
   warn: (message: string, ...args: any[]) => {
-    if (isDevelopment) {
+    if (isDev) {
       logger.warn('DEV', message, args.length > 0 ? { args } : undefined);
     }
   },
@@ -32,7 +31,7 @@ export const devConsole = {
   },
   
   debug: (message: string, ...args: any[]) => {
-    if (isDevelopment) {
+    if (isDev) {
       logger.debug('DEV', message, args.length > 0 ? { args } : undefined);
     }
   }
@@ -43,7 +42,7 @@ export const devConsole = {
  * Use this for temporary debug logs that should never reach production
  */
 export const devLog = (message: string, context?: Record<string, any>) => {
-  if (isDevelopment) {
+  if (isDev) {
     logger.debug('DEV-TEMP', message, context);
   }
 };
@@ -53,7 +52,7 @@ export const devLog = (message: string, context?: Record<string, any>) => {
  * Only logs in development, and only if debug level is enabled
  */
 export const perfLog = (operation: string, data?: any) => {
-  if (isDevelopment && logger.getLogs().length === 0) { // Quick check to avoid overhead
+  if (isDev && logger.getLogs().length === 0) { // Quick check to avoid overhead
     logger.debug('PERF', operation, data ? { data } : undefined);
   }
 };

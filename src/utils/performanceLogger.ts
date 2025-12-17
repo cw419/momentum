@@ -3,8 +3,21 @@
  * while providing detailed debugging information in development.
  */
 
-// Development mode flag for performance checks
-const isDev = process.env.NODE_ENV === 'development';
+import { isDev } from './env';
+import { logger } from './logger';
+
+function parseLogArgs(args: any[]): { message: string; context?: Record<string, any>; error?: Error } {
+  if (args.length === 0) return { message: '' };
+
+  const [first, ...rest] = args;
+  const message = typeof first === 'string' ? first : 'log';
+  const payload = typeof first === 'string' ? rest : args;
+  const error = payload.find(a => a instanceof Error) as Error | undefined;
+  const contextArgs = payload.filter(a => !(a instanceof Error));
+  const context = contextArgs.length > 0 ? { args: contextArgs } : undefined;
+
+  return { message, context, error };
+}
 
 /**
  * Performance logger that only logs in development mode
@@ -15,7 +28,8 @@ export const performanceLogger = {
    */
   log: (...args: any[]) => {
     if (isDev) {
-      console.log(...args);
+      const { message, context } = parseLogArgs(args);
+      logger.debug('PERFORMANCE', message, context);
     }
   },
 
@@ -24,7 +38,8 @@ export const performanceLogger = {
    */
   warn: (...args: any[]) => {
     if (isDev) {
-      console.warn(...args);
+      const { message, context, error } = parseLogArgs(args);
+      logger.warn('PERFORMANCE', message, context, error);
     }
   },
 
@@ -32,7 +47,8 @@ export const performanceLogger = {
    * Log errors (always logged for critical issues)
    */
   error: (...args: any[]) => {
-    console.error(...args);
+    const { message, context, error } = parseLogArgs(args);
+    logger.error('PERFORMANCE', message, context, error);
   },
 
   /**
@@ -43,7 +59,7 @@ export const performanceLogger = {
       const start = performance.now();
       fn();
       const end = performance.now();
-      console.log(`[PERF] ${label}: ${(end - start).toFixed(2)}ms`);
+      logger.performance(label, end - start);
     } else {
       fn();
     }
@@ -54,9 +70,9 @@ export const performanceLogger = {
    */
   time: <T>(label: string, fn: () => T): T => {
     if (isDev) {
-      console.time(label);
+      const start = performance.now();
       const result = fn();
-      console.timeEnd(label);
+      logger.performance(label, performance.now() - start);
       return result;
     } else {
       return fn();
@@ -68,9 +84,9 @@ export const performanceLogger = {
    */
   group: (label: string, fn: () => void) => {
     if (isDev) {
-      console.group(label);
+      logger.debug('PERFORMANCE', `Group start: ${label}`);
       fn();
-      console.groupEnd();
+      logger.debug('PERFORMANCE', `Group end: ${label}`);
     } else {
       fn();
     }
@@ -81,7 +97,8 @@ export const performanceLogger = {
    */
   debug: (...args: any[]) => {
     if (isDev) {
-      console.debug(...args);
+      const { message, context } = parseLogArgs(args);
+      logger.debug('PERFORMANCE', message, context);
     }
   },
 
@@ -90,7 +107,7 @@ export const performanceLogger = {
    */
   trace: (label: string, ...args: any[]) => {
     if (isDev) {
-      console.trace(label, ...args);
+      logger.debug('PERFORMANCE', `Trace: ${label}`, args.length > 0 ? { args } : undefined);
     }
   },
 };

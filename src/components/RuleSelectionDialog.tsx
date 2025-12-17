@@ -21,6 +21,8 @@ import { ExceptionRuleCache } from '../utils/exceptionRuleCache';
 import { useLayoutStability } from '../utils/LayoutStabilityMonitor';
 import { VirtualizedRuleList } from './VirtualizedRuleList';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -166,7 +168,8 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
       return applicableRules;
     } catch (error) {
-      console.error('获取规则失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('RULE_SELECTION', '获取规则失败', { chainId, actionType }, err);
       // 如果获取失败，返回默认预设规则
       return createDefaultPresetRules(chainId, actionType);
     }
@@ -199,7 +202,8 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         const result = await exceptionRuleManager.createChainRule(chainId, name, ruleType, `默认${actionType === 'pause' ? '暂停' : '提前完成'}规则`);
         createdRules.push(result.rule);
       } catch (error) {
-        console.warn(`创建默认规则 "${name}" 失败:`, error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.warn('RULE_SELECTION', `创建默认规则 "${name}" 失败`, { chainId, actionType }, err);
       }
     }
     
@@ -209,7 +213,9 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
   // 选择规则
   const handleRuleSelect = useCallback(async (rule: ExceptionRule) => {
     try {
-      console.log('🔧 RuleSelectionDialog 选择规则:', { rule, actionType });
+      if (isDev) {
+        logger.debug('RULE_SELECTION', '选择规则', { ruleId: rule.id, actionType });
+      }
       
       const pauseOptions: PauseOptions | undefined = actionType === 'pause' ? {
         duration: isIndefinite ? undefined : (duration || 0) * 60,
@@ -251,7 +257,14 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       }
 
       // 创建链专属规则
-      console.log('🔧 RuleSelectionDialog 创建链专属规则:', { cleanName, ruleType, actionType, chainId: sessionContext.chainId });
+      if (isDev) {
+        logger.debug('RULE_SELECTION', '创建链专属规则', {
+          cleanName,
+          ruleType,
+          actionType,
+          chainId: sessionContext.chainId,
+        });
+      }
       await exceptionRuleManager.createChainRule(sessionContext.chainId, cleanName, ruleType, `用户创建的${actionType === 'pause' ? '暂停' : '提前完成'}规则`);
       
       // 刷新规则列表

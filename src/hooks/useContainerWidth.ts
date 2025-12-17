@@ -4,6 +4,8 @@
  */
 
 import { useEffect, useState, RefObject } from 'react';
+import { isDev } from '../utils/env';
+import { logger } from '../utils/logger';
 
 interface ContainerDimensions {
   width: number;
@@ -30,8 +32,8 @@ export const useContainerWidth = (
         setDimensions({ width, height });
         
         // 在开发模式下记录容器尺寸变化
-        if (process.env.NODE_ENV === 'development') {
-          console.log('容器尺寸变化:', { width, height });
+        if (isDev) {
+          logger.debug('LAYOUT', '容器尺寸变化', { width, height });
         }
       }
     });

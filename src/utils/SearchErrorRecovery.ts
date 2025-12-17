@@ -5,6 +5,7 @@
 
 import { ExceptionRule } from '../types';
 import { SearchResult } from './ruleSearchOptimizer';
+import { logger } from './logger';
 
 export interface SearchErrorRecoveryOptions {
   maxRetries?: number;
@@ -34,7 +35,7 @@ export class SearchErrorRecovery {
     rules: ExceptionRule[],
     originalSearchFn: (query: string, rules: ExceptionRule[]) => Promise<SearchResult[]>
   ): Promise<SearchResult[]> {
-    console.warn(`Search error for query "${query}":`, error);
+    logger.warn('SEARCH', `Search error for query "${query}"`, { query }, error);
 
     if (this.retryCount < this.maxRetries) {
       this.retryCount++;
@@ -189,7 +190,10 @@ export class LayoutErrorRecovery {
     this.errorCount++;
     
     if (this.errorCount > this.maxErrors) {
-      console.error('Too many layout errors, stopping recovery attempts');
+      logger.error('LAYOUT', 'Too many layout errors, stopping recovery attempts', {
+        errorCount: this.errorCount,
+        maxErrors: this.maxErrors,
+      });
       return;
     }
 
@@ -206,7 +210,8 @@ export class LayoutErrorRecovery {
       this.fixCommonLayoutIssues(target);
       
     } catch (error) {
-      console.error('Layout recovery failed:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('LAYOUT', 'Layout recovery failed', undefined, err);
     }
   }
 

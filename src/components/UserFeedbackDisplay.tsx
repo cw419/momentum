@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle, Loader } from 'lucide-react';
 import { userFeedbackHandler, FeedbackAction, FeedbackMessage, ProgressInfo } from '../services/UserFeedbackHandler';
+import { logger } from '../utils/logger';
 
 interface UserFeedbackDisplayProps {
   className?: string;
@@ -82,7 +83,8 @@ export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({ classN
     try {
       await action.handler();
     } catch (error) {
-      console.error('操作执行失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('USER_FEEDBACK', '操作执行失败', undefined, err);
     }
   };
 

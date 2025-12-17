@@ -3,6 +3,9 @@
  * 监控ChainEditor的渲染性能和交互响应时间
  */
 
+import { isDev } from './env';
+import { performanceLogger } from './performanceLogger';
+
 interface PerformanceMetrics {
   renderTime: number;
   interactionTime: number;
@@ -35,7 +38,7 @@ class PerformanceMonitor {
   private backgroundMode = true; // 默认后台模式
   private dataBuffer: any[] = [];
   private maxBufferSize = 100;
-  private reportingEnabled = process.env.NODE_ENV === 'development';
+  private reportingEnabled = isDev;
 
   constructor() {
     if (typeof window !== 'undefined' && this.reportingEnabled) {
@@ -65,7 +68,7 @@ class PerformanceMonitor {
                     timestamp: Date.now()
                   });
                 } else if ((entry as any).value > 0.1) {
-                  console.warn('🚨 检测到大幅布局偏移:', {
+                  performanceLogger.warn('🚨 检测到大幅布局偏移:', {
                     value: (entry as any).value,
                     sources: (entry as any).sources
                   });
@@ -79,7 +82,7 @@ class PerformanceMonitor {
       } catch (e) {
         // 静默处理错误，不影响用户体验
         if (!this.backgroundMode) {
-          console.warn('布局偏移监控不可用:', e);
+          performanceLogger.warn('布局偏移监控不可用:', e);
         }
       }
 
@@ -105,7 +108,7 @@ class PerformanceMonitor {
       } catch (e) {
         // 静默处理错误
         if (!this.backgroundMode) {
-          console.warn('绘制性能监控不可用:', e);
+          performanceLogger.warn('绘制性能监控不可用:', e);
         }
       }
 
@@ -123,7 +126,7 @@ class PerformanceMonitor {
                 });
                 
                 if (!this.backgroundMode) {
-                  console.log('性能测量:', entry.name, entry.duration + 'ms');
+                  performanceLogger.debug('性能测量:', entry.name, entry.duration + 'ms');
                 }
               }
             }
@@ -134,7 +137,7 @@ class PerformanceMonitor {
       } catch (e) {
         // 静默处理错误
         if (!this.backgroundMode) {
-          console.warn('自定义测量监控不可用:', e);
+          performanceLogger.warn('自定义测量监控不可用:', e);
         }
       }
     }
@@ -161,7 +164,7 @@ class PerformanceMonitor {
         
         // 处理数据（可以发送到分析服务等）
         if (this.reportingEnabled && !this.backgroundMode) {
-          console.log('批量处理性能数据:', batchData.length, '条记录');
+          performanceLogger.debug('批量处理性能数据:', batchData.length, '条记录');
         }
         
         resolve();
@@ -193,7 +196,7 @@ class PerformanceMonitor {
     }
     
     if (this.reportingEnabled && !this.backgroundMode) {
-      console.log('🔍 性能监控已启动');
+      performanceLogger.debug('🔍 性能监控已启动');
     }
   }
 
@@ -205,8 +208,8 @@ class PerformanceMonitor {
       observer?.disconnect();
     });
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('⏹️ 性能监控已停止');
+    if (isDev) {
+      performanceLogger.debug('⏹️ 性能监控已停止');
       this.reportMetrics();
     }
   }
@@ -227,7 +230,7 @@ class PerformanceMonitor {
         
         // 如果FPS低于30，发出警告
         if (this.metrics.fps < 30) {
-          console.warn('⚠️ FPS较低:', this.metrics.fps);
+          performanceLogger.warn('⚠️ FPS较低:', this.metrics.fps);
         }
       }
       
@@ -272,7 +275,7 @@ class PerformanceMonitor {
       
       // 只在非后台模式下立即警告
       if (duration > 100 && !this.backgroundMode) {
-        console.warn('🐌 交互响应较慢:', interactionName, duration + 'ms');
+        performanceLogger.warn('🐌 交互响应较慢:', interactionName, duration + 'ms');
       } else if (duration > 100) {
         // 后台模式下添加到缓冲区
         this.addToBuffer({
@@ -303,15 +306,15 @@ class PerformanceMonitor {
       this.metrics.memoryUsage = memoryUsage;
     }
 
-    console.group('📊 ChainEditor 性能报告');
-    console.log('渲染时间:', this.metrics.renderTime.toFixed(2) + 'ms');
-    console.log('最大交互时间:', this.metrics.interactionTime.toFixed(2) + 'ms');
-    console.log('累积布局偏移:', this.metrics.layoutShifts.toFixed(4));
-    console.log('当前FPS:', this.metrics.fps);
-    if (memoryUsage) {
-      console.log('内存使用:', memoryUsage.toFixed(2) + 'MB');
-    }
-    console.groupEnd();
+    performanceLogger.group('📊 ChainEditor 性能报告', () => {
+      performanceLogger.log('渲染时间:', this.metrics.renderTime.toFixed(2) + 'ms');
+      performanceLogger.log('最大交互时间:', this.metrics.interactionTime.toFixed(2) + 'ms');
+      performanceLogger.log('累积布局偏移:', this.metrics.layoutShifts.toFixed(4));
+      performanceLogger.log('当前FPS:', this.metrics.fps);
+      if (memoryUsage) {
+        performanceLogger.log('内存使用:', memoryUsage.toFixed(2) + 'MB');
+      }
+    });
 
     return { ...this.metrics };
   }

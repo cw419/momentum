@@ -276,7 +276,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
           // 简单的ID冲突处理
           if (existingRsipIds.has(nodeId)) {
             nodeId = crypto.randomUUID ? crypto.randomUUID() : `rsip_${Date.now()}_${Math.random()}`;
-            console.log(`RSIP节点ID冲突，生成新ID: ${node.id} -> ${nodeId}`);
+            logger.debug('IMPORT_EXPORT', 'RSIP 节点 ID 冲突，生成新 ID', { from: node.id, to: nodeId });
           }
           
           existingRsipIds.add(nodeId);

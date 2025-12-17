@@ -1,4 +1,6 @@
 import { queryOptimizer } from './queryOptimizer';
+import { isDev } from './env';
+import { logger } from './logger';
 
 /**
  * Performance Dashboard - Monitor query optimization and cache performance
@@ -56,15 +58,15 @@ export class PerformanceDashboard {
   displayConsoleReport(): void {
     const stats = queryOptimizer.getCacheStats();
     const hitRate = this.getHitRate();
-    
-    console.group('[PERFORMANCE DASHBOARD]');
-    console.log('Cache Size:', stats.cacheSize);
-    console.log('Pending Queries:', stats.pendingQueries);
-    console.log('Cache Hit Rate:', hitRate.toFixed(2) + '%');
-    console.log('Total Cache Hits:', this.cacheHits);
-    console.log('Total Cache Misses:', this.cacheMisses);
-    console.log('Active Cache Keys:', stats.cacheKeys);
-    console.groupEnd();
+
+    logger.debug('PERFORMANCE_DASHBOARD', 'Performance dashboard report', {
+      cacheSize: stats.cacheSize,
+      pendingQueries: stats.pendingQueries,
+      cacheHitRate: Number(hitRate.toFixed(2)),
+      totalCacheHits: this.cacheHits,
+      totalCacheMisses: this.cacheMisses,
+      activeCacheKeys: stats.cacheKeys,
+    });
   }
   
   getPerformanceReport() {
@@ -89,7 +91,7 @@ export class PerformanceDashboard {
 export const performanceDashboard = PerformanceDashboard.getInstance();
 
 // Auto-capture metrics every 30 seconds in development
-if (process.env.NODE_ENV === 'development') {
+if (isDev) {
   setInterval(() => {
     performanceDashboard.captureMetrics();
   }, 30000);

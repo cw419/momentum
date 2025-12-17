@@ -5,6 +5,7 @@
 
 import { Chain, ExceptionRule, ExceptionRuleType } from '../types';
 import { exceptionRuleManager } from './ExceptionRuleManager';
+import { logger } from '../utils/logger';
 
 export interface MigrationResult {
   totalChains: number;
@@ -46,7 +47,8 @@ export class ExceptionRuleMigrationService {
 
       return chainsWithExceptions.length > 0;
     } catch (error) {
-      console.error('检查迁移需求失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', '检查迁移需求失败', undefined, err);
       return false;
     }
   }
@@ -138,7 +140,8 @@ export class ExceptionRuleMigrationService {
           result.migratedRules++;
 
         } catch (error) {
-          console.warn(`创建规则 "${ruleName}" 失败:`, error);
+          const err = error instanceof Error ? error : new Error(String(error));
+          logger.warn('EXCEPTION_RULE_MIGRATION', `创建规则 "${ruleName}" 失败`, undefined, err);
           result.skippedRules++;
           result.errors.push({
             chainId: 'migration',
@@ -177,7 +180,8 @@ export class ExceptionRuleMigrationService {
       return result;
 
     } catch (error) {
-      console.error('迁移过程中发生错误:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', '迁移过程中发生错误', undefined, err);
       result.errors.push({
         chainId: 'system',
         chainName: 'Migration System',
@@ -261,7 +265,8 @@ export class ExceptionRuleMigrationService {
       };
 
     } catch (error) {
-      console.error('获取迁移建议失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', '获取迁移建议失败', undefined, err);
       return {
         totalRules: 0,
         uniqueRules: [],
@@ -302,7 +307,8 @@ export class ExceptionRuleMigrationService {
           await exceptionRuleManager.deleteRule(rule.id);
           deletedCount++;
         } catch (error) {
-          console.warn(`删除规则 ${rule.name} 失败:`, error);
+          const err = error instanceof Error ? error : new Error(String(error));
+          logger.warn('EXCEPTION_RULE_MIGRATION', `删除规则 ${rule.name} 失败`, { ruleId: rule.id }, err);
         }
       }
 
@@ -397,7 +403,8 @@ export class ExceptionRuleMigrationService {
       // 在实际实现中，应该调用 storage.getChains() 或类似方法
       return [];
     } catch (error) {
-      console.error('获取旧链条数据失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', '获取旧链条数据失败', undefined, err);
       return [];
     }
   }
@@ -422,7 +429,8 @@ export class ExceptionRuleMigrationService {
         migratedAt: new Date(parsed.migratedAt)
       };
     } catch (error) {
-      console.error('获取迁移信息失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', '获取迁移信息失败', undefined, err);
       return null;
     }
   }
@@ -443,7 +451,8 @@ export class ExceptionRuleMigrationService {
         JSON.stringify(info)
       );
     } catch (error) {
-      console.error('保存迁移信息失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', '保存迁移信息失败', undefined, err);
     }
   }
 
@@ -454,7 +463,8 @@ export class ExceptionRuleMigrationService {
     try {
       localStorage.removeItem(ExceptionRuleMigrationService.MIGRATION_KEY);
     } catch (error) {
-      console.error('清除迁移信息失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', '清除迁移信息失败', undefined, err);
     }
   }
 

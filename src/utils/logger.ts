@@ -2,11 +2,51 @@
  * Comprehensive logging system for Momentum application
  */
 
+import { isDev, isProd } from './env';
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
   ERROR = 3,
+}
+
+function safeStringify(value: unknown, space?: number): string {
+  const seen = new WeakSet<object>();
+
+  try {
+    return JSON.stringify(
+      value,
+      (_key, val) => {
+        if (typeof val === 'bigint') {
+          return val.toString();
+        }
+        if (typeof val === 'function') {
+          return `[Function${val.name ? `: ${val.name}` : ''}]`;
+        }
+        if (typeof val === 'symbol') {
+          return val.toString();
+        }
+        if (val instanceof Error) {
+          return { name: val.name, message: val.message, stack: val.stack };
+        }
+        if (typeof HTMLElement !== 'undefined' && val instanceof HTMLElement) {
+          return { tagName: val.tagName, id: val.id, className: val.className };
+        }
+        if (val && typeof val === 'object') {
+          if (seen.has(val as object)) {
+            return '[Circular]';
+          }
+          seen.add(val as object);
+        }
+        return val;
+      },
+      space
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return `[Unserializable: ${message}]`;
+  }
 }
 
 interface LogEntry {
@@ -22,7 +62,7 @@ class Logger {
   private logLevel: LogLevel = LogLevel.INFO;
   private logs: LogEntry[] = [];
   private maxLogs: number = 1000;
-  private isProduction = process.env.NODE_ENV === 'production';
+  private isProduction = isProd;
 
   setLogLevel(level: LogLevel) {
     this.logLevel = level;
@@ -72,7 +112,7 @@ class Logger {
     }
 
     // Console output with appropriate method
-    const contextStr = entry.context ? ` | Context: ${JSON.stringify(entry.context)}` : '';
+    const contextStr = entry.context ? ` | Context: ${safeStringify(entry.context)}` : '';
     const errorStr = entry.error ? ` | Error: ${entry.error.message}` : '';
     const fullMessage = `[${entry.category}] ${entry.message}${contextStr}${errorStr}`;
 
@@ -164,7 +204,7 @@ class Logger {
 
   // Export logs for debugging
   exportLogs(): string {
-    return JSON.stringify(this.logs, null, 2);
+    return safeStringify(this.logs, 2);
   }
 
   // Clear logs
@@ -178,9 +218,9 @@ class Logger {
 export const logger = new Logger();
 
 // Set log level based on environment
-if (process.env.NODE_ENV === 'development') {
+if (isDev) {
   logger.setLogLevel(LogLevel.DEBUG);
-} else if (process.env.NODE_ENV === 'production') {
+} else if (isProd) {
   // In production, only log warnings and errors to reduce noise
   logger.setLogLevel(LogLevel.WARN);
 } else {

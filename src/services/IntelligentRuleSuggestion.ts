@@ -7,6 +7,7 @@ import { ExceptionRule, ExceptionRuleType, RuleUsageRecord } from '../types';
 import { exceptionRuleManager } from './ExceptionRuleManager';
 import { ruleScopeManager } from './RuleScopeManager';
 import { exceptionRuleCache } from '../utils/exceptionRuleCache';
+import { logger } from '../utils/logger';
 
 export interface RuleSuggestion {
   rule: ExceptionRule;
@@ -93,7 +94,8 @@ export class IntelligentRuleSuggestion {
       
       return suggestions;
     } catch (error) {
-      console.error('获取智能建议失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('INTELLIGENT_RULE_SUGGESTION', '获取智能建议失败', { chainId, actionType }, err);
       return [];
     }
   }
@@ -125,7 +127,8 @@ export class IntelligentRuleSuggestion {
       
       return patterns;
     } catch (error) {
-      console.error('分析使用模式失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('INTELLIGENT_RULE_SUGGESTION', '分析使用模式失败', { chainId }, err);
       return {
         timeOfDay: {},
         dayOfWeek: {},
@@ -189,7 +192,8 @@ export class IntelligentRuleSuggestion {
         factors
       };
     } catch (error) {
-      console.error('预测规则使用概率失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('INTELLIGENT_RULE_SUGGESTION', '预测规则使用概率失败', { ruleId: rule.id }, err);
       return { probability: 0, factors: [] };
     }
   }
@@ -227,7 +231,6 @@ export class IntelligentRuleSuggestion {
     chainId: string,
     context?: Partial<ContextualFactors>
   ): Promise<ContextualFactors> {
-    void chainId;
     const defaultFactors: ContextualFactors = {
       currentTime: new Date(),
       sessionDuration: 0,
@@ -249,7 +252,8 @@ export class IntelligentRuleSuggestion {
       
       defaultFactors.userPreferences.frequentlyUsedRules = frequentRules;
     } catch (error) {
-      console.error('获取用户偏好失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('INTELLIGENT_RULE_SUGGESTION', '获取用户偏好失败', { chainId }, err);
     }
 
     return { ...defaultFactors, ...context };
@@ -367,7 +371,8 @@ export class IntelligentRuleSuggestion {
 
       return suggestions;
     } catch (error) {
-      console.error('获取模式建议失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('INTELLIGENT_RULE_SUGGESTION', '获取模式建议失败', { chainId }, err);
       return [];
     }
   }
@@ -491,12 +496,12 @@ export class IntelligentRuleSuggestion {
    */
   private async getRecentUsageRecords(chainId: string): Promise<RuleUsageRecord[]> {
     try {
-      void chainId;
       // 这里应该从实际的存储中获取使用记录
       // 目前返回模拟数据
       return [];
     } catch (error) {
-      console.error('获取使用记录失败:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('INTELLIGENT_RULE_SUGGESTION', '获取使用记录失败', { chainId }, err);
       return [];
     }
   }

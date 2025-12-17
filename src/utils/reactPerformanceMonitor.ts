@@ -3,6 +3,7 @@
  */
 
 import { performanceLogger } from './performanceLogger';
+import { isDev } from './env';
 
 interface PerformanceMetrics {
   renderTimes: number[];
@@ -30,7 +31,7 @@ class ReactPerformanceMonitor {
     this.metrics.renderTimes.push(renderTime);
     this.metrics.totalRenders++;
     
-    if (process.env.NODE_ENV === 'development' && renderTime > 16) {
+    if (isDev && renderTime > 16) {
       performanceLogger.warn(`[PERF] Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`);
     }
   }
@@ -42,7 +43,7 @@ class ReactPerformanceMonitor {
     this.metrics.treeBuilds.push(buildTime);
     this.metrics.totalTreeBuilds++;
     
-    if (process.env.NODE_ENV === 'development' && buildTime > 10) {
+    if (isDev && buildTime > 10) {
       performanceLogger.warn(`[PERF] Slow tree build: ${buildTime.toFixed(2)}ms`);
     }
   }

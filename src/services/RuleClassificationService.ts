@@ -5,6 +5,8 @@
 
 import { ExceptionRule, ExceptionRuleType, ExceptionRuleError, EnhancedExceptionRuleException } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 export class RuleClassificationService {
   /**
@@ -58,12 +60,21 @@ export class RuleClassificationService {
    * 验证规则类型是否匹配指定操作
    */
   validateRuleTypeForAction(rule: ExceptionRule, actionType: 'pause' | 'early_completion'): boolean {
-    // 添加调试日志
-    console.log(`验证规则类型匹配: 规则="${rule.name}", 规则类型="${rule.type}", 操作类型="${actionType}"`);
+    if (isDev) {
+      logger.debug('RULE_CLASSIFICATION', 'Validating rule type match', {
+        ruleId: rule.id,
+        ruleName: rule.name,
+        ruleType: rule.type,
+        actionType,
+      });
+    }
     
     // 确保规则类型有效
     if (!rule.type) {
-      console.error(`规则 "${rule.name}" 缺少类型定义`);
+      logger.error('RULE_CLASSIFICATION', 'Rule missing type definition', {
+        ruleId: rule.id,
+        ruleName: rule.name,
+      });
       return false;
     }
     
@@ -71,17 +82,21 @@ export class RuleClassificationService {
       case 'pause':
         {
           const pauseMatch = rule.type === ExceptionRuleType.PAUSE_ONLY;
-          console.log(`暂停操作匹配结果: ${pauseMatch}`);
+          if (isDev) {
+            logger.debug('RULE_CLASSIFICATION', 'Pause action match result', { pauseMatch });
+          }
           return pauseMatch;
         }
       case 'early_completion':
         {
           const completionMatch = rule.type === ExceptionRuleType.EARLY_COMPLETION_ONLY;
-          console.log(`提前完成操作匹配结果: ${completionMatch}`);
+          if (isDev) {
+            logger.debug('RULE_CLASSIFICATION', 'Early completion action match result', { completionMatch });
+          }
           return completionMatch;
         }
       default:
-        console.error(`未知的操作类型: ${actionType}`);
+        logger.error('RULE_CLASSIFICATION', 'Unknown action type', { actionType });
         return false;
     }
   }
@@ -128,7 +143,10 @@ export class RuleClassificationService {
         // 尝试自动修复
         const fixResult = await this.fixRuleTypeIssues(ruleId);
         if (fixResult.fixed) {
-          console.log('已自动修复规则类型问题:', fixResult.actions);
+          logger.info('RULE_CLASSIFICATION', '已自动修复规则类型问题', {
+            ruleId,
+            actions: fixResult.actions,
+          });
           // 重新获取规则
           const fixedRule = await exceptionRuleStorage.getRuleById(ruleId);
           if (fixedRule && fixedRule.type) {
@@ -159,7 +177,9 @@ export class RuleClassificationService {
         ).addSuggestedAction(`创建${actionName}类型的规则`).addSuggestedAction(`选择${actionName}类型的规则`);
       }
 
-      console.log(`规则验证通过: ${ruleId} 可用于 ${actionType} 操作`);
+      if (isDev) {
+        logger.debug('RULE_CLASSIFICATION', 'Rule validation passed', { ruleId, actionType });
+      }
 
     } catch (error) {
       if (error instanceof EnhancedExceptionRuleException) {

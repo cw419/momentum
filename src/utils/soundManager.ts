@@ -1,6 +1,9 @@
 /**
  * Sound Manager for playing notification sounds
  */
+
+import { logger } from './logger';
+
 class SoundManager {
   private audioContext: AudioContext | null = null;
 
@@ -13,7 +16,8 @@ class SoundManager {
         this.audioContext = new AudioContextClass();
       }
     } catch (e) {
-      console.error('Failed to initialize AudioContext', e);
+      const err = e instanceof Error ? e : new Error(String(e));
+      logger.warn('SOUND', 'Failed to initialize AudioContext', undefined, err);
     }
   }
 

@@ -6,6 +6,8 @@ import { ResponsiveContainer } from './ResponsiveContainer';
 import { SettingSection } from './SettingSection';
 import { SliderContainer } from './SliderContainer';
 import { useMobileOptimization, useTouchOptimization, useVirtualKeyboardAdaptation } from '../hooks/useMobileOptimization';
+import { logger } from '../utils/logger';
+import { isDev } from '../utils/env';
 
 interface ChainEditorProps {
   chain?: Chain;
@@ -85,20 +87,21 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('ChainEditor - Submitting form');
-    console.log('Current form data:', {
-      name: name.trim(),
-      type,
-      parentId,
-      sortOrder,
-      trigger,
-      duration,
-      description: description.trim(),
-      auxiliarySignal,
-      auxiliaryDuration,
-      auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim()
-    });
+
+    if (isDev) {
+      logger.debug('CHAIN_EDITOR', 'Submitting form', {
+        name: name.trim(),
+        type,
+        parentId,
+        sortOrder,
+        trigger,
+        duration,
+        description: description.trim(),
+        auxiliarySignal,
+        auxiliaryDuration,
+        auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
+      });
+    }
     
     // All fields are required for non-group chains
     if (!name.trim() || !trigger.trim() || !description.trim() || 
@@ -111,7 +114,7 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
     // CRITICAL: 防止循环引用 - 不能把自己设为自己的父节点
     let finalParentId = parentId;
     if (chain && finalParentId === chain.id) {
-      console.warn('Detected circular reference, resetting parentId to undefined');
+      logger.warn('CHAIN_EDITOR', 'Detected circular reference, resetting parentId to undefined', { chainId: chain.id });
       finalParentId = undefined;
     }
     const chainData = {
@@ -132,10 +135,11 @@ export const ChainEditor: React.FC<ChainEditorProps> = ({
       timeLimitExceptions: chain?.timeLimitExceptions || [],
     };
     
-    console.log('ChainEditor - Chain data to save:', chainData);
-    console.log('ChainEditor - 是否为编辑模式:', !!chain);
-    if (chain) {
-      console.log('ChainEditor - 原始链条数据:', chain);
+    if (isDev) {
+      logger.debug('CHAIN_EDITOR', 'Chain data to save', { chainData, isEditing: !!chain });
+      if (chain) {
+        logger.debug('CHAIN_EDITOR', 'Original chain data', { chain });
+      }
     }
     
     onSave(chainData, isCopyMode);
