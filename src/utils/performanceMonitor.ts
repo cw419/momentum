@@ -39,23 +39,36 @@ class PerformanceMonitor {
   private dataBuffer: any[] = [];
   private maxBufferSize = 100;
   private reportingEnabled = isDev;
+  private initialized = false;
+  private batchInterval: ReturnType<typeof setInterval> | null = null;
 
-  constructor() {
-    if (typeof window !== 'undefined' && this.reportingEnabled) {
-      // 延迟初始化，避免阻塞主线程
-      requestIdleCallback(() => {
-        this.initializeObservers();
-      }, { timeout: 1000 });
+  constructor() {}
+
+  private runWhenIdle(callback: () => void, timeout: number = 1000): void {
+    if (typeof window === 'undefined') return;
+
+    const requestIdleCallbackFn = (window as any).requestIdleCallback as
+      | ((cb: () => void, opts?: { timeout: number }) => void)
+      | undefined;
+
+    if (typeof requestIdleCallbackFn === 'function') {
+      requestIdleCallbackFn(callback, { timeout });
+      return;
     }
+
+    setTimeout(callback, 0);
   }
 
   private initializeObservers() {
+    if (typeof window === 'undefined') return;
+    if (!this.isMonitoring) return;
+
     // 监控布局偏移 (CLS - Cumulative Layout Shift)
     if ('PerformanceObserver' in window) {
       try {
         this.observers.layout = new PerformanceObserver((list) => {
           // 使用 requestIdleCallback 在空闲时处理数据
-          requestIdleCallback(() => {
+          this.runWhenIdle(() => {
             for (const entry of list.getEntries()) {
               if (entry.entryType === 'layout-shift' && !(entry as any).hadRecentInput) {
                 this.metrics.layoutShifts += (entry as any).value;
@@ -89,7 +102,7 @@ class PerformanceMonitor {
       // 监控绘制性能
       try {
         this.observers.paint = new PerformanceObserver((list) => {
-          requestIdleCallback(() => {
+          this.runWhenIdle(() => {
             for (const entry of list.getEntries()) {
               if (entry.name === 'first-contentful-paint') {
                 this.metrics.renderTime = entry.startTime;
@@ -115,7 +128,7 @@ class PerformanceMonitor {
       // 监控自定义测量
       try {
         this.observers.measure = new PerformanceObserver((list) => {
-          requestIdleCallback(() => {
+          this.runWhenIdle(() => {
             for (const entry of list.getEntries()) {
               if (entry.name.startsWith('chain-editor-')) {
                 this.addToBuffer({
@@ -187,10 +200,15 @@ class PerformanceMonitor {
     
     this.isMonitoring = true;
     this.startFPSMonitoring();
+
+    if (!this.initialized && this.reportingEnabled) {
+      this.initialized = true;
+      this.runWhenIdle(() => this.initializeObservers(), 1000);
+    }
     
     // 定期批量处理数据
     if (this.backgroundMode) {
-      setInterval(() => {
+      this.batchInterval = setInterval(() => {
         this.processBatchData();
       }, 5000); // 每5秒处理一次
     }
@@ -202,6 +220,11 @@ class PerformanceMonitor {
 
   stopMonitoring() {
     this.isMonitoring = false;
+
+    if (this.batchInterval) {
+      clearInterval(this.batchInterval);
+      this.batchInterval = null;
+    }
     
     // 清理观察者
     Object.values(this.observers).forEach(observer => {
@@ -212,6 +235,14 @@ class PerformanceMonitor {
       performanceLogger.debug('⏹️ 性能监控已停止');
       this.reportMetrics();
     }
+  }
+
+  start(): void {
+    this.startMonitoring();
+  }
+
+  stop(): void {
+    this.stopMonitoring();
   }
 
   private startFPSMonitoring() {

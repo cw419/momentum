@@ -44,6 +44,7 @@ export class RuleStateManager {
   private pendingCreations = new Map<string, PendingRuleCreation>();
   private idMappings = new Map<string, IdMapping>();
   private idCounter = 0;
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   /**
    * 生成临时ID
@@ -472,12 +473,21 @@ export class RuleStateManager {
       logger.error('RULE_STATE', '同步规则状态失败', undefined, err);
     }
   }
+
+  start(): void {
+    if (this.cleanupInterval) return;
+
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupExpiredStates();
+    }, 5 * 60 * 1000); // 每5分钟清理一次
+  }
+
+  stop(): void {
+    if (!this.cleanupInterval) return;
+    clearInterval(this.cleanupInterval);
+    this.cleanupInterval = null;
+  }
 }
 
 // 创建全局实例
 export const ruleStateManager = new RuleStateManager();
-
-// 定期清理过期状态
-setInterval(() => {
-  ruleStateManager.cleanupExpiredStates();
-}, 5 * 60 * 1000); // 每5分钟清理一次

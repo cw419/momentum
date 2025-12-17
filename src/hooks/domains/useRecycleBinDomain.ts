@@ -6,36 +6,36 @@ import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 
 interface UseRecycleBinDomainParams {
+  state: AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
 }
 
-export function useRecycleBinDomain({ setState, storage }: UseRecycleBinDomainParams) {
+export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinDomainParams) {
   const handleDeleteChain = async (chainId: string) => {
     try {
       const updatedChains = await realTimeSyncService.deleteWithSync(storage, chainId);
 
-      setState(prev => {
-        const updatedScheduledSessions = prev.scheduledSessions.filter(
-          session => session.chainId !== chainId
-        );
-        const updatedActiveSession =
-          prev.activeSession?.chainId === chainId ? null : prev.activeSession;
+      const updatedScheduledSessions = state.scheduledSessions.filter(session => session.chainId !== chainId);
+      const updatedActiveSession = state.activeSession?.chainId === chainId ? null : state.activeSession;
 
-        storage.saveScheduledSessions(updatedScheduledSessions);
-        if (!updatedActiveSession) {
-          storage.saveActiveSession(null);
-        }
-
-        return {
-          ...prev,
-          chains: updatedChains,
-          scheduledSessions: updatedScheduledSessions,
-          activeSession: updatedActiveSession,
-          currentView: updatedActiveSession ? prev.currentView : 'dashboard',
-          viewingChainId: prev.viewingChainId === chainId ? null : prev.viewingChainId,
-        };
+      void storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
+        logger.error('RECYCLE_BIN', 'Failed to persist scheduled sessions after delete', { chainId }, error as Error);
       });
+      if (!updatedActiveSession) {
+        void storage.saveActiveSession(null).catch(error => {
+          logger.error('RECYCLE_BIN', 'Failed to clear active session after delete', { chainId }, error as Error);
+        });
+      }
+
+      setState(prev => ({
+        ...prev,
+        chains: updatedChains,
+        scheduledSessions: updatedScheduledSessions,
+        activeSession: updatedActiveSession,
+        currentView: updatedActiveSession ? prev.currentView : 'dashboard',
+        viewingChainId: prev.viewingChainId === chainId ? null : prev.viewingChainId,
+      }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       logger.error('RECYCLE_BIN', 'Delete failed', { chainId }, error as Error);

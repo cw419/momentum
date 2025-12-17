@@ -29,9 +29,14 @@ export class ExceptionRuleCache {
   private readonly MAX_CACHE_SIZE = 1000;
   private cleanupInterval: NodeJS.Timeout | null = null;
 
-  constructor() {
-    // 启动定期清理
+  constructor() {}
+
+  start(): void {
     this.startCleanupInterval();
+  }
+
+  stop(): void {
+    this.stopCleanupInterval();
   }
 
   /**
@@ -370,6 +375,7 @@ export class ExceptionRuleCache {
    * 启动定期清理
    */
   private startCleanupInterval(): void {
+    if (this.cleanupInterval) return;
     this.cleanupInterval = setInterval(() => {
       this.clearExpired();
     }, 60 * 1000); // 每分钟清理一次

@@ -1,5 +1,4 @@
 import { queryOptimizer } from './queryOptimizer';
-import { isDev } from './env';
 import { logger } from './logger';
 
 /**
@@ -8,6 +7,7 @@ import { logger } from './logger';
 
 export class PerformanceDashboard {
   private static instance: PerformanceDashboard;
+  private autoCaptureInterval: ReturnType<typeof setInterval> | null = null;
   private metricsHistory: Array<{
     timestamp: number;
     cacheSize: number;
@@ -85,14 +85,20 @@ export class PerformanceDashboard {
     this.metricsHistory = [];
     queryOptimizer.clearCache();
   }
+
+  start(intervalMs: number = 30000): void {
+    if (this.autoCaptureInterval) return;
+    this.autoCaptureInterval = setInterval(() => {
+      this.captureMetrics();
+    }, intervalMs);
+  }
+
+  stop(): void {
+    if (!this.autoCaptureInterval) return;
+    clearInterval(this.autoCaptureInterval);
+    this.autoCaptureInterval = null;
+  }
 }
 
 // Export singleton instance
 export const performanceDashboard = PerformanceDashboard.getInstance();
-
-// Auto-capture metrics every 30 seconds in development
-if (isDev) {
-  setInterval(() => {
-    performanceDashboard.captureMetrics();
-  }, 30000);
-}

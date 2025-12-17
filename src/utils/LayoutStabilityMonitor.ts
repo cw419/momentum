@@ -43,7 +43,6 @@ export class LayoutStabilityMonitor {
 
   constructor(autoFix = true) {
     this.autoFix = autoFix;
-    this.initializeMonitoring();
   }
 
   private initializeMonitoring() {
@@ -81,6 +80,8 @@ export class LayoutStabilityMonitor {
 
   startMonitoring(container?: HTMLElement) {
     if (this.isMonitoring) return;
+
+    this.initializeMonitoring();
 
     this.isMonitoring = true;
     const target = container || document.body;

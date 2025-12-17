@@ -18,9 +18,23 @@ export class ForwardTimerManager {
   private visibilityHandler: (() => void) | null = null;
   private focusHandler: (() => void) | null = null;
   private blurHandler: (() => void) | null = null;
+  private started = false;
 
-  constructor() {
+  constructor() {}
+
+  start(): void {
+    if (this.started) return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    this.started = true;
     this.setupVisibilityHandler();
+
+    // 页面启动时清理过期数据
+    this.cleanupExpiredStates();
+  }
+
+  stop(): void {
+    this.destroy();
   }
 
   /**
@@ -314,6 +328,7 @@ export class ForwardTimerManager {
    * 销毁管理器，清理事件监听器
    */
   destroy(): void {
+    this.started = false;
     if (this.visibilityHandler && typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', this.visibilityHandler);
       this.visibilityHandler = null;
@@ -335,8 +350,3 @@ export class ForwardTimerManager {
 
 // 创建全局实例
 export const forwardTimerManager = new ForwardTimerManager();
-
-// 页面加载时清理过期数据
-if (typeof window !== 'undefined') {
-  forwardTimerManager.cleanupExpiredStates();
-}

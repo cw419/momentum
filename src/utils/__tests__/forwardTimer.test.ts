@@ -47,6 +47,7 @@ describe('ForwardTimerManager', () => {
     mockDocument.removeEventListener.mockClear();
     
     timerManager = new ForwardTimerManager();
+    timerManager.start();
   });
 
   afterEach(() => {
