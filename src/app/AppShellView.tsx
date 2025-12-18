@@ -3,6 +3,7 @@ import type { Chain, ChainDraft, CompletionHistory, RSIPMeta, RSIPNode } from '.
 import type { AppState } from '../types';
 import type { BetPlacementResult } from '../domain/betting';
 import { Dashboard } from '../components/Dashboard';
+import { AuthWrapper } from '../components/AuthWrapper';
 import { queryOptimizer } from '../utils/queryOptimizer';
 
 // 非首屏组件 - 懒加载以优化首屏性能
@@ -37,6 +38,7 @@ interface ImportChainsOptions {
 }
 
 interface AppShellViewProps {
+  storageKind: 'local' | 'supabase';
   state: AppState;
   isInitialized: boolean;
   isLoadingData: boolean;
@@ -87,6 +89,7 @@ interface AppShellViewProps {
 }
 
 export function AppShellView({
+  storageKind,
   state,
   isInitialized,
   isLoadingData,
@@ -291,7 +294,11 @@ export function AppShellView({
     }
   };
 
-  const content = renderCurrentView();
+  const content = storageKind !== 'supabase' ? (
+    renderCurrentView()
+  ) : (
+    <AuthWrapper>{renderCurrentView()}</AuthWrapper>
+  );
 
   return (
     <>
@@ -313,3 +320,4 @@ export function AppShellView({
     </>
   );
 }
+

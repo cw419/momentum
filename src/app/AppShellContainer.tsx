@@ -14,8 +14,6 @@ import { forwardTimerManager } from '../utils/forwardTimer';
 import { exceptionRuleCache } from '../utils/exceptionRuleCache';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import { ruleStateManager } from '../services/RuleStateManager';
-import { realTimeSyncService } from '../services/RealTimeSyncService';
-import { RecycleBinService } from '../services/RecycleBinService';
 import { useSafeSaveChains } from '../hooks/domains/useSafeSaveChains';
 import { useChainsDomain } from '../hooks/domains/useChainsDomain';
 import { useSessionsDomain } from '../hooks/domains/useSessionsDomain';
@@ -60,15 +58,6 @@ export default function AppShellContainer() {
 
   const storage = useStorage();
   const safelySaveChains = useSafeSaveChains(storage);
-
-  useEffect(() => {
-    realTimeSyncService.setStorage(storage);
-    RecycleBinService.setStorage(storage);
-    return () => {
-      realTimeSyncService.setStorage(null);
-      RecycleBinService.setStorage(null);
-    };
-  }, [storage]);
 
   useEffect(() => {
     // 立即设置初始化完成，让首屏尽快渲染
@@ -288,6 +277,7 @@ export default function AppShellContainer() {
 
   return (
     <AppShellView
+      storageKind={storage.kind}
       state={state}
       isInitialized={isInitialized}
       isLoadingData={isLoadingData}
@@ -327,3 +317,4 @@ export default function AppShellContainer() {
     />
   );
 }
+

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { AuthUser } from '../domain/auth';
 import { useStorage } from '../storage/StorageContext';
 import { logger } from '../utils/logger';
@@ -12,35 +12,46 @@ interface AuthWrapperProps {
 export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const storage = useStorage();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (storage.kind !== 'supabase') {
       setUser(null);
-      setIsCheckingAuth(false);
+      setLoading(false);
       return;
     }
 
     let isMounted = true;
-    setIsCheckingAuth(true);
+    setLoading(true);
 
     const unsubscribeResult = storage.onAuthStateChange((event, session) => {
       logger.debug('AUTH', 'Auth state changed', { event, hasUser: Boolean(session.user) });
-      if (!isMounted) return;
       setUser(session.user);
-      setIsCheckingAuth(false);
+      setLoading(false);
     });
 
-    // Don't block first paint on auth readiness. If auth is slow to initialize,
-    // show the AuthForm immediately and let onAuthStateChange update UI later.
-    const revealTimeoutId = window.setTimeout(() => {
+    const init = async () => {
+      const authResult = await storage.waitForAuthentication(10000);
       if (!isMounted) return;
-      setIsCheckingAuth(false);
-    }, 200);
+
+      if (!authResult.ok) {
+        logger.warn('AUTH', 'waitForAuthentication failed', {
+          code: authResult.error.code,
+          message: authResult.error.message,
+        });
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      setUser(authResult.value.user);
+      setLoading(false);
+    };
+
+    init();
 
     return () => {
       isMounted = false;
-      window.clearTimeout(revealTimeoutId);
       if (unsubscribeResult.ok) {
         unsubscribeResult.value();
       }
@@ -51,18 +62,26 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     return <>{children}</>;
   }
 
-  if (!user) {
+  if (loading) {
     return (
-      <>
-        <AuthForm />
-        {isCheckingAuth && (
-          <div className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-xs font-mono text-gray-700 shadow-sm backdrop-blur dark:bg-slate-900/70 dark:text-slate-200">
-            <Loader2 className="animate-spin" size={14} />
-            <span>AUTH CHECK</span>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-xl">
+            <Loader2 className="text-white animate-spin" size={24} />
           </div>
-        )}
-      </>
+          <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
+            正在验证身份...
+          </h2>
+          <p className="text-gray-600 dark:text-slate-400 font-mono text-sm">
+            AUTHENTICATING
+          </p>
+        </div>
+      </div>
     );
+  }
+
+  if (!user) {
+    return <AuthForm />;
   }
 
   return <>{children}</>;

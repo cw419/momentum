@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import type { MomentumStorage } from './MomentumStorage';
 import { localStorageAdapter } from './localStorageAdapter';
 import { supabaseStorage } from '../utils/supabaseStorage';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { realTimeSyncService } from '../services/RealTimeSyncService';
+import { RecycleBinService } from '../services/RecycleBinService';
 
 const StorageContext = createContext<MomentumStorage | null>(null);
 
@@ -16,6 +18,15 @@ export function StorageProvider({ storage, children }: StorageProviderProps) {
     if (storage) return storage;
     return isSupabaseConfigured ? supabaseStorage : localStorageAdapter;
   }, [storage]);
+
+  useEffect(() => {
+    realTimeSyncService.setStorage(resolvedStorage);
+    RecycleBinService.setStorage(resolvedStorage);
+    return () => {
+      realTimeSyncService.setStorage(null);
+      RecycleBinService.setStorage(null);
+    };
+  }, [resolvedStorage]);
 
   return <StorageContext.Provider value={resolvedStorage}>{children}</StorageContext.Provider>;
 }
