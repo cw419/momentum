@@ -22,12 +22,12 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
   const recentHistory = chainHistory.slice(-10).reverse();
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
-  const successRate = chain.totalCompletions > 0 
+  const successRate = chain.totalCompletions > 0
     ? Math.round((chain.totalCompletions / (chain.totalCompletions + chain.totalFailures)) * 100)
     : 0;
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="flex items-center justify-between mb-12 animate-fade-in">
@@ -78,7 +78,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                 </div>
               </div>
 
-              <div className="text-center mb-8 pb-8 border-b border-gray-200">
+              <div className="text-center mb-8 pb-8 border-b border-gray-200/30 dark:border-gray-700/30">
                 <div className="flex items-center justify-center space-x-3 text-blue-500 mb-4">
                   <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
                     <Calendar size={24} />
@@ -123,7 +123,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                   <span className="text-gray-500 dark:text-slate-400 font-chinese">预约完成条件</span>
                   <span className="text-blue-500 font-medium font-chinese">{chain.auxiliaryCompletionTrigger}</span>
                 </div>
-                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                <div className="flex justify-between items-center pt-4 border-t border-gray-200/30 dark:border-gray-700/30">
                   <span className="text-gray-500 dark:text-slate-400 font-chinese">成功率</span>
                   <span className="text-primary-500 font-bold text-xl font-mono">{successRate}%</span>
                 </div>
@@ -142,7 +142,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                     <p className="text-xs font-mono text-gray-500 dark:text-slate-400 tracking-wide">RULE HANDBOOK</p>
                   </div>
                 </h3>
-                
+
                 {chain.exceptions.length > 0 && (
                   <div className="mb-6">
                     <h4 className="text-[#161615] dark:text-slate-100 font-medium mb-3 font-chinese flex items-center space-x-2">
@@ -158,7 +158,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                     </div>
                   </div>
                 )}
-                
+
                 {chain.auxiliaryExceptions.length > 0 && (
                   <div>
                     <h4 className="text-[#161615] dark:text-slate-100 font-medium mb-3 font-chinese flex items-center space-x-2">
@@ -217,15 +217,14 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
               ) : (
                 <div className="space-y-4">
                   {recentHistory.map((record, index) => (
-                    <div key={index} className="bg-gray-50 dark:bg-slate-700/50 rounded-2xl p-6 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-200">
+                    <div key={index} className="bg-white/40 dark:bg-slate-700/30 rounded-2xl p-6 hover:bg-white/60 dark:hover:bg-slate-700/50 transition-colors duration-200 border border-white/20 dark:border-white/5">
                       {/* Main record info */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-4">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                            record.wasSuccessful 
-                              ? 'bg-green-500/10 text-green-500' 
-                              : 'bg-red-500/10 text-red-500'
-                          }`}>
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${record.wasSuccessful
+                            ? 'bg-green-500/10 text-green-500'
+                            : 'bg-red-500/10 text-red-500'
+                            }`}>
                             {record.wasSuccessful ? (
                               <CheckCircle size={24} />
                             ) : (
@@ -248,7 +247,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                           <div className="flex items-center space-x-2 text-gray-400 dark:text-slate-500 text-sm">
                             <Clock size={14} />
                             <span className="font-mono">
-                              {record.actualDuration 
+                              {record.actualDuration
                                 ? formatActualDuration(record.actualDuration, record.isForwardTimed)
                                 : formatTime(record.duration)
                               }
@@ -256,12 +255,12 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Task description and notes */}
                       {(record.description || record.notes) && (
                         <div className="space-y-3">
                           {record.description && (
-                            <div className="bg-white dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/50 dark:border-slate-500/30">
+                            <div className="bg-white/40 dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/30 dark:border-slate-500/30">
                               <div className="flex items-center space-x-2 mb-2">
                                 <div className="w-6 h-6 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
                                   <ListTodo className="text-blue-500" size={14} />
@@ -273,9 +272,9 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                               </p>
                             </div>
                           )}
-                          
+
                           {record.notes && (
-                            <div className="bg-white dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/50 dark:border-slate-500/30">
+                            <div className="bg-white/40 dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/30 dark:border-slate-500/30">
                               <div className="flex items-center space-x-2 mb-2">
                                 <div className="w-6 h-6 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center">
                                   <StickyNote className="text-amber-500" size={14} />
@@ -296,7 +295,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* Delete confirmation modal */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
@@ -310,7 +309,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                   你确定要删除链条 "<span className="text-primary-500 font-semibold">{chain.name}</span>" 吗？
                 </p>
               </div>
-              
+
               <div className="bg-red-50/80 dark:bg-red-900/20 rounded-2xl p-6 border border-red-200/60 dark:border-red-800/40 mb-8">
                 <div className="text-center mb-6">
                   <p className="text-red-600 dark:text-red-400 text-sm font-medium font-chinese">
@@ -374,7 +373,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
