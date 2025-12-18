@@ -31,7 +31,7 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     });
 
     const init = async () => {
-      const authResult = await storage.waitForAuthentication(10000);
+      const authResult = await storage.waitForAuthentication(3000);
       if (!isMounted) return;
 
       if (!authResult.ok) {

@@ -31,7 +31,8 @@ class PerformanceMonitor {
   private fpsCounter = {
     frames: 0,
     lastTime: 0,
-    fps: 0
+    fps: 0,
+    lastWarnTime: 0
   };
 
   private isMonitoring = false;
@@ -258,10 +259,14 @@ class PerformanceMonitor {
         
         this.fpsCounter.frames = 0;
         this.fpsCounter.lastTime = timestamp;
-        
-        // 如果FPS低于30，发出警告
-        if (this.metrics.fps < 30) {
-          performanceLogger.warn('⚠️ FPS较低:', this.metrics.fps);
+
+        // FPS 警告节流：每 30 秒最多警告一次，且仅在非开发环境
+        if (this.metrics.fps < 30 && !isDev) {
+          const now = Date.now();
+          if (now - this.fpsCounter.lastWarnTime > 30000) {
+            this.fpsCounter.lastWarnTime = now;
+            performanceLogger.warn('⚠️ FPS较低:', this.metrics.fps);
+          }
         }
       }
       

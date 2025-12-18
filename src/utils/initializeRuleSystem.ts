@@ -65,20 +65,3 @@ export async function initializeRuleSystem(): Promise<{
     };
   }
 }
-
-// 自动初始化（如果在浏览器环境中）
-if (typeof window !== 'undefined') {
-  // 延迟初始化，确保所有模块都已加载
-  setTimeout(() => {
-    initializeRuleSystem().then(result => {
-      if (result.success) {
-        logger.info('RULE_SYSTEM', '✅ 规则系统自动初始化成功');
-      } else {
-        logger.error('RULE_SYSTEM', '❌ 规则系统自动初始化失败', { message: result.message });
-      }
-    });
-  }, 1000);
-
-  // 暴露到全局作用域以便手动调用
-  (window as any).initializeRuleSystem = initializeRuleSystem;
-}
