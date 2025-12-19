@@ -46,7 +46,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
         <div className={`relative ${className}`}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center space-x-2 px-4 py-2 rounded-2xl bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-white/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-slate-700/60 transition-all duration-300 shadow-lg hover:shadow-xl dark:shadow-slate-900/50 focus-ring"
+            className="flex items-center space-x-2 px-4 py-2 rounded-2xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-gray-200/60 dark:border-slate-600/60 hover:bg-white dark:hover:bg-slate-700/90 transition-all duration-300 shadow-lg hover:shadow-xl dark:shadow-slate-900/50 focus-ring"
             aria-label="选择主题"
             aria-expanded={isDropdownOpen}
             aria-haspopup="true"
@@ -77,7 +77,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
               />
 
               {/* Dropdown menu */}
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white/80 dark:bg-slate-900/80 rounded-2xl shadow-2xl border border-white/40 dark:border-slate-600/60 backdrop-blur-xl z-20 animate-scale-in">
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white/95 dark:bg-slate-800/95 rounded-2xl shadow-2xl border border-gray-200/60 dark:border-slate-600/60 backdrop-blur-xl z-20 animate-scale-in">
                 <div className="p-2">
                   <div className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider font-chinese">
                     主题设置
@@ -93,8 +93,8 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
                           handleThemeChange(themeOption.value);
                         }}
                         className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 ${isSelected
-                            ? 'bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                            : 'text-gray-800 dark:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                            : 'text-gray-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700/50'
                           } focus-ring`}
                         role="menuitem"
                       >
@@ -106,7 +106,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
                           </div>
                         </div>
                         {isSelected && (
-                          <Check size={16} className="text-primary-600 dark:text-primary-400" />
+                          <Check size={16} className="text-primary-500" />
                         )}
                       </button>
                     );
@@ -129,7 +129,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
     <>
       <button
         onClick={handleToggle}
-        className={`p-3 rounded-2xl bg-white/60 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-slate-800/60 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md group focus-ring ${className}`}
+        className={`p-3 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md group focus-ring ${className}`}
         aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}
         title={isDark ? '切换到浅色模式' : '切换到深色模式'}
       >

@@ -20,7 +20,7 @@ const BettingModal = lazy(() => import('../components/BettingModal').then(m => (
 
 // 加载状态组件
 const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center relative z-10">
+  <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
     <div className="text-center">
       <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -145,7 +145,7 @@ export function AppShellView({
   const renderCurrentView = () => {
     if (!isInitialized) {
       return (
-        <div className="min-h-screen flex items-center justify-center relative z-10">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-xl">
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

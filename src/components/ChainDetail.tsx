@@ -27,7 +27,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
     : 0;
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="flex items-center justify-between mb-12 animate-fade-in">
@@ -78,7 +78,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                 </div>
               </div>
 
-              <div className="text-center mb-8 pb-8 border-b border-gray-200/30 dark:border-gray-700/30">
+              <div className="text-center mb-8 pb-8 border-b border-gray-200">
                 <div className="flex items-center justify-center space-x-3 text-blue-500 mb-4">
                   <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
                     <Calendar size={24} />
@@ -123,7 +123,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                   <span className="text-gray-500 dark:text-slate-400 font-chinese">预约完成条件</span>
                   <span className="text-blue-500 font-medium font-chinese">{chain.auxiliaryCompletionTrigger}</span>
                 </div>
-                <div className="flex justify-between items-center pt-4 border-t border-gray-200/30 dark:border-gray-700/30">
+                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
                   <span className="text-gray-500 dark:text-slate-400 font-chinese">成功率</span>
                   <span className="text-primary-500 font-bold text-xl font-mono">{successRate}%</span>
                 </div>
@@ -217,13 +217,13 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
               ) : (
                 <div className="space-y-4">
                   {recentHistory.map((record, index) => (
-                    <div key={index} className="bg-white/40 dark:bg-slate-700/30 rounded-2xl p-6 hover:bg-white/60 dark:hover:bg-slate-700/50 transition-colors duration-200 border border-white/20 dark:border-white/5">
+                    <div key={index} className="bg-gray-50 dark:bg-slate-700/50 rounded-2xl p-6 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-200">
                       {/* Main record info */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-4">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${record.wasSuccessful
-                            ? 'bg-green-500/10 text-green-500'
-                            : 'bg-red-500/10 text-red-500'
+                              ? 'bg-green-500/10 text-green-500'
+                              : 'bg-red-500/10 text-red-500'
                             }`}>
                             {record.wasSuccessful ? (
                               <CheckCircle size={24} />
@@ -260,7 +260,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                       {(record.description || record.notes) && (
                         <div className="space-y-3">
                           {record.description && (
-                            <div className="bg-white/40 dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/30 dark:border-slate-500/30">
+                            <div className="bg-white dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/50 dark:border-slate-500/30">
                               <div className="flex items-center space-x-2 mb-2">
                                 <div className="w-6 h-6 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
                                   <ListTodo className="text-blue-500" size={14} />
@@ -274,7 +274,7 @@ export const ChainDetail: React.FC<ChainDetailProps> = ({
                           )}
 
                           {record.notes && (
-                            <div className="bg-white/40 dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/30 dark:border-slate-500/30">
+                            <div className="bg-white dark:bg-slate-600/30 rounded-xl p-4 border border-gray-200/50 dark:border-slate-500/30">
                               <div className="flex items-center space-x-2 mb-2">
                                 <div className="w-6 h-6 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center">
                                   <StickyNote className="text-amber-500" size={14} />
