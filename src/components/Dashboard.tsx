@@ -170,7 +170,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
             </button>
           )}
           <NotificationToggle />
-          <ThemeToggle variant="dropdown" showLabel />
+          <ThemeToggle />
         </div>
 
         <header className="text-center mb-16 animate-fade-in">

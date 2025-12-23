@@ -3,6 +3,7 @@ import type { AuthUser } from '../domain/auth';
 import { useStorage } from '../storage/StorageContext';
 import { logger } from '../utils/logger';
 import { AuthForm } from './AuthForm';
+import { IntroScreen } from './IntroScreen';
 import { Loader2 } from 'lucide-react';
 
 interface AuthWrapperProps {
@@ -13,6 +14,8 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const storage = useStorage();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<'intro' | 'auth'>('intro');
+  const [initialIsSignUp, setInitialIsSignUp] = useState(false);
 
   useEffect(() => {
     if (storage.kind !== 'supabase') {
@@ -80,8 +83,29 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     );
   }
 
+
+
   if (!user) {
-    return <AuthForm />;
+    if (view === 'intro') {
+      return (
+        <IntroScreen
+          onSignIn={() => {
+            setInitialIsSignUp(false);
+            setView('auth');
+          }}
+          onSignUp={() => {
+            setInitialIsSignUp(true);
+            setView('auth');
+          }}
+        />
+      );
+    }
+    return (
+      <AuthForm
+        initialIsSignUp={initialIsSignUp}
+        onBack={() => setView('intro')}
+      />
+    );
   }
 
   return <>{children}</>;

@@ -2,190 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent transition on theme change to avoid flash */
-.theme-transition-disable * {
-  transition: none !important;
-}
-
 @layer base {
-  * {
-    @apply antialiased;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    @apply bg-[#FDFDFD] dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-[#161615] dark:text-gray-100;
-  }
-
-  .font-mono {
-    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  }
-
-  .font-chinese {
-    font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', system-ui, sans-serif;
-  }
-
-  /* High contrast colors for accessibility */
-  :root {
-    --color-text-primary: #161615;
-    --color-text-secondary: #6B7280;
-    --color-bg-primary: #FDFDFD;
-    --color-bg-secondary: #F9FAFB;
-    --color-border: #E5E7EB;
-  }
-
-  .dark {
-    --color-text-primary: #F1F5F9;
-    --color-text-secondary: #CBD5E1;
-    --color-bg-primary: #0F172A;
-    --color-bg-secondary: #1E293B;
-    --color-border: #334155;
-  }
-}
-
-@layer components {
-  .bento-card {
-    @apply bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-gray-200/60 dark:border-slate-600/60 rounded-2xl p-6 shadow-lg dark:shadow-2xl;
-  }
-
-  /* Desktop hover effects only */
-  @media (hover: hover) {
-    .bento-card {
-      @apply transition-shadow duration-300 hover:shadow-xl dark:hover:shadow-slate-900/50;
-    }
-  }
-
-  .bento-card-dark {
-    @apply bg-slate-900 dark:bg-slate-900/95 text-white border border-slate-700 dark:border-slate-600 rounded-2xl p-6 shadow-xl dark:shadow-2xl;
-  }
-
-  .gradient-primary {
-    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
-    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.3);
-  }
-
-  .dark .gradient-primary {
-    background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #A855F7 100%);
-    box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
-  }
-
-  .gradient-dark {
-    background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
-    box-shadow: 0 10px 25px -5px rgba(30, 41, 59, 0.3);
-  }
-
-  .dark .gradient-dark {
-    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.5);
-  }
-
-  .glass-effect {
-    @apply bg-white/10 dark:bg-slate-800/20 backdrop-blur-xl border border-white/20 dark:border-slate-600/30;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out forwards;
-  }
-
-  .animate-scale-in {
-    animation: scaleIn 0.3s ease-out forwards;
-  }
-
-  /* Focus styles for accessibility */
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
-  }
-
-  /* High contrast mode support */
-  @media (prefers-contrast: high) {
-    .bento-card {
-      @apply border-2 border-gray-900 dark:border-gray-100;
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+        background-color: #F2F2F7;
+        color: #1C1C1E;
+        @apply antialiased selection:bg-gray-900 selection:text-white dark:bg-[#0F0F12] dark:text-[#F2F2F7] dark:selection:bg-white dark:selection:text-black;
     }
 
-    button {
-      @apply border-2 border-current;
+    .font-chinese {
+        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     }
-  }
+}
 
-  /* Reduced motion support */
-  @media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+@layer utilities {
+    .glass-panel {
+        @apply backdrop-blur-[40px] bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)];
     }
-  }
 
-  /* Custom slider styles */
-  .slider::-webkit-slider-thumb {
-    appearance: none;
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    background: currentColor;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    border: 2px solid white;
-  }
+    .nav-glass {
+        @apply backdrop-blur-[20px] bg-white/70 dark:bg-black/70 border-b border-gray-200/30 dark:border-white/10;
+    }
 
-  .slider::-moz-range-thumb {
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    background: currentColor;
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  }
+    .text-title {
+        @apply text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight font-extrabold;
+    }
 
-  .dark .slider::-webkit-slider-thumb {
-    border: 2px solid #1e293b;
-  }
+    .text-body {
+        @apply text-[#6C6C70] dark:text-[#A0A0A5] leading-relaxed;
+    }
 
-  .dark .slider::-moz-range-thumb {
-    border: 2px solid #1e293b;
-  }
+    .btn-primary {
+        @apply bg-[#1C1C1E] dark:bg-white text-white dark:text-black font-semibold rounded-2xl transition-transform active:scale-95 shadow-lg hover:shadow-xl;
+    }
+
+    .btn-secondary {
+        @apply bg-white dark:bg-[#1C1C1E] text-black dark:text-white font-semibold rounded-2xl border border-gray-200/50 dark:border-white/10 transition-transform active:scale-95 shadow-md hover:shadow-lg;
+    }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
+/* Custom Animation classes */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-float {
+    animation: float 6s ease-in-out infinite;
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.animate-pulse-slow {
+    animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

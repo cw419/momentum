@@ -1,170 +1,156 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Rocket, LogIn } from 'lucide-react';
 import { useStorage } from '../storage/StorageContext';
 import { logger } from '../utils/logger';
+import { Eye, EyeOff, Loader2, Mail, Lock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 
-export const AuthForm: React.FC = () => {
-  const storage = useStorage();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+export interface AuthFormProps {
+    initialIsSignUp?: boolean;
+    onBack?: () => void;
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onBack }) => {
+    const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
-    try {
-      const result = isSignUp ? await storage.signUp(email, password) : await storage.signIn(email, password);
+    const storage = useStorage();
 
-      if (!result.ok) {
-        setError(result.error.message);
-      }
-    } catch (error) {
-      logger.error('AUTH', 'AuthForm submit failed', undefined, error as Error);
-      setError('发生未知错误，请重试');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (storage.kind !== 'supabase') return;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="w-20 h-20 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-2xl">
-            <Rocket className="text-white" size={32} />
-          </div>
-          <h1 className="text-4xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
-            Momentum
-          </h1>
-          <p className="text-gray-600 dark:text-slate-400 font-mono text-sm tracking-wider">
-            CTDP PROTOCOL
-          </p>
-        </div>
+        setLoading(true);
+        setError(null);
+        setSuccessMessage(null);
 
-        {/* Auth Form */}
-        <div className="bento-card">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
-              {isSignUp ? '创建账户' : '登录账户'}
-            </h2>
-            <p className="text-gray-600 dark:text-slate-400 text-sm">
-              {isSignUp ? '开始你的专注之旅' : '继续你的专注之旅'}
-            </p>
-          </div>
+        try {
+            if (isSignUp) {
+                const result = await storage.signUp(email, password);
+                if (result.ok) {
+                    setSuccessMessage('Account created! Please check your email to confirm.');
+                    logger.info('AUTH', 'Sign up successful', { email });
+                } else {
+                    setError(result.error.message);
+                    logger.error('AUTH', 'Sign up failed', result.error);
+                }
+            } else {
+                const result = await storage.signIn(email, password);
+                if (result.ok) {
+                    logger.info('AUTH', 'Sign in successful', { email });
+                } else {
+                    setError(result.error.message);
+                    logger.error('AUTH', 'Sign in failed', result.error);
+                }
+            }
+        } catch (err: any) {
+            setError(err.message || 'An unexpected error occurred');
+            logger.error('AUTH', 'Unexpected error during auth', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
-              <div className="flex items-center space-x-3 text-red-600 dark:text-red-400">
-                <AlertCircle size={20} />
-                <span className="text-sm font-chinese">{error}</span>
-              </div>
-            </div>
-          )}
+    return (
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[#F2F2F7] dark:bg-black font-sans transition-colors duration-500">
+            <div className="w-full max-w-md">
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className="mb-8 flex items-center space-x-2 text-[#6C6C70] hover:text-[#1C1C1E] dark:text-[#8E8E93] dark:hover:text-white transition-colors pl-2"
+                    >
+                        <ArrowLeft size={20} />
+                        <span className="font-bold tracking-wide text-xs uppercase">Back</span>
+                    </button>
+                )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
-            <div>
-              <label className="block text-gray-700 dark:text-slate-300 text-sm font-medium mb-3 font-chinese">
-                邮箱地址
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="text-gray-400" size={20} />
+                <div className="glass-panel p-10 rounded-[40px] shadow-2xl">
+                    <div className="text-center mb-10">
+                        <h2 className="text-2xl font-extrabold text-[#1C1C1E] dark:text-white tracking-tight mb-2">
+                            {isSignUp ? 'Create Account' : 'Welcome Back'}
+                        </h2>
+                        <p className="text-sm font-medium text-[#6C6C70] dark:text-[#8E8E93]">
+                            {isSignUp ? 'Start your journey to mastery' : 'Enter your credentials to continue'}
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">Email</label>
+                            <div className="relative">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    className="w-full h-14 pl-12 pr-4 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
+                                    placeholder="name@example.com"
+                                />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={20} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="w-full h-14 pl-12 pr-12 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
+                                    placeholder="••••••••"
+                                />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={20} />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 flex items-start gap-3">
+                                <AlertCircle className="text-[#FF3B30] shrink-0 mt-0.5" size={16} />
+                                <p className="text-sm font-medium text-[#FF3B30]">{error}</p>
+                            </div>
+                        )}
+
+                        {successMessage && (
+                            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 flex items-start gap-3">
+                                <CheckCircle className="text-[#34C759] shrink-0 mt-0.5" size={16} />
+                                <p className="text-sm font-medium text-[#34C759]">{successMessage}</p>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full h-14 btn-primary flex items-center justify-center space-x-2 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : <span className="text-sm font-bold tracking-wide">{isSignUp ? 'Create Account' : 'Sign In'}</span>}
+                        </button>
+                    </form>
+
+                    <div className="mt-8 text-center">
+                        <p className="text-sm text-[#6C6C70] dark:text-[#8E8E93]">
+                            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                            <button
+                                onClick={() => setIsSignUp(!isSignUp)}
+                                className="font-bold text-[#1C1C1E] dark:text-white hover:underline transition-all"
+                            >
+                                {isSignUp ? 'Sign In' : 'Sign Up'}
+                            </button>
+                        </p>
+                    </div>
                 </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="输入你的邮箱地址"
-                  className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl pl-12 pr-4 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
-                  required
-                />
-              </div>
             </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-gray-700 dark:text-slate-300 text-sm font-medium mb-3 font-chinese">
-                密码
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="text-gray-400" size={20} />
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isSignUp ? '创建一个强密码' : '输入你的密码'}
-                  className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl pl-12 pr-12 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              {isSignUp && (
-                <p className="text-gray-500 dark:text-slate-400 text-xs mt-2 font-chinese">
-                  密码至少需要6个字符
-                </p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full gradient-primary hover:shadow-xl text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>{isSignUp ? '创建中...' : '登录中...'}</span>
-                </>
-              ) : (
-                <>
-                  {isSignUp ? <User size={20} /> : <LogIn size={20} />}
-                  <span>{isSignUp ? '创建账户' : '登录'}</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Toggle Form */}
-          <div className="mt-8 text-center">
-            <p className="text-gray-600 dark:text-slate-400 text-sm font-chinese">
-              {isSignUp ? '已经有账户了？' : '还没有账户？'}
-              <button
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setError(null);
-                }}
-                className="ml-2 text-primary-500 hover:text-primary-600 font-medium transition-colors"
-              >
-                {isSignUp ? '立即登录' : '立即注册'}
-              </button>
-            </p>
-          </div>
         </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-gray-500 dark:text-slate-400 text-xs font-chinese">
-            基于链式时延协议理论的专注力训练工具
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
