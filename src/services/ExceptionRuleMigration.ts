@@ -370,6 +370,8 @@ export class ExceptionRuleMigrationService {
       };
 
     } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('EXCEPTION_RULE_MIGRATION', 'Rollback failed', undefined, err);
       return {
         success: false,
         message: tr('回滚失败', 'Rollback failed'),
