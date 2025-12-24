@@ -4,6 +4,7 @@ import { X, Import, Search, Clock, Flame, CheckCircle } from 'lucide-react';
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { formatTime } from '../utils/time';
+import { useI18n } from '../i18n';
 
 interface ImportUnitsModalProps {
   availableUnits: Chain[];
@@ -18,6 +19,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
   onImport,
   onClose,
 }) => {
+  const { language, tr } = useI18n();
   const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [importMode, setImportMode] = useState<'move' | 'copy'>('copy');
@@ -57,10 +59,10 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
             </div>
             <div>
               <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-                导入任务单元
+                {tr('导入任务单元', 'Import units')}
               </h2>
               <p className="text-sm font-mono text-gray-500 tracking-wide">
-                IMPORT TASK UNITS
+                {tr('导入任务单元', 'IMPORT TASK UNITS')}
               </p>
             </div>
           </div>
@@ -74,7 +76,9 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
 
         {/* Import Mode Selection */}
         <div className="mb-6">
-          <h3 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100 mb-4">导入模式</h3>
+          <h3 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100 mb-4">
+            {tr('导入模式', 'Import mode')}
+          </h3>
           <div className="flex space-x-4">
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
@@ -86,9 +90,9 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                 className="w-5 h-5 text-blue-500 focus:ring-blue-500 focus:ring-2"
               />
               <div>
-                <span className="text-blue-600 dark:text-blue-400 font-medium font-chinese">复制模式</span>
+                <span className="text-blue-600 dark:text-blue-400 font-medium font-chinese">{tr('复制模式', 'Copy')}</span>
                 <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
-                  创建副本加入任务群，原单元保持独立
+                  {tr('创建副本加入任务群，原单元保持独立', 'Create a copy in the group; keep the original unit independent')}
                 </p>
               </div>
             </label>
@@ -102,9 +106,9 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                 className="w-5 h-5 text-green-500 focus:ring-green-500 focus:ring-2"
               />
               <div>
-                <span className="text-green-600 dark:text-green-400 font-medium font-chinese">移动模式</span>
+                <span className="text-green-600 dark:text-green-400 font-medium font-chinese">{tr('移动模式', 'Move')}</span>
                 <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
-                  将单元移入任务群，不再独立显示
+                  {tr('将单元移入任务群，不再独立显示', 'Move the unit into the group; it will no longer appear independently')}
                 </p>
               </div>
             </label>
@@ -120,7 +124,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="搜索任务单元..."
+              placeholder={tr('搜索任务单元...', 'Search units...')}
               className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl pl-12 pr-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
             />
           </div>
@@ -133,14 +137,16 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
               <div className="w-16 h-16 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
                 <Import size={24} className="text-gray-400" />
               </div>
-              <p className="font-chinese text-lg">没有找到可导入的任务单元</p>
+              <p className="font-chinese text-lg">{tr('没有找到可导入的任务单元', 'No importable units found')}</p>
               <p className="text-sm font-mono text-gray-400 dark:text-slate-500 mt-2">
-                {searchTerm ? '尝试调整搜索条件' : '所有单元都已在任务群中'}
+                {searchTerm
+                  ? tr('尝试调整搜索条件', 'Try adjusting your search')
+                  : tr('所有单元都已在任务群中', 'All units are already in a group')}
               </p>
             </div>
           ) : (
             importableUnits.map(unit => {
-              const typeConfig = getChainTypeConfig(unit.type);
+              const typeConfig = getChainTypeConfig(unit.type, language);
               const isSelected = selectedUnits.has(unit.id);
               
               return (
@@ -189,7 +195,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                         <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-slate-400">
                           <span className="flex items-center space-x-1">
                             <Clock size={12} />
-                            <span>{formatTime(unit.duration)}</span>
+                            <span>{formatTime(unit.duration, language)}</span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <Flame size={12} />
@@ -197,7 +203,11 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                           </span>
                           <span className="flex items-center space-x-1">
                             <CheckCircle size={12} />
-                            <span>{unit.totalCompletions} 次完成</span>
+                            <span>
+                              {language === 'zh'
+                                ? `${unit.totalCompletions} 次完成`
+                                : `${unit.totalCompletions} completion${unit.totalCompletions === 1 ? '' : 's'}`}
+                            </span>
                           </span>
                         </div>
                       </div>
@@ -212,21 +222,23 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
         {/* Actions */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
-            已选择 {selectedUnits.size} 个任务单元 ({importMode === 'copy' ? '复制模式' : '移动模式'})
+            {language === 'zh'
+              ? `已选择 ${selectedUnits.size} 个任务单元（${importMode === 'copy' ? '复制模式' : '移动模式'}）`
+              : `${selectedUnits.size} selected (${importMode === 'copy' ? 'Copy' : 'Move'})`}
           </div>
           <div className="flex space-x-3">
             <button
               onClick={onClose}
               className="px-6 py-3 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
             >
-              取消
+              {tr('取消', 'Cancel')}
             </button>
             <button
               onClick={handleImport}
               disabled={selectedUnits.size === 0}
               className="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl font-medium transition-all duration-300 hover:scale-105 shadow-lg disabled:hover:scale-100 font-chinese"
             >
-              导入 {selectedUnits.size > 0 && `(${selectedUnits.size})`}
+              {tr('导入', 'Import')} {selectedUnits.size > 0 && `(${selectedUnits.size})`}
             </button>
           </div>
         </div>

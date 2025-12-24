@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Chain, ScheduledSession, ChainTreeNode } from '../types';
 import { Play, Clock, MoreHorizontal, Trash2, Flame, Calendar, Bell, Check, AlertTriangle, TrendingUp, Settings } from 'lucide-react';
-import { formatTime, getTimeRemaining, formatDuration, formatTimeDescription } from '../utils/time';
+import { formatDuration, formatTime, formatTimeDescriptionByLanguage, getTimeRemaining } from '../utils/time';
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { notificationManager } from '../utils/notifications';
@@ -9,6 +9,8 @@ import { useStorage } from '../storage/StorageContext';
 import { soundManager } from '../utils/soundManager';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
+import { useI18n } from '../i18n';
+import { getAuxiliarySignalLabel, getTriggerLabel } from './chain-editor/constants';
 
 interface ChainCardProps {
   chain: Chain | ChainTreeNode;
@@ -32,6 +34,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
   onCompleteBooking,
   onDelete,
 }) => {
+  const { language, tr } = useI18n();
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -47,7 +50,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
   }, [chain]);
 
   // Memoize type configuration to prevent recalculation
-  const typeConfig = useMemo(() => getChainTypeConfig(chain.type), [chain.type]);
+  const typeConfig = useMemo(() => getChainTypeConfig(chain.type, language), [chain.type, language]);
 
   // 获取上次完成时间（仅对无时长任务）
   useEffect(() => {
@@ -104,7 +107,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
         const minutes = Math.max(1, Math.ceil(remaining / 60));
         notificationManager.notifyScheduleWarning(
           chain.name, 
-          `${minutes}分钟`
+          tr(`${minutes}分钟`, `${minutes} min`)
         );
       }
       
@@ -174,7 +177,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 className="w-full px-4 py-3 text-left text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
               >
                 <Trash2 size={14} />
-                <span className="font-chinese font-medium">删除链条</span>
+                <span className="font-chinese font-medium">{tr('删除链条', 'Delete chain')}</span>
               </button>
             </div>
           )}
@@ -199,7 +202,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
               </div>
             </div>
             <p className="text-gray-600 dark:text-slate-400 text-sm mb-3 font-mono tracking-wide">
-              {chain.trigger}
+              {getTriggerLabel(chain.trigger, language)}
             </p>
             <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed">
               {chain.description}
@@ -214,14 +217,18 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
               <Flame size={18} />
               <span className="text-3xl font-bold font-mono">#{chain.currentStreak}</span>
             </div>
-            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">主链记录</div>
+            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">
+              {tr('主链记录', 'Main streak')}
+            </div>
           </div>
           <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 dark:from-blue-500/20 dark:to-blue-600/10 border border-blue-200/50 dark:border-blue-400/30">
             <div className="flex items-center justify-center space-x-2 text-blue-500 mb-2">
               <Calendar size={18} />
               <span className="text-3xl font-bold font-mono">#{chain.auxiliaryStreak}</span>
             </div>
-            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">预约链记录</div>
+            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">
+              {tr('预约链记录', 'Booking streak')}
+            </div>
           </div>
         </div>
 
@@ -232,15 +239,17 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
             <span className="font-medium">
               {(actualChain.isDurationless || actualChain.duration === 0) 
                 ? (lastCompletionTime 
-                    ? `上次：${formatTimeDescription(lastCompletionTime)}`
-                    : '首次执行'
+                    ? `${tr('上次：', 'Last: ')}${formatTimeDescriptionByLanguage(lastCompletionTime, language)}`
+                    : tr('首次执行', 'First time')
                   )
-                : formatTime(actualChain.duration)
+                : formatTime(actualChain.duration, language)
               }
             </span>
           </div>
           <div className="text-gray-600 dark:text-slate-400 text-sm font-mono">
-            {actualChain.totalCompletions} completion{(actualChain.totalCompletions === 0 || actualChain.totalCompletions === 1) ? '' : 's'}
+            {language === 'zh'
+              ? `${actualChain.totalCompletions} 次完成`
+              : `${actualChain.totalCompletions} completion${actualChain.totalCompletions === 1 ? '' : 's'}`}
           </div>
         </div>
 
@@ -250,14 +259,18 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2 text-blue-600">
                 <Bell size={14} />
-                <span className="text-sm font-chinese font-medium">预约信号: {scheduledSession.auxiliarySignal}</span>
+                <span className="text-sm font-chinese font-medium">
+                  {tr('预约信号: ', 'Signal: ')}
+                  {getAuxiliarySignalLabel(scheduledSession.auxiliarySignal, language)}
+                </span>
               </div>
               <div className="text-blue-700 dark:text-blue-400 font-mono font-bold text-lg">
                 {formatDuration(timeRemaining)}
               </div>
             </div>
             <div className="text-blue-600 dark:text-blue-400 text-xs mb-3 font-chinese">
-              请在时间结束前完成: {chain.auxiliaryCompletionTrigger}
+              {tr('请在时间结束前完成: ', 'Complete before time runs out: ')}
+              {getTriggerLabel(chain.auxiliaryCompletionTrigger, language)}
             </div>
             <div className="flex space-x-2">
               <button
@@ -268,7 +281,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 className="flex-1 bg-green-500/10 hover:bg-green-500/20 dark:bg-green-500/20 dark:hover:bg-green-500/30 text-green-600 dark:text-green-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-green-200/50 dark:border-green-400/30"
               >
                 <Check size={14} />
-                <span className="font-chinese font-medium">完成预约</span>
+                <span className="font-chinese font-medium">{tr('完成预约', 'Complete booking')}</span>
               </button>
               <button
                 onClick={(e) => {
@@ -278,7 +291,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-red-200/50 dark:border-red-400/30"
               >
                 <AlertTriangle size={14} />
-                <span className="font-chinese font-medium">中断/规则判定</span>
+                <span className="font-chinese font-medium">{tr('中断/规则判定', 'Interrupt / Adjudicate')}</span>
               </button>
             </div>
           </div>
@@ -291,7 +304,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
             className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
           >
             <Play size={16} />
-            <span className="font-chinese font-semibold">开始任务</span>
+            <span className="font-chinese font-semibold">{tr('开始任务', 'Start')}</span>
           </button>
           
           {!isScheduled && (
@@ -300,7 +313,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
               className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
             >
               <Clock size={16} />
-              <span className="font-chinese font-semibold">预约</span>
+              <span className="font-chinese font-semibold">{tr('预约', 'Schedule')}</span>
             </button>
           )}
         </div>
@@ -314,39 +327,60 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
               <div className="w-16 h-16 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-6">
                 <Trash2 size={24} className="text-red-500" />
               </div>
-              <h3 className="text-2xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-3">确认删除链条</h3>
+              <h3 className="text-2xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-3">
+                {tr('确认删除链条', 'Delete chain?')}
+              </h3>
               <p className="text-gray-600 dark:text-slate-300 mb-6">
-                你确定要删除链条 "<span className="text-primary-500 font-semibold">{chain.name}</span>" 吗？
+                {tr('你确定要删除链条 “', 'Are you sure you want to delete the chain “')}
+                <span className="text-primary-500 font-semibold">{chain.name}</span>
+                {tr('” 吗？', '”?')}
               </p>
             </div>
             
             <div className="bg-red-50/80 dark:bg-red-900/20 rounded-2xl p-6 border border-red-200/60 dark:border-red-800/40 mb-8">
               <div className="text-center mb-6">
                 <p className="text-red-600 dark:text-red-400 text-sm font-medium font-chinese">
-                  ⚠️ 此操作将永久删除以下数据：
+                  {tr('⚠️ 此操作将永久删除以下数据：', '⚠️ This will permanently delete:')}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4 text-red-600 dark:text-red-400 text-sm">
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
                     <Flame size={14} className="mr-2" />
-                    主链数据
+                    {tr('主链数据', 'Main chain')}
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
-                    <div>记录: #{chain.currentStreak}</div>
-                    <div>完成: {chain.totalCompletions}</div>
-                    <div>失败: {chain.totalFailures}</div>
+                    <div>
+                      {tr('记录: ', 'Streak: ')}#{chain.currentStreak}
+                    </div>
+                    <div>
+                      {tr('完成: ', 'Completions: ')}
+                      {chain.totalCompletions}
+                    </div>
+                    <div>
+                      {tr('失败: ', 'Failures: ')}
+                      {chain.totalFailures}
+                    </div>
                   </div>
                 </div>
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
                     <Calendar size={14} className="mr-2" />
-                    预约链数据
+                    {tr('预约链数据', 'Booking')}
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
-                    <div>记录: #{chain.auxiliaryStreak}</div>
-                    <div>失败: {chain.auxiliaryFailures}</div>
-                    <div>例外: {chain.auxiliaryExceptions?.length || 0} 条</div>
+                    <div>
+                      {tr('记录: ', 'Streak: ')}#{chain.auxiliaryStreak}
+                    </div>
+                    <div>
+                      {tr('失败: ', 'Failures: ')}
+                      {chain.auxiliaryFailures}
+                    </div>
+                    <div>
+                      {tr('例外: ', 'Exceptions: ')}
+                      {chain.auxiliaryExceptions?.length || 0}
+                      {language === 'zh' ? ' 条' : ''}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -354,23 +388,45 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
                     <TrendingUp size={14} className="mr-2" />
-                    历史记录
+                    {tr('历史记录', 'History')}
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
-                    <div>完成记录: {chain.totalCompletions} 次</div>
-                    <div>失败记录: {chain.totalFailures} 次</div>
-                    <div>成功率: {chain.totalCompletions > 0 ? Math.round((chain.totalCompletions / (chain.totalCompletions + chain.totalFailures)) * 100) : 0}%</div>
+                    <div>
+                      {tr('完成记录: ', 'Completions: ')}
+                      {chain.totalCompletions}
+                      {language === 'zh' ? ' 次' : ''}
+                    </div>
+                    <div>
+                      {tr('失败记录: ', 'Failures: ')}
+                      {chain.totalFailures}
+                      {language === 'zh' ? ' 次' : ''}
+                    </div>
+                    <div>
+                      {tr('成功率: ', 'Success rate: ')}
+                      {chain.totalCompletions > 0
+                        ? Math.round((chain.totalCompletions / (chain.totalCompletions + chain.totalFailures)) * 100)
+                        : 0}
+                      %
+                    </div>
                   </div>
                 </div>
                 <div className="bg-white/80 dark:bg-slate-700/50 rounded-xl p-4 border border-red-200/60 dark:border-red-800/40">
                   <div className="font-semibold mb-3 flex items-center font-chinese">
                     <Settings size={14} className="mr-2" />
-                    规则设置
+                    {tr('规则设置', 'Rules')}
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300">
-                    <div>例外: {chain.exceptions.length} 条</div>
-                    <div>预约例外: {chain.auxiliaryExceptions?.length || 0} 条</div>
-                    <div>所有配置</div>
+                    <div>
+                      {tr('例外: ', 'Exceptions: ')}
+                      {chain.exceptions.length}
+                      {language === 'zh' ? ' 条' : ''}
+                    </div>
+                    <div>
+                      {tr('预约例外: ', 'Booking exceptions: ')}
+                      {chain.auxiliaryExceptions?.length || 0}
+                      {language === 'zh' ? ' 条' : ''}
+                    </div>
+                    <div>{tr('所有配置', 'All settings')}</div>
                   </div>
                 </div>
               </div>
@@ -381,14 +437,14 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 onClick={handleCancelDelete}
                 className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
               >
-                取消
+                {tr('取消', 'Cancel')}
               </button>
               <button
                 onClick={handleConfirmDelete}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese"
               >
                 <Trash2 size={16} />
-                <span>确认删除</span>
+                <span>{tr('确认删除', 'Delete')}</span>
               </button>
             </div>
           </div>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useStorage } from '../storage/StorageContext';
 import { logger } from '../utils/logger';
 import { Eye, EyeOff, Loader2, Mail, Lock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { useI18n } from '../i18n';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 
 export interface AuthFormProps {
     initialIsSignUp?: boolean;
@@ -9,6 +11,7 @@ export interface AuthFormProps {
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onBack }) => {
+    const { language, tr } = useI18n();
     const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -31,10 +34,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
             if (isSignUp) {
                 const result = await storage.signUp(email, password);
                 if (result.ok) {
-                    setSuccessMessage('Account created! Please check your email to confirm.');
+                    setSuccessMessage(tr('账号已创建！请检查邮箱完成确认。', 'Account created! Please check your email to confirm.'));
                     logger.info('AUTH', 'Sign up successful', { email });
                 } else {
-                    setError(result.error.message);
+                    const safeDetail = getSafeErrorDetail(result.error.message, language);
+                    setError(safeDetail ?? tr('注册失败，请重试（详情见控制台）', 'Sign up failed. Check the console for details, then try again.'));
                     logger.error('AUTH', 'Sign up failed', result.error);
                 }
             } else {
@@ -42,12 +46,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                 if (result.ok) {
                     logger.info('AUTH', 'Sign in successful', { email });
                 } else {
-                    setError(result.error.message);
+                    const safeDetail = getSafeErrorDetail(result.error.message, language);
+                    setError(safeDetail ?? tr('登录失败，请重试（详情见控制台）', 'Sign in failed. Check the console for details, then try again.'));
                     logger.error('AUTH', 'Sign in failed', result.error);
                 }
             }
         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred');
+            const safeDetail = err?.message ? getSafeErrorDetail(String(err.message), language) : null;
+            setError(safeDetail ?? tr('发生了意外错误（详情见控制台）', 'An unexpected error occurred. Check the console for details.'));
             logger.error('AUTH', 'Unexpected error during auth', err);
         } finally {
             setLoading(false);
@@ -63,23 +69,27 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                         className="mb-8 flex items-center space-x-2 text-[#6C6C70] hover:text-[#1C1C1E] dark:text-[#8E8E93] dark:hover:text-white transition-colors pl-2"
                     >
                         <ArrowLeft size={20} />
-                        <span className="font-bold tracking-wide text-xs uppercase">Back</span>
+                        <span className="font-bold tracking-wide text-xs uppercase">{tr('返回', 'Back')}</span>
                     </button>
                 )}
 
                 <div className="glass-panel p-10 rounded-[40px] shadow-2xl">
                     <div className="text-center mb-10">
                         <h2 className="text-2xl font-extrabold text-[#1C1C1E] dark:text-white tracking-tight mb-2">
-                            {isSignUp ? 'Create Account' : 'Welcome Back'}
+                            {isSignUp ? tr('创建账号', 'Create Account') : tr('欢迎回来', 'Welcome Back')}
                         </h2>
                         <p className="text-sm font-medium text-[#6C6C70] dark:text-[#8E8E93]">
-                            {isSignUp ? 'Start your journey to mastery' : 'Enter your credentials to continue'}
+                            {isSignUp
+                                ? tr('开启你的掌控之旅', 'Start your journey to mastery')
+                                : tr('输入账号信息以继续', 'Enter your credentials to continue')}
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">Email</label>
+                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">
+                                {tr('邮箱', 'Email')}
+                            </label>
                             <div className="relative">
                                 <input
                                     type="email"
@@ -94,7 +104,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">Password</label>
+                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">
+                                {tr('密码', 'Password')}
+                            </label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -134,18 +146,24 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                             disabled={loading}
                             className="w-full h-14 btn-primary flex items-center justify-center space-x-2 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? <Loader2 className="animate-spin" size={20} /> : <span className="text-sm font-bold tracking-wide">{isSignUp ? 'Create Account' : 'Sign In'}</span>}
+                            {loading ? (
+                                <Loader2 className="animate-spin" size={20} />
+                            ) : (
+                                <span className="text-sm font-bold tracking-wide">
+                                    {isSignUp ? tr('创建账号', 'Create Account') : tr('登录', 'Sign In')}
+                                </span>
+                            )}
                         </button>
                     </form>
 
                     <div className="mt-8 text-center">
                         <p className="text-sm text-[#6C6C70] dark:text-[#8E8E93]">
-                            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                            {isSignUp ? tr('已有账号？', 'Already have an account?') : tr('没有账号？', "Don't have an account?")}{' '}
                             <button
                                 onClick={() => setIsSignUp(!isSignUp)}
                                 className="font-bold text-[#1C1C1E] dark:text-white hover:underline transition-all"
                             >
-                                {isSignUp ? 'Sign In' : 'Sign Up'}
+                                {isSignUp ? tr('登录', 'Sign In') : tr('注册', 'Sign Up')}
                             </button>
                         </p>
                     </div>

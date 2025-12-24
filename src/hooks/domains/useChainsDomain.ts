@@ -4,6 +4,8 @@ import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
+import { useI18n } from '../../i18n';
+import { getSafeErrorDetail } from '../../utils/errorMessage';
 
 export type SafelySaveChains = (updatedActiveChains: Chain[], retryCount?: number) => Promise<void>;
 
@@ -15,6 +17,7 @@ interface UseChainsDomainParams {
 }
 
 export function useChainsDomain({ state, setState, storage, safelySaveChains }: UseChainsDomainParams) {
+  const { language, tr } = useI18n();
   const handleCreateChain = (parentId?: string | null) => {
     setState(prev => ({
       ...prev,
@@ -164,8 +167,13 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
       }));
     } catch (error) {
       logger.error('CHAINS', 'Failed to save chain', undefined, error as Error);
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      toast.error(`保存失败: ${errorMessage}`);
+
+      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      toast.error(
+        safeDetail
+          ? tr(`保存失败: ${safeDetail}`, `Save failed: ${safeDetail}`)
+          : tr('保存失败，请重试（详情见控制台）', 'Save failed. Check the console for details, then try again.')
+      );
 
       try {
         const currentChains = await storage.getActiveChains();

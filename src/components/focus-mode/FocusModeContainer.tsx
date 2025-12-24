@@ -6,6 +6,7 @@ import { useExceptionRuleFlow } from './hooks/useExceptionRuleFlow';
 import { useFocusTimers } from './hooks/useFocusTimers';
 import { useFullscreen } from './hooks/useFullscreen';
 import { FocusModeView } from './FocusModeView';
+import { useI18n } from '../../i18n';
 
 interface FocusModeProps {
   session: ActiveSession;
@@ -18,6 +19,7 @@ interface FocusModeProps {
 }
 
 export function FocusMode({ session, chain, onComplete, onInterrupt, onPause, onResume, onRuleUsed }: FocusModeProps) {
+  const { tr } = useI18n();
   const storage = useStorage();
   const isDurationless = !!chain.isDurationless || session.duration === 0;
 
@@ -79,7 +81,7 @@ export function FocusMode({ session, chain, onComplete, onInterrupt, onPause, on
 
   const handleConfirmInterrupt = () => {
     setShowInterruptDialog(false);
-    onInterrupt('用户主动中断');
+    onInterrupt(tr('用户主动中断', 'User interrupted'));
   };
 
   const handleResumeNow = () => {

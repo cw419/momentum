@@ -3,21 +3,33 @@ import { PureDOMSlider } from '../../PureDOMSlider';
 import { SettingSection } from '../../SettingSection';
 import { SliderContainer } from '../../SliderContainer';
 import type { ChainEditorFormModel } from '../hooks/useChainEditorForm';
-import { AUXILIARY_DURATION_PRESETS, AUXILIARY_SIGNAL_TEMPLATES } from '../constants';
+import {
+  AUXILIARY_DURATION_PRESETS,
+  AUXILIARY_SIGNAL_TEMPLATES,
+  CUSTOM_AUXILIARY_SIGNAL_VALUE,
+  getTriggerLabel,
+} from '../constants';
+import { useI18n } from '../../../i18n';
 
 interface AuxiliaryChainSettingsSectionProps {
   form: ChainEditorFormModel;
 }
 
 export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSectionProps) {
+  const { language, tr } = useI18n();
+
   return (
-    <SettingSection title="辅助链设置" icon={<Calendar className="text-blue-500" size={20} />} description="配置预约和完成条件">
+    <SettingSection
+      title={tr('辅助链设置', 'Auxiliary booking')}
+      icon={<Calendar className="text-blue-500" size={20} />}
+      description={tr('配置预约和完成条件', 'Configure booking and completion conditions')}
+    >
       <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in">
         <div className="flex items-center space-x-3 mb-4">
           <Bell className="text-blue-500" size={18} />
           <div>
-            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">预约信号</h4>
-            <p className="text-xs font-mono text-gray-500">BOOKING SIGNAL</p>
+            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('预约信号', 'Booking signal')}</h4>
+            <p className="text-xs font-mono text-gray-500">{tr('预约信号', 'BOOKING SIGNAL')}</p>
           </div>
         </div>
         <select
@@ -29,22 +41,22 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
           required
         >
           <option value="" disabled className="text-gray-400">
-            选择预约信号
+            {tr('选择预约信号', 'Choose a booking signal')}
           </option>
           {AUXILIARY_SIGNAL_TEMPLATES.map((template, index) => (
-            <option key={index} value={template.text} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-              {template.text}
+            <option key={index} value={template.value} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
+              {template.label[language]}
             </option>
           ))}
         </select>
-        {form.auxiliarySignal === '自定义信号' && (
+        {form.auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE && (
           <input
             type="text"
             id="custom-auxiliary-signal"
             name="customAuxiliarySignal"
             value={form.customAuxiliarySignal}
             onChange={(e) => form.setCustomAuxiliarySignal(e.target.value)}
-            placeholder="输入你的自定义预约信号"
+            placeholder={tr('输入你的自定义预约信号', 'Enter your custom booking signal')}
             className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
             required
           />
@@ -55,8 +67,8 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
         <div className="flex items-center space-x-3 mb-4">
           <Hourglass className="text-blue-500" size={18} />
           <div>
-            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">预约时长</h4>
-            <p className="text-xs font-mono text-gray-500">BOOKING DURATION</p>
+            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('预约时长', 'Booking duration')}</h4>
+            <p className="text-xs font-mono text-gray-500">{tr('预约时长', 'BOOKING DURATION')}</p>
           </div>
         </div>
         <select
@@ -77,17 +89,17 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
         >
           {AUXILIARY_DURATION_PRESETS.map((preset) => (
             <option key={preset} value={preset} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-              {preset}分钟
+              {tr(`${preset}分钟`, `${preset} min`)}
             </option>
           ))}
           <option value="custom" className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-            自定义时长
+            {tr('自定义时长', 'Custom duration')}
           </option>
         </select>
         {form.isCustomAuxiliaryDuration && (
           <SliderContainer
-            label="自定义预约时长"
-            description="设置预约阶段的持续时间"
+            label={tr('自定义预约时长', 'Custom booking duration')}
+            description={tr('设置预约阶段的持续时间', 'Set how long the booking phase lasts')}
             orientation="vertical"
             showKeyboardInput={true}
             keyboardInputProps={{
@@ -95,8 +107,8 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
               onChange: form.setAuxiliaryDuration,
               min: 1,
               max: 120,
-              unit: '分钟',
-              placeholder: '输入时长',
+              unit: tr('分钟', 'min'),
+              placeholder: tr('输入时长', 'Enter duration'),
             }}
           >
             <PureDOMSlider
@@ -106,7 +118,7 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
               max={120}
               initialValue={form.auxiliaryDuration}
               onValueChange={form.setAuxiliaryDuration}
-              valueFormatter={(v) => `${v}分钟`}
+              valueFormatter={(v) => tr(`${v}分钟`, `${v} min`)}
               debounceMs={50}
               showValue={true}
             />
@@ -118,21 +130,23 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
         <div className="flex items-center space-x-3 mb-4">
           <CheckCircle className="text-blue-500" size={18} />
           <div>
-            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">预约完成条件</h4>
-            <p className="text-xs font-mono text-gray-500">COMPLETION CONDITION</p>
+            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('预约完成条件', 'Booking completion condition')}</h4>
+            <p className="text-xs font-mono text-gray-500">{tr('完成条件', 'COMPLETION CONDITION')}</p>
           </div>
         </div>
         <input
           type="text"
           id="auxiliary-completion-trigger"
           name="auxiliaryCompletionTrigger"
-          value={form.auxiliaryCompletionTrigger}
+          value={getTriggerLabel(form.auxiliaryCompletionTrigger, language)}
           onChange={(e) => form.setAuxiliaryCompletionTrigger(e.target.value)}
-          placeholder="例如：打开编程软件、坐到书房书桌前"
+          placeholder={tr('例如：打开编程软件、坐到书房书桌前', 'e.g. Open your IDE, sit at your desk')}
           className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
           required
         />
-        <p className="text-gray-500 text-xs mt-3 leading-relaxed">这是你在预约时间内必须完成的动作，通常就是主链的&quot;神圣座位&quot;触发器</p>
+        <p className="text-gray-500 text-xs mt-3 leading-relaxed">
+          {tr('这是你在预约时间内必须完成的动作，通常就是主链的“神圣座位”触发器', 'This is the action you must complete during booking—usually the main chain’s “Sacred Seat” trigger.')}
+        </p>
       </div>
     </SettingSection>
   );

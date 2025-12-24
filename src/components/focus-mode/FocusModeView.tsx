@@ -4,13 +4,15 @@ import {
   formatDuration,
   formatElapsedTime,
   formatLastCompletionReference,
-  formatTimeDescription,
+  formatTimeDescriptionByLanguage,
 } from '../../utils/time';
 import { FocusModeControls } from './FocusModeControls';
 import { InterruptConfirmDialog } from './InterruptConfirmDialog';
 import { RuleSelectionDialog } from '../RuleSelectionDialog';
 import { TaskCompletionDialog } from '../TaskCompletionDialog';
 import { UserFeedbackDisplay } from '../UserFeedbackDisplay';
+import { useI18n } from '../../i18n';
+import { getTriggerLabel } from '../chain-editor/constants';
 
 interface FocusModeViewProps {
   session: ActiveSession;
@@ -87,6 +89,10 @@ export function FocusModeView({
   onResumeNow,
   onCancelAutoResume,
 }: FocusModeViewProps) {
+  const { language, tr } = useI18n();
+  const elapsedMinutes = Math.ceil(elapsedSeconds / 60);
+  const elapsedWholeMinutes = Math.floor((session.duration * 60 - timeRemaining) / 60);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-[#161615] dark:via-black dark:to-[#161615] flex items-center justify-center relative overflow-hidden">
       <div className="absolute top-4 right-4 z-20 flex items-center space-x-2">
@@ -94,7 +100,7 @@ export function FocusModeView({
           <button
             onClick={onEnterFullscreen}
             className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-gray-600 dark:text-gray-300 transition-all duration-300 border border-white/20"
-            title="进入全屏 (F11)"
+            title={tr('进入全屏 (F11)', 'Enter fullscreen (F11)')}
           >
             <Maximize size={20} />
           </button>
@@ -102,7 +108,7 @@ export function FocusModeView({
           <button
             onClick={onExitFullscreen}
             className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-gray-600 dark:text-gray-300 transition-all duration-300 border border-white/20"
-            title="退出全屏 (ESC)"
+            title={tr('退出全屏 (ESC)', 'Exit fullscreen (ESC)')}
           >
             <X size={20} />
           </button>
@@ -126,7 +132,9 @@ export function FocusModeView({
               <h1 className="text-5xl md:text-6xl font-light font-chinese text-gray-900 dark:text-white mb-2">
                 {chain.name}
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-lg font-mono tracking-wider">{chain.trigger}</p>
+              <p className="text-gray-600 dark:text-gray-400 text-lg font-mono tracking-wider">
+                {getTriggerLabel(chain.trigger, language)}
+              </p>
             </div>
           </div>
         </div>
@@ -148,8 +156,11 @@ export function FocusModeView({
               <Clock className="text-primary-500" size={16} />
               <span className="font-mono">
                 {isDurationless
-                  ? `已用时 ${formatTimeDescription(Math.ceil(elapsedSeconds / 60))}`
-                  : `${Math.floor((session.duration * 60 - timeRemaining) / 60)}分钟 / ${session.duration}分钟`}
+                  ? `${tr('已用时 ', 'Elapsed: ')}${formatTimeDescriptionByLanguage(elapsedMinutes, language)}`
+                  : tr(
+                    `${elapsedWholeMinutes}分钟 / ${session.duration}分钟`,
+                    `${elapsedWholeMinutes} min / ${session.duration} min`
+                  )}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -160,7 +171,7 @@ export function FocusModeView({
 
           {isDurationless && lastCompletionTime !== null && (
             <div className="mt-4 text-gray-500 dark:text-gray-400 text-sm font-chinese">
-              {formatLastCompletionReference(lastCompletionTime)}
+              {formatLastCompletionReference(lastCompletionTime, language)}
             </div>
           )}
 
@@ -169,7 +180,10 @@ export function FocusModeView({
               <div className="flex items-center justify-center space-x-2">
                 <Hourglass className="text-indigo-500" size={16} />
                 <span>
-                  还需 {Math.floor(minimumCountdown / 60)}分{minimumCountdown % 60}秒 达到最小时长
+                  {tr(
+                    `还需 ${Math.floor(minimumCountdown / 60)}分${minimumCountdown % 60}秒 达到最小时长`,
+                    `Need ${Math.floor(minimumCountdown / 60)}m ${minimumCountdown % 60}s to reach the minimum duration`
+                  )}
                 </span>
               </div>
             </div>
@@ -179,7 +193,12 @@ export function FocusModeView({
             <div className="mt-4 text-green-600 dark:text-green-400 text-lg font-chinese">
               <div className="flex items-center justify-center space-x-2">
                 <CheckCircle className="text-green-500" size={16} />
-                <span>已达到最小时长 {chain.minimumDuration} 分钟，可以完成任务</span>
+                <span>
+                  {tr(
+                    `已达到最小时长 ${chain.minimumDuration} 分钟，可以完成任务`,
+                    `Minimum duration reached (${chain.minimumDuration} min). You can complete the task.`
+                  )}
+                </span>
               </div>
             </div>
           )}
@@ -205,7 +224,7 @@ export function FocusModeView({
           <button
             onClick={onInterruptClick}
             className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center border-2 border-red-400"
-            title="中断任务"
+            title={tr('中断任务', 'Interrupt')}
           >
             <AlertTriangle size={24} />
           </button>

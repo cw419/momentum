@@ -14,6 +14,7 @@ import { notificationManager } from '../../utils/notifications';
 import { forwardTimerManager } from '../../utils/forwardTimer';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
+import { useI18n } from '../../i18n';
 
 interface UseSessionsDomainParams {
   state: AppState;
@@ -45,6 +46,7 @@ export function useSessionsDomain({
   setShowBettingModal,
   setShowAuxiliaryJudgment,
 }: UseSessionsDomainParams) {
+  const { tr } = useI18n();
   const handleScheduleChain = (chainId: string) => {
     const existingSchedule = state.scheduledSessions.find(s => s.chainId === chainId);
     if (existingSchedule) return;
@@ -77,7 +79,7 @@ export function useSessionsDomain({
         }));
       } catch (error) {
         logger.error('SESSIONS', 'Failed to schedule chain', { chainId }, error as Error);
-        toast.error('预约失败，请重试');
+        toast.error(tr('预约失败，请重试', 'Failed to schedule. Please try again.'));
       }
     };
 
@@ -126,7 +128,7 @@ export function useSessionsDomain({
           chains: updatedChains,
         }));
 
-        notificationManager.notifyTaskFailed(chain.name, '任务群已超时');
+        notificationManager.notifyTaskFailed(chain.name, tr('任务群已超时', 'Group has expired'));
         return;
       }
 
@@ -156,9 +158,12 @@ export function useSessionsDomain({
 
         if (updatedGroup) {
           notificationManager.notifyTaskCompleted(
-            `${updatedGroup.name} (任务群)`,
+            updatedGroup.name,
             updatedGroup.totalCompletions,
-            `第${updatedGroup.totalCompletions}轮已完成，正在开始第${updatedGroup.totalCompletions + 1}轮`
+            tr(
+              `第${updatedGroup.totalCompletions}轮已完成，正在开始第${updatedGroup.totalCompletions + 1}轮`,
+              `Cycle ${updatedGroup.totalCompletions} completed. Starting cycle ${updatedGroup.totalCompletions + 1}.`
+            )
           );
         }
 
@@ -208,7 +213,7 @@ export function useSessionsDomain({
         c.id === chainId ? { ...c, auxiliaryStreak: c.auxiliaryStreak + 1 } : c
       );
 
-      notificationManager.notifyTaskCompleted(`${chain.name} (预约)`, chain.auxiliaryStreak + 1, '预约已完成');
+      notificationManager.notifyTaskCompleted(chain.name, chain.auxiliaryStreak + 1, tr('预约已完成', 'Schedule completed'));
     }
 
     void storage.saveActiveSession(activeSession).catch(error => {
@@ -287,9 +292,9 @@ export function useSessionsDomain({
           const parentChain = updatedChains.find(c => c.id === chain.parentId);
           if (parentChain) {
             notificationManager.notifyTaskCompleted(
-              `${parentChain.name} (任务群)`,
+              parentChain.name,
               parentChain.currentStreak,
-              '任务群完成一轮'
+              tr('任务群完成一轮', 'Group completed a cycle')
             );
           }
         }
@@ -309,7 +314,7 @@ export function useSessionsDomain({
 
     if (activeSessionId && storage.kind === 'supabase') {
       storage
-        .completeTaskWithBetting(activeSessionId, true, '任务完成')
+        .completeTaskWithBetting(activeSessionId, true, tr('任务完成', 'Task completed'))
         .then(result => {
           if (!result.ok) {
             logger.error('SESSIONS', '完成任务和押注结算失败', {
@@ -400,7 +405,7 @@ export function useSessionsDomain({
 
     if (activeSessionId && storage.kind === 'supabase') {
       storage
-        .completeTaskWithBetting(activeSessionId, false, '任务中断或失败')
+        .completeTaskWithBetting(activeSessionId, false, tr('任务中断或失败', 'Task interrupted or failed'))
         .then(result => {
           if (!result.ok) {
             logger.error('SESSIONS', '中断任务和押注结算失败', {
@@ -504,7 +509,7 @@ export function useSessionsDomain({
       chains: updatedChains,
     }));
 
-    notificationManager.notifyTaskCompleted(`${chain.name} (预约)`, chain.auxiliaryStreak + 1, '预约已完成');
+    notificationManager.notifyTaskCompleted(chain.name, chain.auxiliaryStreak + 1, tr('预约已完成', 'Schedule completed'));
   };
 
   return {

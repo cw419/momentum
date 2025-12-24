@@ -4,6 +4,7 @@ import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { notificationManager } from '../../../utils/notifications';
 import { forwardTimerManager } from '../../../utils/forwardTimer';
 import { soundManager } from '../../../utils/soundManager';
+import { useI18n } from '../../../i18n';
 
 interface UseFocusTimersParams {
   session: ActiveSession;
@@ -14,6 +15,7 @@ interface UseFocusTimersParams {
 }
 
 export function useFocusTimers({ session, chain, isDurationless, storage, onTimeUp }: UseFocusTimersParams) {
+  const { tr } = useI18n();
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [forwardElapsedSeconds, setForwardElapsedSeconds] = useState(0);
   const [lastCompletionTime, setLastCompletionTime] = useState<number | null>(null);
@@ -117,7 +119,7 @@ export function useFocusTimers({ session, chain, isDurationless, storage, onTime
       ) {
         hasShownWarningRef.current = true;
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        notificationManager.notifyTaskWarning(chain.name, `${minutes}分钟`);
+        notificationManager.notifyTaskWarning(chain.name, tr(`${minutes}分钟`, `${minutes} min`));
       }
 
       if (remaining <= 0) {
@@ -135,7 +137,7 @@ export function useFocusTimers({ session, chain, isDurationless, storage, onTime
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [chain.name, isDurationless, onTimeUp, session]);
+  }, [chain.name, isDurationless, onTimeUp, session, tr]);
 
   return {
     timeRemaining,
@@ -145,4 +147,3 @@ export function useFocusTimers({ session, chain, isDurationless, storage, onTime
     minimumCountdown,
   };
 }
-

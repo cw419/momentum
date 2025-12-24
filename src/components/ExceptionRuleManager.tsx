@@ -13,6 +13,8 @@ import {
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { asyncOperationManager } from '../utils/AsyncOperationManager';
 import RuleItem from './RuleItem';
+import { useI18n } from '../i18n';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 import { 
   Plus, 
   Search, 
@@ -34,6 +36,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
   initialFilter,
   onRuleSelected
 }) => {
+  const { language, tr } = useI18n();
   const [rules, setRules] = useState<ExceptionRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +116,8 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
       setRules(allRules);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载规则失败');
+      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
     } finally {
       setLoading(false);
     }
@@ -180,7 +184,8 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
           });
           
           if (error instanceof ExceptionRuleException) {
-            setFormErrors([error.message]);
+            const safe = getSafeErrorDetail(error.message, language);
+            setFormErrors([safe ?? tr('创建规则失败，请重试', 'Failed to create rule. Please try again.')]);
             
             if (error.type === ExceptionRuleError.DUPLICATE_RULE_NAME) {
               // 获取重复建议
@@ -190,7 +195,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
                 });
             }
           } else {
-            setFormErrors(['创建规则失败，请重试']);
+            setFormErrors([tr('创建规则失败，请重试', 'Failed to create rule. Please try again.')]);
           }
         }
       });
@@ -203,7 +208,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
         newMap.delete(operationId);
         return newMap;
       });
-      setFormErrors(['创建规则失败']);
+      setFormErrors([tr('创建规则失败', 'Failed to create rule')]);
     } finally {
       setSavingOperations(prev => {
         const newSet = new Set(prev);
@@ -261,9 +266,10 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
           ));
           
           if (error instanceof ExceptionRuleException) {
-            setFormErrors([error.message]);
+            const safe = getSafeErrorDetail(error.message, language);
+            setFormErrors([safe ?? tr('更新规则失败，请重试', 'Failed to update rule. Please try again.')]);
           } else {
-            setFormErrors(['更新规则失败，请重试']);
+            setFormErrors([tr('更新规则失败，请重试', 'Failed to update rule. Please try again.')]);
           }
         }
       });
@@ -273,7 +279,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
       setRules(prev => prev.map(rule => 
         rule.id === originalRule.id ? originalRule : rule
       ));
-      setFormErrors(['更新规则失败']);
+      setFormErrors([tr('更新规则失败', 'Failed to update rule')]);
     } finally {
       setSavingOperations(prev => {
         const newSet = new Set(prev);
@@ -284,15 +290,16 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
   };
 
   const handleDeleteRule = useCallback(async (rule: ExceptionRule) => {
-    if (!confirm(`确定要删除规则 "${rule.name}" 吗？`)) return;
-    
+    if (!confirm(tr(`确定要删除规则 "${rule.name}" 吗？`, `Delete rule "${rule.name}"?`))) return;
+
     try {
       await exceptionRuleManager.deleteRule(rule.id);
       await loadRules();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除规则失败');
+      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safe ?? tr('删除规则失败', 'Failed to delete rule'));
     }
-  }, []);
+  }, [loadRules, tr, language]);
 
   const handleEditRule = useCallback((rule: ExceptionRule) => {
     setEditingRule(rule);
@@ -332,12 +339,12 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      setError('导出规则失败');
+      setError(tr('导出规则失败', 'Failed to export rules'));
     }
   };
 
   const getRuleTypeDisplayName = (type: ExceptionRuleType): string => {
-    return type === ExceptionRuleType.PAUSE_ONLY ? '仅暂停' : '仅提前完成';
+    return type === ExceptionRuleType.PAUSE_ONLY ? tr('仅暂停', 'Pause only') : tr('仅提前完成', 'Early completion only');
   };
 
   const getRuleTypeColor = (type: ExceptionRuleType): string => {
@@ -347,17 +354,17 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
   };
 
   const formatLastUsed = (date?: Date): string => {
-    if (!date) return '从未使用';
+    if (!date) return tr('从未使用', 'Never');
     
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return '今天';
-    if (diffDays === 1) return '昨天';
-    if (diffDays < 7) return `${diffDays}天前`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`;
-    return `${Math.floor(diffDays / 30)}个月前`;
+    if (diffDays === 0) return tr('今天', 'Today');
+    if (diffDays === 1) return tr('昨天', 'Yesterday');
+    if (diffDays < 7) return language === 'zh' ? `${diffDays}天前` : `${diffDays}d ago`;
+    if (diffDays < 30) return language === 'zh' ? `${Math.floor(diffDays / 7)}周前` : `${Math.floor(diffDays / 7)}w ago`;
+    return language === 'zh' ? `${Math.floor(diffDays / 30)}个月前` : `${Math.floor(diffDays / 30)}mo ago`;
   };
 
   void getRuleTypeDisplayName;
@@ -369,7 +376,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="text-center mt-4 text-gray-600 dark:text-gray-400">加载规则中...</p>
+          <p className="text-center mt-4 text-gray-600 dark:text-gray-400">{tr('加载规则中...', 'Loading rules...')}</p>
         </div>
       </div>
     );
@@ -385,9 +392,9 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
               <Settings className="text-primary-500" size={20} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">例外规则管理</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{tr('例外规则管理', 'Exception Rules')}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                管理暂停和提前完成的例外规则
+                {tr('管理暂停和提前完成的例外规则', 'Manage exception rules for pausing or early completion')}
               </p>
             </div>
           </div>
@@ -398,7 +405,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
               className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors flex items-center space-x-2"
             >
               <Download size={16} />
-              <span>导出</span>
+              <span>{tr('导出', 'Export')}</span>
             </button>
             
 
@@ -408,14 +415,14 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
               className="px-4 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white transition-colors flex items-center space-x-2"
             >
               <Plus size={16} />
-              <span>创建链专属规则</span>
+              <span>{tr('创建链专属规则', 'Create chain-specific rule')}</span>
             </button>
             
             <button
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
             >
-              关闭
+              {tr('关闭', 'Close')}
             </button>
           </div>
         </div>
@@ -444,7 +451,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                   <input
                     type="text"
-                    placeholder="搜索规则名称或描述..."
+                    placeholder={tr('搜索规则名称或描述...', 'Search rule name or description...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -456,9 +463,9 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
                   onChange={(e) => setTypeFilter(e.target.value as ExceptionRuleType | 'all')}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="all">所有类型</option>
-                  <option value={ExceptionRuleType.PAUSE_ONLY}>仅暂停</option>
-                  <option value={ExceptionRuleType.EARLY_COMPLETION_ONLY}>仅提前完成</option>
+                  <option value="all">{tr('所有类型', 'All types')}</option>
+                  <option value={ExceptionRuleType.PAUSE_ONLY}>{tr('仅暂停', 'Pause only')}</option>
+                  <option value={ExceptionRuleType.EARLY_COMPLETION_ONLY}>{tr('仅提前完成', 'Early completion only')}</option>
                 </select>
                 
                 <select
@@ -466,9 +473,9 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
                   onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="usage">按使用频率</option>
-                  <option value="name">按名称</option>
-                  <option value="lastUsed">按最近使用</option>
+                  <option value="usage">{tr('按使用频率', 'Most used')}</option>
+                  <option value="name">{tr('按名称', 'Name')}</option>
+                  <option value="lastUsed">{tr('按最近使用', 'Last used')}</option>
                 </select>
               </div>
             </div>
@@ -481,19 +488,21 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
                     <Filter className="text-gray-400" size={24} />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    {searchQuery || typeFilter !== 'all' ? '没有找到匹配的规则' : '还没有规则'}
+                    {searchQuery || typeFilter !== 'all'
+                      ? tr('没有找到匹配的规则', 'No matching rules')
+                      : tr('还没有规则', 'No rules yet')}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400 mb-4">
                     {searchQuery || typeFilter !== 'all' 
-                      ? '尝试调整搜索条件或筛选器' 
-                      : '创建第一个例外规则来开始使用'}
+                      ? tr('尝试调整搜索条件或筛选器', 'Try adjusting your search or filters') 
+                      : tr('创建第一个例外规则来开始使用', 'Create your first exception rule to get started')}
                   </p>
                   {!searchQuery && typeFilter === 'all' && (
                     <button
                       onClick={() => setShowCreateForm(true)}
                       className="px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white transition-colors"
                     >
-                      创建规则
+                      {tr('创建规则', 'Create rule')}
                     </button>
                   )}
                 </div>
@@ -520,7 +529,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md p-6">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                {editingRule ? '编辑规则' : '创建新规则'}
+                {editingRule ? tr('编辑规则', 'Edit rule') : tr('创建新规则', 'Create rule')}
               </h3>
               
               {/* 错误和警告提示 */}
@@ -549,7 +558,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
               {/* 重复建议 */}
               {duplicateSuggestions.length > 0 && (
                 <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-2xl">
-                  <p className="text-blue-700 dark:text-blue-300 mb-2">建议的规则名称：</p>
+                  <p className="text-blue-700 dark:text-blue-300 mb-2">{tr('建议的规则名称：', 'Suggested rule names:')}</p>
                   <div className="flex flex-wrap gap-2">
                     {duplicateSuggestions.map((suggestion, index) => (
                       <button
@@ -567,39 +576,43 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    规则名称 *
+                    {tr('规则名称 *', 'Rule name *')}
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="例如：上厕所、喝水、接电话"
+                    placeholder={tr('例如：上厕所、喝水、接电话', 'e.g. bathroom break, water, phone call')}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    规则类型 *
+                    {tr('规则类型 *', 'Rule type *')}
                   </label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as ExceptionRuleType })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value={ExceptionRuleType.PAUSE_ONLY}>仅暂停 - 只能用于暂停计时</option>
-                    <option value={ExceptionRuleType.EARLY_COMPLETION_ONLY}>仅提前完成 - 只能用于提前完成任务</option>
+                    <option value={ExceptionRuleType.PAUSE_ONLY}>
+                      {tr('仅暂停 - 只能用于暂停计时', 'Pause only — can only pause the timer')}
+                    </option>
+                    <option value={ExceptionRuleType.EARLY_COMPLETION_ONLY}>
+                      {tr('仅提前完成 - 只能用于提前完成任务', 'Early completion only — can only complete tasks early')}
+                    </option>
                   </select>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    描述（可选）
+                    {tr('描述（可选）', 'Description (optional)')}
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="详细描述这个例外情况..."
+                    placeholder={tr('详细描述这个例外情况...', 'Describe this exception...')}
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                   />
@@ -615,7 +628,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
                   }}
                   className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
                 >
-                  取消
+                  {tr('取消', 'Cancel')}
                 </button>
                 <button
                   onClick={editingRule ? handleUpdateRule : handleCreateRule}
@@ -625,7 +638,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
                   {savingOperations.size > 0 && (
                     <Loader2 size={16} className="animate-spin" />
                   )}
-                  <span>{editingRule ? '更新' : '创建'}</span>
+                  <span>{editingRule ? tr('更新', 'Update') : tr('创建', 'Create')}</span>
                 </button>
               </div>
             </div>

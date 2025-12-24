@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { CheckCircle, Gift, Calendar, Flame, Star, Loader2, AlertCircle } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface DailyCheckinDemoProps {
   className?: string;
 }
 
 export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = '' }) => {
+  const { tr } = useI18n();
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
   const [stats, setStats] = useState({
@@ -37,7 +39,7 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
       {/* 演示标签 */}
       <div className="mb-4 text-center">
         <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm rounded-full">
-          🚀 演示模式 - Demo Mode
+          {tr('🚀 演示模式', '🚀 Demo mode')}
         </span>
       </div>
 
@@ -45,11 +47,11 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
           <Calendar className="w-5 h-5 mr-2 text-primary-500" />
-          每日签到
+          {tr('每日签到', 'Daily Check-in')}
         </h2>
         <button 
           className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          title="刷新数据"
+          title={tr('刷新数据', 'Refresh')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -63,7 +65,7 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
         <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">总积分</p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">{tr('总积分', 'Total points')}</p>
               <p className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">{stats.total_points}</p>
             </div>
             <Star className="w-8 h-8 text-yellow-500" />
@@ -74,7 +76,7 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
         <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-red-700 dark:text-red-300 font-medium">连续天数</p>
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">{tr('连续天数', 'Streak')}</p>
               <p className="text-2xl font-bold text-red-800 dark:text-red-200">{stats.current_streak}</p>
             </div>
             <Flame className="w-8 h-8 text-red-500" />
@@ -85,7 +87,7 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
         <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4 col-span-2 md:col-span-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-700 dark:text-green-300 font-medium">总签到</p>
+              <p className="text-sm text-green-700 dark:text-green-300 font-medium">{tr('总签到', 'Total check-ins')}</p>
               <p className="text-2xl font-bold text-green-800 dark:text-green-200">{stats.total_checkins}</p>
             </div>
             <Gift className="w-8 h-8 text-green-500" />
@@ -98,9 +100,9 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
         {stats.has_checked_in_today || hasCheckedIn ? (
           <div className="text-center py-4">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
-            <p className="text-lg font-semibold text-green-700 dark:text-green-300">今天已签到</p>
+            <p className="text-lg font-semibold text-green-700 dark:text-green-300">{tr('今天已签到', 'Checked in today')}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              明天再来获取更多积分吧！
+              {tr('明天再来获取更多积分吧！', 'Come back tomorrow for more points!')}
             </p>
           </div>
         ) : (
@@ -119,12 +121,12 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
               {isCheckingIn ? (
                 <>
                   <Loader2 className="w-6 h-6 animate-spin" />
-                  <span>签到中...</span>
+                  <span>{tr('签到中...', 'Checking in...')}</span>
                 </>
               ) : (
                 <>
                   <Gift className="w-6 h-6" />
-                  <span>每日签到 +10 积分</span>
+                  <span>{tr('每日签到 +10 积分', 'Daily check-in +10 points')}</span>
                 </>
               )}
             </div>
@@ -134,7 +136,7 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
         {/* 说明文字 */}
         <div className="text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            每日签到获得 10 积分，连续签到获得更多奖励
+            {tr('每日签到获得 10 积分，连续签到获得更多奖励', 'Check in daily to earn 10 points. Streaks earn more rewards.')}
           </p>
         </div>
       </div>
@@ -145,11 +147,13 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
           <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
-              演示模式说明
+              {tr('演示模式说明', 'Demo notes')}
             </p>
             <p className="text-xs text-blue-600 dark:text-blue-300 leading-relaxed">
-              这是签到功能的演示版本。要使用真实功能，请配置 Supabase 环境变量并运行数据库迁移。
-              配置完成后，此演示版本将被正式版本自动替换。
+              {tr(
+                '这是签到功能的演示版本。要使用真实功能，请配置 Supabase 环境变量并运行数据库迁移。配置完成后，此演示版本将被正式版本自动替换。',
+                'This is a demo version of Daily Check-in. To use the real feature, configure Supabase env vars and run the database migrations. Once configured, this demo will be replaced automatically.'
+              )}
             </p>
           </div>
         </div>

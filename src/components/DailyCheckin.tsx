@@ -1,12 +1,14 @@
 import React from 'react';
 import { CheckCircle, Gift, Calendar, Flame, Star, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCheckinDomain } from '../hooks/domains/useCheckinDomain';
+import { useI18n } from '../i18n';
 
 interface DailyCheckinProps {
   className?: string;
 }
 
 export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) => {
+  const { tr } = useI18n();
   const {
     stats,
     isLoading,
@@ -27,7 +29,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
       <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}>
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-          <span className="ml-3 text-gray-600 dark:text-gray-300">加载签到数据...</span>
+          <span className="ml-3 text-gray-600 dark:text-gray-300">{tr('加载签到数据...', 'Loading check-in data...')}</span>
         </div>
       </div>
     );
@@ -40,13 +42,13 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
         <div className="flex items-center justify-center py-8">
           <AlertCircle className="w-8 h-8 text-red-500" />
           <div className="ml-3">
-            <p className="text-red-600 dark:text-red-400 font-medium">签到功能暂不可用</p>
+            <p className="text-red-600 dark:text-red-400 font-medium">{tr('签到功能暂不可用', 'Daily check-in unavailable')}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{error}</p>
             <button 
               onClick={loadStats}
               className="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
             >
-              重试
+              {tr('重试', 'Retry')}
             </button>
           </div>
         </div>
@@ -63,7 +65,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           className="flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           <Calendar className="w-5 h-5 mr-2 text-primary-500" />
-          每日签到
+          {tr('每日签到', 'Daily Check-in')}
           {isCollapsed ? (
             <ChevronDown className="w-5 h-5 ml-2 text-gray-500" />
           ) : (
@@ -88,7 +90,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           <button 
             onClick={loadStats}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            title="刷新数据"
+            title={tr('刷新数据', 'Refresh')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -109,7 +111,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">总积分</p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">{tr('总积分', 'Total points')}</p>
                 <p className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">{stats.total_points}</p>
               </div>
               <Star className="w-8 h-8 text-yellow-500" />
@@ -120,7 +122,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-red-700 dark:text-red-300 font-medium">连续天数</p>
+                <p className="text-sm text-red-700 dark:text-red-300 font-medium">{tr('连续天数', 'Streak')}</p>
                 <p className="text-2xl font-bold text-red-800 dark:text-red-200">{stats.current_streak}</p>
               </div>
               <Flame className="w-8 h-8 text-red-500" />
@@ -131,7 +133,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4 col-span-2 md:col-span-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-700 dark:text-green-300 font-medium">总签到</p>
+                <p className="text-sm text-green-700 dark:text-green-300 font-medium">{tr('总签到', 'Total check-ins')}</p>
                 <p className="text-2xl font-bold text-green-800 dark:text-green-200">{stats.total_checkins}</p>
               </div>
               <Gift className="w-8 h-8 text-green-500" />
@@ -145,9 +147,9 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
         {stats?.has_checked_in_today ? (
           <div className="text-center py-4">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
-            <p className="text-lg font-semibold text-green-700 dark:text-green-300">今天已签到</p>
+            <p className="text-lg font-semibold text-green-700 dark:text-green-300">{tr('今天已签到', 'Checked in today')}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              明天再来获取更多积分吧！
+              {tr('明天再来获取更多积分吧！', 'Come back tomorrow for more points!')}
             </p>
           </div>
         ) : (
@@ -165,12 +167,12 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
             {isCheckingIn ? (
               <div className="flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin mr-3" />
-                签到中...
+                {tr('签到中...', 'Checking in...')}
               </div>
             ) : (
               <div className="flex items-center justify-center">
                 <Gift className="w-6 h-6 mr-3" />
-                立即签到
+                {tr('立即签到', 'Check in now')}
               </div>
             )}
           </button>
@@ -210,7 +212,9 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
         {stats && stats.longest_streak > stats.current_streak && (
           <div className="text-center py-2 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              最佳记录：连续 <span className="font-semibold text-gray-700 dark:text-gray-300">{stats.longest_streak}</span> 天
+              {tr('最佳记录：连续', 'Best streak:')}{' '}
+              <span className="font-semibold text-gray-700 dark:text-gray-300">{stats.longest_streak}</span>{' '}
+              {tr('天', 'days')}
             </p>
           </div>
         )}

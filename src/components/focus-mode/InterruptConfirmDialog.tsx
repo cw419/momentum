@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 interface InterruptConfirmDialogProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface InterruptConfirmDialogProps {
 }
 
 export function InterruptConfirmDialog({ isOpen, onCancel, onConfirm }: InterruptConfirmDialogProps) {
+  const { tr } = useI18n();
   if (!isOpen) return null;
 
   return (
@@ -17,10 +19,15 @@ export function InterruptConfirmDialog({ isOpen, onCancel, onConfirm }: Interrup
             <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
 
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 font-chinese">确认中断任务</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 font-chinese">
+            {tr('确认中断任务', 'Interrupt task?')}
+          </h3>
 
           <p className="text-gray-600 dark:text-gray-300 mb-8 font-chinese leading-relaxed">
-            中断任务将导致任务失败，主链记录将清空为零。你确定要中断当前任务吗？
+            {tr(
+              '中断任务将导致任务失败，主链记录将清空为零。你确定要中断当前任务吗？',
+              'Interrupting will fail the task and reset your main streak to zero. Are you sure you want to interrupt?'
+            )}
           </p>
 
           <div className="flex space-x-4">
@@ -28,13 +35,13 @@ export function InterruptConfirmDialog({ isOpen, onCancel, onConfirm }: Interrup
               onClick={onCancel}
               className="flex-1 px-6 py-3 rounded-2xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-chinese transition-all duration-300"
             >
-              取消
+              {tr('取消', 'Cancel')}
             </button>
             <button
               onClick={onConfirm}
               className="flex-1 px-6 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-chinese transition-all duration-300 shadow-lg"
             >
-              确认中断
+              {tr('确认中断', 'Interrupt')}
             </button>
           </div>
         </div>

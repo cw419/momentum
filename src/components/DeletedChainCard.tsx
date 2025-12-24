@@ -3,6 +3,7 @@ import { DeletedChain } from '../types';
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { RotateCcw, Trash2, CheckSquare, Square } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface DeletedChainCardProps {
   chain: DeletedChain;
@@ -21,7 +22,8 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
   onPermanentDelete,
   deletedTimeText,
 }) => {
-  const typeConfig = getChainTypeConfig(chain.type);
+  const { language, tr } = useI18n();
+  const typeConfig = getChainTypeConfig(chain.type, language);
 
   const handleSelectToggle = () => {
     onSelect(chain.id, !isSelected);
@@ -73,7 +75,7 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
               {chain.currentStreak}
             </div>
             <div className="text-xs text-gray-500 dark:text-slate-400 font-mono uppercase tracking-wide">
-              当前连击
+              {tr('当前连击', 'CURRENT STREAK')}
             </div>
           </div>
           <div className="text-center">
@@ -81,7 +83,7 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
               {chain.totalCompletions}
             </div>
             <div className="text-xs text-gray-500 dark:text-slate-400 font-mono uppercase tracking-wide">
-              总完成数
+              {tr('总完成数', 'TOTAL COMPLETIONS')}
             </div>
           </div>
         </div>
@@ -89,11 +91,11 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
         {/* Deletion Info */}
         <div className="mb-4 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-slate-400">删除时间</span>
+            <span className="text-gray-600 dark:text-slate-400">{tr('删除时间', 'Deleted')}</span>
             <span className="text-gray-800 dark:text-slate-200 font-medium">{deletedTimeText}</span>
           </div>
           <div className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-            30天后将自动永久删除
+            {tr('30天后将自动永久删除', 'Automatically deleted after 30 days')}
           </div>
         </div>
 
@@ -104,14 +106,14 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
             className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors font-medium"
           >
             <RotateCcw size={16} />
-            <span>恢复</span>
+            <span>{tr('恢复', 'Restore')}</span>
           </button>
           <button
             onClick={() => onPermanentDelete(chain.id)}
             className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors font-medium"
           >
             <Trash2 size={16} />
-            <span>永久删除</span>
+            <span>{tr('永久删除', 'Delete permanently')}</span>
           </button>
         </div>
 

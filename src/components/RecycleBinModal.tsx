@@ -6,6 +6,8 @@ import { ConfirmationDialog } from './ConfirmationDialog';
 import { Trash2, RotateCcw, X, CheckSquare, Square } from 'lucide-react';
 import { logger } from '../utils/logger';
 import { toast } from '../utils/toast';
+import { useI18n } from '../i18n';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 
 interface RecycleBinModalProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
   onRestore,
   onPermanentDelete,
 }) => {
+  const { language, tr } = useI18n();
   const storage = useStorage();
   const [deletedChains, setDeletedChains] = useState<DeletedChain[]>([]);
   const [selectedChains, setSelectedChains] = useState<Set<string>>(new Set());
@@ -45,7 +48,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
       setSelectedChains(new Set()); // 清空选择
     } catch (error) {
       logger.error('RECYCLE_BIN', '加载已删除链条失败', undefined, error as Error);
-      toast.error('加载回收箱失败，请重试');
+      toast.error(tr('加载回收箱失败，请重试', 'Failed to load recycle bin. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -137,25 +140,38 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
           const duration = Date.now() - startTime;
           operationResult = {
             success: true,
-            message: `成功恢复 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
+            message: tr(
+              `成功恢复 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
+              `Restored ${showConfirmDialog.chainIds.length} chain(s) (took ${duration}ms)`
+            ),
             details: { count: showConfirmDialog.chainIds.length, duration }
           };
           logger.debug('RECYCLE_BIN', 'Restore completed', operationResult.details);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : '未知错误';
+          const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
+          const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
           operationResult = {
             success: false,
-            message: `恢复操作失败: ${errorMessage}`,
-            details: { error: errorMessage, chainIds: showConfirmDialog.chainIds }
+            message: safeDetail
+              ? tr(`恢复操作失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
+              : tr('恢复操作失败，请重试（详情见控制台）', 'Restore failed. Check the console for details, then try again.'),
+            details: { error: rawErrorMessage, chainIds: showConfirmDialog.chainIds }
           };
           logger.error('RECYCLE_BIN', 'Restore operation failed', operationResult.details, error as Error);
           
           // ENHANCED: Handle partial failures more gracefully
-          if (errorMessage.includes('Partial restore failure') || errorMessage.includes('部分链条恢复可能失败')) {
-            operationResult.message = `部分链条恢复可能失败，请检查主界面确认结果。如有问题请刷新页面。`;
+          if (rawErrorMessage.includes('Partial restore failure') || rawErrorMessage.includes('部分链条恢复可能失败')) {
+            operationResult.message = tr(
+              '部分链条恢复可能失败，请检查主界面确认结果。如有问题请刷新页面。',
+              'Some chains may not have been restored. Please check the dashboard. If needed, refresh the page.'
+            );
             toast.warning(operationResult.message);
           } else {
-            toast.error(`恢复失败: ${errorMessage}`);
+            toast.error(
+              safeDetail
+                ? tr(`恢复失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
+                : tr('恢复失败，请重试（详情见控制台）', 'Restore failed. Check the console for details, then try again.')
+            );
           }
         }
       } else {
@@ -164,19 +180,29 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
           const duration = Date.now() - startTime;
           operationResult = {
             success: true,
-            message: `成功永久删除 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
+            message: tr(
+              `成功永久删除 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
+              `Permanently deleted ${showConfirmDialog.chainIds.length} chain(s) (took ${duration}ms)`
+            ),
             details: { count: showConfirmDialog.chainIds.length, duration }
           };
           logger.debug('RECYCLE_BIN', 'Permanent delete completed', operationResult.details);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : '未知错误';
+          const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
+          const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
           operationResult = {
             success: false,
-            message: `永久删除操作失败: ${errorMessage}`,
-            details: { error: errorMessage, chainIds: showConfirmDialog.chainIds }
+            message: safeDetail
+              ? tr(`永久删除操作失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
+              : tr('永久删除操作失败，请重试（详情见控制台）', 'Permanent delete failed. Check the console for details, then try again.'),
+            details: { error: rawErrorMessage, chainIds: showConfirmDialog.chainIds }
           };
           logger.error('RECYCLE_BIN', 'Permanent delete operation failed', operationResult.details, error as Error);
-          toast.error(`永久删除失败: ${errorMessage}`);
+          toast.error(
+            safeDetail
+              ? tr(`永久删除失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
+              : tr('永久删除失败，请重试（详情见控制台）', 'Permanent delete failed. Check the console for details, then try again.')
+          );
         }
       }
       
@@ -194,8 +220,12 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
       
     } catch (error) {
       logger.error('RECYCLE_BIN', 'Operation failed with unexpected error', { type: showConfirmDialog?.type }, error as Error);
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      toast.error(`操作失败: ${errorMessage}`);
+      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      toast.error(
+        safeDetail
+          ? tr(`操作失败: ${safeDetail}`, `Operation failed: ${safeDetail}`)
+          : tr('操作失败，请重试（详情见控制台）', 'Operation failed. Check the console for details, then try again.')
+      );
     } finally {
       setIsLoading(false);
       setShowConfirmDialog(null);
@@ -214,13 +244,13 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
     if (diffDays > 0) {
-      return `${diffDays}天前`;
+      return language === 'zh' ? `${diffDays}天前` : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
     } else if (diffHours > 0) {
-      return `${diffHours}小时前`;
+      return language === 'zh' ? `${diffHours}小时前` : `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
     } else if (diffMinutes > 0) {
-      return `${diffMinutes}分钟前`;
+      return language === 'zh' ? `${diffMinutes}分钟前` : `${diffMinutes} min ago`;
     } else {
-      return '刚刚';
+      return tr('刚刚', 'just now');
     }
   };
 
@@ -237,10 +267,12 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
             </div>
             <div>
               <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-                回收箱
+                {tr('回收箱', 'Recycle bin')}
               </h2>
               <p className="text-sm text-gray-500 dark:text-slate-400 font-mono">
-                RECYCLE BIN • {deletedChains.length} ITEMS
+                {language === 'zh'
+                  ? `回收箱 • ${deletedChains.length} 项`
+                  : `RECYCLE BIN • ${deletedChains.length} ITEM${deletedChains.length === 1 ? '' : 'S'}`}
               </p>
             </div>
           </div>
@@ -260,7 +292,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
                   <div className="w-5 h-5 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
                 </div>
-                <p className="text-gray-600 dark:text-slate-400 font-chinese">正在加载...</p>
+                <p className="text-gray-600 dark:text-slate-400 font-chinese">{tr('正在加载…', 'Loading…')}</p>
               </div>
             </div>
           ) : deletedChains.length === 0 ? (
@@ -270,10 +302,13 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
                   <Trash2 size={32} className="text-gray-400 dark:text-slate-500" />
                 </div>
                 <h3 className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
-                  回收箱为空
+                  {tr('回收箱为空', 'Recycle bin is empty')}
                 </h3>
                 <p className="text-gray-600 dark:text-slate-400 leading-relaxed">
-                  删除的链条会出现在这里，你可以选择恢复或永久删除它们。
+                  {tr(
+                    '删除的链条会出现在这里，你可以选择恢复或永久删除它们。',
+                    'Deleted chains appear here. You can restore them or delete them permanently.'
+                  )}
                 </p>
               </div>
             </div>
@@ -294,12 +329,14 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
                           <Square size={16} />
                         )}
                         <span>
-                          {selectedChains.size === deletedChains.length ? '取消全选' : '全选'}
+                          {selectedChains.size === deletedChains.length
+                            ? tr('取消全选', 'Clear selection')
+                            : tr('全选', 'Select all')}
                         </span>
                       </button>
                       {selectedChains.size > 0 && (
                         <span className="text-sm text-gray-500 dark:text-slate-400">
-                          已选择 {selectedChains.size} 项
+                          {language === 'zh' ? `已选择 ${selectedChains.size} 项` : `${selectedChains.size} selected`}
                         </span>
                       )}
                     </div>
@@ -311,14 +348,14 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
                           className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors text-sm font-medium"
                         >
                           <RotateCcw size={16} />
-                          <span>批量恢复</span>
+                          <span>{tr('批量恢复', 'Restore selected')}</span>
                         </button>
                         <button
                           onClick={handleBulkPermanentDelete}
                           className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors text-sm font-medium"
                         >
                           <Trash2 size={16} />
-                          <span>永久删除</span>
+                          <span>{tr('永久删除', 'Delete permanently')}</span>
                         </button>
                       </div>
                     )}
@@ -351,14 +388,24 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
       {showConfirmDialog && (
         <ConfirmationDialog
           isOpen={true}
-          title={showConfirmDialog.type === 'restore' ? '确认恢复' : '确认永久删除'}
+          title={
+            showConfirmDialog.type === 'restore'
+              ? tr('确认恢复', 'Confirm restore')
+              : tr('确认永久删除', 'Confirm permanent deletion')
+          }
           message={
             showConfirmDialog.type === 'restore'
-              ? `确定要恢复以下 ${showConfirmDialog.chainIds.length} 个链条吗？\n\n${showConfirmDialog.chainNames.join(', ')}`
-              : `确定要永久删除以下 ${showConfirmDialog.chainIds.length} 个链条吗？\n\n${showConfirmDialog.chainNames.join(', ')}\n\n⚠️ 此操作无法撤销，所有数据将被永久删除！`
+              ? tr(
+                `确定要恢复以下 ${showConfirmDialog.chainIds.length} 个链条吗？\n\n${showConfirmDialog.chainNames.join(', ')}`,
+                `Restore the following ${showConfirmDialog.chainIds.length} chain(s)?\n\n${showConfirmDialog.chainNames.join(', ')}`
+              )
+              : tr(
+                `确定要永久删除以下 ${showConfirmDialog.chainIds.length} 个链条吗？\n\n${showConfirmDialog.chainNames.join(', ')}\n\n⚠️ 此操作无法撤销，所有数据将被永久删除！`,
+                `Permanently delete the following ${showConfirmDialog.chainIds.length} chain(s)?\n\n${showConfirmDialog.chainNames.join(', ')}\n\n⚠️ This cannot be undone. All data will be permanently deleted!`
+              )
           }
-          confirmText={showConfirmDialog.type === 'restore' ? '恢复' : '永久删除'}
-          cancelText="取消"
+          confirmText={showConfirmDialog.type === 'restore' ? tr('恢复', 'Restore') : tr('永久删除', 'Delete permanently')}
+          cancelText={tr('取消', 'Cancel')}
           confirmButtonClass={
             showConfirmDialog.type === 'restore'
               ? 'bg-green-500 hover:bg-green-600'

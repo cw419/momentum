@@ -6,6 +6,7 @@
 import React, { memo } from 'react';
 import { ExceptionRule, ExceptionRuleType } from '../types';
 import { Edit2, Trash2, BarChart3, Clock, Loader2 } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface RuleItemProps {
   rule: ExceptionRule;
@@ -22,8 +23,10 @@ const RuleItem: React.FC<RuleItemProps> = memo(({
   onDelete, 
   onSelect 
 }) => {
+  const { language, tr } = useI18n();
+
   const getRuleTypeDisplayName = (type: ExceptionRuleType): string => {
-    return type === ExceptionRuleType.PAUSE_ONLY ? '仅暂停' : '仅提前完成';
+    return type === ExceptionRuleType.PAUSE_ONLY ? tr('仅暂停', 'Pause only') : tr('仅提前完成', 'Early completion only');
   };
 
   const getRuleTypeColor = (type: ExceptionRuleType): string => {
@@ -33,17 +36,21 @@ const RuleItem: React.FC<RuleItemProps> = memo(({
   };
 
   const formatLastUsed = (date?: Date): string => {
-    if (!date) return '从未使用';
+    if (!date) return tr('从未使用', 'Never used');
     
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return '今天';
-    if (diffDays === 1) return '昨天';
-    if (diffDays < 7) return `${diffDays}天前`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`;
-    return `${Math.floor(diffDays / 30)}个月前`;
+    if (diffDays === 0) return tr('今天', 'Today');
+    if (diffDays === 1) return tr('昨天', 'Yesterday');
+    if (diffDays < 7) return language === 'zh' ? `${diffDays}天前` : `${diffDays}d ago`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return language === 'zh' ? `${weeks}周前` : `${weeks}w ago`;
+    }
+    const months = Math.floor(diffDays / 30);
+    return language === 'zh' ? `${months}个月前` : `${months}mo ago`;
   };
 
   const handleSelect = () => {
@@ -80,7 +87,9 @@ const RuleItem: React.FC<RuleItemProps> = memo(({
           <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
             <div className="flex items-center space-x-1">
               <BarChart3 size={14} />
-              <span>使用 {rule.usageCount} 次</span>
+              <span>
+                {language === 'zh' ? `使用 ${rule.usageCount} 次` : `Used ${rule.usageCount} time${rule.usageCount === 1 ? '' : 's'}`}
+              </span>
             </div>
             <div className="flex items-center space-x-1">
               <Clock size={14} />

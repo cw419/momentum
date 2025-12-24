@@ -5,6 +5,7 @@ import { getTimeRemaining, formatDuration } from '../utils/time';
 import { getGroupProgress, getChainTypeConfig, getNextUnitInGroup } from '../utils/chainTree';
 import { notificationManager } from '../utils/notifications';
 import { Icon } from '../utils/iconMap';
+import { useI18n } from '../i18n';
 
 interface GroupCardProps {
   group: ChainTreeNode;
@@ -28,6 +29,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
   onCompleteBooking,
   onDelete,
 }) => {
+  const { language, tr } = useI18n();
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -36,7 +38,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
   // Memoize expensive calculations to prevent recalculation on every render
   const progress = useMemo(() => getGroupProgress(group), [group]);
   const nextUnit = useMemo(() => getNextUnitInGroup(group), [group]);
-  const typeConfig = useMemo(() => getChainTypeConfig(group.type), [group.type]);
+  const typeConfig = useMemo(() => getChainTypeConfig(group.type, language), [group.type, language]);
   const activeScheduledSession = useMemo(
     () => (scheduledSession && timeRemaining > 0 ? scheduledSession : null),
     [scheduledSession, timeRemaining]
@@ -66,7 +68,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
         const minutes = Math.max(1, Math.ceil(remaining / 60));
         notificationManager.notifyScheduleWarning(
           group.name, 
-          `${minutes}分钟`
+          tr(`${minutes}分钟`, `${minutes} min`)
         );
       }
       
@@ -128,7 +130,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
                 className="w-full px-4 py-3 text-left text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
               >
                 <Trash2 size={14} />
-                <span className="font-chinese font-medium">删除任务群</span>
+                <span className="font-chinese font-medium">{tr('删除任务群', 'Delete group')}</span>
               </button>
             </div>
           )}
@@ -146,17 +148,19 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
                   <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 group-hover:text-primary-500 transition-colors">
                     {group.name}
                   </h3>
-                  {/* Cycle Counter Badge */}
-                  {group.totalCompletions > 0 && (
-                    <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-lg text-sm font-bold">
-                      #{group.totalCompletions}轮
-                    </div>
-                  )}
-                </div>
+                    {/* Cycle Counter Badge */}
+                    {group.totalCompletions > 0 && (
+                      <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-lg text-sm font-bold">
+                      {language === 'zh' ? `#${group.totalCompletions}轮` : `#${group.totalCompletions} cycles`}
+                      </div>
+                    )}
+                  </div>
                 <p className="text-xs font-mono text-gray-500 tracking-wide uppercase">
                   {typeConfig.name}
                   {group.totalCompletions > 0 && (
-                    <span className="ml-2 text-amber-600 dark:text-amber-400">• 第{group.totalCompletions + 1}轮进行中</span>
+                    <span className="ml-2 text-amber-600 dark:text-amber-400">
+                      {language === 'zh' ? `• 第${group.totalCompletions + 1}轮进行中` : `• Cycle ${group.totalCompletions + 1} in progress`}
+                    </span>
                   )}
                 </p>
               </div>
@@ -170,7 +174,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
         {/* Progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-chinese text-gray-600 dark:text-slate-400">任务进度</span>
+            <span className="text-sm font-chinese text-gray-600 dark:text-slate-400">{tr('任务进度', 'Progress')}</span>
             <span className="text-sm font-mono text-blue-500 font-semibold">
               {progress.completed}/{progress.total}
             </span>
@@ -190,7 +194,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
               <Users size={16} />
               <span className="text-2xl font-bold font-mono">{group.children.length}</span>
             </div>
-            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">子任务数</div>
+            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">{tr('子任务数', 'Tasks')}</div>
           </div>
           <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-primary-500/10 to-primary-600/5 dark:from-primary-500/20 dark:to-primary-600/10 border border-primary-200/50 dark:border-primary-400/30">
             <div className="flex items-center justify-center space-x-2 text-primary-500 mb-2">
@@ -202,7 +206,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
                 </span>
               )}
             </div>
-            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">群组记录</div>
+            <div className="text-xs font-chinese text-gray-600 dark:text-slate-400 font-medium">{tr('群组记录', 'Group streak')}</div>
           </div>
         </div>
 
@@ -212,7 +216,10 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2 text-blue-600">
                 <Bell size={14} />
-              <span className="text-sm font-chinese font-medium">预约信号: {activeScheduledSession?.auxiliarySignal}</span>
+              <span className="text-sm font-chinese font-medium">
+                {tr('预约信号: ', 'Signal: ')}
+                {activeScheduledSession?.auxiliarySignal}
+              </span>
               </div>
               <div className="text-blue-700 dark:text-blue-400 font-mono font-bold text-lg">
                 {formatDuration(timeRemaining)}
@@ -229,7 +236,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
                 className="flex-1 bg-green-500/10 hover:bg-green-500/20 dark:bg-green-500/20 dark:hover:bg-green-500/30 text-green-600 dark:text-green-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-green-200/50 dark:border-green-400/30"
               >
                 <Check size={16} />
-                <span className="font-chinese font-medium">完成预约</span>
+                <span className="font-chinese font-medium">{tr('完成预约', 'Complete booking')}</span>
               </button>
               <button
                 onClick={(e) => {
@@ -241,7 +248,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-red-200/50 dark:border-red-400/30"
               >
                 <AlertTriangle size={16} />
-                <span className="font-chinese font-medium">中断/规则判定</span>
+                <span className="font-chinese font-medium">{tr('中断/规则判定', 'Interrupt / Adjudicate')}</span>
               </button>
             </div>
           </div>
@@ -254,7 +261,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
           >
             <Play size={16} />
-            <span className="font-chinese font-semibold">开始下一个</span>
+            <span className="font-chinese font-semibold">{tr('开始下一个', 'Start next')}</span>
           </button>
           
           {!isScheduled && (
@@ -263,7 +270,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
               className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
             >
               <Clock size={16} />
-              <span className="font-chinese font-semibold">预约</span>
+              <span className="font-chinese font-semibold">{tr('预约', 'Schedule')}</span>
             </button>
           )}
         </div>
@@ -277,16 +284,20 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
               <div className="w-16 h-16 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-6">
                 <Layers className="text-red-500" size={24} />
               </div>
-              <h3 className="text-2xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-3">确认删除任务群</h3>
+              <h3 className="text-2xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-3">
+                {tr('确认删除任务群', 'Delete group?')}
+              </h3>
               <p className="text-gray-600 dark:text-slate-300 mb-6">
-                你确定要删除任务群 "<span className="text-primary-500 font-semibold">{group.name}</span>" 吗？
+                {tr('你确定要删除任务群 “', 'Are you sure you want to delete the group “')}
+                <span className="text-primary-500 font-semibold">{group.name}</span>
+                {tr('” 吗？', '”?')}
               </p>
             </div>
             
             <div className="bg-red-50/80 dark:bg-red-900/20 rounded-2xl p-6 border border-red-200/60 dark:border-red-800/40 mb-8">
               <div className="text-center mb-6">
                 <p className="text-red-600 dark:text-red-400 text-sm font-medium font-chinese">
-                  ⚠️ 此操作将删除整个任务群及其所有子任务：
+                  {tr('⚠️ 此操作将删除整个任务群及其所有子任务：', '⚠️ This will delete the entire group and all its child tasks:')}
                 </p>
               </div>
               <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -304,14 +315,14 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
                 onClick={handleCancelDelete}
                 className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
               >
-                取消
+                {tr('取消', 'Cancel')}
               </button>
               <button
                 onClick={handleConfirmDelete}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese"
               >
                 <Trash2 size={16} />
-                <span>确认删除</span>
+                <span>{tr('确认删除', 'Delete')}</span>
               </button>
             </div>
           </div>

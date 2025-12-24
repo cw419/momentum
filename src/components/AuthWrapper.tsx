@@ -5,12 +5,14 @@ import { logger } from '../utils/logger';
 import { AuthForm } from './AuthForm';
 import { IntroScreen } from './IntroScreen';
 import { Loader2 } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface AuthWrapperProps {
   children: React.ReactNode;
 }
 
 export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
+  const { tr } = useI18n();
   const storage = useStorage();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,10 +75,10 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
             <Loader2 className="text-white animate-spin" size={24} />
           </div>
           <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
-            正在验证身份...
+            {tr('正在验证身份…', 'Authenticating…')}
           </h2>
           <p className="text-gray-600 dark:text-slate-400 font-mono text-sm">
-            AUTHENTICATING
+            {tr('验证中', 'AUTHENTICATING')}
           </p>
         </div>
       </div>

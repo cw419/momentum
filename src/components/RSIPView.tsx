@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { RSIPNode, RSIPTreeNode, RSIPMeta } from '../types';
 import { buildRSIPTree, countDescendants, deleteNodeAndDescendants } from '../utils/rsipTree';
 import { Plus, Trash2, ArrowLeft, Clock, Play } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface RSIPViewProps {
   nodes: RSIPNode[];
@@ -12,6 +13,7 @@ interface RSIPViewProps {
 }
 
 export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveNodes, onSaveMeta }) => {
+  const { language, tr } = useI18n();
   const tree = useMemo<RSIPTreeNode[]>(() => buildRSIPTree(nodes), [nodes]);
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined);
   const [title, setTitle] = useState('');
@@ -60,7 +62,11 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     const node = find(treeNodes, nodeId);
     if (!node) return;
     const descendants = countDescendants(node);
-    if (!confirm(`判定失败：将删除「${node.title}」及其 ${descendants} 个子节点。确认回溯？`)) return;
+    const confirmText = tr(
+      `判定失败：将删除「${node.title}」及其 ${descendants} 个子节点。确认回溯？`,
+      `Marked as failed: this will delete "${node.title}" and its ${descendants} child node${descendants === 1 ? '' : 's'}. Roll back?`
+    );
+    if (!confirm(confirmText)) return;
     const newNodes = deleteNodeAndDescendants(nodes, nodeId);
     onSaveNodes(newNodes);
   };
@@ -87,7 +93,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         try {
           if ('Notification' in window) {
             if (Notification.permission === 'granted') {
-              new Notification('计时完成', { body: 'RSIP 定式计时已结束' });
+              new Notification(tr('计时完成', 'Timer complete'), { body: tr('RSIP 定式计时已结束', 'RSIP timer has ended') });
             } else if (Notification.permission !== 'denied') {
               Notification.requestPermission();
             }
@@ -115,13 +121,17 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   };
 
   const handleStopTimer = (nodeId: string) => {
-    if (confirm('确定要停止计时吗？')) {
+    if (confirm(tr('确定要停止计时吗？', 'Stop the timer?'))) {
       setActiveTimers(prev => {
         const copy = { ...prev };
         delete copy[nodeId];
         return copy;
       });
     }
+  };
+
+  const formatMinutesLabel = (minutes: number) => {
+    return tr(`${minutes} 分钟`, `${minutes} min`);
   };
 
   // 新增：用于 Civ6 风格横向卡片渲染（不递归渲染子节点）
@@ -133,6 +143,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     const endsAt = activeTimers[node.id];
     const isRunning = endsAt && endsAt > now;
     const remaining = isRunning ? endsAt - now : 0;
+    const timerMinutes = node.timerMinutes || 15;
 
     return (
       <div
@@ -177,7 +188,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
                   </>
                 ) : (
                   <>
-                    <Play size={12} className="mr-1" /> {node.timerMinutes} 分钟
+                    <Play size={12} className="mr-1" /> {formatMinutesLabel(timerMinutes)}
                   </>
                 )}
               </button>
@@ -186,7 +197,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
           <button
             onClick={() => handleFailure(node.id)}
             className="p-1.5 text-red-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-            title="判定失败（删除此节点及其所有子节点）"
+            title={tr('判定失败（删除此节点及其所有子节点）', 'Mark as failed (delete this node and all descendants)')}
           >
             <Trash2 size={14} />
           </button>
@@ -212,15 +223,21 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   const typeEmojiMap: Record<string, string> = { policy: '📝', habit: '🔄', reward: '🌟', penalty: '❌', ritual: '🧘', goal: '🏁', trigger: '➡️', reminder: '⏰' };
   
   // 类型标签映射
-  const typeLabelMap: Record<string, string> = {
-    policy: '国策',
-    habit: '习惯',
-    reward: '奖励',
-    penalty: '惩罚',
-    ritual: '仪式',
-    goal: '目标',
-    trigger: '触发器',
-    reminder: '提醒',
+  const typeLabelMap: Record<string, { zh: string; en: string }> = {
+    policy: { zh: '国策', en: 'Policy' },
+    habit: { zh: '习惯', en: 'Habit' },
+    reward: { zh: '奖励', en: 'Reward' },
+    penalty: { zh: '惩罚', en: 'Penalty' },
+    ritual: { zh: '仪式', en: 'Ritual' },
+    goal: { zh: '目标', en: 'Goal' },
+    trigger: { zh: '触发器', en: 'Trigger' },
+    reminder: { zh: '提醒', en: 'Reminder' },
+  };
+
+  const getTypeLabel = (type: string) => {
+    const label = typeLabelMap[type];
+    if (!label) return type;
+    return language === 'zh' ? label.zh : label.en;
   };
 
   // 颜色映射：类型 -> 徽章/环/背景样式
@@ -488,13 +505,17 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
               <ArrowLeft size={22} />
             </button>
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold font-chinese text-gray-900 dark:text-slate-100">国策树 · RSIP</h1>
-              <p className="text-xs font-mono text-gray-600 dark:text-slate-400 tracking-wider uppercase">Recursive Stabilization Iteration Protocol</p>
+              <h1 className="text-3xl md:text-4xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+                {tr('国策树 · RSIP', 'RSIP Policy Tree')}
+              </h1>
+              <p className="text-xs font-mono text-gray-600 dark:text-slate-400 tracking-wider uppercase">
+                {tr('递归稳定迭代协议', 'Recursive Stabilization Iteration Protocol')}
+              </p>
             </div>
           </div>
           {/* Daily policy toggle */}
           <div className="flex items-center space-x-3">
-            <span className="text-xs font-chinese text-gray-600 dark:text-slate-400">一天可多条</span>
+            <span className="text-xs font-chinese text-gray-600 dark:text-slate-400">{tr('一天可多条', 'Multiple per day')}</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -510,9 +531,14 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         {/* First-time empty state */}
         {nodes.length === 0 && (
           <div className="bento-card max-w-3xl mx-auto mb-8">
-            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-3">开始你的第一条国策</h2>
+            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-3">
+              {tr('开始你的第一条国策', 'Create your first policy')}
+            </h2>
             <p className="text-gray-700 dark:text-slate-300 leading-relaxed font-chinese">
-              RSIP 强调通过「每天至多新增一个、失败即回溯」来稳定迭代你的生活定式。选择一个小而稳的起点，建立第一条国策吧。
+              {tr(
+                'RSIP 强调通过「每天至多新增一个、失败即回溯」来稳定迭代你的生活定式。选择一个小而稳的起点，建立第一条国策吧。',
+                'RSIP stabilizes your routines by adding at most one item per day and rolling back on failure. Start small and steady—create your first policy.'
+              )}
             </p>
           </div>
         )}
@@ -521,33 +547,35 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         <div className="bento-card mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">父节点（可空，表示新分支）</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">
+                {tr('父节点（可空，表示新分支）', 'Parent (optional; empty = new branch)')}
+              </label>
               <select
                 value={selectedParentId || ''}
                 onChange={e => setSelectedParentId(e.target.value || undefined)}
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
               >
-                <option value="">（无父节点，建立新根）</option>
+                <option value="">{tr('（无父节点，建立新根）', '(No parent; create new root)')}</option>
                 {flatForSelect(tree).map(n => (
                   <option key={n.id} value={n.id}>{'— '.repeat(n.depth)}{n.title}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">国策标题</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">{tr('国策标题', 'Policy title')}</label>
               <input
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder="例如：进门15分钟内开始洗澡"
+                placeholder={tr('例如：进门15分钟内开始洗澡', 'e.g. Start showering within 15 minutes of getting home')}
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">精准规则</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">{tr('精准规则', 'Rule')}</label>
               <input
                 value={rule}
                 onChange={e => setRule(e.target.value)}
-                placeholder="例如：回家即启动15分钟计时，计时内进浴室"
+                placeholder={tr('例如：回家即启动15分钟计时，计时内进浴室', 'e.g. Start a 15-minute timer when home; enter the bathroom before it ends')}
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
               />
             </div>
@@ -557,7 +585,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
             <div className="flex items-center justify-between bento-subtle px-4 py-3 rounded-2xl">
               <div className="flex items-center space-x-2">
                 <Clock size={16} className="text-emerald-600" />
-                <span className="text-sm font-chinese text-gray-700 dark:text-slate-300">启用计时</span>
+                <span className="text-sm font-chinese text-gray-700 dark:text-slate-300">{tr('启用计时', 'Enable timer')}</span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -570,7 +598,9 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
               </label>
             </div>
             <div className={`${createUseTimer ? '' : 'opacity-60'}`}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">计时分钟数</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">
+                {tr('计时分钟数', 'Timer minutes')}
+              </label>
               <input
                 type="number"
                 min={1}
@@ -585,7 +615,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
           {/* 新增：类型与 Emoji 选择 */}
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">节点类型</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 font-chinese">{tr('节点类型', 'Node type')}</label>
               <select
                 value={createType}
                 onChange={e => {
@@ -596,14 +626,17 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-3 py-2 text-gray-900 dark:text-slate-100 focus:outline-none transition-all duration-200 font-chinese"
               >
                 {Object.entries(typeEmojiMap).map(([type, emoji]) => (
-                  <option key={type} value={type}>{emoji} {typeLabelMap[type] || type} ({type})</option>
+                  <option key={type} value={type}>{emoji} {getTypeLabel(type)} ({type})</option>
                 ))}
               </select>
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm font-chinese text-gray-600 dark:text-slate-400">
-              每天最多新增一个国策。{canAddToday ? '今日可新增。' : '今日已新增，明日继续。'}
+              {meta.allowMultiplePerDay
+                ? tr('已开启“一天可多条”。今日可继续新增。', 'Multiple per day is enabled. You can add more today.')
+                : tr('每天最多新增一个国策。', 'Add at most one policy per day.')}{' '}
+              {!meta.allowMultiplePerDay && (canAddToday ? tr('今日可新增。', 'You can add today.') : tr('今日已新增，明日继续。', 'Already added today. Try again tomorrow.'))}
             </div>
             <button
               onClick={handleAdd}
@@ -611,7 +644,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
               className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-all duration-300 shadow-lg ${(!canAddToday || !title.trim() || !rule.trim()) ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500' : 'gradient-primary text-white hover:shadow-xl hover:scale-105'}`}
             >
               <Plus size={18} />
-              <span className="font-chinese">新增国策</span>
+              <span className="font-chinese">{tr('新增国策', 'Add policy')}</span>
             </button>
           </div>
         </div>
@@ -620,18 +653,18 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         <div className="bento-card mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <label className="text-sm font-chinese text-gray-700 dark:text-slate-300">按类型筛选：</label>
+              <label className="text-sm font-chinese text-gray-700 dark:text-slate-300">{tr('按类型筛选：', 'Filter by type:')}</label>
               <select value={filterType || ''} onChange={e => setFilterType(e.target.value || null)} className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-3 py-2 text-gray-900 dark:text-slate-100">
-                <option value="">全部</option>
-                {Object.keys(typeEmojiMap).map(t => <option key={t} value={t}>{typeLabelMap[t] || t}</option>)}
+                <option value="">{tr('全部', 'All')}</option>
+                {Object.keys(typeEmojiMap).map(t => <option key={t} value={t}>{getTypeLabel(t)}</option>)}
               </select>
-              <button type="button" onClick={() => setFilterType(null)} className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-slate-700 text-xs">清除</button>
+              <button type="button" onClick={() => setFilterType(null)} className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-slate-700 text-xs">{tr('清除', 'Clear')}</button>
             </div>
             <div className="flex items-center space-x-2">
               {Object.keys(typeColorMap).map(t => {
                 const col = typeColorMap[t];
                 return (
-                  <div key={t} className={`px-2 py-1 rounded-lg ${col.badge} text-xs font-chinese`}>{typeLabelMap[t] || t}</div>
+                  <div key={t} className={`px-2 py-1 rounded-lg ${col.badge} text-xs font-chinese`}>{getTypeLabel(t)}</div>
                 );
               })}
             </div>
@@ -641,7 +674,9 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         {/* Tree */}
         <div className="relative w-full" style={{ height: containerHeight }}>
           {tree.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-600 dark:text-slate-400 font-chinese">尚无国策，先从上方表单添加一个吧。</div>
+            <div className="absolute inset-0 flex items-center justify-center text-gray-600 dark:text-slate-400 font-chinese">
+              {tr('尚无国策，先从上方表单添加一个吧。', 'No policies yet. Add one from the form above.')}
+            </div>
           ) : (
             <div ref={containerRef} className="relative w-full h-full">
               {/* SVG overlay for connectors */}

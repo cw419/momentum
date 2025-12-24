@@ -3,7 +3,9 @@ import { X, User, LogOut, AlertCircle, Dices, Loader2 } from 'lucide-react';
 import type { AuthUser } from '../domain/auth';
 import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/StorageContext';
+import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -12,6 +14,7 @@ interface AccountModalProps {
 
 export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) => {
   const storage = useStorage();
+  const { language, locale, setLanguage, t, tr } = useI18n();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
@@ -48,14 +51,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
       const result = await storage.getCurrentUser();
       if (!result.ok) {
         setUser(null);
-        setError(result.error.message || '获取用户信息失败');
+        const safeDetail = getSafeErrorDetail(result.error.message || '', language);
+        setError(safeDetail ?? tr('获取用户信息失败，请重试（详情见控制台）', 'Failed to load user info. Check the console for details, then try again.'));
         return;
       }
 
       setUser(result.value);
     } catch (err) {
       logger.error('ACCOUNT', 'Failed to get user info', undefined, err as Error);
-      setError('获取用户信息失败');
+      setError(tr('获取用户信息失败', 'Failed to load user info'));
     } finally {
       setLoading(false);
     }
@@ -68,13 +72,14 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
       setGamblingError(null);
       const settingsResult = await storage.getGamblingSettings();
       if (!settingsResult.ok) {
-        setGamblingError(settingsResult.error.message || '获取设置失败');
+        const safeDetail = getSafeErrorDetail(settingsResult.error.message || '', language);
+        setGamblingError(safeDetail ?? tr('获取设置失败，请重试（详情见控制台）', 'Failed to load settings. Check the console for details, then try again.'));
         return;
       }
       setGamblingSettings(settingsResult.value);
     } catch (err) {
       logger.error('ACCOUNT', 'Failed to load gambling settings', undefined, err as Error);
-      setGamblingError('获取设置失败');
+      setGamblingError(tr('获取设置失败', 'Failed to load settings'));
     }
   };
 
@@ -86,10 +91,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
     setGamblingSuccess(null);
     
     try {
+      const nextEnabled = !gamblingSettings.gambling_mode_enabled;
       const result = await storage.toggleGamblingMode();
       
       if (!result.ok) {
-        setGamblingError(result.error.message || '设置更新失败');
+        const safeDetail = getSafeErrorDetail(result.error.message || '', language);
+        setGamblingError(safeDetail ?? tr('设置更新失败，请重试（详情见控制台）', 'Failed to update settings. Check the console for details, then try again.'));
         return;
       }
 
@@ -98,16 +105,18 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
           ...prev,
           gambling_mode_enabled: !prev.gambling_mode_enabled
         }));
-        setGamblingSuccess(result.value.message);
+        setGamblingSuccess(nextEnabled ? tr('狂赌模式已启用', 'Gambling mode enabled') : tr('狂赌模式已禁用', 'Gambling mode disabled'));
         
         // 3秒后清除成功消息
         setTimeout(() => setGamblingSuccess(null), 3000);
       } else {
-        setGamblingError(result.value.message || '设置更新失败');
+        const safeDetail = getSafeErrorDetail(result.value.message || '', language);
+        setGamblingError(safeDetail ?? tr('设置更新失败，请重试（详情见控制台）', 'Failed to update settings. Check the console for details, then try again.'));
       }
     } catch (err) {
       logger.error('ACCOUNT', 'Failed to toggle gambling mode', undefined, err as Error);
-      setGamblingError(err instanceof Error ? err.message : '设置更新失败');
+      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setGamblingError(safeDetail ?? tr('设置更新失败，请重试（详情见控制台）', 'Failed to update settings. Check the console for details, then try again.'));
     } finally {
       setGamblingLoading(false);
     }
@@ -120,14 +129,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
     try {
       const result = await storage.signOut();
       if (!result.ok) {
-        setError(result.error.message || '退出登录失败，请重试');
+        const safeDetail = getSafeErrorDetail(result.error.message || '', language);
+        setError(safeDetail ?? tr('退出登录失败，请重试（详情见控制台）', 'Sign out failed. Check the console for details, then try again.'));
         return;
       }
 
       onClose();
     } catch (err) {
       logger.error('ACCOUNT', 'Sign out failed', undefined, err as Error);
-      setError('退出登录失败，请重试');
+      setError(tr('退出登录失败，请重试', 'Sign out failed. Please try again.'));
     } finally {
       setSigningOut(false);
     }
@@ -141,7 +151,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700">
           <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-            账号管理
+            {t('settings.title')}
           </h2>
           <button
             onClick={onClose}
@@ -152,14 +162,54 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 space-y-6">
+          {/* Language */}
+          <div className="space-y-3 p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl border border-gray-200 dark:border-slate-600">
+            <div>
+              <h3 className="text-base font-medium font-chinese text-gray-900 dark:text-slate-100">
+                {t('settings.language.title')}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 font-chinese">
+                {t('settings.language.description')}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2" role="radiogroup" aria-label={t('settings.language.title')}>
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                className={`flex-1 px-3 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                  language === 'en'
+                    ? 'bg-primary-500/10 border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'bg-white/80 dark:bg-slate-800/60 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800'
+                }`}
+                aria-checked={language === 'en'}
+                role="radio"
+              >
+                {t('language.english')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('zh')}
+                className={`flex-1 px-3 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                  language === 'zh'
+                    ? 'bg-primary-500/10 border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'bg-white/80 dark:bg-slate-800/60 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800'
+                }`}
+                aria-checked={language === 'zh'}
+                role="radio"
+              >
+                {t('language.chinese')}
+              </button>
+            </div>
+          </div>
+
           {storage.kind !== 'supabase' ? (
             <div className="text-center py-8">
               <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
                 <User className="text-gray-400 dark:text-slate-500" size={24} />
               </div>
               <p className="text-gray-600 dark:text-slate-400 font-chinese">
-                当前使用本地存储模式，无需账号登录
+                {tr('当前使用本地存储模式，无需账号登录', 'Using local storage — no account required.')}
               </p>
             </div>
           ) : loading ? (
@@ -168,7 +218,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               </div>
               <p className="text-gray-600 dark:text-slate-400 font-chinese">
-                正在获取账号信息...
+                {tr('正在获取账号信息...', 'Loading account...')}
               </p>
             </div>
           ) : error ? (
@@ -183,7 +233,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                 onClick={loadUser}
                 className="text-primary-500 hover:text-primary-600 font-medium transition-colors font-chinese"
               >
-                重试
+                {tr('重试', 'Retry')}
               </button>
             </div>
           ) : user ? (
@@ -195,7 +245,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-medium font-chinese text-gray-900 dark:text-slate-100 mb-1">
-                    当前账号
+                    {tr('当前账号', 'Account')}
                   </h3>
                   <p className="text-gray-600 dark:text-slate-400 text-sm truncate">
                     {user.email}
@@ -212,20 +262,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2">
                   <span className="text-sm font-chinese text-gray-600 dark:text-slate-400">
-                    注册时间
+                    {tr('注册时间', 'Created')}
                   </span>
                   <span className="text-sm text-gray-900 dark:text-slate-100">
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString('zh-CN') : '-'}
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString(locale) : '-'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-sm font-chinese text-gray-600 dark:text-slate-400">
-                    最后登录
+                    {tr('最后登录', 'Last sign in')}
                   </span>
                   <span className="text-sm text-gray-900 dark:text-slate-100">
                     {user.lastSignInAt 
-                      ? new Date(user.lastSignInAt).toLocaleDateString('zh-CN')
-                      : '首次登录'
+                      ? new Date(user.lastSignInAt).toLocaleDateString(locale)
+                      : tr('首次登录', 'First sign in')
                     }
                   </span>
                 </div>
@@ -240,10 +290,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                     </div>
                     <div>
                       <h4 className="text-base font-medium font-chinese text-gray-900 dark:text-slate-100">
-                        狂赌模式
+                        {tr('狂赌模式', 'Gambling mode')}
                       </h4>
                       <p className="text-xs text-gray-500 dark:text-slate-400">
-                        在任务上押注积分以获得额外奖励
+                        {tr('在任务上押注积分以获得额外奖励', 'Bet points on tasks for extra rewards')}
                       </p>
                     </div>
                   </div>
@@ -280,12 +330,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                   {gamblingSettings.gambling_mode_enabled ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span>已启用 - 可在任务开始时进行押注</span>
+                      <span>{tr('已启用 - 可在任务开始时进行押注', 'Enabled — you can bet when starting a task')}</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                      <span>已禁用 - 无法进行任务押注</span>
+                      <span>{tr('已禁用 - 无法进行任务押注', 'Disabled — betting is unavailable')}</span>
                     </div>
                   )}
                 </div>
@@ -326,12 +376,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                 {signingOut ? (
                   <>
                     <div className="w-5 h-5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
-                    <span>正在退出...</span>
+                    <span>{tr('正在退出...', 'Signing out...')}</span>
                   </>
                 ) : (
                   <>
                     <LogOut size={20} />
-                    <span>退出登录</span>
+                    <span>{tr('退出登录', 'Sign out')}</span>
                   </>
                 )}
               </button>
@@ -342,7 +392,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                 <User className="text-gray-400 dark:text-slate-500" size={24} />
               </div>
               <p className="text-gray-600 dark:text-slate-400 font-chinese">
-                未找到用户信息
+                {tr('未找到用户信息', 'User info not found')}
               </p>
             </div>
           )}

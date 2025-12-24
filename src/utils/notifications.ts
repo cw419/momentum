@@ -4,6 +4,34 @@
 
 import { logger } from './logger';
 
+type Language = 'en' | 'zh';
+
+const detectBrowserLanguage = (): Language => {
+  if (typeof navigator === 'undefined') return 'en';
+
+  const candidates = Array.isArray(navigator.languages) && navigator.languages.length > 0
+    ? navigator.languages
+    : [navigator.language];
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    if (candidate.toLowerCase().startsWith('zh')) return 'zh';
+  }
+
+  return 'en';
+};
+
+const getCurrentLanguage = (): Language => {
+  try {
+    const stored = localStorage.getItem('language');
+    if (stored === 'en' || stored === 'zh') return stored;
+  } catch {
+    // ignore
+  }
+
+  return detectBrowserLanguage();
+};
+
 export interface NotificationOptions {
   title: string;
   body: string;
@@ -25,9 +53,15 @@ class NotificationManager {
   async notifyTaskFailed(chainName: string, reason: string) {
     if (!this.isNotificationsEnabled()) return null;
 
+    const language = getCurrentLanguage();
+    const title = language === 'zh' ? '任务失败' : 'Task failed';
+    const body = language === 'zh'
+      ? `"${chainName}"${reason ? `：${reason}` : ''}`
+      : `"${chainName}"${reason ? `: ${reason}` : ''}`;
+
     return this.showNotification({
-      title: 'ä»»åŠ¡å¤±è´¥',
-      body: `"${chainName}"${reason ? `ï¼š${reason}` : ''}`,
+      title,
+      body,
       icon: '/vite.svg',
       tag: `task-failed-${Date.now()}`,
       requireInteraction: true,
@@ -63,7 +97,7 @@ class NotificationManager {
    */
   async requestPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
-      logger.warn('NOTIFICATIONS', '此浏览器不支持桌面通知');
+      logger.warn('NOTIFICATIONS', 'Desktop notifications are not supported in this browser');
       return false;
     }
 
@@ -85,7 +119,7 @@ class NotificationManager {
       return permission === 'granted';
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('NOTIFICATIONS', '请求通知权限失败', undefined, err);
+      logger.error('NOTIFICATIONS', 'Failed to request notification permission', undefined, err);
       return false;
     }
   }
@@ -162,10 +196,13 @@ class NotificationManager {
   async notifyTaskCompleted(chainName: string, streak: number, message?: string) {
     if (!this.isNotificationsEnabled()) return null;
     const messageSuffix = message ? ` ${message}` : '';
+    const language = getCurrentLanguage();
 
     return this.showNotification({
-      title: '任务完成',
-      body: `"${chainName}"已完成！${messageSuffix}当前记录: #${streak}`,
+      title: language === 'zh' ? '任务完成' : 'Task completed',
+      body: language === 'zh'
+        ? `"${chainName}"已完成！${messageSuffix}当前记录: #${streak}`
+        : `"${chainName}" completed!${messageSuffix}Current streak: #${streak}`,
       icon: '/vite.svg',
       tag: `task-completed-${Date.now()}`, // 确保每次通知都是唯一的
       requireInteraction: false,
@@ -177,10 +214,13 @@ class NotificationManager {
    */
   async notifyTaskWarning(chainName: string, timeRemaining: string) {
     if (!this.isNotificationsEnabled()) return null;
+    const language = getCurrentLanguage();
     
     return this.showNotification({
-      title: '任务即将结束',
-      body: `"${chainName}"还剩${timeRemaining}，请继续保持专注！`,
+      title: language === 'zh' ? '任务即将结束' : 'Task ending soon',
+      body: language === 'zh'
+        ? `"${chainName}"还剩${timeRemaining}，请继续保持专注！`
+        : `"${chainName}" has ${timeRemaining} left. Stay focused!`,
       icon: '/vite.svg',
       tag: `task-warning-${Date.now()}`, // 确保每次通知都是唯一的
       requireInteraction: false,
@@ -192,10 +232,13 @@ class NotificationManager {
    */
   async notifyScheduleWarning(chainName: string, timeRemaining: string) {
     if (!this.isNotificationsEnabled()) return null;
+    const language = getCurrentLanguage();
     
     return this.showNotification({
-      title: '预约即将到期', 
-      body: `"${chainName}"预约还剩${timeRemaining}，请准备开始任务！`,
+      title: language === 'zh' ? '预约即将到期' : 'Schedule expiring',
+      body: language === 'zh'
+        ? `"${chainName}"预约还剩${timeRemaining}，请准备开始任务！`
+        : `"${chainName}" schedule has ${timeRemaining} left. Get ready to start!`,
       icon: '/vite.svg',
       tag: `schedule-warning-${Date.now()}`, // 确保每次通知都是唯一的
       requireInteraction: true,
@@ -207,10 +250,13 @@ class NotificationManager {
    */
   async notifyScheduleFailed(chainName: string) {
     if (!this.isNotificationsEnabled()) return null;
+    const language = getCurrentLanguage();
     
     return this.showNotification({
-      title: '预约失败',
-      body: `"${chainName}"预约时间已到期，需要进行规则判定`,
+      title: language === 'zh' ? '预约失败' : 'Schedule failed',
+      body: language === 'zh'
+        ? `"${chainName}"预约时间已到期，需要进行规则判定`
+        : `"${chainName}" schedule expired. Adjudication required.`,
       icon: '/vite.svg',
       tag: `schedule-failed-${Date.now()}`, // 确保每次通知都是唯一的
       requireInteraction: true,

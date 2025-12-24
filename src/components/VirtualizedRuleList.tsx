@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { ExceptionRule } from '../types';
 import { SearchResult } from '../utils/ruleSearchOptimizer';
 import { CheckCircle, Plus, TrendingUp, History } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface VirtualizedRuleListProps {
   rules: SearchResult[];
@@ -35,6 +36,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   containerHeight = 400,
   overscan = 5
 }) => {
+  const { language, tr } = useI18n();
   const [scrollTop, setScrollTop] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 0, height: containerHeight });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -132,16 +134,16 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
           <Plus className="text-primary-500 flex-shrink-0" size={20} />
           <div className="flex-1 min-w-0">
             <div className="font-medium text-primary-700 dark:text-primary-300 truncate">
-              创建新规则: "{searchQuery}"
+              {tr(`创建新规则: "${searchQuery}"`, `Create new rule: "${searchQuery}"`)}
             </div>
             <div className="text-sm text-primary-600 dark:text-primary-400">
-              为当前任务链创建专属规则
+              {tr('为当前任务链创建专属规则', 'Create a chain-specific rule')}
             </div>
           </div>
         </button>
       </div>
     );
-  }, [onCreateNew, searchQuery, itemHeight]);
+  }, [onCreateNew, searchQuery, itemHeight, tr]);
 
   // 渲染规则项
   const renderRuleItem = useCallback((result: SearchResult, index: number) => {
@@ -172,7 +174,9 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
             <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center space-x-4">
               <span className="flex items-center space-x-1">
                 <TrendingUp size={12} />
-                <span>使用过 {rule.usageCount || 0} 次</span>
+                <span>
+                  {language === 'zh' ? `使用过 ${rule.usageCount || 0} 次` : `Used ${rule.usageCount || 0} time${(rule.usageCount || 0) === 1 ? '' : 's'}`}
+                </span>
               </span>
               {rule.lastUsedAt && (
                 <span className="flex items-center space-x-1">
@@ -207,7 +211,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
         </button>
       </div>
     );
-  }, [rules, onSelect, itemHeight, onCreateNew, searchQuery]);
+  }, [rules, onSelect, itemHeight, onCreateNew, searchQuery, language, tr]);
 
   // 高亮搜索匹配的文本
   const highlightText = (text: string, ranges: Array<{ start: number; end: number }>) => {
@@ -242,20 +246,21 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
     const now = new Date();
     const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
-    if (diffHours < 1) return '刚刚';
-    if (diffHours < 24) return `${diffHours}小时前`;
+    if (diffHours < 1) return tr('刚刚', 'Just now');
+    if (diffHours < 24) return language === 'zh' ? `${diffHours}小时前` : `${diffHours}h ago`;
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return '昨天';
-    if (diffDays < 7) return `${diffDays}天前`;
-    return `${Math.floor(diffDays / 7)}周前`;
+    if (diffDays === 1) return tr('昨天', 'Yesterday');
+    if (diffDays < 7) return language === 'zh' ? `${diffDays}天前` : `${diffDays}d ago`;
+    const weeks = Math.floor(diffDays / 7);
+    return language === 'zh' ? `${weeks}周前` : `${weeks}w ago`;
   };
 
   // 获取匹配类型标签
   const getMatchTypeLabel = (matchType: string): string => {
     switch (matchType) {
-      case 'prefix': return '前缀匹配';
-      case 'contains': return '包含匹配';
-      case 'fuzzy': return '模糊匹配';
+      case 'prefix': return tr('前缀匹配', 'Prefix match');
+      case 'contains': return tr('包含匹配', 'Contains match');
+      case 'fuzzy': return tr('模糊匹配', 'Fuzzy match');
       default: return '';
     }
   };
@@ -264,7 +269,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   const renderEmptyState = () => (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="text-gray-500 dark:text-gray-400 mb-4">
-        {searchQuery ? '未找到匹配的规则' : '暂无可用规则'}
+        {searchQuery ? tr('未找到匹配的规则', 'No matching rules found') : tr('暂无可用规则', 'No rules available')}
       </div>
       {searchQuery && onCreateNew && (
         <button
@@ -272,7 +277,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
           className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
         >
           <Plus size={16} />
-          <span>创建 "{searchQuery}"</span>
+          <span>{tr(`创建 "${searchQuery}"`, `Create "${searchQuery}"`)}</span>
         </button>
       )}
     </div>
@@ -282,7 +287,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   const renderLoadingState = () => (
     <div className="flex items-center justify-center py-12">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-      <span className="ml-3 text-gray-600 dark:text-gray-400">加载规则中...</span>
+      <span className="ml-3 text-gray-600 dark:text-gray-400">{tr('加载规则中...', 'Loading rules...')}</span>
     </div>
   );
 

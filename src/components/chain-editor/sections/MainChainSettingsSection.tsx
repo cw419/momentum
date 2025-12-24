@@ -3,26 +3,29 @@ import { PureDOMSlider } from '../../PureDOMSlider';
 import { SettingSection } from '../../SettingSection';
 import { SliderContainer } from '../../SliderContainer';
 import type { ChainEditorFormModel } from '../hooks/useChainEditorForm';
-import { DURATION_PRESETS, TRIGGER_TEMPLATES } from '../constants';
+import { CUSTOM_TRIGGER_VALUE, DURATION_PRESETS, TRIGGER_TEMPLATES } from '../constants';
+import { useI18n } from '../../../i18n';
 
 interface MainChainSettingsSectionProps {
   form: ChainEditorFormModel;
 }
 
 export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps) {
+  const { language, tr } = useI18n();
+
   return (
     <SettingSection
-      title="主链设置"
+      title={tr('主链设置', 'Main chain')}
       icon={<Flame className="text-primary-500" size={20} />}
-      description="配置主要任务的执行参数"
+      description={tr('配置主要任务的执行参数', 'Configure the main task execution settings')}
     >
       <div className="bento-card border-l-4 border-l-purple-500 animate-scale-in">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <Infinity className="text-purple-500" size={18} />
             <div>
-              <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">无时长任务</h4>
-              <p className="text-xs font-mono text-gray-500">DURATIONLESS TASK</p>
+              <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('无时长任务', 'No timer')}</h4>
+              <p className="text-xs font-mono text-gray-500">{tr('无时长任务', 'DURATIONLESS TASK')}</p>
             </div>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
@@ -36,7 +39,10 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
           </label>
         </div>
         <p className="text-xs text-gray-600 dark:text-slate-400 font-chinese">
-          开启后，本任务不会倒计时，你可以在专注模式中自行点击&quot;完成任务&quot;结束。
+          {tr(
+            '开启后，本任务不会倒计时，你可以在专注模式中自行点击“完成任务”结束。',
+            'When enabled, this task will not count down. In Focus Mode, you can end it by tapping “Complete task”.'
+          )}
         </p>
       </div>
 
@@ -45,12 +51,12 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
           <div className="flex items-center space-x-3 mb-4">
             <Hourglass className="text-indigo-500" size={18} />
             <div>
-              <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">最小时长</h4>
-              <p className="text-xs font-mono text-gray-500">MINIMUM DURATION</p>
+              <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('最小时长', 'Minimum duration')}</h4>
+              <p className="text-xs font-mono text-gray-500">{tr('最小时长', 'MINIMUM DURATION')}</p>
             </div>
           </div>
           <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese mb-4">
-            设置最小时长后，达到时间后会出现提前完成按钮
+            {tr('设置最小时长后，达到时间后会出现提前完成按钮', 'Once the minimum is reached, you can complete early.')}
           </p>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
             {DURATION_PRESETS.map((preset) => (
@@ -67,7 +73,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                     : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30'
                 }`}
               >
-                {preset}分钟
+                {tr(`${preset}分钟`, `${preset} min`)}
               </button>
             ))}
           </div>
@@ -83,10 +89,10 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                   const value = parseInt(e.target.value);
                   if (!isNaN(value) && value > 0) {
                     form.setMinimumDuration(value);
-                    form.setIsCustomMinimumDuration(true);
+                      form.setIsCustomMinimumDuration(true);
                   }
                 }}
-                placeholder="自定义分钟数"
+                placeholder={tr('自定义分钟数', 'Custom minutes')}
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 font-chinese"
               />
             </div>
@@ -98,7 +104,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
               }}
               className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
             >
-              不设置
+              {tr('不设置', 'Clear')}
             </button>
           </div>
         </div>
@@ -108,8 +114,8 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
         <div className="flex items-center space-x-3 mb-4">
           <Crown className="text-primary-500" size={18} />
           <div>
-            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">神圣座位</h4>
-            <p className="text-xs font-mono text-gray-500">SACRED SEAT TRIGGER</p>
+            <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('神圣座位', 'Sacred Seat')}</h4>
+            <p className="text-xs font-mono text-gray-500">{tr('神圣座位触发器', 'SACRED SEAT TRIGGER')}</p>
           </div>
         </div>
         <select
@@ -121,22 +127,26 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
           required
         >
           <option value="" disabled className="text-gray-400">
-            选择触发动作
+            {tr('选择触发动作', 'Choose a trigger')}
           </option>
           {TRIGGER_TEMPLATES.map((template, index) => (
-            <option key={index} value={template.text} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-              {template.text}
+            <option
+              key={index}
+              value={template.value}
+              className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700"
+            >
+              {template.label[language]}
             </option>
           ))}
         </select>
-        {form.trigger === '自定义触发器' && (
+        {form.trigger === CUSTOM_TRIGGER_VALUE && (
           <input
             type="text"
             id="custom-trigger"
             name="customTrigger"
             value={form.customTrigger}
             onChange={(e) => form.setCustomTrigger(e.target.value)}
-            placeholder="输入你的自定义触发动作"
+            placeholder={tr('输入你的自定义触发动作', 'Enter your custom trigger')}
             className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
             required
           />
@@ -148,8 +158,8 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
           <div className="flex items-center space-x-3 mb-4">
             <Clock className="text-primary-500" size={20} />
             <div>
-              <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">任务时长</h4>
-              <p className="text-xs font-mono text-gray-500">TASK DURATION</p>
+              <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('任务时长', 'Task duration')}</h4>
+              <p className="text-xs font-mono text-gray-500">{tr('任务时长', 'TASK DURATION')}</p>
             </div>
           </div>
           <select
@@ -170,17 +180,17 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
           >
             {DURATION_PRESETS.map((preset) => (
               <option key={preset} value={preset} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-                {preset}分钟
+                {tr(`${preset}分钟`, `${preset} min`)}
               </option>
             ))}
             <option value="custom" className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-              自定义时长
+              {tr('自定义时长', 'Custom duration')}
             </option>
           </select>
           {form.isCustomDuration && (
             <SliderContainer
-              label="自定义时长"
-              description="拖动滑块或使用键盘输入设置任务时长"
+              label={tr('自定义时长', 'Custom duration')}
+              description={tr('拖动滑块或使用键盘输入设置任务时长', 'Drag the slider or use keyboard input to set the duration')}
               orientation="vertical"
               showKeyboardInput={true}
               keyboardInputProps={{
@@ -188,8 +198,8 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                 onChange: form.setDuration,
                 min: 1,
                 max: 300,
-                unit: '分钟',
-                placeholder: '输入时长',
+                unit: tr('分钟', 'min'),
+                placeholder: tr('输入时长', 'Enter duration'),
               }}
             >
               <PureDOMSlider
@@ -199,7 +209,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                 max={300}
                 initialValue={form.duration}
                 onValueChange={form.setDuration}
-                valueFormatter={(v) => `${v}分钟`}
+                valueFormatter={(v) => tr(`${v}分钟`, `${v} min`)}
                 debounceMs={50}
                 showValue={true}
               />

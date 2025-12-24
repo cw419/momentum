@@ -6,6 +6,7 @@ import { userFeedbackHandler } from '../../../services/UserFeedbackHandler';
 import { errorRecoveryManager } from '../../../services/ErrorRecoveryManager';
 import { logger } from '../../../utils/logger';
 import { isDev } from '../../../utils/env';
+import { useI18n } from '../../../i18n';
 
 type PendingActionType = 'pause' | 'early_completion';
 
@@ -26,6 +27,7 @@ export function useExceptionRuleFlow({
   clearAutoResumeSchedule,
   onRuleUsed,
 }: UseExceptionRuleFlowParams) {
+  const { tr } = useI18n();
   const [showRuleSelection, setShowRuleSelection] = useState(false);
   const [pendingActionType, setPendingActionType] = useState<PendingActionType | null>(null);
 
@@ -43,7 +45,10 @@ export function useExceptionRuleFlow({
     userFeedbackHandler.hideProgress();
     setShowRuleSelection(false);
     setPendingActionType(null);
-    userFeedbackHandler.showInfo('操作已取消', '您可以继续任务或重新选择操作');
+    userFeedbackHandler.showInfo(
+      tr('操作已取消', 'Cancelled'),
+      tr('您可以继续任务或重新选择操作', 'You can continue the task or choose another action.')
+    );
   };
 
   const handleRuleError = async (error: unknown, operation: string, context: any) => {
@@ -54,7 +59,7 @@ export function useExceptionRuleFlow({
 
         if (recoveryResult.success) {
           userFeedbackHandler.removeMessage(messageId);
-          userFeedbackHandler.showSuccess('问题已解决', recoveryResult.message);
+          userFeedbackHandler.showSuccess(tr('问题已解决', 'Issue resolved'), recoveryResult.message);
 
           if (recoveryResult.recoveredData && operation === 'create_rule') {
             await handleRuleSelected(recoveryResult.recoveredData as any);
@@ -67,19 +72,22 @@ export function useExceptionRuleFlow({
 
       const enhancedError = new EnhancedExceptionRuleException(
         'STORAGE_ERROR' as any,
-        error instanceof Error ? error.message : '未知错误',
+        error instanceof Error ? error.message : tr('未知错误', 'Unknown error'),
         context,
         true,
-        ['重试操作', '刷新页面'],
+        [tr('重试操作', 'Retry'), tr('刷新页面', 'Refresh')],
         'medium',
-        '操作失败，请重试'
+        tr('操作失败，请重试', 'Operation failed. Please try again.')
       );
 
       userFeedbackHandler.showErrorMessage(enhancedError, context);
     } catch (handlingError) {
       const err = handlingError instanceof Error ? handlingError : new Error(String(handlingError));
       logger.error('FOCUS_MODE', '错误处理失败', { operation, context }, err);
-      userFeedbackHandler.showWarning('系统错误', '处理错误时发生问题，请刷新页面重试');
+      userFeedbackHandler.showWarning(
+        tr('系统错误', 'System error'),
+        tr('处理错误时发生问题，请刷新页面重试', 'Something went wrong while handling the error. Refresh the page and try again.')
+      );
     }
   };
 
@@ -99,12 +107,14 @@ export function useExceptionRuleFlow({
       if (!rule || !rule.id) {
         logger.error('FOCUS_MODE', 'Invalid rule object', { rule, pendingActionType });
         userFeedbackHandler.showErrorMessage(
-          new EnhancedExceptionRuleException('RULE_NOT_FOUND' as any, '规则对象无效', { rule, pendingActionType })
+          new EnhancedExceptionRuleException('RULE_NOT_FOUND' as any, tr('规则对象无效', 'Invalid rule'), { rule, pendingActionType })
         );
         return;
       }
 
-      userFeedbackHandler.showProgress(`正在${pendingActionType === 'pause' ? '暂停' : '完成'}任务...`);
+      userFeedbackHandler.showProgress(
+        pendingActionType === 'pause' ? tr('正在暂停任务...', 'Pausing task...') : tr('正在完成任务...', 'Completing task...')
+      );
 
       if (isDev) {
         logger.debug('FOCUS_MODE', 'Preparing to use rule', {
@@ -119,8 +129,10 @@ export function useExceptionRuleFlow({
 
       userFeedbackHandler.hideProgress();
 
-      const actionName = pendingActionType === 'pause' ? '暂停' : '提前完成';
-      userFeedbackHandler.showSuccess('操作成功', `已使用规则 "${rule.name}" ${actionName}任务`);
+      const successMessage = pendingActionType === 'pause'
+        ? tr(`已使用规则 "${rule.name}" 暂停任务`, `Applied rule "${rule.name}" to pause the task`)
+        : tr(`已使用规则 "${rule.name}" 提前完成任务`, `Applied rule "${rule.name}" to complete the task early`);
+      userFeedbackHandler.showSuccess(tr('操作成功', 'Success'), successMessage);
 
       onRuleUsed?.(rule, pendingActionType, pauseOptions);
 
@@ -157,7 +169,7 @@ export function useExceptionRuleFlow({
     try {
       if (!name || !name.trim()) {
         userFeedbackHandler.showErrorMessage(
-          new EnhancedExceptionRuleException('VALIDATION_ERROR' as any, '规则名称不能为空', { name, type })
+          new EnhancedExceptionRuleException('VALIDATION_ERROR' as any, tr('规则名称不能为空', 'Rule name cannot be empty'), { name, type })
         );
         return;
       }
@@ -168,8 +180,8 @@ export function useExceptionRuleFlow({
         validType = pendingActionType === 'pause' ? ExceptionRuleType.PAUSE_ONLY : ExceptionRuleType.EARLY_COMPLETION_ONLY;
       }
 
-      userFeedbackHandler.showProgress('正在创建规则...', 0);
-      userFeedbackHandler.updateProgress(30, '验证规则信息...');
+      userFeedbackHandler.showProgress(tr('正在创建规则...', 'Creating rule...'), 0);
+      userFeedbackHandler.updateProgress(30, tr('验证规则信息...', 'Validating...'));
 
       const duplicateCheck = await exceptionRuleManager.checkRuleNameRealTime(name);
       let userChoice: 'use_existing' | 'modify_name' | 'create_anyway' | undefined;
@@ -179,17 +191,20 @@ export function useExceptionRuleFlow({
         if (duplicateCheck.suggestions && duplicateCheck.suggestions.length > 0) {
           userChoice = duplicateCheck.suggestions[0].type as any;
         }
-        userFeedbackHandler.showProgress('正在创建规则...', 50);
+        userFeedbackHandler.showProgress(tr('正在创建规则...', 'Creating rule...'), 50);
       }
 
-      userFeedbackHandler.updateProgress(70, '保存规则...');
+      userFeedbackHandler.updateProgress(70, tr('保存规则...', 'Saving...'));
       const result = await exceptionRuleManager.createRule(name, validType, undefined, userChoice);
 
       userFeedbackHandler.hideProgress();
-      userFeedbackHandler.showSuccess('规则创建成功', `规则 "${result.rule.name}" 已创建并应用`);
+      userFeedbackHandler.showSuccess(
+        tr('规则创建成功', 'Rule created'),
+        tr(`规则 "${result.rule.name}" 已创建并应用`, `Rule "${result.rule.name}" has been created and applied`)
+      );
 
       if (result.warnings && result.warnings.length > 0) {
-        userFeedbackHandler.showWarning('注意事项', result.warnings.join('\n'));
+        userFeedbackHandler.showWarning(tr('注意事项', 'Notes'), result.warnings.join('\n'));
       }
 
       await handleRuleSelected(result.rule);

@@ -23,6 +23,8 @@ import { VirtualizedRuleList } from './VirtualizedRuleList';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { logger } from '../utils/logger';
 import { isDev } from '../utils/env';
+import { useI18n } from '../i18n';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -48,6 +50,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
   onCreateNewRule,
   onCancel
 }) => {
+  const { language, tr } = useI18n();
   // 状态管理
   const [rules, setRules] = useState<ExceptionRule[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,11 +133,12 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
       setRules(chainRules);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载规则失败');
+      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
     } finally {
       setLoading(false);
     }
-  }, [sessionContext.chainId, actionType, ruleCache]);
+  }, [sessionContext.chainId, actionType, ruleCache, tr, language]);
 
   // 从实际存储获取规则
   const fetchChainRulesFromAPI = async (chainId: string, actionType: string): Promise<ExceptionRule[]> => {
@@ -177,9 +181,14 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
   // 创建默认预设规则
   const createDefaultPresetRules = async (chainId: string, actionType: string): Promise<ExceptionRule[]> => {
-    const defaultRuleNames = actionType === 'pause' 
-      ? ['上厕所', '接电话']
-      : ['提前达成目标'];
+    const defaultRuleNames =
+      actionType === 'pause'
+        ? language === 'zh'
+          ? ['上厕所', '接电话']
+          : ['Bathroom break', 'Phone call']
+        : language === 'zh'
+          ? ['提前达成目标']
+          : ['Reached goal early'];
     
     const ruleType = actionType === 'pause' 
       ? ExceptionRuleType.PAUSE_ONLY 
@@ -199,11 +208,11 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         }
 
         // 创建链专属规则
-        const result = await exceptionRuleManager.createChainRule(chainId, name, ruleType, `默认${actionType === 'pause' ? '暂停' : '提前完成'}规则`);
+        const result = await exceptionRuleManager.createChainRule(chainId, name, ruleType);
         createdRules.push(result.rule);
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.warn('RULE_SELECTION', `创建默认规则 "${name}" 失败`, { chainId, actionType }, err);
+        logger.warn('RULE_SELECTION', `Failed to create default rule "${name}"`, { chainId, actionType }, err);
       }
     }
     
@@ -229,9 +238,10 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         onRuleSelected(rule);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '选择规则失败');
+      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safe ?? tr('选择规则失败', 'Failed to select rule'));
     }
-  }, [actionType, duration, isIndefinite, onRuleSelected]);
+  }, [actionType, duration, isIndefinite, onRuleSelected, tr, language]);
 
   // 创建新规则
   const handleCreateNewRule = useCallback(async (inputName?: string) => {
@@ -246,13 +256,13 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       // 检查重复 - 确保name是字符串
       const cleanName = String(name).trim();
       if (!cleanName) {
-        setError('规则名称不能为空');
+        setError(tr('规则名称不能为空', 'Rule name cannot be empty'));
         return;
       }
       
       const duplicateCheck = searchOptimizer.detectDuplicates(cleanName, rules);
       if (duplicateCheck.hasExactMatch) {
-        setError(`规则名称 "${cleanName}" 已存在`);
+        setError(language === 'zh' ? `规则名称 "${cleanName}" 已存在` : `Rule name "${cleanName}" already exists`);
         return;
       }
 
@@ -265,7 +275,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
           chainId: sessionContext.chainId,
         });
       }
-      await exceptionRuleManager.createChainRule(sessionContext.chainId, cleanName, ruleType, `用户创建的${actionType === 'pause' ? '暂停' : '提前完成'}规则`);
+      await exceptionRuleManager.createChainRule(sessionContext.chainId, cleanName, ruleType);
       
       // 刷新规则列表
       await loadChainRules();
@@ -273,9 +283,10 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       // 通知父组件规则已创建
       onCreateNewRule(cleanName, ruleType);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建规则失败');
+      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safe ?? tr('创建规则失败', 'Failed to create rule'));
     }
-  }, [rules, actionType, sessionContext.chainId, onCreateNewRule, searchOptimizer, ruleCache, loadChainRules]);
+  }, [rules, actionType, sessionContext.chainId, onCreateNewRule, searchOptimizer, ruleCache, loadChainRules, searchQuery, language, tr]);
 
 
 
@@ -283,7 +294,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
   // 获取操作显示名称
   const getActionDisplayName = (): string => {
-    return actionType === 'pause' ? '暂停计时' : '提前完成';
+    return actionType === 'pause' ? tr('暂停计时', 'Pause timer') : tr('提前完成', 'Early completion');
   };
 
   // 获取操作颜色
@@ -321,10 +332,12 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                选择例外规则
+                {tr('选择例外规则', 'Choose exception rule')}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                为{getActionDisplayName()}操作选择适用的规则
+                {language === 'zh'
+                  ? `为${getActionDisplayName()}操作选择适用的规则`
+                  : `Choose a rule for ${getActionDisplayName()}`}
               </p>
             </div>
           </div>
@@ -346,9 +359,15 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
                   {sessionContext.chainName}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  已进行 {Math.floor(sessionContext.elapsedTime / 60)} 分钟
+                  {language === 'zh'
+                    ? `已进行 ${Math.floor(sessionContext.elapsedTime / 60)} 分钟`
+                    : `Elapsed ${Math.floor(sessionContext.elapsedTime / 60)} min`}
                   {sessionContext.remainingTime && (
-                    <span>，剩余 {Math.floor(sessionContext.remainingTime / 60)} 分钟</span>
+                    <span>
+                      {language === 'zh'
+                        ? `，剩余 ${Math.floor(sessionContext.remainingTime / 60)} 分钟`
+                        : `, ${Math.floor(sessionContext.remainingTime / 60)} min remaining`}
+                    </span>
                   )}
                 </p>
               </div>
@@ -363,20 +382,22 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
           {/* 暂停时间设置（仅暂停操作显示） */}
           {actionType === 'pause' && (
             <div className="mx-6 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-2xl">
-              <h3 className="font-medium text-gray-900 dark:text-white mb-3">暂停时长设置</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white mb-3">{tr('暂停时长设置', 'Pause duration')}</h3>
               <div className="flex items-center space-x-4">
                 <input
                   type="number"
                   min="1"
                   value={duration || ''}
                   onChange={(e) => setDuration(parseInt(e.target.value))}
-                  placeholder="输入分钟"
+                  placeholder={tr('输入分钟', 'Minutes')}
                   disabled={isIndefinite}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-200 dark:disabled:bg-gray-600"
                 />
               </div>
               <div className="flex items-center justify-end mt-2">
-                  <label htmlFor="isIndefinite" className="text-sm text-gray-600 dark:text-gray-400 mr-2">无限时间</label>
+                  <label htmlFor="isIndefinite" className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+                    {tr('无限时间', 'Indefinite')}
+                  </label>
                   <input
                     type="checkbox"
                     id="isIndefinite"
@@ -417,7 +438,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="搜索规则或输入新规则名称..."
+                placeholder={tr('搜索规则或输入新规则名称...', 'Search rules or type a new rule name...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -443,13 +464,15 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         <div className="flex-shrink-0 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              {searchResults.length} 个可用规则
+              {language === 'zh'
+                ? `${searchResults.length} 个可用规则`
+                : `${searchResults.length} available rule${searchResults.length === 1 ? '' : 's'}`}
             </div>
             <button
               onClick={onCancel}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
-              取消操作
+              {tr('取消操作', 'Cancel')}
             </button>
           </div>
         </div>

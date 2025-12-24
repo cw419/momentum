@@ -5,6 +5,7 @@ import { isSupabaseConfigured } from '../utils/supabaseConfig';
 import { realTimeSyncService } from '../services/RealTimeSyncService';
 import { RecycleBinService } from '../services/RecycleBinService';
 import { logger } from '../utils/logger';
+import { useI18n } from '../i18n';
 
 const StorageContext = createContext<MomentumStorage | null>(null);
 
@@ -14,6 +15,7 @@ interface StorageProviderProps {
 }
 
 export function StorageProvider({ storage, children }: StorageProviderProps) {
+  const { tr } = useI18n();
   const [dynamicStorage, setDynamicStorage] = useState<MomentumStorage | null>(
     storage ?? (isSupabaseConfigured ? null : localStorageAdapter)
   );
@@ -70,7 +72,7 @@ export function StorageProvider({ storage, children }: StorageProviderProps) {
           <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           </div>
-          <p className="text-gray-500 dark:text-slate-400 text-sm">初始化存储...</p>
+          <p className="text-gray-500 dark:text-slate-400 text-sm">{tr('初始化存储…', 'Initializing storage…')}</p>
         </div>
       </div>
     );

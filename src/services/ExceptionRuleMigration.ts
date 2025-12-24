@@ -6,6 +6,8 @@
 import { Chain, ExceptionRule, ExceptionRuleType } from '../types';
 import { exceptionRuleManager } from './ExceptionRuleManager';
 import { logger } from '../utils/logger';
+import { getCurrentLanguage, tr } from '../utils/runtimeI18n';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 
 export interface MigrationResult {
   totalChains: number;
@@ -27,6 +29,8 @@ export interface MigrationProgress {
 export class ExceptionRuleMigrationService {
   private static readonly MIGRATION_KEY = 'momentum_exception_rules_migration';
   private static readonly MIGRATION_VERSION = '1.0.0';
+  private static readonly LEGACY_MIGRATED_DESCRIPTION_ZH = '从旧系统迁移的规则';
+  private static readonly LEGACY_MIGRATED_DESCRIPTION_EN = 'Migrated from legacy system';
 
   /**
    * 检查是否需要迁移
@@ -75,7 +79,7 @@ export class ExceptionRuleMigrationService {
         totalChains: 0,
         currentChainName: '',
         phase: 'analyzing',
-        message: '分析现有数据...'
+        message: tr('分析现有数据...', 'Analyzing existing data...')
       });
 
       // 获取所有链条
@@ -92,7 +96,7 @@ export class ExceptionRuleMigrationService {
           totalChains: 0,
           currentChainName: '',
           phase: 'complete',
-          message: '没有需要迁移的数据'
+          message: tr('没有需要迁移的数据', 'No data to migrate')
         });
         return result;
       }
@@ -102,7 +106,10 @@ export class ExceptionRuleMigrationService {
         totalChains: result.totalChains,
         currentChainName: '',
         phase: 'migrating',
-        message: `开始迁移 ${result.totalChains} 个链条的例外规则...`
+        message: tr(
+          `开始迁移 ${result.totalChains} 个链条的例外规则...`,
+          `Starting migration for exception rules from ${result.totalChains} chain(s)...`
+        )
       });
 
       // 收集所有唯一的例外规则
@@ -117,6 +124,7 @@ export class ExceptionRuleMigrationService {
 
       // 创建新的例外规则
       let currentChainIndex = 0;
+      const createdRuleIds: string[] = [];
       for (const ruleName of uniqueRules) {
         currentChainIndex++;
         
@@ -125,7 +133,7 @@ export class ExceptionRuleMigrationService {
           totalChains: uniqueRules.size,
           currentChainName: ruleName,
           phase: 'migrating',
-          message: `创建规则: ${ruleName}`
+          message: tr(`创建规则: ${ruleName}`, `Creating rule: ${ruleName}`)
         });
 
         try {
@@ -133,10 +141,11 @@ export class ExceptionRuleMigrationService {
           const createResult = await exceptionRuleManager.createRule(
             ruleName,
             ExceptionRuleType.PAUSE_ONLY,
-            '从旧系统迁移的规则'
+            undefined
           );
 
           result.createdRules.push(createResult.rule);
+          createdRuleIds.push(createResult.rule.id);
           result.migratedRules++;
 
         } catch (error) {
@@ -146,7 +155,13 @@ export class ExceptionRuleMigrationService {
           result.errors.push({
             chainId: 'migration',
             chainName: ruleName,
-            error: error instanceof Error ? error.message : '未知错误'
+            error: (() => {
+              if (error instanceof Error) {
+                const safe = getSafeErrorDetail(error.message, getCurrentLanguage());
+                return safe ?? tr('创建规则失败，请查看控制台', 'Failed to create rule. Check console for details.');
+              }
+              return tr('未知错误', 'Unknown error');
+            })()
           });
         }
       }
@@ -157,7 +172,7 @@ export class ExceptionRuleMigrationService {
         totalChains: result.totalChains,
         currentChainName: '',
         phase: 'cleanup',
-        message: '完成迁移，保存迁移信息...'
+        message: tr('完成迁移，保存迁移信息...', 'Migration done. Saving migration info...')
       });
 
       // 保存迁移信息
@@ -166,7 +181,8 @@ export class ExceptionRuleMigrationService {
         migratedAt: startTime,
         totalRules: result.migratedRules,
         skippedRules: result.skippedRules,
-        errors: result.errors.length
+        errors: result.errors.length,
+        createdRuleIds
       });
 
       onProgress?.({
@@ -174,7 +190,10 @@ export class ExceptionRuleMigrationService {
         totalChains: result.totalChains,
         currentChainName: '',
         phase: 'complete',
-        message: `迁移完成！创建了 ${result.migratedRules} 个规则`
+        message: tr(
+          `迁移完成！创建了 ${result.migratedRules} 个规则`,
+          `Migration completed! Created ${result.migratedRules} rule(s)`
+        )
       });
 
       return result;
@@ -185,7 +204,13 @@ export class ExceptionRuleMigrationService {
       result.errors.push({
         chainId: 'system',
         chainName: 'Migration System',
-        error: error instanceof Error ? error.message : '系统错误'
+        error: (() => {
+          if (error instanceof Error) {
+            const safe = getSafeErrorDetail(error.message, getCurrentLanguage());
+            return safe ?? tr('迁移过程中发生错误，请查看控制台', 'Migration error occurred. Check console for details.');
+          }
+          return tr('系统错误', 'System error');
+        })()
       });
       return result;
     }
@@ -236,11 +261,21 @@ export class ExceptionRuleMigrationService {
       const recommendations: string[] = [];
       
       if (duplicateRules.length > 0) {
-        recommendations.push(`发现 ${duplicateRules.length} 个重复使用的规则，迁移后将合并为单个规则`);
+        recommendations.push(
+          tr(
+            `发现 ${duplicateRules.length} 个重复使用的规则，迁移后将合并为单个规则`,
+            `Found ${duplicateRules.length} duplicated rule(s); duplicates will be merged after migration`
+          )
+        );
       }
       
       if (uniqueRules.length > 20) {
-        recommendations.push('规则数量较多，建议迁移后进行整理和分类');
+        recommendations.push(
+          tr(
+            '规则数量较多，建议迁移后进行整理和分类',
+            'Many rules detected; consider organizing and categorizing them after migration'
+          )
+        );
       }
       
       const commonPatterns = uniqueRules.filter(rule => 
@@ -250,11 +285,18 @@ export class ExceptionRuleMigrationService {
       );
       
       if (commonPatterns.length > 0) {
-        recommendations.push(`发现 ${commonPatterns.length} 个常见模式的规则，建议统一命名规范`);
+        recommendations.push(
+          tr(
+            `发现 ${commonPatterns.length} 个常见模式的规则，建议统一命名规范`,
+            `Found ${commonPatterns.length} common-pattern rule(s); consider standardizing naming`
+          )
+        );
       }
 
       if (recommendations.length === 0) {
-        recommendations.push('数据结构良好，可以直接进行迁移');
+        recommendations.push(
+          tr('数据结构良好，可以直接进行迁移', 'Data looks good; you can migrate directly')
+        );
       }
 
       return {
@@ -271,7 +313,7 @@ export class ExceptionRuleMigrationService {
         totalRules: 0,
         uniqueRules: [],
         duplicateRules: [],
-        recommendations: ['获取迁移建议失败，请检查数据完整性']
+        recommendations: [tr('获取迁移建议失败，请检查数据完整性', 'Failed to get migration suggestions. Check data integrity.')]
       };
     }
   }
@@ -289,16 +331,19 @@ export class ExceptionRuleMigrationService {
       if (!migrationInfo) {
         return {
           success: false,
-          message: '没有找到迁移记录',
+          message: tr('没有找到迁移记录', 'No migration record found'),
           deletedRules: 0
         };
       }
 
       // 获取所有规则
       const allRules = await exceptionRuleManager.getAllRules();
-      const migratedRules = allRules.filter(rule => 
-        rule.description === '从旧系统迁移的规则'
-      );
+      const migratedRules = migrationInfo.createdRuleIds?.length
+        ? allRules.filter(rule => migrationInfo.createdRuleIds!.includes(rule.id))
+        : allRules.filter(rule =>
+            rule.description === ExceptionRuleMigrationService.LEGACY_MIGRATED_DESCRIPTION_ZH ||
+            rule.description === ExceptionRuleMigrationService.LEGACY_MIGRATED_DESCRIPTION_EN
+          );
 
       // 删除迁移的规则
       let deletedCount = 0;
@@ -317,14 +362,17 @@ export class ExceptionRuleMigrationService {
 
       return {
         success: true,
-        message: `成功回滚迁移，删除了 ${deletedCount} 个规则`,
+        message: tr(
+          `成功回滚迁移，删除了 ${deletedCount} 个规则`,
+          `Rollback succeeded. Deleted ${deletedCount} rule(s)`
+        ),
         deletedRules: deletedCount
       };
 
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : '回滚失败',
+        message: tr('回滚失败', 'Rollback failed'),
         deletedRules: 0
       };
     }
@@ -348,25 +396,33 @@ export class ExceptionRuleMigrationService {
       // 检查迁移信息
       const migrationInfo = this.getMigrationInfo();
       if (!migrationInfo) {
-        issues.push('缺少迁移记录');
+        issues.push(tr('缺少迁移记录', 'Missing migration record'));
       }
 
       // 检查规则数据
       const allRules = await exceptionRuleManager.getAllRules();
-      const migratedRules = allRules.filter(rule => 
-        rule.description === '从旧系统迁移的规则'
-      );
+      const migratedRules = migrationInfo?.createdRuleIds?.length
+        ? allRules.filter(rule => migrationInfo.createdRuleIds!.includes(rule.id))
+        : allRules.filter(rule =>
+            rule.description === ExceptionRuleMigrationService.LEGACY_MIGRATED_DESCRIPTION_ZH ||
+            rule.description === ExceptionRuleMigrationService.LEGACY_MIGRATED_DESCRIPTION_EN
+          );
       const activeRules = allRules.filter(rule => rule.isActive);
 
       // 检查数据一致性
       if (migrationInfo && migratedRules.length !== migrationInfo.totalRules) {
-        issues.push(`迁移规则数量不匹配：期望 ${migrationInfo.totalRules}，实际 ${migratedRules.length}`);
+        issues.push(
+          tr(
+            `迁移规则数量不匹配：期望 ${migrationInfo.totalRules}，实际 ${migratedRules.length}`,
+            `Migrated rule count mismatch: expected ${migrationInfo.totalRules}, got ${migratedRules.length}`
+          )
+        );
       }
 
       // 检查规则完整性
       for (const rule of migratedRules) {
         if (!rule.name || !rule.type) {
-          issues.push(`规则 ${rule.id} 数据不完整`);
+          issues.push(tr(`规则 ${rule.id} 数据不完整`, `Rule ${rule.id} data is incomplete`));
         }
       }
 
@@ -381,9 +437,18 @@ export class ExceptionRuleMigrationService {
       };
 
     } catch (error) {
+      const currentLanguage = getCurrentLanguage();
       return {
         isValid: false,
-        issues: ['验证过程中发生错误: ' + (error instanceof Error ? error.message : '未知错误')],
+        issues: [
+          (() => {
+            if (error instanceof Error) {
+              const safe = getSafeErrorDetail(error.message, currentLanguage);
+              return safe ?? tr('验证过程中发生错误，请查看控制台', 'Validation error occurred. Check console for details.');
+            }
+            return tr('未知错误', 'Unknown error');
+          })()
+        ],
         statistics: {
           totalRules: 0,
           migratedRules: 0,
@@ -418,6 +483,7 @@ export class ExceptionRuleMigrationService {
     totalRules: number;
     skippedRules: number;
     errors: number;
+    createdRuleIds?: string[];
   } | null {
     try {
       const data = localStorage.getItem(ExceptionRuleMigrationService.MIGRATION_KEY);
@@ -444,6 +510,7 @@ export class ExceptionRuleMigrationService {
     totalRules: number;
     skippedRules: number;
     errors: number;
+    createdRuleIds: string[];
   }): void {
     try {
       localStorage.setItem(
@@ -478,7 +545,7 @@ export class ExceptionRuleMigrationService {
       const suggestions = await this.getMigrationSuggestions();
 
       const report = {
-        title: '例外规则迁移报告',
+        title: tr('例外规则迁移报告', 'Exception Rule Migration Report'),
         generatedAt: new Date().toISOString(),
         migrationInfo,
         validation,
@@ -494,9 +561,9 @@ export class ExceptionRuleMigrationService {
       return JSON.stringify(report, null, 2);
     } catch (error) {
       return JSON.stringify({
-        title: '例外规则迁移报告',
+        title: tr('例外规则迁移报告', 'Exception Rule Migration Report'),
         generatedAt: new Date().toISOString(),
-        error: error instanceof Error ? error.message : '生成报告失败'
+        error: error instanceof Error ? error.message : tr('生成报告失败', 'Failed to generate report')
       }, null, 2);
     }
   }

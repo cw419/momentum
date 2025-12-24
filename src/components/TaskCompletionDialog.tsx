@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, CheckCircle, FileText, MessageSquare, History, RotateCcw } from 'lucide-react';
 import { useStorage } from '../storage/StorageContext';
+import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 
 interface TaskCompletionDialogProps {
@@ -20,6 +21,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
   onComplete,
   onCancel,
 }) => {
+  const { tr } = useI18n();
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [isNotesVisible, setIsNotesVisible] = useState(false);
@@ -157,7 +159,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                完成任务
+                {tr('完成任务', 'Complete task')}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {chainName}
@@ -181,7 +183,8 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               <div className="flex items-center space-x-2">
                 <FileText className="text-gray-500 dark:text-gray-400" size={16} />
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  任务描述{isDurationless ? ' *' : ' (可选)'}
+                  {tr('任务描述', 'Task description')}
+                  {isDurationless ? ' *' : tr('（可选）', ' (optional)')}
                 </label>
               </div>
               
@@ -191,10 +194,10 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
                   type="button"
                   onClick={() => setShowQuickFill(!showQuickFill)}
                   className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                  title="显示历史描述 (Shift+Tab)"
+                  title={tr('显示历史描述 (Shift+Tab)', 'Show history (Shift+Tab)')}
                 >
                   <History size={14} />
-                  <span>历史</span>
+                  <span>{tr('历史', 'History')}</span>
                 </button>
               )}
             </div>
@@ -205,7 +208,11 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onKeyDown={handleDescriptionKeyDown}
-              placeholder={isDurationless ? "例如：完成cs61a的第一部分（按Tab添加备注或自动填充）" : "例如：完成cs61a的第一部分（可选，按Tab添加备注）"}
+              placeholder={
+                isDurationless
+                  ? tr('例如：完成 CS61A 的第一部分（按 Tab 添加备注或自动填充）', 'e.g. Finish CS61A Part 1 (Tab to add notes or auto-fill)')
+                  : tr('例如：完成 CS61A 的第一部分（可选，按 Tab 添加备注）', 'e.g. Finish CS61A Part 1 (optional, Tab to add notes)')
+              }
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
               required={isDurationless}
             />
@@ -215,7 +222,9 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-xl animate-slide-down">
                 <div className="flex items-center space-x-2 mb-2">
                   <RotateCcw className="text-blue-600 dark:text-blue-400" size={14} />
-                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">最近的任务描述</span>
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                    {tr('最近的任务描述', 'Recent descriptions')}
+                  </span>
                 </div>
                 <div className="space-y-1">
                   {recentDescriptions.map((desc, index) => (
@@ -235,8 +244,11 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
             
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {isDurationless 
-                ? "按Tab键添加备注或自动填充，按Shift+Tab显示历史，按Enter完成" 
-                : "任务描述为可选，按Tab键添加备注，按Enter完成"}
+                ? tr(
+                    '按 Tab 添加备注或自动填充，按 Shift+Tab 显示历史，按 Enter 完成',
+                    'Tab to add notes or auto-fill, Shift+Tab for history, Enter to complete'
+                  )
+                : tr('任务描述可选，按 Tab 添加备注，按 Enter 完成', 'Description optional; Tab to add notes; Enter to complete')}
             </p>
           </div>
 
@@ -246,7 +258,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               <div className="flex items-center space-x-2 mb-3">
                 <MessageSquare className="text-gray-500 dark:text-gray-400" size={16} />
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  备注（可选）
+                  {tr('备注（可选）', 'Notes (optional)')}
                 </label>
               </div>
               <textarea
@@ -254,12 +266,12 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 onKeyDown={handleNotesKeyDown}
-                placeholder="添加更多详细信息或感想..."
+                placeholder={tr('添加更多详细信息或感想…', 'Add more details or thoughts…')}
                 rows={3}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                按Ctrl+Enter完成任务，按Esc取消
+                {tr('按 Ctrl+Enter 完成，按 Esc 取消', 'Ctrl+Enter to complete, Esc to cancel')}
               </p>
             </div>
           )}
@@ -275,7 +287,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               }}
               className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
-              + 添加备注
+              {tr('+ 添加备注', '+ Add notes')}
             </button>
           )}
         </div>
@@ -287,14 +299,14 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               onClick={handleCancel}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
-              取消
+              {tr('取消', 'Cancel')}
             </button>
             <button
               onClick={handleSubmit}
               disabled={isDurationless && !description.trim()}
               className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
             >
-              完成任务
+              {tr('完成任务', 'Complete')}
             </button>
           </div>
         </div>

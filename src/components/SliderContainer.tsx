@@ -4,6 +4,7 @@
  */
 
 import React, { useRef, useEffect, useState } from 'react';
+import { useI18n } from '../i18n';
 
 interface SliderContainerProps {
   label: string;
@@ -31,6 +32,7 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
   className = '',
   description
 }) => {
+  const { tr } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -116,7 +118,7 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
           </span>
           {containerWidth > 0 && (
             <span className="text-xs text-gray-400 font-mono">
-              容器宽度: {containerWidth}px
+              {tr('容器宽度', 'Container width')}: {containerWidth}px
             </span>
           )}
         </div>
@@ -136,7 +138,7 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
         <div className="keyboard-input-section">
           <div className="flex items-center space-x-4">
             <span className="text-gray-700 dark:text-slate-300 font-chinese">
-              键盘输入:
+              {tr('键盘输入', 'Keyboard input')}:
             </span>
             <div className="flex items-center space-x-2">
               <input

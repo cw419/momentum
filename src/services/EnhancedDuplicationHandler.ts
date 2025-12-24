@@ -10,6 +10,7 @@ import {
   ExceptionRuleException 
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { getCurrentLanguage, tr } from '../utils/runtimeI18n';
 
 export interface DuplicationCheckResult {
   hasConflict: boolean;
@@ -66,8 +67,8 @@ export class EnhancedDuplicationHandler {
         hasConflict: false,
         suggestions: [{
           type: 'create_anyway',
-          title: '继续创建',
-          description: '检查失败，但可以尝试创建',
+          title: tr('继续创建', 'Continue'),
+          description: tr('检查失败，但可以尝试创建', 'Check failed, but you can try creating it'),
           handler: async () => null
         }]
       };
@@ -130,7 +131,7 @@ export class EnhancedDuplicationHandler {
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
-        `重复检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        tr('重复检查失败', 'Duplicate check failed'),
         error
       );
     }
@@ -181,7 +182,10 @@ export class EnhancedDuplicationHandler {
         if (checkResult.conflictType === 'exact') {
           throw new ExceptionRuleException(
             ExceptionRuleError.DUPLICATE_RULE_NAME,
-            `不能创建重复名称的规则: "${name}"`
+            tr(
+              `不能创建重复名称的规则: "${name}"`,
+              `Cannot create a rule with a duplicate name: "${name}"`
+            )
           );
         }
         return this.handleCreateAnyway(name, type, description, checkResult);
@@ -214,7 +218,10 @@ export class EnhancedDuplicationHandler {
     }
     
     // 描述性后缀建议
-    const descriptiveSuffixes = ['新', '备用', '临时', '特殊'];
+    const language = getCurrentLanguage();
+    const descriptiveSuffixes = language === 'zh'
+      ? ['新', '备用', '临时', '特殊']
+      : ['New', 'Spare', 'Temp', 'Special'];
     for (const suffix of descriptiveSuffixes) {
       const suggestion = `${baseName}(${suffix})`;
       if (!existingNames.some(name => name.toLowerCase() === suggestion.toLowerCase())) {
@@ -223,7 +230,7 @@ export class EnhancedDuplicationHandler {
     }
     
     // 时间戳后缀（作为最后选择）
-    const timestamp = new Date().toLocaleDateString('zh-CN', { 
+    const timestamp = new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { 
       month: '2-digit', 
       day: '2-digit' 
     }).replace(/\//g, '');
@@ -291,8 +298,8 @@ export class EnhancedDuplicationHandler {
       
       suggestions.push({
         type: 'use_existing',
-        title: '使用现有规则',
-        description: `使用已存在的规则 "${existingRule.name}"`,
+        title: tr('使用现有规则', 'Use existing rule'),
+        description: tr(`使用已存在的规则 "${existingRule.name}"`, `Use the existing rule "${existingRule.name}"`),
         rule: existingRule,
         handler: async () => existingRule
       });
@@ -305,8 +312,8 @@ export class EnhancedDuplicationHandler {
       nameSuggestions.forEach(suggestedName => {
         suggestions.push({
           type: 'modify_name',
-          title: '修改名称',
-          description: `使用建议的名称 "${suggestedName}"`,
+          title: tr('修改名称', 'Change name'),
+          description: tr(`使用建议的名称 "${suggestedName}"`, `Use the suggested name "${suggestedName}"`),
           suggestedName,
           handler: async () => null // 需要重新创建
         });
@@ -316,8 +323,8 @@ export class EnhancedDuplicationHandler {
       // 相似匹配的情况
       suggestions.push({
         type: 'create_anyway',
-        title: '继续创建',
-        description: '名称相似但不完全相同，可以继续创建',
+        title: tr('继续创建', 'Continue'),
+        description: tr('名称相似但不完全相同，可以继续创建', 'Name is similar but not identical; you can continue creating it'),
         handler: async () => null
       });
 
@@ -325,8 +332,8 @@ export class EnhancedDuplicationHandler {
         const mostSimilar = existingRules[0];
         suggestions.push({
           type: 'use_existing',
-          title: '使用相似规则',
-          description: `考虑使用相似的规则 "${mostSimilar.name}"`,
+          title: tr('使用相似规则', 'Use similar rule'),
+          description: tr(`考虑使用相似的规则 "${mostSimilar.name}"`, `Consider using the similar rule "${mostSimilar.name}"`),
           rule: mostSimilar,
           handler: async () => mostSimilar
         });
@@ -341,12 +348,18 @@ export class EnhancedDuplicationHandler {
    */
   private getConflictMessage(result: DuplicationCheckResult): string {
     if (result.conflictType === 'exact') {
-      return `规则名称 "${result.existingRules[0].name}" 已存在`;
+      return tr(
+        `规则名称 "${result.existingRules[0].name}" 已存在`,
+        `Rule name "${result.existingRules[0].name}" already exists`
+      );
     } else if (result.conflictType === 'similar') {
       const similarNames = result.existingRules.map(r => r.name).join('", "');
-      return `发现相似的规则名称: "${similarNames}"`;
+      return tr(
+        `发现相似的规则名称: "${similarNames}"`,
+        `Found similar rule name(s): "${similarNames}"`
+      );
     }
-    return '没有发现冲突';
+    return tr('没有发现冲突', 'No conflict detected');
   }
 
   /**
@@ -373,7 +386,12 @@ export class EnhancedDuplicationHandler {
     
     // 如果没有类型匹配的规则，使用第一个并警告
     const rule = existingRules[0];
-    const warnings = [`使用的规则类型 (${rule.type}) 与请求的类型 (${requestedType}) 不匹配`];
+    const warnings = [
+      tr(
+        `使用的规则类型 (${rule.type}) 与请求的类型 (${requestedType}) 不匹配`,
+        `Rule type (${rule.type}) does not match requested type (${requestedType})`
+      )
+    ];
     
     return {
       rule,
@@ -401,7 +419,7 @@ export class EnhancedDuplicationHandler {
     if (suggestions.length === 0) {
       throw new ExceptionRuleException(
         ExceptionRuleError.DUPLICATE_RULE_NAME,
-        '无法生成可用的名称建议'
+        tr('无法生成可用的名称建议', 'Unable to generate a usable name suggestion')
       );
     }
     
@@ -419,7 +437,7 @@ export class EnhancedDuplicationHandler {
     return {
       rule,
       action: 'created_with_modified_name',
-      warnings: [`名称已修改为 "${newName}"`]
+      warnings: [tr(`名称已修改为 "${newName}"`, `Name changed to "${newName}"`)]
     };
   }
 
@@ -448,7 +466,12 @@ export class EnhancedDuplicationHandler {
     const warnings: string[] = [];
     if (checkResult.conflictType === 'similar') {
       const similarNames = checkResult.existingRules.map(r => r.name).join('", "');
-      warnings.push(`注意：存在相似的规则名称 "${similarNames}"`);
+      warnings.push(
+        tr(
+          `注意：存在相似的规则名称 "${similarNames}"`,
+          `Note: similar rule name(s) exist: "${similarNames}"`
+        )
+      );
     }
     
     return {

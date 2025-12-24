@@ -7,6 +7,7 @@ import { formatTime, getTimeRemaining } from '../utils/time';
 import { getGroupTimeStatus } from '../utils/timeLimit';
 import { ImportUnitsModal } from './ImportUnitsModal';
 import { soundManager } from '../utils/soundManager';
+import { useI18n } from '../i18n';
 
 interface GroupViewProps {
   group: ChainTreeNode;
@@ -51,9 +52,10 @@ const UnitCard: React.FC<{
   onOpenRepeatModal,
   onViewDetail
 }) => {
+  const { language, tr } = useI18n();
   const [timeRemaining, setTimeRemaining] = React.useState<number>(0);
   const lastPlayedExpiresAtRef = React.useRef<number | null>(null);
-  const unitTypeConfig = getChainTypeConfig(unit.type);
+  const unitTypeConfig = getChainTypeConfig(unit.type, language);
   const requiredRepeats = unit.taskRepeatCount || 1;
   const isCompleted = unit.currentStreak >= requiredRepeats;
   const isNext = nextUnit?.id === unit.id;
@@ -118,7 +120,7 @@ const UnitCard: React.FC<{
               </h4>
               {isNext && (
                 <span className="px-2 py-1 bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs rounded-full font-chinese">
-                  下一个
+                  {tr('下一个', 'Next')}
                 </span>
               )}
             </div>
@@ -128,13 +130,13 @@ const UnitCard: React.FC<{
             <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-slate-400">
               <span className="flex items-center space-x-1">
                 <Clock size={12} />
-                <span>{formatTime(unit.duration)}</span>
+                <span>{formatTime(unit.duration, language)}</span>
               </span>
-              <span className="flex items-center space-x-1" title="完成次数">
+              <span className="flex items-center space-x-1" title={tr('完成次数', 'Completions')}>
                 <Flame size={12} />
                 <span>#{unit.currentStreak}</span>
               </span>
-              <span className="flex items-center space-x-1" title="预约次数">
+              <span className="flex items-center space-x-1" title={tr('预约次数', 'Bookings')}>
                 <CalendarCheck size={12} />
                 <span>{unit.auxiliaryStreak || 0}</span>
               </span>
@@ -155,7 +157,7 @@ const UnitCard: React.FC<{
               <button
                 onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'up')}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-                title="上移"
+                title={tr('上移', 'Move up')}
                 disabled={index === 0}
               >
                 <ArrowUp size={14} />
@@ -163,7 +165,7 @@ const UnitCard: React.FC<{
               <button
                 onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'down')}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-                title="下移"
+                title={tr('下移', 'Move down')}
                 disabled={index === (group.children.length - 1)}
               >
                 <ArrowDown size={14} />
@@ -173,14 +175,14 @@ const UnitCard: React.FC<{
             <button
               onClick={() => onEditChain(unit.id)}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-              title="编辑单元"
+              title={tr('编辑单元', 'Edit unit')}
             >
               <Edit size={14} />
             </button>
             <button
               onClick={() => onDeleteChain(unit.id)}
               className="p-2 text-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-              title="删除单元"
+              title={tr('删除单元', 'Delete unit')}
             >
               <Trash2 size={14} />
             </button>
@@ -192,13 +194,13 @@ const UnitCard: React.FC<{
                   className="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm transition-colors font-chinese"
                   disabled={!!scheduledSession}
                 >
-                  预约
+                  {tr('预约', 'Schedule')}
                 </button>
                 <button
                   onClick={() => onStartChain(unit.id)}
                   className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors font-chinese"
                 >
-                  开始
+                  {tr('开始', 'Start')}
                 </button>
               </>
             )}
@@ -215,7 +217,7 @@ const UnitCard: React.FC<{
                    rounded-md text-xs font-bold transition-all duration-200 
                    shadow-md hover:shadow-lg border border-slate-600 dark:border-slate-400
                    hover:scale-105"
-        title={`设置重复次数 (当前: ${currentRepeatCount})`}
+        title={tr(`设置重复次数 (当前: ${currentRepeatCount})`, `Set repeat count (current: ${currentRepeatCount})`)}
       >
         <X size={12} className="opacity-90" />
         <span>{currentRepeatCount}</span>
@@ -239,11 +241,12 @@ export const GroupView: React.FC<GroupViewProps> = ({
   onReorderUnit,
   onViewDetail,
 }) => {
+  const { language, tr } = useI18n();
   const progress = getGroupProgress(group);
   const unitProgress = getGroupUnitProgress(group);
   const nextUnit = getNextUnitInGroup(group);
-  const typeConfig = getChainTypeConfig(group.type);
-  const timeStatus = getGroupTimeStatus(group);
+  const typeConfig = getChainTypeConfig(group.type, language);
+  const timeStatus = getGroupTimeStatus(group, language);
   const [showImportModal, setShowImportModal] = React.useState(false);
   const [showRepeatModal, setShowRepeatModal] = React.useState(false);
   const [selectedUnitId, setSelectedUnitId] = React.useState<string>('');
@@ -293,15 +296,19 @@ export const GroupView: React.FC<GroupViewProps> = ({
                     <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-2xl shadow-lg">
                       <div className="flex items-center space-x-2">
                         <span className="text-lg font-bold">#{group.totalCompletions}</span>
-                        <span className="text-sm">轮</span>
+                        <span className="text-sm">{tr('轮', 'cycles')}</span>
                       </div>
                     </div>
                   )}
                 </div>
                 <p className="text-sm font-mono text-gray-500 tracking-wider uppercase">
-                  {typeConfig.name} • {unitProgress.completed}/{unitProgress.total} 已完成
+                  {typeConfig.name} • {unitProgress.completed}/{unitProgress.total} {tr('已完成', 'completed')}
                   {group.totalCompletions > 0 && (
-                    <span className="ml-2 text-amber-600 dark:text-amber-400">• 第{group.totalCompletions + 1}轮进行中</span>
+                    <span className="ml-2 text-amber-600 dark:text-amber-400">
+                      {language === 'zh'
+                        ? `• 第${group.totalCompletions + 1}轮进行中`
+                        : `• Cycle ${group.totalCompletions + 1} in progress`}
+                    </span>
                   )}
                 </p>
               </div>
@@ -314,7 +321,7 @@ export const GroupView: React.FC<GroupViewProps> = ({
               className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
             >
               <Plus size={16} />
-              <span>添加单元</span>
+              <span>{tr('添加单元', 'Add unit')}</span>
             </button>
             
             <button
@@ -322,16 +329,16 @@ export const GroupView: React.FC<GroupViewProps> = ({
               className="bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
             >
               <Import size={16} />
-              <span>导入单元</span>
+              <span>{tr('导入单元', 'Import units')}</span>
             </button>
 
             <button
               onClick={() => onEditChain(group.id)}
               className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
-              title="编辑任务群"
+              title={tr('编辑任务群', 'Edit group')}
             >
               <Pencil size={16} />
-              <span>编辑任务群</span>
+              <span>{tr('编辑任务群', 'Edit group')}</span>
             </button>
 
             <button
@@ -340,7 +347,7 @@ export const GroupView: React.FC<GroupViewProps> = ({
             >
               <Play size={16} />
               <span>
-                {nextUnit ? '开始下一个' : '开始新一轮'}
+                {nextUnit ? tr('开始下一个', 'Start next') : tr('开始新一轮', 'Start new cycle')}
               </span>
             </button>
           </div>
@@ -349,25 +356,35 @@ export const GroupView: React.FC<GroupViewProps> = ({
         {/* Progress Overview */}
         <div className="bento-card mb-8 animate-scale-in">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">任务群概览</h2>
+            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+              {tr('任务群概览', 'Group overview')}
+            </h2>
             <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-slate-400">
               <div className="flex items-center space-x-2">
                 <Users size={16} />
-                <span>{group.children.length} 个单元</span>
+                <span>{tr(`${group.children.length} 个单元`, `${group.children.length} units`)}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Target size={16} />
-                <span>{unitProgress.completed}/{unitProgress.total} 已完成</span>
+                <span>
+                  {unitProgress.completed}/{unitProgress.total} {tr('已完成', 'completed')}
+                </span>
               </div>
               {group.totalCompletions > 0 && (
                 <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400 font-medium">
                   <Hash size={16} />
-                  <span>已完成 {group.totalCompletions} 轮</span>
+                  <span>
+                    {language === 'zh' ? `已完成 ${group.totalCompletions} 轮` : `Completed ${group.totalCompletions} cycles`}
+                  </span>
                 </div>
               )}
               {progress.total !== unitProgress.total && (
                 <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-slate-500">
-                  <span>({progress.completed}/{progress.total} 重复次数)</span>
+                  <span>
+                    {language === 'zh'
+                      ? `(${progress.completed}/${progress.total} 重复次数)`
+                      : `(${progress.completed}/${progress.total} repeats)`}
+                  </span>
                 </div>
               )}
             </div>
@@ -406,7 +423,7 @@ export const GroupView: React.FC<GroupViewProps> = ({
                     <h4 className={`font-bold font-chinese ${
                       timeStatus.isExpired ? 'text-red-700 dark:text-red-300' : 'text-orange-700 dark:text-orange-300'
                     }`}>
-                      {timeStatus.isExpired ? '任务群已超时' : '时间限制'}
+                      {timeStatus.isExpired ? tr('任务群已超时', 'Time expired') : tr('时间限制', 'Time limit')}
                     </h4>
                     <p className={`text-sm ${
                       timeStatus.isExpired ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
@@ -434,12 +451,15 @@ export const GroupView: React.FC<GroupViewProps> = ({
                 )}
               </div>
 
-              {timeStatus.isExpired && (
-                <div className="mt-3 text-sm text-red-600 dark:text-red-400 font-chinese flex items-center">
-                  <AlertTriangle size={14} className="mr-2" />
-                  任务群已超时，进度将被清空。请重新开始任务群。
-                </div>
-              )}
+                {timeStatus.isExpired && (
+                  <div className="mt-3 text-sm text-red-600 dark:text-red-400 font-chinese flex items-center">
+                    <AlertTriangle size={14} className="mr-2" />
+                    {tr(
+                      '任务群已超时，进度将被清空。请重新开始任务群。',
+                      'This group has expired. Progress will be cleared. Please restart the group.'
+                    )}
+                  </div>
+                )}
             </div>
           )}
         </div>
@@ -447,10 +467,11 @@ export const GroupView: React.FC<GroupViewProps> = ({
         {/* Units List */}
         <div className="space-y-4 animate-slide-up">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">任务单元</h2>
+            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('任务单元', 'Units')}</h2>
             {nextUnit && (
               <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
-                下一个待执行：<span className="text-primary-500 font-semibold">{nextUnit.name}</span>
+                {tr('下一个待执行：', 'Next up: ')}
+                <span className="text-primary-500 font-semibold">{nextUnit.name}</span>
               </p>
             )}
           </div>
@@ -460,13 +481,15 @@ export const GroupView: React.FC<GroupViewProps> = ({
               <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-6">
                 <Users size={32} className="text-gray-400" />
               </div>
-              <p className="font-chinese text-lg mb-4">此任务群还没有子单元</p>
+              <p className="font-chinese text-lg mb-4">
+                {tr('此任务群还没有子单元', 'This group has no units yet')}
+              </p>
               <button
                 onClick={onAddUnit}
                 className="gradient-primary hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 mx-auto hover:scale-105 shadow-lg font-chinese"
               >
                 <Plus size={16} />
-                <span>添加第一个单元</span>
+                <span>{tr('添加第一个单元', 'Add your first unit')}</span>
               </button>
             </div>
           ) : (
@@ -509,7 +532,7 @@ export const GroupView: React.FC<GroupViewProps> = ({
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md animate-scale-in shadow-2xl border border-gray-200 dark:border-slate-600">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-                设置重复次数
+                {tr('设置重复次数', 'Set repeat count')}
               </h3>
               <button
                 onClick={() => setShowRepeatModal(false)}
@@ -521,7 +544,7 @@ export const GroupView: React.FC<GroupViewProps> = ({
             
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3 font-chinese">
-                重复次数 (1-99)
+                {tr('重复次数 (1-99)', 'Repeat count (1-99)')}
               </label>
               <div className="flex items-center space-x-4">
                 <button
@@ -552,9 +575,9 @@ export const GroupView: React.FC<GroupViewProps> = ({
                   +
                 </button>
               </div>
-              
+               
               <p className="text-xs text-gray-500 dark:text-slate-400 mt-2 font-chinese">
-                设置该任务单元在任务群中需要重复执行的次数
+                {tr('设置该任务单元在任务群中需要重复执行的次数', 'Set how many times this unit must be repeated in the group')}
               </p>
             </div>
             
@@ -563,13 +586,13 @@ export const GroupView: React.FC<GroupViewProps> = ({
                 onClick={() => setShowRepeatModal(false)}
                 className="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-chinese"
               >
-                取消
+                {tr('取消', 'Cancel')}
               </button>
               <button
                 onClick={handleUpdateRepeatCount}
                 className="flex-1 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors font-chinese font-medium"
               >
-                确认设置
+                {tr('确认设置', 'Save')}
               </button>
             </div>
           </div>

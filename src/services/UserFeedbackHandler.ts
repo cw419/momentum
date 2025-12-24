@@ -9,6 +9,8 @@ import {
 } from '../types';
 import { errorRecoveryManager, RecoveryAction } from './ErrorRecoveryManager';
 import { logger } from '../utils/logger';
+import { getSafeErrorDetail } from '../utils/errorMessage';
+import { getCurrentLanguage, tr } from '../utils/runtimeI18n';
 
 export interface FeedbackMessage {
   id: string;
@@ -147,7 +149,7 @@ export class UserFeedbackHandler {
       // 添加取消选项
       actions.push({
         id: 'cancel',
-        label: '取消',
+        label: tr('取消', 'Cancel'),
         type: 'secondary',
         handler: () => {
           this.removeMessage(messageId);
@@ -158,8 +160,8 @@ export class UserFeedbackHandler {
       const feedbackMessage: FeedbackMessage = {
         id: messageId,
         type: 'warning',
-        title: '选择恢复操作',
-        message: '请选择如何处理这个问题：',
+        title: tr('选择恢复操作', 'Choose a recovery action'),
+        message: tr('请选择如何处理这个问题：', 'Choose how to handle this issue:'),
         actions,
         persistent: true,
         timestamp: new Date()
@@ -283,6 +285,7 @@ export class UserFeedbackHandler {
    * 获取用户友好的错误信息
    */
   private getUserFriendlyMessage(error: ExceptionRuleException): string {
+    const language = getCurrentLanguage();
     switch (error.type) {
       case ExceptionRuleError.RULE_NOT_FOUND:
         return this.formatRuleNotFoundMessage(error);
@@ -294,16 +297,24 @@ export class UserFeedbackHandler {
         return this.formatTypeMismatchMessage(error);
       
       case ExceptionRuleError.INVALID_RULE_TYPE:
-        return '规则类型无效，请检查规则设置';
+        return tr('规则类型无效，请检查规则设置', 'Invalid rule type. Please check the rule settings.', language);
       
       case ExceptionRuleError.VALIDATION_ERROR:
-        return `输入验证失败：${error.message}`;
+        {
+          const safeDetail = getSafeErrorDetail(error.message || '', language);
+          return safeDetail
+            ? tr(`输入验证失败：${safeDetail}`, `Validation failed: ${safeDetail}`, language)
+            : tr('输入验证失败', 'Validation failed', language);
+        }
       
       case ExceptionRuleError.STORAGE_ERROR:
-        return '数据保存失败，请检查网络连接或重试';
+        return tr('数据保存失败，请检查网络连接或重试', 'Failed to save data. Please check your connection or try again.', language);
       
       default:
-        return error.message || '发生了未知错误';
+        {
+          const safeDetail = getSafeErrorDetail(error.message || '', language);
+          return safeDetail ?? tr('发生了未知错误', 'An unknown error occurred.', language);
+        }
     }
   }
 
@@ -311,67 +322,81 @@ export class UserFeedbackHandler {
    * 格式化规则不存在的错误信息
    */
   private formatRuleNotFoundMessage(error: ExceptionRuleException): string {
+    const language = getCurrentLanguage();
     const message = error.message;
     
     if (message.includes('ID')) {
-      return '所选的规则不存在，可能已被删除。请选择其他规则或创建新规则。';
+      return tr(
+        '所选的规则不存在，可能已被删除。请选择其他规则或创建新规则。',
+        'The selected rule no longer exists. It may have been deleted. Please choose another rule or create a new one.',
+        language
+      );
     }
     
-    return '规则不存在或已被删除，请选择其他规则或创建新规则。';
+    return tr(
+      '规则不存在或已被删除，请选择其他规则或创建新规则。',
+      'The rule does not exist or has been deleted. Please choose another rule or create a new one.',
+      language
+    );
   }
 
   /**
    * 格式化重复名称的错误信息
    */
   private formatDuplicateNameMessage(error: ExceptionRuleException): string {
+    const language = getCurrentLanguage();
     const existingRules = error.details?.existingRules || [];
     
     if (existingRules.length > 0) {
-      return `规则名称已存在。您可以使用现有规则或为新规则选择不同的名称。`;
+      return tr(
+        '规则名称已存在。您可以使用现有规则或为新规则选择不同的名称。',
+        'This rule name already exists. You can use the existing rule or choose a different name.',
+        language
+      );
     }
     
-    return '规则名称已存在，请选择不同的名称或使用现有规则。';
+    return tr(
+      '规则名称已存在，请选择不同的名称或使用现有规则。',
+      'This rule name already exists. Please choose a different name or use the existing rule.',
+      language
+    );
   }
 
   /**
    * 格式化类型不匹配的错误信息
    */
   private formatTypeMismatchMessage(error: ExceptionRuleException): string {
+    const language = getCurrentLanguage();
     const message = error.message;
+    void message;
     
-    // 提取规则类型和操作类型
-    const ruleTypeMatch = message.match(/是(\w+)类型/);
-    const actionTypeMatch = message.match(/不能用于(\w+)操作/);
-    
-    if (ruleTypeMatch && actionTypeMatch) {
-      const ruleType = ruleTypeMatch[1];
-      const actionType = actionTypeMatch[1];
-      
-      return `所选规则是${ruleType}类型，不能用于${actionType}操作。请选择${actionType}类型的规则或创建新的${actionType}规则。`;
-    }
-    
-    return '规则类型与当前操作不匹配，请选择正确类型的规则。';
+    return tr(
+      '规则类型与当前操作不匹配，请选择正确类型的规则。',
+      'This rule type does not match the current action. Please choose a compatible rule type.',
+      language
+    );
   }
 
   /**
    * 获取错误标题
    */
   private getErrorTitle(errorType: ExceptionRuleError): string {
+    const language = getCurrentLanguage();
     switch (errorType) {
       case ExceptionRuleError.RULE_NOT_FOUND:
-        return '规则不存在';
+        return tr('规则不存在', 'Rule not found', language);
       case ExceptionRuleError.DUPLICATE_RULE_NAME:
-        return '规则名称重复';
+        return tr('规则名称重复', 'Duplicate rule name', language);
       case ExceptionRuleError.RULE_TYPE_MISMATCH:
-        return '规则类型不匹配';
+        return tr('规则类型不匹配', 'Rule type mismatch', language);
       case ExceptionRuleError.INVALID_RULE_TYPE:
-        return '规则类型无效';
+        return tr('规则类型无效', 'Invalid rule type', language);
       case ExceptionRuleError.VALIDATION_ERROR:
-        return '输入验证失败';
+        return tr('输入验证失败', 'Validation failed', language);
       case ExceptionRuleError.STORAGE_ERROR:
-        return '数据保存失败';
+        return tr('数据保存失败', 'Save failed', language);
       default:
-        return '操作失败';
+        return tr('操作失败', 'Operation failed', language);
     }
   }
 
@@ -390,18 +415,21 @@ export class UserFeedbackHandler {
           this.hideProgress();
           
           if (result.success) {
-            this.showSuccess('操作成功', result.message);
+            this.showSuccess(tr('操作成功', 'Success'), result.message);
           } else {
-            this.showWarning('操作未完成', result.message);
+            this.showWarning(tr('操作未完成', 'Not completed'), result.message);
           }
         } catch (error) {
           this.hideProgress();
+          const language = getCurrentLanguage();
           this.showErrorMessage(
             error instanceof ExceptionRuleException 
               ? error 
               : new ExceptionRuleException(
                   ExceptionRuleError.STORAGE_ERROR,
-                  error instanceof Error ? error.message : '操作失败'
+                  error instanceof Error
+                    ? (getSafeErrorDetail(error.message, language) ?? tr('操作失败', 'Operation failed', language))
+                    : tr('操作失败', 'Operation failed', language)
                 )
           );
         }
@@ -467,16 +495,18 @@ export class UserFeedbackHandler {
   async showConfirmation(
     title: string, 
     message: string, 
-    confirmLabel: string = '确认',
-    cancelLabel: string = '取消'
+    confirmLabel?: string,
+    cancelLabel?: string
   ): Promise<boolean> {
     return new Promise((resolve) => {
       const messageId = this.generateMessageId();
+      const finalConfirmLabel = confirmLabel ?? tr('确认', 'Confirm');
+      const finalCancelLabel = cancelLabel ?? tr('取消', 'Cancel');
       
       const actions: FeedbackAction[] = [
         {
           id: 'confirm',
-          label: confirmLabel,
+          label: finalConfirmLabel,
           type: 'primary',
           handler: () => {
             this.removeMessage(messageId);
@@ -485,7 +515,7 @@ export class UserFeedbackHandler {
         },
         {
           id: 'cancel',
-          label: cancelLabel,
+          label: finalCancelLabel,
           type: 'secondary',
           handler: () => {
             this.removeMessage(messageId);
@@ -518,11 +548,14 @@ export class UserFeedbackHandler {
     failed: number,
     errors?: string[]
   ): string {
-    const title = `${operation}完成`;
-    let message = `总计 ${total} 项，成功 ${success} 项`;
+    const language = getCurrentLanguage();
+    const title = language === 'zh' ? `${operation}完成` : `${operation} completed`;
+    let message = language === 'zh'
+      ? `总计 ${total} 项，成功 ${success} 项`
+      : `Total ${total}, succeeded ${success}`;
     
     if (failed > 0) {
-      message += `，失败 ${failed} 项`;
+      message += language === 'zh' ? `，失败 ${failed} 项` : `, failed ${failed}`;
     }
 
     const actions: FeedbackAction[] = [];
@@ -530,10 +563,10 @@ export class UserFeedbackHandler {
     if (errors && errors.length > 0) {
       actions.push({
         id: 'show_errors',
-        label: '查看错误详情',
+        label: tr('查看错误详情', 'View error details', language),
         type: 'secondary',
         handler: () => {
-          this.showInfo('错误详情', errors.join('\n'), false);
+          this.showInfo(tr('错误详情', 'Error details', language), errors.join('\n'), false);
         }
       });
     }

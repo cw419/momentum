@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import {
     Rocket, ArrowRight, Brain, Scale, Clock,
     Smartphone, Target, ShieldCheck, TrendingUp, Zap, Armchair, ChevronDown
 } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface IntroScreenProps {
     onSignIn: () => void;
@@ -153,16 +154,8 @@ const translations = {
 };
 
 export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) => {
-    const [lang, setLang] = useState<Lang>('zh');
-
-    useEffect(() => {
-        const browserLang = navigator.language.startsWith('zh') ? 'zh' : 'en';
-        setLang(browserLang);
-    }, []);
-
-    const toggleLang = () => {
-        setLang(prev => prev === 'en' ? 'zh' : 'en');
-    };
+    const { language } = useI18n();
+    const lang: Lang = language;
 
     const scrollToNext = () => {
         const theorySection = document.getElementById('theory-section');
@@ -181,12 +174,6 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                     <span className="font-bold text-lg tracking-tight text-[#1C1C1E] dark:text-white">MOMENTUM</span>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <button
-                        onClick={toggleLang}
-                        className="p-2 rounded-xl text-[11px] font-bold tracking-widest hover:bg-black/5 dark:hover:bg-white/10 transition-colors uppercase text-[#6C6C70] dark:text-[#8E8E93]"
-                    >
-                        {lang === 'en' ? 'CN' : 'EN'}
-                    </button>
                     <ThemeToggle />
                 </div>
             </nav>

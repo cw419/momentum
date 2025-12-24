@@ -1,5 +1,6 @@
 import { Copy, Save } from 'lucide-react';
 import type { ChainEditorFormModel } from './hooks/useChainEditorForm';
+import { useI18n } from '../../i18n';
 
 interface MobileInfo {
   isMobile: boolean;
@@ -14,6 +15,8 @@ interface ChainEditorActionsProps {
 }
 
 export function ChainEditorActions({ isEditing, onCancel, form, mobileInfo }: ChainEditorActionsProps) {
+  const { tr } = useI18n();
+
   const containerClassName = `action-buttons flex ${
     mobileInfo.isMobile ? 'flex-col space-y-4' : 'flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6'
   } animate-scale-in pt-4`;
@@ -33,19 +36,25 @@ export function ChainEditorActions({ isEditing, onCancel, form, mobileInfo }: Ch
   return (
     <div className={containerClassName}>
       <button type="button" onClick={onCancel} className={cancelButtonClassName}>
-        <span>取消</span>
+        <span>{tr('取消', 'Cancel')}</span>
       </button>
 
       {isEditing && (
         <button type="submit" onClick={() => form.setIsCopyMode(true)} className={copyButtonClassName}>
           <Copy size={20} />
-          <span>另存为副本</span>
+          <span>{tr('另存为副本', 'Save as copy')}</span>
         </button>
       )}
 
       <button type="submit" className={saveButtonClassName}>
         <Save size={20} />
-        <span>{form.isCopyMode ? '创建副本' : isEditing ? '保存更改' : '创建链条'}</span>
+        <span>
+          {form.isCopyMode
+            ? tr('创建副本', 'Create copy')
+            : isEditing
+              ? tr('保存更改', 'Save changes')
+              : tr('创建链条', 'Create chain')}
+        </span>
       </button>
     </div>
   );

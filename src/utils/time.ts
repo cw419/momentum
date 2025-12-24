@@ -1,6 +1,17 @@
-export const formatTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+export type TimeLanguage = 'en' | 'zh';
+
+export const formatTime = (minutes: number, language: TimeLanguage = 'en'): string => {
+  const totalMinutes = Math.floor(minutes);
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+
+  if (language === 'zh') {
+    if (hours > 0) {
+      return `${hours}小时${mins}分钟`;
+    }
+    return `${mins}分钟`;
+  }
+
   if (hours > 0) {
     return `${hours}h ${mins}m`;
   }
@@ -44,44 +55,68 @@ export const formatElapsedTime = (seconds: number): string => {
  * @returns 格式化的用时描述
  */
 export const formatTimeDescription = (minutes: number): string => {
+  return formatTimeDescriptionByLanguage(minutes);
+};
+
+export const formatTimeDescriptionByLanguage = (minutes: number, language: TimeLanguage = 'en'): string => {
   if (minutes < 1) {
-    return '不到1分钟';
+    return language === 'zh' ? '不到1分钟' : 'less than 1 minute';
   }
-  
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  
+
+  const totalMinutes = Math.floor(minutes);
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+
+  if (language === 'zh') {
+    if (hours > 0) {
+      if (mins > 0) {
+        return `${hours}小时${mins}分钟`;
+      }
+      return `${hours}小时`;
+    }
+    return `${mins}分钟`;
+  }
+
   if (hours > 0) {
     if (mins > 0) {
-      return `${hours}小时${mins}分钟`;
+      return `${hours}h ${mins}m`;
     }
-    return `${hours}小时`;
+    return `${hours}h`;
   }
-  
-  return `${mins}分钟`;
+
+  return `${mins}m`;
 };
 
 /**
  * 格式化实际用时显示（用于历史记录）
  * @param minutes 用时分钟数
  * @param isForwardTimed 是否为正向计时任务
+ * @param language 语言（en/zh）
  * @returns 格式化的用时显示
  */
-export const formatActualDuration = (minutes: number, isForwardTimed?: boolean): string => {
+export const formatActualDuration = (
+  minutes: number,
+  isForwardTimed?: boolean,
+  language: TimeLanguage = 'en'
+): string => {
   if (isForwardTimed) {
-    return `完成用时：${formatTimeDescription(minutes)}`;
+    const prefix = language === 'zh' ? '完成用时：' : 'Time spent: ';
+    return `${prefix}${formatTimeDescriptionByLanguage(minutes, language)}`;
   }
-  return formatTime(minutes);
+  return formatTime(minutes, language);
 };
 
 /**
  * 格式化上次用时参考
  * @param minutes 上次用时分钟数，null表示首次执行
+ * @param language 语言（en/zh）
  * @returns 格式化的参考信息
  */
-export const formatLastCompletionReference = (minutes: number | null): string => {
+export const formatLastCompletionReference = (minutes: number | null, language: TimeLanguage = 'en'): string => {
   if (minutes === null) {
-    return '首次执行';
+    return language === 'zh' ? '首次执行' : 'First time';
   }
-  return `上次用时：${formatTimeDescription(minutes)}`;
+
+  const prefix = language === 'zh' ? '上次用时：' : 'Last time: ';
+  return `${prefix}${formatTimeDescriptionByLanguage(minutes, language)}`;
 };

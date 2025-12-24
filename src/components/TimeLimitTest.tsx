@@ -3,13 +3,15 @@ import { Chain } from '../types';
 import { getGroupTimeStatus, startGroupTimer, isGroupExpired } from '../utils/timeLimit';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
+import { useI18n } from '../i18n';
 
 interface TimeLimitTestProps {
   group: Chain;
 }
 
 export const TimeLimitTest: React.FC<TimeLimitTestProps> = ({ group }) => {
-  const timeStatus = getGroupTimeStatus(group);
+  const { language, locale, tr } = useI18n();
+  const timeStatus = getGroupTimeStatus(group, language);
   
   const handleStartTimer = () => {
     const updatedGroup = startGroupTimer(group);
@@ -27,33 +29,40 @@ export const TimeLimitTest: React.FC<TimeLimitTestProps> = ({ group }) => {
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-2xl">
-      <h3 className="text-lg font-bold font-chinese mb-4">时间限定测试</h3>
+      <h3 className="text-lg font-bold font-chinese mb-4">{tr('时间限定测试', 'Time Limit Test')}</h3>
       
       <div className="space-y-4">
         <div>
           <p className="text-sm text-gray-600 dark:text-slate-400">
-            任务群: {group.name}
+            {tr('任务群', 'Group')}: {group.name}
           </p>
           <p className="text-sm text-gray-600 dark:text-slate-400">
-            时间限制: {group.timeLimitHours || '无'} 小时
+            {tr('时间限制', 'Time limit')}:{' '}
+            {group.timeLimitHours ? (
+              <>
+                {group.timeLimitHours} {tr('小时', 'hours')}
+              </>
+            ) : (
+              tr('无时间限制', 'No time limit')
+            )}
           </p>
           <p className="text-sm text-gray-600 dark:text-slate-400">
-            开始时间: {group.groupStartedAt ? group.groupStartedAt.toLocaleString() : '未开始'}
+            {tr('开始时间', 'Start')}: {group.groupStartedAt ? group.groupStartedAt.toLocaleString(locale) : tr('未开始', 'Not started')}
           </p>
           <p className="text-sm text-gray-600 dark:text-slate-400">
-            过期时间: {group.groupExpiresAt ? group.groupExpiresAt.toLocaleString() : '未设置'}
+            {tr('过期时间', 'Expires')}: {group.groupExpiresAt ? group.groupExpiresAt.toLocaleString(locale) : tr('未设置', 'Not set')}
           </p>
         </div>
 
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <p className="text-sm font-chinese">
-            状态: {timeStatus.formattedTime}
+            {tr('状态', 'Status')}: {timeStatus.formattedTime}
           </p>
           <p className="text-sm font-chinese">
-            进度: {Math.round(timeStatus.progress * 100)}%
+            {tr('进度', 'Progress')}: {Math.round(timeStatus.progress * 100)}%
           </p>
           <p className="text-sm font-chinese">
-            是否过期: {timeStatus.isExpired ? '是' : '否'}
+            {tr('是否过期', 'Expired')}: {timeStatus.isExpired ? tr('是', 'Yes') : tr('否', 'No')}
           </p>
         </div>
 
@@ -62,13 +71,13 @@ export const TimeLimitTest: React.FC<TimeLimitTestProps> = ({ group }) => {
             onClick={handleStartTimer}
             className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-chinese"
           >
-            启动计时器
+            {tr('启动计时器', 'Start timer')}
           </button>
           <button
             onClick={handleCheckExpired}
             className="px-3 py-2 bg-orange-500 text-white rounded-lg text-sm font-chinese"
           >
-            检查过期
+            {tr('检查过期', 'Check expired')}
           </button>
         </div>
       </div>

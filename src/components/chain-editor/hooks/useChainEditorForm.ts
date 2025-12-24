@@ -3,7 +3,14 @@ import { useState } from 'react';
 import type { Chain, ChainDraft, UnitChainType } from '../../../types';
 import { logger } from '../../../utils/logger';
 import { isDev } from '../../../utils/env';
-import { AUXILIARY_DURATION_PRESETS, AUXILIARY_SIGNAL_TEMPLATES, DURATION_PRESETS, TRIGGER_TEMPLATES } from '../constants';
+import {
+  AUXILIARY_DURATION_PRESETS,
+  AUXILIARY_SIGNAL_TEMPLATES,
+  CUSTOM_AUXILIARY_SIGNAL_VALUE,
+  CUSTOM_TRIGGER_VALUE,
+  DURATION_PRESETS,
+  TRIGGER_TEMPLATES,
+} from '../constants';
 
 export interface ChainEditorFormModel {
   name: string;
@@ -65,8 +72,8 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
   const [parentId, setParentId] = useState<string | undefined>(chain ? chain.parentId : initialParentId);
   const [sortOrder] = useState(chain?.sortOrder || Math.floor(Date.now() / 1000));
 
-  const isCustomTriggerValue = !!(chain?.trigger && !TRIGGER_TEMPLATES.some(t => t.text === chain.trigger));
-  const [trigger, setTrigger] = useState(isCustomTriggerValue ? '自定义触发器' : chain?.trigger || '');
+  const isCustomTriggerValue = !!(chain?.trigger && !TRIGGER_TEMPLATES.some(t => t.value === chain.trigger));
+  const [trigger, setTrigger] = useState(isCustomTriggerValue ? CUSTOM_TRIGGER_VALUE : chain?.trigger || '');
   const [customTrigger, setCustomTrigger] = useState(isCustomTriggerValue ? chain!.trigger : '');
 
   const [duration, setDuration] = useState(chain?.duration || 45);
@@ -81,10 +88,10 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
   const [description, setDescription] = useState(chain?.description || '');
 
   const isCustomAuxiliarySignalValue = !!(
-    chain?.auxiliarySignal && !AUXILIARY_SIGNAL_TEMPLATES.some(t => t.text === chain.auxiliarySignal)
+    chain?.auxiliarySignal && !AUXILIARY_SIGNAL_TEMPLATES.some(t => t.value === chain.auxiliarySignal)
   );
   const [auxiliarySignal, setAuxiliarySignal] = useState(
-    isCustomAuxiliarySignalValue ? '自定义信号' : chain?.auxiliarySignal || ''
+    isCustomAuxiliarySignalValue ? CUSTOM_AUXILIARY_SIGNAL_VALUE : chain?.auxiliarySignal || ''
   );
   const [customAuxiliarySignal, setCustomAuxiliarySignal] = useState(
     isCustomAuxiliarySignalValue ? chain!.auxiliarySignal : ''
@@ -100,7 +107,7 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
 
   const handleTriggerSelect = (triggerText: string) => {
     setTrigger(triggerText);
-    if (triggerText !== '自定义触发器') {
+    if (triggerText !== CUSTOM_TRIGGER_VALUE) {
       setCustomTrigger('');
       setAuxiliaryCompletionTrigger(triggerText);
     }
@@ -108,7 +115,7 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
 
   const handleAuxiliarySignalSelect = (signalText: string) => {
     setAuxiliarySignal(signalText);
-    if (signalText !== '自定义信号') {
+    if (signalText !== CUSTOM_AUXILIARY_SIGNAL_VALUE) {
       setCustomAuxiliarySignal('');
     }
   };
@@ -149,12 +156,13 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
       type,
       parentId: finalParentId,
       sortOrder,
-      trigger: trigger === '自定义触发器' ? customTrigger.trim() : trigger,
+      trigger: trigger === CUSTOM_TRIGGER_VALUE ? customTrigger.trim() : trigger,
       duration: finalDuration,
       isDurationless,
       minimumDuration: isDurationless ? minimumDuration : undefined,
       description: description.trim(),
-      auxiliarySignal: auxiliarySignal === '自定义信号' ? customAuxiliarySignal.trim() : auxiliarySignal,
+      auxiliarySignal:
+        auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE ? customAuxiliarySignal.trim() : auxiliarySignal,
       auxiliaryDuration: finalAuxiliaryDuration,
       auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
       exceptions: chain?.exceptions || [],

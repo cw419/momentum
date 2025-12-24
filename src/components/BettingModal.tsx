@@ -3,7 +3,9 @@ import { X, Dices, Star, TrendingUp, AlertCircle, Loader2, CheckCircle, Target, 
 import type { BetPlacementRequest, BetPlacementResult } from '../domain/betting';
 import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/StorageContext';
+import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 
 interface BettingModalProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
   taskDuration
 }) => {
   const storage = useStorage();
+  const { language, tr } = useI18n();
   const [betAmount, setBetAmount] = useState<string>('');
   const [availablePoints, setAvailablePoints] = useState<number>(0);
   const [gamblingSettings, setGamblingSettings] = useState<GamblingSettings | null>(null);
@@ -39,7 +42,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
     if (!isOpen) return;
     if (storage.kind !== 'supabase') {
       setIsLoading(false);
-      setError('当前存储不支持押注功能');
+      setError(tr('当前存储不支持押注功能', 'Betting is not supported for the current storage'));
       return;
     }
     
@@ -54,15 +57,18 @@ export const BettingModal: React.FC<BettingModalProps> = ({
       ]);
 
       if (!pointsResult.ok) {
-        setError(pointsResult.error.message || '加载数据失败');
+        const safeDetail = getSafeErrorDetail(pointsResult.error.message || '', language);
+        setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
         return;
       }
       if (!settingsResult.ok) {
-        setError(settingsResult.error.message || '加载数据失败');
+        const safeDetail = getSafeErrorDetail(settingsResult.error.message || '', language);
+        setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
         return;
       }
       if (!todayBetsResult.ok) {
-        setError(todayBetsResult.error.message || '加载数据失败');
+        const safeDetail = getSafeErrorDetail(todayBetsResult.error.message || '', language);
+        setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
         return;
       }
       
@@ -72,41 +78,50 @@ export const BettingModal: React.FC<BettingModalProps> = ({
       
     } catch (err) {
       logger.error('BETTING', 'Failed to load betting data', undefined, err as Error);
-      setError(err instanceof Error ? err.message : '加载数据失败');
+      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
     } finally {
       setIsLoading(false);
     }
-  }, [isOpen, storage]);
+  }, [isOpen, language, storage, tr]);
 
   // 验证押注金额
   const validateBetAmount = useCallback(async (amount: string): Promise<boolean> => {
     setValidationError(null);
     
     if (!amount || amount.trim() === '') {
-      setValidationError('请输入押注金额');
+      setValidationError(tr('请输入押注金额', 'Enter a bet amount'));
       return false;
     }
     
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      setValidationError('押注金额必须大于0');
+      setValidationError(tr('押注金额必须大于 0', 'Bet amount must be greater than 0'));
       return false;
     }
     
     if (!Number.isInteger(numAmount)) {
-      setValidationError('押注金额必须是整数');
+      setValidationError(tr('押注金额必须是整数', 'Bet amount must be an integer'));
       return false;
     }
     
     // 检查可用积分
     if (numAmount > availablePoints) {
-      setValidationError(`可用积分不足，当前可用：${availablePoints}`);
+      setValidationError(
+        language === 'zh'
+          ? `可用积分不足，当前可用：${availablePoints}`
+          : `Not enough points. Available: ${availablePoints}`
+      );
       return false;
     }
     
     // 检查单次押注限制
     if (gamblingSettings?.max_single_bet && numAmount > gamblingSettings.max_single_bet) {
-      setValidationError(`超出单次押注限制：${gamblingSettings.max_single_bet}`);
+      setValidationError(
+        language === 'zh'
+          ? `超出单次押注限制：${gamblingSettings.max_single_bet}`
+          : `Exceeds max single bet: ${gamblingSettings.max_single_bet}`
+      );
       return false;
     }
     
@@ -114,13 +129,17 @@ export const BettingModal: React.FC<BettingModalProps> = ({
     if (gamblingSettings?.daily_bet_limit) {
       const totalToday = todayBetAmount + numAmount;
       if (totalToday > gamblingSettings.daily_bet_limit) {
-        setValidationError(`超出每日押注限制：${gamblingSettings.daily_bet_limit}（今日已用：${todayBetAmount}）`);
+        setValidationError(
+          language === 'zh'
+            ? `超出每日押注限制：${gamblingSettings.daily_bet_limit}（今日已用：${todayBetAmount}）`
+            : `Exceeds daily limit: ${gamblingSettings.daily_bet_limit} (used today: ${todayBetAmount})`
+        );
         return false;
       }
     }
     
     return true;
-  }, [availablePoints, gamblingSettings, todayBetAmount]);
+  }, [availablePoints, gamblingSettings, todayBetAmount, language, tr]);
 
   // 处理押注金额变化
   const handleBetAmountChange = useCallback((value: string) => {
@@ -141,7 +160,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
     }
 
     if (storage.kind !== 'supabase') {
-      setError('当前存储不支持押注功能');
+      setError(tr('当前存储不支持押注功能', 'Betting is not supported for the current storage'));
       return;
     }
     
@@ -158,12 +177,17 @@ export const BettingModal: React.FC<BettingModalProps> = ({
       const result = await storage.placeBet(betRequest);
       
       if (!result.ok) {
-        setError(result.error.message || '押注失败');
+        const safeDetail = getSafeErrorDetail(result.error.message || '', language);
+        setError(safeDetail ?? tr('押注失败，请重试（详情见控制台）', 'Bet failed. Check the console for details, then try again.'));
         return;
       }
 
       if (result.value.success) {
-        setSuccessMessage(`押注成功！押注 ${numAmount} 积分，潜在收益 ${result.value.potential_payout} 积分`);
+        setSuccessMessage(
+          language === 'zh'
+            ? `押注成功！押注 ${numAmount} 积分，潜在收益 ${result.value.potential_payout} 积分`
+            : `Bet placed! Bet ${numAmount} points, potential payout ${result.value.potential_payout} points`
+        );
         
         // 更新可用积分
         setAvailablePoints(result.value.points_after ?? availablePoints - numAmount);
@@ -180,15 +204,17 @@ export const BettingModal: React.FC<BettingModalProps> = ({
         }, 2000);
         
       } else {
-        setError(result.value.message || '押注失败');
+        const safeDetail = getSafeErrorDetail(result.value.message || '', language);
+        setError(safeDetail ?? tr('押注失败', 'Bet failed'));
       }
     } catch (err) {
       logger.error('BETTING', 'Failed to place bet', { sessionId }, err as Error);
-      setError(err instanceof Error ? err.message : '押注失败，请重试');
+      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safeDetail ?? tr('押注失败，请重试（详情见控制台）', 'Bet failed. Check the console for details, then try again.'));
     } finally {
       setIsPlacingBet(false);
     }
-  }, [betAmount, sessionId, availablePoints, onBetPlaced, onClose, validateBetAmount, storage]);
+  }, [betAmount, sessionId, availablePoints, onBetPlaced, onClose, validateBetAmount, storage, language, tr]);
 
   // 组件挂载时加载数据
   useEffect(() => {
@@ -220,7 +246,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
               <Dices className="text-white" size={20} />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              任务押注
+              {tr('任务押注', 'Task bet')}
             </h2>
           </div>
           <button
@@ -236,7 +262,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
           {isLoading ? (
             <div className="text-center py-8">
               <Loader2 className="w-8 h-8 animate-spin text-primary-500 mx-auto mb-3" />
-              <p className="text-gray-600 dark:text-gray-300">加载押注数据...</p>
+              <p className="text-gray-600 dark:text-gray-300">{tr('加载押注数据...', 'Loading betting data...')}</p>
             </div>
           ) : error ? (
             <div className="text-center py-8">
@@ -246,14 +272,14 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                 onClick={loadData}
                 className="text-primary-500 hover:text-primary-600 font-medium transition-colors"
               >
-                重新加载
+                {tr('重新加载', 'Reload')}
               </button>
             </div>
           ) : successMessage ? (
             <div className="text-center py-8">
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
               <p className="text-green-700 dark:text-green-300 font-medium text-lg mb-2">
-                押注成功！
+                {tr('押注成功！', 'Bet placed!')}
               </p>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 {successMessage}
@@ -266,16 +292,16 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Target className="w-5 h-5 text-primary-500" />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">任务链</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{tr('任务链', 'Chain')}</span>
                   </div>
                   <span className="text-gray-700 dark:text-gray-300">{chainName}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Zap className="w-5 h-5 text-yellow-500" />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">时长</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{tr('时长', 'Duration')}</span>
                   </div>
-                  <span className="text-gray-700 dark:text-gray-300">{taskDuration} 分钟</span>
+                  <span className="text-gray-700 dark:text-gray-300">{tr(`${taskDuration} 分钟`, `${taskDuration} min`)}</span>
                 </div>
               </div>
 
@@ -284,7 +310,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                 <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">可用积分</p>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">{tr('可用积分', 'Available')}</p>
                       <p className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">{availablePoints}</p>
                     </div>
                     <Star className="w-6 h-6 text-yellow-500" />
@@ -294,7 +320,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">今日已押</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">{tr('今日已押', 'Bet today')}</p>
                       <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">{todayBetAmount}</p>
                     </div>
                     <TrendingUp className="w-6 h-6 text-blue-500" />
@@ -305,23 +331,23 @@ export const BettingModal: React.FC<BettingModalProps> = ({
               {/* 押注金额输入 */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  押注金额
+                  {tr('押注金额', 'Bet amount')}
                 </label>
                 <div className="relative">
                   <input
                     type="number"
                     min="1"
                     max={availablePoints}
-                    value={betAmount}
-                    onChange={(e) => handleBetAmountChange(e.target.value)}
-                    placeholder="输入押注积分数"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                  />
-                  {betAmount && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
-                      → {betAmount} 积分
-                    </div>
-                  )}
+                     value={betAmount}
+                     onChange={(e) => handleBetAmountChange(e.target.value)}
+                     placeholder={tr('输入押注积分数', 'Enter points to bet')}
+                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                   />
+                    {betAmount && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
+                      {language === 'zh' ? `→ ${betAmount} 积分` : `→ ${betAmount} pts`}
+                      </div>
+                    )}
                 </div>
 
                 {/* 快速选择按钮 */}
@@ -341,7 +367,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                         onClick={() => setQuickBetAmount(availablePoints)}
                         className="px-3 py-1 text-sm bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-lg transition-colors"
                       >
-                        全部
+                        {tr('全部', 'All')}
                       </button>
                     )}
                   </div>
@@ -362,11 +388,11 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                     <CheckCircle className="w-3 h-3 text-white" />
                   </div>
                   <div className="space-y-1 text-sm">
-                    <p className="text-blue-700 dark:text-blue-300 font-medium">押注规则</p>
+                    <p className="text-blue-700 dark:text-blue-300 font-medium">{tr('押注规则', 'Rules')}</p>
                     <ul className="space-y-1 text-blue-600 dark:text-blue-400">
-                      <li>• 任务成功完成：获得 1:1 奖励（双倍回报）</li>
-                      <li>• 任务失败：损失押注积分</li>
-                      <li>• 每个任务会话只能押注一次</li>
+                      <li>{tr('• 任务成功完成：获得 1:1 奖励（双倍回报）', '• If completed: 1:1 payout (double return)')}</li>
+                      <li>{tr('• 任务失败：损失押注积分', '• If failed: lose the bet')}</li>
+                      <li>{tr('• 每个任务会话只能押注一次', '• Only one bet per session')}</li>
                     </ul>
                   </div>
                 </div>
@@ -388,14 +414,14 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                   {isPlacingBet ? (
                     <div className="flex items-center justify-center">
                       <Loader2 className="w-6 h-6 animate-spin mr-3" />
-                      押注中...
+                      {tr('押注中...', 'Placing bet...')}
                     </div>
                   ) : availablePoints === 0 ? (
-                    '积分不足'
+                    tr('积分不足', 'Not enough points')
                   ) : (
                     <div className="flex items-center justify-center">
                       <Dices className="w-6 h-6 mr-3" />
-                      确认押注
+                      {tr('确认押注', 'Confirm bet')}
                     </div>
                   )}
                 </button>
@@ -404,7 +430,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                   onClick={onClose}
                   className="w-full py-3 px-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
                 >
-                  取消
+                  {tr('取消', 'Cancel')}
                 </button>
               </div>
             </div>

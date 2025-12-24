@@ -8,6 +8,7 @@ import { ruleStateManager } from './RuleStateManager';
 import { dataIntegrityChecker } from './DataIntegrityChecker';
 import { enhancedDuplicationHandler } from './EnhancedDuplicationHandler';
 import { logger } from '../utils/logger';
+import { tr } from '../utils/runtimeI18n';
 
 export interface RecoveryStrategy {
   errorType: ExceptionRuleError;
@@ -131,13 +132,13 @@ export class ErrorRecoveryManager {
       logger.error('ERROR_RECOVERY', '错误恢复过程失败', undefined, err);
       return {
         success: false,
-        message: '错误恢复过程失败',
+        message: tr('错误恢复过程失败', 'Error recovery failed'),
         actions: [{
           id: 'manual_intervention',
-          label: '手动处理',
-          description: '需要手动解决此问题',
+          label: tr('手动处理', 'Manual fix'),
+          description: tr('需要手动解决此问题', 'This requires manual intervention'),
           type: 'danger',
-          handler: async () => ({ success: false, message: '需要手动处理' })
+          handler: async () => ({ success: false, message: tr('需要手动处理', 'Manual intervention required') })
         }]
       };
     }
@@ -154,15 +155,15 @@ export class ErrorRecoveryManager {
         actions.push(
           {
             id: 'create_new_rule',
-            label: '创建新规则',
-            description: '创建一个新的规则来替代缺失的规则',
+            label: tr('创建新规则', 'Create new rule'),
+            description: tr('创建一个新的规则来替代缺失的规则', 'Create a new rule to replace the missing one'),
             type: 'primary',
             handler: async () => this.handleCreateNewRule(error)
           },
           {
             id: 'select_existing_rule',
-            label: '选择现有规则',
-            description: '从现有规则中选择一个',
+            label: tr('选择现有规则', 'Select existing rule'),
+            description: tr('从现有规则中选择一个', 'Choose one from existing rules'),
             type: 'secondary',
             handler: async () => this.handleSelectExistingRule(error)
           }
@@ -173,15 +174,15 @@ export class ErrorRecoveryManager {
         actions.push(
           {
             id: 'use_existing_rule',
-            label: '使用现有规则',
-            description: '使用已存在的同名规则',
+            label: tr('使用现有规则', 'Use existing rule'),
+            description: tr('使用已存在的同名规则', 'Use the existing rule with the same name'),
             type: 'primary',
             handler: async () => this.handleUseExistingRule(error)
           },
           {
             id: 'rename_rule',
-            label: '重命名规则',
-            description: '为新规则生成一个不同的名称',
+            label: tr('重命名规则', 'Rename rule'),
+            description: tr('为新规则生成一个不同的名称', 'Generate a different name for the new rule'),
             type: 'secondary',
             handler: async () => this.handleRenameRule(error)
           }
@@ -192,15 +193,15 @@ export class ErrorRecoveryManager {
         actions.push(
           {
             id: 'create_correct_type',
-            label: '创建正确类型的规则',
-            description: '创建一个类型匹配的新规则',
+            label: tr('创建正确类型的规则', 'Create correct type'),
+            description: tr('创建一个类型匹配的新规则', 'Create a new rule with a matching type'),
             type: 'primary',
             handler: async () => this.handleCreateCorrectType(error)
           },
           {
             id: 'select_matching_rule',
-            label: '选择匹配的规则',
-            description: '选择一个类型匹配的现有规则',
+            label: tr('选择匹配的规则', 'Select matching rule'),
+            description: tr('选择一个类型匹配的现有规则', 'Select an existing rule with a matching type'),
             type: 'secondary',
             handler: async () => this.handleSelectMatchingRule(error)
           }
@@ -211,15 +212,15 @@ export class ErrorRecoveryManager {
         actions.push(
           {
             id: 'retry_operation',
-            label: '重试操作',
-            description: '重新尝试执行操作',
+            label: tr('重试操作', 'Retry'),
+            description: tr('重新尝试执行操作', 'Try the operation again'),
             type: 'primary',
             handler: async () => this.handleRetryOperation(error)
           },
           {
             id: 'check_data_integrity',
-            label: '检查数据完整性',
-            description: '运行数据完整性检查和修复',
+            label: tr('检查数据完整性', 'Check data integrity'),
+            description: tr('运行数据完整性检查和修复', 'Run a data integrity check and auto-fix if possible'),
             type: 'secondary',
             handler: async () => this.handleDataIntegrityCheck(error)
           }
@@ -229,8 +230,8 @@ export class ErrorRecoveryManager {
       default:
         actions.push({
           id: 'generic_recovery',
-          label: '尝试通用恢复',
-          description: '执行通用的错误恢复流程',
+          label: tr('尝试通用恢复', 'Try generic recovery'),
+          description: tr('执行通用的错误恢复流程', 'Run a generic recovery flow'),
           type: 'secondary',
           handler: async () => this.handleGenericRecovery(error)
         });
@@ -256,7 +257,7 @@ export class ErrorRecoveryManager {
             const rule = await ruleStateManager.waitForRuleCreation(ruleId);
             return {
               success: true,
-              message: '从临时规则恢复成功',
+              message: tr('从临时规则恢复成功', 'Recovered from temporary rule'),
               recoveredData: rule
             };
           } catch {
@@ -266,7 +267,7 @@ export class ErrorRecoveryManager {
 
         return {
           success: false,
-          message: '无法自动恢复缺失的规则',
+          message: tr('无法自动恢复缺失的规则', 'Unable to auto-recover the missing rule'),
           requiresUserAction: true,
           actions: this.getRecoveryOptions(error)
         };
@@ -281,7 +282,7 @@ export class ErrorRecoveryManager {
       handler: async (error) => {
         return {
           success: false,
-          message: '发现重复的规则名称',
+          message: tr('发现重复的规则名称', 'Duplicate rule name detected'),
           requiresUserAction: true,
           actions: this.getRecoveryOptions(error)
         };
@@ -296,7 +297,7 @@ export class ErrorRecoveryManager {
       handler: async (error) => {
         return {
           success: false,
-          message: '规则类型与操作不匹配',
+          message: tr('规则类型与操作不匹配', 'Rule type does not match the action'),
           requiresUserAction: true,
           actions: this.getRecoveryOptions(error)
         };
@@ -321,7 +322,7 @@ export class ErrorRecoveryManager {
             if (successCount > 0) {
               return {
                 success: true,
-                message: `已自动修复 ${successCount} 个数据问题`
+                message: tr(`已自动修复 ${successCount} 个数据问题`, `Auto-fixed ${successCount} data issue(s)`)
               };
             }
           }
@@ -331,7 +332,7 @@ export class ErrorRecoveryManager {
 
         return {
           success: false,
-          message: '存储错误需要手动处理',
+          message: tr('存储错误需要手动处理', 'Storage error requires manual handling'),
           requiresUserAction: true,
           actions: this.getRecoveryOptions(error)
         };
@@ -346,12 +347,12 @@ export class ErrorRecoveryManager {
       handler: async (error) => {
         return {
           success: false,
-          message: '验证错误需要用户确认',
+          message: tr('验证错误需要用户确认', 'Validation requires your confirmation'),
           requiresUserAction: true,
           actions: [{
             id: 'fix_validation',
-            label: '修复验证问题',
-            description: '尝试修复数据验证问题',
+            label: tr('修复验证问题', 'Fix validation issues'),
+            description: tr('尝试修复数据验证问题', 'Try to fix validation issues'),
             type: 'primary',
             handler: async () => this.handleValidationFix(error)
           }]
@@ -370,11 +371,11 @@ export class ErrorRecoveryManager {
     void context;
     return {
       success: false,
-      message: `未知错误类型: ${error.type}`,
+      message: tr(`未知错误类型: ${error.type}`, `Unknown error type: ${error.type}`),
       actions: [{
         id: 'generic_recovery',
-        label: '通用恢复',
-        description: '尝试通用的错误恢复方法',
+        label: tr('通用恢复', 'Generic recovery'),
+        description: tr('尝试通用的错误恢复方法', 'Try generic recovery actions'),
         type: 'secondary',
         handler: async () => this.handleGenericRecovery(error)
       }]
@@ -391,19 +392,19 @@ export class ErrorRecoveryManager {
     void context;
     return {
       success: false,
-      message: '所有自动恢复策略都失败了',
+      message: tr('所有自动恢复策略都失败了', 'All auto-recovery strategies failed'),
       actions: [
         {
           id: 'manual_intervention',
-          label: '手动处理',
-          description: '需要手动解决此问题',
+          label: tr('手动处理', 'Manual fix'),
+          description: tr('需要手动解决此问题', 'This requires manual intervention'),
           type: 'danger',
-          handler: async () => ({ success: false, message: '需要手动处理' })
+          handler: async () => ({ success: false, message: tr('需要手动处理', 'Manual intervention required') })
         },
         {
           id: 'reset_system',
-          label: '重置系统',
-          description: '重置规则系统到初始状态',
+          label: tr('重置系统', 'Reset system'),
+          description: tr('重置规则系统到初始状态', 'Reset the rule system to the initial state'),
           type: 'danger',
           handler: async () => this.handleSystemReset(error)
         }
@@ -419,7 +420,7 @@ export class ErrorRecoveryManager {
     // 这里应该触发创建新规则的UI流程
     return {
       success: false,
-      message: '请创建新规则',
+      message: tr('请创建新规则', 'Please create a new rule'),
       requiresUserAction: true
     };
   }
@@ -429,7 +430,7 @@ export class ErrorRecoveryManager {
     // 这里应该显示现有规则选择界面
     return {
       success: false,
-      message: '请选择现有规则',
+      message: tr('请选择现有规则', 'Please select an existing rule'),
       requiresUserAction: true
     };
   }
@@ -440,7 +441,7 @@ export class ErrorRecoveryManager {
       if (existingRules.length > 0) {
         return {
           success: true,
-          message: '使用现有规则',
+          message: tr('使用现有规则', 'Using existing rule'),
           recoveredData: existingRules[0]
         };
       }
@@ -450,7 +451,7 @@ export class ErrorRecoveryManager {
 
     return {
       success: false,
-      message: '无法找到可用的现有规则'
+      message: tr('无法找到可用的现有规则', 'No usable existing rule found')
     };
   }
 
@@ -466,7 +467,7 @@ export class ErrorRecoveryManager {
         if (suggestions.length > 0) {
           return {
             success: true,
-            message: `建议使用名称: ${suggestions[0]}`,
+            message: tr(`建议使用名称: ${suggestions[0]}`, `Suggested name: ${suggestions[0]}`),
             recoveredData: { suggestedName: suggestions[0] }
           };
         }
@@ -477,7 +478,7 @@ export class ErrorRecoveryManager {
 
     return {
       success: false,
-      message: '无法生成新的规则名称'
+      message: tr('无法生成新的规则名称', 'Unable to generate a new rule name')
     };
   }
 
@@ -485,7 +486,7 @@ export class ErrorRecoveryManager {
     void error;
     return {
       success: false,
-      message: '请创建正确类型的规则',
+      message: tr('请创建正确类型的规则', 'Please create a rule with the correct type'),
       requiresUserAction: true
     };
   }
@@ -494,7 +495,7 @@ export class ErrorRecoveryManager {
     void error;
     return {
       success: false,
-      message: '请选择类型匹配的规则',
+      message: tr('请选择类型匹配的规则', 'Please select a rule with a matching type'),
       requiresUserAction: true
     };
   }
@@ -504,7 +505,7 @@ export class ErrorRecoveryManager {
     // 简单的重试逻辑
     return {
       success: false,
-      message: '请重试操作',
+      message: tr('请重试操作', 'Please retry the operation'),
       requiresUserAction: true
     };
   }
@@ -517,18 +518,21 @@ export class ErrorRecoveryManager {
       if (report.issues.length === 0) {
         return {
           success: true,
-          message: '数据完整性检查通过'
+          message: tr('数据完整性检查通过', 'Data integrity check passed')
         };
       }
 
       const autoFixableCount = report.issues.filter(i => i.autoFixable).length;
       return {
         success: false,
-        message: `发现 ${report.issues.length} 个问题，其中 ${autoFixableCount} 个可自动修复`,
+        message: tr(
+          `发现 ${report.issues.length} 个问题，其中 ${autoFixableCount} 个可自动修复`,
+          `Found ${report.issues.length} issue(s), ${autoFixableCount} can be auto-fixed`
+        ),
         actions: [{
           id: 'auto_fix_issues',
-          label: '自动修复',
-          description: '自动修复可修复的问题',
+          label: tr('自动修复', 'Auto-fix'),
+          description: tr('自动修复可修复的问题', 'Automatically fix the fixable issues'),
           type: 'primary',
           handler: async () => {
             const fixResults = await dataIntegrityChecker.autoFixIssues(
@@ -537,7 +541,7 @@ export class ErrorRecoveryManager {
             const successCount = fixResults.filter(r => r.success).length;
             return {
               success: successCount > 0,
-              message: `已修复 ${successCount} 个问题`
+              message: tr(`已修复 ${successCount} 个问题`, `Fixed ${successCount} issue(s)`)
             };
           }
         }]
@@ -546,7 +550,7 @@ export class ErrorRecoveryManager {
     } catch {
       return {
         success: false,
-        message: '数据完整性检查失败'
+        message: tr('数据完整性检查失败', 'Data integrity check failed')
       };
     }
   }
@@ -560,12 +564,12 @@ export class ErrorRecoveryManager {
       
       return {
         success: true,
-        message: '已同步规则状态'
+        message: tr('已同步规则状态', 'Rule state synced')
       };
     } catch {
       return {
         success: false,
-        message: '通用恢复失败'
+        message: tr('通用恢复失败', 'Generic recovery failed')
       };
     }
   }
@@ -574,7 +578,7 @@ export class ErrorRecoveryManager {
     void error;
     return {
       success: false,
-      message: '验证修复需要用户输入',
+      message: tr('验证修复需要用户输入', 'Fixing validation requires your input'),
       requiresUserAction: true
     };
   }
@@ -583,7 +587,7 @@ export class ErrorRecoveryManager {
     void error;
     return {
       success: false,
-      message: '系统重置是危险操作，需要用户确认',
+      message: tr('系统重置是危险操作，需要用户确认', 'System reset is risky and requires confirmation'),
       requiresUserAction: true
     };
   }
@@ -593,14 +597,14 @@ export class ErrorRecoveryManager {
    */
   private extractRuleIdFromError(error: ExceptionRuleException): string | null {
     const message = error.message;
-    const match = message.match(/规则 ID (\w+)/);
-    return match ? match[1] : null;
+    const match = message.match(/(?:规则 ID|Rule ID)\s+([\w-]+)/i);
+    return match?.[1] ?? null;
   }
 
   private extractRuleNameFromError(error: ExceptionRuleException): string | null {
     const message = error.message;
-    const match = message.match(/规则名称 "([^"]+)"/);
-    return match ? match[1] : null;
+    const match = message.match(/(?:规则名称|Rule name)\s+"([^"]+)"/i);
+    return match?.[1] ?? null;
   }
 
   /**

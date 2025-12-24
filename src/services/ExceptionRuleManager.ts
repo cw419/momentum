@@ -25,6 +25,7 @@ import { errorRecoveryManager } from './ErrorRecoveryManager';
 import { errorClassificationService } from './ErrorClassificationService';
 import { logger } from '../utils/logger';
 import { isDev } from '../utils/env';
+import { tr } from '../utils/runtimeI18n';
 
 export class ExceptionRuleManager {
   private initialized = false;
@@ -132,7 +133,7 @@ export class ExceptionRuleManager {
       if (recoveryResult.success && recoveryResult.recoveredData) {
         return {
           rule: recoveryResult.recoveredData,
-          warnings: ['通过错误恢复创建了规则']
+          warnings: [tr('通过错误恢复创建了规则', 'Rule was created via error recovery')]
         };
       }
 
@@ -268,7 +269,10 @@ export class ExceptionRuleManager {
         }
 
         if (duplicationReport.hasSimilarRules) {
-          warnings.push(`发现相似规则: ${duplicationReport.similarRules.map(r => r.rule.name).join(', ')}`);
+          const similarRuleNames = duplicationReport.similarRules.map(r => r.rule.name).join(', ');
+          warnings.push(
+            tr(`发现相似规则: ${similarRuleNames}`, `Similar rules found: ${similarRuleNames}`)
+          );
         }
       }
 

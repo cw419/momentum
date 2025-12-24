@@ -1,3 +1,5 @@
+import { tr } from '../utils/runtimeI18n';
+
 export interface ChainRecord {
   id: string;
   parentId?: string; // 父任务ID，用于构建层级关系
@@ -322,9 +324,9 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
       message,
       context,
       false,
-      ['联系技术支持'],
+      [tr('联系技术支持', 'Contact support')],
       'critical',
-      '系统遇到严重错误，请联系技术支持',
+      tr('系统遇到严重错误，请联系技术支持', 'A critical error occurred. Please contact support.'),
       { originalMessage: message }
     );
   }

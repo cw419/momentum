@@ -5,6 +5,7 @@ import type { BetPlacementResult } from '../domain/betting';
 import { Dashboard } from '../components/Dashboard';
 import { AuthWrapper } from '../components/AuthWrapper';
 import { queryOptimizer } from '../utils/queryOptimizer';
+import { useI18n } from '../i18n';
 
 // 非首屏组件 - 懒加载以优化首屏性能
 const RSIPView = lazy(() => import('../components/RSIPView').then(m => ({ default: m.RSIPView })));
@@ -19,16 +20,19 @@ const AuxiliaryJudgment = lazy(() =>
 const BettingModal = lazy(() => import('../components/BettingModal').then(m => ({ default: m.BettingModal })));
 
 // 加载状态组件
-const LoadingFallback = () => (
-  <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
-    <div className="text-center">
-      <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
-        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+const LoadingFallback = () => {
+  const { tr } = useI18n();
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        </div>
+        <p className="text-gray-500 dark:text-slate-400 text-sm">{tr('加载中…', 'Loading…')}</p>
       </div>
-      <p className="text-gray-500 dark:text-slate-400 text-sm">加载中...</p>
     </div>
-  </div>
-);
+  );
+};
 
 interface ImportChainsOptions {
   history?: CompletionHistory[];
@@ -127,6 +131,7 @@ export function AppShellView({
   handleBetPlaced,
   handleBetCancelled,
 }: AppShellViewProps) {
+  const { tr } = useI18n();
   const renderAuxiliaryJudgment = () => {
     if (!showAuxiliaryJudgment) return null;
 
@@ -150,8 +155,12 @@ export function AppShellView({
             <div className="w-16 h-16 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-xl">
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
             </div>
-            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">正在初始化...</h2>
-            <p className="text-gray-600 dark:text-slate-400 font-mono text-sm">INITIALIZING APPLICATION</p>
+            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
+              {tr('正在初始化…', 'Initializing…')}
+            </h2>
+            <p className="text-gray-600 dark:text-slate-400 font-mono text-sm">
+              {tr('正在初始化应用', 'INITIALIZING APPLICATION')}
+            </p>
           </div>
         </div>
       );
@@ -312,7 +321,7 @@ export function AppShellView({
             onClose={handleBetCancelled}
             onBetPlaced={handleBetPlaced}
             sessionId={currentSessionId}
-            chainName={state.chains.find(c => c.id === pendingChainId)?.name || 'Unknown Task'}
+            chainName={state.chains.find(c => c.id === pendingChainId)?.name || tr('未知任务', 'Unknown Task')}
             taskDuration={state.chains.find(c => c.id === pendingChainId)?.duration || 0}
           />
         </Suspense>

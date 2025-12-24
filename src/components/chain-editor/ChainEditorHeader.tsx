@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 interface ChainEditorHeaderProps {
   isEditing: boolean;
@@ -6,6 +7,8 @@ interface ChainEditorHeaderProps {
 }
 
 export function ChainEditorHeader({ isEditing, onCancel }: ChainEditorHeaderProps) {
+  const { tr } = useI18n();
+
   return (
     <header className="flex items-center space-x-4 mb-12 animate-fade-in">
       <button
@@ -16,10 +19,10 @@ export function ChainEditorHeader({ isEditing, onCancel }: ChainEditorHeaderProp
       </button>
       <div>
         <h1 className="text-4xl md:text-5xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-2">
-          {isEditing ? '编辑链条' : '创建新链条'}
+          {isEditing ? tr('编辑链条', 'Edit chain') : tr('创建新链条', 'Create a new chain')}
         </h1>
         <p className="text-sm font-mono text-gray-500 tracking-wider uppercase">
-          {isEditing ? 'EDIT CHAIN' : 'CREATE NEW CHAIN'}
+          {isEditing ? tr('编辑链条', 'EDIT CHAIN') : tr('创建链条', 'CREATE CHAIN')}
         </p>
       </div>
     </header>

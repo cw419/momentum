@@ -4,6 +4,8 @@ import { Download, Upload, X, FileText, AlertCircle, CheckCircle, Clock, Shield 
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { useStorage } from '../storage/StorageContext';
 import { logger } from '../utils/logger';
+import { useI18n } from '../i18n';
+import { getSafeErrorDetail } from '../utils/errorMessage';
 
 interface ExportData {
   version: string;
@@ -59,6 +61,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   onImport,
   onClose,
 }) => {
+  const { language, tr } = useI18n();
   const storage = useStorage();
   const isSupabase = storage.kind === 'supabase';
   const [activeTab, setActiveTab] = useState<'export' | 'import'>(chains.length === 0 ? 'import' : 'export');
@@ -127,7 +130,12 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       if (isSupabase) {
         const authResult = await storage.waitForAuthentication(10000);
         if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
-          throw new Error('用户身份验证失败。请确保您已正确登录，然后重试导入操作。');
+          throw new Error(
+            tr(
+              '用户身份验证失败。请确保您已正确登录，然后重试导入操作。',
+              'Authentication failed. Please make sure you are signed in and try importing again.'
+            )
+          );
         }
       }
 
@@ -135,7 +143,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       const parsedData = JSON.parse(importData);
       
       if (!parsedData.chains || !Array.isArray(parsedData.chains)) {
-        throw new Error('导入数据格式错误：未找到有效的链条数据');
+        throw new Error(tr('导入数据格式错误：未找到有效的链条数据', 'Invalid import format: no valid chains found'));
       }
 
       setImportStatus('creating-session');
@@ -160,7 +168,11 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       const seenIds = new Set<string>();
       for (const entry of chainEntries) {
         if (seenIds.has(entry.sourceId)) {
-          throw new Error(`导入数据包含重复的链条ID: ${entry.sourceId}`);
+          throw new Error(
+            language === 'zh'
+              ? `导入数据包含重复的链条ID: ${entry.sourceId}`
+              : `Import data contains duplicate chain ID: ${entry.sourceId}`
+          );
         }
         seenIds.add(entry.sourceId);
       }
@@ -200,7 +212,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
         const common = {
           id: newId,
-          name: String(raw?.name ?? '未命名链条'),
+          name: String(raw?.name ?? tr('未命名链条', 'Untitled chain')),
           parentId,
           sortOrder: toNumber(raw?.sortOrder ?? raw?.sort_order, Math.floor(Date.now() / 1000)),
           trigger: String(raw?.trigger ?? ''),
@@ -333,20 +345,32 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       logger.error('IMPORT_EXPORT', 'Import failed', undefined, error as Error);
       
       // 提供具体的错误信息
-      let errorMessage = '导入失败';
+      let errorMessage = tr('导入失败', 'Import failed');
 
       if (error instanceof SyntaxError) {
-        errorMessage = '导入数据格式错误：请确保上传的是有效的JSON格式文件。';
+        errorMessage = tr(
+          '导入数据格式错误：请确保上传的是有效的JSON格式文件。',
+          'Invalid import format: please make sure you uploaded a valid JSON file.'
+        );
       } else if (error instanceof Error) {
         if (error.message.includes('身份验证失败') || error.message.includes('Authentication failed')) {
-          errorMessage = '用户身份验证失败：请确保您已正确登录，然后重试导入操作。';
+          errorMessage = tr(
+            '用户身份验证失败：请确保您已正确登录，然后重试导入操作。',
+            'Authentication failed: please make sure you are signed in and try importing again.'
+          );
         } else if (error.message.includes('导入数据格式错误')) {
-          errorMessage = '导入数据格式错误：文件中未找到有效的链条数据。请确保文件是从Momentum导出的有效数据。';
+          errorMessage = tr(
+            '导入数据格式错误：文件中未找到有效的链条数据。请确保文件是从Momentum导出的有效数据。',
+            'Invalid import format: no valid chains found. Please make sure this file was exported from Momentum.'
+          );
         } else {
-          errorMessage = `导入失败：${error.message}`;
+          const safeDetail = getSafeErrorDetail(error.message, language);
+          errorMessage = safeDetail
+            ? tr(`导入失败：${safeDetail}`, `Import failed: ${safeDetail}`)
+            : tr('导入失败，请重试（详情见控制台）', 'Import failed. Check the console for details, then try again.');
         }
       } else {
-        errorMessage = '导入失败：未知错误';
+        errorMessage = tr('导入失败：未知错误', 'Import failed: unknown error');
       }
       
       setImportError(errorMessage);
@@ -377,10 +401,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </div>
             <div>
               <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-                数据管理
+                {tr('数据管理', 'Data management')}
               </h2>
               <p className="text-sm font-mono text-gray-500 tracking-wide">
-                DATA MANAGEMENT
+                {tr('数据管理', 'DATA MANAGEMENT')}
               </p>
             </div>
           </div>
@@ -404,7 +428,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               }`}
             >
               <Download size={16} />
-              <span>导出数据</span>
+              <span>{tr('导出数据', 'Export')}</span>
             </button>
           )}
           <button
@@ -416,7 +440,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             }`}
           >
             <Upload size={16} />
-            <span>导入数据</span>
+            <span>{tr('导入数据', 'Import')}</span>
           </button>
         </div>
 
@@ -427,34 +451,46 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
           <div className="space-y-6">
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-2xl p-6">
               <h3 className="text-lg font-bold font-chinese text-blue-900 dark:text-blue-100 mb-3">
-                导出任务链数据
+                {tr('导出任务链数据', 'Export your data')}
               </h3>
               <p className="text-blue-700 dark:text-blue-300 text-sm mb-4 font-chinese leading-relaxed">
-                导出功能将保存您当前的所有数据，包括任务链配置、统计数据、国策树和例外规则。
+                {tr(
+                  '导出功能将保存您当前的所有数据，包括任务链配置、统计数据、国策树和例外规则。',
+                  'Export saves all your current data, including chains, stats, RSIP tree, and exception rules.'
+                )}
               </p>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                   <CheckCircle size={16} />
-                  <span className="font-chinese text-sm">任务链配置与统计</span>
+                  <span className="font-chinese text-sm">{tr('任务链配置与统计', 'Chain config & stats')}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                   <CheckCircle size={16} />
-                  <span className="font-chinese text-sm">完成历史记录</span>
+                  <span className="font-chinese text-sm">{tr('完成历史记录', 'Completion history')}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                   <CheckCircle size={16} />
-                  <span className="font-chinese text-sm">国策树（RSIP）数据</span>
+                  <span className="font-chinese text-sm">{tr('国策树（RSIP）数据', 'RSIP tree data')}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                   <CheckCircle size={16} />
-                  <span className="font-chinese text-sm">例外规则配置</span>
+                  <span className="font-chinese text-sm">{tr('例外规则配置', 'Exception rules')}</span>
                 </div>
               </div>
             </div>
 
             <div className="text-center">
               <p className="text-gray-600 dark:text-slate-400 mb-4 font-chinese">
-                当前共有 <span className="font-bold text-primary-500">{chains.length}</span> 条任务链
+                {language === 'zh' ? (
+                  <>
+                    当前共有 <span className="font-bold text-primary-500">{chains.length}</span> 条任务链
+                  </>
+                ) : (
+                  <>
+                    You have <span className="font-bold text-primary-500">{chains.length}</span>{' '}
+                    chain{chains.length === 1 ? '' : 's'}
+                  </>
+                )}
               </p>
               <button
                 onClick={handleExport}
@@ -462,7 +498,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 className="gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 mx-auto hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese"
               >
                 <Download size={20} />
-                <span>导出为JSON文件</span>
+                <span>{tr('导出为 JSON 文件', 'Export as JSON')}</span>
               </button>
             </div>
           </div>
@@ -473,35 +509,40 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
           <div className="space-y-6">
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-2xl p-6">
               <h3 className="text-lg font-bold font-chinese text-yellow-900 dark:text-yellow-100 mb-3">
-                导入任务链数据
+                {tr('导入任务链数据', 'Import data')}
               </h3>
               <p className="text-yellow-700 dark:text-yellow-300 text-sm mb-4 font-chinese leading-relaxed">
-                导入功能将添加新的数据到您的系统中，包括任务链、国策树和例外规则。导入的链条将生成新的ID，不会覆盖现有数据。
+                {tr(
+                  '导入功能将添加新的数据到您的系统中，包括任务链、国策树和例外规则。导入的链条将生成新的ID，不会覆盖现有数据。',
+                  'Import adds new data to your system, including chains, RSIP, and exception rules. Imported chains get new IDs and will not overwrite existing data.'
+                )}
               </p>
               <div className="space-y-2 mb-4">
                 <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
                   <CheckCircle size={16} />
-                  <span className="text-sm font-chinese">任务链数据（生成新ID）</span>
+                  <span className="text-sm font-chinese">{tr('任务链数据（生成新ID）', 'Chains (new IDs)')}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
                   <CheckCircle size={16} />
-                  <span className="text-sm font-chinese">国策树节点与配置</span>
+                  <span className="text-sm font-chinese">{tr('国策树节点与配置', 'RSIP nodes & config')}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
                   <CheckCircle size={16} />
-                  <span className="text-sm font-chinese">例外规则（跳过重复）</span>
+                  <span className="text-sm font-chinese">{tr('例外规则（跳过重复）', 'Exception rules (skip duplicates)')}</span>
                 </div>
               </div>
               <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
                 <AlertCircle size={16} />
-                <span className="text-sm font-chinese">请确保导入的是从Momentum导出的有效JSON文件</span>
+                <span className="text-sm font-chinese">
+                  {tr('请确保导入的是从 Momentum 导出的有效 JSON 文件', 'Make sure the JSON file was exported from Momentum')}
+                </span>
               </div>
             </div>
 
             {/* File Upload */}
             <div className="space-y-4">
               <label className="block text-gray-700 dark:text-slate-300 text-sm font-medium font-chinese">
-                选择文件导入
+                {tr('选择文件导入', 'Choose a file')}
               </label>
               <input
                 type="file"
@@ -514,12 +555,12 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             {/* Manual Input */}
             <div className="space-y-4">
               <label className="block text-gray-700 dark:text-slate-300 text-sm font-medium font-chinese">
-                或手动粘贴JSON数据
+                {tr('或手动粘贴 JSON 数据', 'Or paste JSON manually')}
               </label>
               <textarea
                 value={importData}
                 onChange={(e) => setImportData(e.target.value)}
-                placeholder="粘贴从Momentum导出的JSON数据..."
+                placeholder={tr('粘贴从 Momentum 导出的 JSON 数据...', 'Paste the JSON exported from Momentum...')}
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 resize-none font-mono text-sm"
                 rows={8}
               />
@@ -528,7 +569,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             {/* Import Options */}
             <div className="space-y-4">
               <h4 className="text-gray-700 dark:text-slate-300 text-sm font-medium font-chinese">
-                导入选项
+                {tr('导入选项', 'Import options')}
               </h4>
               
               <div className="space-y-3 bg-gray-50 dark:bg-slate-700/50 rounded-2xl p-4">
@@ -545,7 +586,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                   <div className="flex items-center space-x-2">
                     <Shield size={16} className="text-gray-500" />
                     <span className="text-sm font-chinese text-gray-700 dark:text-slate-300">
-                      保留统计数据（连击数、完成次数等）
+                      {tr('保留统计数据（连击数、完成次数等）', 'Preserve statistics (streaks, completions, etc.)')}
                     </span>
                   </div>
                 </label>
@@ -563,7 +604,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                   <div className="flex items-center space-x-2">
                     <Clock size={16} className="text-gray-500" />
                     <span className="text-sm font-chinese text-gray-700 dark:text-slate-300">
-                      保留原始时间戳（创建时间、完成时间等）
+                      {tr('保留原始时间戳（创建时间、完成时间等）', 'Preserve original timestamps (createdAt, completedAt, etc.)')}
                     </span>
                   </div>
                 </label>
@@ -581,7 +622,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                   <div className="flex items-center space-x-2">
                     <FileText size={16} className="text-gray-500" />
                     <span className="text-sm font-chinese text-gray-700 dark:text-slate-300">
-                      导入完成历史记录
+                      {tr('导入完成历史记录', 'Import completion history')}
                     </span>
                   </div>
                 </label>
@@ -591,10 +632,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 <div className="flex items-start space-x-2">
                   <Shield size={16} className="text-blue-600 dark:text-blue-400 mt-0.5" />
                   <div className="text-xs font-chinese text-blue-700 dark:text-blue-300">
-                    <p className="font-medium mb-1">安全导入机制</p>
-                    <p>• 所有导入数据将自动归属到您的账户</p>
-                    <p>• ID冲突将自动解决，生成新的唯一标识</p>
-                    <p>• 导入会话30分钟后自动过期</p>
+                    <p className="font-medium mb-1">{tr('安全导入机制', 'Safe import')}</p>
+                    <p>{tr('• 所有导入数据将自动归属到您的账户', '• Imported data is automatically associated with your account')}</p>
+                    <p>{tr('• ID 冲突将自动解决，生成新的唯一标识', '• ID conflicts are resolved automatically with new unique IDs')}</p>
+                    <p>{tr('• 导入会话 30 分钟后自动过期', '• Import sessions expire automatically after 30 minutes')}</p>
                   </div>
                 </div>
               </div>
@@ -605,7 +646,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-2xl p-4">
                 <div className="flex items-center space-x-3 text-blue-700 dark:text-blue-300">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                  <span className="font-chinese font-medium">正在验证用户身份...</span>
+                  <span className="font-chinese font-medium">{tr('正在验证用户身份...', 'Verifying your account...')}</span>
                 </div>
               </div>
             )}
@@ -614,7 +655,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-2xl p-4">
                 <div className="flex items-center space-x-3 text-blue-700 dark:text-blue-300">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                  <span className="font-chinese font-medium">正在创建安全导入会话...</span>
+                  <span className="font-chinese font-medium">{tr('正在创建安全导入会话...', 'Creating a safe import session...')}</span>
                 </div>
               </div>
             )}
@@ -623,7 +664,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-2xl p-4">
                 <div className="flex items-center space-x-3 text-blue-700 dark:text-blue-300">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                  <span className="font-chinese font-medium">正在安全导入数据，请稍候...</span>
+                  <span className="font-chinese font-medium">{tr('正在安全导入数据，请稍候...', 'Importing data safely...')}</span>
                 </div>
               </div>
             )}
@@ -632,7 +673,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-2xl p-4">
                 <div className="flex items-center space-x-3 text-green-700 dark:text-green-300">
                   <CheckCircle size={20} />
-                  <span className="font-chinese font-medium">导入成功！任务链已添加到您的系统中。</span>
+                  <span className="font-chinese font-medium">{tr('导入成功！任务链已添加到您的系统中。', 'Import successful! The chains have been added.')}</span>
                 </div>
               </div>
             )}
@@ -642,7 +683,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 <div className="flex items-start space-x-3 text-red-700 dark:text-red-300">
                   <AlertCircle size={20} className="mt-0.5" />
                   <div>
-                    <p className="font-chinese font-medium mb-1">导入失败</p>
+                    <p className="font-chinese font-medium mb-1">{tr('导入失败', 'Import failed')}</p>
                     <p className="text-sm font-chinese">{importError}</p>
                   </div>
                 </div>
@@ -663,12 +704,12 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 )}
                 <span>
                   {importStatus === 'checking-auth' 
-                    ? '验证身份中...' 
+                    ? tr('验证身份中...', 'Verifying...')
                     : importStatus === 'creating-session'
-                      ? '创建会话中...'
+                      ? tr('创建会话中...', 'Creating session...')
                       : importStatus === 'importing' 
-                        ? '安全导入中...' 
-                        : '安全导入数据'
+                        ? tr('安全导入中...', 'Importing...')
+                        : tr('安全导入数据', 'Import data')
                   }
                 </span>
               </button>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useI18n } from '../i18n';
 
 interface AccessibilityAnnouncerProps {
   message: string;
@@ -46,13 +47,14 @@ export const AccessibilityAnnouncer: React.FC<AccessibilityAnnouncerProps> = ({
  * Hook for announcing theme changes
  */
 export const useThemeAnnouncer = () => {
+  const { tr } = useI18n();
   const [announcement, setAnnouncement] = React.useState('');
 
   const announceThemeChange = (theme: 'light' | 'dark' | 'system') => {
     const messages = {
-      light: '已切换到浅色模式',
-      dark: '已切换到深色模式',
-      system: '已切换到跟随系统模式',
+      light: tr('已切换到浅色模式', 'Switched to light mode'),
+      dark: tr('已切换到深色模式', 'Switched to dark mode'),
+      system: tr('已切换到跟随系统模式', 'Switched to system theme'),
     };
     
     setAnnouncement(messages[theme]);

@@ -1,4 +1,5 @@
 import { Chain } from '../types';
+import type { TimeLanguage } from './time';
 
 /**
  * 检查任务群是否已过期
@@ -31,9 +32,9 @@ export const getGroupRemainingTime = (group: Chain): number => {
 /**
  * 格式化剩余时间显示
  */
-export const formatRemainingTime = (remainingMs: number): string => {
+export const formatRemainingTime = (remainingMs: number, language: TimeLanguage = 'en'): string => {
   if (remainingMs <= 0) {
-    return '已过期';
+    return language === 'zh' ? '已过期' : 'Expired';
   }
 
   const hours = Math.floor(remainingMs / (1000 * 60 * 60));
@@ -41,11 +42,11 @@ export const formatRemainingTime = (remainingMs: number): string => {
   const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
   if (hours > 0) {
-    return `${hours}小时${minutes}分钟`;
+    return language === 'zh' ? `${hours}小时${minutes}分钟` : `${hours}h ${minutes}m`;
   } else if (minutes > 0) {
-    return `${minutes}分钟${seconds}秒`;
+    return language === 'zh' ? `${minutes}分钟${seconds}秒` : `${minutes}m ${seconds}s`;
   } else {
-    return `${seconds}秒`;
+    return language === 'zh' ? `${seconds}秒` : `${seconds}s`;
   }
 };
 
@@ -117,7 +118,7 @@ export const resetGroupProgress = (group: Chain): Chain => {
 /**
  * 获取任务群状态信息
  */
-export const getGroupTimeStatus = (group: Chain): {
+export const getGroupTimeStatus = (group: Chain, language: TimeLanguage = 'en'): {
   isExpired: boolean;
   remainingTime: number;
   formattedTime: string;
@@ -127,14 +128,14 @@ export const getGroupTimeStatus = (group: Chain): {
     return {
       isExpired: false,
       remainingTime: 0,
-      formattedTime: '无时间限制',
+      formattedTime: language === 'zh' ? '无时间限制' : 'No time limit',
       progress: 0,
     };
   }
 
   const isExpired = isGroupExpired(group);
   const remainingTime = getGroupRemainingTime(group);
-  const formattedTime = formatRemainingTime(remainingTime);
+  const formattedTime = formatRemainingTime(remainingTime, language);
   
   // 计算时间进度（已用时间 / 总时间）
   const totalTime = group.timeLimitHours * 60 * 60 * 1000;

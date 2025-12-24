@@ -4,6 +4,8 @@ import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { realTimeSyncService } from '../../services/RealTimeSyncService';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
+import { useI18n } from '../../i18n';
+import { getSafeErrorDetail } from '../../utils/errorMessage';
 
 interface UseRecycleBinDomainParams {
   state: AppState;
@@ -12,6 +14,7 @@ interface UseRecycleBinDomainParams {
 }
 
 export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinDomainParams) {
+  const { language, tr } = useI18n();
   const handleDeleteChain = async (chainId: string) => {
     try {
       const updatedChains = await realTimeSyncService.deleteWithSync(storage, chainId);
@@ -37,9 +40,13 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         viewingChainId: prev.viewingChainId === chainId ? null : prev.viewingChainId,
       }));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
       logger.error('RECYCLE_BIN', 'Delete failed', { chainId }, error as Error);
-      toast.error(`删除失败: ${errorMessage}`);
+      toast.error(
+        safeDetail
+          ? tr(`删除失败: ${safeDetail}`, `Delete failed: ${safeDetail}`)
+          : tr('删除失败，请重试（详情见控制台）', 'Delete failed. Check the console for details, then try again.')
+      );
 
       try {
         const currentChains = await storage.getActiveChains();
@@ -48,7 +55,12 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
           chains: currentChains,
         }));
       } catch {
-        toast.warning('发生错误后无法恢复状态，建议刷新页面。');
+        toast.warning(
+          tr(
+            '发生错误后无法恢复状态，建议刷新页面。',
+            "Couldn't restore state after the error. Refresh the page to recover."
+          )
+        );
       }
     }
   };
@@ -62,9 +74,10 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         chains: updatedChains,
       }));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
 
-      if (errorMessage.includes('Partial restore failure') || errorMessage.includes('failed to restore')) {
+      const rawMessage = error instanceof Error ? error.message : '';
+      if (rawMessage.includes('Partial restore failure') || rawMessage.includes('failed to restore')) {
         try {
           const currentChains = await storage.getActiveChains();
           setState(prev => ({
@@ -72,15 +85,26 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
             chains: currentChains,
           }));
 
-          toast.warning('部分链条恢复可能失败，请检查回收箱确认结果。');
+          toast.warning(
+            tr(
+              '部分链条恢复可能失败，请检查回收箱确认结果。',
+              'Some chains may have failed to restore. Please check the recycle bin.'
+            )
+          );
         } catch {
-          toast.warning('恢复操作遇到问题，请刷新页面查看最新状态。');
+          toast.warning(
+            tr('恢复操作遇到问题，请刷新页面查看最新状态。', 'Restore encountered an issue. Refresh to see the latest status.')
+          );
         }
         return;
       }
 
       logger.error('RECYCLE_BIN', 'Restore failed', { chainIds }, error as Error);
-      toast.error(`恢复失败: ${errorMessage}`);
+      toast.error(
+        safeDetail
+          ? tr(`恢复失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
+          : tr('恢复失败，请重试（详情见控制台）', 'Restore failed. Check the console for details, then try again.')
+      );
     }
   };
 
@@ -93,9 +117,13 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         chains: updatedChains,
       }));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
       logger.error('RECYCLE_BIN', 'Permanent delete failed', { chainIds }, error as Error);
-      toast.error(`永久删除失败: ${errorMessage}`);
+      toast.error(
+        safeDetail
+          ? tr(`永久删除失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
+          : tr('永久删除失败，请重试（详情见控制台）', 'Permanent delete failed. Check the console for details, then try again.')
+      );
     }
   };
 

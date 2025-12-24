@@ -5,6 +5,8 @@ import type { SafelySaveChains } from './useChainsDomain';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 import { queryOptimizer } from '../../utils/queryOptimizer';
+import { useI18n } from '../../i18n';
+import { getSafeErrorDetail } from '../../utils/errorMessage';
 
 interface UseGroupDomainParams {
   state: AppState;
@@ -14,6 +16,7 @@ interface UseGroupDomainParams {
 }
 
 export function useGroupDomain({ state, setState, storage, safelySaveChains }: UseGroupDomainParams) {
+  const { language, tr } = useI18n();
   const handleImportUnits = async (unitIds: string[], groupId: string, mode: 'move' | 'copy' = 'copy') => {
     logger.info('APP_SHELL', '开始导入单元到任务群', { unitIds, groupId, mode });
 
@@ -29,7 +32,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
             const copy: Chain = {
               ...chain,
               id: crypto.randomUUID(), // 生成新的ID
-              name: `${chain.name} (副本)`, // 添加副本标识
+              name: `${chain.name} ${tr('(副本)', '(Copy)')}`, // 添加副本标识
               parentId: groupId,
               currentStreak: 0, // 重置记录
               auxiliaryStreak: 0,
@@ -66,8 +69,15 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       logger.info('APP_SHELL', '导入完成，UI状态更新完成');
     } catch (error) {
       logger.error('APP_SHELL', 'Failed to import units', undefined, error as Error);
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      toast.error(`导入失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
+      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      toast.error(
+        safeDetail
+          ? tr(
+              `导入失败: ${safeDetail}\n\n请查看控制台了解详细信息，然后重试`,
+              `Import failed: ${safeDetail}\n\nCheck the console for details, then try again.`
+            )
+          : tr('导入失败，请重试（详情见控制台）', 'Import failed. Check the console for details, then try again.')
+      );
 
       try {
         const currentChains = await storage.getChains();
@@ -104,8 +114,15 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       logger.info('APP_SHELL', '重复次数更新完成，UI状态更新完成');
     } catch (error) {
       logger.error('APP_SHELL', 'Failed to update task repeat count', undefined, error as Error);
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      toast.error(`重复次数更新失败: ${errorMessage}\n\n请查看控制台了解详细信息，然后重试`);
+      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      toast.error(
+        safeDetail
+          ? tr(
+              `重复次数更新失败: ${safeDetail}\n\n请查看控制台了解详细信息，然后重试`,
+              `Failed to update repeat count: ${safeDetail}\n\nCheck the console for details, then try again.`
+            )
+          : tr('重复次数更新失败，请重试（详情见控制台）', 'Failed to update repeat count. Check the console for details, then try again.')
+      );
 
       try {
         const currentChains = await storage.getChains();
@@ -145,4 +162,3 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
 
   return { handleImportUnits, handleUpdateTaskRepeatCount, handleReorderUnit };
 }
-

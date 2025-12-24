@@ -5,6 +5,7 @@ import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
 import { logger } from '../../utils/logger';
 import { queryOptimizer } from '../../utils/queryOptimizer';
+import { useI18n } from '../../i18n';
 
 interface ImportChainsOptions {
   history?: CompletionHistory[];
@@ -20,6 +21,7 @@ interface UseImportExportDomainParams {
 }
 
 export function useImportExportDomain({ storage, safelySaveChains, setState }: UseImportExportDomainParams) {
+  const { tr } = useI18n();
   const handleImportChains = async (importedChains: Chain[], options?: ImportChainsOptions) => {
     logger.info('APP_SHELL', '开始导入数据', { chainCount: importedChains.length, options });
 
@@ -41,7 +43,12 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
           const authResult = await storage.waitForAuthentication(10000);
 
           if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
-            throw new Error('Authentication failed during import. Please ensure you are logged in and try again.');
+            throw new Error(
+              tr(
+                '导入时身份验证失败：请确保您已正确登录，然后重试导入操作。',
+                'Authentication failed during import. Please make sure you are signed in and try again.'
+              )
+            );
           }
 
           logger.debug('IMPORT', 'Authentication confirmed after wait', { userId: authResult.value.user.id });
@@ -52,7 +59,7 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
 
       // 验证导入的链条数据
       if (!Array.isArray(importedChains) || importedChains.length === 0) {
-        throw new Error('没有有效的链条数据可导入');
+        throw new Error(tr('没有有效的链条数据可导入', 'No valid chains found to import'));
       }
 
       // 获取当前最新的链条数据（避免使用可能过期的 state.chains）
@@ -65,7 +72,12 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
       const conflictingChains = importedChains.filter(c => existingIds.has(c.id));
       if (conflictingChains.length > 0) {
         logger.error('APP_SHELL', '发现ID冲突的链条', { conflictingIds: conflictingChains.map(c => c.id) });
-        throw new Error(`导入失败：发现${conflictingChains.length}个ID冲突的链条`);
+        throw new Error(
+          tr(
+            `导入失败：发现${conflictingChains.length}个ID冲突的链条`,
+            `Import failed: found ${conflictingChains.length} chains with conflicting IDs`
+          )
+        );
       }
 
       // 创建合并后的链条列表（但只保存导入的部分）
@@ -121,7 +133,7 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
       logger.info('APP_SHELL', '导入完成，UI状态更新完成');
     } catch (error) {
       // 提供更详细的错误信息
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      const errorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
       logger.error('IMPORT', 'Failed to import data', { errorMessage }, error instanceof Error ? error : undefined);
 
       // 如果导入失败，重新加载数据以确保状态一致性
@@ -145,4 +157,3 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
 
   return { handleImportChains };
 }
-

@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/StorageContext';
 import { logger } from '../../utils/logger';
+import { useI18n } from '../../i18n';
+import { getSafeErrorDetail } from '../../utils/errorMessage';
 
 export function useCheckinDomain() {
+  const { language, tr } = useI18n();
   const storage = useStorage();
   const isSupabase = storage.kind === 'supabase';
 
@@ -24,7 +27,7 @@ export function useCheckinDomain() {
 
   const loadStats = useCallback(async () => {
     if (!isSupabase) {
-      setError('签到功能需要登录后使用');
+      setError(tr('签到功能需要登录后使用', 'Daily check-in requires login'));
       setIsLoading(false);
       return;
     }
@@ -34,7 +37,8 @@ export function useCheckinDomain() {
       setIsLoading(true);
       const result = await storage.getUserCheckinStats();
       if (!result.ok) {
-        setError(result.error.message);
+        const safeDetail = getSafeErrorDetail(result.error.message, language);
+        setError(safeDetail ?? tr('加载签到数据失败，请重试（详情见控制台）', 'Failed to load check-in data. Check the console for details, then try again.'));
         setStats(null);
         return;
       }
@@ -42,11 +46,12 @@ export function useCheckinDomain() {
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       logger.error('CHECKIN', '加载签到统计失败', undefined, errorObj);
-      setError(err instanceof Error ? err.message : '加载签到数据失败');
+      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safeDetail ?? tr('加载签到数据失败，请重试（详情见控制台）', 'Failed to load check-in data. Check the console for details, then try again.'));
     } finally {
       setIsLoading(false);
     }
-  }, [isSupabase, storage]);
+  }, [isSupabase, language, storage, tr]);
 
   const handleCheckin = useCallback(async () => {
     if (!stats || stats.has_checked_in_today || isCheckingIn) {
@@ -60,7 +65,8 @@ export function useCheckinDomain() {
 
       const op = await storage.performDailyCheckin();
       if (!op.ok) {
-        setError(op.error.message);
+        const safeDetail = getSafeErrorDetail(op.error.message, language);
+        setError(safeDetail ?? tr('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
         return;
       }
 
@@ -80,19 +86,26 @@ export function useCheckinDomain() {
             : null
         );
 
-        setSuccessMessage(`签到成功！获得${result.points_earned} 积分，连续签到${result.consecutive_days} 天`);
+        setSuccessMessage(
+          tr(
+            `签到成功！获得${result.points_earned} 积分，连续签到${result.consecutive_days} 天`,
+            `Checked in! Earned ${result.points_earned} points. Streak: ${result.consecutive_days} days.`
+          )
+        );
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        setError(result.message || '签到失败');
+        const safeDetail = result.message ? getSafeErrorDetail(result.message, language) : null;
+        setError(safeDetail ?? tr('签到失败', 'Check-in failed'));
       }
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       logger.error('CHECKIN', '签到失败', undefined, errorObj);
-      setError(err instanceof Error ? err.message : '签到失败，请重试');
+      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safeDetail ?? tr('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
     } finally {
       setIsCheckingIn(false);
     }
-  }, [stats, isCheckingIn]);
+  }, [isCheckingIn, language, stats, storage, tr]);
 
   useEffect(() => {
     loadStats();
