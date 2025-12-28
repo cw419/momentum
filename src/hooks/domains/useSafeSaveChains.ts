@@ -1,3 +1,19 @@
+/**
+ * @module useSafeSaveChains
+ * @description 安全保存链条数据的领域 Hook
+ *
+ * 职责：
+ * - 提供带重试机制的链条保存函数
+ * - 保留已删除链条数据（回收箱功能）
+ * - 通过 RealTimeSyncService 确保多端同步
+ *
+ * 重试策略：
+ * - 最多重试 3 次
+ * - 指数退避：1s → 2s → 4s
+ * - 重试前清理缓存
+ *
+ * @returns safelySaveChains - 安全保存函数，被其他 Domain Hooks 依赖
+ */
 import { useCallback } from 'react';
 import type { Chain } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';

@@ -1,3 +1,15 @@
+/**
+ * @module useChainsDomain
+ * @description 任务链 CRUD 操作的领域 Hook
+ *
+ * 职责：
+ * - 创建、编辑、保存任务链（Chain）
+ * - 处理 UnitChain 和 GroupChain 的类型转换
+ * - 支持复制链条功能
+ *
+ * @see docs/ARCHITECTURE.md - 架构总览
+ * @see src/types/index.ts - Chain, UnitChain, GroupChain 类型定义
+ */
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, Chain, ChainDraft, GroupChain, UnitChain } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';

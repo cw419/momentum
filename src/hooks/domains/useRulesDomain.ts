@@ -1,3 +1,18 @@
+/**
+ * @module useRulesDomain
+ * @description 辅助链例外规则判定的领域 Hook
+ *
+ * 职责：
+ * - 处理辅助链（预约）失败判定
+ * - 处理辅助链例外规则添加
+ * - 更新辅助链连胜/失败计数
+ *
+ * 注意：此 Hook 处理的是辅助链的例外规则，
+ * 主任务的例外规则由 ExceptionRuleManager 服务处理。
+ *
+ * @see docs/DOMAIN_RULES.md - 例外规则系统文档
+ * @see src/services/ExceptionRuleManager.ts - 主任务例外规则管理
+ */
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';

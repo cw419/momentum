@@ -1,3 +1,18 @@
+/**
+ * @module useGroupDomain
+ * @description 任务群（Group）管理的领域 Hook
+ *
+ * 职责：
+ * - 导入单元到任务群（复制/移动模式）
+ * - 更新任务重复次数设置
+ * - 任务群内单元排序
+ *
+ * 任务群是一种容器类型的链条，包含多个子任务，
+ * 支持循环执行和时间限制功能。
+ *
+ * @see src/types/index.ts - GroupChain, TaskGroupChain 类型定义
+ * @see src/utils/chainTree.ts - 任务树构建工具
+ */
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, Chain } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';

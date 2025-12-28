@@ -1,3 +1,20 @@
+/**
+ * @module useImportExportDomain
+ * @description 数据导入导出功能的领域 Hook
+ *
+ * 职责：
+ * - 导入链条数据（支持增量合并）
+ * - 导入完成历史、RSIP 节点、例外规则
+ * - 处理 ID 冲突检测
+ * - Supabase 模式下的身份验证检查
+ *
+ * 导入时会检查：
+ * 1. 数据有效性
+ * 2. ID 冲突
+ * 3. 用户身份验证（Supabase 模式）
+ *
+ * @see src/types/index.ts - 导入数据类型定义
+ */
 import type { Dispatch, SetStateAction } from 'react';
 import type { Chain, CompletionHistory, RSIPMeta, RSIPNode } from '../../types';
 import type { AppState } from '../../types';

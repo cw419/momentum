@@ -1,3 +1,17 @@
+/**
+ * @module useSessionsDomain
+ * @description 任务会话生命周期管理的领域 Hook
+ *
+ * 职责：
+ * - 预约任务（ScheduledSession）
+ * - 开始/完成/中断/暂停/恢复任务会话
+ * - 处理任务群（Group）的循环执行逻辑
+ * - 集成赌注模式（Betting）和宠物系统（Pet）
+ * - 记录完成历史和时间统计
+ *
+ * @see docs/ARCHITECTURE.md - 架构总览
+ * @see docs/DOMAIN_BETTING.md - 赌注系统集成
+ */
 import type { Dispatch, SetStateAction } from 'react';
 import type { ActiveSession, AppState, CompletionHistory, ScheduledSession } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';

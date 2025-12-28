@@ -1,3 +1,16 @@
+/**
+ * @module useRecycleBinDomain
+ * @description 回收箱（软删除）功能的领域 Hook
+ *
+ * 职责：
+ * - 软删除链条（移入回收箱）
+ * - 恢复已删除的链条
+ * - 永久删除链条
+ * - 通过 RealTimeSyncService 确保多端同步
+ *
+ * @see README-回收箱功能.md - 功能说明
+ * @see src/services/RecycleBinService.ts - 底层服务
+ */
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';

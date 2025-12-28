@@ -1,3 +1,23 @@
+/**
+ * @module usePetDomain
+ * @description 虚拟宠物系统的领域 Hook
+ *
+ * 职责：
+ * - 创建和管理宠物状态（饥饿、快乐、健康、经验）
+ * - 处理宠物喂养和任务完成奖励
+ * - 管理宠物升级和进化
+ * - 定时衰减机制（饥饿增加、快乐减少）
+ * - 宠物位置和可见性控制
+ *
+ * 核心机制：
+ * - 完成任务 → 减少饥饿 + 获得经验
+ * - 饥饿过高 → 健康下降
+ * - 经验累积 → 升级/进化
+ *
+ * @see docs/PET_FEATURE.md - 宠物系统完整文档
+ * @see src/types/pet.ts - 类型定义
+ * @see src/utils/petLogic.ts - 计算逻辑
+ */
 import { useCallback, useEffect, useState, useRef } from 'react';
 import type { PetState, PetMood, TaskCompletionReward, FeedResult } from '../../types/pet';
 import { useStorage } from '../../storage/StorageContext';

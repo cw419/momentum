@@ -1,3 +1,16 @@
+/**
+ * @module useBettingDomain
+ * @description 赌注/博彩模式的领域 Hook
+ *
+ * 职责：
+ * - 处理下注成功后的任务启动流程
+ * - 处理取消下注后的会话清理
+ *
+ * 仅在 Supabase 模式下生效，本地模式不支持赌注功能。
+ *
+ * @see docs/DOMAIN_BETTING.md - 赌注系统完整文档
+ * @see src/domain/betting.ts - 类型定义
+ */
 import type { Dispatch, SetStateAction } from 'react';
 import type { BetPlacementResult } from '../../domain/betting';
 import { useStorage } from '../../storage/StorageContext';

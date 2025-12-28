@@ -1,3 +1,17 @@
+/**
+ * @module useCheckinDomain
+ * @description 每日签到功能的领域 Hook
+ *
+ * 职责：
+ * - 加载用户签到统计（连续天数、总积分等）
+ * - 执行每日签到操作
+ * - 管理签到 UI 状态（加载中、错误、成功消息）
+ *
+ * 仅在 Supabase 模式下生效，本地模式不支持签到功能。
+ *
+ * @see src/domain/checkin.ts - 类型定义
+ * @see daily-checkin-api-guide.md - API 文档
+ */
 import { useCallback, useEffect, useState } from 'react';
 import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/StorageContext';
