@@ -23,6 +23,7 @@ import { useRecycleBinDomain } from '../hooks/domains/useRecycleBinDomain';
 import { useRsipDomain } from '../hooks/domains/useRsipDomain';
 import { useImportExportDomain } from '../hooks/domains/useImportExportDomain';
 import { useGroupDomain } from '../hooks/domains/useGroupDomain';
+import { usePetDomain } from '../hooks/domains/usePetDomain';
 import { useAppDataLoad } from './hooks/useAppDataLoad';
 import { AppShellView } from './AppShellView';
 
@@ -199,6 +200,9 @@ export default function AppShellContainer() {
 
   const { openRSIP, saveNodes: saveRSIPNodes, saveMeta: saveRSIPMeta } = useRsipDomain({ setState, storage });
 
+  // Pet domain
+  const petDomain = usePetDomain();
+
   const {
     handleScheduleChain,
     handleStartChain,
@@ -220,6 +224,7 @@ export default function AppShellContainer() {
     setCurrentSessionId,
     setShowBettingModal,
     setShowAuxiliaryJudgment,
+    onPetTaskCompleted: petDomain.onTaskCompleted,
   });
 
   const { handleBetPlaced, handleBetCancelled } = useBettingDomain({
@@ -314,6 +319,7 @@ export default function AppShellContainer() {
       handleReorderUnit={handleReorderUnit}
       handleBetPlaced={handleBetPlaced}
       handleBetCancelled={handleBetCancelled}
+      petDomain={petDomain}
     />
   );
 }

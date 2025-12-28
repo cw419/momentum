@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import type { Chain, ChainDraft, CompletionHistory, RSIPMeta, RSIPNode } from '../types';
 import type { AppState } from '../types';
 import type { BetPlacementResult } from '../domain/betting';
+import type { PetState, PetMood, FeedResult, TaskCompletionReward } from '../types/pet';
 import { Dashboard } from '../components/Dashboard';
 import { AuthWrapper } from '../components/AuthWrapper';
 import { queryOptimizer } from '../utils/queryOptimizer';
@@ -18,6 +19,7 @@ const AuxiliaryJudgment = lazy(() =>
   import('../components/AuxiliaryJudgment').then(m => ({ default: m.AuxiliaryJudgment }))
 );
 const BettingModal = lazy(() => import('../components/BettingModal').then(m => ({ default: m.BettingModal })));
+const PetWidget = lazy(() => import('../components/pet/PetWidget').then(m => ({ default: m.PetWidget })));
 
 // 加载状态组件
 const LoadingFallback = () => {
@@ -90,6 +92,20 @@ interface AppShellViewProps {
 
   handleBetPlaced: (betResult: BetPlacementResult) => Promise<void>;
   handleBetCancelled: () => Promise<void>;
+
+  // Pet
+  petDomain: {
+    pet: PetState | null;
+    mood: PetMood;
+    isLoading: boolean;
+    hasPet: boolean;
+    createPet: (name: string) => Promise<PetState>;
+    feedPet: () => Promise<FeedResult | null>;
+    onTaskCompleted: (duration: number, wasSuccessful: boolean) => Promise<TaskCompletionReward | null>;
+    updatePosition: (x: number, y: number) => Promise<void>;
+    toggleVisibility: () => Promise<void>;
+    showPet: () => Promise<void>;
+  };
 }
 
 export function AppShellView({
@@ -130,6 +146,7 @@ export function AppShellView({
   handleReorderUnit,
   handleBetPlaced,
   handleBetCancelled,
+  petDomain,
 }: AppShellViewProps) {
   const { tr } = useI18n();
   const renderAuxiliaryJudgment = () => {
@@ -312,6 +329,20 @@ export function AppShellView({
   return (
     <>
       {content}
+
+      {/* Pet Widget - 懒加载 */}
+      <Suspense fallback={null}>
+        <PetWidget
+          pet={petDomain.pet}
+          mood={petDomain.mood}
+          isLoading={petDomain.isLoading}
+          hasPet={petDomain.hasPet}
+          onCreatePet={petDomain.createPet}
+          onFeedPet={petDomain.feedPet}
+          onUpdatePosition={petDomain.updatePosition}
+          onToggleVisibility={petDomain.toggleVisibility}
+        />
+      </Suspense>
 
       {/* Betting Modal - 懒加载 */}
       {showBettingModal && pendingChainId && currentSessionId && (

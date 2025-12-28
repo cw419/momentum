@@ -8,6 +8,7 @@ import type {
   ScheduledSession,
   TaskTimeStats,
 } from '../types';
+import type { PetState } from '../types/pet';
 import type { AuthenticationResult, AuthSession, AuthStateChangeEvent, AuthUser } from '../domain/auth';
 import type { BetPlacementRequest, BetPlacementResult } from '../domain/betting';
 import type { CheckinResult, CheckinStats } from '../domain/checkin';
@@ -88,4 +89,8 @@ export interface MomentumStorage {
   // Daily check-in (Supabase-only; local returns NOT_SUPPORTED)
   performDailyCheckin(): Promise<Result<CheckinResult, AppError>>;
   getUserCheckinStats(): Promise<Result<CheckinStats, AppError>>;
+
+  // Pet (supported in both local and Supabase modes)
+  getPetState(): Promise<PetState | null>;
+  savePetState(pet: PetState): Promise<void>;
 }

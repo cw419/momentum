@@ -31,6 +31,9 @@ interface UseSessionsDomainParams {
   setShowBettingModal: Dispatch<SetStateAction<boolean>>;
 
   setShowAuxiliaryJudgment: Dispatch<SetStateAction<string | null>>;
+
+  // Pet system callback (optional)
+  onPetTaskCompleted?: (duration: number, wasSuccessful: boolean) => void;
 }
 
 export function useSessionsDomain({
@@ -45,6 +48,7 @@ export function useSessionsDomain({
   setCurrentSessionId,
   setShowBettingModal,
   setShowAuxiliaryJudgment,
+  onPetTaskCompleted,
 }: UseSessionsDomainParams) {
   const { tr } = useI18n();
   const handleScheduleChain = (chainId: string) => {
@@ -344,6 +348,11 @@ export function useSessionsDomain({
       void storage.updateTaskTimeStats(chain.id, completionRecord.actualDuration).catch(error => {
         logger.error('SESSIONS', 'Failed to update task time stats after completion', { chainId: chain.id }, error as Error);
       });
+    }
+
+    // Notify pet system of task completion
+    if (onPetTaskCompleted && actualDuration) {
+      onPetTaskCompleted(actualDuration, true);
     }
 
     setState(prev => ({

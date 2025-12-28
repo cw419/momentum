@@ -81,4 +81,8 @@ export const localStorageAdapter: MomentumStorage = {
     err<AppError>({ code: 'NOT_SUPPORTED', message: 'Daily check-in is not supported in local storage mode' }),
   getUserCheckinStats: async () =>
     err<AppError>({ code: 'NOT_SUPPORTED', message: 'Daily check-in is not supported in local storage mode' }),
+
+  // Pet (supported in local mode)
+  getPetState: async () => localStorageUtils.getPetState(),
+  savePetState: async pet => localStorageUtils.savePetState(pet),
 };

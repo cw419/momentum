@@ -1,4 +1,5 @@
 import { Chain, DeletedChain, ScheduledSession, ActiveSession, CompletionHistory, RSIPNode, RSIPMeta, TaskTimeStats } from '../types';
+import type { PetState, SerializedPetState } from '../types/pet';
 
 const STORAGE_KEYS = {
   CHAINS: 'momentum_chains',
@@ -8,6 +9,7 @@ const STORAGE_KEYS = {
   RSIP_NODES: 'momentum_rsip_nodes',
   RSIP_META: 'momentum_rsip_meta',
   TASK_TIME_STATS: 'momentum_task_time_stats',
+  PET_STATE: 'momentum_pet_state',
 };
 
 export const storage = {
@@ -254,8 +256,33 @@ export const storage = {
    * Clear all caches (localStorage doesn't have caches, but provides interface compatibility)
    */
   clearCache: (): void => {
-    // localStorage doesn't maintain internal caches like Supabase, 
+    // localStorage doesn't maintain internal caches like Supabase,
     // but we provide this method for interface compatibility
+  },
+
+  // Pet state
+  getPetState: (): PetState | null => {
+    const data = localStorage.getItem(STORAGE_KEYS.PET_STATE);
+    if (!data) return null;
+    const serialized: SerializedPetState = JSON.parse(data);
+    return {
+      ...serialized,
+      createdAt: new Date(serialized.createdAt),
+      lastFedAt: new Date(serialized.lastFedAt),
+      lastInteractedAt: new Date(serialized.lastInteractedAt),
+      lastDecayCalculatedAt: new Date(serialized.lastDecayCalculatedAt),
+    };
+  },
+
+  savePetState: (pet: PetState): void => {
+    const serialized: SerializedPetState = {
+      ...pet,
+      createdAt: pet.createdAt.toISOString(),
+      lastFedAt: pet.lastFedAt.toISOString(),
+      lastInteractedAt: pet.lastInteractedAt.toISOString(),
+      lastDecayCalculatedAt: pet.lastDecayCalculatedAt.toISOString(),
+    };
+    localStorage.setItem(STORAGE_KEYS.PET_STATE, JSON.stringify(serialized));
   },
 };
 

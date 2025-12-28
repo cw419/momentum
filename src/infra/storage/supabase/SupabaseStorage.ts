@@ -20,7 +20,9 @@ import type {
   ScheduledSession,
   TaskTimeStats,
 } from '../../../types';
+import type { PetState } from '../../../types/pet';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
+import { storage as localStorageUtils } from '../../../utils/storage';
 import { retryOperation, retryWithAuth } from './retry';
 import type { SchemaVerificationResult, SupabaseStorageContext } from './types';
 import * as authApi from './auth';
@@ -267,6 +269,14 @@ export class SupabaseStorage implements MomentumStorage {
   }
   getUserCheckinStats(): Promise<Result<CheckinStats, AppError>> {
     return checkinApi.getUserCheckinStats(this.ctx);
+  }
+
+  // Pet (uses localStorage for now, could be extended to Supabase in the future)
+  async getPetState(): Promise<PetState | null> {
+    return localStorageUtils.getPetState();
+  }
+  async savePetState(pet: PetState): Promise<void> {
+    return localStorageUtils.savePetState(pet);
   }
 }
 
