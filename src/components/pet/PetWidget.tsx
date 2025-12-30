@@ -32,6 +32,7 @@ export function PetWidget({
   const [isDragging, setIsDragging] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showCreationDialog, setShowCreationDialog] = useState(false);
+  const [dismissedCreationDialog, setDismissedCreationDialog] = useState(false);
   const [isFeeding, setIsFeeding] = useState(false);
 
   const dragRef = useRef<{
@@ -41,15 +42,17 @@ export function PetWidget({
     initialY: number;
   } | null>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
+  const dragRafIdRef = useRef<number | null>(null);
+  const pendingDragPositionRef = useRef<{ x: number; y: number } | null>(null);
 
   // Show creation dialog if no pet exists
   useEffect(() => {
-    if (!isLoading && !hasPet) {
+    if (!isLoading && !hasPet && !dismissedCreationDialog) {
       // Small delay for smoother UX
       const timer = setTimeout(() => setShowCreationDialog(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, hasPet]);
+  }, [isLoading, hasPet, dismissedCreationDialog]);
 
   // Handle feeding
   const handleFeed = useCallback(async () => {
@@ -72,6 +75,7 @@ export function PetWidget({
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!pet) return;
+      if (e.button !== 0) return;
       e.preventDefault();
       setIsDragging(true);
       dragRef.current = {
@@ -94,8 +98,16 @@ export function PetWidget({
       const newX = Math.max(0, Math.min(85, dragRef.current.initialX + deltaX));
       const newY = Math.max(5, Math.min(85, dragRef.current.initialY + deltaY));
 
-      widgetRef.current.style.left = `${newX}%`;
-      widgetRef.current.style.top = `${newY}%`;
+      pendingDragPositionRef.current = { x: newX, y: newY };
+
+      // Throttle DOM writes to animation frames for smoother dragging (especially on high polling-rate mice)
+      if (dragRafIdRef.current !== null) return;
+      dragRafIdRef.current = window.requestAnimationFrame(() => {
+        dragRafIdRef.current = null;
+        if (!widgetRef.current || !pendingDragPositionRef.current) return;
+        widgetRef.current.style.left = `${pendingDragPositionRef.current.x}%`;
+        widgetRef.current.style.top = `${pendingDragPositionRef.current.y}%`;
+      });
     },
     [isDragging]
   );
@@ -104,11 +116,23 @@ export function PetWidget({
     if (!isDragging || !widgetRef.current) return;
     setIsDragging(false);
 
+    // Flush latest pending position so saved coordinates match the final visual position.
+    if (pendingDragPositionRef.current) {
+      widgetRef.current.style.left = `${pendingDragPositionRef.current.x}%`;
+      widgetRef.current.style.top = `${pendingDragPositionRef.current.y}%`;
+    }
+    pendingDragPositionRef.current = null;
+    if (dragRafIdRef.current !== null) {
+      cancelAnimationFrame(dragRafIdRef.current);
+      dragRafIdRef.current = null;
+    }
+
     const rect = widgetRef.current.getBoundingClientRect();
     const newX = (rect.left / window.innerWidth) * 100;
     const newY = (rect.top / window.innerHeight) * 100;
 
     await onUpdatePosition(newX, newY);
+    dragRef.current = null;
   }, [isDragging, onUpdatePosition]);
 
   useEffect(() => {
@@ -132,24 +156,69 @@ export function PetWidget({
     [onCreatePet, tr]
   );
 
-  // Don't render if loading or pet is hidden
+  // Don't render if loading
   if (isLoading) return null;
-  if (pet && !pet.isVisible) return null;
 
   return (
     <>
+      {/* Hidden Pet Launcher */}
+      {pet && !pet.isVisible && (
+        <button
+          type="button"
+          onClick={() => void onToggleVisibility()}
+          className="fixed z-40 right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 shadow-lg shadow-black/5 px-3 py-2 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          title={tr('æ˜¾ç¤ºå® ç‰©', 'Show pet')}
+          aria-label={tr('æ˜¾ç¤ºå® ç‰©', 'Show pet')}
+        >
+          <PetAvatar stage={pet.stage} mood={mood} size="sm" />
+          <div className="text-left leading-tight pr-1">
+            <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
+              {tr('æ‰“å¼€å® ç‰©', 'Open pet')}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {tr('ç‚¹å‡»å†æ¬¡æ˜¾ç¤º', 'Click to show again')}
+            </div>
+          </div>
+        </button>
+      )}
+
+      {/* No-pet Launcher (after "Maybe later") */}
+      {!hasPet && dismissedCreationDialog && !showCreationDialog && (
+        <button
+          type="button"
+          onClick={() => setShowCreationDialog(true)}
+          className="fixed z-40 right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 shadow-lg shadow-black/5 px-3 py-2 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          title={tr('é¢†å…»å® ç‰©', 'Adopt a pet')}
+          aria-label={tr('é¢†å…»å® ç‰©', 'Adopt a pet')}
+        >
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 flex items-center justify-center text-3xl select-none">
+            ðŸ¥’
+          </div>
+          <div className="text-left leading-tight pr-1">
+            <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
+              {tr('é¢†å…»ä¸€åªå® ç‰©', 'Adopt a pet')}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {tr('ç»™æ–°ä¼™ä¼´èµ·ä¸ªåå­—', 'Name your new companion')}
+            </div>
+          </div>
+        </button>
+      )}
+
       {/* Main Widget */}
-      {pet && (
+      {pet && pet.isVisible && (
         <div
           ref={widgetRef}
           className={`
-            fixed z-40 transition-all duration-200
+            fixed z-40 select-none
+            ${isDragging ? 'transition-none' : 'transition-all duration-200'}
             ${isMinimized ? 'w-16' : 'w-52'}
             ${isDragging ? 'cursor-grabbing scale-105' : 'cursor-default'}
           `}
           style={{
             left: `${pet.position.x}%`,
             top: `${pet.position.y}%`,
+            willChange: isDragging ? 'left, top' : undefined,
           }}
         >
           {/* Widget Container */}
@@ -256,7 +325,10 @@ export function PetWidget({
       {showCreationDialog && (
         <PetCreationDialog
           onSubmit={handleCreatePet}
-          onCancel={() => setShowCreationDialog(false)}
+          onCancel={() => {
+            setShowCreationDialog(false);
+            setDismissedCreationDialog(true);
+          }}
         />
       )}
     </>
