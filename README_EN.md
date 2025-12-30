@@ -236,10 +236,11 @@ This project is licensed under the GPL-3.0-only license - see the [LICENSE](LICE
   - Combine multiple tasks into task groups
   - Cyclic execution, time limits, repeat control
 
-- [x] **Out-of-the-box Presets**
+- [] **Out-of-the-box Presets**
   - Trigger templates and auxiliary signal templates
   - Bilingual support (Chinese/English)
   - Exception rule presets
+  - still working
 
 - [x] **RSIP Implementation (Recursive Steady-state Iteration Protocol)**
   - Complete personal rule management system
@@ -272,6 +273,6 @@ This project is licensed under the GPL-3.0-only license - see the [LICENSE](LICE
 
 ## 📞 Contact
 
-If you have any questions or suggestions, please send an email to: kenx@andrew.cmu.edu
+If you have any questions or suggestions, please send an email to: xiaofucheng1@gmail.com
 <br>
 My Zhihu Account: https://www.zhihu.com/people/blues-68-53
