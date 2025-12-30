@@ -44,6 +44,12 @@ export function useSafeSaveChains(storage: MomentumStorage) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('SAFE_SAVE', 'Safe save failed', { attempt: retryCount + 1 }, err);
 
+        const message = err.message.toLowerCase();
+        const nonRetryableClientErrors = ['converting circular structure to json', 'do not know how to serialize a bigint'];
+        if (nonRetryableClientErrors.some(fragment => message.includes(fragment))) {
+          throw err;
+        }
+
         if (retryCount < maxRetries) {
           const retryDelay = Math.pow(2, retryCount) * 1000;
           if (isDev) {

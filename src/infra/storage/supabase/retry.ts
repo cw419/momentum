@@ -2,6 +2,28 @@ import { logger } from '../../../utils/logger';
 import { isDev } from '../../../utils/env';
 
 const NON_RETRYABLE_ERROR_CODES = new Set(['PGRST204', 'PGRST116', '42703', '42P01']);
+const NON_RETRYABLE_ERROR_MESSAGES = [
+  'converting circular structure to json',
+  'do not know how to serialize a bigint',
+];
+
+function toErrorWithMetadata(error: unknown): Error {
+  if (error instanceof Error) return error;
+
+  if (error && typeof error === 'object') {
+    const anyErr = error as any;
+    const code = typeof anyErr.code === 'string' ? anyErr.code : undefined;
+    const message = typeof anyErr.message === 'string' ? anyErr.message : String(error);
+
+    const wrapped = new Error(code ? `[${code}] ${message}` : message);
+    if (anyErr.code != null) (wrapped as any).code = anyErr.code;
+    if (anyErr.details != null) (wrapped as any).details = anyErr.details;
+    if (anyErr.hint != null) (wrapped as any).hint = anyErr.hint;
+    return wrapped;
+  }
+
+  return new Error(String(error));
+}
 
 export async function retryOperation<T>(
   operation: () => Promise<T>,
@@ -14,7 +36,12 @@ export async function retryOperation<T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = toErrorWithMetadata(error);
+
+      const normalizedMessage = lastError.message.toLowerCase();
+      if (NON_RETRYABLE_ERROR_MESSAGES.some(fragment => normalizedMessage.includes(fragment))) {
+        throw lastError;
+      }
 
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as any).code;
@@ -70,7 +97,12 @@ export async function retryWithAuth<T>(
 
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = toErrorWithMetadata(error);
+
+      const normalizedMessage = lastError.message.toLowerCase();
+      if (NON_RETRYABLE_ERROR_MESSAGES.some(fragment => normalizedMessage.includes(fragment))) {
+        throw lastError;
+      }
 
       const isAuthError =
         lastError.message.includes('violates row-level security policy') ||

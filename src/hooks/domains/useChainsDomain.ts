@@ -30,12 +30,16 @@ interface UseChainsDomainParams {
 
 export function useChainsDomain({ state, setState, storage, safelySaveChains }: UseChainsDomainParams) {
   const { language, tr } = useI18n();
-  const handleCreateChain = (parentId?: string | null) => {
+  const handleCreateChain = (parentId?: unknown) => {
+    // React event handlers pass the event object as the first argument.
+    // If we treat it as a parentId, it can leak `Window` into persisted data and break JSON serialization.
+    const normalizedParentId = typeof parentId === 'string' ? parentId : null;
+
     setState(prev => ({
       ...prev,
       currentView: 'editor',
       editingChain: null,
-      viewingChainId: parentId ?? null,
+      viewingChainId: normalizedParentId,
     }));
   };
 
@@ -85,7 +89,7 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
         logger.debug('CHAINS', 'Editing existing chain', { chainId: state.editingChain.id });
 
         const editingChainId = state.editingChain.id;
-        const normalizedParentId = chainData.parentId || undefined;
+        const normalizedParentId = typeof chainData.parentId === 'string' ? chainData.parentId : undefined;
 
         updatedActiveChains = state.chains.map(chain => {
           if (chain.id !== editingChainId) return chain;
@@ -119,7 +123,7 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
       } else {
         const id = crypto.randomUUID();
         const createdAt = new Date();
-        const normalizedParentId = chainData.parentId || undefined;
+        const normalizedParentId = typeof chainData.parentId === 'string' ? chainData.parentId : undefined;
 
         if (chainData.type === 'group') {
           const newChain: GroupChain = {

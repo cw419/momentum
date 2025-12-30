@@ -131,10 +131,10 @@ export const TaskGroupEditor: React.FC<TaskGroupEditorProps> = ({
       auxiliaryExceptions: chain?.auxiliaryExceptions || [],
       // Task group specific properties - system managed
       isTaskGroup: true,
-      groupRepeatCount: 0, // System starts at 0, increments on completion
-      taskRepeatCount: 1,
-      timeLimitHours: undefined,
-      timeLimitExceptions: [],
+      groupRepeatCount: chain?.groupRepeatCount ?? 0, // Starts at 0, increments on completion
+      taskRepeatCount: chain?.taskRepeatCount ?? 1,
+      timeLimitHours: chain?.type === 'group' ? (chain.timeLimitHours ?? 24) : 24,
+      timeLimitExceptions: chain?.timeLimitExceptions || [],
     };
     
     if (isDev) {

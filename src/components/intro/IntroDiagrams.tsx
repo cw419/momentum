@@ -140,7 +140,7 @@ function PlotPanel({
   const wCurve = generatePath(wFunc, x0, x1, y0, scaleY);
 
   // 2. Value Function V(τ)
-  let vFunc = (t: number) => 0;
+  let vFunc = (_t: number) => 0;
 
   switch (variant) {
     case 'study':

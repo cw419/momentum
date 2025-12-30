@@ -3,6 +3,19 @@ import { logger } from '../../../utils/logger';
 import type { SupabaseStorageContext, SchemaVerificationResult } from './types';
 import { buildChainRow, mapChainRowToChain } from './mappers';
 
+function formatDbError(error: any): string {
+  if (!error) return 'Unknown error';
+  if (typeof error === 'string') return error;
+
+  const parts: string[] = [];
+  if (error.code) parts.push(`code=${String(error.code)}`);
+  if (error.message) parts.push(String(error.message));
+  if (error.details) parts.push(`details=${String(error.details)}`);
+  if (error.hint) parts.push(`hint=${String(error.hint)}`);
+
+  return parts.length > 0 ? parts.join(' | ') : String(error);
+}
+
 function findChainAndChildren(chainId: string, allChains: Chain[]): Chain[] {
   const result: Chain[] = [];
   const visited = new Set<string>();
@@ -294,7 +307,7 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
     .select('id')
     .eq('user_id', user.id);
   if (existingErr) {
-    throw new Error(`Failed to query existing chains: ${existingErr.message}`);
+    throw new Error(`Failed to query existing chains: ${formatDbError(existingErr)}`);
   }
   const existingIds = new Set((existingRows || []).map(r => r.id as string));
 
@@ -321,7 +334,7 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
     const result = await tryUpsert(rowsBase);
     upsertResultIds = (result.data || []).map(r => r.id);
   } else if (upsertErr1) {
-    throw new Error(`Failed to save chains: ${upsertErr1.message || String(upsertErr1)}`);
+    throw new Error(`Failed to save chains: ${formatDbError(upsertErr1)}`);
   } else {
     upsertResultIds = (upsertData1 || []).map((r: { id: string }) => r.id);
   }
@@ -331,7 +344,7 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
   if (idsToDelete.length > 0) {
     const { error: delErr } = await client.from('chains').delete().in('id', idsToDelete).eq('user_id', user.id);
     if (delErr) {
-      throw new Error(`Failed to delete extra chains: ${delErr.message}`);
+      throw new Error(`Failed to delete extra chains: ${formatDbError(delErr)}`);
     }
   }
 
