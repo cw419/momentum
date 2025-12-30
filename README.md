@@ -229,10 +229,11 @@ npm run build
   - 支持将多个任务组合成任务组
   - 循环执行、时间限制、重复控制
 
-- [x] **开箱即用的预设**
+- [ ] **开箱即用的预设**
   - 触发器模板和辅助信号模板
   - 中英文双语支持
   - 例外规则预设
+  - still working
 
 - [x] **RSIP 实现（递归稳态迭代协议）**
   - 完整的个人规则管理系统
@@ -265,6 +266,8 @@ npm run build
 
 ## 📞 联系方式
 
-如有问题或建议，发送邮件至：kenx@andrew.cmu.edu
+如有问题或建议，发送邮件至：xiaofucheng1@gmail.com
 <br>
 我的知乎账号：https://www.zhihu.com/people/blues-68-53
+<br>
+我的个人网站：https://kenxiao.netlify.app/
