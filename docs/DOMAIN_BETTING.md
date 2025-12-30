@@ -310,5 +310,5 @@ SELECT cleanup_bet_integrity_issues();
 ## 相关文档
 
 - `docs/ARCHITECTURE.md` - 整体架构
-- `docs/DATABASE_SCHEMA.md` - 数据库结构（待创建）
+- `docs/DATABASE_SCHEMA.md` - 数据库结构
 - `DEBUGGING_GUIDE.md` - 调试指南
