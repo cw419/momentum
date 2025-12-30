@@ -236,7 +236,7 @@ This project is licensed under the GPL-3.0-only license - see the [LICENSE](LICE
   - Combine multiple tasks into task groups
   - Cyclic execution, time limits, repeat control
 
-- [] **Out-of-the-box Presets**
+- [ ] **Out-of-the-box Presets**
   - Trigger templates and auxiliary signal templates
   - Bilingual support (Chinese/English)
   - Exception rule presets
@@ -276,3 +276,5 @@ This project is licensed under the GPL-3.0-only license - see the [LICENSE](LICE
 If you have any questions or suggestions, please send an email to: xiaofucheng1@gmail.com
 <br>
 My Zhihu Account: https://www.zhihu.com/people/blues-68-53
+<br>
+My personal website: https://kenxiao.netlify.app/
