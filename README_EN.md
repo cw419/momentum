@@ -1,11 +1,27 @@
 # Momentum - A Psychology-Driven Focus Application
 
 A self-control training tool based on the Chained Time-Delay Protocol (CTDP) theory, designed to help users build powerful habit chains through the "Sacred Seat Principle," the "Principle of Precedent," and the "Linear Time-Delay Principle."
-For more details, please see:
-https://www.zhihu.com/question/19888447/answer/1930799480401293785
-<br>
+
+For more details, please see: https://www.zhihu.com/question/19888447/answer/1930799480401293785
+
 <img width="3000" height="1130" alt="image" src="https://github.com/user-attachments/assets/8765b5c0-4f7a-4d69-a826-d7a6bcef853f" />
+
 You can also read this README on Zhihu: https://zhuanlan.zhihu.com/p/1932530006774505748
+
+## ✨ Feature Highlights
+
+| Feature | Description |
+|---------|-------------|
+| 🔗 Chain Task Management | Habit chain system based on CTDP theory |
+| 📦 Task Groups/Nested Chains | Combine multiple tasks into groups with cyclic execution |
+| 🏛️ RSIP System | Recursive Steady-state Iteration Protocol for personal life rules |
+| 🐾 Virtual Pet System | Earn rewards by completing tasks, raise your own pet |
+| 🎰 Betting Mode | Optional incentive mechanism for extra motivation |
+| ⏱️ Forward Timer | Support for tasks without time limits |
+| 🗑️ Recycle Bin | Soft delete mechanism with recovery option |
+| 📤 Import/Export | Complete data backup and migration support |
+| ☁️ Cloud Sync | Multi-device sync via Supabase |
+| 🎨 Glassmorphism UI | Modern frosted glass interface design |
 
 ## 🎯 Core Concept
 
@@ -92,12 +108,88 @@ When you need to interrupt a task:
    - **Rule as Failure**: Resets the chain to zero.
    - **Rule as Permitted**: Adds the behavior to the exception rules.
 <img width="1107" height="1249" alt="image" src="https://github.com/user-attachments/assets/c4dee7e4-9448-47e0-9a95-9bd78de94ad5" />
-<br>
+
 ### Managing Cards
-<br>
-<br>
 
 <img width="1696" height="1632" alt="image" src="https://github.com/user-attachments/assets/058cb3a0-0eed-41a4-9413-f41fa8b849a7" />
+
+## 📦 Task Groups
+
+Task Groups allow you to combine multiple related tasks and execute them in sequence.
+
+### Creating a Task Group
+1. Click "New Task Group"
+2. Set the group name and description
+3. Configure time limits (optional)
+4. Set repeat counts
+5. Add child task units
+
+### Task Group Features
+- **Cyclic Execution**: Child tasks execute in order, automatically moving to the next upon completion
+- **Time Limits**: Set a total time limit for the entire group
+- **Repeat Control**: Each child task can have its own repeat count
+- **Progress Tracking**: Real-time display of current progress and remaining tasks
+
+## 🏛️ RSIP System
+
+The Recursive Steady-state Iteration Protocol (RSIP) is a personal rule management system that helps you establish and maintain various life rules.
+
+### Core Concepts
+- **Policy Nodes**: Represent a life rule or habit
+- **Hierarchical Structure**: Rules can have parent-child relationships, forming a rule tree
+- **Daily Limits**: By default, only one new rule can be added per day to prevent over-commitment
+- **Violation Rollback**: When a rule is violated, the node and all its children are deleted
+
+### How to Use
+1. Enter the RSIP view
+2. Create root or child nodes
+3. Set the rule title and description
+4. Optionally configure a timer
+5. Follow the rules daily to establish a stable life order
+
+## 🐾 Virtual Pet System
+
+Complete tasks to earn rewards and raise your exclusive virtual pet.
+
+### Pet Growth Stages
+1. 🥚 Egg (Lv.1-9)
+2. 🐣 Baby (Lv.10-24)
+3. 🐥 Child (Lv.25-49)
+4. 🐤 Teen (Lv.50-74)
+5. 🐔 Adult (Lv.75-99)
+6. 🦅 Elder (Lv.100)
+
+### Pet Attributes
+- **Hunger**: Increases over time, needs feeding to reduce
+- **Happiness**: Decreases over time, completing tasks increases it
+- **Health**: Affected by hunger and happiness
+- **Experience**: Earned by completing tasks, levels up and evolves
+
+## 🎰 Betting Mode (Optional)
+
+Add extra incentive mechanisms to your tasks.
+
+- Place bets with points before starting a task
+- Earn rewards upon successful completion
+- Daily betting limits apply
+- Only available in Supabase cloud sync mode
+
+## 🗑️ Recycle Bin
+
+Accidentally deleted chains can be recovered.
+
+- Deleted chains are moved to the recycle bin
+- Can be restored or permanently deleted at any time
+- Automatic cleanup of expired items
+
+## 📤 Import/Export
+
+Complete data management functionality.
+
+- Export all chains, history, RSIP nodes, and exception rules
+- Support for incremental merge imports
+- Smart ID conflict handling
+- Works with both local and cloud modes
 
 ## 🚀 Use Locally
 
@@ -138,20 +230,44 @@ npm run preview
 
 This project is licensed under the GPL-3.0-only license - see the [LICENSE](LICENSE) file for details.
 
+## Completed Features ✅
+
+- [x] **Chainable Nested Work Units (Task Groups)**
+  - Combine multiple tasks into task groups
+  - Cyclic execution, time limits, repeat control
+
+- [x] **Out-of-the-box Presets**
+  - Trigger templates and auxiliary signal templates
+  - Bilingual support (Chinese/English)
+  - Exception rule presets
+
+- [x] **RSIP Implementation (Recursive Steady-state Iteration Protocol)**
+  - Complete personal rule management system
+  - Hierarchical structure, daily limits, violation rollback
+
+- [x] **Virtual Pet System**
+  - 6 growth stages, 100-level progression system
+  - Hunger, happiness, and health attributes
+  - Task completion reward mechanism
+
+- [x] **Betting Mode**
+  - Optional task incentive mechanism
+  - Points system with daily limits
+
+- [x] **Recycle Bin**
+  - Soft delete mechanism
+  - Restore and permanent delete functionality
+
+- [x] **Import/Export**
+  - Complete data backup and migration
+  - Incremental merge support
+
 ## TO DO
 
-- [ ] **Add chainable nested work units**
- <br> *Diagrams:*
-<br>
-  <img width="600" alt="Nested unit example 1" src="https://github.com/user-attachments/assets/39522b04-f284-449b-80d5-21434862f3ee" />
-  <img width="600" alt="Nested unit example 2" src="https://github.com/user-attachments/assets/f54b2816-9869-46bf-8714-bdaee0c6423e" />
-
-- [ ] **Add out-of-the-box presets**
-  - e.g., Presets for exam weeks.
-
-- [ ] **Implement an improved version to prevent daily procrastination (Recursive Steady-state Iteration Protocol, RSIP)**
-  *Design Diagram:*
-  <img width="700" alt="RSIP design diagram" src="https://github.com/user-attachments/assets/29b5274a-e207-476a-ba31-e45affb73bb6" />
+- [ ] **Mobile Optimization**
+- [ ] **More Pet Appearances and Animations**
+- [ ] **Social Features (Leaderboards, Friends System)**
+- [ ] **More Detailed Statistics Dashboard**
 
 
 ## 📞 Contact
