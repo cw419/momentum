@@ -267,6 +267,9 @@ export const storage = {
     const serialized: SerializedPetState = JSON.parse(data);
     return {
       ...serialized,
+      // Migration: add default values for new fields if they don't exist
+      isMinimized: serialized.isMinimized ?? false,
+      minimizedPosition: serialized.minimizedPosition ?? { x: 92, y: 2 },
       createdAt: new Date(serialized.createdAt),
       lastFedAt: new Date(serialized.lastFedAt),
       lastInteractedAt: new Date(serialized.lastInteractedAt),

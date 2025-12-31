@@ -103,8 +103,11 @@ interface AppShellViewProps {
     feedPet: () => Promise<FeedResult | null>;
     onTaskCompleted: (duration: number, wasSuccessful: boolean) => Promise<TaskCompletionReward | null>;
     updatePosition: (x: number, y: number) => Promise<void>;
+    updateMinimizedPosition: (x: number, y: number) => Promise<void>;
     toggleVisibility: () => Promise<void>;
     showPet: () => Promise<void>;
+    minimize: () => Promise<void>;
+    expand: () => Promise<void>;
   };
 }
 
@@ -340,7 +343,10 @@ export function AppShellView({
           onCreatePet={petDomain.createPet}
           onFeedPet={petDomain.feedPet}
           onUpdatePosition={petDomain.updatePosition}
+          onUpdateMinimizedPosition={petDomain.updateMinimizedPosition}
           onToggleVisibility={petDomain.toggleVisibility}
+          onMinimize={petDomain.minimize}
+          onExpand={petDomain.expand}
         />
       </Suspense>
 

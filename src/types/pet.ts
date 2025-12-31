@@ -30,7 +30,9 @@ export interface PetState {
 
   // UI State
   isVisible: boolean;
+  isMinimized: boolean;
   position: { x: number; y: number };
+  minimizedPosition: { x: number; y: number };
 }
 
 // Pet Event Types
@@ -98,7 +100,9 @@ export interface SerializedPetState {
   lastInteractedAt: string;
   lastDecayCalculatedAt: string;
   isVisible: boolean;
+  isMinimized: boolean;
   position: { x: number; y: number };
+  minimizedPosition: { x: number; y: number };
 }
 
 export interface SerializedPetEvent {

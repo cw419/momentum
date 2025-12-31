@@ -42,8 +42,11 @@ interface UsePetDomainReturn {
   feedPet: () => Promise<FeedResult | null>;
   onTaskCompleted: (duration: number, wasSuccessful: boolean) => Promise<TaskCompletionReward | null>;
   updatePosition: (x: number, y: number) => Promise<void>;
+  updateMinimizedPosition: (x: number, y: number) => Promise<void>;
   toggleVisibility: () => Promise<void>;
   showPet: () => Promise<void>;
+  minimize: () => Promise<void>;
+  expand: () => Promise<void>;
 }
 
 const DECAY_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -150,12 +153,24 @@ export function usePetDomain(): UsePetDomainReturn {
     [pet, storage]
   );
 
-  // Update pet position (for dragging)
+  // Update pet position (for dragging when expanded)
   const updatePosition = useCallback(
     async (x: number, y: number) => {
       if (!pet) return;
 
       const updatedPet = { ...pet, position: { x, y } };
+      await storage.savePetState(updatedPet);
+      setPet(updatedPet);
+    },
+    [pet, storage]
+  );
+
+  // Update minimized position (for dragging when minimized)
+  const updateMinimizedPosition = useCallback(
+    async (x: number, y: number) => {
+      if (!pet) return;
+
+      const updatedPet = { ...pet, minimizedPosition: { x, y } };
       await storage.savePetState(updatedPet);
       setPet(updatedPet);
     },
@@ -178,6 +193,36 @@ export function usePetDomain(): UsePetDomainReturn {
     const updatedPet = { ...pet, isVisible: true };
     await storage.savePetState(updatedPet);
     setPet(updatedPet);
+  }, [pet, storage]);
+
+  // Minimize pet - minimize at the current expanded position
+  const minimize = useCallback(async () => {
+    if (!pet || pet.isMinimized) return;
+
+    // Minimize at current position for seamless experience
+    const updatedPet = {
+      ...pet,
+      isMinimized: true,
+      minimizedPosition: { ...pet.position } // Minimize at current position
+    };
+    await storage.savePetState(updatedPet);
+    setPet(updatedPet);
+    logger.info('PET', 'Pet minimized');
+  }, [pet, storage]);
+
+  // Expand pet (restore from minimized) - expand at the minimized position
+  const expand = useCallback(async () => {
+    if (!pet || !pet.isMinimized) return;
+
+    // Expand at the current minimized position for a seamless experience
+    const updatedPet = {
+      ...pet,
+      isMinimized: false,
+      position: { ...pet.minimizedPosition } // Expand at minimized position
+    };
+    await storage.savePetState(updatedPet);
+    setPet(updatedPet);
+    logger.info('PET', 'Pet expanded');
   }, [pet, storage]);
 
   // Setup decay interval
@@ -233,7 +278,10 @@ export function usePetDomain(): UsePetDomainReturn {
     feedPet,
     onTaskCompleted,
     updatePosition,
+    updateMinimizedPosition,
     toggleVisibility,
     showPet,
+    minimize,
+    expand,
   };
 }

@@ -34,7 +34,9 @@ export const INITIAL_PET_STATE: Omit<PetState, 'id' | 'createdAt'> = {
   lastInteractedAt: new Date(),
   lastDecayCalculatedAt: new Date(),
   isVisible: true,
-  position: { x: 80, y: 80 }, // Bottom-right position in percentage
+  isMinimized: false,
+  position: { x: 80, y: 80 }, // Bottom-right position in percentage (expanded)
+  minimizedPosition: { x: 92, y: 2 }, // Top-right position (next to theme toggle)
 };
 
 // Stage order for evolution

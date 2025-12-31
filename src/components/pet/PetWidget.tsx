@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { X, Minimize2, Maximize2, Cookie } from 'lucide-react';
+import { Minimize2, Cookie } from 'lucide-react';
 import type { PetState, PetMood, FeedResult } from '../../types/pet';
 import { PetAvatar } from './PetAvatar';
 import { PetStatsBar } from './PetStatsBar';
@@ -15,7 +15,10 @@ interface PetWidgetProps {
   onCreatePet: (name: string) => Promise<PetState>;
   onFeedPet: () => Promise<FeedResult | null>;
   onUpdatePosition: (x: number, y: number) => Promise<void>;
+  onUpdateMinimizedPosition: (x: number, y: number) => Promise<void>;
   onToggleVisibility: () => Promise<void>;
+  onMinimize: () => Promise<void>;
+  onExpand: () => Promise<void>;
 }
 
 export function PetWidget({
@@ -26,11 +29,12 @@ export function PetWidget({
   onCreatePet,
   onFeedPet,
   onUpdatePosition,
-  onToggleVisibility,
+  onUpdateMinimizedPosition,
+  onMinimize,
+  onExpand,
 }: PetWidgetProps) {
   const { tr } = useI18n();
   const [isDragging, setIsDragging] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [showCreationDialog, setShowCreationDialog] = useState(false);
   const [dismissedCreationDialog, setDismissedCreationDialog] = useState(false);
   const [isFeeding, setIsFeeding] = useState(false);
@@ -44,6 +48,8 @@ export function PetWidget({
   const widgetRef = useRef<HTMLDivElement>(null);
   const dragRafIdRef = useRef<number | null>(null);
   const pendingDragPositionRef = useRef<{ x: number; y: number } | null>(null);
+  // Track if actual dragging occurred (mouse moved significantly)
+  const hasDraggedRef = useRef(false);
 
   // Show creation dialog if no pet exists
   useEffect(() => {
@@ -78,11 +84,13 @@ export function PetWidget({
       if (e.button !== 0) return;
       e.preventDefault();
       setIsDragging(true);
+      hasDraggedRef.current = false; // Reset drag flag
+      const currentPos = pet.isMinimized ? pet.minimizedPosition : pet.position;
       dragRef.current = {
         startX: e.clientX,
         startY: e.clientY,
-        initialX: pet.position.x,
-        initialY: pet.position.y,
+        initialX: currentPos.x,
+        initialY: currentPos.y,
       };
     },
     [pet]
@@ -95,8 +103,15 @@ export function PetWidget({
       const deltaX = ((e.clientX - dragRef.current.startX) / window.innerWidth) * 100;
       const deltaY = ((e.clientY - dragRef.current.startY) / window.innerHeight) * 100;
 
-      const newX = Math.max(0, Math.min(85, dragRef.current.initialX + deltaX));
-      const newY = Math.max(5, Math.min(85, dragRef.current.initialY + deltaY));
+      // Mark as dragged if moved more than 5 pixels
+      const pixelDeltaX = Math.abs(e.clientX - dragRef.current.startX);
+      const pixelDeltaY = Math.abs(e.clientY - dragRef.current.startY);
+      if (pixelDeltaX > 5 || pixelDeltaY > 5) {
+        hasDraggedRef.current = true;
+      }
+
+      const newX = Math.max(0, Math.min(95, dragRef.current.initialX + deltaX));
+      const newY = Math.max(2, Math.min(90, dragRef.current.initialY + deltaY));
 
       pendingDragPositionRef.current = { x: newX, y: newY };
 
@@ -113,7 +128,7 @@ export function PetWidget({
   );
 
   const handleMouseUp = useCallback(async () => {
-    if (!isDragging || !widgetRef.current) return;
+    if (!isDragging || !widgetRef.current || !pet) return;
     setIsDragging(false);
 
     // Flush latest pending position so saved coordinates match the final visual position.
@@ -131,9 +146,14 @@ export function PetWidget({
     const newX = (rect.left / window.innerWidth) * 100;
     const newY = (rect.top / window.innerHeight) * 100;
 
-    await onUpdatePosition(newX, newY);
+    // Save to appropriate position based on minimized state
+    if (pet.isMinimized) {
+      await onUpdateMinimizedPosition(newX, newY);
+    } else {
+      await onUpdatePosition(newX, newY);
+    }
     dragRef.current = null;
-  }, [isDragging, onUpdatePosition]);
+  }, [isDragging, pet, onUpdatePosition, onUpdateMinimizedPosition]);
 
   useEffect(() => {
     if (isDragging) {
@@ -159,127 +179,100 @@ export function PetWidget({
   // Don't render if loading
   if (isLoading) return null;
 
+  // Get current position based on minimized state
+  const currentPosition = pet?.isMinimized ? pet.minimizedPosition : pet?.position;
+
   return (
     <>
-      {/* Hidden Pet Launcher */}
-      {pet && !pet.isVisible && (
-        <button
-          type="button"
-          onClick={() => void onToggleVisibility()}
-          className="fixed z-40 right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 shadow-lg shadow-black/5 px-3 py-2 hover:shadow-xl hover:-translate-y-0.5 transition-all"
-          title={tr('æ˜¾ç¤ºå® ç‰©', 'Show pet')}
-          aria-label={tr('æ˜¾ç¤ºå® ç‰©', 'Show pet')}
-        >
-          <PetAvatar stage={pet.stage} mood={mood} size="sm" />
-          <div className="text-left leading-tight pr-1">
-            <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
-              {tr('æ‰“å¼€å® ç‰©', 'Open pet')}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {tr('ç‚¹å‡»å†æ¬¡æ˜¾ç¤º', 'Click to show again')}
-            </div>
-          </div>
-        </button>
-      )}
-
       {/* No-pet Launcher (after "Maybe later") */}
       {!hasPet && dismissedCreationDialog && !showCreationDialog && (
         <button
           type="button"
           onClick={() => setShowCreationDialog(true)}
           className="fixed z-40 right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 shadow-lg shadow-black/5 px-3 py-2 hover:shadow-xl hover:-translate-y-0.5 transition-all"
-          title={tr('é¢†å…»å® ç‰©', 'Adopt a pet')}
-          aria-label={tr('é¢†å…»å® ç‰©', 'Adopt a pet')}
+          title={tr('领养宠物', 'Adopt a pet')}
+          aria-label={tr('领养宠物', 'Adopt a pet')}
         >
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 flex items-center justify-center text-3xl select-none">
-            ðŸ¥’
+            🥚
           </div>
           <div className="text-left leading-tight pr-1">
             <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
-              {tr('é¢†å…»ä¸€åªå® ç‰©', 'Adopt a pet')}
+              {tr('领养一只宠物', 'Adopt a pet')}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {tr('ç»™æ–°ä¼™ä¼´èµ·ä¸ªåå­—', 'Name your new companion')}
+              {tr('给新伙伴起个名字', 'Name your new companion')}
             </div>
           </div>
         </button>
       )}
 
-      {/* Main Widget */}
-      {pet && pet.isVisible && (
+      {/* Main Widget - shows in both minimized and expanded states */}
+      {pet && currentPosition && (
         <div
           ref={widgetRef}
           className={`
             fixed z-40 select-none
             ${isDragging ? 'transition-none' : 'transition-all duration-200'}
-            ${isMinimized ? 'w-16' : 'w-52'}
+            ${pet.isMinimized ? '' : 'w-52'}
             ${isDragging ? 'cursor-grabbing scale-105' : 'cursor-default'}
           `}
           style={{
-            left: `${pet.position.x}%`,
-            top: `${pet.position.y}%`,
+            left: `${currentPosition.x}%`,
+            top: `${currentPosition.y}%`,
             willChange: isDragging ? 'left, top' : undefined,
           }}
         >
-          {/* Widget Container */}
-          <div
-            className={`
-              bg-white/95 dark:bg-gray-800/95 backdrop-blur-md
-              rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50
-              overflow-hidden
-              ${isMinimized ? 'p-2' : ''}
-            `}
-          >
-            {/* Header - Draggable */}
+          {pet.isMinimized ? (
+            /* Minimized View - Just Avatar, draggable, click to expand */
             <div
-              className={`
-                flex items-center justify-between
-                bg-gradient-to-r from-green-50 to-emerald-50
-                dark:from-green-900/20 dark:to-emerald-900/20
-                ${isMinimized ? 'p-1' : 'px-3 py-2'}
-                cursor-grab active:cursor-grabbing
-              `}
+              className="cursor-grab active:cursor-grabbing"
               onMouseDown={handleMouseDown}
             >
-              {!isMinimized && (
+              <button
+                type="button"
+                onClick={e => {
+                  // Only expand if no drag occurred (click without movement)
+                  if (!hasDraggedRef.current) {
+                    e.stopPropagation();
+                    void onExpand();
+                  }
+                }}
+                className="p-2 rounded-full bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:scale-105 transition-all"
+                title={tr('展开宠物', 'Expand pet')}
+              >
+                <PetAvatar stage={pet.stage} mood={mood} size="sm" />
+              </button>
+            </div>
+          ) : (
+            /* Expanded View */
+            <div
+              className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 overflow-hidden"
+            >
+              {/* Header - Draggable */}
+              <div
+                className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-3 py-2 cursor-grab active:cursor-grabbing"
+                onMouseDown={handleMouseDown}
+              >
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate max-w-24">
                   {pet.name}
                 </span>
-              )}
-              <div className={`flex items-center ${isMinimized ? 'gap-0' : 'gap-1'}`}>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    setIsMinimized(!isMinimized);
-                  }}
-                  className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
-                  title={isMinimized ? tr('展开', 'Expand') : tr('最小化', 'Minimize')}
-                >
-                  {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
-                </button>
-                {!isMinimized && (
+                <div className="flex items-center gap-1">
                   <button
+                    type="button"
                     onClick={e => {
                       e.stopPropagation();
-                      onToggleVisibility();
+                      void onMinimize();
                     }}
                     className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
-                    title={tr('隐藏', 'Hide')}
+                    title={tr('最小化', 'Minimize')}
                   >
-                    <X size={14} />
+                    <Minimize2 size={14} />
                   </button>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* Body */}
-            {isMinimized ? (
-              /* Minimized View - Just Avatar */
-              <div className="p-1 flex justify-center">
-                <PetAvatar stage={pet.stage} mood={mood} size="sm" onClick={handleFeed} />
-              </div>
-            ) : (
-              /* Expanded View */
+              {/* Body */}
               <div className="p-3">
                 {/* Avatar */}
                 <div className="flex justify-center mb-2">
@@ -288,6 +281,7 @@ export function PetWidget({
 
                 {/* Feed Button */}
                 <button
+                  type="button"
                   onClick={handleFeed}
                   disabled={isFeeding || pet.hunger <= 5}
                   className={`
@@ -316,8 +310,8 @@ export function PetWidget({
                   stage={pet.stage}
                 />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
