@@ -96,6 +96,7 @@ input:not([type="range"]), textarea, select {
   min-height: 44px;
   padding: 12px 16px;
 }
+
 @media (max-width: 768px) {
   .mobile-spacing {
     padding: 16px;

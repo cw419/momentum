@@ -6,6 +6,7 @@ import { I18nProvider } from './i18n';
 import './index.css';
 import './styles/mobile-optimizations.css';
 import './styles/mobile-touch-optimization.css';
+import './styles/rsip-canvas.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

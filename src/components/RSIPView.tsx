@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RSIPNode, RSIPTreeNode, RSIPMeta } from '../types';
 import { buildRSIPTree, countDescendants, deleteNodeAndDescendants } from '../utils/rsipTree';
-import { Plus, Trash2, ArrowLeft, Clock, Play } from 'lucide-react';
+import { ArrowLeft, Clock, CornerUpLeft, Link2, Maximize2, Minus, Play, Plus, Trash2, X } from 'lucide-react';
 import { useI18n } from '../i18n';
+import { TransformComponent, TransformWrapper, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
+import { useCanvasState, type CanvasState } from '../hooks/useCanvasState';
 
 interface RSIPViewProps {
   nodes: RSIPNode[];
@@ -18,6 +20,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined);
   const [title, setTitle] = useState('');
   const [rule, setRule] = useState('');
+  const { savedState, isLoaded, saveCanvasState } = useCanvasState();
 
   const canAddToday = (() => {
     if (meta.allowMultiplePerDay) return true;
@@ -138,7 +141,8 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   const renderPolicyCard = (node: RSIPTreeNode, style: React.CSSProperties = {}) => {
     const ntype = node.type || 'policy';
     const color = typeColorMap[ntype] || typeColorMap.policy;
-    const isDraggingThis = draggingId === node.id;
+    const isInvalidParent = !!reparentingId && invalidParentIds.has(node.id);
+    const isReparentingChild = reparentingId === node.id;
     
     const endsAt = activeTimers[node.id];
     const isRunning = endsAt && endsAt > now;
@@ -150,14 +154,20 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         ref={el => nodeRefs.current[node.id] = el}
         key={node.id}
         style={style}
-        draggable
-        onDragStart={(e) => onDragStartNode(e, node.id)}
-        onDragEnd={onDragEndNode}
-        onDrop={(e) => onDropOnNode(e, node.id)}
-        onDragOver={(e) => e.preventDefault()}
+        onClick={() => {
+          if (reparentingId) {
+            if (isInvalidParent) {
+              setRelationError(tr('不能选择该节点作为父节点（会形成循环）。', 'Cannot choose this node as parent (would create a cycle).'));
+              return;
+            }
+            commitReparent(reparentingId, node.id);
+            return;
+          }
+          setPinnedId(prev => prev === node.id ? null : node.id);
+        }}
         onMouseEnter={() => setHoveredId(node.id)}
         onMouseLeave={() => setHoveredId(null)}
-        className={`absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition-all duration-300 transform-gpu ${color.bg} ${color.border} ${hoveredChainIds.has(node.id) ? `ring-2 ${color.ring} scale-105 shadow-2xl` : ''} ${isDraggingThis ? 'opacity-30 scale-90' : 'opacity-100'}`}
+        className={`rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition-all duration-300 transform-gpu ${color.bg} ${color.border} ${hoveredChainIds.has(node.id) ? `ring-2 ${color.ring} scale-105 shadow-2xl` : ''} ${isInvalidParent ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer'} ${isReparentingChild ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : ''}`}
       >
         <div className="flex items-start space-x-3">
           <div className="text-3xl leading-none pt-1" aria-hidden>
@@ -194,13 +204,31 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
               </button>
             )}
           </div>
-          <button
-            onClick={() => handleFailure(node.id)}
-            className="p-1.5 text-red-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-            title={tr('判定失败（删除此节点及其所有子节点）', 'Mark as failed (delete this node and all descendants)')}
-          >
-            <Trash2 size={14} />
-          </button>
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPinnedId(node.id);
+                setRelationError(null);
+                setReparentingId(prev => prev === node.id ? null : node.id);
+              }}
+              className={`p-1.5 rounded-lg transition-colors ${reparentingId === node.id ? 'text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-700' : 'text-gray-500 hover:text-gray-700 dark:text-slate-300 dark:hover:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-700'}`}
+              title={reparentingId === node.id ? tr('取消更改继承', 'Cancel reparent') : tr('更改继承关系', 'Change parent')}
+              aria-label={reparentingId === node.id ? tr('取消更改继承', 'Cancel reparent') : tr('更改继承关系', 'Change parent')}
+            >
+              {reparentingId === node.id ? <X size={14} /> : <Link2 size={14} />}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleFailure(node.id); }}
+              className="p-1.5 text-red-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              title={tr('判定失败（删除此节点及其所有子节点）', 'Mark as failed (delete this node and all descendants)')}
+              aria-label={tr('判定失败', 'Mark as failed')}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -261,12 +289,18 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   const connectorRefs = useRef<Record<string, SVGPathElement | null>>({});
   const [connectors, setConnectors] = useState<Connector[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
+  const [reparentingId, setReparentingId] = useState<string | null>(null);
+  const [relationError, setRelationError] = useState<string | null>(null);
   const [hoveredChainIds, setHoveredChainIds] = useState<Set<string>>(new Set());
-  const [draggingId, setDraggingId] = useState<string | null>(null);
   
   // 布局状态
   const [nodePositions, setNodePositions] = useState<Record<string, { node: RSIPTreeNode; style: React.CSSProperties }>>({});
   const [containerHeight, setContainerHeight] = useState<number>(600);
+  const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const latestTransformRef = useRef<CanvasState>({ scale: 1, positionX: 0, positionY: 0 });
+  const didInitCameraRef = useRef(false);
 
   // 辅助：基于 nodes（扁平）快速查找父链
   const nodesById = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
@@ -389,38 +423,46 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     return res;
   }, [tree]);
 
-  // 拖拽逻辑：开始、允许、放下
-  const onDragStartNode = (e: React.DragEvent, id: string) => {
-    setDraggingId(id);
-    e.dataTransfer.setData('text/plain', id);
-    try { e.dataTransfer.effectAllowed = 'move'; } catch { /* ignore */ }
-  };
+  const invalidParentIds = useMemo(() => {
+    if (!reparentingId) return new Set<string>();
+    return new Set([reparentingId, ...getDescendantsFromTree(reparentingId)]);
+  }, [getDescendantsFromTree, reparentingId]);
 
-  const onDragEndNode = () => setDraggingId(null);
+  const commitReparent = useCallback((childId: string, parentId?: string) => {
+    if (childId === parentId) {
+      setRelationError(tr('不能选择自身作为父节点。', 'Cannot select the node itself as parent.'));
+      return;
+    }
+    if (parentId) {
+      const descendants = getDescendantsFromTree(childId);
+      if (descendants.includes(parentId)) {
+        setRelationError(tr('不能把节点移动到自己的后代下面。', 'Cannot move a node under its descendant.'));
+        return;
+      }
+    }
 
-  const onDropOnNode = (e: React.DragEvent, targetId?: string) => {
-    e.preventDefault();
-    const dragId = e.dataTransfer.getData('text/plain') || draggingId;
-    setDraggingId(null);
-    if (!dragId) return;
-    if (dragId === targetId) return;
-    // prevent drop onto own descendant
-    const desc = getDescendantsFromTree(dragId);
-    if (targetId && desc.includes(targetId)) return; // ignore to prevent cycle
-    // update nodes parentId
-    const updated = nodes.map(n => n.id === dragId ? { ...n, parentId: targetId || undefined } : n);
+    const updated = nodes.map(n => n.id === childId ? { ...n, parentId: parentId || undefined } : n);
     onSaveNodes(updated);
-  };
+    setPinnedId(childId);
+    setReparentingId(null);
+    setRelationError(null);
+  }, [getDescendantsFromTree, nodes, onSaveNodes, tr]);
+
+  const cancelReparent = useCallback(() => {
+    setReparentingId(null);
+    setRelationError(null);
+  }, []);
 
   // hover chain计算：包括祖先与所有后代
   useEffect(() => {
-    if (!hoveredId) { setHoveredChainIds(new Set()); return; }
+    const activeId = reparentingId ?? pinnedId ?? hoveredId;
+    if (!activeId) { setHoveredChainIds(new Set()); return; }
     const ids = new Set<string>();
-    ids.add(hoveredId);
-    getAncestors(hoveredId).forEach(id => ids.add(id));
-    getDescendantsFromTree(hoveredId).forEach(id => ids.add(id));
+    ids.add(activeId);
+    getAncestors(activeId).forEach(id => ids.add(id));
+    getDescendantsFromTree(activeId).forEach(id => ids.add(id));
     setHoveredChainIds(ids);
-  }, [hoveredId, getAncestors, getDescendantsFromTree]);
+  }, [hoveredId, pinnedId, reparentingId, getAncestors, getDescendantsFromTree]);
 
   // 计算连接线的路径
   useEffect(() => {
@@ -440,17 +482,18 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         // Or better, use the actual DOM element if available, but fallback to calculated position
         
         const el = nodeRefs.current[nodeId];
-        if (el) {
-           // Use actual DOM element relative to container
-           const elRect = el.getBoundingClientRect();
-           const containerRect = container.getBoundingClientRect();
-           
-           const x = side === 'left' 
-             ? (elRect.left - containerRect.left) 
-             : (elRect.right - containerRect.left);
-           const y = (elRect.top - containerRect.top) + elRect.height / 2;
-           return { x, y };
-        }
+         if (el) {
+            // Use actual DOM element relative to container
+            const elRect = el.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const scale = latestTransformRef.current.scale || 1;
+            
+            const x = side === 'left' 
+              ? (elRect.left - containerRect.left) / scale
+              : (elRect.right - containerRect.left) / scale;
+            const y = ((elRect.top - containerRect.top) + elRect.height / 2) / scale;
+            return { x, y };
+         }
         
         // Fallback to calculated style
         const styleLeft = Number(pos.style.left);
@@ -495,9 +538,79 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     return () => { clearTimeout(t); window.removeEventListener('resize', compute); };
   }, [filteredTree, hoveredChainIds, nodePositions]);
 
+  const contentBounds = useMemo(() => {
+    const entries = Object.values(nodePositions);
+    if (entries.length === 0) return null;
+
+    const NODE_WIDTH = 256; // w-64
+    const NODE_HEIGHT = 160; // layout spacing
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (const { style } of entries) {
+      const x = Number(style.left) || 0;
+      const y = Number(style.top) || 0;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + NODE_WIDTH);
+      maxY = Math.max(maxY, y + NODE_HEIGHT);
+    }
+
+    return {
+      minX,
+      minY,
+      width: Math.max(1, maxX - minX),
+      height: Math.max(1, maxY - minY),
+    };
+  }, [nodePositions]);
+
+  const fitToContent = useCallback(() => {
+    const viewport = viewportRef.current;
+    const bounds = contentBounds;
+    const api = transformRef.current;
+    if (!viewport || !bounds || !api) return;
+
+    const padding = 40;
+    const rect = viewport.getBoundingClientRect();
+    const viewportWidth = rect.width;
+    const viewportHeight = rect.height;
+
+    const scaleX = (viewportWidth - padding * 2) / bounds.width;
+    const scaleY = (viewportHeight - padding * 2) / bounds.height;
+    const scale = Math.min(scaleX, scaleY, 1);
+
+    const translateX = (viewportWidth - bounds.width * scale) / 2 - bounds.minX * scale;
+    const translateY = (viewportHeight - bounds.height * scale) / 2 - bounds.minY * scale;
+
+    const next: CanvasState = { scale, positionX: translateX, positionY: translateY };
+    latestTransformRef.current = next;
+    saveCanvasState(next);
+    api.setTransform(translateX, translateY, scale, 250, 'easeOut');
+  }, [contentBounds, saveCanvasState]);
+
+  useEffect(() => {
+    if (didInitCameraRef.current) return;
+    if (!isLoaded) return;
+
+    if (savedState && transformRef.current) {
+      latestTransformRef.current = savedState;
+      transformRef.current.setTransform(savedState.positionX, savedState.positionY, savedState.scale, 0);
+      didInitCameraRef.current = true;
+      return;
+    }
+
+    if (!savedState && contentBounds && transformRef.current) {
+      fitToContent();
+      didInitCameraRef.current = true;
+    }
+  }, [contentBounds, fitToContent, isLoaded, savedState]);
+
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto relative">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-3">
@@ -672,45 +785,146 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         </div>
 
         {/* Tree */}
-        <div className="relative w-full" style={{ height: containerHeight }}>
+        <div ref={viewportRef} className="relative w-full h-[60vh] min-h-[400px]">
           {tree.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center text-gray-600 dark:text-slate-400 font-chinese">
               {tr('尚无国策，先从上方表单添加一个吧。', 'No policies yet. Add one from the form above.')}
             </div>
           ) : (
-            <div ref={containerRef} className="relative w-full h-full">
-              {/* SVG overlay for connectors */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <marker id="rsip-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse">
-                    <path d="M0,0 L8,4 L0,8 z" fill="#6b7280" />
-                  </marker>
-                </defs>
-                {connectors.map(({ id, d, isHovered }) => (
-                  <path
-                    key={id}
-                    ref={el => { if (el) connectorRefs.current[id] = el; }}
-                    d={d}
-                    fill="none"
-                    stroke={isHovered ? '#f59e0b' : '#9ca3af'}
-                    strokeWidth={isHovered ? 3 : 2}
-                    className="transition-all duration-200"
-                    markerEnd="url(#rsip-arrow)"
-                  />
-                ))}
-              </svg>
+            <TransformWrapper
+              ref={transformRef}
+              initialScale={1}
+              initialPositionX={0}
+              initialPositionY={0}
+              minScale={0.1}
+              maxScale={2}
+              limitToBounds={false}
+              panning={{ excluded: ['rsip-node'] }}
+              onTransformed={(_, state) => {
+                const next: CanvasState = {
+                  scale: state.scale,
+                  positionX: state.positionX,
+                  positionY: state.positionY,
+                };
+                latestTransformRef.current = next;
+                saveCanvasState(next);
+              }}
+            >
+              {({ zoomIn, zoomOut }) => (
+                <>
+                  <TransformComponent
+                    wrapperClass="rsip-canvas-wrapper w-full h-full rounded-2xl overflow-hidden"
+                    contentClass="relative rsip-canvas-content"
+                  >
+                    <div
+                      ref={containerRef}
+                      className="relative"
+                      style={{
+                        width: contentBounds ? Math.ceil(contentBounds.width + 120) : '100%',
+                        height: Math.ceil(Math.max(containerHeight, (contentBounds?.height ?? 0) + 120)),
+                      }}
+                    >
+                      {/* SVG overlay for connectors */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                          <marker id="rsip-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                            <path d="M0,0 L8,4 L0,8 z" fill="#6b7280" />
+                          </marker>
+                        </defs>
+                        {connectors.map(({ id, d, isHovered }) => (
+                          <path
+                            key={id}
+                            ref={el => { if (el) connectorRefs.current[id] = el; }}
+                            d={d}
+                            fill="none"
+                            stroke={isHovered ? '#f59e0b' : '#9ca3af'}
+                            strokeWidth={isHovered ? 3 : 2}
+                            className="transition-all duration-200"
+                            markerEnd="url(#rsip-arrow)"
+                          />
+                        ))}
+                      </svg>
 
-              {/* Render nodes */}
-              {Object.values(nodePositions).map(({ node, style }) => renderPolicyCard(node, style))}
-            </div>
+                      {/* Render nodes */}
+                      {Object.values(nodePositions).map(({ node, style }) => renderPolicyCard(node, style))}
+                    </div>
+                  </TransformComponent>
+
+                  {reparentingId && (
+                    <div className="absolute top-4 left-4 right-4 z-30 pointer-events-none">
+                      <div className="pointer-events-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-white/50 dark:border-white/10 bg-white/70 dark:bg-slate-900/50 backdrop-blur-xl px-4 py-3 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.5)]">
+                        <div className="min-w-0">
+                          <div className="text-sm font-chinese text-gray-900 dark:text-slate-100">
+                            {tr('选择新的父节点', 'Select a new parent')}
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-slate-300 font-chinese">
+                            {tr('正在移动：', 'Moving: ')}
+                            <span className="font-semibold">{nodesById.get(reparentingId)?.title ?? reparentingId}</span>
+                            {tr('。点击目标节点作为父节点，或设为根。', '. Tap a node to set as parent, or make it a root.')}
+                          </div>
+                          {relationError && (
+                            <div className="mt-1 text-xs text-red-600 dark:text-red-300 font-chinese">
+                              {relationError}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                          <button
+                            type="button"
+                            onClick={() => commitReparent(reparentingId, undefined)}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
+                          >
+                            <CornerUpLeft size={16} />
+                            <span className="text-sm font-chinese">{tr('设为根', 'Make root')}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => cancelReparent()}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
+                          >
+                            <X size={16} />
+                            <span className="text-sm font-chinese">{tr('取消', 'Cancel')}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Controls */}
+                  <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-20">
+                    <button
+                      type="button"
+                      onClick={() => zoomIn()}
+                      className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
+                      aria-label={tr('放大', 'Zoom in')}
+                      title={tr('放大', 'Zoom in')}
+                    >
+                      <Plus size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => zoomOut()}
+                      className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
+                      aria-label={tr('缩小', 'Zoom out')}
+                      title={tr('缩小', 'Zoom out')}
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fitToContent()}
+                      className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
+                      aria-label={tr('适应内容', 'Fit to content')}
+                      title={tr('适应内容', 'Fit to content')}
+                    >
+                      <Maximize2 size={18} />
+                    </button>
+                  </div>
+                </>
+              )}
+            </TransformWrapper>
           )}
         </div>
-        {/* 容器级别支持：拖放到空白处设为根 */}
-        <div
-          className="absolute bottom-0 left-0 w-full h-20"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); const dragId = e.dataTransfer.getData('text/plain') || draggingId; if (dragId) { onDropOnNode(e, undefined); } }}
-        />
       </div>
     </div>
   );
