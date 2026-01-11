@@ -221,6 +221,7 @@ export default function AppShellContainer() {
     setActiveSessionId,
     pendingChainId,
     setPendingChainId,
+    currentSessionId,
     setCurrentSessionId,
     setShowBettingModal,
     setShowAuxiliaryJudgment,

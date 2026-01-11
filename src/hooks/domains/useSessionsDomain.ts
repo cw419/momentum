@@ -41,6 +41,7 @@ interface UseSessionsDomainParams {
 
   pendingChainId: string | null;
   setPendingChainId: Dispatch<SetStateAction<string | null>>;
+  currentSessionId: string | null;
   setCurrentSessionId: Dispatch<SetStateAction<string | null>>;
   setShowBettingModal: Dispatch<SetStateAction<boolean>>;
 
@@ -59,6 +60,7 @@ export function useSessionsDomain({
   setActiveSessionId,
   pendingChainId,
   setPendingChainId,
+  currentSessionId,
   setCurrentSessionId,
   setShowBettingModal,
   setShowAuxiliaryJudgment,
@@ -119,6 +121,12 @@ export function useSessionsDomain({
               code: sessionId.error.code,
               message: sessionId.error.message,
             });
+            toast.error(
+              tr(
+                '无法创建押注会话：数据库可能处于只读状态（查看控制台）',
+                'Failed to create betting session: database may be read-only (check console).'
+              )
+            );
             return;
           }
 
@@ -215,7 +223,10 @@ export function useSessionsDomain({
       return;
     }
 
+    const bettingSessionId = pendingChainId === chainId ? currentSessionId : null;
+
     const activeSession: ActiveSession = {
+      ...(bettingSessionId ? { id: bettingSessionId } : {}),
       chainId,
       startedAt: new Date(),
       duration: chain.isDurationless ? 0 : chain.duration,
@@ -326,33 +337,66 @@ export function useSessionsDomain({
       logger.error('SESSIONS', '完成任务时保存链条数据失败', undefined, error as Error);
     });
 
-    void storage.saveActiveSession(null).catch(error => {
-      logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
-    });
-
     if (activeSessionId && storage.kind === 'supabase') {
-      storage
-        .completeTaskWithBetting(activeSessionId, true, tr('任务完成', 'Task completed'))
-        .then(result => {
-          if (!result.ok) {
+      const sessionIdToSettle = activeSessionId;
+
+      void (async () => {
+        try {
+          const result = await storage.completeTaskWithBetting(sessionIdToSettle, true, tr('任务完成', 'Task completed'));
+
+          const data: any = result.ok ? result.value : null;
+          const settledOk = result.ok && data && typeof data === 'object' && data.success === true;
+
+          if (!settledOk) {
+            const message = result.ok
+              ? typeof data?.error === 'string'
+                ? data.error
+                : typeof data?.message === 'string'
+                  ? data.message
+                  : 'Unknown error'
+              : result.error.message;
+
             logger.error('SESSIONS', '完成任务和押注结算失败', {
-              code: result.error.code,
-              message: result.error.message,
+              sessionId: sessionIdToSettle,
+              message,
+              ...(result.ok ? { data } : { code: result.error.code }),
             });
-            void storage.saveCompletionHistory(updatedHistory).catch(error => {
+            toast.warning(
+              tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
+            );
+
+            try {
+              await storage.saveCompletionHistory(updatedHistory);
+            } catch (error) {
               logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, error as Error);
-            });
-            return;
+            }
           }
-          setActiveSessionId(null);
-        })
-        .catch(error => {
+        } catch (error) {
           logger.error('SESSIONS', '完成任务和押注结算失败', undefined, error as Error);
-          void storage.saveCompletionHistory(updatedHistory).catch(saveError => {
+          toast.warning(
+            tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
+          );
+          try {
+            await storage.saveCompletionHistory(updatedHistory);
+          } catch (saveError) {
             logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, saveError as Error);
-          });
-        });
+          }
+        } finally {
+          setActiveSessionId(null);
+          try {
+            await storage.saveActiveSession(null);
+          } catch (error) {
+            logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
+          }
+        }
+      })();
     } else {
+      setActiveSessionId(null);
+
+      void storage.saveActiveSession(null).catch(error => {
+        logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
+      });
+
       void storage.saveCompletionHistory(updatedHistory).catch(error => {
         logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
       });
@@ -422,33 +466,70 @@ export function useSessionsDomain({
       logger.error('SESSIONS', '中断任务时保存链条数据失败', undefined, error as Error);
     });
 
-    void storage.saveActiveSession(null).catch(error => {
-      logger.error('SESSIONS', 'Failed to clear active session after interrupt', undefined, error as Error);
-    });
-
     if (activeSessionId && storage.kind === 'supabase') {
-      storage
-        .completeTaskWithBetting(activeSessionId, false, tr('任务中断或失败', 'Task interrupted or failed'))
-        .then(result => {
-          if (!result.ok) {
+      const sessionIdToSettle = activeSessionId;
+
+      void (async () => {
+        try {
+          const result = await storage.completeTaskWithBetting(
+            sessionIdToSettle,
+            false,
+            tr('任务中断或失败', 'Task interrupted or failed')
+          );
+
+          const data: any = result.ok ? result.value : null;
+          const settledOk = result.ok && data && typeof data === 'object' && data.success === true;
+
+          if (!settledOk) {
+            const message = result.ok
+              ? typeof data?.error === 'string'
+                ? data.error
+                : typeof data?.message === 'string'
+                  ? data.message
+                  : 'Unknown error'
+              : result.error.message;
+
             logger.error('SESSIONS', '中断任务和押注结算失败', {
-              code: result.error.code,
-              message: result.error.message,
+              sessionId: sessionIdToSettle,
+              message,
+              ...(result.ok ? { data } : { code: result.error.code }),
             });
-            void storage.saveCompletionHistory(updatedHistory).catch(error => {
+            toast.warning(
+              tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
+            );
+
+            try {
+              await storage.saveCompletionHistory(updatedHistory);
+            } catch (error) {
               logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, error as Error);
-            });
-            return;
+            }
           }
-          setActiveSessionId(null);
-        })
-        .catch(error => {
+        } catch (error) {
           logger.error('SESSIONS', '中断任务和押注结算失败', undefined, error as Error);
-          void storage.saveCompletionHistory(updatedHistory).catch(saveError => {
+          toast.warning(
+            tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
+          );
+          try {
+            await storage.saveCompletionHistory(updatedHistory);
+          } catch (saveError) {
             logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, saveError as Error);
-          });
-        });
+          }
+        } finally {
+          setActiveSessionId(null);
+          try {
+            await storage.saveActiveSession(null);
+          } catch (error) {
+            logger.error('SESSIONS', 'Failed to clear active session after interrupt', undefined, error as Error);
+          }
+        }
+      })();
     } else {
+      setActiveSessionId(null);
+
+      void storage.saveActiveSession(null).catch(error => {
+        logger.error('SESSIONS', 'Failed to clear active session after interrupt', undefined, error as Error);
+      });
+
       void storage.saveCompletionHistory(updatedHistory).catch(error => {
         logger.error('SESSIONS', 'Failed to persist completion history after interrupt', undefined, error as Error);
       });
