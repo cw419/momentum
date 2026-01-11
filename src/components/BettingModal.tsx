@@ -198,11 +198,6 @@ export const BettingModal: React.FC<BettingModalProps> = ({
           onBetPlaced(result.value);
         }
         
-        // 2秒后自动关闭
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-        
       } else {
         const safeDetail = getSafeErrorDetail(result.value.message || '', language);
         setError(safeDetail ?? tr('押注失败', 'Bet failed'));

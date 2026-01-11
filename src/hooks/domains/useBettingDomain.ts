@@ -16,6 +16,7 @@ import type { BetPlacementResult } from '../../domain/betting';
 import { useStorage } from '../../storage/StorageContext';
 import { logger } from '../../utils/logger';
 import { isDev } from '../../utils/env';
+import { emitPointsChanged } from '../../utils/pointsEvents';
 
 interface UseBettingDomainParams {
   pendingChainId: string | null;
@@ -46,6 +47,8 @@ export function useBettingDomain({
       logger.debug('BETTING', 'Bet placed successfully', { betResult });
     }
 
+    emitPointsChanged();
+
     if (pendingChainId) {
       setActiveSessionId(currentSessionId);
       await handleStartChain(pendingChainId);
@@ -73,6 +76,8 @@ export function useBettingDomain({
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('BETTING', '删除取消的会话记录失败', { sessionId: currentSessionId }, err);
       }
+
+      emitPointsChanged();
     }
 
     setPendingChainId(null);

@@ -18,6 +18,7 @@ import { useStorage } from '../../storage/StorageContext';
 import { logger } from '../../utils/logger';
 import { useI18n } from '../../i18n';
 import { getSafeErrorDetail } from '../../utils/errorMessage';
+import { POINTS_CHANGED_EVENT } from '../../utils/pointsEvents';
 
 export function useCheckinDomain() {
   const { language, tr } = useI18n();
@@ -124,6 +125,19 @@ export function useCheckinDomain() {
   useEffect(() => {
     loadStats();
   }, [loadStats]);
+
+  useEffect(() => {
+    if (!isSupabase) return;
+
+    const handler = () => {
+      void loadStats();
+    };
+
+    window.addEventListener(POINTS_CHANGED_EVENT, handler);
+    return () => {
+      window.removeEventListener(POINTS_CHANGED_EVENT, handler);
+    };
+  }, [isSupabase, loadStats]);
 
   return {
     stats,

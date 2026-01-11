@@ -163,19 +163,32 @@ export async function getTodayBetAmount(ctx: SupabaseStorageContext): Promise<Re
 
     const client = ctx.getClient();
     const { data, error } = await client
-      .from('task_bets')
-      .select('bet_amount')
+      .from('point_transactions')
+      .select('transaction_type, points_change')
       .eq('user_id', user.id)
       .gte('created_at', today.toISOString())
       .lt('created_at', tomorrow.toISOString())
-      .not('bet_status', 'in', '(cancelled,refunded)');
+      .in('transaction_type', ['bet_placed', 'bet_refunded']);
 
     if (error) {
       return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to get today bet amount', cause: error });
     }
 
-    const total = (data as any[] | null)?.reduce((sum, bet) => sum + (bet.bet_amount ?? 0), 0) ?? 0;
-    return ok(total);
+    const rows = (data as Array<{ transaction_type?: string; points_change?: number }> | null) ?? [];
+
+    const totalPlaced = rows.reduce((sum, tx) => {
+      if (tx.transaction_type !== 'bet_placed') return sum;
+      const delta = typeof tx.points_change === 'number' ? tx.points_change : 0;
+      return sum + Math.abs(delta);
+    }, 0);
+
+    const totalRefunded = rows.reduce((sum, tx) => {
+      if (tx.transaction_type !== 'bet_refunded') return sum;
+      const delta = typeof tx.points_change === 'number' ? tx.points_change : 0;
+      return sum + Math.abs(delta);
+    }, 0);
+
+    return ok(Math.max(0, totalPlaced - totalRefunded));
   } catch {
     return ok(0);
   }

@@ -28,6 +28,7 @@ import { notificationManager } from '../../utils/notifications';
 import { forwardTimerManager } from '../../utils/forwardTimer';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
+import { emitPointsChanged } from '../../utils/pointsEvents';
 import { useI18n } from '../../i18n';
 
 interface UseSessionsDomainParams {
@@ -344,55 +345,19 @@ export function useSessionsDomain({
     });
 
     if (activeSessionId && storage.kind === 'supabase') {
-      const sessionIdToSettle = activeSessionId;
-
       void (async () => {
         try {
-          const result = await storage.completeTaskWithBetting(sessionIdToSettle, true, tr('任务完成', 'Task completed'));
-
-          const data: any = result.ok ? result.value : null;
-          const settledOk = result.ok && data && typeof data === 'object' && data.success === true;
-
-          if (!settledOk) {
-            const message = result.ok
-              ? typeof data?.error === 'string'
-                ? data.error
-                : typeof data?.message === 'string'
-                  ? data.message
-                  : 'Unknown error'
-              : result.error.message;
-
-            logger.error('SESSIONS', '完成任务和押注结算失败', {
-              sessionId: sessionIdToSettle,
-              message,
-              ...(result.ok ? { data } : { code: result.error.code }),
-            });
-            toast.warning(
-              tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
-            );
-
-            try {
-              await storage.saveCompletionHistory(updatedHistory);
-            } catch (error) {
-              logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, error as Error);
-            }
-          }
+          await storage.saveCompletionHistory(updatedHistory);
         } catch (error) {
-          logger.error('SESSIONS', '完成任务和押注结算失败', undefined, error as Error);
-          toast.warning(
-            tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
-          );
-          try {
-            await storage.saveCompletionHistory(updatedHistory);
-          } catch (saveError) {
-            logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, saveError as Error);
-          }
+          logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
         } finally {
           setActiveSessionId(null);
           try {
             await storage.saveActiveSession(null);
           } catch (error) {
             logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
+          } finally {
+            emitPointsChanged();
           }
         }
       })();
@@ -473,59 +438,19 @@ export function useSessionsDomain({
     });
 
     if (activeSessionId && storage.kind === 'supabase') {
-      const sessionIdToSettle = activeSessionId;
-
       void (async () => {
         try {
-          const result = await storage.completeTaskWithBetting(
-            sessionIdToSettle,
-            false,
-            tr('任务中断或失败', 'Task interrupted or failed')
-          );
-
-          const data: any = result.ok ? result.value : null;
-          const settledOk = result.ok && data && typeof data === 'object' && data.success === true;
-
-          if (!settledOk) {
-            const message = result.ok
-              ? typeof data?.error === 'string'
-                ? data.error
-                : typeof data?.message === 'string'
-                  ? data.message
-                  : 'Unknown error'
-              : result.error.message;
-
-            logger.error('SESSIONS', '中断任务和押注结算失败', {
-              sessionId: sessionIdToSettle,
-              message,
-              ...(result.ok ? { data } : { code: result.error.code }),
-            });
-            toast.warning(
-              tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
-            );
-
-            try {
-              await storage.saveCompletionHistory(updatedHistory);
-            } catch (error) {
-              logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, error as Error);
-            }
-          }
+          await storage.saveCompletionHistory(updatedHistory);
         } catch (error) {
-          logger.error('SESSIONS', '中断任务和押注结算失败', undefined, error as Error);
-          toast.warning(
-            tr('押注结算失败，积分可能未更新（数据库可能只读）', 'Bet settlement failed; points may not update (database may be read-only).')
-          );
-          try {
-            await storage.saveCompletionHistory(updatedHistory);
-          } catch (saveError) {
-            logger.error('SESSIONS', 'Failed to persist completion history after betting failure', undefined, saveError as Error);
-          }
+          logger.error('SESSIONS', 'Failed to persist completion history after interrupt', undefined, error as Error);
         } finally {
           setActiveSessionId(null);
           try {
             await storage.saveActiveSession(null);
           } catch (error) {
             logger.error('SESSIONS', 'Failed to clear active session after interrupt', undefined, error as Error);
+          } finally {
+            emitPointsChanged();
           }
         }
       })();
