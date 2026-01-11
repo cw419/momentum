@@ -76,25 +76,26 @@ export async function saveActiveSession(ctx: SupabaseStorageContext, session: Ac
 
   const client = ctx.getClient();
 
+  const formatSupabaseError = (error: unknown, fallback: string) => {
+    const e: any = error as any;
+    const parts = [
+      typeof e?.code === 'string' ? `Code ${e.code}` : null,
+      typeof e?.message === 'string' ? e.message : fallback,
+      typeof e?.details === 'string' ? e.details : null,
+      typeof e?.hint === 'string' ? e.hint : null,
+    ].filter(Boolean);
+    return parts.join(' | ');
+  };
+
   if (!session) {
-    await client.from('active_sessions').delete().eq('user_id', user.id);
+    const { error } = await client.from('active_sessions').delete().eq('user_id', user.id);
+    if (error) {
+      throw new Error(formatSupabaseError(error, 'Failed to clear active session'));
+    }
     return;
   }
 
   const sessionId = session.id;
-
-  const payloadWithNewFields: any = {
-    ...(sessionId ? { id: sessionId } : {}),
-    chain_id: session.chainId,
-    started_at: session.startedAt.toISOString(),
-    duration: session.duration,
-    is_paused: session.isPaused,
-    paused_at: session.pausedAt?.toISOString() ?? null,
-    total_paused_time: session.totalPausedTime,
-    is_forward_timer: session.isForwardTimer ?? false,
-    forward_elapsed_time: session.forwardElapsedTime ?? 0,
-    user_id: user.id,
-  };
 
   const payloadBasic: any = {
     ...(sessionId ? { id: sessionId } : {}),
@@ -107,14 +108,37 @@ export async function saveActiveSession(ctx: SupabaseStorageContext, session: Ac
     user_id: user.id,
   };
 
-  const upsert = async (payload: any) => {
-    const { error } = await client.from('active_sessions').upsert(payload, { onConflict: 'id' });
-    return error;
-  };
+  const shouldIncludeForwardFields =
+    session.isForwardTimer === true || (typeof session.forwardElapsedTime === 'number' && session.forwardElapsedTime > 0);
+  const payload: any = { ...payloadBasic };
 
-  // Try write with new fields first; if schema lacks columns, fallback to basic.
-  const error = await upsert(payloadWithNewFields);
-  if (error && (error.code === '42703' || error.message?.includes('is_forward_timer') || error.message?.includes('forward_elapsed_time'))) {
-    await upsert(payloadBasic);
+  if (shouldIncludeForwardFields) {
+    payload.is_forward_timer = session.isForwardTimer ?? false;
+    payload.forward_elapsed_time = session.forwardElapsedTime ?? 0;
   }
+
+  const { error } = await client.from('active_sessions').upsert(payload, { onConflict: 'id' });
+
+  if (!error) return;
+
+  const errorMessage = (error as any)?.message ?? 'Failed to persist active session';
+  const errorCode = (error as any)?.code;
+
+  // If schema lacks forward-timer columns, retry without them.
+  const isMissingForwardFields =
+    shouldIncludeForwardFields &&
+    (errorCode === '42703' ||
+      errorCode === 'PGRST204' ||
+      errorMessage.includes('is_forward_timer') ||
+      errorMessage.includes('forward_elapsed_time'));
+
+  if (isMissingForwardFields) {
+    const { error: fallbackError } = await client.from('active_sessions').upsert(payloadBasic, { onConflict: 'id' });
+    if (fallbackError) {
+      throw new Error(formatSupabaseError(fallbackError, 'Failed to persist active session'));
+    }
+    return;
+  }
+
+  throw new Error(formatSupabaseError(error, errorMessage));
 }

@@ -247,6 +247,12 @@ export function useSessionsDomain({
 
     void storage.saveActiveSession(activeSession).catch(error => {
       logger.error('SESSIONS', 'Failed to persist active session', { chainId }, error as Error);
+      toast.error(
+        tr(
+          '无法保存任务会话：数据库可能处于只读状态或写入被拒绝（查看控制台）',
+          'Failed to persist session: database may be read-only or write is denied (check console).'
+        )
+      );
     });
     void storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
       logger.error('SESSIONS', 'Failed to persist scheduled sessions', { chainId }, error as Error);

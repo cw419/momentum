@@ -170,7 +170,9 @@ export async function getTodayBetAmount(ctx: SupabaseStorageContext): Promise<Re
       .lt('created_at', tomorrow.toISOString())
       .not('bet_status', 'in', '(cancelled,refunded)');
 
-    if (error) return ok(0);
+    if (error) {
+      return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to get today bet amount', cause: error });
+    }
 
     const total = (data as any[] | null)?.reduce((sum, bet) => sum + (bet.bet_amount ?? 0), 0) ?? 0;
     return ok(total);
