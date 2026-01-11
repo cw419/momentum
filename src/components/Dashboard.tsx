@@ -263,6 +263,16 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     <Download size={16} />
                     <span className="font-chinese font-medium">{tr('数据管理', 'Data')}</span>
                   </button>
+                  {onOpenRSIP && (
+                    <button
+                      onClick={onOpenRSIP}
+                      className="bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-6 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                      title={tr('国策树（RSIP）', 'RSIP Policy Tree')}
+                    >
+                      <TreePine size={16} />
+                      <span className="font-chinese font-medium">{tr('国策树', 'RSIP Tree')}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
