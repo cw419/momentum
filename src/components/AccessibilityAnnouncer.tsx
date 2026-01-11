@@ -50,11 +50,10 @@ export const useThemeAnnouncer = () => {
   const { tr } = useI18n();
   const [announcement, setAnnouncement] = React.useState('');
 
-  const announceThemeChange = (theme: 'light' | 'dark' | 'system') => {
+  const announceThemeChange = (theme: 'light' | 'dark') => {
     const messages = {
       light: tr('已切换到浅色模式', 'Switched to light mode'),
       dark: tr('已切换到深色模式', 'Switched to dark mode'),
-      system: tr('已切换到跟随系统模式', 'Switched to system theme'),
     };
     
     setAnnouncement(messages[theme]);

@@ -1,37 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useI18n } from '../i18n';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'light' | 'dark';
 
 export const ThemeToggle: React.FC = () => {
     const { tr } = useI18n();
     const [theme, setTheme] = useState<Theme>(() => {
         if (typeof window !== 'undefined') {
-            return (localStorage.getItem('theme') as Theme) || 'system';
+            const stored = localStorage.getItem('theme');
+            if (stored === 'light' || stored === 'dark') return stored;
+
+            // Migrate old `system` value (or unset/invalid) to an explicit theme.
+            const prefersDark =
+                typeof window.matchMedia === 'function' &&
+                window.matchMedia('(prefers-color-scheme: dark)').matches;
+            return prefersDark ? 'dark' : 'light';
         }
-        return 'system';
+        return 'light';
     });
 
     useEffect(() => {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
-
-        if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            root.classList.add(systemTheme);
-        } else {
-            root.classList.add(theme);
-        }
+        if (theme === 'dark') root.classList.add('dark');
         localStorage.setItem('theme', theme);
     }, [theme]);
 
     const cycleTheme = () => {
-        setTheme((prev) => {
-            if (prev === 'light') return 'dark';
-            if (prev === 'dark') return 'system';
-            return 'light';
-        });
+        setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
     };
 
     return (
@@ -43,7 +40,6 @@ export const ThemeToggle: React.FC = () => {
         >
             {theme === 'light' && <Sun size={18} strokeWidth={2} />}
             {theme === 'dark' && <Moon size={18} strokeWidth={2} />}
-            {theme === 'system' && <Monitor size={18} strokeWidth={2} />}
         </button>
     );
 };

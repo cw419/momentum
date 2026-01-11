@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { applyThemeWithTransition } from '../utils/theme';
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark';
 
 interface UseDarkModeReturn {
   theme: Theme;
@@ -12,24 +12,24 @@ interface UseDarkModeReturn {
 
 export const useDarkMode = (): UseDarkModeReturn => {
   const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'light';
+
     // Check localStorage first
-    const stored = localStorage.getItem('theme') as Theme;
-    if (stored && ['light', 'dark', 'system'].includes(stored)) {
-      return stored;
-    }
-    return 'system';
+    const stored = localStorage.getItem('theme');
+    if (stored === 'light' || stored === 'dark') return stored;
+
+    // Migrate old `system` value (or unset/invalid) to an explicit theme.
+    const prefersDark =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
   });
 
   const [isDark, setIsDark] = useState(false);
 
-  // Function to get system preference
-  const getSystemPreference = (): boolean => {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  };
-
   // Function to apply theme to document
-  const applyTheme = (currentTheme: Theme, systemPreference: boolean) => {
-    const shouldBeDark = currentTheme === 'dark' || (currentTheme === 'system' && systemPreference);
+  const applyTheme = (currentTheme: Theme) => {
+    const shouldBeDark = currentTheme === 'dark';
     
     // Apply theme with smooth transition
     applyThemeWithTransition(shouldBeDark ? 'dark' : 'light');
@@ -56,11 +56,10 @@ export const useDarkMode = (): UseDarkModeReturn => {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
     
-    const systemPreference = getSystemPreference();
-    applyTheme(newTheme, systemPreference);
+    applyTheme(newTheme);
   };
 
-  // Toggle between light and dark (skips system)
+  // Toggle between light and dark
   const toggleTheme = () => {
     const newTheme = isDark ? 'light' : 'dark';
     setTheme(newTheme);
@@ -68,19 +67,7 @@ export const useDarkMode = (): UseDarkModeReturn => {
 
   // Initialize theme on mount
   useEffect(() => {
-    const systemPreference = getSystemPreference();
-    applyTheme(theme, systemPreference);
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (theme === 'system') {
-        applyTheme('system', e.matches);
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    applyTheme(theme);
   }, [theme]);
 
   return {

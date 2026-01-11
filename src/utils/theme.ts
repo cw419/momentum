@@ -2,7 +2,7 @@
  * Theme utility functions for accessibility and performance
  */
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark';
 
 // Color contrast ratios for WCAG AA compliance
 export const CONTRAST_RATIOS = {
