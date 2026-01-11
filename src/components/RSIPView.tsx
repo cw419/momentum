@@ -149,11 +149,20 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     const remaining = isRunning ? endsAt - now : 0;
     const timerMinutes = node.timerMinutes || 15;
 
+    const baseZ = Number(style.top) || 0;
+    const zIndex = reparentingId === node.id
+      ? 90
+      : pinnedId === node.id
+        ? 80
+        : hoveredChainIds.has(node.id)
+          ? 70
+          : 10 + Math.floor(baseZ / 10);
+
     return (
       <div
         ref={el => nodeRefs.current[node.id] = el}
         key={node.id}
-        style={style}
+        style={{ ...style, zIndex }}
         onClick={() => {
           if (reparentingId) {
             if (isInvalidParent) {
@@ -174,8 +183,8 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
             {node.emoji || '📝'}
           </div>
           <div className="flex-1">
-            <h4 className="text-md font-bold font-chinese text-gray-900 dark:text-slate-100">{node.title}</h4>
-            <p className="text-xs text-gray-600 dark:text-slate-400 font-chinese whitespace-pre-wrap mt-1">{node.rule}</p>
+            <h4 className="text-md font-bold font-chinese text-gray-900 dark:text-slate-100 rsip-title-clamp">{node.title}</h4>
+            <p className="text-xs text-gray-600 dark:text-slate-400 font-chinese rsip-rule-clamp mt-1">{node.rule}</p>
           </div>
         </div>
         <div className="flex items-center justify-between mt-3">
@@ -335,7 +344,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
 
     const positions: Record<string, { node: RSIPTreeNode; style: React.CSSProperties }> = {};
     const LEVEL_WIDTH = 320; // 每列宽度
-    const NODE_HEIGHT = 160; // 节点高度（含间距）
+    const NODE_HEIGHT = 220; // 节点高度（含间距，避免长文本遮挡）
     const START_X = 20;
     const START_Y = 20;
 
@@ -543,7 +552,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     if (entries.length === 0) return null;
 
     const NODE_WIDTH = 256; // w-64
-    const NODE_HEIGHT = 160; // layout spacing
+    const NODE_HEIGHT = 220; // layout spacing
 
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;

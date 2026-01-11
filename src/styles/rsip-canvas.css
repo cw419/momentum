@@ -38,6 +38,21 @@
   opacity: 0.75;
 }
 
+.rsip-title-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.rsip-rule-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  white-space: normal;
+}
+
 .dark .rsip-canvas-wrapper {
   background-color: rgba(15, 23, 42, 0.34);
   border-color: rgba(148, 163, 184, 0.16);
