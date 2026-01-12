@@ -6,6 +6,9 @@ import { useI18n } from '../i18n';
 import { TransformComponent, TransformWrapper, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { useCanvasState, type CanvasState } from '../hooks/useCanvasState';
 
+const MIN_RSIP_NODE_SPACING_Y = 220;
+const RSIP_NODE_SPACING_PADDING_Y = 40;
+
 interface RSIPViewProps {
   nodes: RSIPNode[];
   meta: RSIPMeta;
@@ -304,6 +307,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   const [hoveredChainIds, setHoveredChainIds] = useState<Set<string>>(new Set());
   
   // 布局状态
+  const [layoutNodeHeight, setLayoutNodeHeight] = useState<number>(MIN_RSIP_NODE_SPACING_Y);
   const [nodePositions, setNodePositions] = useState<Record<string, { node: RSIPTreeNode; style: React.CSSProperties }>>({});
   const [containerHeight, setContainerHeight] = useState<number>(600);
   const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
@@ -344,7 +348,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
 
     const positions: Record<string, { node: RSIPTreeNode; style: React.CSSProperties }> = {};
     const LEVEL_WIDTH = 320; // 每列宽度
-    const NODE_HEIGHT = 220; // 节点高度（含间距，避免长文本遮挡）
+    const NODE_HEIGHT = layoutNodeHeight; // 节点高度（含间距，避免长文本遮挡）
     const START_X = 20;
     const START_Y = 20;
 
@@ -403,7 +407,31 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     setNodePositions(positions);
     setContainerHeight(Math.max(600, currentY + 100));
 
-  }, [filteredTree]);
+  }, [filteredTree, layoutNodeHeight]);
+
+  useEffect(() => {
+    const measureAndUpdate = () => {
+      const heights = Object.values(nodeRefs.current)
+        .map(el => el?.offsetHeight ?? 0)
+        .filter(h => h > 0);
+      if (heights.length === 0) return;
+
+      const maxCardHeight = Math.max(...heights);
+      const nextSpacing = Math.max(
+        MIN_RSIP_NODE_SPACING_Y,
+        Math.ceil(maxCardHeight + RSIP_NODE_SPACING_PADDING_Y)
+      );
+
+      setLayoutNodeHeight(prev => (nextSpacing > prev ? nextSpacing : prev));
+    };
+
+    const raf = window.requestAnimationFrame(measureAndUpdate);
+    window.addEventListener('resize', measureAndUpdate);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', measureAndUpdate);
+    };
+  }, [nodePositions]);
   
   const getAncestors = useMemo(() => (id?: string | null): string[] => {
     const res: string[] = [];
@@ -508,7 +536,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         const styleLeft = Number(pos.style.left);
         const styleTop = Number(pos.style.top);
         const width = 256; // w-64
-        const height = 120; // approx height
+        const height = Math.max(120, layoutNodeHeight - RSIP_NODE_SPACING_PADDING_Y); // approx card height
         
         const x = side === 'left' ? styleLeft : styleLeft + width;
         const y = styleTop + height / 2;
@@ -545,14 +573,14 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     const t = setTimeout(compute, 50); 
     window.addEventListener('resize', compute);
     return () => { clearTimeout(t); window.removeEventListener('resize', compute); };
-  }, [filteredTree, hoveredChainIds, nodePositions]);
+  }, [filteredTree, hoveredChainIds, nodePositions, layoutNodeHeight]);
 
   const contentBounds = useMemo(() => {
     const entries = Object.values(nodePositions);
     if (entries.length === 0) return null;
 
     const NODE_WIDTH = 256; // w-64
-    const NODE_HEIGHT = 220; // layout spacing
+    const NODE_HEIGHT = layoutNodeHeight; // layout spacing
 
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
@@ -574,7 +602,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
       width: Math.max(1, maxX - minX),
       height: Math.max(1, maxY - minY),
     };
-  }, [nodePositions]);
+  }, [nodePositions, layoutNodeHeight]);
 
   const fitToContent = useCallback(() => {
     const viewport = viewportRef.current;
