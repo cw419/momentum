@@ -219,6 +219,14 @@ npm run dev
 npm run build
 ```
 
+## Sponsors
+
+谢谢赞助者们的支持！我会继续努力哒 (≧▽≦)ゞ💖
+
+- [旅行青呱](https://www.zhihu.com/people/mo-cun-dan-tui-ren)
+
+![alt text](image.png)
+
 ## 📄 许可证
 
 本项目采用 GPL-3.0-only license 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。

@@ -226,6 +226,14 @@ npm run build
 npm run preview
 ```
 
+## Sponsors
+
+Big love to our sponsors for making continued maintenance possible (๑>◡<๑)ﾉ ❤️
+
+- [旅行青呱](https://www.zhihu.com/people/mo-cun-dan-tui-ren)
+
+![alt text](image.png)
+
 ## 📄 License
 
 This project is licensed under the GPL-3.0-only license - see the [LICENSE](LICENSE) file for details.
