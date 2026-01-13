@@ -15,8 +15,8 @@
   }
 
   /* 按钮优化 */
-  button, 
-  .btn,
+  button:not([role="switch"]), 
+  .btn:not([role="switch"]),
   input[type="submit"],
   input[type="button"] {
     min-height: 44px;

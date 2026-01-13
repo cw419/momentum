@@ -24,7 +24,7 @@ body {
 }
 
 /* 交互元素的精确touch-action控制 */
-button, .btn, [role="button"] {
+button, .btn, [role="button"], [role="switch"] {
   /* 按钮只允许点击，禁止滚动 */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -67,8 +67,8 @@ input, textarea, select {
   justify-content: center;
 }
 
-/* 按钮触摸优化 */
-button:not(.mobile-optimized-slider), .btn {
+/* 按钮触摸优化（不影响开关控件本身尺寸） */
+button:not(.mobile-optimized-slider):not([role="switch"]), .btn:not([role="switch"]) {
   min-height: 44px;
   padding: 12px 16px;
 }

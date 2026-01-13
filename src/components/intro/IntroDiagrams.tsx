@@ -121,7 +121,7 @@ function PlotPanel({
 
       // Clamp to avoid drawing way outside
       // SVG Coord: y increases down. Positive val -> y < yZero.
-      let py = yZero - val * yMaxHeight;
+      const py = yZero - val * yMaxHeight;
 
       // Soft Clamp at top/bottom of the panel to prevent ugly overlaps
       // Panel top is yTop (~gy + 18), bottom is y0 + something

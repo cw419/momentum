@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, LogOut, AlertCircle, Dices, Loader2 } from 'lucide-react';
+import { X, User, LogOut, AlertCircle, Dices } from 'lucide-react';
 import type { AuthUser } from '../domain/auth';
 import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/StorageContext';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 import { getSafeErrorDetail } from '../utils/errorMessage';
+import { Switch } from './Switch';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -298,31 +299,14 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                     </div>
                   </div>
                   
-                  {/* 切换开关 */}
-                  <button
-                    onClick={handleGamblingToggle}
+                  <Switch
+                    checked={gamblingSettings.gambling_mode_enabled}
+                    onCheckedChange={() => handleGamblingToggle()}
                     disabled={gamblingLoading}
-                    className={`
-                      relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out
-                      ${gamblingSettings.gambling_mode_enabled 
-                        ? 'bg-gradient-to-r from-red-500 to-orange-500' 
-                        : 'bg-gray-300 dark:bg-slate-600'
-                      }
-                      ${gamblingLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    `}
-                  >
-                    <span
-                      className={`
-                        inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out
-                        ${gamblingSettings.gambling_mode_enabled ? 'translate-x-6' : 'translate-x-1'}
-                      `}
-                    />
-                    {gamblingLoading && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="w-3 h-3 animate-spin text-white" />
-                      </div>
-                    )}
-                  </button>
+                    loading={gamblingLoading}
+                    variant="danger"
+                    aria-label={tr('切换狂赌模式', 'Toggle gambling mode')}
+                  />
                 </div>
                 
                 {/* 状态说明 */}
