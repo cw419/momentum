@@ -167,12 +167,13 @@ export class RuleClassificationService {
       
       if (!isValidForAction) {
         const actionName = actionType === 'pause' ? '暂停' : '提前完成';
+        const messageActionName = actionType === 'pause' ? '暂停计时' : actionName;
         const typeName = rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
         
         throw EnhancedExceptionRuleException.createUserFriendly(
           ExceptionRuleError.RULE_TYPE_MISMATCH,
           `规则类型与操作不匹配`,
-          `规则 "${rule.name}" 是${typeName}类型，不能用于${actionName}操作`,
+          `规则 "${rule.name}" 是${typeName}类型，不能用于${messageActionName}操作`,
           { rule, actionType, expectedType: actionName, actualType: typeName }
         ).addSuggestedAction(`创建${actionName}类型的规则`).addSuggestedAction(`选择${actionName}类型的规则`);
       }

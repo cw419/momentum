@@ -14,6 +14,9 @@ import {
 import { logger } from '../utils/logger';
 import { isDev } from '../utils/env';
 
+type ExceptionRuleCreateInput = Pick<ExceptionRule, 'name' | 'type'> &
+  Partial<Pick<ExceptionRule, 'description' | 'chainId' | 'scope' | 'isArchived'>>;
+
 export class ExceptionRuleStorageService {
   private static readonly STORAGE_KEY = 'momentum_exception_rules';
   private static readonly USAGE_RECORDS_KEY = 'momentum_rule_usage_records';
@@ -26,12 +29,26 @@ export class ExceptionRuleStorageService {
       const data = localStorage.getItem(ExceptionRuleStorageService.STORAGE_KEY);
       if (!data) return [];
       
-      const rules = JSON.parse(data) as ExceptionRule[];
-      return rules.map(rule => ({
-        ...rule,
-        createdAt: new Date(rule.createdAt),
-        lastUsedAt: rule.lastUsedAt ? new Date(rule.lastUsedAt) : undefined
-      }));
+      const rules = JSON.parse(data) as Array<Partial<ExceptionRule> & { createdAt: string; lastUsedAt?: string | null }>;
+      return rules.map((rule) => {
+        const normalizedChainId =
+          typeof rule.chainId === 'string' && rule.chainId.trim().length > 0 ? rule.chainId : undefined;
+
+        const normalizedScope: ExceptionRule['scope'] =
+          rule.scope === 'chain' || rule.scope === 'global'
+            ? rule.scope
+            : normalizedChainId
+              ? 'chain'
+              : 'global';
+
+        return {
+          ...(rule as ExceptionRule),
+          chainId: normalizedScope === 'chain' ? normalizedChainId : undefined,
+          scope: normalizedScope,
+          createdAt: new Date(rule.createdAt),
+          lastUsedAt: rule.lastUsedAt ? new Date(rule.lastUsedAt) : undefined,
+        };
+      });
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
@@ -60,39 +77,53 @@ export class ExceptionRuleStorageService {
   /**
    * 创建新的例外规则
    */
-  async createRule(rule: Omit<ExceptionRule, 'id' | 'createdAt' | 'usageCount' | 'isActive'>): Promise<ExceptionRule> {
+  async createRule(rule: ExceptionRuleCreateInput): Promise<ExceptionRule> {
     try {
+      const normalizedChainId =
+        typeof rule.chainId === 'string' && rule.chainId.trim().length > 0 ? rule.chainId : undefined;
+      const scope: ExceptionRule['scope'] =
+        rule.scope === 'chain' || rule.scope === 'global'
+          ? rule.scope
+          : normalizedChainId
+            ? 'chain'
+            : 'global';
+
+      const normalizedRule = {
+        name: rule.name,
+        type: rule.type,
+        description: rule.description?.trim() || undefined,
+        scope,
+        chainId: scope === 'chain' ? normalizedChainId : undefined,
+        isArchived: rule.isArchived,
+      };
+
       // 验证规则数据（创建模式）
-      this.validateRule(rule, true);
+      this.validateRule(normalizedRule, true);
       
       // 验证规则名称唯一性（链专属规则只检查同链内的重复，全局规则检查所有规则）
       const existingRules = await this.getRules();
       const isDuplicate = existingRules.some(r => {
-        if (r.name !== rule.name || !r.isActive) return false;
+        if (r.name !== normalizedRule.name || !r.isActive) return false;
         
         // 如果是链专属规则，只检查同链内的重复
-        if (rule.chainId && r.chainId) {
-          return r.chainId === rule.chainId;
+        if (normalizedRule.scope === 'chain') {
+          return r.scope === 'chain' && r.chainId === normalizedRule.chainId;
         }
         
         // 如果是全局规则，检查所有全局规则
-        if (rule.scope === 'global' && r.scope === 'global') {
-          return true;
-        }
-        
-        return false;
+        return r.scope === 'global';
       });
       
       if (isDuplicate) {
-        const scopeText = rule.chainId ? '此链中' : '全局';
+        const scopeText = normalizedRule.scope === 'chain' ? '此链中' : '全局';
         throw new ExceptionRuleException(
           ExceptionRuleError.DUPLICATE_RULE_NAME,
-          `规则名称 "${rule.name}" 在${scopeText}已存在`
+          `规则名称 "${normalizedRule.name}" 在${scopeText}已存在`
         );
       }
 
       const newRule: ExceptionRule = {
-        ...rule,
+        ...normalizedRule,
         id: this.generateId(),
         createdAt: new Date(),
         usageCount: 0,
@@ -310,9 +341,15 @@ export class ExceptionRuleStorageService {
    */
   async getUsageRecordsByRuleId(ruleId: string, limit?: number): Promise<RuleUsageRecord[]> {
     const records = await this.getUsageRecords();
+    const recordOrder = new Map(records.map((record, index) => [record.id, index]));
     const filtered = records
       .filter(record => record.ruleId === ruleId)
-      .sort((a, b) => b.usedAt.getTime() - a.usedAt.getTime());
+      .sort((a, b) => {
+        const timeDiff = b.usedAt.getTime() - a.usedAt.getTime();
+        if (timeDiff !== 0) return timeDiff;
+
+        return (recordOrder.get(b.id) ?? 0) - (recordOrder.get(a.id) ?? 0);
+      });
     
     return limit ? filtered.slice(0, limit) : filtered;
   }
@@ -342,21 +379,29 @@ export class ExceptionRuleStorageService {
       });
     }
     
-    if (!rule.name || rule.name.trim().length === 0) {
+    // 创建时 name 必填；更新时仅校验被提供的字段
+    if (rule.name !== undefined) {
+      if (rule.name.trim().length === 0) {
+        throw new ExceptionRuleException(
+          ExceptionRuleError.VALIDATION_ERROR,
+          '规则名称不能为空'
+        );
+      }
+
+      if (rule.name.length > 100) {
+        throw new ExceptionRuleException(
+          ExceptionRuleError.VALIDATION_ERROR,
+          '规则名称不能超过100个字符'
+        );
+      }
+    } else if (isCreating) {
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
         '规则名称不能为空'
       );
     }
 
-    if (rule.name.length > 100) {
-      throw new ExceptionRuleException(
-        ExceptionRuleError.VALIDATION_ERROR,
-        '规则名称不能超过100个字符'
-      );
-    }
-
-    // 创建规则时，类型是必需的
+    // 创建规则时，类型是必需的（更新时只校验传入的 type）
     if (isCreating && !rule.type) {
       logger.error('EXCEPTION_RULE_STORAGE', '规则类型验证失败', {
         isCreating,
@@ -373,7 +418,7 @@ export class ExceptionRuleStorageService {
       );
     }
 
-    if (rule.type && !Object.values(ExceptionRuleType).includes(rule.type)) {
+    if (rule.type !== undefined && !Object.values(ExceptionRuleType).includes(rule.type)) {
       throw new ExceptionRuleException(
         ExceptionRuleError.INVALID_RULE_TYPE,
         `无效的规则类型: ${rule.type}`
@@ -385,6 +430,29 @@ export class ExceptionRuleStorageService {
         ExceptionRuleError.VALIDATION_ERROR,
         '规则描述不能超过500个字符'
       );
+    }
+
+    if (isCreating) {
+      if (rule.scope !== undefined && rule.scope !== 'chain' && rule.scope !== 'global') {
+        throw new ExceptionRuleException(
+          ExceptionRuleError.VALIDATION_ERROR,
+          '规则作用域必须为 "chain" 或 "global"'
+        );
+      }
+
+      const inferredScope: ExceptionRule['scope'] =
+        rule.scope === 'chain' || rule.scope === 'global'
+          ? rule.scope
+          : rule.chainId && rule.chainId.trim().length > 0
+            ? 'chain'
+            : 'global';
+
+      if (inferredScope === 'chain' && (!rule.chainId || rule.chainId.trim().length === 0)) {
+        throw new ExceptionRuleException(
+          ExceptionRuleError.VALIDATION_ERROR,
+          '链专属规则必须指定 chainId'
+        );
+      }
     }
   }
 

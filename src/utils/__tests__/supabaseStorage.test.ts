@@ -1,35 +1,18 @@
 import { SupabaseStorage } from '../supabaseStorage';
 import { Chain } from '../../types';
+import { getCurrentUser, isUserAuthenticated, supabase, waitForAuthentication } from '../../lib/supabase';
 
 // Mock Supabase
-jest.mock('../lib/supabase', () => ({
+vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          order: jest.fn(() => ({
-            data: [],
-            error: null
-          }))
-        }))
-      })),
-      upsert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          data: [],
-          error: null
-        }))
-      })),
-      delete: jest.fn(() => ({
-        in: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            error: null
-          }))
-        }))
-      }))
-    }))
+    from: vi.fn(),
   },
-  getCurrentUser: jest.fn(() => Promise.resolve({ id: 'test-user-id' }))
+  getCurrentUser: vi.fn(() => Promise.resolve({ id: 'test-user-id' })),
+  waitForAuthentication: vi.fn(() => Promise.resolve({ user: { id: 'test-user-id' }, isAuthenticated: true })),
+  isUserAuthenticated: vi.fn(() => Promise.resolve(true)),
 }));
+
+const mockSupabase = supabase as unknown as { from: ReturnType<typeof vi.fn> };
 
 const createMockChain = (overrides: Partial<Chain> = {}): Chain => ({
   id: 'test-id',
@@ -60,21 +43,52 @@ describe('SupabaseStorage', () => {
 
   beforeEach(() => {
     storage = new SupabaseStorage();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+
+    (getCurrentUser as any).mockReset();
+    (waitForAuthentication as any).mockReset();
+    (isUserAuthenticated as any).mockReset();
+    mockSupabase.from.mockReset();
+
+    (getCurrentUser as any).mockResolvedValue({ id: 'test-user-id' });
+    (waitForAuthentication as any).mockResolvedValue({ user: { id: 'test-user-id' }, isAuthenticated: true });
+    (isUserAuthenticated as any).mockResolvedValue(true);
+
+    mockSupabase.from.mockImplementation(() => ({
+      select: () => ({
+        eq: () => ({
+          order: () => ({
+            data: [],
+            error: null,
+          }),
+        }),
+      }),
+      upsert: () => ({
+        select: () => ({
+          data: [],
+          error: null,
+        }),
+      }),
+      delete: () => ({
+        in: () => ({
+          eq: () => ({
+            error: null,
+          }),
+        }),
+      }),
+    }));
   });
 
   describe('getChains', () => {
     it('should return empty array when user is not authenticated', async () => {
-      const { getCurrentUser } = require('../lib/supabase');
-      getCurrentUser.mockResolvedValueOnce(null);
+      (getCurrentUser as any).mockResolvedValueOnce(null);
 
       const result = await storage.getChains();
       expect(result).toEqual([]);
     });
 
     it('should handle database errors gracefully', async () => {
-      const { supabase } = require('../lib/supabase');
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: () => ({
           eq: () => ({
             order: () => ({
@@ -113,8 +127,7 @@ describe('SupabaseStorage', () => {
         last_completed_at: null,
       }];
 
-      const { supabase } = require('../lib/supabase');
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: () => ({
           eq: () => ({
             order: () => ({
@@ -134,56 +147,42 @@ describe('SupabaseStorage', () => {
 
   describe('saveChains', () => {
     it('should throw error when user is not authenticated', async () => {
-      const { getCurrentUser } = require('../lib/supabase');
-      getCurrentUser.mockResolvedValueOnce(null);
+      (waitForAuthentication as any).mockResolvedValueOnce({ user: null, isAuthenticated: false });
 
       const chains = [createMockChain()];
-      await expect(storage.saveChains(chains)).rejects.toThrow('用户未认证');
+      await expect(storage.saveChains(chains)).rejects.toThrow('User authentication failed or timed out');
     });
 
     it('should handle missing columns gracefully with fallback', async () => {
       const chains = [createMockChain({ id: 'chain1', name: 'Test' })];
 
-      const { supabase } = require('../lib/supabase');
-      
-      // Mock schema verification to return missing columns
-      supabase.from
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              in: () => ({
-                data: [],
-                error: null
-              })
-            })
-          })
-        })
-        // Mock existing chains query
+      mockSupabase.from
+        // Existing chains query
         .mockReturnValueOnce({
           select: () => ({
             eq: () => ({
               data: [],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         })
-        // Mock first upsert attempt (with new columns) - fails
+        // First upsert attempt fails (missing column)
         .mockReturnValueOnce({
           upsert: () => ({
             select: () => ({
               data: null,
-              error: { code: 'PGRST204', message: "Could not find the 'group_expires_at' column" }
-            })
-          })
+              error: { code: 'PGRST204', message: "Could not find the 'group_expires_at' column" },
+            }),
+          }),
         })
-        // Mock second upsert attempt (fallback) - succeeds
+        // Fallback upsert succeeds
         .mockReturnValueOnce({
           upsert: () => ({
             select: () => ({
               data: [{ id: 'chain1' }],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         });
 
       await expect(storage.saveChains(chains)).resolves.not.toThrow();
@@ -192,43 +191,24 @@ describe('SupabaseStorage', () => {
     it('should save chains successfully with complete schema', async () => {
       const chains = [createMockChain({ id: 'chain1', name: 'Test' })];
 
-      const { supabase } = require('../lib/supabase');
-      
-      // Mock schema verification to return all columns exist
-      supabase.from
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              in: () => ({
-                data: [
-                  { column_name: 'is_durationless' },
-                  { column_name: 'time_limit_hours' },
-                  { column_name: 'time_limit_exceptions' },
-                  { column_name: 'group_started_at' },
-                  { column_name: 'group_expires_at' }
-                ],
-                error: null
-              })
-            })
-          })
-        })
-        // Mock existing chains query
+      mockSupabase.from
+        // Existing chains query
         .mockReturnValueOnce({
           select: () => ({
             eq: () => ({
               data: [],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         })
-        // Mock successful upsert
+        // Upsert succeeds on first attempt
         .mockReturnValueOnce({
           upsert: () => ({
             select: () => ({
               data: [{ id: 'chain1' }],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         });
 
       await expect(storage.saveChains(chains)).resolves.not.toThrow();
@@ -237,28 +217,18 @@ describe('SupabaseStorage', () => {
     it('should handle network errors with retry logic', async () => {
       const chains = [createMockChain({ id: 'chain1', name: 'Test' })];
 
-      const { supabase } = require('../lib/supabase');
-      
       let attemptCount = 0;
-      supabase.from
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              in: () => ({
-                data: [],
-                error: null
-              })
-            })
-          })
-        })
+      mockSupabase.from
+        // Existing chains query
         .mockReturnValueOnce({
           select: () => ({
             eq: () => ({
               data: [],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         })
+        // Upsert retries until success
         .mockImplementation(() => ({
           upsert: () => ({
             select: () => {
@@ -266,81 +236,37 @@ describe('SupabaseStorage', () => {
               if (attemptCount < 3) {
                 return {
                   data: null,
-                  error: { message: 'Network error', code: 'NETWORK_ERROR' }
+                  error: { message: 'Network error', code: 'NETWORK_ERROR' },
                 };
               }
               return {
                 data: [{ id: 'chain1' }],
-                error: null
+                error: null,
               };
-            }
-          })
+            },
+          }),
         }));
 
       await expect(storage.saveChains(chains)).resolves.not.toThrow();
-      expect(attemptCount).toBeGreaterThan(1);
+      expect(attemptCount).toBe(3);
     });
   });
 
   describe('verifySchemaColumns', () => {
-    it('should return missing columns when they do not exist', async () => {
-      const { supabase } = require('../lib/supabase');
-      supabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            in: () => ({
-              data: [{ column_name: 'existing_column' }],
-              error: null
-            })
-          })
-        })
-      });
+    it('should skip schema verification and return conservative result', async () => {
+      const result = await storage.verifySchemaColumns('test_table', ['column1']);
 
-      const result = await storage.verifySchemaColumns('test_table', ['existing_column', 'missing_column']);
-      
-      expect(result.hasAllColumns).toBe(false);
-      expect(result.missingColumns).toEqual(['missing_column']);
-    });
-
-    it('should return success when all columns exist', async () => {
-      const { supabase } = require('../lib/supabase');
-      supabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            in: () => ({
-              data: [
-                { column_name: 'column1' },
-                { column_name: 'column2' }
-              ],
-              error: null
-            })
-          })
-        })
-      });
-
-      const result = await storage.verifySchemaColumns('test_table', ['column1', 'column2']);
-      
       expect(result.hasAllColumns).toBe(true);
       expect(result.missingColumns).toEqual([]);
+      expect(result.error).toContain('Schema verification');
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
-    it('should handle schema verification errors', async () => {
-      const { supabase } = require('../lib/supabase');
-      supabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            in: () => ({
-              data: null,
-              error: { message: 'Permission denied' }
-            })
-          })
-        })
-      });
+    it('should cache schema verification results within session', async () => {
+      const result1 = await storage.verifySchemaColumns('test_table', ['column1']);
+      const result2 = await storage.verifySchemaColumns('test_table', ['column1']);
 
-      const result = await storage.verifySchemaColumns('test_table', ['column1']);
-      
-      expect(result.hasAllColumns).toBe(false);
-      expect(result.error).toBe('Permission denied');
+      expect(result2).toEqual(result1);
     });
   });
 });

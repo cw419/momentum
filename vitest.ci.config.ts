@@ -9,11 +9,18 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: [
-      'src/services/__tests__/CheckinService.test.ts',
-      'src/services/__tests__/RuleClassificationService.test.ts',
-      'src/components/__tests__/PureDOMSlider.mobile.test.tsx',
-      'src/utils/__tests__/time.formatting.test.ts'
+      'src/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'src/**/__tests__/**/*.{js,ts,jsx,tsx}'
     ],
-    exclude: ['**/node_modules/**', '**/dist/**']
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/*integration.test.*',
+      '**/*db.test.*',
+      '**/*performance.test.*',
+      '**/__tests__/**/*.integration.*',
+      '**/__tests__/**/*.db.*',
+      '**/__tests__/**/*.performance.*'
+    ]
   }
 });

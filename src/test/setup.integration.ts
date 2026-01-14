@@ -22,6 +22,7 @@ afterEach(() => {
 // Clean up after all tests
 afterAll(() => {
   server.close();
+  vi.useRealTimers();
 });
 
 // Mock environment variables for integration tests

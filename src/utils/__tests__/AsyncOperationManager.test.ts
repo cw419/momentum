@@ -5,7 +5,7 @@ describe('AsyncOperationManager', () => {
 
   beforeEach(() => {
     manager = new AsyncOperationManager();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -14,8 +14,8 @@ describe('AsyncOperationManager', () => {
 
   describe('basic operations', () => {
     it('should execute operation successfully', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('success');
-      const onSuccess = jest.fn();
+      const mockOperation = vi.fn().mockResolvedValue('success');
+      const onSuccess = vi.fn();
 
       const result = await manager.executeOperation({
         id: 'test-op',
@@ -29,8 +29,8 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should handle operation errors', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('Test error'));
-      const onError = jest.fn();
+      const mockOperation = vi.fn().mockRejectedValue(new Error('Test error'));
+      const onError = vi.fn();
 
       await expect(manager.executeOperation({
         id: 'test-op',
@@ -42,12 +42,12 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should retry failed operations', async () => {
-      const mockOperation = jest.fn()
+      const mockOperation = vi.fn()
         .mockRejectedValueOnce(new Error('First failure'))
         .mockRejectedValueOnce(new Error('Second failure'))
         .mockResolvedValue('success');
 
-      const onRetry = jest.fn();
+      const onRetry = vi.fn();
 
       const result = await manager.executeOperation({
         id: 'test-op',
@@ -62,7 +62,7 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should timeout operations', async () => {
-      const mockOperation = jest.fn(() => new Promise(resolve => setTimeout(resolve, 1000)));
+      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(resolve, 1000)));
 
       await expect(manager.executeOperation({
         id: 'test-op',
@@ -74,9 +74,9 @@ describe('AsyncOperationManager', () => {
 
   describe('optimistic updates', () => {
     it('should perform optimistic update successfully', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('real-result');
-      const updateUI = jest.fn();
-      const rollback = jest.fn();
+      const mockOperation = vi.fn().mockResolvedValue('real-result');
+      const updateUI = vi.fn();
+      const rollback = vi.fn();
 
       const result = await manager.optimisticUpdate({
         id: 'test-optimistic',
@@ -93,9 +93,9 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should rollback on optimistic update failure', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('Operation failed'));
-      const updateUI = jest.fn();
-      const rollback = jest.fn();
+      const mockOperation = vi.fn().mockRejectedValue(new Error('Operation failed'));
+      const updateUI = vi.fn();
+      const rollback = vi.fn();
 
       await expect(manager.optimisticUpdate({
         id: 'test-optimistic',
@@ -110,12 +110,12 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should handle batch optimistic updates', async () => {
-      const mockOperation1 = jest.fn().mockResolvedValue('result1');
-      const mockOperation2 = jest.fn().mockResolvedValue('result2');
-      const updateUI1 = jest.fn();
-      const updateUI2 = jest.fn();
-      const rollback1 = jest.fn();
-      const rollback2 = jest.fn();
+      const mockOperation1 = vi.fn().mockResolvedValue('result1');
+      const mockOperation2 = vi.fn().mockResolvedValue('result2');
+      const updateUI1 = vi.fn();
+      const updateUI2 = vi.fn();
+      const rollback1 = vi.fn();
+      const rollback2 = vi.fn();
 
       const results = await manager.batchOptimisticUpdate([
         {
@@ -144,7 +144,7 @@ describe('AsyncOperationManager', () => {
 
   describe('duplicate prevention', () => {
     it('should prevent duplicate operations', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('result');
+      const mockOperation = vi.fn().mockResolvedValue('result');
 
       const promise1 = manager.executeOnce('duplicate-key', mockOperation);
       const promise2 = manager.executeOnce('duplicate-key', mockOperation);
@@ -157,8 +157,8 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should allow different keys to execute separately', async () => {
-      const mockOperation1 = jest.fn().mockResolvedValue('result1');
-      const mockOperation2 = jest.fn().mockResolvedValue('result2');
+      const mockOperation1 = vi.fn().mockResolvedValue('result1');
+      const mockOperation2 = vi.fn().mockResolvedValue('result2');
 
       const [result1, result2] = await Promise.all([
         manager.executeOnce('key1', mockOperation1),
@@ -174,7 +174,7 @@ describe('AsyncOperationManager', () => {
 
   describe('debounced operations', () => {
     it('should debounce rapid operations', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('result');
+      const mockOperation = vi.fn().mockResolvedValue('result');
 
       // Fire multiple rapid operations
       const promise1 = manager.debounceOperation('debounce-key', mockOperation, 100);
@@ -193,8 +193,8 @@ describe('AsyncOperationManager', () => {
 
   describe('queue operations', () => {
     it('should queue and process operations', async () => {
-      const mockOperation1 = jest.fn().mockResolvedValue('result1');
-      const mockOperation2 = jest.fn().mockResolvedValue('result2');
+      const mockOperation1 = vi.fn().mockResolvedValue('result1');
+      const mockOperation2 = vi.fn().mockResolvedValue('result2');
 
       const promise1 = manager.queueOperation({
         id: 'queue1',
@@ -215,7 +215,7 @@ describe('AsyncOperationManager', () => {
 
   describe('operation management', () => {
     it('should track operation status', async () => {
-      const mockOperation = jest.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 100)));
+      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 100)));
 
       const promise = manager.executeOperation({
         id: 'tracked-op',
@@ -232,7 +232,7 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should cancel pending operations', async () => {
-      const mockOperation = jest.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 1000)));
+      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 1000)));
 
       const promise = manager.executeOperation({
         id: 'cancel-op',
@@ -247,7 +247,7 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should get pending operations', async () => {
-      const mockOperation = jest.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 100)));
+      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 100)));
 
       manager.executeOperation({
         id: 'pending1',
@@ -266,7 +266,7 @@ describe('AsyncOperationManager', () => {
 
   describe('statistics and cleanup', () => {
     it('should provide operation statistics', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('result');
+      const mockOperation = vi.fn().mockResolvedValue('result');
 
       await manager.executeOperation({
         id: 'stats-op',
@@ -280,7 +280,7 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should cleanup expired operations', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('result');
+      const mockOperation = vi.fn().mockResolvedValue('result');
 
       await manager.executeOperation({
         id: 'expired-op',
@@ -289,7 +289,7 @@ describe('AsyncOperationManager', () => {
 
       // Simulate time passing
       const originalNow = Date.now;
-      Date.now = jest.fn(() => originalNow() + 400000); // 6.67 minutes later
+      Date.now = vi.fn(() => originalNow() + 400000); // 6.67 minutes later
 
       manager.cleanupExpiredOperations(300000); // 5 minutes max age
 
@@ -301,7 +301,7 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should clear all operations', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('result');
+      const mockOperation = vi.fn().mockResolvedValue('result');
 
       await manager.executeOperation({
         id: 'clear-op',

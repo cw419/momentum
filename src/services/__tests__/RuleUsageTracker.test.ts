@@ -183,8 +183,12 @@ describe('RuleUsageTracker', () => {
       const sessionContext1 = createMockSessionContext({ sessionId: 'session_1' });
       const sessionContext2 = createMockSessionContext({ sessionId: 'session_2' });
       
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
       await tracker.recordUsage(rule.id, sessionContext1, 'pause');
+      vi.setSystemTime(new Date('2024-01-01T00:00:01.000Z'));
       await tracker.recordUsage(rule.id, sessionContext2, 'pause');
+      vi.useRealTimers();
 
       const history = await tracker.getRuleUsageHistory(rule.id);
 

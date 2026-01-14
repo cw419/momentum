@@ -29,8 +29,9 @@ export async function createBettingSession(
       .select('id')
       .single();
 
-    if (error) return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to create session', cause: error });
-    return ok((data as any).id as string);
+    if (error) return err({ code: 'STORAGE', message: error.message || 'Failed to create session', cause: error });
+    if (!data?.id) return err({ code: 'STORAGE', message: 'Failed to create session: missing id' });
+    return ok(data.id);
   } catch (e) {
     return err(toAppError(e, 'Failed to create betting session'));
   }
@@ -43,7 +44,7 @@ export async function deleteBettingSession(ctx: SupabaseStorageContext, sessionI
 
     const client = ctx.getClient();
     const { error } = await client.from('active_sessions').delete().eq('id', sessionId).eq('user_id', user.id);
-    if (error) return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to delete session', cause: error });
+    if (error) return err({ code: 'STORAGE', message: error.message || 'Failed to delete session', cause: error });
     return ok(undefined);
   } catch (e) {
     return err(toAppError(e, 'Failed to delete betting session'));
@@ -63,7 +64,7 @@ export async function completeTaskWithBetting(
       p_was_successful: wasSuccessful,
       p_completion_notes: completionNotes || null,
     });
-    if (error) return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to complete task', cause: error });
+    if (error) return err({ code: 'STORAGE', message: error.message || 'Failed to complete task', cause: error });
     return ok(data as unknown);
   } catch (e) {
     return err(toAppError(e, 'Failed to complete task with betting'));
@@ -107,8 +108,8 @@ export async function placeBet(
     if (error) {
       return ok({
         success: false,
-        message: `Bet placement failed: ${(error as any).message ?? 'Unknown error'}`,
-        error_code: (error as any).code ?? 'BET_PLACEMENT_FAILED',
+        message: `Bet placement failed: ${error.message || 'Unknown error'}`,
+        error_code: error.code ?? 'BET_PLACEMENT_FAILED',
       });
     }
 
@@ -141,11 +142,11 @@ export async function getUserAvailablePoints(ctx: SupabaseStorageContext): Promi
     const { data, error } = await client.from('user_points').select('total_points').eq('user_id', user.id).single();
 
     if (error) {
-      if ((error as any).code === 'PGRST116') return ok(0);
-      return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to get user points', cause: error });
+      if (error.code === 'PGRST116') return ok(0);
+      return err({ code: 'STORAGE', message: error.message || 'Failed to get user points', cause: error });
     }
 
-    return ok((data as any)?.total_points ?? 0);
+    return ok(data?.total_points ?? 0);
   } catch (e) {
     return err(toAppError(e, 'Failed to get user points'));
   }
@@ -171,7 +172,7 @@ export async function getTodayBetAmount(ctx: SupabaseStorageContext): Promise<Re
       .in('transaction_type', ['bet_placed', 'bet_refunded']);
 
     if (error) {
-      return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to get today bet amount', cause: error });
+      return err({ code: 'STORAGE', message: error.message || 'Failed to get today bet amount', cause: error });
     }
 
     const rows = (data as Array<{ transaction_type?: string; points_change?: number }> | null) ?? [];

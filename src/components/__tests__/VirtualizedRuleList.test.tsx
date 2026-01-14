@@ -4,13 +4,18 @@ import userEvent from '@testing-library/user-event';
 import { VirtualizedRuleList } from '../VirtualizedRuleList';
 import { ExceptionRule, ExceptionRuleType } from '../../types';
 import { SearchResult } from '../../utils/ruleSearchOptimizer';
+import { I18nProvider } from '../../i18n';
 
 // Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
 }));
+
+const renderWithI18n = (ui: React.ReactElement) => {
+  return render(ui, { wrapper: I18nProvider });
+};
 
 describe('VirtualizedRuleList', () => {
   const mockRules: ExceptionRule[] = Array.from({ length: 100 }, (_, i) => ({
@@ -34,55 +39,56 @@ describe('VirtualizedRuleList', () => {
 
   const defaultProps = {
     rules: mockSearchResults.slice(0, 10), // Start with 10 rules
-    onSelect: jest.fn(),
+    onSelect: vi.fn(),
     itemHeight: 60,
     containerHeight: 400
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    localStorage.setItem('language', 'zh');
   });
 
   describe('rendering', () => {
     it('should render rule list', () => {
-      render(<VirtualizedRuleList {...defaultProps} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} />);
       
       expect(screen.getByText('规则 0')).toBeInTheDocument();
       expect(screen.getByText('规则 1')).toBeInTheDocument();
     });
 
     it('should render loading state', () => {
-      render(<VirtualizedRuleList {...defaultProps} isLoading={true} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} isLoading={true} />);
       
       expect(screen.getByText('加载规则中...')).toBeInTheDocument();
       expect(screen.getByRole('status', { hidden: true })).toBeInTheDocument();
     });
 
     it('should render empty state when no rules', () => {
-      render(<VirtualizedRuleList {...defaultProps} rules={[]} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={[]} />);
       
       expect(screen.getByText('暂无可用规则')).toBeInTheDocument();
     });
 
     it('should render empty state with search query', () => {
-      render(
+      renderWithI18n(
         <VirtualizedRuleList 
           {...defaultProps} 
           rules={[]} 
           searchQuery="nonexistent"
-          onCreateNew={jest.fn()}
+          onCreateNew={vi.fn()}
         />
       );
       
-      expect(screen.getByText('未找到匹配的规则')).toBeInTheDocument();
-      expect(screen.getByText('创建 "nonexistent"')).toBeInTheDocument();
+      expect(screen.getByText('创建新规则: "nonexistent"')).toBeInTheDocument();
+      expect(screen.getByText('为当前任务链创建专属规则')).toBeInTheDocument();
     });
   });
 
   describe('virtualization', () => {
     it('should only render visible items', () => {
       const largeRuleSet = mockSearchResults; // 100 rules
-      render(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
       
       // Should render first few items
       expect(screen.getByText('规则 0')).toBeInTheDocument();
@@ -95,38 +101,37 @@ describe('VirtualizedRuleList', () => {
 
     it('should handle scrolling', async () => {
       const largeRuleSet = mockSearchResults;
-      render(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
       
-      const scrollContainer = screen.getByRole('region', { hidden: true }) || 
-                             document.querySelector('.overflow-auto');
-      
-      if (scrollContainer) {
-        // Simulate scrolling down
-        fireEvent.scroll(scrollContainer, { target: { scrollTop: 1000 } });
-        
-        await waitFor(() => {
-          // Should render items further down the list
-          expect(screen.queryByText('规则 0')).not.toBeInTheDocument();
-        });
-      }
+      const scrollContainer = document.querySelector('.overflow-auto') as HTMLElement | null;
+      expect(scrollContainer).not.toBeNull();
+
+      // Simulate scrolling down
+      scrollContainer!.scrollTop = 1000;
+      fireEvent.scroll(scrollContainer!);
+
+      await waitFor(() => {
+        // Should render items further down the list
+        expect(screen.queryByText('规则 0')).not.toBeInTheDocument();
+      });
     });
 
     it('should maintain correct total height', () => {
       const largeRuleSet = mockSearchResults;
-      render(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
       
-      const virtualContainer = document.querySelector('.relative > .relative');
+      const virtualContainer = document.querySelector('.overflow-auto > .relative');
       expect(virtualContainer).toHaveStyle(`height: ${100 * 60}px`); // 100 items * 60px height
     });
   });
 
   describe('create new rule functionality', () => {
     it('should show create new rule option when provided', () => {
-      render(
+      renderWithI18n(
         <VirtualizedRuleList 
           {...defaultProps} 
           searchQuery="新规则"
-          onCreateNew={jest.fn()}
+          onCreateNew={vi.fn()}
         />
       );
       
@@ -135,9 +140,9 @@ describe('VirtualizedRuleList', () => {
 
     it('should call onCreateNew when create button is clicked', async () => {
       const user = userEvent.setup();
-      const mockOnCreateNew = jest.fn();
+      const mockOnCreateNew = vi.fn();
       
-      render(
+      renderWithI18n(
         <VirtualizedRuleList 
           {...defaultProps} 
           searchQuery="新规则"
@@ -152,10 +157,10 @@ describe('VirtualizedRuleList', () => {
     });
 
     it('should not show create option without search query', () => {
-      render(
+      renderWithI18n(
         <VirtualizedRuleList 
           {...defaultProps} 
-          onCreateNew={jest.fn()}
+          onCreateNew={vi.fn()}
         />
       );
       
@@ -166,9 +171,9 @@ describe('VirtualizedRuleList', () => {
   describe('rule selection', () => {
     it('should call onSelect when rule is clicked', async () => {
       const user = userEvent.setup();
-      const mockOnSelect = jest.fn();
+      const mockOnSelect = vi.fn();
       
-      render(<VirtualizedRuleList {...defaultProps} onSelect={mockOnSelect} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} onSelect={mockOnSelect} />);
       
       const ruleButton = screen.getByText('规则 0').closest('button');
       await user.click(ruleButton!);
@@ -177,9 +182,9 @@ describe('VirtualizedRuleList', () => {
     });
 
     it('should show rule usage information', () => {
-      render(<VirtualizedRuleList {...defaultProps} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} />);
       
-      expect(screen.getByText(/使用过 \d+ 次/)).toBeInTheDocument();
+      expect(screen.getAllByText(/使用过 \d+ 次/).length).toBeGreaterThan(0);
     });
 
     it('should show last used information when available', () => {
@@ -191,9 +196,9 @@ describe('VirtualizedRuleList', () => {
         }
       }));
       
-      render(<VirtualizedRuleList {...defaultProps} rules={rulesWithLastUsed} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={rulesWithLastUsed} />);
       
-      expect(screen.getByText(/2小时前/)).toBeInTheDocument();
+      expect(screen.getAllByText(/2小时前/).length).toBeGreaterThan(0);
     });
   });
 
@@ -206,7 +211,7 @@ describe('VirtualizedRuleList', () => {
         highlightRanges: [{ start: 0, end: 2 }]
       }];
       
-      render(<VirtualizedRuleList {...defaultProps} rules={searchResults} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={searchResults} />);
       
       const highlightedText = screen.getByText('规则').closest('mark');
       expect(highlightedText).toBeInTheDocument();
@@ -221,7 +226,7 @@ describe('VirtualizedRuleList', () => {
         highlightRanges: []
       }];
       
-      render(<VirtualizedRuleList {...defaultProps} rules={searchResults} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={searchResults} />);
       
       expect(screen.getByText('模糊匹配')).toBeInTheDocument();
     });
@@ -241,7 +246,7 @@ describe('VirtualizedRuleList', () => {
         highlightRanges: []
       }];
       
-      render(<VirtualizedRuleList {...defaultProps} rules={searchResults} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={searchResults} />);
       
       // Should have usage frequency visualization bars
       const usageBars = document.querySelectorAll('.w-1.h-4.rounded-full');
@@ -255,32 +260,29 @@ describe('VirtualizedRuleList', () => {
 
   describe('performance', () => {
     it('should handle large datasets efficiently', () => {
-      const startTime = performance.now();
-      
-      render(<VirtualizedRuleList {...defaultProps} rules={mockSearchResults} />);
-      
-      const endTime = performance.now();
-      const renderTime = endTime - startTime;
-      
-      // Should render within reasonable time (less than 100ms)
-      expect(renderTime).toBeLessThan(100);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={mockSearchResults} />);
+
+      // Virtualization: should not render the whole dataset at once.
+      const ruleButtons = screen.getAllByRole('button');
+      expect(ruleButtons.length).toBeLessThan(50);
     });
 
     it('should throttle scroll events', async () => {
       const largeRuleSet = mockSearchResults;
-      render(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />);
       
       const scrollContainer = document.querySelector('.overflow-auto');
       
       if (scrollContainer) {
         // Fire multiple scroll events rapidly
         for (let i = 0; i < 10; i++) {
-          fireEvent.scroll(scrollContainer, { target: { scrollTop: i * 100 } });
+          (scrollContainer as HTMLElement).scrollTop = i * 100;
+          fireEvent.scroll(scrollContainer);
         }
         
         // Should handle without performance issues
         await waitFor(() => {
-          expect(scrollContainer.scrollTop).toBeGreaterThan(0);
+          expect((scrollContainer as HTMLElement).scrollTop).toBeGreaterThan(0);
         });
       }
     });
@@ -288,7 +290,7 @@ describe('VirtualizedRuleList', () => {
 
   describe('accessibility', () => {
     it('should have proper button roles', () => {
-      render(<VirtualizedRuleList {...defaultProps} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} />);
       
       const ruleButtons = screen.getAllByRole('button');
       expect(ruleButtons.length).toBeGreaterThan(0);
@@ -296,7 +298,7 @@ describe('VirtualizedRuleList', () => {
 
     it('should support keyboard navigation', async () => {
       const user = userEvent.setup();
-      render(<VirtualizedRuleList {...defaultProps} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} />);
       
       // Tab should focus on first rule button
       await user.tab();
@@ -307,7 +309,7 @@ describe('VirtualizedRuleList', () => {
 
   describe('responsive behavior', () => {
     it('should adapt to container size changes', () => {
-      const { rerender } = render(<VirtualizedRuleList {...defaultProps} />);
+      const { rerender } = renderWithI18n(<VirtualizedRuleList {...defaultProps} />);
       
       // Change container height
       rerender(<VirtualizedRuleList {...defaultProps} containerHeight={600} />);
@@ -317,9 +319,9 @@ describe('VirtualizedRuleList', () => {
     });
 
     it('should handle different item heights', () => {
-      render(<VirtualizedRuleList {...defaultProps} itemHeight={80} />);
+      renderWithI18n(<VirtualizedRuleList {...defaultProps} itemHeight={80} />);
       
-      const virtualContainer = document.querySelector('.relative > .relative');
+      const virtualContainer = document.querySelector('.overflow-auto > .relative');
       expect(virtualContainer).toHaveStyle(`height: ${10 * 80}px`); // 10 items * 80px height
     });
   });

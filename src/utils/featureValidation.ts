@@ -319,6 +319,6 @@ export async function validateTimerFeatures(): Promise<string> {
 }
 
 // 在开发环境中暴露到全局对象，方便调试
- if (typeof window !== 'undefined' && isDev) {
-  (window as any).validateTimerFeatures = validateTimerFeatures;
+if (typeof window !== 'undefined' && isDev) {
+  window.validateTimerFeatures = validateTimerFeatures;
 }

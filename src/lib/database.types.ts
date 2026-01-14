@@ -30,6 +30,10 @@ export interface Database {
           auxiliary_duration: number
           auxiliary_completion_trigger: string
           is_durationless: boolean | null
+          minimum_duration: number | null
+          is_task_group: boolean | null
+          task_repeat_count: number | null
+          group_repeat_count: number | null
           time_limit_hours: number | null
           time_limit_exceptions: Json
           group_started_at: string | null
@@ -59,6 +63,10 @@ export interface Database {
           auxiliary_duration?: number
           auxiliary_completion_trigger: string
           is_durationless?: boolean | null
+          minimum_duration?: number | null
+          is_task_group?: boolean | null
+          task_repeat_count?: number | null
+          group_repeat_count?: number | null
           time_limit_hours?: number | null
           time_limit_exceptions?: Json
           group_started_at?: string | null
@@ -88,6 +96,10 @@ export interface Database {
           auxiliary_duration?: number
           auxiliary_completion_trigger?: string
           is_durationless?: boolean | null
+          minimum_duration?: number | null
+          is_task_group?: boolean | null
+          task_repeat_count?: number | null
+          group_repeat_count?: number | null
           time_limit_hours?: number | null
           time_limit_exceptions?: Json
           group_started_at?: string | null
@@ -133,6 +145,8 @@ export interface Database {
           is_paused: boolean
           paused_at: string | null
           total_paused_time: number
+          is_forward_timer: boolean | null
+          forward_elapsed_time: number | null
           user_id: string
         }
         Insert: {
@@ -143,6 +157,8 @@ export interface Database {
           is_paused?: boolean
           paused_at?: string | null
           total_paused_time?: number
+          is_forward_timer?: boolean | null
+          forward_elapsed_time?: number | null
           user_id: string
         }
         Update: {
@@ -153,6 +169,8 @@ export interface Database {
           is_paused?: boolean
           paused_at?: string | null
           total_paused_time?: number
+          is_forward_timer?: boolean | null
+          forward_elapsed_time?: number | null
           user_id?: string
         }
       }
@@ -265,6 +283,35 @@ export interface Database {
         Update: {
           user_id?: string
           total_points?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_settings: {
+        Row: {
+          user_id: string
+          gambling_mode_enabled: boolean
+          daily_bet_limit: number | null
+          max_single_bet: number | null
+          settings_data: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          gambling_mode_enabled?: boolean
+          daily_bet_limit?: number | null
+          max_single_bet?: number | null
+          settings_data?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          gambling_mode_enabled?: boolean
+          daily_bet_limit?: number | null
+          max_single_bet?: number | null
+          settings_data?: Json
           created_at?: string
           updated_at?: string
         }

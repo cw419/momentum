@@ -7,10 +7,10 @@ import { TaskTimeStats, CompletionHistory, Chain } from '../../types';
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(global, 'localStorage', {
   value: mockLocalStorage,

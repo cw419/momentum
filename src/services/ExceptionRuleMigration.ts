@@ -4,6 +4,7 @@
  */
 
 import { Chain, ExceptionRule, ExceptionRuleType } from '../types';
+import type { MomentumStorage } from '../storage/MomentumStorage';
 import { exceptionRuleManager } from './ExceptionRuleManager';
 import { logger } from '../utils/logger';
 import { getCurrentLanguage, tr } from '../utils/runtimeI18n';
@@ -31,6 +32,16 @@ export class ExceptionRuleMigrationService {
   private static readonly MIGRATION_VERSION = '1.0.0';
   private static readonly LEGACY_MIGRATED_DESCRIPTION_ZH = '从旧系统迁移的规则';
   private static readonly LEGACY_MIGRATED_DESCRIPTION_EN = 'Migrated from legacy system';
+
+  private storage: MomentumStorage | null = null;
+
+  setStorage(storage: MomentumStorage | null): void {
+    this.storage = storage;
+    logger.debug('EXCEPTION_RULE_MIGRATION', 'Default storage updated', {
+      configured: !!storage,
+      kind: storage?.kind,
+    });
+  }
 
   /**
    * 检查是否需要迁移
@@ -141,7 +152,10 @@ export class ExceptionRuleMigrationService {
           const createResult = await exceptionRuleManager.createRule(
             ruleName,
             ExceptionRuleType.PAUSE_ONLY,
-            undefined
+            tr(
+              ExceptionRuleMigrationService.LEGACY_MIGRATED_DESCRIPTION_ZH,
+              ExceptionRuleMigrationService.LEGACY_MIGRATED_DESCRIPTION_EN
+            )
           );
 
           result.createdRules.push(createResult.rule);
@@ -465,10 +479,13 @@ export class ExceptionRuleMigrationService {
    */
   private async getLegacyChains(): Promise<Chain[]> {
     try {
-      // 这里应该调用实际的存储服务来获取链条数据
-      // 由于我们没有直接访问存储的方法，这里返回空数组
-      // 在实际实现中，应该调用 storage.getChains() 或类似方法
-      return [];
+      const storage = this.storage;
+      if (!storage) {
+        logger.warn('EXCEPTION_RULE_MIGRATION', 'No storage configured; skipping legacy chain scan');
+        return [];
+      }
+
+      return await storage.getChains();
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('EXCEPTION_RULE_MIGRATION', '获取旧链条数据失败', undefined, err);

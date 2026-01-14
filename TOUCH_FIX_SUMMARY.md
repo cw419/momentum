@@ -210,7 +210,7 @@ input, textarea, select {
 ## 测试验证
 
 ### 测试文件
-- `test-touch-fix.html` - 独立的触摸修复测试页面
+- `tools/experiments/legacy-artifacts/test-touch-fix.html` - 独立的触摸修复测试页面
 
 ### 测试场景
 1. **页面滚动测试** - 验证垂直滚动正常

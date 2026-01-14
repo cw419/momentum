@@ -15,11 +15,10 @@ function describeElement(element: HTMLElement): { tagName: string; id?: string; 
   };
 }
 
-interface LayoutShiftEntry {
-  value: number;
-  sources: any[];
-  hadRecentInput: boolean;
-  timestamp: number;
+function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShift {
+  if (entry.entryType !== 'layout-shift') return false;
+  const candidate = entry as Partial<LayoutShift>;
+  return typeof candidate.value === 'number' && typeof candidate.hadRecentInput === 'boolean';
 }
 
 interface LayoutIssue {
@@ -53,7 +52,9 @@ export class LayoutStabilityMonitor {
       try {
         this.observer = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            this.handleLayoutShift(entry as any);
+            if (isLayoutShiftEntry(entry)) {
+              this.handleLayoutShift(entry);
+            }
           }
         });
         this.observer.observe({ entryTypes: ['layout-shift'] });
@@ -117,7 +118,7 @@ export class LayoutStabilityMonitor {
     }
   }
 
-  private handleLayoutShift(entry: LayoutShiftEntry) {
+  private handleLayoutShift(entry: LayoutShift) {
     if (entry.hadRecentInput) return;
 
     this.cumulativeLayoutShift += entry.value;

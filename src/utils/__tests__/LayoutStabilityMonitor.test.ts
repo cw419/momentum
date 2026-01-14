@@ -1,54 +1,150 @@
 import { LayoutStabilityMonitor } from '../LayoutStabilityMonitor';
 
-// Mock DOM APIs
-const mockResizeObserver = jest.fn(() => ({
-  observe: jest.fn(),
-  disconnect: jest.fn(),
-  unobserve: jest.fn(),
-}));
+const ensureWindowProp = (key: string, value: unknown) => {
+  Object.defineProperty(window, key, { configurable: true, value });
+};
 
-const mockMutationObserver = jest.fn(() => ({
-  observe: jest.fn(),
-  disconnect: jest.fn(),
-}));
+const restoreWindowProp = (key: string, original: unknown) => {
+  if (original === undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete (window as any)[key];
+    return;
+  }
 
-const mockPerformanceObserver = jest.fn(() => ({
-  observe: jest.fn(),
-  disconnect: jest.fn(),
-}));
+  ensureWindowProp(key, original);
+};
 
-// @ts-ignore
-global.ResizeObserver = mockResizeObserver;
-// @ts-ignore
-global.MutationObserver = mockMutationObserver;
-// @ts-ignore
-global.PerformanceObserver = mockPerformanceObserver;
+const ensureGlobalProp = (key: string, value: unknown) => {
+  try {
+    (global as any)[key] = value;
+    return;
+  } catch {
+    // fall back to defineProperty below
+  }
 
-// Mock requestAnimationFrame
-global.requestAnimationFrame = jest.fn((cb) => {
-  setTimeout(cb, 16);
-  return 1;
-});
+  try {
+    Object.defineProperty(global, key, { configurable: true, value });
+  } catch {
+    // If the environment defines a non-configurable global (common in jsdom),
+    // rely on the window override instead.
+  }
+};
+
+const restoreGlobalProp = (key: string, original: unknown) => {
+  if (original === undefined) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete (global as any)[key];
+    } catch {
+      // ignore
+    }
+    return;
+  }
+
+  ensureGlobalProp(key, original);
+};
 
 describe('LayoutStabilityMonitor', () => {
   let monitor: LayoutStabilityMonitor;
   let container: HTMLElement;
 
+  let resizeObserverObserve: ReturnType<typeof vi.fn>;
+  let resizeObserverDisconnect: ReturnType<typeof vi.fn>;
+  let mutationObserverObserve: ReturnType<typeof vi.fn>;
+  let mutationObserverDisconnect: ReturnType<typeof vi.fn>;
+  let performanceObserverObserve: ReturnType<typeof vi.fn>;
+  let performanceObserverDisconnect: ReturnType<typeof vi.fn>;
+
+  let mockResizeObserver: ReturnType<typeof vi.fn>;
+  let mockMutationObserver: ReturnType<typeof vi.fn>;
+  let mockPerformanceObserver: ReturnType<typeof vi.fn>;
+  let mockRequestAnimationFrame: ReturnType<typeof vi.fn>;
+
+  let originalResizeObserver: unknown;
+  let originalMutationObserver: unknown;
+  let originalPerformanceObserver: unknown;
+  let originalRequestAnimationFrame: unknown;
+
+  let originalGlobalResizeObserver: unknown;
+  let originalGlobalMutationObserver: unknown;
+  let originalGlobalPerformanceObserver: unknown;
+  let originalGlobalRequestAnimationFrame: unknown;
+
+  const flushRaf = () => {
+    vi.advanceTimersByTime(16);
+  };
+
   beforeEach(() => {
+    vi.useFakeTimers();
+
+    originalResizeObserver = (window as any).ResizeObserver;
+    originalMutationObserver = (window as any).MutationObserver;
+    originalPerformanceObserver = (window as any).PerformanceObserver;
+    originalRequestAnimationFrame = (window as any).requestAnimationFrame;
+
+    originalGlobalResizeObserver = (global as any).ResizeObserver;
+    originalGlobalMutationObserver = (global as any).MutationObserver;
+    originalGlobalPerformanceObserver = (global as any).PerformanceObserver;
+    originalGlobalRequestAnimationFrame = (global as any).requestAnimationFrame;
+
+    resizeObserverObserve = vi.fn();
+    resizeObserverDisconnect = vi.fn();
+    mockResizeObserver = vi.fn(() => ({
+      observe: resizeObserverObserve,
+      disconnect: resizeObserverDisconnect,
+      unobserve: vi.fn(),
+    }));
+
+    mutationObserverObserve = vi.fn();
+    mutationObserverDisconnect = vi.fn();
+    mockMutationObserver = vi.fn(() => ({
+      observe: mutationObserverObserve,
+      disconnect: mutationObserverDisconnect,
+    }));
+
+    performanceObserverObserve = vi.fn();
+    performanceObserverDisconnect = vi.fn();
+    mockPerformanceObserver = vi.fn(() => ({
+      observe: performanceObserverObserve,
+      disconnect: performanceObserverDisconnect,
+    }));
+
+    mockRequestAnimationFrame = vi.fn((cb: FrameRequestCallback) => {
+      setTimeout(() => cb(performance.now()), 16);
+      return 1;
+    });
+
+    ensureWindowProp('ResizeObserver', mockResizeObserver);
+    ensureWindowProp('MutationObserver', mockMutationObserver);
+    ensureWindowProp('PerformanceObserver', mockPerformanceObserver);
+    ensureWindowProp('requestAnimationFrame', mockRequestAnimationFrame);
+
+    ensureGlobalProp('ResizeObserver', mockResizeObserver);
+    ensureGlobalProp('MutationObserver', mockMutationObserver);
+    ensureGlobalProp('PerformanceObserver', mockPerformanceObserver);
+    ensureGlobalProp('requestAnimationFrame', mockRequestAnimationFrame);
+
     monitor = new LayoutStabilityMonitor();
-    
+
     // Create a mock container
     container = document.createElement('div');
     container.className = 'test-container';
     document.body.appendChild(container);
-    
-    // Reset mocks
-    jest.clearAllMocks();
   });
 
   afterEach(() => {
     monitor.stopMonitoring();
     document.body.removeChild(container);
+
+    restoreWindowProp('ResizeObserver', originalResizeObserver);
+    restoreWindowProp('MutationObserver', originalMutationObserver);
+    restoreWindowProp('PerformanceObserver', originalPerformanceObserver);
+    restoreWindowProp('requestAnimationFrame', originalRequestAnimationFrame);
+
+    restoreGlobalProp('ResizeObserver', originalGlobalResizeObserver);
+    restoreGlobalProp('MutationObserver', originalGlobalMutationObserver);
+    restoreGlobalProp('PerformanceObserver', originalGlobalPerformanceObserver);
+    restoreGlobalProp('requestAnimationFrame', originalGlobalRequestAnimationFrame);
   });
 
   describe('initialization', () => {
@@ -56,9 +152,10 @@ describe('LayoutStabilityMonitor', () => {
       expect(monitor).toBeInstanceOf(LayoutStabilityMonitor);
     });
 
-    it('should create observers when available', () => {
-      expect(mockMutationObserver).toHaveBeenCalled();
-      expect(mockResizeObserver).toHaveBeenCalled();
+    it('should not create observers until startMonitoring', () => {
+      expect(mockMutationObserver).not.toHaveBeenCalled();
+      expect(mockResizeObserver).not.toHaveBeenCalled();
+      expect(mockPerformanceObserver).not.toHaveBeenCalled();
     });
   });
 
@@ -67,8 +164,18 @@ describe('LayoutStabilityMonitor', () => {
       monitor.startMonitoring(container);
       
       // Should call observe methods
-      expect(mockMutationObserver().observe).toHaveBeenCalled();
-      expect(mockResizeObserver().observe).toHaveBeenCalled();
+      expect(mockMutationObserver).toHaveBeenCalledTimes(1);
+      expect(mockResizeObserver).toHaveBeenCalledTimes(1);
+      expect(mockPerformanceObserver).toHaveBeenCalledTimes(1);
+
+      expect(mutationObserverObserve).toHaveBeenCalledWith(container, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+      });
+      expect(resizeObserverObserve).toHaveBeenCalledWith(container);
+      expect(performanceObserverObserve).toHaveBeenCalledWith({ entryTypes: ['layout-shift'] });
     });
 
     it('should stop monitoring', () => {
@@ -76,8 +183,9 @@ describe('LayoutStabilityMonitor', () => {
       monitor.stopMonitoring();
       
       // Should call disconnect methods
-      expect(mockMutationObserver().disconnect).toHaveBeenCalled();
-      expect(mockResizeObserver().disconnect).toHaveBeenCalled();
+      expect(mutationObserverDisconnect).toHaveBeenCalledTimes(1);
+      expect(resizeObserverDisconnect).toHaveBeenCalledTimes(1);
+      expect(performanceObserverDisconnect).toHaveBeenCalledTimes(1);
     });
 
     it('should not start monitoring twice', () => {
@@ -85,12 +193,14 @@ describe('LayoutStabilityMonitor', () => {
       monitor.startMonitoring(container);
       
       // Should only call observe once
-      expect(mockMutationObserver().observe).toHaveBeenCalledTimes(1);
+      expect(mutationObserverObserve).toHaveBeenCalledTimes(1);
+      expect(resizeObserverObserve).toHaveBeenCalledTimes(1);
+      expect(performanceObserverObserve).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('layout stabilization', () => {
-    it('should stabilize layout', (done) => {
+    it('should stabilize layout', () => {
       // Add some rule items to the container
       const ruleItem = document.createElement('div');
       ruleItem.className = 'rule-item';
@@ -98,98 +208,88 @@ describe('LayoutStabilityMonitor', () => {
 
       monitor.stabilizeLayout(container);
 
-      // Wait for requestAnimationFrame
-      setTimeout(() => {
-        expect(ruleItem.style.minHeight).toBe('60px');
-        expect(ruleItem.style.boxSizing).toBe('border-box');
-        done();
-      }, 20);
+      flushRaf();
+
+      expect(ruleItem.style.minHeight).toBe('60px');
+      expect(ruleItem.style.boxSizing).toBe('border-box');
     });
 
-    it('should fix scroll containers', (done) => {
+    it('should fix scroll containers', () => {
       const scrollContainer = document.createElement('div');
       scrollContainer.setAttribute('data-scroll-container', '');
       container.appendChild(scrollContainer);
 
       monitor.stabilizeLayout(container);
 
-      setTimeout(() => {
-        expect(scrollContainer.style.maxHeight).toBe('400px');
-        expect(scrollContainer.style.overflowY).toBe('auto');
-        expect(scrollContainer.style.overscrollBehavior).toBe('contain');
-        done();
-      }, 20);
+      flushRaf();
+
+      expect(scrollContainer.style.maxHeight).toBe('400px');
+      expect(scrollContainer.style.overflowY).toBe('auto');
+      expect(scrollContainer.style.overscrollBehavior).toBe('contain');
     });
 
-    it('should fix popover layers', (done) => {
+    it('should fix popover layers', () => {
       const popover = document.createElement('div');
       popover.setAttribute('data-popover', '');
       container.appendChild(popover);
 
       monitor.stabilizeLayout(container);
 
-      setTimeout(() => {
-        expect(popover.style.transform).toContain('translateZ(0)');
-        expect(popover.style.backfaceVisibility).toBe('hidden');
-        done();
-      }, 20);
+      flushRaf();
+
+      expect(popover.style.transform).toContain('translateZ(0)');
+      expect(popover.style.backfaceVisibility).toBe('hidden');
     });
 
     it('should not stabilize if already stabilizing', () => {
-      const callback = jest.fn();
+      const callback = vi.fn();
       monitor.onStabilized(callback);
 
       monitor.stabilizeLayout(container);
       monitor.stabilizeLayout(container); // Second call should be ignored
 
-      setTimeout(() => {
-        expect(callback).toHaveBeenCalledTimes(1);
-      }, 20);
+      flushRaf();
+      expect(callback).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('callbacks', () => {
-    it('should register and call stabilization callbacks', (done) => {
-      const callback = jest.fn();
+    it('should register and call stabilization callbacks', () => {
+      const callback = vi.fn();
       const unsubscribe = monitor.onStabilized(callback);
 
       monitor.stabilizeLayout(container);
 
-      setTimeout(() => {
-        expect(callback).toHaveBeenCalled();
-        
-        // Test unsubscribe
-        unsubscribe();
-        monitor.stabilizeLayout(container);
-        
-        setTimeout(() => {
-          expect(callback).toHaveBeenCalledTimes(1);
-          done();
-        }, 20);
-      }, 20);
+      flushRaf();
+      expect(callback).toHaveBeenCalledTimes(1);
+
+      // Test unsubscribe
+      unsubscribe();
+      monitor.stabilizeLayout(container);
+      flushRaf();
+      expect(callback).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle callback errors gracefully', (done) => {
-      const errorCallback = jest.fn(() => {
+    it('should handle callback errors gracefully', () => {
+      const errorCallback = vi.fn(() => {
         throw new Error('Test error');
       });
-      const normalCallback = jest.fn();
+      const normalCallback = vi.fn();
 
       monitor.onStabilized(errorCallback);
       monitor.onStabilized(normalCallback);
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      vi.mocked(console.error).mockClear();
 
       monitor.stabilizeLayout(container);
 
-      setTimeout(() => {
-        expect(errorCallback).toHaveBeenCalled();
-        expect(normalCallback).toHaveBeenCalled();
-        expect(consoleSpy).toHaveBeenCalledWith('Stabilization callback error:', expect.any(Error));
-        
-        consoleSpy.mockRestore();
-        done();
-      }, 20);
+      flushRaf();
+
+      expect(errorCallback).toHaveBeenCalledTimes(1);
+      expect(normalCallback).toHaveBeenCalledTimes(1);
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Stabilization callback error')
+      );
     });
   });
 
@@ -215,14 +315,14 @@ describe('LayoutStabilityMonitor', () => {
 
   describe('manual checks', () => {
     it('should perform manual check', () => {
-      const spy = jest.spyOn(monitor as any, 'performInitialCheck');
+      const spy = vi.spyOn(monitor as any, 'performInitialCheck');
       monitor.checkNow(container);
       
       expect(spy).toHaveBeenCalledWith(container);
     });
 
     it('should use document.body as default container', () => {
-      const spy = jest.spyOn(monitor as any, 'performInitialCheck');
+      const spy = vi.spyOn(monitor as any, 'performInitialCheck');
       monitor.checkNow();
       
       expect(spy).toHaveBeenCalledWith(document.body);
@@ -236,9 +336,8 @@ describe('LayoutStabilityMonitor', () => {
       monitor.stabilizeLayout(container);
       expect(monitor.isStabilizingLayout()).toBe(true);
       
-      setTimeout(() => {
-        expect(monitor.isStabilizingLayout()).toBe(false);
-      }, 20);
+      flushRaf();
+      expect(monitor.isStabilizingLayout()).toBe(false);
     });
   });
 

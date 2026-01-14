@@ -14,6 +14,16 @@ interface PerformanceMetrics {
   fps: number;
 }
 
+function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShift {
+  if (entry.entryType !== 'layout-shift') return false;
+  const candidate = entry as Partial<LayoutShift>;
+  return (
+    typeof candidate.value === 'number' &&
+    typeof candidate.hadRecentInput === 'boolean' &&
+    Array.isArray(candidate.sources)
+  );
+}
+
 class PerformanceMonitor {
   private metrics: PerformanceMetrics = {
     renderTime: 0,
@@ -48,12 +58,12 @@ class PerformanceMonitor {
   private runWhenIdle(callback: () => void, timeout: number = 1000): void {
     if (typeof window === 'undefined') return;
 
-    const requestIdleCallbackFn = (window as any).requestIdleCallback as
-      | ((cb: () => void, opts?: { timeout: number }) => void)
-      | undefined;
-
+    const requestIdleCallbackFn = window.requestIdleCallback;
     if (typeof requestIdleCallbackFn === 'function') {
-      requestIdleCallbackFn(callback, { timeout });
+      requestIdleCallbackFn((_deadline) => {
+        void _deadline;
+        callback();
+      }, { timeout });
       return;
     }
 
@@ -71,20 +81,20 @@ class PerformanceMonitor {
           // 使用 requestIdleCallback 在空闲时处理数据
           this.runWhenIdle(() => {
             for (const entry of list.getEntries()) {
-              if (entry.entryType === 'layout-shift' && !(entry as any).hadRecentInput) {
-                this.metrics.layoutShifts += (entry as any).value;
+              if (isLayoutShiftEntry(entry) && !entry.hadRecentInput) {
+                this.metrics.layoutShifts += entry.value;
                 
                 // 只在后台模式下记录，不立即输出
                 if (this.backgroundMode) {
                   this.addToBuffer({
                     type: 'layout-shift',
-                    value: (entry as any).value,
+                    value: entry.value,
                     timestamp: Date.now()
                   });
-                } else if ((entry as any).value > 0.1) {
+                } else if (entry.value > 0.1) {
                   performanceLogger.warn('🚨 检测到大幅布局偏移:', {
-                    value: (entry as any).value,
-                    sources: (entry as any).sources
+                    value: entry.value,
+                    sources: entry.sources
                   });
                 }
               }
@@ -328,10 +338,8 @@ class PerformanceMonitor {
 
   // 获取内存使用情况
   getMemoryUsage(): number | undefined {
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      return memory.usedJSHeapSize / 1024 / 1024; // MB
-    }
+    const memory = performance.memory;
+    if (memory) return memory.usedJSHeapSize / 1024 / 1024; // MB
     return undefined;
   }
 

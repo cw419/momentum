@@ -1,5 +1,9 @@
 import type { RSIPMeta, RSIPNode } from '../../../types';
 import type { SupabaseStorageContext } from './types';
+import type { Database } from '../../../lib/database.types';
+
+type RSIPNodeRow = Database['public']['Tables']['rsip_nodes']['Row'];
+type RSIPMetaRow = Database['public']['Tables']['rsip_meta']['Row'];
 
 export async function getRSIPNodes(ctx: SupabaseStorageContext): Promise<RSIPNode[]> {
   const user = await ctx.getCurrentUser();
@@ -14,7 +18,7 @@ export async function getRSIPNodes(ctx: SupabaseStorageContext): Promise<RSIPNod
 
   if (error) return [];
 
-  return (data || []).map((row: any) => ({
+  return (data || []).map((row: RSIPNodeRow) => ({
     id: row.id,
     parentId: row.parent_id || undefined,
     title: row.title,
@@ -49,7 +53,7 @@ export async function saveRSIPNodes(ctx: SupabaseStorageContext, nodes: RSIPNode
     throw new Error(`Failed to query RSIP nodes: ${existingErr.message}`);
   }
 
-  const existingIds = new Set((existingRows || []).map((r: any) => r.id as string));
+  const existingIds = new Set((existingRows || []).map(r => r.id));
   const newIds = new Set(nodes.map(n => n.id));
   const idsToDelete = [...existingIds].filter(id => !newIds.has(id));
 
@@ -74,7 +78,7 @@ export async function getRSIPMeta(ctx: SupabaseStorageContext): Promise<RSIPMeta
   const { data, error } = await client.from('rsip_meta').select('*').eq('user_id', user.id).limit(1);
   if (error || !data || data.length === 0) return {};
 
-  const row: any = data[0];
+  const row = data[0] as RSIPMetaRow;
   return {
     lastAddedAt: row.last_added_at ? new Date(row.last_added_at) : undefined,
     allowMultiplePerDay: !!row.allow_multiple_per_day,

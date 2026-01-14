@@ -15,17 +15,17 @@ import { AsyncOperationManager } from '../utils/AsyncOperationManager';
 import { ExceptionRule, ExceptionRuleType, SessionContext } from '../types';
 
 // Mock performance.now for consistent testing
-const mockPerformanceNow = jest.fn(() => Date.now());
+const mockPerformanceNow = vi.fn(() => Date.now());
 Object.defineProperty(window, 'performance', {
   value: { now: mockPerformanceNow },
   writable: true
 });
 
 // Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
 }));
 
 describe('Rule System Performance Tests', () => {
@@ -77,7 +77,7 @@ describe('Rule System Performance Tests', () => {
       optimizer.updateIndex(rules);
       
       let callCount = 0;
-      const callback = jest.fn(() => {
+      const callback = vi.fn(() => {
         callCount++;
         if (callCount === 1) {
           expect(callback).toHaveBeenCalledTimes(1);
@@ -126,7 +126,7 @@ describe('Rule System Performance Tests', () => {
       render(
         <VirtualizedRuleList
           rules={searchResults}
-          onSelect={jest.fn()}
+          onSelect={vi.fn()}
           itemHeight={60}
           containerHeight={400}
         />
@@ -154,7 +154,7 @@ describe('Rule System Performance Tests', () => {
       render(
         <VirtualizedRuleList
           rules={searchResults}
-          onSelect={jest.fn()}
+          onSelect={vi.fn()}
           itemHeight={60}
           containerHeight={400}
         />
@@ -344,7 +344,7 @@ describe('Rule System Performance Tests', () => {
       const largeRuleSet = createLargeRuleSet(100);
       
       // Mock the API calls to return large dataset
-      jest.spyOn(window, 'fetch').mockImplementation(() =>
+      vi.spyOn(window, 'fetch').mockImplementation(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(largeRuleSet)
@@ -358,9 +358,9 @@ describe('Rule System Performance Tests', () => {
           isOpen={true}
           actionType="pause"
           sessionContext={mockSessionContext}
-          onRuleSelected={jest.fn()}
-          onCreateNewRule={jest.fn()}
-          onCancel={jest.fn()}
+          onRuleSelected={vi.fn()}
+          onCreateNewRule={vi.fn()}
+          onCancel={vi.fn()}
         />
       );
       
@@ -390,7 +390,7 @@ describe('Rule System Performance Tests', () => {
       const originalSearch = optimizer.searchRules;
       let errorThrown = false;
       
-      optimizer.searchRules = jest.fn().mockImplementation((rules, query) => {
+      optimizer.searchRules = vi.fn().mockImplementation((rules, query) => {
         if (!errorThrown) {
           errorThrown = true;
           throw new Error('Search failed');

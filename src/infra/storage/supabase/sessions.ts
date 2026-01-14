@@ -1,5 +1,10 @@
 import type { ActiveSession, ScheduledSession } from '../../../types';
 import type { SupabaseStorageContext } from './types';
+import type { Database } from '../../../lib/database.types';
+import { formatSupabaseError } from './supabaseError';
+
+type ActiveSessionRow = Database['public']['Tables']['active_sessions']['Row'];
+type ActiveSessionInsert = Database['public']['Tables']['active_sessions']['Insert'];
 
 export async function getScheduledSessions(ctx: SupabaseStorageContext): Promise<ScheduledSession[]> {
   const user = await ctx.getCurrentUser();
@@ -56,17 +61,17 @@ export async function getActiveSession(ctx: SupabaseStorageContext): Promise<Act
   const { data, error } = await client.from('active_sessions').select('*').eq('user_id', user.id).limit(1);
   if (error || !data || data.length === 0) return null;
 
-  const sessionData: any = data[0];
+  const sessionData = data[0] as ActiveSessionRow;
   return {
-    id: sessionData.id ?? undefined,
+    id: sessionData.id,
     chainId: sessionData.chain_id,
     startedAt: new Date(sessionData.started_at),
     duration: sessionData.duration,
     isPaused: sessionData.is_paused,
     pausedAt: sessionData.paused_at ? new Date(sessionData.paused_at) : undefined,
     totalPausedTime: sessionData.total_paused_time,
-    isForwardTimer: Boolean(sessionData.is_forward_timer ?? false),
-    forwardElapsedTime: Number(sessionData.forward_elapsed_time ?? 0),
+    isForwardTimer: sessionData.is_forward_timer ?? false,
+    forwardElapsedTime: sessionData.forward_elapsed_time ?? 0,
   };
 }
 
@@ -75,17 +80,6 @@ export async function saveActiveSession(ctx: SupabaseStorageContext, session: Ac
   if (!user) return;
 
   const client = ctx.getClient();
-
-  const formatSupabaseError = (error: unknown, fallback: string) => {
-    const e: any = error as any;
-    const parts = [
-      typeof e?.code === 'string' ? `Code ${e.code}` : null,
-      typeof e?.message === 'string' ? e.message : fallback,
-      typeof e?.details === 'string' ? e.details : null,
-      typeof e?.hint === 'string' ? e.hint : null,
-    ].filter(Boolean);
-    return parts.join(' | ');
-  };
 
   if (!session) {
     const { error } = await client.from('active_sessions').delete().eq('user_id', user.id);
@@ -97,8 +91,8 @@ export async function saveActiveSession(ctx: SupabaseStorageContext, session: Ac
 
   const sessionId = session.id;
 
-  const payloadBasic: any = {
-    ...(sessionId ? { id: sessionId } : {}),
+  const payloadBasic: ActiveSessionInsert = {
+    id: sessionId,
     chain_id: session.chainId,
     started_at: session.startedAt.toISOString(),
     duration: session.duration,
@@ -110,7 +104,7 @@ export async function saveActiveSession(ctx: SupabaseStorageContext, session: Ac
 
   const shouldIncludeForwardFields =
     session.isForwardTimer === true || (typeof session.forwardElapsedTime === 'number' && session.forwardElapsedTime > 0);
-  const payload: any = { ...payloadBasic };
+  const payload: ActiveSessionInsert = { ...payloadBasic };
 
   if (shouldIncludeForwardFields) {
     payload.is_forward_timer = session.isForwardTimer ?? false;
@@ -121,8 +115,8 @@ export async function saveActiveSession(ctx: SupabaseStorageContext, session: Ac
 
   if (!error) return;
 
-  const errorMessage = (error as any)?.message ?? 'Failed to persist active session';
-  const errorCode = (error as any)?.code;
+  const errorMessage = error.message || 'Failed to persist active session';
+  const errorCode = error.code;
 
   // If schema lacks forward-timer columns, retry without them.
   const isMissingForwardFields =

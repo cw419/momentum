@@ -5,7 +5,7 @@
 import { ForwardTimerManager } from '../forwardTimer';
 
 // Mock performance.now()
-const mockPerformanceNow = jest.fn();
+const mockPerformanceNow = vi.fn();
 Object.defineProperty(global, 'performance', {
   value: {
     now: mockPerformanceNow,
@@ -14,10 +14,10 @@ Object.defineProperty(global, 'performance', {
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(global, 'localStorage', {
   value: mockLocalStorage,
@@ -26,8 +26,8 @@ Object.defineProperty(global, 'localStorage', {
 // Mock document
 const mockDocument = {
   hidden: false,
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
 };
 Object.defineProperty(global, 'document', {
   value: mockDocument,
@@ -45,6 +45,12 @@ describe('ForwardTimerManager', () => {
     mockLocalStorage.removeItem.mockClear();
     mockDocument.addEventListener.mockClear();
     mockDocument.removeEventListener.mockClear();
+
+    // Reset Storage API shims added in specific tests
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete (mockLocalStorage as any).key;
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete (mockLocalStorage as any).length;
     
     timerManager = new ForwardTimerManager();
     timerManager.start();
@@ -214,9 +220,11 @@ describe('ForwardTimerManager', () => {
         timestamp: Date.now() - 1 * 60 * 60 * 1000 // 1小时前
       });
       
-      Object.defineProperty(mockLocalStorage, 'keys', {
-        value: keys
+      Object.defineProperty(mockLocalStorage, 'length', {
+        value: keys.length,
+        configurable: true
       });
+      (mockLocalStorage as any).key = vi.fn((index: number) => keys[index] ?? null);
       
       mockLocalStorage.getItem.mockImplementation((key: string) => {
         if (key === 'momentum_timer_session1') return expiredData;

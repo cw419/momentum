@@ -320,7 +320,7 @@ npm run test:coverage    # 覆盖率报告
 |------|------|
 | `CLAUDE.md` | AI 开发指南、架构原则 |
 | `docs/PET_FEATURE.md` | 宠物系统详细设计 |
-| `docs/DATABASE_SCHEMA.md` | 数据库结构（待创建） |
+| `docs/DATABASE_SCHEMA.md` | 数据库结构 |
 | `DEBUGGING_GUIDE.md` | 调试指南 |
 | `DEPLOYMENT.md` | 部署流程 |
 

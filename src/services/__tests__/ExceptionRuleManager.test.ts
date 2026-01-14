@@ -5,34 +5,13 @@
 import { ExceptionRuleManager } from '../ExceptionRuleManager';
 import { ExceptionRuleType, SessionContext, ExceptionRuleException } from '../../types';
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    }
-  };
-})();
-
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
-});
-
 describe('ExceptionRuleManager', () => {
   let manager: ExceptionRuleManager;
 
   beforeEach(() => {
-    manager = new ExceptionRuleManager();
     localStorage.clear();
+    localStorage.setItem('language', 'zh');
+    manager = new ExceptionRuleManager();
   });
 
   const createMockSessionContext = (overrides: Partial<SessionContext> = {}): SessionContext => ({

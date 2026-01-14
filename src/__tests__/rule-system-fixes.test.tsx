@@ -192,7 +192,7 @@ describe('Rule System Fixes', () => {
       optimizer.updateIndex(rules);
 
       let callCount = 0;
-      const callback = jest.fn(() => {
+      const callback = vi.fn(() => {
         callCount++;
         if (callCount === 1) {
           expect(callback).toHaveBeenCalledTimes(1);

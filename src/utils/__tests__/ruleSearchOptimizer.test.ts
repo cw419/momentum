@@ -113,22 +113,27 @@ describe('RuleSearchOptimizer', () => {
   });
 
   describe('searchRulesDebounced', () => {
-    it('should debounce search calls', (done) => {
-      let callCount = 0;
-      const callback = jest.fn(() => {
-        callCount++;
-        if (callCount === 1) {
-          expect(callback).toHaveBeenCalledTimes(1);
-          done();
-        }
-      });
+    it('should debounce search calls', () => {
+      vi.useFakeTimers();
+      try {
+        const callback = vi.fn();
 
-      // Multiple rapid calls
-      optimizer.searchRulesDebounced(mockRules, '上', callback);
-      optimizer.searchRulesDebounced(mockRules, '上厕', callback);
-      optimizer.searchRulesDebounced(mockRules, '上厕所', callback);
+        // Multiple rapid calls
+        optimizer.searchRulesDebounced(mockRules, '上', callback);
+        optimizer.searchRulesDebounced(mockRules, '上厕', callback);
+        optimizer.searchRulesDebounced(mockRules, '上厕所', callback);
 
-      // Only the last call should execute after debounce delay
+        expect(callback).not.toHaveBeenCalled();
+
+        // Only the last call should execute after debounce delay
+        vi.advanceTimersByTime(200);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        const results = callback.mock.calls[0]?.[0] ?? [];
+        expect(results.some((r) => r.rule.name === '上厕所')).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

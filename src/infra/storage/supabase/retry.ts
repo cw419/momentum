@@ -1,5 +1,7 @@
 import { logger } from '../../../utils/logger';
 import { isDev } from '../../../utils/env';
+import { formatSupabaseError, getSupabaseErrorCode } from './supabaseError';
+import type { User } from '@supabase/supabase-js';
 
 const NON_RETRYABLE_ERROR_CODES = new Set(['PGRST204', 'PGRST116', '42703', '42P01']);
 const NON_RETRYABLE_ERROR_MESSAGES = [
@@ -7,22 +9,19 @@ const NON_RETRYABLE_ERROR_MESSAGES = [
   'do not know how to serialize a bigint',
 ];
 
-function toErrorWithMetadata(error: unknown): Error {
+interface ErrorWithSupabaseMetadata extends Error {
+  code?: string;
+}
+
+function toErrorWithMetadata(error: unknown): ErrorWithSupabaseMetadata {
   if (error instanceof Error) return error;
 
-  if (error && typeof error === 'object') {
-    const anyErr = error as any;
-    const code = typeof anyErr.code === 'string' ? anyErr.code : undefined;
-    const message = typeof anyErr.message === 'string' ? anyErr.message : String(error);
+  const wrapped: ErrorWithSupabaseMetadata = new Error(formatSupabaseError(error, String(error)));
+  const code = getSupabaseErrorCode(error);
+  if (code) wrapped.code = code;
+  return wrapped;
 
-    const wrapped = new Error(code ? `[${code}] ${message}` : message);
-    if (anyErr.code != null) (wrapped as any).code = anyErr.code;
-    if (anyErr.details != null) (wrapped as any).details = anyErr.details;
-    if (anyErr.hint != null) (wrapped as any).hint = anyErr.hint;
-    return wrapped;
-  }
-
-  return new Error(String(error));
+  // unreachable
 }
 
 export async function retryOperation<T>(
@@ -43,11 +42,9 @@ export async function retryOperation<T>(
         throw lastError;
       }
 
-      if (error && typeof error === 'object' && 'code' in error) {
-        const errorCode = (error as any).code;
-        if (NON_RETRYABLE_ERROR_CODES.has(errorCode)) {
-          throw lastError;
-        }
+      const errorCode = getSupabaseErrorCode(error);
+      if (errorCode && NON_RETRYABLE_ERROR_CODES.has(errorCode)) {
+        throw lastError;
       }
 
       if (attempt === maxRetries) {
@@ -77,7 +74,7 @@ export async function retryOperation<T>(
 export async function retryWithAuth<T>(
   deps: {
     isUserAuthenticated(): Promise<boolean>;
-    waitForAuthentication(maxWaitTime?: number): Promise<{ user: any | null; isAuthenticated: boolean }>;
+    waitForAuthentication(maxWaitTime?: number): Promise<{ user: User | null; isAuthenticated: boolean }>;
   },
   operation: () => Promise<T>,
   maxRetries: number = 3,
@@ -110,9 +107,9 @@ export async function retryWithAuth<T>(
         lastError.message.includes('authentication') ||
         lastError.message.includes('auth');
 
-      if (!isAuthError && error && typeof error === 'object' && 'code' in error) {
-        const errorCode = (error as any).code;
-        if (NON_RETRYABLE_ERROR_CODES.has(errorCode)) {
+      if (!isAuthError) {
+        const errorCode = getSupabaseErrorCode(error);
+        if (errorCode && NON_RETRYABLE_ERROR_CODES.has(errorCode)) {
           throw lastError;
         }
       }

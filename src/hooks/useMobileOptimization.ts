@@ -151,6 +151,9 @@ export const useMobileOptimization = () => {
  */
 export const useTouchOptimization = () => {
   useEffect(() => {
+    type InitialTouch = { x: number; y: number; time: number };
+    type TouchTrackingElement = HTMLElement & { _initialTouch?: InitialTouch };
+
     // 防止双击缩放
     let lastTouchEnd = 0;
     const preventZoom = (e: TouchEvent) => {
@@ -181,7 +184,8 @@ export const useTouchOptimization = () => {
           const touch = e.touches[0];
           if (touch) {
             // 记录初始触摸位置，用于后续判断
-            (e.target as any)._initialTouch = {
+            const target = e.target as TouchTrackingElement;
+            target._initialTouch = {
               x: touch.clientX,
               y: touch.clientY,
               time: Date.now()
@@ -189,7 +193,7 @@ export const useTouchOptimization = () => {
             
             // 延迟阻止，给滚动手势一个机会
             setTimeout(() => {
-              const initialTouch = (e.target as any)._initialTouch;
+              const initialTouch = target._initialTouch;
               if (initialTouch && Date.now() - initialTouch.time > 150) {
                 // 检查是否为静止状态或非滚动手势
                 if (Math.abs(touch.clientX - initialTouch.x) < 10 && 

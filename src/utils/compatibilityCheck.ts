@@ -239,7 +239,7 @@ export async function checkTimerCompatibility(): Promise<string> {
 }
 
 // 在开发环境中暴露到全局对象，方便调试
- if (typeof window !== 'undefined' && isDev) {
-  (window as any).checkTimerCompatibility = checkTimerCompatibility;
-  (window as any).compatibilityChecker = compatibilityChecker;
+if (typeof window !== 'undefined' && isDev) {
+  window.checkTimerCompatibility = checkTimerCompatibility;
+  window.compatibilityChecker = compatibilityChecker;
 }

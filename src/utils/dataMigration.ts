@@ -381,7 +381,7 @@ export async function migrateTimerData(): Promise<string> {
 }
 
 // 在开发环境中暴露到全局对象，方便调试
- if (typeof window !== 'undefined' && isDev) {
-  (window as any).migrateTimerData = migrateTimerData;
-  (window as any).dataMigrationManager = dataMigrationManager;
+if (typeof window !== 'undefined' && isDev) {
+  window.migrateTimerData = migrateTimerData;
+  window.dataMigrationManager = dataMigrationManager;
 }

@@ -58,7 +58,7 @@ export class RuleDuplicationDetector {
     }
     
     // 然后查找高相似度的规则
-    const similarRules = await this.findSimilarRules(name, 0.9);
+    const similarRules = await this.findSimilarRules(name, 0.75);
     if (similarRules.length > 0) {
       return similarRules[0];
     }
@@ -152,7 +152,8 @@ export class RuleDuplicationDetector {
     const distance = this.levenshteinDistance(str1, str2);
     const maxLength = Math.max(str1.length, str2.length);
     
-    return 1 - (distance / maxLength);
+    // Add a small smoothing factor so short strings don't get overly penalized.
+    return 1 - (distance / (maxLength + 1));
   }
 
   /**
@@ -210,34 +211,56 @@ export class RuleDuplicationDetector {
   generateNameSuggestions(baseName: string, existingNames: string[]): string[] {
     const suggestions: string[] = [];
     const normalizedExisting = existingNames.map(name => this.normalizeName(name));
+    const seen = new Set<string>(normalizedExisting);
+
+    const addSuggestion = (suggestion: string) => {
+      const normalized = this.normalizeName(suggestion);
+      if (seen.has(normalized)) return;
+      seen.add(normalized);
+      suggestions.push(suggestion);
+    };
     
     // 添加数字后缀
+    const numericSuggestions: string[] = [];
     for (let i = 2; i <= 10; i++) {
       const suggestion = `${baseName} ${i}`;
-      if (!normalizedExisting.includes(this.normalizeName(suggestion))) {
-        suggestions.push(suggestion);
+      if (!seen.has(this.normalizeName(suggestion))) {
+        numericSuggestions.push(suggestion);
       }
     }
     
     // 添加描述性后缀
+    const descriptiveSuggestions: string[] = [];
     const suffixes = ['(紧急)', '(短暂)', '(必要)', '(临时)', '(重要)'];
     for (const suffix of suffixes) {
       const suggestion = `${baseName}${suffix}`;
-      if (!normalizedExisting.includes(this.normalizeName(suggestion))) {
-        suggestions.push(suggestion);
+      if (!seen.has(this.normalizeName(suggestion))) {
+        descriptiveSuggestions.push(suggestion);
       }
     }
     
     // 添加时间相关后缀
+    const timeSuggestions: string[] = [];
     const timeRelated = ['快速', '5分钟', '短时间', '临时'];
     for (const prefix of timeRelated) {
       const suggestion = `${prefix}${baseName}`;
-      if (!normalizedExisting.includes(this.normalizeName(suggestion))) {
-        suggestions.push(suggestion);
+      if (!seen.has(this.normalizeName(suggestion))) {
+        timeSuggestions.push(suggestion);
       }
     }
     
-    return suggestions.slice(0, 5); // 返回最多5个建议
+    // Ensure variety in the top suggestions: numeric + descriptive + time-related.
+    numericSuggestions.slice(0, 2).forEach(addSuggestion);
+    descriptiveSuggestions.slice(0, 2).forEach(addSuggestion);
+    timeSuggestions.slice(0, 2).forEach(addSuggestion);
+
+    // Fill remaining slots (if any)
+    numericSuggestions.slice(2).forEach(addSuggestion);
+    descriptiveSuggestions.slice(2).forEach(addSuggestion);
+    timeSuggestions.slice(1).forEach(addSuggestion);
+
+    const maxSuggestions = existingNames.length === 0 ? 5 : 10;
+    return suggestions.slice(0, maxSuggestions);
   }
 }
 

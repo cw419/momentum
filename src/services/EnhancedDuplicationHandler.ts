@@ -10,6 +10,7 @@ import {
   ExceptionRuleException 
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { ruleDuplicationDetector } from './RuleDuplicationDetector';
 import { getCurrentLanguage, tr } from '../utils/runtimeI18n';
 
 export interface DuplicationCheckResult {
@@ -154,20 +155,42 @@ export class EnhancedDuplicationHandler {
     
     if (!checkResult.hasConflict) {
       // 没有冲突，直接创建
+      const trimmedName = name.trim();
+      const warnings: string[] = [];
+
+      if (ruleDuplicationDetector.isCommonPattern(trimmedName)) {
+        warnings.push(
+          tr(
+            '这是一个常见的规则模式，建议检查是否已有类似规则',
+            'This is a common rule pattern; consider checking for existing similar rules'
+          )
+        );
+      }
+
       const rule = await exceptionRuleStorage.createRule({
-        name: name.trim(),
+        name: trimmedName,
         type,
         description: description?.trim(),
         scope: 'global',
         chainId: undefined,
         isArchived: false
       });
+
+      // 创建后清理缓存，避免重复检查结果过期或不一致
+      this.clearCache();
       
       return {
         rule,
         action: 'created_new',
-        warnings: []
+        warnings
       };
+    }
+
+    // 相似冲突默认允许创建，但提供警告
+    if (checkResult.conflictType === 'similar' && userChoice === undefined) {
+      const result = await this.handleCreateAnyway(name, type, description, checkResult);
+      this.clearCache();
+      return result;
     }
 
     // 有冲突，根据用户选择处理
@@ -188,7 +211,11 @@ export class EnhancedDuplicationHandler {
             )
           );
         }
-        return this.handleCreateAnyway(name, type, description, checkResult);
+        {
+          const result = await this.handleCreateAnyway(name, type, description, checkResult);
+          this.clearCache();
+          return result;
+        }
       
       default:
         // 没有用户选择，抛出异常让用户决定
@@ -279,7 +306,8 @@ export class EnhancedDuplicationHandler {
     }
     
     const maxLen = Math.max(len1, len2);
-    return maxLen === 0 ? 1 : (maxLen - matrix[len1][len2]) / maxLen;
+    // Add a small smoothing factor so short strings don't get overly penalized.
+    return maxLen === 0 ? 1 : 1 - (matrix[len1][len2] / (maxLen + 1));
   }
 
   /**
@@ -433,6 +461,9 @@ export class EnhancedDuplicationHandler {
       chainId: undefined,
       isArchived: false
     });
+
+    // 创建后清理缓存，避免重复检查结果过期或不一致
+    this.clearCache();
     
     return {
       rule,
@@ -468,8 +499,8 @@ export class EnhancedDuplicationHandler {
       const similarNames = checkResult.existingRules.map(r => r.name).join('", "');
       warnings.push(
         tr(
-          `注意：存在相似的规则名称 "${similarNames}"`,
-          `Note: similar rule name(s) exist: "${similarNames}"`
+          `发现相似规则: "${similarNames}"`,
+          `Similar rules found: "${similarNames}"`
         )
       );
     }

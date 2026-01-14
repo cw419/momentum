@@ -3,6 +3,7 @@ import type { AppState } from '../types';
 import { useStorage } from '../storage/StorageContext';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorHandling';
 import { isSessionExpired } from '../utils/time';
 import { notificationManager } from '../utils/notifications';
 import { performanceDashboard } from '../utils/performanceDashboard';
@@ -82,7 +83,7 @@ export default function AppShellContainer() {
           }
         })
         .catch(error => {
-          logger.error('APP_SHELL', 'Rule system initialization error', undefined, error as Error);
+          logger.error('APP_SHELL', 'Rule system initialization error', undefined, toError(error));
         });
 
       runMigration();
@@ -94,8 +95,12 @@ export default function AppShellContainer() {
       }
     };
 
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(initializeNonCritical, { timeout: 2000 });
+    const requestIdleCallbackFn = window.requestIdleCallback;
+    if (typeof requestIdleCallbackFn === 'function') {
+      requestIdleCallbackFn((_deadline) => {
+        void _deadline;
+        initializeNonCritical();
+      }, { timeout: 2000 });
     } else {
       setTimeout(initializeNonCritical, 100);
     }
@@ -148,7 +153,7 @@ export default function AppShellContainer() {
       if (!hasChanges) return;
 
       void storage.saveChains(updatedChains).catch(error => {
-        logger.error('APP_SHELL', 'Failed to persist group expiry cleanup', undefined, error as Error);
+        logger.error('APP_SHELL', 'Failed to persist group expiry cleanup', undefined, toError(error));
       });
 
       setState(prev => ({ ...prev, chains: updatedChains }));
@@ -182,7 +187,7 @@ export default function AppShellContainer() {
       setShowAuxiliaryJudgment(expiredSessions[0].chainId);
 
       void storage.saveScheduledSessions(activeScheduledSessions).catch(error => {
-        logger.error('APP_SHELL', 'Failed to persist scheduled session cleanup', undefined, error as Error);
+        logger.error('APP_SHELL', 'Failed to persist scheduled session cleanup', undefined, toError(error));
       });
 
       setState(prev => ({ ...prev, scheduledSessions: activeScheduledSessions }));

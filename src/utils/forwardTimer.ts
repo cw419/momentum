@@ -299,7 +299,21 @@ export class ForwardTimerManager {
    */
   cleanupExpiredStates(): void {
     try {
-      const keys = Object.keys(localStorage);
+      const keys: string[] = [];
+
+      // Prefer Storage API when available (real browser localStorage),
+      // but keep a fallback for test/mocked implementations.
+      const storage = localStorage as unknown;
+      const storageLike = storage as Partial<Storage>;
+      if (typeof storageLike.length === 'number' && typeof storageLike.key === 'function') {
+        for (let i = 0; i < storageLike.length; i++) {
+          const key = storageLike.key(i);
+          if (key) keys.push(key);
+        }
+      } else if (storage && typeof storage === 'object') {
+        keys.push(...Object.keys(storage as Record<string, unknown>));
+      }
+
       const timerKeys = keys.filter(key => key.startsWith('momentum_timer_'));
       const now = Date.now();
 

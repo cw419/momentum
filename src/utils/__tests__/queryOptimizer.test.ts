@@ -11,37 +11,59 @@
 
 import { queryOptimizer } from '../queryOptimizer';
 import { Chain, ChainTreeNode } from '../../types';
+import { buildChainTree } from '../chainTree';
+import { performanceLogger } from '../performanceLogger';
+import { reactPerformanceMonitor } from '../reactPerformanceMonitor';
 
 // Mock dependencies
-jest.mock('../chainTree');
-jest.mock('../performanceLogger');
-jest.mock('../reactPerformanceMonitor');
-
-const { buildChainTree } = require('../chainTree');
-const { performanceLogger } = require('../performanceLogger');
-const { reactPerformanceMonitor } = require('../reactPerformanceMonitor');
+vi.mock('../chainTree');
+vi.mock('../performanceLogger');
+vi.mock('../reactPerformanceMonitor');
 
 describe('QueryOptimizer', () => {
   beforeEach(() => {
     queryOptimizer.clearCache();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Setup default mocks
-    performanceLogger.debug = jest.fn();
-    performanceLogger.time = jest.fn((label, fn) => fn());
-    performanceLogger.log = jest.fn();
-    performanceLogger.group = jest.fn((label, fn) => fn());
+    performanceLogger.debug = vi.fn();
+    performanceLogger.time = vi.fn((label, fn) => fn());
+    performanceLogger.log = vi.fn();
+    performanceLogger.group = vi.fn((label, fn) => fn());
     
-    reactPerformanceMonitor.trackCacheHit = jest.fn();
-    reactPerformanceMonitor.trackCacheMiss = jest.fn();
-    reactPerformanceMonitor.trackTreeBuild = jest.fn();
-    reactPerformanceMonitor.generateReport = jest.fn(() => ({ cacheHitRatio: 0.8 }));
+    reactPerformanceMonitor.trackCacheHit = vi.fn();
+    reactPerformanceMonitor.trackCacheMiss = vi.fn();
+    reactPerformanceMonitor.trackTreeBuild = vi.fn();
+    reactPerformanceMonitor.generateReport = vi.fn(() => ({ cacheHitRatio: 0.8 }));
+  });
+
+  const createMockChain = (id: string, parentId?: string): Chain => ({
+    id,
+    name: `Chain ${id}`,
+    parentId,
+    type: 'unit',
+    sortOrder: parseInt(id),
+    trigger: 'Test',
+    duration: 30,
+    description: 'Test chain',
+    currentStreak: 0,
+    auxiliaryStreak: 0,
+    totalCompletions: 0,
+    totalFailures: 0,
+    auxiliaryFailures: 0,
+    exceptions: [],
+    auxiliaryExceptions: [],
+    auxiliarySignal: 'Test',
+    auxiliaryDuration: 15,
+    auxiliaryCompletionTrigger: 'Test',
+    isDurationless: false,
+    createdAt: new Date(),
   });
 
   describe('Query Deduplication', () => {
     test('should deduplicate identical concurrent queries', async () => {
       let callCount = 0;
-      const mockQuery = jest.fn(async () => {
+      const mockQuery = vi.fn(async () => {
         callCount++;
         await new Promise(resolve => setTimeout(resolve, 10));
         return `result-${callCount}`;
@@ -63,7 +85,7 @@ describe('QueryOptimizer', () => {
     });
 
     test('should cache results for subsequent queries', async () => {
-      const mockQuery = jest.fn(async () => 'cached-result');
+      const mockQuery = vi.fn(async () => 'cached-result');
 
       // First call
       const result1 = await queryOptimizer.deduplicateQuery('cache:test', mockQuery);
@@ -77,7 +99,7 @@ describe('QueryOptimizer', () => {
     });
 
     test('should not cache error results', async () => {
-      const mockQuery = jest.fn()
+      const mockQuery = vi.fn()
         .mockRejectedValueOnce(new Error('First attempt failed'))
         .mockResolvedValueOnce('Success on retry');
 
@@ -92,7 +114,7 @@ describe('QueryOptimizer', () => {
     });
 
     test('should handle cache TTL expiration', async () => {
-      const mockQuery = jest.fn()
+      const mockQuery = vi.fn()
         .mockResolvedValueOnce('initial')
         .mockResolvedValueOnce('refreshed');
 
@@ -116,29 +138,6 @@ describe('QueryOptimizer', () => {
   });
 
   describe('Chain Tree Memoization', () => {
-    const createMockChain = (id: string, parentId?: string): Chain => ({
-      id,
-      name: `Chain ${id}`,
-      parentId,
-      type: 'unit',
-      sortOrder: parseInt(id),
-      trigger: 'Test',
-      duration: 30,
-      description: 'Test chain',
-      currentStreak: 0,
-      auxiliaryStreak: 0,
-      totalCompletions: 0,
-      totalFailures: 0,
-      auxiliaryFailures: 0,
-      exceptions: [],
-      auxiliaryExceptions: [],
-      auxiliarySignal: 'Test',
-      auxiliaryDuration: 15,
-      auxiliaryCompletionTrigger: 'Test',
-      isDurationless: false,
-      createdAt: new Date(),
-    });
-
     test('should use cached tree for identical chain data', () => {
       const chains = [
         createMockChain('1'),
@@ -217,7 +216,7 @@ describe('QueryOptimizer', () => {
       buildChainTree.mockReturnValue(mockTree);
       
       // Mock performance.now to control timing
-      const mockNow = jest.spyOn(performance, 'now');
+      const mockNow = vi.spyOn(performance, 'now');
       mockNow.mockReturnValueOnce(0).mockReturnValueOnce(50); // 50ms build time
 
       queryOptimizer.memoizedBuildChainTree(chains);
@@ -234,10 +233,10 @@ describe('QueryOptimizer', () => {
   describe('Batch Operations', () => {
     test('should batch load all data efficiently', async () => {
       const mockStorage = {
-        getActiveChains: jest.fn().mockResolvedValue([createMockChain('1')]),
-        getScheduledSessions: jest.fn().mockResolvedValue([]),
-        getActiveSession: jest.fn().mockResolvedValue(null),
-        getCompletionHistory: jest.fn().mockResolvedValue([])
+        getActiveChains: vi.fn().mockResolvedValue([createMockChain('1')]),
+        getScheduledSessions: vi.fn().mockResolvedValue([]),
+        getActiveSession: vi.fn().mockResolvedValue(null),
+        getCompletionHistory: vi.fn().mockResolvedValue([])
       };
 
       const result = await queryOptimizer.batchLoadData(mockStorage);
@@ -258,10 +257,10 @@ describe('QueryOptimizer', () => {
 
     test('should deduplicate batch load requests', async () => {
       const mockStorage = {
-        getActiveChains: jest.fn().mockResolvedValue([]),
-        getScheduledSessions: jest.fn().mockResolvedValue([]),
-        getActiveSession: jest.fn().mockResolvedValue(null),
-        getCompletionHistory: jest.fn().mockResolvedValue([])
+        getActiveChains: vi.fn().mockResolvedValue([]),
+        getScheduledSessions: vi.fn().mockResolvedValue([]),
+        getActiveSession: vi.fn().mockResolvedValue(null),
+        getCompletionHistory: vi.fn().mockResolvedValue([])
       };
 
       // Concurrent batch loads
@@ -284,10 +283,10 @@ describe('QueryOptimizer', () => {
 
     test('should handle partial failures in batch operations', async () => {
       const mockStorage = {
-        getActiveChains: jest.fn().mockResolvedValue([createMockChain('1')]),
-        getScheduledSessions: jest.fn().mockRejectedValue(new Error('Sessions failed')),
-        getActiveSession: jest.fn().mockResolvedValue(null),
-        getCompletionHistory: jest.fn().mockResolvedValue([])
+        getActiveChains: vi.fn().mockResolvedValue([createMockChain('1')]),
+        getScheduledSessions: vi.fn().mockRejectedValue(new Error('Sessions failed')),
+        getActiveSession: vi.fn().mockResolvedValue(null),
+        getCompletionHistory: vi.fn().mockResolvedValue([])
       };
 
       await expect(queryOptimizer.batchLoadData(mockStorage))
@@ -297,7 +296,7 @@ describe('QueryOptimizer', () => {
 
   describe('Cache Invalidation', () => {
     test('should invalidate related caches on data changes', async () => {
-      const mockQuery = jest.fn().mockResolvedValue('data');
+      const mockQuery = vi.fn().mockResolvedValue('data');
 
       // Populate cache with chains data
       await queryOptimizer.deduplicateQuery('chains:getAll', mockQuery);
@@ -330,10 +329,10 @@ describe('QueryOptimizer', () => {
 
     test('should invalidate batched data on any data change', async () => {
       const mockStorage = {
-        getActiveChains: jest.fn().mockResolvedValue([]),
-        getScheduledSessions: jest.fn().mockResolvedValue([]),
-        getActiveSession: jest.fn().mockResolvedValue(null),
-        getCompletionHistory: jest.fn().mockResolvedValue([])
+        getActiveChains: vi.fn().mockResolvedValue([]),
+        getScheduledSessions: vi.fn().mockResolvedValue([]),
+        getActiveSession: vi.fn().mockResolvedValue(null),
+        getCompletionHistory: vi.fn().mockResolvedValue([])
       };
 
       // First batch load
@@ -374,7 +373,7 @@ describe('QueryOptimizer', () => {
     });
 
     test('should track performance for optimized queries', async () => {
-      const mockQuery = jest.fn().mockResolvedValue('data');
+      const mockQuery = vi.fn().mockResolvedValue('data');
       
       await queryOptimizer.getOptimizedChains({ getActiveChains: mockQuery });
       
@@ -409,7 +408,7 @@ describe('QueryOptimizer', () => {
     });
 
     test('should handle concurrent cache clears gracefully', async () => {
-      const mockQuery = jest.fn().mockResolvedValue('data');
+      const mockQuery = vi.fn().mockResolvedValue('data');
       
       // Start query
       const queryPromise = queryOptimizer.deduplicateQuery('test:clear', mockQuery);
@@ -423,7 +422,7 @@ describe('QueryOptimizer', () => {
     });
 
     test('should maintain performance under high load', async () => {
-      const mockQuery = jest.fn().mockResolvedValue('data');
+      const mockQuery = vi.fn().mockResolvedValue('data');
       
       // Simulate high load with many concurrent queries
       const promises = Array.from({ length: 100 }, (_, i) =>
@@ -443,7 +442,7 @@ describe('QueryOptimizer', () => {
 
   describe('Memory Management', () => {
     test('should properly cleanup expired cache entries', async () => {
-      const mockQuery = jest.fn().mockResolvedValue('data');
+      const mockQuery = vi.fn().mockResolvedValue('data');
       
       // Mock short TTL
       const originalTTL = (queryOptimizer as any).CACHE_TTL;
@@ -465,7 +464,7 @@ describe('QueryOptimizer', () => {
 
     test('should handle cache clear during active operations', async () => {
       let resolveQuery: (value: string) => void;
-      const mockQuery = jest.fn(() => new Promise<string>(resolve => {
+      const mockQuery = vi.fn(() => new Promise<string>(resolve => {
         resolveQuery = resolve;
       }));
       

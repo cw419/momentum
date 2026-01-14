@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ExceptionRuleType, EnhancedExceptionRuleException } from '../../../types';
+import { ExceptionRuleError, ExceptionRuleType, EnhancedExceptionRuleException } from '../../../types';
 import type { ExceptionRule, PauseOptions, SessionContext } from '../../../types';
 import { exceptionRuleManager } from '../../../services/ExceptionRuleManager';
 import { userFeedbackHandler } from '../../../services/UserFeedbackHandler';
 import { errorRecoveryManager } from '../../../services/ErrorRecoveryManager';
 import { logger } from '../../../utils/logger';
+import { toError } from '../../../utils/errorHandling';
 import { isDev } from '../../../utils/env';
 import { useI18n } from '../../../i18n';
 
@@ -17,6 +18,13 @@ interface UseExceptionRuleFlowParams {
   scheduleAutoResume: (minutes: number) => void;
   clearAutoResumeSchedule: () => void;
   onRuleUsed?: (rule: ExceptionRule, actionType: PendingActionType, pauseOptions?: PauseOptions) => void;
+}
+
+function isExceptionRule(value: unknown): value is ExceptionRule {
+  if (!value || typeof value !== 'object') return false;
+
+  const candidate = value as Partial<ExceptionRule>;
+  return typeof candidate.id === 'string' && typeof candidate.name === 'string';
 }
 
 export function useExceptionRuleFlow({
@@ -62,7 +70,15 @@ export function useExceptionRuleFlow({
           userFeedbackHandler.showSuccess(tr('问题已解决', 'Issue resolved'), recoveryResult.message);
 
           if (recoveryResult.recoveredData && operation === 'create_rule') {
-            await handleRuleSelected(recoveryResult.recoveredData as any);
+            if (isExceptionRule(recoveryResult.recoveredData)) {
+              await handleRuleSelected(recoveryResult.recoveredData);
+            } else {
+              logger.warn('FOCUS_MODE', 'Recovery returned invalid rule data', {
+                operation,
+                context,
+                recoveredData: recoveryResult.recoveredData,
+              });
+            }
           }
         } else if (recoveryResult.requiresUserAction && recoveryResult.actions) {
           logger.error('FOCUS_MODE', '需要用户操作的恢复失败', { recoveryResult, operation, context });
@@ -71,7 +87,7 @@ export function useExceptionRuleFlow({
       }
 
       const enhancedError = new EnhancedExceptionRuleException(
-        'STORAGE_ERROR' as any,
+        ExceptionRuleError.STORAGE_ERROR,
         error instanceof Error ? error.message : tr('未知错误', 'Unknown error'),
         context,
         true,
@@ -82,7 +98,7 @@ export function useExceptionRuleFlow({
 
       userFeedbackHandler.showErrorMessage(enhancedError, context);
     } catch (handlingError) {
-      const err = handlingError instanceof Error ? handlingError : new Error(String(handlingError));
+      const err = toError(handlingError);
       logger.error('FOCUS_MODE', '错误处理失败', { operation, context }, err);
       userFeedbackHandler.showWarning(
         tr('系统错误', 'System error'),
@@ -107,7 +123,7 @@ export function useExceptionRuleFlow({
       if (!rule || !rule.id) {
         logger.error('FOCUS_MODE', 'Invalid rule object', { rule, pendingActionType });
         userFeedbackHandler.showErrorMessage(
-          new EnhancedExceptionRuleException('RULE_NOT_FOUND' as any, tr('规则对象无效', 'Invalid rule'), { rule, pendingActionType })
+          new EnhancedExceptionRuleException(ExceptionRuleError.RULE_NOT_FOUND, tr('规则对象无效', 'Invalid rule'), { rule, pendingActionType })
         );
         return;
       }
@@ -154,7 +170,7 @@ export function useExceptionRuleFlow({
     } catch (error) {
       userFeedbackHandler.hideProgress();
 
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('FOCUS_MODE', 'Failed to use rule', { ruleId: rule.id, actionType: pendingActionType }, err);
 
       await handleRuleError(error, 'use_rule', { rule, actionType: pendingActionType });
@@ -169,7 +185,7 @@ export function useExceptionRuleFlow({
     try {
       if (!name || !name.trim()) {
         userFeedbackHandler.showErrorMessage(
-          new EnhancedExceptionRuleException('VALIDATION_ERROR' as any, tr('规则名称不能为空', 'Rule name cannot be empty'), { name, type })
+          new EnhancedExceptionRuleException(ExceptionRuleError.VALIDATION_ERROR, tr('规则名称不能为空', 'Rule name cannot be empty'), { name, type })
         );
         return;
       }
@@ -188,8 +204,9 @@ export function useExceptionRuleFlow({
 
       if (duplicateCheck.hasConflict) {
         userFeedbackHandler.hideProgress();
-        if (duplicateCheck.suggestions && duplicateCheck.suggestions.length > 0) {
-          userChoice = duplicateCheck.suggestions[0].type as any;
+        const suggestedType = duplicateCheck.suggestions?.[0]?.type;
+        if (suggestedType === 'use_existing' || suggestedType === 'modify_name' || suggestedType === 'create_anyway') {
+          userChoice = suggestedType;
         }
         userFeedbackHandler.showProgress(tr('正在创建规则...', 'Creating rule...'), 50);
       }
@@ -211,7 +228,7 @@ export function useExceptionRuleFlow({
     } catch (error) {
       userFeedbackHandler.hideProgress();
 
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('FOCUS_MODE', '创建规则失败', { name, type }, err);
 
       await handleRuleError(error, 'create_rule', { name, type });

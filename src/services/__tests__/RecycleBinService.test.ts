@@ -1,14 +1,35 @@
 import { RecycleBinService } from '../RecycleBinService';
-import { storage } from '../../utils/storage';
-import { Chain, DeletedChain } from '../../types';
+import type { MomentumStorage } from '../../storage/MomentumStorage';
+import { DeletedChain } from '../../types';
+import type { Mocked } from 'vitest';
 
-// Mock the storage module
-jest.mock('../../utils/storage');
-const mockStorage = storage as jest.Mocked<typeof storage>;
+type RecycleBinStorage = Pick<
+  MomentumStorage,
+  | 'kind'
+  | 'getDeletedChains'
+  | 'softDeleteChain'
+  | 'restoreChain'
+  | 'permanentlyDeleteChain'
+  | 'cleanupExpiredDeletedChains'
+>;
+
+const mockStorage: Mocked<RecycleBinStorage> = {
+  kind: 'local',
+  getDeletedChains: vi.fn<[], Promise<DeletedChain[]>>(),
+  softDeleteChain: vi.fn<[string], Promise<void>>(),
+  restoreChain: vi.fn<[string], Promise<void>>(),
+  permanentlyDeleteChain: vi.fn<[string], Promise<void>>(),
+  cleanupExpiredDeletedChains: vi.fn<[olderThanDays?: number], Promise<number>>(),
+};
 
 describe('RecycleBinService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    RecycleBinService.setStorage(mockStorage as unknown as MomentumStorage);
+  });
+
+  afterEach(() => {
+    RecycleBinService.setStorage(null);
   });
 
   describe('getDeletedChains', () => {

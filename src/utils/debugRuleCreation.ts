@@ -4,6 +4,8 @@
 
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { ExceptionRuleType } from '../types';
+import { isDev } from './env';
+import { toError } from './errorHandling';
 import { logger } from './logger';
 
 export async function debugRuleCreation() {
@@ -28,13 +30,13 @@ export async function debugRuleCreation() {
     return true;
     
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error('RULE_DEBUG', '❌ 规则创建失败', undefined, err);
     return false;
   }
 }
 
 // 暴露到全局
-if (typeof window !== 'undefined') {
-  (window as any).debugRuleCreation = debugRuleCreation;
+if (typeof window !== 'undefined' && isDev) {
+  window.debugRuleCreation = debugRuleCreation;
 }

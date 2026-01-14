@@ -2,6 +2,7 @@ import type { AuthSession, AuthStateChangeEvent, AuthUser, AuthenticationResult 
 import type { AppError } from '../../../domain/errors';
 import { err, ok } from '../../../domain/result';
 import type { Result } from '../../../domain/result';
+import type { User } from '@supabase/supabase-js';
 import {
   getCurrentUser as supabaseGetCurrentUser,
   isUserAuthenticated as supabaseIsUserAuthenticated,
@@ -12,7 +13,7 @@ import {
   waitForAuthentication as supabaseWaitForAuthentication,
 } from '../../../lib/supabase';
 
-function toAuthUser(user: any): AuthUser {
+function toAuthUser(user: User): AuthUser {
   return {
     id: user.id,
     email: user.email ?? null,

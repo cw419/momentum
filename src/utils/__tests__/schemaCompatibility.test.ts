@@ -1,65 +1,51 @@
 import { SupabaseStorage } from '../supabaseStorage';
-import { SchemaChecker } from '../schemaChecker';
 import { MigrationHelper } from '../migrationHelper';
 import { Chain } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 // Mock Supabase for testing
-jest.mock('../lib/supabase', () => ({
+vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: jest.fn()
+    from: vi.fn()
   },
-  getCurrentUser: jest.fn(() => Promise.resolve({ id: 'test-user' }))
+  getCurrentUser: vi.fn(() => Promise.resolve({ id: 'test-user' })),
+  waitForAuthentication: vi.fn(() => Promise.resolve({ user: { id: 'test-user' }, isAuthenticated: true })),
+  isUserAuthenticated: vi.fn(() => Promise.resolve(true))
 }));
+
+const mockSupabase = supabase as unknown as { from: ReturnType<typeof vi.fn> };
 
 describe('Schema Compatibility Tests', () => {
   let storage: SupabaseStorage;
-  let schemaChecker: SchemaChecker;
   let migrationHelper: MigrationHelper;
 
   beforeEach(() => {
     storage = new SupabaseStorage();
-    schemaChecker = new SchemaChecker();
     migrationHelper = new MigrationHelper();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    mockSupabase.from.mockReset();
   });
 
   describe('Complete Schema Compatibility', () => {
     it('should work with complete schema (all columns present)', async () => {
-      const { supabase } = require('../lib/supabase');
-      
-      // Mock complete schema
-      supabase.from
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              in: () => ({
-                data: [
-                  { column_name: 'is_durationless' },
-                  { column_name: 'time_limit_hours' },
-                  { column_name: 'time_limit_exceptions' },
-                  { column_name: 'group_started_at' },
-                  { column_name: 'group_expires_at' }
-                ],
-                error: null
-              })
-            })
-          })
-        })
+      // Existing chains query
+      mockSupabase.from
         .mockReturnValueOnce({
           select: () => ({
             eq: () => ({
               data: [],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         })
+        // Upsert succeeds on first attempt
         .mockReturnValueOnce({
           upsert: () => ({
             select: () => ({
               data: [{ id: 'chain1' }],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         });
 
       const chains: Chain[] = [{
@@ -93,45 +79,33 @@ describe('Schema Compatibility Tests', () => {
     });
 
     it('should work with legacy schema (missing new columns)', async () => {
-      const { supabase } = require('../lib/supabase');
-      
-      // Mock legacy schema (missing new columns)
-      supabase.from
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              in: () => ({
-                data: [], // No new columns found
-                error: null
-              })
-            })
-          })
-        })
+      // Existing chains query
+      mockSupabase.from
         .mockReturnValueOnce({
           select: () => ({
             eq: () => ({
               data: [],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         })
-        // First attempt with new columns fails
+        // First upsert attempt fails (missing column)
         .mockReturnValueOnce({
           upsert: () => ({
             select: () => ({
               data: null,
-              error: { code: 'PGRST204', message: "Could not find the 'group_expires_at' column" }
-            })
-          })
+              error: { code: 'PGRST204', message: "Could not find the 'group_expires_at' column" },
+            }),
+          }),
         })
-        // Fallback attempt succeeds
+        // Fallback upsert succeeds
         .mockReturnValueOnce({
           upsert: () => ({
             select: () => ({
               data: [{ id: 'chain1' }],
-              error: null
-            })
-          })
+              error: null,
+            }),
+          }),
         });
 
       const chains: Chain[] = [{
@@ -162,72 +136,34 @@ describe('Schema Compatibility Tests', () => {
   });
 
   describe('Schema Detection', () => {
-    it('should correctly identify missing columns', async () => {
-      const { supabase } = require('../lib/supabase');
-      
-      supabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            in: () => ({
-              data: [
-                { column_name: 'is_durationless' },
-                { column_name: 'time_limit_hours' }
-                // Missing: time_limit_exceptions, group_started_at, group_expires_at
-              ],
-              error: null
-            })
-          })
-        })
-      });
+    it('should skip schema verification and return conservative result', async () => {
+      const result = await storage.verifySchemaColumns('chains', ['is_durationless']);
 
-      const result = await storage.verifySchemaColumns('chains', [
-        'is_durationless',
-        'time_limit_hours', 
-        'time_limit_exceptions',
-        'group_started_at',
-        'group_expires_at'
-      ]);
-
-      expect(result.hasAllColumns).toBe(false);
-      expect(result.missingColumns).toEqual([
-        'time_limit_exceptions',
-        'group_started_at', 
-        'group_expires_at'
-      ]);
+      expect(result.hasAllColumns).toBe(true);
+      expect(result.missingColumns).toEqual([]);
+      expect(result.error).toContain('Schema verification');
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
-    it('should handle schema verification errors gracefully', async () => {
-      const { supabase } = require('../lib/supabase');
-      
-      supabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            in: () => ({
-              data: null,
-              error: { message: 'Permission denied' }
-            })
-          })
-        })
-      });
+    it('should cache schema verification results within session', async () => {
+      const result1 = await storage.verifySchemaColumns('chains', ['is_durationless']);
+      const result2 = await storage.verifySchemaColumns('chains', ['is_durationless']);
 
-      const result = await storage.verifySchemaColumns('chains', ['test_column']);
-
-      expect(result.hasAllColumns).toBe(false);
-      expect(result.error).toBe('Permission denied');
+      expect(result2).toEqual(result1);
     });
   });
 
   describe('Migration Status Detection', () => {
     it('should correctly identify applied migrations', async () => {
-      const { supabase } = require('../lib/supabase');
-      
       // Mock that chains table exists (basic migration applied)
-      supabase.from
+      mockSupabase.from
         .mockReturnValueOnce({
           select: () => ({
             eq: () => ({
-              data: [{ table_name: 'chains' }],
-              error: null
+              eq: () => ({
+                data: [{ table_name: 'chains' }],
+                error: null
+              })
             })
           })
         })
@@ -269,10 +205,8 @@ describe('Schema Compatibility Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors with retry logic', async () => {
-      const { supabase } = require('../lib/supabase');
-      
       let attemptCount = 0;
-      supabase.from.mockImplementation(() => ({
+      mockSupabase.from.mockImplementation(() => ({
         select: () => ({
           eq: () => ({
             order: () => {
@@ -295,9 +229,7 @@ describe('Schema Compatibility Tests', () => {
     });
 
     it('should handle malformed data gracefully', async () => {
-      const { supabase } = require('../lib/supabase');
-      
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: () => ({
           eq: () => ({
             order: () => ({
@@ -322,8 +254,6 @@ describe('Schema Compatibility Tests', () => {
 
   describe('Data Consistency', () => {
     it('should maintain data consistency during schema transitions', async () => {
-      const { supabase } = require('../lib/supabase');
-      
       // Simulate a scenario where some chains have new fields and others don't
       const mixedData = [
         {
@@ -335,13 +265,14 @@ describe('Schema Compatibility Tests', () => {
         {
           id: 'new-chain',
           name: 'New Chain',
+          type: 'group',
           is_durationless: true,
           time_limit_hours: 24,
           created_at: '2023-01-01T00:00:00Z'
         }
       ];
 
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: () => ({
           eq: () => ({
             order: () => ({

@@ -71,11 +71,24 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
   // 初始化和清理
   useEffect(() => {
+    let focusTimer: ReturnType<typeof setTimeout> | undefined;
+
     if (isOpen) {
       startMonitoring();
       loadChainRules();
       // 聚焦搜索框
-      setTimeout(() => searchInputRef.current?.focus(), 100);
+      focusTimer = setTimeout(() => {
+        const input = searchInputRef.current;
+        if (!input) return;
+
+        // Avoid stealing focus if the user already interacted with another control (e.g. pause duration input).
+        const active = document.activeElement;
+        const shouldFocus =
+          !active || active === document.body || active === document.documentElement;
+        if (shouldFocus) {
+          input.focus();
+        }
+      }, 100);
     } else {
       stopMonitoring();
       // 重置状态
@@ -84,6 +97,9 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
     }
 
     return () => {
+      if (focusTimer) {
+        clearTimeout(focusTimer);
+      }
       stopMonitoring();
     };
   }, [isOpen, sessionContext.chainId]);
@@ -317,6 +333,9 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div 
         ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rule-selection-dialog-title"
         className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
         style={{ maxWidth: 'min(640px, 100vw - 2rem)' }}
       >
@@ -332,7 +351,9 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                <span id="rule-selection-dialog-title">
                 {tr('选择例外规则', 'Choose exception rule')}
+                </span>
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {language === 'zh'
@@ -344,6 +365,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
           
           <button
             onClick={onCancel}
+            aria-label={tr('关闭对话框', 'Close dialog')}
             className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors"
           >
             <X size={20} />
@@ -421,6 +443,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
               <span className="text-red-700 dark:text-red-300 flex-1">{error}</span>
               <button
                 onClick={() => setError(null)}
+                aria-label={tr('关闭错误提示', 'Dismiss error')}
                 className="text-red-500 hover:text-red-700"
               >
                 <X size={16} />

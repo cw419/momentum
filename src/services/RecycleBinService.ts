@@ -155,15 +155,16 @@ export class RecycleBinService {
   }> {
     try {
       const deletedChains = await this.getDeletedChains();
-      const sevenDaysFromNow = new Date();
+      const now = new Date();
+      const sevenDaysFromNow = new Date(now);
       sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-      
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const expiringSoon = deletedChains.filter(chain => 
-        chain.deletedAt < sevenDaysFromNow && chain.deletedAt > thirtyDaysAgo
-      ).length;
+
+      const retentionDays = 30;
+      const expiringSoon = deletedChains.filter(chain => {
+        const expiresAt = new Date(chain.deletedAt);
+        expiresAt.setDate(expiresAt.getDate() + retentionDays);
+        return expiresAt <= sevenDaysFromNow && expiresAt >= now;
+      }).length;
 
       return {
         totalDeleted: deletedChains.length,

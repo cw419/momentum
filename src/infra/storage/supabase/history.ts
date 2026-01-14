@@ -1,5 +1,8 @@
 import type { CompletionHistory } from '../../../types';
 import type { SupabaseStorageContext } from './types';
+import type { Database } from '../../../lib/database.types';
+
+type CompletionHistoryRow = Database['public']['Tables']['completion_history']['Row'];
 
 export async function getCompletionHistory(ctx: SupabaseStorageContext): Promise<CompletionHistory[]> {
   const user = await ctx.getCurrentUser();
@@ -15,14 +18,14 @@ export async function getCompletionHistory(ctx: SupabaseStorageContext): Promise
   if (error) return [];
   if (!data) return [];
 
-  return data.map((history: any) => ({
+  return data.map((history: CompletionHistoryRow) => ({
     chainId: history.chain_id,
     completedAt: new Date(history.completed_at),
     duration: history.duration,
     wasSuccessful: history.was_successful,
     reasonForFailure: history.reason_for_failure || undefined,
-    actualDuration: history.actual_duration || history.duration,
-    isForwardTimed: history.is_forward_timed || false,
+    actualDuration: history.actual_duration ?? history.duration,
+    isForwardTimed: history.is_forward_timed ?? false,
     description: history.description || undefined,
     notes: history.notes || undefined,
   }));
@@ -62,10 +65,10 @@ export async function saveCompletionHistory(ctx: SupabaseStorageContext, history
         duration: h.duration,
         was_successful: h.wasSuccessful,
         reason_for_failure: h.reasonForFailure,
-        actual_duration: (h as any).actualDuration || h.duration,
-        is_forward_timed: (h as any).isForwardTimed || false,
-        description: (h as any).description || null,
-        notes: (h as any).notes || null,
+        actual_duration: h.actualDuration ?? h.duration,
+        is_forward_timed: h.isForwardTimed ?? false,
+        description: h.description ?? null,
+        notes: h.notes ?? null,
         user_id: user.id,
       }))
     );
@@ -79,8 +82,8 @@ export async function saveCompletionHistory(ctx: SupabaseStorageContext, history
         duration: h.duration,
         was_successful: h.wasSuccessful,
         reason_for_failure: h.reasonForFailure,
-        description: (h as any).description || null,
-        notes: (h as any).notes || null,
+        description: h.description ?? null,
+        notes: h.notes ?? null,
         user_id: user.id,
       }))
     );

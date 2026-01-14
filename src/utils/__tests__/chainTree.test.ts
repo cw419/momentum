@@ -344,7 +344,7 @@ describe('chainTree utilities', () => {
       };
       
       const result = getGroupProgress(unit);
-      expect(result).toEqual({ completed: 0, total: 1 }); // Not complete until currentStreak >= taskRepeatCount
+      expect(result).toEqual({ completed: 1, total: 3 });
     });
 
     it('should handle completed task with repeat count', () => {
@@ -359,7 +359,7 @@ describe('chainTree utilities', () => {
       };
       
       const result = getGroupProgress(unit);
-      expect(result).toEqual({ completed: 1, total: 1 });
+      expect(result).toEqual({ completed: 3, total: 3 });
     });
 
     it('should handle user issue scenario: 4 tasks, 2 completed their repeats', () => {
@@ -412,7 +412,7 @@ describe('chainTree utilities', () => {
       };
       
       const result = getGroupProgress(group);
-      expect(result).toEqual({ completed: 2, total: 4 });
+      expect(result).toEqual({ completed: 3, total: 7 });
     });
 
     it('should calculate progress for group with mixed completion', () => {

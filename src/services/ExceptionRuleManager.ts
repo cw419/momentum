@@ -57,7 +57,8 @@ export class ExceptionRuleManager {
 
       // 清理过期缓存
       enhancedRuleValidationService.cleanupExpiredCache();
-      enhancedDuplicationHandler.cleanupExpiredCache();
+      // 重复检测缓存依赖当前规则数据，初始化时清空以避免跨会话/跨测试污染
+      enhancedDuplicationHandler.clearCache();
 
       this.initialized = true;
       logger.info('EXCEPTION_RULE_MANAGER', 'Initialization completed');
@@ -211,7 +212,7 @@ export class ExceptionRuleManager {
     hasConflict: boolean;
     conflictMessage?: string;
     suggestions: Array<{
-      type: string;
+      type: 'use_existing' | 'modify_name' | 'create_anyway' | 'merge_rules';
       title: string;
       description: string;
       suggestedName?: string;

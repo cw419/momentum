@@ -186,7 +186,7 @@ export class SupabaseStorage implements MomentumStorage {
       let hasChanges = false;
 
       const updatedHistory = history.map(record => {
-        if ((record as any).actualDuration !== undefined && (record as any).isForwardTimed !== undefined) {
+        if (record.actualDuration !== undefined && record.isForwardTimed !== undefined) {
           return record;
         }
 
@@ -195,7 +195,7 @@ export class SupabaseStorage implements MomentumStorage {
           ...record,
           actualDuration: record.duration,
           isForwardTimed: chain?.isDurationless || false,
-        } as any;
+        };
 
         hasChanges = true;
         return migratedRecord;

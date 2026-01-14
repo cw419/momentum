@@ -4,18 +4,32 @@
 
 import { RuleScopeManager } from '../RuleScopeManager';
 import { exceptionRuleManager } from '../ExceptionRuleManager';
+import { exceptionRuleStorage } from '../ExceptionRuleStorage';
 import { ExceptionRule, ExceptionRuleType } from '../../types';
+import type { Mocked } from 'vitest';
 
 // Mock ExceptionRuleManager
-jest.mock('../ExceptionRuleManager');
+vi.mock('../ExceptionRuleManager', () => ({
+  exceptionRuleManager: {
+    getAllRules: vi.fn(),
+    createRule: vi.fn(),
+  },
+}));
+
+vi.mock('../ExceptionRuleStorage', () => ({
+  exceptionRuleStorage: {
+    updateRule: vi.fn(),
+  },
+}));
 
 describe('RuleScopeManager', () => {
   let ruleScopeManager: RuleScopeManager;
-  const mockExceptionRuleManager = exceptionRuleManager as jest.Mocked<typeof exceptionRuleManager>;
+  const mockExceptionRuleManager = exceptionRuleManager as Mocked<typeof exceptionRuleManager>;
+  const mockExceptionRuleStorage = exceptionRuleStorage as Mocked<typeof exceptionRuleStorage>;
 
   beforeEach(() => {
     ruleScopeManager = new RuleScopeManager();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const mockRules: ExceptionRule[] = [
@@ -52,7 +66,7 @@ describe('RuleScopeManager', () => {
 
   describe('getAvailableRules', () => {
     it('应该返回指定链的可用规则（全局 + 链专属）', async () => {
-      mockExceptionRuleManager.getRules.mockResolvedValue(mockRules);
+      mockExceptionRuleManager.getAllRules.mockResolvedValue(mockRules);
 
       const result = await ruleScopeManager.getAvailableRules('chain-1', ExceptionRuleType.PAUSE_ONLY);
 
@@ -67,7 +81,7 @@ describe('RuleScopeManager', () => {
         { ...mockRules[0], usageCount: 10 }, // 全局规则，高使用频率
         { ...mockRules[1], usageCount: 1 }   // 链规则，低使用频率
       ];
-      mockExceptionRuleManager.getRules.mockResolvedValue(testRules);
+      mockExceptionRuleManager.getAllRules.mockResolvedValue(testRules);
 
       const result = await ruleScopeManager.getAvailableRules('chain-1', ExceptionRuleType.PAUSE_ONLY);
 
@@ -76,7 +90,7 @@ describe('RuleScopeManager', () => {
     });
 
     it('应该处理获取规则失败的情况', async () => {
-      mockExceptionRuleManager.getRules.mockRejectedValue(new Error('获取失败'));
+      mockExceptionRuleManager.getAllRules.mockRejectedValue(new Error('获取失败'));
 
       const result = await ruleScopeManager.getAvailableRules('chain-1', ExceptionRuleType.PAUSE_ONLY);
 
@@ -86,13 +100,13 @@ describe('RuleScopeManager', () => {
 
   describe('createChainRule', () => {
     it('应该成功创建链专属规则', async () => {
-      const newRule = { ...mockRules[1], id: 'new-rule' };
-      mockExceptionRuleManager.createRule.mockResolvedValue(newRule);
-      mockExceptionRuleManager.updateRule.mockResolvedValue({
+      const newRule = { ...mockRules[1], id: 'new-rule', chainId: undefined, scope: 'global' as const };
+      mockExceptionRuleManager.createRule.mockResolvedValue({ rule: newRule });
+      mockExceptionRuleStorage.updateRule.mockResolvedValue({
         ...newRule,
         chainId: 'chain-1',
-        scope: 'chain'
-      });
+        scope: 'chain',
+      } as any);
 
       const result = await ruleScopeManager.createChainRule(
         'chain-1',
@@ -106,7 +120,7 @@ describe('RuleScopeManager', () => {
         ExceptionRuleType.PAUSE_ONLY,
         '测试描述'
       );
-      expect(mockExceptionRuleManager.updateRule).toHaveBeenCalledWith('new-rule', {
+      expect(mockExceptionRuleStorage.updateRule).toHaveBeenCalledWith('new-rule', {
         chainId: 'chain-1',
         scope: 'chain'
       });
@@ -126,12 +140,7 @@ describe('RuleScopeManager', () => {
   describe('createGlobalRule', () => {
     it('应该成功创建全局规则', async () => {
       const newRule = { ...mockRules[0], id: 'new-global-rule' };
-      mockExceptionRuleManager.createRule.mockResolvedValue(newRule);
-      mockExceptionRuleManager.updateRule.mockResolvedValue({
-        ...newRule,
-        chainId: undefined,
-        scope: 'global'
-      });
+      mockExceptionRuleManager.createRule.mockResolvedValue({ rule: newRule });
 
       const result = await ruleScopeManager.createGlobalRule(
         '新全局规则',
@@ -144,12 +153,7 @@ describe('RuleScopeManager', () => {
         ExceptionRuleType.PAUSE_ONLY,
         '测试描述'
       );
-      expect(mockExceptionRuleManager.updateRule).toHaveBeenCalledWith('new-global-rule', {
-        chainId: undefined,
-        scope: 'global'
-      });
-      expect(result.scope).toBe('global');
-      expect(result.chainId).toBeUndefined();
+      expect(result).toEqual(newRule);
     });
   });
 
@@ -157,7 +161,7 @@ describe('RuleScopeManager', () => {
     it('应该将规则转换为链专属', async () => {
       await ruleScopeManager.convertRuleScope('rule-1', 'chain', 'chain-1');
 
-      expect(mockExceptionRuleManager.updateRule).toHaveBeenCalledWith('rule-1', {
+      expect(mockExceptionRuleStorage.updateRule).toHaveBeenCalledWith('rule-1', {
         scope: 'chain',
         chainId: 'chain-1'
       });
@@ -166,14 +170,14 @@ describe('RuleScopeManager', () => {
     it('应该将规则转换为全局', async () => {
       await ruleScopeManager.convertRuleScope('rule-1', 'global');
 
-      expect(mockExceptionRuleManager.updateRule).toHaveBeenCalledWith('rule-1', {
+      expect(mockExceptionRuleStorage.updateRule).toHaveBeenCalledWith('rule-1', {
         scope: 'global',
         chainId: undefined
       });
     });
 
     it('应该处理转换失败的情况', async () => {
-      mockExceptionRuleManager.updateRule.mockRejectedValue(new Error('更新失败'));
+      mockExceptionRuleStorage.updateRule.mockRejectedValue(new Error('更新失败'));
 
       await expect(
         ruleScopeManager.convertRuleScope('rule-1', 'global')
@@ -183,7 +187,7 @@ describe('RuleScopeManager', () => {
 
   describe('getChainRuleCount', () => {
     it('应该返回指定链的规则数量', async () => {
-      mockExceptionRuleManager.getRules.mockResolvedValue(mockRules);
+      mockExceptionRuleManager.getAllRules.mockResolvedValue(mockRules);
 
       const count = await ruleScopeManager.getChainRuleCount('chain-1');
 
@@ -191,7 +195,7 @@ describe('RuleScopeManager', () => {
     });
 
     it('应该处理获取失败的情况', async () => {
-      mockExceptionRuleManager.getRules.mockRejectedValue(new Error('获取失败'));
+      mockExceptionRuleManager.getAllRules.mockRejectedValue(new Error('获取失败'));
 
       const count = await ruleScopeManager.getChainRuleCount('chain-1');
 
@@ -201,7 +205,7 @@ describe('RuleScopeManager', () => {
 
   describe('getGlobalRuleCount', () => {
     it('应该返回全局规则数量', async () => {
-      mockExceptionRuleManager.getRules.mockResolvedValue(mockRules);
+      mockExceptionRuleManager.getAllRules.mockResolvedValue(mockRules);
 
       const count = await ruleScopeManager.getGlobalRuleCount();
 
@@ -211,7 +215,7 @@ describe('RuleScopeManager', () => {
 
   describe('checkRuleNameDuplication', () => {
     beforeEach(() => {
-      mockExceptionRuleManager.getRules.mockResolvedValue(mockRules);
+      mockExceptionRuleManager.getAllRules.mockResolvedValue(mockRules);
     });
 
     it('应该检测全局规则名称重复', async () => {
@@ -239,7 +243,7 @@ describe('RuleScopeManager', () => {
     });
 
     it('应该处理检查失败的情况', async () => {
-      mockExceptionRuleManager.getRules.mockRejectedValue(new Error('获取失败'));
+      mockExceptionRuleManager.getAllRules.mockRejectedValue(new Error('获取失败'));
 
       const isDuplicate = await ruleScopeManager.checkRuleNameDuplication('测试', 'global');
 

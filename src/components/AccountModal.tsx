@@ -30,6 +30,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
   const [gamblingLoading, setGamblingLoading] = useState(false);
   const [gamblingError, setGamblingError] = useState<string | null>(null);
   const [gamblingSuccess, setGamblingSuccess] = useState<string | null>(null);
+  const userFullName = (() => {
+    const fullName = user?.userMetadata?.['full_name'];
+    return typeof fullName === 'string' ? fullName : null;
+  })();
 
   useEffect(() => {
     if (isOpen) {
@@ -251,9 +255,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                   <p className="text-gray-600 dark:text-slate-400 text-sm truncate">
                     {user.email}
                   </p>
-                  {(user.userMetadata as any)?.full_name && (
+                  {userFullName && (
                     <p className="text-gray-500 dark:text-slate-500 text-xs">
-                      {(user.userMetadata as any).full_name}
+                      {userFullName}
                     </p>
                   )}
                 </div>

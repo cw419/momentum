@@ -285,11 +285,12 @@ class RealTimeSyncService {
 export const realTimeSyncService = new RealTimeSyncService();
 
 // Auto-enable in development for better debugging
- if (isDev) {
+if (isDev) {
   realTimeSyncService.setEnabled(true);
-  
-  // Add global access for debugging
-  (window as any).__realTimeSync = realTimeSyncService;
+
+  if (typeof window !== 'undefined') {
+    window.__realTimeSync = realTimeSyncService;
+  }
 }
 
 /**

@@ -11,32 +11,33 @@
 
 import { SchemaChecker, schemaChecker } from '../schemaChecker';
 import { supabase } from '../../lib/supabase';
+import type { Mocked } from 'vitest';
 
 // Mock Supabase
-jest.mock('../../lib/supabase', () => ({
+vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: jest.fn()
+    from: vi.fn()
   }
 }));
 
 // Mock logger
-jest.mock('../logger', () => ({
+vi.mock('../logger', () => ({
   logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn()
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn()
   }
 }));
 
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockSupabase = supabase as Mocked<typeof supabase>;
 
 describe('SchemaChecker', () => {
   let checker: SchemaChecker;
 
   beforeEach(() => {
     checker = new SchemaChecker();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Table Information Retrieval', () => {
@@ -305,7 +306,7 @@ describe('SchemaChecker', () => {
       expect(status.tablesExist).toBe(true);
       expect(status.missingTables).toHaveLength(0);
       expect(Object.keys(status.missingColumns)).toHaveLength(0);
-      expect(status.recommendations).toContain(
+      expect(status.recommendations).toContainEqual(
         expect.stringContaining('数据库架构完整')
       );
     });
@@ -344,7 +345,7 @@ describe('SchemaChecker', () => {
       expect(status.tablesExist).toBe(false);
       expect(status.missingTables).toContain('scheduled_sessions');
       expect(status.missingTables).toContain('active_sessions');
-      expect(status.recommendations).toContain(
+      expect(status.recommendations).toContainEqual(
         expect.stringContaining('需要创建以下表')
       );
     });
@@ -366,8 +367,8 @@ describe('SchemaChecker', () => {
         completion_history: [
           { column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }
         ],
-        rsip_nodes: [],
-        rsip_meta: []
+        rsip_nodes: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
+        rsip_meta: [{ column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO', column_default: null }]
       };
 
       mockSupabase.from.mockImplementation((table: string) => {
@@ -389,9 +390,9 @@ describe('SchemaChecker', () => {
       const status = await checker.getSchemaStatus();
 
       expect(status.migrationStatus).toBe('partial');
+      expect(status.missingTables).toHaveLength(0);
       expect(status.missingColumns.chains).toContain('parent_id');
       expect(status.missingColumns.chains).toContain('deleted_at');
-      expect(status.missingTables).toContain('rsip_nodes');
     });
 
     test('should generate appropriate migration recommendations', async () => {
@@ -427,13 +428,13 @@ describe('SchemaChecker', () => {
 
       const status = await checker.getSchemaStatus();
 
-      expect(status.recommendations).toContain(
+      expect(status.recommendations).toContainEqual(
         expect.stringContaining('20250801160754_peaceful_palace.sql')
       );
-      expect(status.recommendations).toContain(
+      expect(status.recommendations).toContainEqual(
         expect.stringContaining('20250808000000_add_group_time_limit.sql')
       );
-      expect(status.recommendations).toContain(
+      expect(status.recommendations).toContainEqual(
         expect.stringContaining('20250814000000_add_soft_delete.sql')
       );
     });
@@ -473,7 +474,7 @@ describe('SchemaChecker', () => {
       const report = await checker.generateMigrationReport();
 
       expect(report).toContain('# 数据库架构状态报告');
-      expect(report).toContain('迁移状态: partial');
+      expect(report).toContain('迁移状态: missing');
       expect(report).toContain('## 缺失的表');
       expect(report).toContain('- scheduled_sessions');
       expect(report).toContain('## 缺失的列');

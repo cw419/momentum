@@ -18,16 +18,16 @@ export async function getGamblingSettings(ctx: SupabaseStorageContext): Promise<
       .single();
 
     if (error) {
-      if ((error as any).code === 'PGRST116') {
+      if (error.code === 'PGRST116') {
         return ok({ gambling_mode_enabled: false, daily_bet_limit: null, max_single_bet: null });
       }
-      return err({ code: 'STORAGE', message: (error as any).message ?? 'Failed to load settings', cause: error });
+      return err({ code: 'STORAGE', message: error.message || 'Failed to load settings', cause: error });
     }
 
     return ok({
-      gambling_mode_enabled: (data as any)?.gambling_mode_enabled ?? false,
-      daily_bet_limit: (data as any)?.daily_bet_limit ?? null,
-      max_single_bet: (data as any)?.max_single_bet ?? null,
+      gambling_mode_enabled: data?.gambling_mode_enabled ?? false,
+      daily_bet_limit: data?.daily_bet_limit ?? null,
+      max_single_bet: data?.max_single_bet ?? null,
     });
   } catch (e) {
     return err(toAppError(e, 'Failed to load gambling settings'));
@@ -63,7 +63,7 @@ export async function toggleGamblingMode(ctx: SupabaseStorageContext): Promise<R
       .single();
 
     if (error) {
-      return ok({ success: false, message: (error as any).message ?? 'Failed to update settings' });
+      return ok({ success: false, message: error.message || 'Failed to update settings' });
     }
 
     return ok({

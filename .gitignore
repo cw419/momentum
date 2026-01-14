@@ -29,3 +29,24 @@ dist-ssr
 
 src/**/*.backup
 src/**/temp_fix.txt
+
+# Local tooling artifacts
+.lighthouse/
+vitest-results*.json
+ui-fixes-results.json
+chaineditor-results.json
+rs.json
+
+# Coverage outputs
+coverage/
+
+# Local editor / AI tool folders
+.obsidian/
+.VSCodeCounter/
+.serena/
+.claude/
+.augment/
+
+# Local backups / scratch
+archive/
+h origin main

@@ -187,7 +187,7 @@ describe('AccessibleFormField', () => {
 
   describe('Functionality', () => {
     it('should call onChange with correct value for text input', () => {
-      const mockOnChange = jest.fn();
+      const mockOnChange = vi.fn();
       render(
         <AccessibleFormField
           id="text-field"
@@ -205,7 +205,7 @@ describe('AccessibleFormField', () => {
     });
 
     it('should call onChange with correct value for number input', () => {
-      const mockOnChange = jest.fn();
+      const mockOnChange = vi.fn();
       render(
         <AccessibleFormField
           id="number-field"
@@ -223,7 +223,7 @@ describe('AccessibleFormField', () => {
     });
 
     it('should call onChange with correct value for checkbox', () => {
-      const mockOnChange = jest.fn();
+      const mockOnChange = vi.fn();
       render(
         <AccessibleFormField
           id="checkbox-field"
@@ -241,7 +241,7 @@ describe('AccessibleFormField', () => {
     });
 
     it('should call onChange with correct value for select', () => {
-      const mockOnChange = jest.fn();
+      const mockOnChange = vi.fn();
       render(
         <AccessibleFormField
           id="select-field"

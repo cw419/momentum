@@ -159,8 +159,14 @@ export class RuleSearchOptimizer {
       
       if (ruleName === normalizedName) {
         exactMatches.push(rule);
-      } else if (this.calculateSimilarity(ruleName, normalizedName) > 0.7) {
+      } else {
+        const hasSubstringMatch =
+          normalizedName.length >= 2 &&
+          (ruleName.includes(normalizedName) || normalizedName.includes(ruleName));
+
+        if (hasSubstringMatch || this.calculateSimilarity(ruleName, normalizedName) > 0.7) {
         similarRules.push(rule);
+        }
       }
     }
 

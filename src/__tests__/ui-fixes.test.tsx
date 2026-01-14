@@ -10,34 +10,92 @@ import { RuleSelectionDialog } from '../components/RuleSelectionDialog';
 import { ResponsiveContainer } from '../components/ResponsiveContainer';
 import { layoutStabilityMonitor } from '../utils/LayoutStabilityMonitor';
 import { performanceMonitor } from '../utils/performanceMonitor';
+import { I18nProvider } from '../i18n';
+import { exceptionRuleManager } from '../services/ExceptionRuleManager';
+import { ExceptionRuleType, type ExceptionRule } from '../types';
+import type { Mocked } from 'vitest';
 
 // Mock dependencies
-jest.mock('../services/ExceptionRuleManager');
-jest.mock('../services/RuleScopeManager');
-jest.mock('../utils/exceptionRuleCache');
+vi.mock('../services/ExceptionRuleManager', () => ({
+    exceptionRuleManager: {
+        getAllRules: vi.fn(),
+        createChainRule: vi.fn(),
+    },
+}));
+
+vi.mock('../utils/exceptionRuleCache', () => ({
+    ExceptionRuleCache: vi.fn().mockImplementation(() => ({
+        getChainRules: vi.fn(() => null),
+        setChainRules: vi.fn(),
+        updateChainRules: vi.fn(),
+    })),
+}));
+
+vi.mock('../utils/ruleSearchOptimizer', () => ({
+    RuleSearchOptimizer: vi.fn().mockImplementation(() => ({
+        updateIndex: vi.fn(),
+        searchRulesDebounced: vi.fn((_rules, _query, callback) => callback([])),
+        detectDuplicates: vi.fn(() => ({
+            hasExactMatch: false,
+            exactMatches: [],
+            similarRules: [],
+        })),
+    })),
+}));
+
+vi.mock('../utils/LayoutStabilityMonitor', async () => {
+    const actual = await vi.importActual<any>('../utils/LayoutStabilityMonitor');
+    return {
+        ...actual,
+        useLayoutStability: vi.fn(() => ({
+            startMonitoring: vi.fn(),
+            stopMonitoring: vi.fn(),
+            checkNow: vi.fn(),
+            getReport: vi.fn(),
+            clearIssues: vi.fn(),
+        })),
+    };
+});
+
+const renderWithI18n = (ui: React.ReactElement) => {
+    return render(ui, { wrapper: I18nProvider });
+};
+
+const mockedRuleManager = exceptionRuleManager as Mocked<typeof exceptionRuleManager>;
+
+const mockRules: ExceptionRule[] = [
+    {
+        id: '1',
+        name: '上厕所',
+        chainId: 'test-chain',
+        scope: 'chain',
+        type: ExceptionRuleType.PAUSE_ONLY,
+        createdAt: new Date(),
+        usageCount: 1,
+        isActive: true,
+    },
+];
 
 describe('UI Fixes and Improvements', () => {
     beforeEach(() => {
+        vi.clearAllMocks();
+        localStorage.setItem('language', 'zh');
+        mockedRuleManager.getAllRules.mockResolvedValue(mockRules);
+
         // Reset monitors
         layoutStabilityMonitor.clearIssues();
         performanceMonitor.setBackgroundMode(false);
+        performanceMonitor.setReportingEnabled(false);
     });
 
     describe('Horizontal Scroll Fixes', () => {
-        test('ExceptionRuleManager should not cause horizontal overflow', () => {
-            const { container } = render(
-                <ExceptionRuleManager onClose={() => { }} />
-            );
+        test('ExceptionRuleManager should not cause horizontal overflow', async () => {
+            const { container } = renderWithI18n(<ExceptionRuleManager onClose={() => { }} />);
 
-            const modal = container.querySelector('.modal-container');
-            expect(modal).toHaveStyle({ overflowX: 'hidden' });
+            await screen.findByText('例外规则管理');
 
-            // Check if modal content respects viewport width
-            const modalContent = container.querySelector('.modal-content');
-            if (modalContent) {
-                const computedStyle = window.getComputedStyle(modalContent);
-                expect(computedStyle.maxWidth).toContain('100vw');
-            }
+            const overlay = container.querySelector('div.fixed.inset-0');
+            expect(overlay).toHaveClass('overflow-x-hidden');
         });
 
         test('RuleSelectionDialog should prevent horizontal overflow', () => {
@@ -51,7 +109,7 @@ describe('UI Fixes and Improvements', () => {
                 isDurationless: false
             };
 
-            const { container } = render(
+            const { container } = renderWithI18n(
                 <RuleSelectionDialog
                     isOpen={true}
                     actionType="pause"
@@ -62,8 +120,9 @@ describe('UI Fixes and Improvements', () => {
                 />
             );
 
-            const modal = container.querySelector('[class*="overflow-x-hidden"]');
-            expect(modal).toBeInTheDocument();
+            const dialog = screen.getByRole('dialog');
+            expect(dialog).toHaveClass('overflow-hidden');
+            expect(dialog).toHaveStyle({ maxWidth: 'min(640px, 100vw - 2rem)' });
         });
 
         test('ResponsiveContainer should prevent overflow', () => {
@@ -74,14 +133,15 @@ describe('UI Fixes and Improvements', () => {
             );
 
             const containerElement = container.firstChild as HTMLElement;
-            expect(containerElement).toHaveStyle({ overflowX: 'hidden' });
+            expect(containerElement).toHaveClass('overflow-x-hidden');
+            expect(containerElement).toHaveStyle({ maxWidth: '100vw' });
         });
     });
 
     describe('Performance Optimizations', () => {
         test('Performance monitor should work in background mode', () => {
+            performanceMonitor.setReportingEnabled(true);
             performanceMonitor.setBackgroundMode(true);
-            performanceMonitor.startMonitoring();
 
             // Simulate a slow operation
             const result = performanceMonitor.measureInteraction('test-interaction', () => {
@@ -97,6 +157,10 @@ describe('UI Fixes and Improvements', () => {
 
             const report = performanceMonitor.reportMetrics();
             expect(report.interactionTime).toBeGreaterThan(0);
+
+            // Restore defaults to avoid leaking state across tests.
+            performanceMonitor.setReportingEnabled(false);
+            performanceMonitor.setBackgroundMode(false);
         });
 
         test('Layout stability monitor should detect issues', async () => {
@@ -109,6 +173,10 @@ describe('UI Fixes and Improvements', () => {
             testContainer.appendChild(wideChild);
 
             document.body.appendChild(testContainer);
+
+            // JSDOM doesn't calculate layout metrics; simulate overflow explicitly.
+            Object.defineProperty(testContainer, 'clientWidth', { configurable: true, value: 100 });
+            Object.defineProperty(testContainer, 'scrollWidth', { configurable: true, value: 200 });
 
             layoutStabilityMonitor.checkNow(testContainer);
 
@@ -161,7 +229,7 @@ describe('UI Fixes and Improvements', () => {
             expect(screen.getByText('Content')).toBeInTheDocument();
         });
 
-        test('Modal should be responsive on mobile', () => {
+        test('Modal should be responsive on mobile', async () => {
             // Mock mobile viewport
             Object.defineProperty(window, 'innerWidth', {
                 writable: true,
@@ -169,11 +237,10 @@ describe('UI Fixes and Improvements', () => {
                 value: 375,
             });
 
-            const { container } = render(
-                <ExceptionRuleManager onClose={() => { }} />
-            );
+            const { container } = renderWithI18n(<ExceptionRuleManager onClose={() => { }} />);
+            await screen.findByText('例外规则管理');
 
-            const modal = container.querySelector('.mobile-modal');
+            const modal = container.querySelector('div[style*="100vw"]');
             expect(modal).toBeInTheDocument();
         });
     });
@@ -183,7 +250,7 @@ describe('UI Fixes and Improvements', () => {
             const mockError = new Error('Network error');
 
             // Mock a failing operation
-            const failingOperation = jest.fn().mockRejectedValue(mockError);
+            const failingOperation = vi.fn().mockRejectedValue(mockError);
 
             try {
                 await failingOperation();
@@ -234,7 +301,7 @@ describe('UI Fixes and Improvements', () => {
 
     describe('Performance Metrics', () => {
         test('Should track render performance', () => {
-            const renderFn = jest.fn(() => 'rendered');
+            const renderFn = vi.fn(() => 'rendered');
 
             const result = performanceMonitor.measureRender('test-component', renderFn);
 
@@ -265,23 +332,31 @@ describe('UI Fixes and Improvements', () => {
 
 // Integration tests
 describe('UI Integration Tests', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        localStorage.setItem('language', 'zh');
+        mockedRuleManager.getAllRules.mockResolvedValue(mockRules);
+        performanceMonitor.setReportingEnabled(false);
+        performanceMonitor.setBackgroundMode(false);
+        layoutStabilityMonitor.clearIssues();
+    });
+
     test('Complete rule creation flow should work without layout issues', async () => {
-        const onClose = jest.fn();
+        const onClose = vi.fn();
 
-        const { container } = render(
-            <ExceptionRuleManager onClose={onClose} />
-        );
-
-        // Check initial render
-        expect(container.querySelector('.modal-container')).toBeInTheDocument();
+        const { container } = renderWithI18n(<ExceptionRuleManager onClose={onClose} />);
+        await screen.findByText('例外规则管理');
 
         // Test create button
         const createButton = screen.getByText('创建链专属规则');
         fireEvent.click(createButton);
 
-        // Should not cause horizontal overflow
-        const modal = container.querySelector('.modal-container');
-        expect(modal).toHaveStyle({ overflowX: 'hidden' });
+        await waitFor(() => {
+            expect(screen.getByText('规则名称 *')).toBeInTheDocument();
+        });
+
+        const overlay = container.querySelector('div.fixed.inset-0');
+        expect(overlay).toHaveClass('overflow-x-hidden');
     });
 
     test('Rule selection dialog should handle all interactions smoothly', async () => {
@@ -295,10 +370,10 @@ describe('UI Integration Tests', () => {
             isDurationless: false
         };
 
-        const onRuleSelected = jest.fn();
-        const onCancel = jest.fn();
+        const onRuleSelected = vi.fn();
+        const onCancel = vi.fn();
 
-        render(
+        renderWithI18n(
             <RuleSelectionDialog
                 isOpen={true}
                 actionType="pause"
@@ -310,7 +385,7 @@ describe('UI Integration Tests', () => {
         );
 
         // Test cancel button
-        const cancelButton = screen.getByRole('button', { name: /close/i });
+        const cancelButton = screen.getByLabelText('关闭对话框');
         fireEvent.click(cancelButton);
 
         expect(onCancel).toHaveBeenCalled();

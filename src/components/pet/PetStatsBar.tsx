@@ -44,7 +44,7 @@ function StatBar({ label, value, maxValue = 100, colorClass, icon, inverted }: S
 
 export function PetStatsBar({ hunger, happiness, health, level, experience, stage }: PetStatsBarProps) {
   const { language } = useI18n();
-  const levelProgress = getLevelProgress({ level, experience } as any);
+  const levelProgress = getLevelProgress({ level, experience });
   const xpRequired = getXpForLevel(level);
   const stageName = getStageName(stage, language);
 

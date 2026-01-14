@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type User } from '@supabase/supabase-js';
 import { Database } from './database.types';
 import { logger } from '../utils/logger';
 
@@ -13,12 +13,12 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 export interface AuthenticationResult {
-  user: any | null;
+  user: User | null;
   isAuthenticated: boolean;
 }
 
 // Auth helpers
-export const getCurrentUser = async () => {
+export const getCurrentUser = async (): Promise<User | null> => {
   if (!supabase) return null;
   try {
     const { data: { user } } = await supabase.auth.getUser();

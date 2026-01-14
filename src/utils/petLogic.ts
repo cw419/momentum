@@ -251,7 +251,7 @@ export function getMoodName(mood: PetMood, language: 'zh' | 'en' = 'zh'): string
 /**
  * Calculate progress to next level (0-100)
  */
-export function getLevelProgress(pet: PetState): number {
+export function getLevelProgress(pet: Pick<PetState, 'level' | 'experience'>): number {
   const xpRequired = getXpForLevel(pet.level);
   return Math.min(100, Math.round((pet.experience / xpRequired) * 100));
 }

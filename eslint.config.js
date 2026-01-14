@@ -31,6 +31,17 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "TSAsExpression[typeAnnotation.type='TSAnyKeyword']",
+          message: 'Do not use `as any`; use proper types or `unknown` + narrowing.',
+        },
+        {
+          selector: "TSTypeAssertion[typeAnnotation.type='TSAnyKeyword']",
+          message: 'Do not use `<any>` type assertions; use proper types or `unknown` + narrowing.',
+        },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

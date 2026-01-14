@@ -1,4 +1,5 @@
 import type { supabase } from '../../../lib/supabase';
+import type { User } from '@supabase/supabase-js';
 
 export interface SchemaVerificationResult {
   hasAllColumns: boolean;
@@ -10,8 +11,8 @@ export type SupabaseClient = NonNullable<typeof supabase>;
 
 export interface SupabaseStorageContext {
   getClient(): SupabaseClient;
-  getCurrentUser(): Promise<any | null>;
-  waitForAuthentication(maxWaitTime?: number): Promise<{ user: any | null; isAuthenticated: boolean }>;
+  getCurrentUser(): Promise<User | null>;
+  waitForAuthentication(maxWaitTime?: number): Promise<{ user: User | null; isAuthenticated: boolean }>;
   isUserAuthenticated(): Promise<boolean>;
 
   retryOperation<T>(operation: () => Promise<T>, maxRetries?: number, baseDelay?: number): Promise<T>;

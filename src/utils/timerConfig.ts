@@ -67,7 +67,7 @@ export function getOptimalTimerConfig(): TimerConfig {
     if (cores >= 4) return true;
     
     // 检查内存（如果可用）
-    const memory = (navigator as any).deviceMemory;
+    const memory = navigator.deviceMemory;
     if (memory && memory >= 4) return true;
     
     return false;
@@ -76,8 +76,8 @@ export function getOptimalTimerConfig(): TimerConfig {
   // 检测电池状态（如果可用）
   const isBatterySaverMode = async (): Promise<boolean> => {
     try {
-      if ('getBattery' in navigator) {
-        const battery = await (navigator as any).getBattery();
+      if (typeof navigator.getBattery === 'function') {
+        const battery = await navigator.getBattery();
         return battery.level < 0.2; // 电量低于20%
       }
     } catch {

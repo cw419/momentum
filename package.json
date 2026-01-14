@@ -15,9 +15,12 @@
     "test:coverage": "vitest run --coverage --config vitest.ci.config.ts",
     "test:all": "vitest run --config vitest.config.ts",
     "test:all:watch": "vitest --config vitest.config.ts",
-    "test:integration": "vitest --config vitest.integration.config.ts",
-    "test:db": "vitest --config vitest.db.config.ts",
-    "test:performance": "vitest --config vitest.performance.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration:watch": "vitest --config vitest.integration.config.ts",
+    "test:db": "vitest run --config vitest.db.config.ts",
+    "test:db:watch": "vitest --config vitest.db.config.ts",
+    "test:performance": "vitest run --config vitest.performance.config.ts",
+    "test:performance:watch": "vitest --config vitest.performance.config.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",

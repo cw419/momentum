@@ -3,49 +3,39 @@
  */
 
 import { ExceptionRuleMigrationService } from '../ExceptionRuleMigration';
-import { ExceptionRuleManager } from '../ExceptionRuleManager';
 import { ExceptionRuleType } from '../../types';
+import { exceptionRuleManager } from '../ExceptionRuleManager';
+import type { MomentumStorage } from '../../storage/MomentumStorage';
+import type { Mocked } from 'vitest';
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
+type LegacyStorage = Pick<MomentumStorage, 'kind' | 'getChains'>;
 
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    }
-  };
-})();
-
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
-});
-
-// Mock ExceptionRuleManager
-jest.mock('../ExceptionRuleManager');
+const mockStorage: Mocked<LegacyStorage> = {
+  kind: 'local',
+  getChains: vi.fn(),
+};
 
 describe('ExceptionRuleMigrationService', () => {
   let migrationService: ExceptionRuleMigrationService;
-  let mockRuleManager: jest.Mocked<ExceptionRuleManager>;
 
   beforeEach(() => {
-    migrationService = new ExceptionRuleMigrationService();
-    mockRuleManager = new ExceptionRuleManager() as jest.Mocked<ExceptionRuleManager>;
+    vi.clearAllMocks();
     localStorage.clear();
-    jest.clearAllMocks();
+    localStorage.setItem('language', 'zh');
+
+    migrationService = new ExceptionRuleMigrationService();
+    migrationService.setStorage(mockStorage as unknown as MomentumStorage);
+    mockStorage.getChains.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    migrationService.setStorage(null);
+    vi.restoreAllMocks();
   });
 
   describe('迁移需求检查', () => {
     test('没有迁移信息且没有旧数据时应该返回false', async () => {
-      // Mock getLegacyChains to return empty array
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue([]);
+      mockStorage.getChains.mockResolvedValueOnce([] as any);
 
       const needsMigration = await migrationService.needsMigration();
       expect(needsMigration).toBe(false);
@@ -66,7 +56,6 @@ describe('ExceptionRuleMigrationService', () => {
     });
 
     test('有旧数据且未迁移时应该返回true', async () => {
-      // Mock getLegacyChains to return chains with exceptions
       const mockChains = [
         {
           id: 'chain1',
@@ -79,7 +68,7 @@ describe('ExceptionRuleMigrationService', () => {
           exceptions: ['休息']
         }
       ];
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue(mockChains);
+      mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       const needsMigration = await migrationService.needsMigration();
       expect(needsMigration).toBe(true);
@@ -100,7 +89,7 @@ describe('ExceptionRuleMigrationService', () => {
           exceptions: ['上厕所', '休息'] // 上厕所重复
         }
       ];
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue(mockChains);
+      mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       const suggestions = await migrationService.getMigrationSuggestions();
 
@@ -120,7 +109,7 @@ describe('ExceptionRuleMigrationService', () => {
           exceptions: ['上厕所', '喝水', '接电话', '查看消息']
         }
       ];
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue(mockChains);
+      mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       const suggestions = await migrationService.getMigrationSuggestions();
 
@@ -135,7 +124,7 @@ describe('ExceptionRuleMigrationService', () => {
           exceptions: Array.from({ length: 25 }, (_, i) => `规则${i}`)
         }
       ];
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue(mockChains);
+      mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       const suggestions = await migrationService.getMigrationSuggestions();
 
@@ -157,10 +146,10 @@ describe('ExceptionRuleMigrationService', () => {
           exceptions: ['休息']
         }
       ];
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue(mockChains);
+      mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       // Mock rule creation
-      mockRuleManager.createRule = jest.fn()
+      vi.spyOn(exceptionRuleManager, 'createRule')
         .mockResolvedValueOnce({
           rule: { id: 'rule1', name: '上厕所', type: ExceptionRuleType.PAUSE_ONLY },
           warnings: []
@@ -174,7 +163,7 @@ describe('ExceptionRuleMigrationService', () => {
           warnings: []
         });
 
-      const progressCallback = jest.fn();
+      const progressCallback = vi.fn();
       const result = await migrationService.migrate(progressCallback);
 
       expect(result.totalChains).toBe(2);
@@ -193,10 +182,10 @@ describe('ExceptionRuleMigrationService', () => {
           exceptions: ['有效规则', '无效规则']
         }
       ];
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue(mockChains);
+      mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       // Mock rule creation with one success and one failure
-      mockRuleManager.createRule = jest.fn()
+      vi.spyOn(exceptionRuleManager, 'createRule')
         .mockResolvedValueOnce({
           rule: { id: 'rule1', name: '有效规则', type: ExceptionRuleType.PAUSE_ONLY },
           warnings: []
@@ -219,15 +208,15 @@ describe('ExceptionRuleMigrationService', () => {
           exceptions: ['规则1', '规则2']
         }
       ];
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue(mockChains);
+      mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
-      mockRuleManager.createRule = jest.fn()
+      vi.spyOn(exceptionRuleManager, 'createRule')
         .mockResolvedValue({
           rule: { id: 'rule1', name: '规则1', type: ExceptionRuleType.PAUSE_ONLY },
           warnings: []
         });
 
-      const progressCallback = jest.fn();
+      const progressCallback = vi.fn();
       await migrationService.migrate(progressCallback);
 
       expect(progressCallback).toHaveBeenCalledWith(
@@ -263,7 +252,7 @@ describe('ExceptionRuleMigrationService', () => {
       }));
 
       // Mock rule manager
-      mockRuleManager.getAllRules = jest.fn().mockResolvedValue([
+      vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
         {
           id: 'rule1',
           name: '规则1',
@@ -298,7 +287,7 @@ describe('ExceptionRuleMigrationService', () => {
         errors: 0
       }));
 
-      mockRuleManager.getAllRules = jest.fn().mockResolvedValue([
+      vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
         {
           id: 'rule1',
           name: '规则1',
@@ -334,7 +323,7 @@ describe('ExceptionRuleMigrationService', () => {
       }));
 
       // Mock migrated rules
-      mockRuleManager.getAllRules = jest.fn().mockResolvedValue([
+      vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
         {
           id: 'rule1',
           name: '规则1',
@@ -347,13 +336,13 @@ describe('ExceptionRuleMigrationService', () => {
         }
       ]);
 
-      mockRuleManager.deleteRule = jest.fn().mockResolvedValue(undefined);
+      vi.spyOn(exceptionRuleManager, 'deleteRule').mockResolvedValue(undefined);
 
       const result = await migrationService.rollback();
 
       expect(result.success).toBe(true);
       expect(result.deletedRules).toBe(2);
-      expect(mockRuleManager.deleteRule).toHaveBeenCalledTimes(2);
+      expect(exceptionRuleManager.deleteRule).toHaveBeenCalledTimes(2);
       expect(localStorage.getItem('momentum_exception_rules_migration')).toBeNull();
     });
 
@@ -377,7 +366,7 @@ describe('ExceptionRuleMigrationService', () => {
         errors: 0
       }));
 
-      mockRuleManager.getAllRules = jest.fn().mockResolvedValue([
+      vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
         {
           id: 'rule1',
           name: '规则1',
@@ -386,7 +375,7 @@ describe('ExceptionRuleMigrationService', () => {
         }
       ]);
 
-      jest.spyOn(migrationService as any, 'getLegacyChains').mockResolvedValue([]);
+      mockStorage.getChains.mockResolvedValueOnce([] as any);
 
       const report = await migrationService.generateMigrationReport();
       const parsedReport = JSON.parse(report);
@@ -400,13 +389,14 @@ describe('ExceptionRuleMigrationService', () => {
     });
 
     test('发生错误时应该生成错误报告', async () => {
-      // Mock error in validation
-      mockRuleManager.getAllRules = jest.fn().mockRejectedValue(new Error('测试错误'));
+      vi.spyOn(exceptionRuleManager, 'getAllRules').mockRejectedValue(new Error('测试错误'));
+      mockStorage.getChains.mockResolvedValueOnce([] as any);
 
       const report = await migrationService.generateMigrationReport();
       const parsedReport = JSON.parse(report);
 
-      expect(parsedReport.error).toBeTruthy();
+      expect(parsedReport.validation?.isValid).toBe(false);
+      expect(parsedReport.validation?.issues?.length).toBeGreaterThan(0);
     });
   });
 });

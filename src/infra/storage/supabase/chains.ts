@@ -2,18 +2,13 @@ import type { Chain, DeletedChain } from '../../../types';
 import { logger } from '../../../utils/logger';
 import type { SupabaseStorageContext, SchemaVerificationResult } from './types';
 import { buildChainRow, mapChainRowToChain } from './mappers';
+import type { Database } from '../../../lib/database.types';
+import { formatSupabaseError, getSupabaseErrorCode } from './supabaseError';
 
-function formatDbError(error: any): string {
-  if (!error) return 'Unknown error';
-  if (typeof error === 'string') return error;
+type ChainInsert = Database['public']['Tables']['chains']['Insert'];
 
-  const parts: string[] = [];
-  if (error.code) parts.push(`code=${String(error.code)}`);
-  if (error.message) parts.push(String(error.message));
-  if (error.details) parts.push(`details=${String(error.details)}`);
-  if (error.hint) parts.push(`hint=${String(error.hint)}`);
-
-  return parts.length > 0 ? parts.join(' | ') : String(error);
+function formatDbError(error: unknown): string {
+  return formatSupabaseError(error, 'Unknown error');
 }
 
 function findChainAndChildren(chainId: string, allChains: Chain[]): Chain[] {
@@ -43,8 +38,9 @@ export async function getChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
     return [];
   }
 
-  try {
-    const client = ctx.getClient();
+  const client = ctx.getClient();
+
+  const fetchChains = async () => {
     const { data, error } = await client
       .from('chains')
       .select('*')
@@ -75,6 +71,10 @@ export async function getChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
     logger.dbOperation('getChains', true, { chainCount, userId: user.id });
 
     return (data || []).map(mapChainRowToChain);
+  };
+
+  try {
+    return await ctx.retryOperation(fetchChains, 2, 100);
   } catch (error) {
     const errorObj = error instanceof Error ? error : new Error(String(error));
     logger.warn('SUPABASE_STORAGE', 'getChains failed; returning empty array', { message: errorObj.message });
@@ -279,10 +279,9 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
   const rowsWithNew = chains.map(c => buildChainRow(c, user.id, true));
   const rowsBase = chains.map(c => buildChainRow(c, user.id, false));
 
-  const isMissingColumnError = (e: any) => {
-    if (!e) return false;
-    const msg = `${e.message || ''} ${e.details || ''}`.toLowerCase();
-    const code = e.code || '';
+  const isMissingColumnError = (error: unknown) => {
+    const msg = formatSupabaseError(error, '').toLowerCase();
+    const code = getSupabaseErrorCode(error) ?? '';
 
     const patterns = [
       /column .* does not exist/,
@@ -309,34 +308,33 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
   if (existingErr) {
     throw new Error(`Failed to query existing chains: ${formatDbError(existingErr)}`);
   }
-  const existingIds = new Set((existingRows || []).map(r => r.id as string));
+  const existingIds = new Set((existingRows || []).map(r => r.id));
 
-  const tryUpsert = async (rows: any[]) => {
+  const tryUpsert = async (rows: ChainInsert[]) => {
     return await ctx.retryWithAuth(async () => {
       const { data, error } = await client.from('chains').upsert(rows, { onConflict: 'id' }).select('id');
       if (error) throw error;
-      return { data, error } as { data: { id: string }[] | null; error: any };
+      return (data || []) as Array<{ id: string }>;
     });
   };
 
   let upsertResultIds: string[] = [];
-  let upsertData1: any = null;
-  let upsertErr1: any = null;
+  let upsertData1: Array<{ id: string }> | null = null;
+  let upsertErr1: unknown | null = null;
 
   try {
-    const result = await tryUpsert(rowsWithNew);
-    upsertData1 = result.data;
+    upsertData1 = await tryUpsert(rowsWithNew);
   } catch (error) {
     upsertErr1 = error;
   }
 
   if (upsertErr1 && isMissingColumnError(upsertErr1)) {
     const result = await tryUpsert(rowsBase);
-    upsertResultIds = (result.data || []).map(r => r.id);
+    upsertResultIds = result.map(r => r.id);
   } else if (upsertErr1) {
     throw new Error(`Failed to save chains: ${formatDbError(upsertErr1)}`);
   } else {
-    upsertResultIds = (upsertData1 || []).map((r: { id: string }) => r.id);
+    upsertResultIds = (upsertData1 || []).map(r => r.id);
   }
 
   const newIds = new Set(chains.map(c => c.id));

@@ -3,12 +3,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RuleSelectionDialog } from '../RuleSelectionDialog';
 import { ExceptionRule, ExceptionRuleType, SessionContext } from '../../types';
+import { I18nProvider } from '../../i18n';
+import { exceptionRuleManager } from '../../services/ExceptionRuleManager';
+import type { Mocked } from 'vitest';
+
+vi.mock('../../services/ExceptionRuleManager', () => ({
+  exceptionRuleManager: {
+    getAllRules: vi.fn(),
+    createChainRule: vi.fn(),
+  },
+}));
 
 // Mock the utility modules
-jest.mock('../../utils/ruleSearchOptimizer', () => ({
-  RuleSearchOptimizer: jest.fn().mockImplementation(() => ({
-    updateIndex: jest.fn(),
-    searchRulesDebounced: jest.fn((rules, query, callback) => {
+vi.mock('../../utils/ruleSearchOptimizer', () => ({
+  RuleSearchOptimizer: vi.fn().mockImplementation(() => ({
+    updateIndex: vi.fn(),
+    searchRulesDebounced: vi.fn((rules, query, callback) => {
       const results = rules
         .filter((rule: ExceptionRule) => rule.name.toLowerCase().includes(query.toLowerCase()))
         .map((rule: ExceptionRule) => ({
@@ -19,48 +29,47 @@ jest.mock('../../utils/ruleSearchOptimizer', () => ({
         }));
       callback(results);
     }),
-    detectDuplicates: jest.fn(() => ({
-      hasExactMatch: false,
-      exactMatches: [],
-      similarRules: []
-    }))
+    detectDuplicates: vi.fn((name: string, rules: ExceptionRule[]) => {
+      const exactMatches = rules.filter((rule) => rule.name === name);
+      return {
+        hasExactMatch: exactMatches.length > 0,
+        exactMatches,
+        similarRules: []
+      };
+    })
   }))
 }));
 
-jest.mock('../../utils/exceptionRuleCache', () => ({
-  ExceptionRuleCache: jest.fn().mockImplementation(() => ({
-    getChainRules: jest.fn(() => null),
-    setChainRules: jest.fn(),
-    updateChainRules: jest.fn()
+vi.mock('../../utils/exceptionRuleCache', () => ({
+  ExceptionRuleCache: vi.fn().mockImplementation(() => ({
+    getChainRules: vi.fn(() => null),
+    setChainRules: vi.fn(),
+    updateChainRules: vi.fn()
   }))
 }));
 
-jest.mock('../../utils/LayoutStabilityMonitor', () => ({
-  useLayoutStability: jest.fn(() => ({
-    startMonitoring: jest.fn(),
-    stopMonitoring: jest.fn(),
-    checkNow: jest.fn()
+vi.mock('../../utils/LayoutStabilityMonitor', () => ({
+  useLayoutStability: vi.fn(() => ({
+    startMonitoring: vi.fn(),
+    stopMonitoring: vi.fn(),
+    checkNow: vi.fn()
   }))
 }));
 
-jest.mock('../../utils/AsyncOperationManager', () => ({
-  useAsyncOperation: jest.fn(() => ({
-    optimisticUpdate: jest.fn(({ updateUI, optimisticValue }) => {
-      updateUI(optimisticValue);
-      return Promise.resolve(optimisticValue);
-    }),
-    debounceOperation: jest.fn()
-  }))
-}));
+const renderWithI18n = (ui: React.ReactElement) => {
+  return render(ui, { wrapper: I18nProvider });
+};
 
 describe('RuleSelectionDialog', () => {
+  const mockedRuleManager = exceptionRuleManager as Mocked<typeof exceptionRuleManager>;
   const mockSessionContext: SessionContext = {
+    sessionId: 'session-1',
     chainId: 'test-chain',
     chainName: 'Test Chain',
+    startedAt: new Date(),
     elapsedTime: 1800, // 30 minutes
     remainingTime: 900, // 15 minutes
-    currentTaskId: 'task-1',
-    isActive: true
+    isDurationless: false
   };
 
   const mockRules: ExceptionRule[] = [
@@ -91,49 +100,63 @@ describe('RuleSelectionDialog', () => {
     isOpen: true,
     actionType: 'pause' as const,
     sessionContext: mockSessionContext,
-    onRuleSelected: jest.fn(),
-    onCreateNewRule: jest.fn(),
-    onCancel: jest.fn()
+    onRuleSelected: vi.fn(),
+    onCreateNewRule: vi.fn(),
+    onCancel: vi.fn()
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    localStorage.setItem('language', 'zh');
+    mockedRuleManager.getAllRules.mockResolvedValue(mockRules);
+    mockedRuleManager.createChainRule.mockResolvedValue({
+      rule: {
+        id: 'created-rule',
+        name: '新规则',
+        chainId: 'test-chain',
+        scope: 'chain',
+        type: ExceptionRuleType.PAUSE_ONLY,
+        createdAt: new Date(),
+        usageCount: 0,
+        isActive: true,
+      } as ExceptionRule,
+      warnings: [],
+    });
   });
 
   describe('rendering', () => {
     it('should render when open', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       expect(screen.getByText('选择例外规则')).toBeInTheDocument();
       expect(screen.getByText('为暂停计时操作选择适用的规则')).toBeInTheDocument();
     });
 
     it('should not render when closed', () => {
-      render(<RuleSelectionDialog {...defaultProps} isOpen={false} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} isOpen={false} />);
       
       expect(screen.queryByText('选择例外规则')).not.toBeInTheDocument();
     });
 
     it('should show task information', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       expect(screen.getByText('Test Chain')).toBeInTheDocument();
-      expect(screen.getByText('已进行 30 分钟，剩余 15 分钟')).toBeInTheDocument();
+      expect(screen.getByText('已进行 30 分钟')).toBeInTheDocument();
+      expect(screen.getByText(/剩余 15 分钟/)).toBeInTheDocument();
       expect(screen.getByText('30:00')).toBeInTheDocument();
     });
 
     it('should show pause duration settings for pause action', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       expect(screen.getByText('暂停时长设置')).toBeInTheDocument();
-      expect(screen.getByText('15分钟')).toBeInTheDocument();
-      expect(screen.getByText('30分钟')).toBeInTheDocument();
-      expect(screen.getByText('1小时')).toBeInTheDocument();
-      expect(screen.getByText('无限时间')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('输入分钟')).toHaveValue(15);
+      expect(screen.getByRole('checkbox', { name: '无限时间' })).toBeInTheDocument();
     });
 
     it('should not show pause duration settings for early completion', () => {
-      render(<RuleSelectionDialog {...defaultProps} actionType="early_completion" />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} actionType="early_completion" />);
       
       expect(screen.queryByText('暂停时长设置')).not.toBeInTheDocument();
     });
@@ -141,7 +164,7 @@ describe('RuleSelectionDialog', () => {
 
   describe('search functionality', () => {
     it('should render search input', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
       expect(searchInput).toBeInTheDocument();
@@ -149,7 +172,7 @@ describe('RuleSelectionDialog', () => {
 
     it('should show create new rule option when typing', async () => {
       const user = userEvent.setup();
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
       await user.type(searchInput, '新规则');
@@ -158,58 +181,56 @@ describe('RuleSelectionDialog', () => {
       expect(screen.getByText('为当前任务链创建专属规则')).toBeInTheDocument();
     });
 
-    it('should focus search input when dialog opens', async () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
-      
-      await waitFor(() => {
-        const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
-        expect(searchInput).toHaveFocus();
-      }, { timeout: 200 });
+    it('should focus search input when dialog opens', () => {
+      vi.useFakeTimers();
+      try {
+        renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
+
+        vi.advanceTimersByTime(150);
+        expect(screen.getByPlaceholderText('搜索规则或输入新规则名称...')).toHaveFocus();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
   describe('pause options', () => {
     it('should select 15 minutes by default', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
-      const fifteenMinButton = screen.getByText('15分钟').closest('button');
-      expect(fifteenMinButton).toHaveClass('border-primary-500');
+      const durationInput = screen.getByPlaceholderText('输入分钟');
+      expect(durationInput).toHaveValue(15);
+      expect(durationInput).toBeEnabled();
     });
 
     it('should change pause duration when clicked', async () => {
       const user = userEvent.setup();
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
-      const thirtyMinButton = screen.getByText('30分钟').closest('button');
-      await user.click(thirtyMinButton!);
-      
-      expect(thirtyMinButton).toHaveClass('border-primary-500');
+      const durationInput = screen.getByPlaceholderText('输入分钟');
+      await user.clear(durationInput);
+      await user.type(durationInput, '30');
+
+      expect(durationInput).toHaveValue(30);
     });
 
     it('should show unlimited time option', async () => {
       const user = userEvent.setup();
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
-      const unlimitedButton = screen.getByText('无限时间').closest('button');
-      await user.click(unlimitedButton!);
-      
-      expect(unlimitedButton).toHaveClass('border-primary-500');
+      const checkbox = screen.getByRole('checkbox', { name: '无限时间' });
+      const durationInput = screen.getByPlaceholderText('输入分钟');
+
+      await user.click(checkbox);
+      expect(checkbox).toBeChecked();
+      expect(durationInput).toBeDisabled();
     });
   });
 
   describe('rule creation', () => {
-    it('should call optimistic update when creating new rule', async () => {
+    it('should create a chain rule and notify parent', async () => {
       const user = userEvent.setup();
-      const mockOptimisticUpdate = jest.fn().mockResolvedValue({});
-      
-      // Mock the hook to return our mock function
-      const { useAsyncOperation } = require('../../utils/AsyncOperationManager');
-      useAsyncOperation.mockReturnValue({
-        optimisticUpdate: mockOptimisticUpdate,
-        debounceOperation: jest.fn()
-      });
-
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
       await user.type(searchInput, '新规则');
@@ -217,22 +238,27 @@ describe('RuleSelectionDialog', () => {
       const createButton = screen.getByText('创建新规则: "新规则"');
       await user.click(createButton);
       
-      expect(mockOptimisticUpdate).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockedRuleManager.createChainRule).toHaveBeenCalledWith(
+          'test-chain',
+          '新规则',
+          ExceptionRuleType.PAUSE_ONLY
+        );
+      });
+
+      await waitFor(() => {
+        expect(defaultProps.onCreateNewRule).toHaveBeenCalledWith('新规则', ExceptionRuleType.PAUSE_ONLY);
+      });
     });
 
     it('should show error when creating duplicate rule', async () => {
       const user = userEvent.setup();
-      
-      // Mock duplicate detection
-      const { RuleSearchOptimizer } = require('../../utils/ruleSearchOptimizer');
-      const mockOptimizer = new RuleSearchOptimizer();
-      mockOptimizer.detectDuplicates.mockReturnValue({
-        hasExactMatch: true,
-        exactMatches: [mockRules[0]],
-        similarRules: []
-      });
 
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('上厕所')).toBeInTheDocument();
+      });
       
       const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
       await user.type(searchInput, '上厕所');
@@ -243,15 +269,21 @@ describe('RuleSelectionDialog', () => {
       await waitFor(() => {
         expect(screen.getByText('规则名称 "上厕所" 已存在')).toBeInTheDocument();
       });
+
+      expect(mockedRuleManager.createChainRule).not.toHaveBeenCalledWith(
+        'test-chain',
+        '上厕所',
+        ExceptionRuleType.PAUSE_ONLY
+      );
     });
   });
 
   describe('rule selection', () => {
     it('should call onRuleSelected when rule is clicked', async () => {
       const user = userEvent.setup();
-      const mockOnRuleSelected = jest.fn();
+      const mockOnRuleSelected = vi.fn();
       
-      render(<RuleSelectionDialog {...defaultProps} onRuleSelected={mockOnRuleSelected} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} onRuleSelected={mockOnRuleSelected} />);
       
       // Wait for rules to load and then click the first rule
       await waitFor(() => {
@@ -267,13 +299,14 @@ describe('RuleSelectionDialog', () => {
 
     it('should pass pause options for pause action', async () => {
       const user = userEvent.setup();
-      const mockOnRuleSelected = jest.fn();
+      const mockOnRuleSelected = vi.fn();
       
-      render(<RuleSelectionDialog {...defaultProps} onRuleSelected={mockOnRuleSelected} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} onRuleSelected={mockOnRuleSelected} />);
       
       // Change pause duration first
-      const thirtyMinButton = screen.getByText('30分钟').closest('button');
-      await user.click(thirtyMinButton!);
+      const durationInput = screen.getByPlaceholderText('输入分钟');
+      await user.clear(durationInput);
+      await user.type(durationInput, '30');
       
       // Then select a rule
       await waitFor(() => {
@@ -295,55 +328,85 @@ describe('RuleSelectionDialog', () => {
   });
 
   describe('error handling', () => {
-    it('should display error message', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
-      
-      // Simulate an error by triggering a failed operation
-      fireEvent.click(screen.getByText('创建新规则: "test"').closest('button') || document.body);
-      
-      // The error should be handled by the component's error state
+    it('should display error message', async () => {
+      const user = userEvent.setup();
+      mockedRuleManager.createChainRule.mockRejectedValueOnce(new Error('Network error'));
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
+
+      const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      await user.type(searchInput, '新规则');
+
+      const createButton = screen.getByText('创建新规则: "新规则"');
+      await user.click(createButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/网络错误/)).toBeInTheDocument();
+      });
     });
 
     it('should allow dismissing error', async () => {
       const user = userEvent.setup();
-      render(<RuleSelectionDialog {...defaultProps} />);
-      
-      // Manually set an error state (in a real scenario, this would come from a failed operation)
-      // For testing, we'll simulate this by checking if the error dismiss functionality works
-      // when an error is present
+      mockedRuleManager.createChainRule.mockRejectedValueOnce(new Error('Network error'));
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
+
+      const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      await user.type(searchInput, '新规则');
+
+      const createButton = screen.getByText('创建新规则: "新规则"');
+      await user.click(createButton);
+
+      const errorMessage = await screen.findByText(/网络错误/);
+      expect(errorMessage).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText('关闭错误提示'));
+      expect(screen.queryByText(/网络错误/)).not.toBeInTheDocument();
     });
   });
 
   describe('loading states', () => {
-    it('should show loading spinner when loading', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
+    it('should show loading spinner when loading', async () => {
+      mockedRuleManager.getAllRules.mockImplementationOnce(() => new Promise(() => {}));
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
-      expect(screen.getByText('加载规则中...')).toBeInTheDocument();
+      expect(await screen.findByText('加载规则中...')).toBeInTheDocument();
     });
   });
 
   describe('accessibility', () => {
     it('should have proper ARIA labels', () => {
-      render(<RuleSelectionDialog {...defaultProps} />);
+      renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       const dialog = screen.getByRole('dialog', { hidden: true });
       expect(dialog).toBeInTheDocument();
     });
 
     it('should support keyboard navigation', async () => {
-      const user = userEvent.setup();
-      render(<RuleSelectionDialog {...defaultProps} />);
-      
-      // Tab should move focus to search input
-      await user.tab();
-      const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
-      expect(searchInput).toHaveFocus();
+      vi.useFakeTimers();
+      try {
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+        renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
+
+        // Prevent the auto-focus timer from interfering with tab order.
+        await user.tab();
+        expect(screen.getByLabelText('关闭对话框')).toHaveFocus();
+
+        await user.tab();
+        expect(screen.getByPlaceholderText('输入分钟')).toHaveFocus();
+
+        await user.tab();
+        expect(screen.getByRole('checkbox', { name: '无限时间' })).toHaveFocus();
+
+        await user.tab();
+        expect(screen.getByPlaceholderText('搜索规则或输入新规则名称...')).toHaveFocus();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
   describe('cleanup', () => {
     it('should reset state when dialog closes', () => {
-      const { rerender } = render(<RuleSelectionDialog {...defaultProps} />);
+      const { rerender } = renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
       
       // Open dialog and add some search text
       const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');

@@ -34,7 +34,7 @@ The codebase follows a clear three-layer separation:
 
 2. **Domain Logic Layer** (`src/hooks/domains/`)
    - Business logic encapsulated in domain hooks
-   - `useChainsDomain`, `useSessionsDomain`, `useBettingDomain`, `useRulesDomain`, `useRecycleBinDomain`, `useRsipDomain`, `useGroupDomain`, `useImportExportDomain`
+   - `useChainsDomain`, `useSessionsDomain`, `useBettingDomain`, `useRulesDomain`, `useRecycleBinDomain`, `useRsipDomain`, `useGroupDomain`, `useImportExportDomain`, `useCheckinDomain`, `usePetDomain`, `useSafeSaveChains`
    - Handle state mutations and side effects
 
 3. **Infrastructure Layer** (`src/storage/`, `src/infra/storage/supabase/`)

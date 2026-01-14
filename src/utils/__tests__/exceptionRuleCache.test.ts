@@ -85,7 +85,7 @@ describe('ExceptionRuleCache', () => {
 
   describe('cache subscription', () => {
     it('should notify subscribers when rules are updated', () => {
-      const subscriber = jest.fn();
+      const subscriber = vi.fn();
       const unsubscribe = cache.subscribe(subscriber);
 
       const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
@@ -99,24 +99,24 @@ describe('ExceptionRuleCache', () => {
     });
 
     it('should handle subscriber errors gracefully', () => {
-      const errorSubscriber = jest.fn(() => {
+      const errorSubscriber = vi.fn(() => {
         throw new Error('Subscriber error');
       });
-      const normalSubscriber = jest.fn();
+      const normalSubscriber = vi.fn();
 
       cache.subscribe(errorSubscriber);
       cache.subscribe(normalSubscriber);
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      vi.mocked(console.error).mockClear();
 
       const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
 
       expect(errorSubscriber).toHaveBeenCalled();
       expect(normalSubscriber).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Subscriber notification failed:', expect.any(Error));
-
-      consoleSpy.mockRestore();
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Subscriber notification failed')
+      );
     });
   });
 
@@ -157,15 +157,15 @@ describe('ExceptionRuleCache', () => {
         isActive: true
       } as any;
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      vi.mocked(console.warn).mockClear();
       
       cache.addRuleToChain('chain1', globalRule);
       const rules = cache.getChainRules('chain1');
       
       expect(rules).toHaveLength(2); // Should remain unchanged
-      expect(consoleSpy).toHaveBeenCalledWith('Attempting to add non-chain-specific rule to chain cache');
-      
-      consoleSpy.mockRestore();
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Attempting to add non-chain-specific rule to chain cache')
+      );
     });
 
     it('should remove rule from chain', () => {
@@ -272,7 +272,7 @@ describe('ExceptionRuleCache', () => {
 
   describe('preloading', () => {
     it('should preload chain data', async () => {
-      const loadFunction = jest.fn().mockResolvedValue(mockRules.filter(r => r.chainId === 'chain1'));
+      const loadFunction = vi.fn().mockResolvedValue(mockRules.filter(r => r.chainId === 'chain1'));
 
       await cache.preloadChainData('chain1', loadFunction);
 
@@ -284,40 +284,43 @@ describe('ExceptionRuleCache', () => {
       const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
 
-      const loadFunction = jest.fn();
+      const loadFunction = vi.fn();
       await cache.preloadChainData('chain1', loadFunction);
 
       expect(loadFunction).not.toHaveBeenCalled();
     });
 
     it('should handle preload errors gracefully', async () => {
-      const loadFunction = jest.fn().mockRejectedValue(new Error('Load failed'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const loadFunction = vi.fn().mockRejectedValue(new Error('Load failed'));
+      vi.mocked(console.warn).mockClear();
 
       await cache.preloadChainData('chain1', loadFunction);
 
-      expect(consoleSpy).toHaveBeenCalledWith('预加载链 chain1 数据失败:', expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('预加载链 chain1 数据失败')
+      );
     });
   });
 
   describe('deprecated methods', () => {
     it('should warn when using deprecated getRules', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      vi.mocked(console.warn).mockClear();
       
       cache.getRules();
       
-      expect(consoleSpy).toHaveBeenCalledWith('getRules is deprecated, use getChainRules instead');
-      consoleSpy.mockRestore();
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('getRules is deprecated, use getChainRules instead')
+      );
     });
 
     it('should warn when using deprecated setRules', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      vi.mocked(console.warn).mockClear();
       
       cache.setRules(mockRules);
       
-      expect(consoleSpy).toHaveBeenCalledWith('setRules is deprecated, use setChainRules instead');
-      consoleSpy.mockRestore();
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('setRules is deprecated, use setChainRules instead')
+      );
     });
   });
 

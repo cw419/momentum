@@ -81,12 +81,20 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   const totalHeight = visibleRange.totalItems * itemHeight;
 
   // 滚动处理（节流）
-  const handleScroll = useCallback(
-    throttle((e: React.UIEvent<HTMLDivElement>) => {
-      const scrollTop = e.currentTarget.scrollTop;
-      setScrollTop(scrollTop);
-    }, 16), // 60fps
+  // 注意：不要把 React 合成事件对象传给节流函数（事件可能被复用/清空），只传递必要的值。
+  const handleScroll = useMemo(
+    () =>
+      throttle((nextScrollTop: number) => {
+        setScrollTop(nextScrollTop);
+      }, 16),
     []
+  );
+
+  const onScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      handleScroll(e.currentTarget.scrollTop);
+    },
+    [handleScroll]
   );
 
   // 容器大小变化处理
@@ -285,7 +293,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
 
   // 渲染加载状态
   const renderLoadingState = () => (
-    <div className="flex items-center justify-center py-12">
+    <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
       <span className="ml-3 text-gray-600 dark:text-gray-400">{tr('加载规则中...', 'Loading rules...')}</span>
     </div>
@@ -316,7 +324,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
       <div
         ref={scrollElementRef}
         className="overflow-auto h-full"
-        onScroll={handleScroll}
+        onScroll={onScroll}
         style={{
           overscrollBehavior: 'contain',
           scrollBehavior: 'smooth'

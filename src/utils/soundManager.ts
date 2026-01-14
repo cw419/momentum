@@ -11,7 +11,7 @@ class SoundManager {
     // Initialize AudioContext on user interaction if possible, 
     // but we can try to create it here.
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
         this.audioContext = new AudioContextClass();
       }
