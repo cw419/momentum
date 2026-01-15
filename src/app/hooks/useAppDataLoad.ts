@@ -19,18 +19,72 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
     const loadData = async () => {
       logger.debug('APP_SHELL', 'Starting data load', { storage: storage.kind });
       setIsLoadingData(true);
+      const toError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)));
       try {
         // 在加载数据前先执行自动清理
-        try {
-          const cleanedCount = await storage.cleanupExpiredDeletedChains(30);
-          if (cleanedCount > 0) {
-            logger.info('APP_SHELL', `Auto-cleaned ${cleanedCount} expired deleted chains`);
+        const scheduleIdle = (fn: () => void, timeoutMs: number = 2000) => {
+          const requestIdleCallbackFn = window.requestIdleCallback;
+          if (typeof requestIdleCallbackFn === 'function') {
+            requestIdleCallbackFn(() => fn(), { timeout: timeoutMs });
+          } else {
+            setTimeout(fn, 0);
           }
-        } catch (cleanupError) {
-          logger.warn('APP_SHELL', 'Auto cleanup failed', undefined, cleanupError as Error);
-        }
+        };
 
-        const chains = await storage.getActiveChains();
+        // Run maintenance tasks without blocking initial render.
+        scheduleIdle(() => {
+          void storage
+            .cleanupExpiredDeletedChains(30)
+            .then(cleanedCount => {
+              if (cleanedCount > 0) {
+                logger.info('APP_SHELL', `Auto-cleaned ${cleanedCount} expired deleted chains`);
+              }
+            })
+            .catch(cleanupError => {
+              logger.warn('APP_SHELL', 'Auto cleanup failed', undefined, toError(cleanupError));
+            });
+        });
+
+        const [
+          chains,
+          allScheduledSessions,
+          activeSession,
+          completionHistory,
+          rsipNodes,
+          rsipMeta,
+          taskTimeStats,
+        ] = await Promise.all([
+          storage.getActiveChains().catch(error => {
+            logger.error('APP_SHELL', 'Failed to load chain data', undefined, toError(error));
+            return [];
+          }),
+          storage.getScheduledSessions().catch(error => {
+            logger.warn('APP_SHELL', 'Failed to load scheduled sessions', undefined, toError(error));
+            return [];
+          }),
+          storage.getActiveSession().catch(error => {
+            logger.warn('APP_SHELL', 'Failed to load active session', undefined, toError(error));
+            return null;
+          }),
+          storage.getCompletionHistory().catch(error => {
+            logger.warn('APP_SHELL', 'Failed to load completion history', undefined, toError(error));
+            return [];
+          }),
+          storage.getRSIPNodes().catch(error => {
+            logger.warn('APP_SHELL', 'Failed to load RSIP nodes', undefined, toError(error));
+            return [];
+          }),
+          storage.getRSIPMeta().catch(error => {
+            logger.warn('APP_SHELL', 'Failed to load RSIP meta', undefined, toError(error));
+            return {};
+          }),
+          storage.getTaskTimeStats().catch(error => {
+            logger.warn('APP_SHELL', 'Failed to load task time stats', undefined, toError(error));
+            return [];
+          }),
+        ]);
+
+        const scheduledSessions = allScheduledSessions.filter(session => !isSessionExpired(session.expiresAt));
 
         // 检查并修复循环引用的数据
         const hasCircularReferences = chains.some(chain => chain.parentId === chain.id);
@@ -63,30 +117,25 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
         logger.debug('APP_SHELL', 'Loaded chain data', { count: chains.length });
         logger.debug('APP_SHELL', 'Chain data details', { chains: chains.map(c => ({ id: c.id, name: c.name })) });
 
-        const allScheduledSessions = await storage.getScheduledSessions();
-        const scheduledSessions = allScheduledSessions.filter(session => !isSessionExpired(session.expiresAt));
-        const activeSession = await storage.getActiveSession();
-        const completionHistory = await storage.getCompletionHistory();
-        const rsipNodes = await storage.getRSIPNodes();
-        const rsipMeta = await storage.getRSIPMeta();
-        const taskTimeStats = await storage.getTaskTimeStats();
-
         // 执行数据迁移以确保历史记录包含用时信息
         storage.migrateCompletionHistoryForTiming();
 
         // 执行完整的数据迁移（仅在开发环境中记录详细信息）
-        if (isDev) {
-          try {
-            const { dataMigrationManager } = await import('../../utils/dataMigration');
-            const migrationResult = await dataMigrationManager.migrateAll();
-            if (!migrationResult.success || migrationResult.errors.length > 0) {
-              logger.warn('APP_SHELL', 'Data migration completed with warnings', { migrationResult });
-            } else {
-              logger.info('APP_SHELL', 'Data migration completed successfully');
-            }
-          } catch (migrationError) {
-            logger.warn('APP_SHELL', 'Error occurred during data migration', undefined, migrationError as Error);
-          }
+        if (isDev && storage.kind === 'local') {
+          scheduleIdle(() => {
+            void import('../../utils/dataMigration')
+              .then(({ dataMigrationManager }) => dataMigrationManager.migrateAll())
+              .then(migrationResult => {
+                if (!migrationResult.success || migrationResult.errors.length > 0) {
+                  logger.warn('APP_SHELL', 'Data migration completed with warnings', { migrationResult });
+                } else {
+                  logger.info('APP_SHELL', 'Data migration completed successfully');
+                }
+              })
+              .catch(migrationError => {
+                logger.warn('APP_SHELL', 'Error occurred during data migration', undefined, toError(migrationError));
+              });
+          }, 5000);
         }
 
         logger.debug('APP_SHELL', 'Setting app state', { chainCount: chains.length });
@@ -107,7 +156,7 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
           await storage.saveScheduledSessions(scheduledSessions);
         }
       } catch (error) {
-        logger.error('APP_SHELL', 'Failed to load data', undefined, error as Error);
+        logger.error('APP_SHELL', 'Failed to load data', undefined, toError(error));
       } finally {
         setIsLoadingData(false);
       }

@@ -21,7 +21,19 @@ export interface AuthenticationResult {
 export const getCurrentUser = async (): Promise<User | null> => {
   if (!supabase) return null;
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Fast path: prefer the locally cached session user to avoid a network roundtrip.
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (!sessionError && session?.user) {
+      return session.user;
+    }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      const err = userError instanceof Error ? userError : new Error(String(userError));
+      logger.warn('SUPABASE', 'Failed to get current user', undefined, err);
+      return null;
+    }
+
     return user;
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
