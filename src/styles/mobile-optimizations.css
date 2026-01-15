@@ -236,25 +236,25 @@
 }
 
 /* 暗色模式移动端优化 */
-@media (max-width: 768px) and (prefers-color-scheme: dark) {
+@media (max-width: 768px) {
   /* 确保暗色模式下的可读性 */
-  .bento-card {
+  .dark .bento-card {
     background-color: rgba(30, 41, 59, 0.8);
     border-color: rgba(71, 85, 105, 0.3);
   }
 
   /* 输入框在暗色模式下的优化 */
-  input,
-  textarea,
-  select {
+  .dark input,
+  .dark textarea,
+  .dark select {
     background-color: rgba(15, 23, 42, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
     color: rgb(248, 250, 252);
   }
 
-  input:focus,
-  textarea:focus,
-  select:focus {
+  .dark input:focus,
+  .dark textarea:focus,
+  .dark select:focus {
     border-color: rgb(59, 130, 246);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
   }

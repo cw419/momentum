@@ -278,8 +278,8 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
             </div>
           ) : (
             <div className="animate-slide-up">
-              <div className="flex justify-between items-center mb-12">
-                <div>
+              <div className="flex flex-col gap-6 lg:flex-row lg:justify-between lg:items-center mb-12">
+                <div className="min-w-0">
                   <h2 className="text-3xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
                     {tr('你的任务链', 'Your Task Chains')}
                   </h2>
@@ -287,10 +287,10 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     {tr('任务链列表', 'YOUR TASK CHAINS')}
                   </p>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <button
                     onClick={handleShowRecycleBin}
-                    className="relative bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="relative shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                     title={tr('回收箱', 'Recycle bin')}
                   >
                     <Trash2 size={16} />
@@ -303,14 +303,14 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                   </button>
                   <button
                     onClick={handleShowImportExport}
-                    className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
                     <Download size={16} />
                     <span className="font-chinese font-medium">{tr('数据管理', 'Data')}</span>
                   </button>
                   <button
                     onClick={onOpenRSIP}
-                    className="bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="shrink-0 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                     title={tr('国策树（RSIP）', 'RSIP Policy Tree')}
                   >
                     <TreePine size={16} />
@@ -318,7 +318,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                   </button>
                   <button
                     onClick={onCreateChain}
-                    className="gradient-dark hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="shrink-0 gradient-dark hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
                     <Plus size={16} />
                     <span className="font-chinese font-medium">{tr('新建链', 'New Chain')}</span>
@@ -326,7 +326,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                   {onCreateTaskGroup && (
                     <button
                       onClick={onCreateTaskGroup}
-                      className="bg-green-500 hover:bg-green-600 hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                      className="shrink-0 bg-green-500 hover:bg-green-600 hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                     >
                       <Layers size={16} />
                       <span className="font-chinese font-medium">{tr('新建任务群', 'New Group')}</span>
