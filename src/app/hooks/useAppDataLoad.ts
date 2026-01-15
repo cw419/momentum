@@ -21,6 +21,22 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
       setIsLoadingData(true);
       const toError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)));
       try {
+        if (storage.kind === 'supabase') {
+          const authResult = await storage.waitForAuthentication(10000);
+          if (!authResult.ok) {
+            logger.warn('APP_SHELL', 'Authentication check failed; delaying data load', {
+              code: authResult.error.code,
+              message: authResult.error.message,
+            });
+            return;
+          }
+
+          if (!authResult.value.isAuthenticated) {
+            logger.warn('APP_SHELL', 'Not authenticated; skipping data load');
+            return;
+          }
+        }
+
         // 在加载数据前先执行自动清理
         const scheduleIdle = (fn: () => void, timeoutMs: number = 2000) => {
           const requestIdleCallbackFn = window.requestIdleCallback;

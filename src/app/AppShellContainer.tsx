@@ -28,8 +28,8 @@ import { usePetDomain } from '../hooks/domains/usePetDomain';
 import { useAppDataLoad } from './hooks/useAppDataLoad';
 import { AppShellView } from './AppShellView';
 
-export default function AppShellContainer() {
-  const [state, setState] = useState<AppState>({
+function createInitialAppState(): AppState {
+  return {
     chains: [],
     scheduledSessions: [],
     activeSession: null,
@@ -42,7 +42,11 @@ export default function AppShellContainer() {
     taskTimeStats: [],
     exceptionRules: [],
     ruleUsageRecords: [],
-  });
+  };
+}
+
+export default function AppShellContainer() {
+  const [state, setState] = useState<AppState>(() => createInitialAppState());
 
   const stateRef = useRef(state);
   useEffect(() => {
@@ -60,6 +64,43 @@ export default function AppShellContainer() {
 
   const storage = useStorage();
   const safelySaveChains = useSafeSaveChains(storage);
+
+  // When using Supabase storage, defer initial data load until the user is authenticated.
+  // Otherwise the first load (unauthenticated) will cache empty data and never refresh until a full reload.
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const prevAuthUserIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (storage.kind !== 'supabase') {
+      setAuthUserId(null);
+      prevAuthUserIdRef.current = null;
+      return;
+    }
+
+    const unsubscribeResult = storage.onAuthStateChange((event, session) => {
+      const nextUserId = session.user?.id ?? null;
+      setAuthUserId(nextUserId);
+
+      const prevUserId = prevAuthUserIdRef.current;
+      if (prevUserId !== nextUserId) {
+        prevAuthUserIdRef.current = nextUserId;
+        logger.debug('APP_SHELL', 'Auth user changed', { event, prevUserId, nextUserId });
+        setState(createInitialAppState());
+      }
+    });
+
+    if (!unsubscribeResult.ok) {
+      logger.warn(
+        'APP_SHELL',
+        'Failed to subscribe to auth state changes',
+        { message: unsubscribeResult.error.message },
+        toError(unsubscribeResult.error)
+      );
+      return;
+    }
+
+    return () => unsubscribeResult.value();
+  }, [storage]);
 
   useEffect(() => {
     // 立即设置初始化完成，让首屏尽快渲染
@@ -114,7 +155,8 @@ export default function AppShellContainer() {
     };
   }, []);
 
-  const { isLoadingData } = useAppDataLoad({ storage, isInitialized, setState });
+  const shouldLoadData = isInitialized && (storage.kind !== 'supabase' || Boolean(authUserId));
+  const { isLoadingData } = useAppDataLoad({ storage, isInitialized: shouldLoadData, setState });
 
   useEffect(() => {
     if (state.currentView === 'focus') {
