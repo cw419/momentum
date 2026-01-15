@@ -69,13 +69,116 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
   const ruleCache = useMemo(() => new ExceptionRuleCache(), []);
   const { startMonitoring, stopMonitoring } = useLayoutStability(containerRef);
 
+  // 创建默认预设规则
+  const createDefaultPresetRules = useCallback(async (chainId: string, actionType: string): Promise<ExceptionRule[]> => {
+    const defaultRuleNames =
+      actionType === 'pause'
+        ? language === 'zh'
+          ? ['上厕所', '接电话']
+          : ['Bathroom break', 'Phone call']
+        : language === 'zh'
+          ? ['提前达成目标']
+          : ['Reached goal early'];
+
+    const ruleType = actionType === 'pause'
+      ? ExceptionRuleType.PAUSE_ONLY
+      : ExceptionRuleType.EARLY_COMPLETION_ONLY;
+
+    const createdRules: ExceptionRule[] = [];
+    const allRules = await exceptionRuleManager.getAllRules();
+    const chainRules = allRules.filter(rule => rule.chainId === chainId);
+
+    for (const name of defaultRuleNames) {
+      try {
+        // 检查是否已存在同名规则
+        const existingRule = chainRules.find(rule => rule.name === name);
+        if (existingRule) {
+          createdRules.push(existingRule);
+          continue;
+        }
+
+        // 创建链专属规则
+        const result = await exceptionRuleManager.createChainRule(chainId, name, ruleType);
+        createdRules.push(result.rule);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.warn('RULE_SELECTION', `Failed to create default rule "${name}"`, { chainId, actionType }, err);
+      }
+    }
+
+    return createdRules;
+  }, [language]);
+
+  // 从实际存储获取规则
+  const fetchChainRulesFromAPI = useCallback(async (chainId: string, actionType: string): Promise<ExceptionRule[]> => {
+    try {
+      // 获取所有规则
+      const allRules = await exceptionRuleManager.getAllRules();
+
+      // 过滤出当前链的规则，并且适用于当前操作类型
+      const applicableRules = allRules.filter(rule => {
+        // 只显示当前链的规则或全局规则
+        const isChainRule = rule.chainId === chainId;
+        const isGlobalRule = rule.scope === 'global';
+
+        if (!isChainRule && !isGlobalRule) {
+          return false;
+        }
+
+        // 检查规则类型是否匹配
+        if (actionType === 'pause') {
+          return rule.type === ExceptionRuleType.PAUSE_ONLY;
+        } else {
+          return rule.type === ExceptionRuleType.EARLY_COMPLETION_ONLY;
+        }
+      });
+
+      // 如果没有规则，创建一些默认的预设规则
+      if (applicableRules.length === 0) {
+        const defaultRules = await createDefaultPresetRules(chainId, actionType);
+        return defaultRules;
+      }
+
+      return applicableRules;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('RULE_SELECTION', '获取规则失败', { chainId, actionType }, err);
+      // 如果获取失败，返回默认预设规则
+      return createDefaultPresetRules(chainId, actionType);
+    }
+  }, [createDefaultPresetRules]);
+
+  // 加载链专属规则
+  const loadChainRules = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // 尝试从缓存获取
+      let chainRules = ruleCache.getChainRules(sessionContext.chainId);
+
+      if (!chainRules) {
+        // 从实际的规则存储中获取规则
+        chainRules = await fetchChainRulesFromAPI(sessionContext.chainId, actionType);
+        ruleCache.setChainRules(sessionContext.chainId, chainRules);
+      }
+
+      setRules(chainRules);
+    } catch (err) {
+      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
+    } finally {
+      setLoading(false);
+    }
+  }, [actionType, fetchChainRulesFromAPI, language, ruleCache, sessionContext.chainId, tr]);
+
   // 初始化和清理
   useEffect(() => {
     let focusTimer: ReturnType<typeof setTimeout> | undefined;
 
     if (isOpen) {
       startMonitoring();
-      loadChainRules();
+      void loadChainRules();
       // 聚焦搜索框
       focusTimer = setTimeout(() => {
         const input = searchInputRef.current;
@@ -102,7 +205,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       }
       stopMonitoring();
     };
-  }, [isOpen, sessionContext.chainId]);
+  }, [isOpen, loadChainRules, startMonitoring, stopMonitoring]);
 
   // 搜索处理
   useEffect(() => {
@@ -131,109 +234,6 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
     performSearch();
   }, [rules, searchQuery, searchOptimizer]);
-
-  // 加载链专属规则
-  const loadChainRules = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // 尝试从缓存获取
-      let chainRules = ruleCache.getChainRules(sessionContext.chainId);
-      
-      if (!chainRules) {
-        // 从实际的规则存储中获取规则
-        chainRules = await fetchChainRulesFromAPI(sessionContext.chainId, actionType);
-        ruleCache.setChainRules(sessionContext.chainId, chainRules);
-      }
-
-      setRules(chainRules);
-    } catch (err) {
-      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
-      setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionContext.chainId, actionType, ruleCache, tr, language]);
-
-  // 从实际存储获取规则
-  const fetchChainRulesFromAPI = async (chainId: string, actionType: string): Promise<ExceptionRule[]> => {
-    try {
-      // 获取所有规则
-      const allRules = await exceptionRuleManager.getAllRules();
-      
-      // 过滤出当前链的规则，并且适用于当前操作类型
-      const applicableRules = allRules.filter(rule => {
-        // 只显示当前链的规则或全局规则
-        const isChainRule = rule.chainId === chainId;
-        const isGlobalRule = rule.scope === 'global';
-        
-        if (!isChainRule && !isGlobalRule) {
-          return false;
-        }
-        
-        // 检查规则类型是否匹配
-        if (actionType === 'pause') {
-          return rule.type === ExceptionRuleType.PAUSE_ONLY;
-        } else {
-          return rule.type === ExceptionRuleType.EARLY_COMPLETION_ONLY;
-        }
-      });
-
-      // 如果没有规则，创建一些默认的预设规则
-      if (applicableRules.length === 0) {
-        const defaultRules = await createDefaultPresetRules(chainId, actionType);
-        return defaultRules;
-      }
-
-      return applicableRules;
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('RULE_SELECTION', '获取规则失败', { chainId, actionType }, err);
-      // 如果获取失败，返回默认预设规则
-      return createDefaultPresetRules(chainId, actionType);
-    }
-  };
-
-  // 创建默认预设规则
-  const createDefaultPresetRules = async (chainId: string, actionType: string): Promise<ExceptionRule[]> => {
-    const defaultRuleNames =
-      actionType === 'pause'
-        ? language === 'zh'
-          ? ['上厕所', '接电话']
-          : ['Bathroom break', 'Phone call']
-        : language === 'zh'
-          ? ['提前达成目标']
-          : ['Reached goal early'];
-    
-    const ruleType = actionType === 'pause' 
-      ? ExceptionRuleType.PAUSE_ONLY 
-      : ExceptionRuleType.EARLY_COMPLETION_ONLY;
-
-    const createdRules: ExceptionRule[] = [];
-    const allRules = await exceptionRuleManager.getAllRules();
-    const chainRules = allRules.filter(rule => rule.chainId === chainId);
-    
-    for (const name of defaultRuleNames) {
-      try {
-        // 检查是否已存在同名规则
-        const existingRule = chainRules.find(rule => rule.name === name);
-        if (existingRule) {
-          createdRules.push(existingRule);
-          continue;
-        }
-
-        // 创建链专属规则
-        const result = await exceptionRuleManager.createChainRule(chainId, name, ruleType);
-        createdRules.push(result.rule);
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        logger.warn('RULE_SELECTION', `Failed to create default rule "${name}"`, { chainId, actionType }, err);
-      }
-    }
-    
-    return createdRules;
-  };
 
   // 选择规则
   const handleRuleSelect = useCallback(async (rule: ExceptionRule) => {
@@ -302,7 +302,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
       setError(safe ?? tr('创建规则失败', 'Failed to create rule'));
     }
-  }, [rules, actionType, sessionContext.chainId, onCreateNewRule, searchOptimizer, ruleCache, loadChainRules, searchQuery, language, tr]);
+  }, [rules, actionType, sessionContext.chainId, onCreateNewRule, searchOptimizer, loadChainRules, searchQuery, language, tr]);
 
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActiveSession } from '../../../types';
 
 const AUTO_RESUME_STORAGE_KEY = 'momentum_auto_resume';
@@ -14,7 +14,7 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
   const [elapsedPauseTime, setElapsedPauseTime] = useState(0);
   const resumeTimeoutRef = useRef<number | null>(null);
 
-  const clearAutoResumeSchedule = () => {
+  const clearAutoResumeSchedule = useCallback(() => {
     try {
       const dataStr = localStorage.getItem(AUTO_RESUME_STORAGE_KEY);
       if (dataStr) {
@@ -34,9 +34,9 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
 
     setAutoResumeAt(null);
     setResumeCountdown(0);
-  };
+  }, [session.chainId]);
 
-  const setupAutoResumeTimer = (resumeTime: number) => {
+  const setupAutoResumeTimer = useCallback((resumeTime: number) => {
     if (resumeTimeoutRef.current) {
       window.clearTimeout(resumeTimeoutRef.current);
     }
@@ -52,9 +52,9 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
       onResume();
       clearAutoResumeSchedule();
     }, delay);
-  };
+  }, [clearAutoResumeSchedule, onResume]);
 
-  const scheduleAutoResume = (minutes: number) => {
+  const scheduleAutoResume = useCallback((minutes: number) => {
     const resumeTime = Date.now() + minutes * 60 * 1000;
     setAutoResumeAt(resumeTime);
 
@@ -72,7 +72,7 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     }
 
     setupAutoResumeTimer(resumeTime);
-  };
+  }, [session.chainId, session.startedAt, setupAutoResumeTimer]);
 
   // 加载已有的自动恢复计划
   useEffect(() => {
@@ -96,7 +96,7 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     } catch {
       // ignore
     }
-  }, [onResume, session.chainId, session.isPaused, session.startedAt]);
+  }, [clearAutoResumeSchedule, onResume, session.chainId, session.isPaused, session.startedAt, setupAutoResumeTimer]);
 
   // 倒计时显示
   useEffect(() => {
@@ -135,7 +135,7 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     if (!session.isPaused) {
       clearAutoResumeSchedule();
     }
-  }, [session.isPaused]);
+  }, [session.isPaused, clearAutoResumeSchedule]);
 
   return {
     autoResumeAt,

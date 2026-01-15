@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
 import { Eye, EyeOff, Loader2, Mail, Lock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useI18n } from '../i18n';

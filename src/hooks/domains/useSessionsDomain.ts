@@ -9,8 +9,8 @@
  * - 集成赌注模式（Betting）和宠物系统（Pet）
  * - 记录完成历史和时间统计
  *
- * @see docs/ARCHITECTURE.md - 架构总览
- * @see docs/DOMAIN_BETTING.md - 赌注系统集成
+ * @see docs/guides/ARCHITECTURE.md - 架构总览
+ * @see docs/features/DOMAIN_BETTING.md - 赌注系统集成
  */
 import type { Dispatch, SetStateAction } from 'react';
 import type { ActiveSession, AppState, CompletionHistory, ScheduledSession } from '../../types';

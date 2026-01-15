@@ -8,12 +8,12 @@
  *
  * 仅在 Supabase 模式下生效，本地模式不支持赌注功能。
  *
- * @see docs/DOMAIN_BETTING.md - 赌注系统完整文档
+ * @see docs/features/DOMAIN_BETTING.md - 赌注系统完整文档
  * @see src/domain/betting.ts - 类型定义
  */
 import type { Dispatch, SetStateAction } from 'react';
 import type { BetPlacementResult } from '../../domain/betting';
-import { useStorage } from '../../storage/StorageContext';
+import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
 import { isDev } from '../../utils/env';
 import { emitPointsChanged } from '../../utils/pointsEvents';

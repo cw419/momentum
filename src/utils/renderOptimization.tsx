@@ -90,6 +90,7 @@ export const useThrottle = <T extends (...args: any[]) => any>(
  * 确保对象引用在依赖项不变时保持稳定
  */
 export const useStableReference = <T,>(value: T, deps: React.DependencyList): T => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => value, deps);
 };
 

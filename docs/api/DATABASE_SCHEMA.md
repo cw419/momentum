@@ -425,7 +425,7 @@ WHERE user_id = auth.uid();
 
 ## 相关文档
 
-- `docs/ARCHITECTURE.md` - 整体架构
-- `docs/DOMAIN_BETTING.md` - 赌注系统
-- `docs/DOMAIN_RULES.md` - 例外规则
-- `apply-migration.md` - 迁移指南
+- `docs/guides/ARCHITECTURE.md` - 整体架构
+- `docs/features/DOMAIN_BETTING.md` - 赌注系统
+- `docs/features/DOMAIN_RULES.md` - 例外规则
+- `docs/guides/apply-migration.md` - 迁移指南

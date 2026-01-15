@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ActiveSession, Chain, ExceptionRule, PauseOptions, SessionContext } from '../../types';
-import { useStorage } from '../../storage/StorageContext';
+import { useStorage } from '../../storage/useStorage';
 import { useAutoResume } from './hooks/useAutoResume';
 import { useExceptionRuleFlow } from './hooks/useExceptionRuleFlow';
 import { useFocusTimers } from './hooks/useFocusTimers';

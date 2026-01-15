@@ -52,31 +52,41 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
 
   // 检查迁移需求
   useEffect(() => {
-    if (isOpen) {
-      checkMigrationNeeded();
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
 
-  const checkMigrationNeeded = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const needed = await exceptionRuleMigration.needsMigration();
-      setMigrationNeeded(needed);
-      
-      if (needed) {
-        const suggestions = await exceptionRuleMigration.getMigrationSuggestions();
-        setMigrationSuggestions(suggestions);
+    let cancelled = false;
+
+    const checkMigrationNeeded = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const needed = await exceptionRuleMigration.needsMigration();
+        if (cancelled) return;
+        setMigrationNeeded(needed);
+
+        if (needed) {
+          const suggestions = await exceptionRuleMigration.getMigrationSuggestions();
+          if (cancelled) return;
+          setMigrationSuggestions(suggestions);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+        setError(safe ?? tr('检查迁移需求失败', 'Failed to check migration status'));
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-      
-    } catch (err) {
-      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
-      setError(safe ?? tr('检查迁移需求失败', 'Failed to check migration status'));
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    void checkMigrationNeeded();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, language, tr]);
 
   const handleStartMigration = async () => {
     try {

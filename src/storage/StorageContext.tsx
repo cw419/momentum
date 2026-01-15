@@ -1,14 +1,13 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { MomentumStorage } from './MomentumStorage';
 import { localStorageAdapter } from './localStorageAdapter';
+import { StorageContext } from './storageContextValue';
 import { isSupabaseConfigured } from '../utils/supabaseConfig';
 import { realTimeSyncService } from '../services/RealTimeSyncService';
 import { RecycleBinService } from '../services/RecycleBinService';
 import { exceptionRuleMigration } from '../services/ExceptionRuleMigration';
 import { logger } from '../utils/logger';
 import { useI18n } from '../i18n';
-
-const StorageContext = createContext<MomentumStorage | null>(null);
 
 interface StorageProviderProps {
   storage?: MomentumStorage;
@@ -82,12 +81,4 @@ export function StorageProvider({ storage, children }: StorageProviderProps) {
   }
 
   return <StorageContext.Provider value={resolvedStorage}>{children}</StorageContext.Provider>;
-}
-
-export function useStorage(): MomentumStorage {
-  const storage = useContext(StorageContext);
-  if (!storage) {
-    throw new Error('useStorage must be used within a StorageProvider');
-  }
-  return storage;
 }

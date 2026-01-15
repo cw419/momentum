@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { DeletedChain } from '../types';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { DeletedChainCard } from './DeletedChainCard';
 import { ConfirmationDialog } from './ConfirmationDialog';
 import { Trash2, RotateCcw, X, CheckSquare, Square } from 'lucide-react';
@@ -34,13 +34,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
   } | null>(null);
 
   // 加载已删除的链条
-  useEffect(() => {
-    if (isOpen) {
-      loadDeletedChains();
-    }
-  }, [isOpen]);
-
-  const loadDeletedChains = async () => {
+  const loadDeletedChains = useCallback(async () => {
     setIsLoading(true);
     try {
       const chains = await storage.getDeletedChains();
@@ -52,7 +46,13 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [storage, tr]);
+
+  // 加载已删除的链条
+  useEffect(() => {
+    if (!isOpen) return;
+    void loadDeletedChains();
+  }, [isOpen, loadDeletedChains]);
 
   const handleSelectChain = (chainId: string, selected: boolean) => {
     setSelectedChains(prev => {

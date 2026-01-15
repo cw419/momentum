@@ -8,6 +8,10 @@
 - 允许快速验证想法，但请在稳定后把“最终形态”迁移回 `src/`（并补测试/文档）。
 - 若脚本已失效或仅对当时问题有意义：优先删除；否则至少在此 README 里补一行用途说明。
 
-## legacy-artifacts
+## archive/legacy-artifacts
 
-`tools/experiments/legacy-artifacts/` 存放历史遗留的调试工件（如独立 HTML / bundle / 孤立 JS）。
+`tools/experiments/archive/legacy-artifacts/` 存放历史遗留的调试工件（如独立 HTML / bundle / 孤立 JS）。
+
+## archive/legacy-tests
+
+`tools/experiments/archive/legacy-tests/` 存放历史遗留的测试草稿（可能引用过时接口/导入路径，默认不保证可运行）。

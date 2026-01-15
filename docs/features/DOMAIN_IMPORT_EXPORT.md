@@ -266,6 +266,6 @@ const importBackup = async (file: File) => {
 
 ## 相关文档
 
-- `docs/ARCHITECTURE.md` - 整体架构
-- `docs/DOMAIN_RSIP.md` - RSIP 系统
-- `docs/DOMAIN_CHAINS.md` - 链条管理
+- `docs/guides/ARCHITECTURE.md` - 整体架构
+- `docs/features/DOMAIN_RSIP.md` - RSIP 系统
+- `docs/features/DOMAIN_CHAINS.md` - 链条管理

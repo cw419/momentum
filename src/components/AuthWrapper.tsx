@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { AuthUser } from '../domain/auth';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
 import { AuthForm } from './AuthForm';
 import { IntroScreen } from './IntroScreen';

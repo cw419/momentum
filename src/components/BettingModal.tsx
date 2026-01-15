@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, Dices, Star, TrendingUp, AlertCircle, Loader2, CheckCircle, Target, Zap } from 'lucide-react';
 import type { BetPlacementRequest, BetPlacementResult } from '../domain/betting';
 import type { GamblingSettings } from '../domain/userSettings';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 import { getSafeErrorDetail } from '../utils/errorMessage';
@@ -209,7 +209,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
     } finally {
       setIsPlacingBet(false);
     }
-  }, [betAmount, sessionId, availablePoints, onBetPlaced, onClose, validateBetAmount, storage, language, tr]);
+  }, [betAmount, sessionId, availablePoints, onBetPlaced, validateBetAmount, storage, language, tr]);
 
   // 组件挂载时加载数据
   useEffect(() => {

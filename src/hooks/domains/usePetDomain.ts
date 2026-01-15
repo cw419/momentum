@@ -14,13 +14,13 @@
  * - 饥饿过高 → 健康下降
  * - 经验累积 → 升级/进化
  *
- * @see docs/PET_FEATURE.md - 宠物系统完整文档
+ * @see docs/features/PET_FEATURE.md - 宠物系统完整文档
  * @see src/types/pet.ts - 类型定义
  * @see src/utils/petLogic.ts - 计算逻辑
  */
 import { useCallback, useEffect, useState, useRef } from 'react';
 import type { PetState, PetMood, TaskCompletionReward, FeedResult } from '../../types/pet';
-import { useStorage } from '../../storage/StorageContext';
+import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
 import {
   DEFAULT_PET_CONFIG,

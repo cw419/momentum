@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { AppState } from '../types';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
 import { toError } from '../utils/errorHandling';

@@ -121,11 +121,63 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
     };
   }, []);
 
+  // 高亮搜索匹配的文本
+  const highlightText = useCallback((text: string, ranges: Array<{ start: number; end: number }>) => {
+    // 确保text是字符串
+    const safeText = String(text || '');
+    if (!ranges.length) return safeText;
+
+    const parts = [];
+    let lastIndex = 0;
+
+    for (const range of ranges) {
+      if (range.start > lastIndex) {
+        parts.push(safeText.slice(lastIndex, range.start));
+      }
+      parts.push(
+        <mark key={`${range.start}-${range.end}`} className="bg-yellow-200 dark:bg-yellow-600 px-1 rounded">
+          {safeText.slice(range.start, range.end)}
+        </mark>
+      );
+      lastIndex = range.end;
+    }
+
+    if (lastIndex < safeText.length) {
+      parts.push(safeText.slice(lastIndex));
+    }
+
+    return parts;
+  }, []);
+
+  // 格式化最后使用时间
+  const formatLastUsed = useCallback((date: Date): string => {
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+
+    if (diffHours < 1) return tr('刚刚', 'Just now');
+    if (diffHours < 24) return language === 'zh' ? `${diffHours}小时前` : `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return tr('昨天', 'Yesterday');
+    if (diffDays < 7) return language === 'zh' ? `${diffDays}天前` : `${diffDays}d ago`;
+    const weeks = Math.floor(diffDays / 7);
+    return language === 'zh' ? `${weeks}周前` : `${weeks}w ago`;
+  }, [language, tr]);
+
+  // 获取匹配类型标签
+  const getMatchTypeLabel = useCallback((matchType: string): string => {
+    switch (matchType) {
+      case 'prefix': return tr('前缀匹配', 'Prefix match');
+      case 'contains': return tr('包含匹配', 'Contains match');
+      case 'fuzzy': return tr('模糊匹配', 'Fuzzy match');
+      default: return '';
+    }
+  }, [tr]);
+
   // 渲染创建新规则项
   const renderCreateNewItem = useCallback(() => {
     if (!onCreateNew || !searchQuery) return null;
 
-    return (
+	  return (
       <div
         className="absolute w-full"
         style={{
@@ -219,59 +271,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
         </button>
       </div>
     );
-  }, [rules, onSelect, itemHeight, onCreateNew, searchQuery, language, tr]);
-
-  // 高亮搜索匹配的文本
-  const highlightText = (text: string, ranges: Array<{ start: number; end: number }>) => {
-    // 确保text是字符串
-    const safeText = String(text || '');
-    if (!ranges.length) return safeText;
-    
-    const parts = [];
-    let lastIndex = 0;
-    
-    for (const range of ranges) {
-      if (range.start > lastIndex) {
-        parts.push(safeText.slice(lastIndex, range.start));
-      }
-      parts.push(
-        <mark key={`${range.start}-${range.end}`} className="bg-yellow-200 dark:bg-yellow-600 px-1 rounded">
-          {safeText.slice(range.start, range.end)}
-        </mark>
-      );
-      lastIndex = range.end;
-    }
-    
-    if (lastIndex < safeText.length) {
-      parts.push(safeText.slice(lastIndex));
-    }
-    
-    return parts;
-  };
-
-  // 格式化最后使用时间
-  const formatLastUsed = (date: Date): string => {
-    const now = new Date();
-    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffHours < 1) return tr('刚刚', 'Just now');
-    if (diffHours < 24) return language === 'zh' ? `${diffHours}小时前` : `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return tr('昨天', 'Yesterday');
-    if (diffDays < 7) return language === 'zh' ? `${diffDays}天前` : `${diffDays}d ago`;
-    const weeks = Math.floor(diffDays / 7);
-    return language === 'zh' ? `${weeks}周前` : `${weeks}w ago`;
-  };
-
-  // 获取匹配类型标签
-  const getMatchTypeLabel = (matchType: string): string => {
-    switch (matchType) {
-      case 'prefix': return tr('前缀匹配', 'Prefix match');
-      case 'contains': return tr('包含匹配', 'Contains match');
-      case 'fuzzy': return tr('模糊匹配', 'Fuzzy match');
-      default: return '';
-    }
-  };
+  }, [rules, onSelect, itemHeight, onCreateNew, searchQuery, language, highlightText, formatLastUsed, getMatchTypeLabel]);
 
   // 渲染空状态
   const renderEmptyState = () => (

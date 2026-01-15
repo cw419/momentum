@@ -7,7 +7,7 @@
  * - 处理 UnitChain 和 GroupChain 的类型转换
  * - 支持复制链条功能
  *
- * @see docs/ARCHITECTURE.md - 架构总览
+ * @see docs/guides/ARCHITECTURE.md - 架构总览
  * @see src/types/index.ts - Chain, UnitChain, GroupChain 类型定义
  */
 import type { Dispatch, SetStateAction } from 'react';

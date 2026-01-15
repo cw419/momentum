@@ -81,7 +81,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [scheduledSession, hasShownWarning, group.name, group.auxiliaryDuration, nextUnit]);
+  }, [scheduledSession, hasShownWarning, group.name, group.auxiliaryDuration, nextUnit, tr]);
 
   // 重置警告状态当预约会话改变时
   React.useEffect(() => {

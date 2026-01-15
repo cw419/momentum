@@ -51,8 +51,8 @@ Momentum has no custom backend server: "backend" = Supabase (Postgres + RLS + SQ
 ### Where the database lives
 
 - Migrations: `supabase/migrations/*.sql` (PostgreSQL + RLS + functions)
-- Schema reference: `docs/DATABASE_SCHEMA.md`
-- Manual migration notes: `apply-migration.md` (Supabase Dashboard SQL Editor fallback)
+- Schema reference: `docs/api/DATABASE_SCHEMA.md`
+- Manual migration notes: `docs/guides/apply-migration.md` (Supabase Dashboard SQL Editor fallback)
 
 ### Supabase client + types
 

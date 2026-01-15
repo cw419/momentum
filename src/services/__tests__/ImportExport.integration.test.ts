@@ -397,10 +397,10 @@ describe('导入导出功能集成测试', () => {
 
     test('应该能够导出完整的应用数据', async () => {
       // 保存测试数据到存储
-      await storage.saveChains(testChains);
-      await storage.saveCompletionHistory(testHistory);
-      await storage.saveRSIPNodes(testRsipNodes);
-      await storage.saveRSIPMeta(testRsipMeta);
+      storage.saveChains(testChains);
+      storage.saveCompletionHistory(testHistory);
+      storage.saveRSIPNodes(testRsipNodes);
+      storage.saveRSIPMeta(testRsipMeta);
       localStorage.setItem('userPreferences', JSON.stringify(testUserPreferences));
 
       // 模拟导出功能
@@ -447,22 +447,22 @@ describe('导入导出功能集成测试', () => {
 
       // 清空现有数据
       localStorage.clear();
-      await storage.saveChains([]);
-      await storage.saveCompletionHistory([]);
-      await storage.saveRSIPNodes([]);
+      storage.saveChains([]);
+      storage.saveCompletionHistory([]);
+      storage.saveRSIPNodes([]);
 
       // 模拟导入过程
       if (importData.chains) {
-        await storage.saveChains(importData.chains);
+        storage.saveChains(importData.chains);
       }
       if (importData.completionHistory) {
-        await storage.saveCompletionHistory(importData.completionHistory);
+        storage.saveCompletionHistory(importData.completionHistory);
       }
       if (importData.rsipNodes) {
-        await storage.saveRSIPNodes(importData.rsipNodes);
+        storage.saveRSIPNodes(importData.rsipNodes);
       }
       if (importData.rsipMeta) {
-        await storage.saveRSIPMeta(importData.rsipMeta);
+        storage.saveRSIPMeta(importData.rsipMeta);
       }
       if (importData.userPreferences) {
         localStorage.setItem('userPreferences', JSON.stringify(importData.userPreferences));
@@ -472,10 +472,10 @@ describe('导入导出功能集成测试', () => {
       }
 
       // 验证导入结果
-      const importedChains = await storage.getChains();
-      const importedHistory = await storage.getCompletionHistory();
-      const importedRsipNodes = await storage.getRSIPNodes();
-      const importedRsipMeta = await storage.getRSIPMeta();
+      const importedChains = storage.getChains();
+      const importedHistory = storage.getCompletionHistory();
+      const importedRsipNodes = storage.getRSIPNodes();
+      const importedRsipMeta = storage.getRSIPMeta();
       const importedPreferences = JSON.parse(localStorage.getItem('userPreferences') || '{}');
       const importedRules = await manager.getAllRules();
 
@@ -498,15 +498,15 @@ describe('导入导出功能集成测试', () => {
 
       // 导入部分数据
       if (partialImportData.chains) {
-        await storage.saveChains(partialImportData.chains);
+        storage.saveChains(partialImportData.chains);
       }
 
       // 验证部分导入结果
-      const importedChains = await storage.getChains();
+      const importedChains = storage.getChains();
       expect(importedChains).toHaveLength(2);
 
       // 验证其他数据未受影响
-      const importedHistory = await storage.getCompletionHistory();
+      const importedHistory = storage.getCompletionHistory();
       expect(importedHistory).toHaveLength(0); // 应该为空，因为没有导入
     });
 
@@ -522,9 +522,9 @@ describe('导入导出功能集成测试', () => {
 
       // 尝试导入无效数据应该不会崩溃
       try {
-        await storage.saveChains(invalidChainData as any);
+        storage.saveChains(invalidChainData as any);
         // 如果没有抛出错误，验证数据是否被正确处理
-        const chains = await storage.getChains();
+        const chains = storage.getChains();
         expect(Array.isArray(chains)).toBe(true);
       } catch (error) {
         // 如果抛出错误，这是预期的行为
@@ -534,18 +534,18 @@ describe('导入导出功能集成测试', () => {
 
     test('导出导入循环应该保持数据完整性', async () => {
       // 设置完整的测试环境
-      await storage.saveChains(testChains);
-      await storage.saveCompletionHistory(testHistory);
-      await storage.saveRSIPNodes(testRsipNodes);
-      await storage.saveRSIPMeta(testRsipMeta);
+      storage.saveChains(testChains);
+      storage.saveCompletionHistory(testHistory);
+      storage.saveRSIPNodes(testRsipNodes);
+      storage.saveRSIPMeta(testRsipMeta);
       localStorage.setItem('userPreferences', JSON.stringify(testUserPreferences));
       await manager.createRule('循环测试规则', ExceptionRuleType.EARLY_COMPLETION_ONLY, '循环测试');
 
       // 导出数据
-      const originalChains = await storage.getChains();
-      const originalHistory = await storage.getCompletionHistory();
-      const originalRsipNodes = await storage.getRSIPNodes();
-      const originalRsipMeta = await storage.getRSIPMeta();
+      const originalChains = storage.getChains();
+      const originalHistory = storage.getCompletionHistory();
+      const originalRsipNodes = storage.getRSIPNodes();
+      const originalRsipMeta = storage.getRSIPMeta();
       const originalPreferences = JSON.parse(localStorage.getItem('userPreferences') || '{}');
       const originalRules = await manager.exportRules(false);
 
@@ -562,9 +562,9 @@ describe('导入导出功能集成测试', () => {
 
       // 清空数据
       localStorage.clear();
-      await storage.saveChains([]);
-      await storage.saveCompletionHistory([]);
-      await storage.saveRSIPNodes([]);
+      storage.saveChains([]);
+      storage.saveCompletionHistory([]);
+      storage.saveRSIPNodes([]);
       const allRules = await manager.getAllRules();
       for (const rule of allRules) {
         if (rule.isActive) {
@@ -573,10 +573,10 @@ describe('导入导出功能集成测试', () => {
       }
 
       // 重新导入
-      await storage.saveChains(exportData.chains);
-      await storage.saveCompletionHistory(exportData.completionHistory);
-      await storage.saveRSIPNodes(exportData.rsipNodes);
-      await storage.saveRSIPMeta(exportData.rsipMeta);
+      storage.saveChains(exportData.chains);
+      storage.saveCompletionHistory(exportData.completionHistory);
+      storage.saveRSIPNodes(exportData.rsipNodes);
+      storage.saveRSIPMeta(exportData.rsipMeta);
       localStorage.setItem('userPreferences', JSON.stringify(exportData.userPreferences));
       await manager.importRules(exportData.exceptionRules.map(rule => ({
         name: rule.name,
@@ -585,10 +585,10 @@ describe('导入导出功能集成测试', () => {
       })));
 
       // 验证数据完整性
-      const restoredChains = await storage.getChains();
-      const restoredHistory = await storage.getCompletionHistory();
-      const restoredRsipNodes = await storage.getRSIPNodes();
-      const restoredRsipMeta = await storage.getRSIPMeta();
+      const restoredChains = storage.getChains();
+      const restoredHistory = storage.getCompletionHistory();
+      const restoredRsipNodes = storage.getRSIPNodes();
+      const restoredRsipMeta = storage.getRSIPMeta();
       const restoredPreferences = JSON.parse(localStorage.getItem('userPreferences') || '{}');
       const restoredRules = await manager.getAllRules();
 

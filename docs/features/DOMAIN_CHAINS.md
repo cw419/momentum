@@ -357,8 +357,8 @@ await storage.saveChains([...updatedActiveChains, ...deletedChains]);
 
 ## 相关文档
 
-- `docs/ARCHITECTURE.md` - 整体架构
-- `docs/DATABASE_SCHEMA.md` - 数据库结构
-- `docs/DOMAIN_GROUPS.md` - 任务组
-- `docs/DOMAIN_SESSIONS.md` - 会话管理
-- `docs/DOMAIN_RECYCLE_BIN.md` - 回收箱
+- `docs/guides/ARCHITECTURE.md` - 整体架构
+- `docs/api/DATABASE_SCHEMA.md` - 数据库结构
+- `docs/features/DOMAIN_GROUPS.md` - 任务组
+- `docs/features/DOMAIN_SESSIONS.md` - 会话管理
+- `docs/features/DOMAIN_RECYCLE_BIN.md` - 回收箱

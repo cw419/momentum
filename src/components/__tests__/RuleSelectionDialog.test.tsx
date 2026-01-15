@@ -48,13 +48,19 @@ vi.mock('../../utils/exceptionRuleCache', () => ({
   }))
 }));
 
-vi.mock('../../utils/LayoutStabilityMonitor', () => ({
-  useLayoutStability: vi.fn(() => ({
-    startMonitoring: vi.fn(),
-    stopMonitoring: vi.fn(),
-    checkNow: vi.fn()
-  }))
-}));
+vi.mock('../../utils/LayoutStabilityMonitor', () => {
+  const startMonitoring = vi.fn();
+  const stopMonitoring = vi.fn();
+  const checkNow = vi.fn();
+
+  return {
+    useLayoutStability: vi.fn(() => ({
+      startMonitoring,
+      stopMonitoring,
+      checkNow
+    }))
+  };
+});
 
 const renderWithI18n = (ui: React.ReactElement) => {
   return render(ui, { wrapper: I18nProvider });

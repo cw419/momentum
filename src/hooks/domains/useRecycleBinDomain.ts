@@ -8,7 +8,7 @@
  * - 永久删除链条
  * - 通过 RealTimeSyncService 确保多端同步
  *
- * @see README-回收箱功能.md - 功能说明
+ * @see docs/features/README-回收箱功能.md - 功能说明
  * @see src/services/RecycleBinService.ts - 底层服务
  */
 import type { Dispatch, SetStateAction } from 'react';

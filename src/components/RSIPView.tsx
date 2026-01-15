@@ -109,7 +109,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
          }
       }
     });
-  }, [now, activeTimers]);
+  }, [now, activeTimers, tr]);
 
   const formatRemaining = (ms: number) => {
     const s = Math.max(0, Math.floor(ms / 1000));

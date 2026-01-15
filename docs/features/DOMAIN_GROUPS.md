@@ -449,7 +449,7 @@ const startGroup = async (groupId: string) => {
 
 ## 相关文档
 
-- `docs/ARCHITECTURE.md` - 整体架构
-- `docs/DATABASE_SCHEMA.md` - 数据库结构
-- `docs/DOMAIN_SESSIONS.md` - 会话管理
-- `docs/DOMAIN_CHAINS.md` - 链条管理
+- `docs/guides/ARCHITECTURE.md` - 整体架构
+- `docs/api/DATABASE_SCHEMA.md` - 数据库结构
+- `docs/features/DOMAIN_SESSIONS.md` - 会话管理
+- `docs/features/DOMAIN_CHAINS.md` - 链条管理

@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { Chain, ScheduledSession, CompletionHistory } from '../types';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { ThemeToggle } from './ThemeToggle';
 import { VirtualizedChainList } from './VirtualizedChainList';

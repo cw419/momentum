@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { X, User, LogOut, AlertCircle, Dices } from 'lucide-react';
 import type { AuthUser } from '../domain/auth';
 import type { GamblingSettings } from '../domain/userSettings';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 import { getSafeErrorDetail } from '../utils/errorMessage';
@@ -30,63 +30,75 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
   const [gamblingLoading, setGamblingLoading] = useState(false);
   const [gamblingError, setGamblingError] = useState<string | null>(null);
   const [gamblingSuccess, setGamblingSuccess] = useState<string | null>(null);
-  const userFullName = (() => {
-    const fullName = user?.userMetadata?.['full_name'];
-    return typeof fullName === 'string' ? fullName : null;
-  })();
+	  const userFullName = (() => {
+	    const fullName = user?.userMetadata?.['full_name'];
+	    return typeof fullName === 'string' ? fullName : null;
+	  })();
 
-  useEffect(() => {
-    if (isOpen) {
-      if (storage.kind !== 'supabase') {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
+	  const loadUser = useCallback(async () => {
+	    if (storage.kind !== 'supabase') return;
+	    setLoading(true);
+	    setError(null);
+	    try {
+	      const result = await storage.getCurrentUser();
+	      if (!result.ok) {
+	        setUser(null);
+	        const safeDetail = getSafeErrorDetail(result.error.message || '', language);
+	        setError(
+	          safeDetail ??
+	            tr(
+	              '获取用户信息失败，请重试（详情见控制台）',
+	              'Failed to load user info. Check the console for details, then try again.'
+	            )
+	        );
+	        return;
+	      }
 
-      loadUser();
-      loadGamblingSettings();
-    }
-  }, [isOpen, storage.kind]);
+	      setUser(result.value);
+	    } catch (err) {
+	      logger.error('ACCOUNT', 'Failed to get user info', undefined, err as Error);
+	      setError(tr('获取用户信息失败', 'Failed to load user info'));
+	    } finally {
+	      setLoading(false);
+	    }
+	  }, [storage, language, tr]);
 
-  const loadUser = async () => {
-    if (storage.kind !== 'supabase') return;
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await storage.getCurrentUser();
-      if (!result.ok) {
-        setUser(null);
-        const safeDetail = getSafeErrorDetail(result.error.message || '', language);
-        setError(safeDetail ?? tr('获取用户信息失败，请重试（详情见控制台）', 'Failed to load user info. Check the console for details, then try again.'));
-        return;
-      }
+	  // 加载狂赌模式设置
+	  const loadGamblingSettings = useCallback(async () => {
+	    if (storage.kind !== 'supabase') return;
+	    try {
+	      setGamblingError(null);
+	      const settingsResult = await storage.getGamblingSettings();
+	      if (!settingsResult.ok) {
+	        const safeDetail = getSafeErrorDetail(settingsResult.error.message || '', language);
+	        setGamblingError(
+	          safeDetail ??
+	            tr(
+	              '获取设置失败，请重试（详情见控制台）',
+	              'Failed to load settings. Check the console for details, then try again.'
+	            )
+	        );
+	        return;
+	      }
+	      setGamblingSettings(settingsResult.value);
+	    } catch (err) {
+	      logger.error('ACCOUNT', 'Failed to load gambling settings', undefined, err as Error);
+	      setGamblingError(tr('获取设置失败', 'Failed to load settings'));
+	    }
+	  }, [storage, language, tr]);
 
-      setUser(result.value);
-    } catch (err) {
-      logger.error('ACCOUNT', 'Failed to get user info', undefined, err as Error);
-      setError(tr('获取用户信息失败', 'Failed to load user info'));
-    } finally {
-      setLoading(false);
-    }
-  };
+	  useEffect(() => {
+	    if (isOpen) {
+	      if (storage.kind !== 'supabase') {
+	        setUser(null);
+	        setLoading(false);
+	        return;
+	      }
 
-  // 加载狂赌模式设置
-  const loadGamblingSettings = async () => {
-    if (storage.kind !== 'supabase') return;
-    try {
-      setGamblingError(null);
-      const settingsResult = await storage.getGamblingSettings();
-      if (!settingsResult.ok) {
-        const safeDetail = getSafeErrorDetail(settingsResult.error.message || '', language);
-        setGamblingError(safeDetail ?? tr('获取设置失败，请重试（详情见控制台）', 'Failed to load settings. Check the console for details, then try again.'));
-        return;
-      }
-      setGamblingSettings(settingsResult.value);
-    } catch (err) {
-      logger.error('ACCOUNT', 'Failed to load gambling settings', undefined, err as Error);
-      setGamblingError(tr('获取设置失败', 'Failed to load settings'));
-    }
-  };
+	      void loadUser();
+	      void loadGamblingSettings();
+	    }
+	  }, [isOpen, storage.kind, loadUser, loadGamblingSettings]);
 
   // 切换狂赌模式
   const handleGamblingToggle = async () => {

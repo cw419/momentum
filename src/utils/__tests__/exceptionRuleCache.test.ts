@@ -302,28 +302,6 @@ describe('ExceptionRuleCache', () => {
     });
   });
 
-  describe('deprecated methods', () => {
-    it('should warn when using deprecated getRules', () => {
-      vi.mocked(console.warn).mockClear();
-      
-      cache.getRules();
-      
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('getRules is deprecated, use getChainRules instead')
-      );
-    });
-
-    it('should warn when using deprecated setRules', () => {
-      vi.mocked(console.warn).mockClear();
-      
-      cache.setRules(mockRules);
-      
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('setRules is deprecated, use setChainRules instead')
-      );
-    });
-  });
-
   describe('TTL and expiration', () => {
     it('should respect custom TTL for chain rules', () => {
       const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');

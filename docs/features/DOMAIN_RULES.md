@@ -412,6 +412,6 @@ async initialize(): Promise<void> {
 
 ## 相关文档
 
-- `docs/ARCHITECTURE.md` - 整体架构
-- `docs/DOMAIN_BETTING.md` - 赌注系统
+- `docs/guides/ARCHITECTURE.md` - 整体架构
+- `docs/features/DOMAIN_BETTING.md` - 赌注系统
 - `DEBUGGING_GUIDE.md` - 调试指南

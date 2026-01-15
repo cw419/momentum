@@ -65,24 +65,6 @@ export class ExceptionRuleCache {
   }
 
   /**
-   * 获取缓存的规则列表（已废弃，使用 getChainRules）
-   * @deprecated 使用 getChainRules 替代
-   */
-  getRules(key: string = 'all_rules'): ExceptionRule[] | null {
-    logger.warn('EXCEPTION_RULE_CACHE', 'getRules is deprecated, use getChainRules instead');
-    return this.get<ExceptionRule[]>(key);
-  }
-
-  /**
-   * 缓存规则列表（已废弃，使用 setChainRules）
-   * @deprecated 使用 setChainRules 替代
-   */
-  setRules(rules: ExceptionRule[], key: string = 'all_rules', ttl?: number): void {
-    logger.warn('EXCEPTION_RULE_CACHE', 'setRules is deprecated, use setChainRules instead');
-    this.set(key, rules, ttl);
-  }
-
-  /**
    * 获取缓存的规则详情
    */
   getRule(ruleId: string): ExceptionRule | null {
@@ -211,30 +193,6 @@ export class ExceptionRuleCache {
     }
 
     return clearedCount;
-  }
-
-  /**
-   * 预加载常用数据
-   */
-  async preloadCommonData(loadFunction: () => Promise<ExceptionRule[]>): Promise<void> {
-    try {
-      // 检查是否已有缓存
-      if (this.getRules()) {
-        return;
-      }
-
-      // 加载并缓存数据
-      const rules = await loadFunction();
-      this.setRules(rules);
-
-      // 预加载每个规则的详情
-      for (const rule of rules.slice(0, 20)) { // 只预加载前20个最常用的
-        this.setRule(rule);
-      }
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('EXCEPTION_RULE_CACHE', '预加载数据失败', undefined, err);
-    }
   }
 
   /**

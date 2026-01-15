@@ -64,10 +64,24 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
   const [savingOperations, setSavingOperations] = useState<Set<string>>(new Set());
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, ExceptionRule>>(new Map());
 
+  const loadRules = useCallback(async () => {
+    try {
+      setLoading(true);
+      const allRules = await exceptionRuleManager.getAllRules();
+      setRules(allRules);
+      setError(null);
+    } catch (err) {
+      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
+    } finally {
+      setLoading(false);
+    }
+  }, [language, tr]);
+
   // 加载规则数据
   useEffect(() => {
-    loadRules();
-  }, []);
+    void loadRules();
+  }, [loadRules]);
 
   // 使用 useMemo 优化筛选和排序
   const filteredRules = useMemo(() => {
@@ -108,20 +122,6 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
     
     return filtered;
   }, [rules, searchQuery, typeFilter, sortBy]);
-
-  const loadRules = async () => {
-    try {
-      setLoading(true);
-      const allRules = await exceptionRuleManager.getAllRules();
-      setRules(allRules);
-      setError(null);
-    } catch (err) {
-      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
-      setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateRule = async () => {
     const operationId = `create-rule-${Date.now()}`;

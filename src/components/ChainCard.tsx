@@ -5,7 +5,7 @@ import { formatDuration, formatTime, formatTimeDescriptionByLanguage, getTimeRem
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { notificationManager } from '../utils/notifications';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { soundManager } from '../utils/soundManager';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
@@ -126,7 +126,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [scheduledSession, hasShownWarning, chain.name, chain.auxiliaryDuration]);
+  }, [scheduledSession, hasShownWarning, chain.name, chain.auxiliaryDuration, tr]);
 
   // 重置警告状态当预约会话改变时
   React.useEffect(() => {

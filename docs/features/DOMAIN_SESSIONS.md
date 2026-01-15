@@ -365,9 +365,9 @@ const handleResumeSession = async () => {
 
 ## 相关文档
 
-- `docs/ARCHITECTURE.md` - 整体架构
-- `docs/DATABASE_SCHEMA.md` - 数据库结构
-- `docs/DOMAIN_BETTING.md` - 赌注系统
-- `docs/DOMAIN_GROUPS.md` - 任务组
-- `docs/DOMAIN_RULES.md` - 例外规则
-- `docs/PET_FEATURE.md` - 宠物系统
+- `docs/guides/ARCHITECTURE.md` - 整体架构
+- `docs/api/DATABASE_SCHEMA.md` - 数据库结构
+- `docs/features/DOMAIN_BETTING.md` - 赌注系统
+- `docs/features/DOMAIN_GROUPS.md` - 任务组
+- `docs/features/DOMAIN_RULES.md` - 例外规则
+- `docs/features/PET_FEATURE.md` - 宠物系统

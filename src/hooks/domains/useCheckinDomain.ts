@@ -10,11 +10,11 @@
  * 仅在 Supabase 模式下生效，本地模式不支持签到功能。
  *
  * @see src/domain/checkin.ts - 类型定义
- * @see docs/daily-checkin-api-guide.md - API 文档
+ * @see docs/api/daily-checkin-api-guide.md - API 文档
  */
 import { useCallback, useEffect, useState } from 'react';
 import type { CheckinResult, CheckinStats } from '../../domain/checkin';
-import { useStorage } from '../../storage/StorageContext';
+import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
 import { useI18n } from '../../i18n';
 import { getSafeErrorDetail } from '../../utils/errorMessage';

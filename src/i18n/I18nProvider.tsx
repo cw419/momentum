@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { translations, type Language } from './translations';
+import { I18nContext, type I18nContextValue, type TranslationParams } from './context';
 
 const LANGUAGE_STORAGE_KEY = 'language';
 const HAN_CHARACTER_REGEX = /[\u4E00-\u9FFF]/;
@@ -64,18 +65,6 @@ const normalizeZhInlineTranslation = (zh: string): string => {
   if (!decoded || !HAN_CHARACTER_REGEX.test(decoded)) return zh;
   return decoded;
 };
-
-type TranslationParams = Record<string, string | number | boolean | null | undefined>;
-
-interface I18nContextValue {
-  language: Language;
-  locale: string;
-  setLanguage: (language: Language) => void;
-  t: (key: string, params?: TranslationParams) => string;
-  tr: (zh: string, en: string) => string;
-}
-
-const I18nContext = createContext<I18nContextValue | null>(null);
 
 const detectBrowserLanguage = (): Language => {
   if (typeof navigator === 'undefined') return 'en';
@@ -159,12 +148,4 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
-}
-
-export function useI18n(): I18nContextValue {
-  const ctx = useContext(I18nContext);
-  if (!ctx) {
-    throw new Error('useI18n must be used within an I18nProvider');
-  }
-  return ctx;
 }

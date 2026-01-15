@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Chain, CompletionHistory, RSIPNode, RSIPMeta } from '../types';
 import { Download, Upload, X, FileText, AlertCircle, CheckCircle, Clock, Shield } from 'lucide-react';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
-import { useStorage } from '../storage/StorageContext';
+import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
 import { useI18n } from '../i18n';
 import { getSafeErrorDetail } from '../utils/errorMessage';
