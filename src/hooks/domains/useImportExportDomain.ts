@@ -16,7 +16,7 @@
  * @see src/types/index.ts - 导入数据类型定义
  */
 import type { Dispatch, SetStateAction } from 'react';
-import type { Chain, CompletionHistory, RSIPMeta, RSIPNode } from '../../types';
+import type { Chain, CompletionHistory, ExceptionRule, RSIPMeta, RSIPNode } from '../../types';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
@@ -28,7 +28,7 @@ interface ImportChainsOptions {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
-  exceptionRules?: unknown[];
+  exceptionRules?: ExceptionRule[];
 }
 
 interface UseImportExportDomainParams {

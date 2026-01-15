@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import type { Chain, ChainDraft, CompletionHistory, RSIPMeta, RSIPNode } from '../types';
+import type { Chain, ChainDraft, CompletionHistory, ExceptionRule, RSIPMeta, RSIPNode } from '../types';
 import type { AppState } from '../types';
 import type { BetPlacementResult } from '../domain/betting';
 import type { PetState, PetMood, FeedResult, TaskCompletionReward } from '../types/pet';
@@ -40,7 +40,7 @@ interface ImportChainsOptions {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
-  exceptionRules?: unknown[];
+  exceptionRules?: ExceptionRule[];
 }
 
 interface AppShellViewProps {

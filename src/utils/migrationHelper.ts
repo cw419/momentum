@@ -8,8 +8,7 @@ export class MigrationHelper {
    */
   async isMigrationApplied(migrationId: string): Promise<boolean> {
     try {
-      const client = supabase;
-      if (!client) {
+      if (!supabase) {
         return false;
       }
 
@@ -17,57 +16,63 @@ export class MigrationHelper {
         case '20250730021823_winter_flame':
           {
             // Check if basic tables exist
-            const { data: chainsTable } = await client
-              .from('information_schema.tables')
-              .select('table_name')
-              .eq('table_name', 'chains')
-              .eq('table_schema', 'public');
-            return (chainsTable?.length || 0) > 0;
+            const chainsTable = await schemaChecker.getTableInfo('chains');
+            return !!chainsTable && chainsTable.columns.length > 0;
           }
 
         case '20250801160754_peaceful_palace':
         case '20250801161456_fading_sunset':
           {
             // Check if parent_id and type columns exist
-            const { data: hierarchyColumns } = await client
-              .from('information_schema.columns')
-              .select('column_name')
-              .eq('table_name', 'chains')
-              .in('column_name', ['parent_id', 'type']);
-            return (hierarchyColumns?.length || 0) >= 2;
+            const chainsTable = await schemaChecker.getTableInfo('chains');
+            if (!chainsTable || chainsTable.columns.length === 0) {
+              return false;
+            }
+
+            const columnNames = new Set(chainsTable.columns.map(col => col.column_name));
+            return columnNames.has('parent_id') && columnNames.has('type');
           }
 
         case '20250808000000_add_group_time_limit':
           {
             // Check if time limit columns exist
-            const { data: timeLimitColumns } = await client
-              .from('information_schema.columns')
-              .select('column_name')
-              .eq('table_name', 'chains')
-              .in('column_name', ['time_limit_hours', 'group_started_at', 'group_expires_at']);
-            return (timeLimitColumns?.length || 0) >= 3;
+            const chainsTable = await schemaChecker.getTableInfo('chains');
+            if (!chainsTable || chainsTable.columns.length === 0) {
+              return false;
+            }
+
+            const columnNames = new Set(chainsTable.columns.map(col => col.column_name));
+            return (
+              columnNames.has('time_limit_hours') &&
+              columnNames.has('group_started_at') &&
+              columnNames.has('group_expires_at')
+            );
           }
 
         case '20250808001000_add_durationless_flag':
           {
             // Check if is_durationless column exists
-            const { data: durationlessColumn } = await client
-              .from('information_schema.columns')
-              .select('column_name')
-              .eq('table_name', 'chains')
-              .eq('column_name', 'is_durationless');
-            return (durationlessColumn?.length || 0) > 0;
+            const chainsTable = await schemaChecker.getTableInfo('chains');
+            if (!chainsTable || chainsTable.columns.length === 0) {
+              return false;
+            }
+
+            const columnNames = new Set(chainsTable.columns.map(col => col.column_name));
+            return columnNames.has('is_durationless');
           }
 
         case '20250810000000_add_rsip_tables':
           {
             // Check if RSIP tables exist
-            const { data: rsipTables } = await client
-              .from('information_schema.tables')
-              .select('table_name')
-              .eq('table_schema', 'public')
-              .in('table_name', ['rsip_nodes', 'rsip_meta']);
-            return (rsipTables?.length || 0) >= 2;
+            const rsipNodesTable = await schemaChecker.getTableInfo('rsip_nodes');
+            const rsipMetaTable = await schemaChecker.getTableInfo('rsip_meta');
+
+            return (
+              !!rsipNodesTable &&
+              rsipNodesTable.columns.length > 0 &&
+              !!rsipMetaTable &&
+              rsipMetaTable.columns.length > 0
+            );
           }
 
         default:

@@ -13,6 +13,7 @@ import {
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { asyncOperationManager } from '../utils/AsyncOperationManager';
 import RuleItem from './RuleItem';
+import { ConfirmationDialog } from './ConfirmationDialog';
 import { useI18n } from '../i18n';
 import { getSafeErrorDetail } from '../utils/errorMessage';
 import { 
@@ -25,13 +26,13 @@ import {
   Loader2
 } from 'lucide-react';
 
-interface ExceptionRuleManagerProps {
+interface RuleManagerViewProps {
   onClose: () => void;
   initialFilter?: ExceptionRuleType;
   onRuleSelected?: (rule: ExceptionRule) => void;
 }
 
-export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
+export const RuleManagerView: React.FC<RuleManagerViewProps> = ({
   onClose,
   initialFilter,
   onRuleSelected
@@ -40,6 +41,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
   const [rules, setRules] = useState<ExceptionRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmationRule, setDeleteConfirmationRule] = useState<ExceptionRule | null>(null);
   
   // 筛选和搜索状态
   const [searchQuery, setSearchQuery] = useState('');
@@ -289,8 +291,14 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
     }
   };
 
-  const handleDeleteRule = useCallback(async (rule: ExceptionRule) => {
-    if (!confirm(tr(`确定要删除规则 "${rule.name}" 吗？`, `Delete rule "${rule.name}"?`))) return;
+  const handleDeleteRule = useCallback((rule: ExceptionRule) => {
+    setDeleteConfirmationRule(rule);
+  }, []);
+
+  const confirmDeleteRule = useCallback(async () => {
+    const rule = deleteConfirmationRule;
+    if (!rule) return;
+    setDeleteConfirmationRule(null);
 
     try {
       await exceptionRuleManager.deleteRule(rule.id);
@@ -299,7 +307,7 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
       const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
       setError(safe ?? tr('删除规则失败', 'Failed to delete rule'));
     }
-  }, [loadRules, tr, language]);
+  }, [deleteConfirmationRule, loadRules, tr, language]);
 
   const handleEditRule = useCallback((rule: ExceptionRule) => {
     setEditingRule(rule);
@@ -384,6 +392,19 @@ export const ExceptionRuleManager: React.FC<ExceptionRuleManagerProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-x-hidden">
+      <ConfirmationDialog
+        isOpen={deleteConfirmationRule !== null}
+        title={tr('确认删除', 'Confirm deletion')}
+        message={
+          deleteConfirmationRule
+            ? tr(`确定要删除规则 "${deleteConfirmationRule.name}" 吗？`, `Delete rule "${deleteConfirmationRule.name}"?`)
+            : ''
+        }
+        confirmText={tr('删除', 'Delete')}
+        cancelText={tr('取消', 'Cancel')}
+        onConfirm={() => void confirmDeleteRule()}
+        onCancel={() => setDeleteConfirmationRule(null)}
+      />
       <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl" style={{ maxWidth: 'min(1152px, 100vw - 2rem)' }}>
         {/* 头部 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">

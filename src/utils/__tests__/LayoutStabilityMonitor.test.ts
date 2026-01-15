@@ -1,7 +1,7 @@
 import { LayoutStabilityMonitor } from '../LayoutStabilityMonitor';
 
 const ensureWindowProp = (key: string, value: unknown) => {
-  Object.defineProperty(window, key, { configurable: true, value });
+  Object.defineProperty(window, key, { configurable: true, writable: true, value });
 };
 
 const restoreWindowProp = (key: string, original: unknown) => {
@@ -23,7 +23,7 @@ const ensureGlobalProp = (key: string, value: unknown) => {
   }
 
   try {
-    Object.defineProperty(global, key, { configurable: true, value });
+    Object.defineProperty(global, key, { configurable: true, writable: true, value });
   } catch {
     // If the environment defines a non-configurable global (common in jsdom),
     // rely on the window override instead.
@@ -89,39 +89,51 @@ describe('LayoutStabilityMonitor', () => {
 
     resizeObserverObserve = vi.fn();
     resizeObserverDisconnect = vi.fn();
-    mockResizeObserver = vi.fn(() => ({
-      observe: resizeObserverObserve,
-      disconnect: resizeObserverDisconnect,
-      unobserve: vi.fn(),
-    }));
+    mockResizeObserver = vi.fn();
+    class MockResizeObserver {
+      observe = resizeObserverObserve;
+      disconnect = resizeObserverDisconnect;
+      unobserve = vi.fn();
+      constructor(cb: ResizeObserverCallback) {
+        mockResizeObserver(cb);
+      }
+    }
 
     mutationObserverObserve = vi.fn();
     mutationObserverDisconnect = vi.fn();
-    mockMutationObserver = vi.fn(() => ({
-      observe: mutationObserverObserve,
-      disconnect: mutationObserverDisconnect,
-    }));
+    mockMutationObserver = vi.fn();
+    class MockMutationObserver {
+      observe = mutationObserverObserve;
+      disconnect = mutationObserverDisconnect;
+      constructor(cb: MutationCallback) {
+        mockMutationObserver(cb);
+      }
+    }
 
     performanceObserverObserve = vi.fn();
     performanceObserverDisconnect = vi.fn();
-    mockPerformanceObserver = vi.fn(() => ({
-      observe: performanceObserverObserve,
-      disconnect: performanceObserverDisconnect,
-    }));
+    mockPerformanceObserver = vi.fn();
+    class MockPerformanceObserver {
+      observe = performanceObserverObserve;
+      disconnect = performanceObserverDisconnect;
+      constructor(cb: PerformanceObserverCallback) {
+        mockPerformanceObserver(cb);
+      }
+    }
 
     mockRequestAnimationFrame = vi.fn((cb: FrameRequestCallback) => {
       setTimeout(() => cb(performance.now()), 16);
       return 1;
     });
 
-    ensureWindowProp('ResizeObserver', mockResizeObserver);
-    ensureWindowProp('MutationObserver', mockMutationObserver);
-    ensureWindowProp('PerformanceObserver', mockPerformanceObserver);
+    ensureWindowProp('ResizeObserver', MockResizeObserver);
+    ensureWindowProp('MutationObserver', MockMutationObserver);
+    ensureWindowProp('PerformanceObserver', MockPerformanceObserver);
     ensureWindowProp('requestAnimationFrame', mockRequestAnimationFrame);
 
-    ensureGlobalProp('ResizeObserver', mockResizeObserver);
-    ensureGlobalProp('MutationObserver', mockMutationObserver);
-    ensureGlobalProp('PerformanceObserver', mockPerformanceObserver);
+    ensureGlobalProp('ResizeObserver', MockResizeObserver);
+    ensureGlobalProp('MutationObserver', MockMutationObserver);
+    ensureGlobalProp('PerformanceObserver', MockPerformanceObserver);
     ensureGlobalProp('requestAnimationFrame', mockRequestAnimationFrame);
 
     monitor = new LayoutStabilityMonitor();

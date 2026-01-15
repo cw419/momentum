@@ -9,14 +9,14 @@
  * - Error handling and recovery
  */
 
-import { SchemaChecker, schemaChecker } from '../schemaChecker';
+import { SchemaChecker } from '../schemaChecker';
 import { supabase } from '../../lib/supabase';
 import type { Mocked } from 'vitest';
 
 // Mock Supabase
 vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: vi.fn()
+    rpc: vi.fn()
   }
 }));
 
@@ -40,6 +40,30 @@ describe('SchemaChecker', () => {
     vi.clearAllMocks();
   });
 
+  const extractTableNameFromSql = (sql: string): string | null => {
+    const match = sql.match(/table_name\s*=\s*'([^']+)'/);
+    return match?.[1] ?? null;
+  };
+
+  const mockExecSqlColumns = (tableResponses: Record<string, unknown>) => {
+    mockSupabase.rpc.mockImplementation((fnName: string, args?: { sql?: string }) => {
+      if (fnName !== 'exec_sql') {
+        return Promise.resolve({ data: null, error: { message: `Unexpected rpc: ${fnName}` } });
+      }
+
+      const sql = args?.sql;
+      if (typeof sql !== 'string') {
+        return Promise.resolve({ data: null, error: { message: 'Missing sql' } });
+      }
+
+      const tableName = extractTableNameFromSql(sql);
+      return Promise.resolve({
+        data: tableName ? (tableResponses[tableName] ?? []) : [],
+        error: null
+      });
+    });
+  };
+
   describe('Table Information Retrieval', () => {
     test('should successfully retrieve table information', async () => {
       const mockColumns = [
@@ -48,16 +72,7 @@ describe('SchemaChecker', () => {
         { column_name: 'created_at', data_type: 'timestamp', is_nullable: 'YES', column_default: 'now()' }
       ];
 
-      mockSupabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: mockColumns,
-              error: null
-            })
-          })
-        })
-      } as any);
+      mockSupabase.rpc.mockResolvedValueOnce({ data: mockColumns, error: null } as any);
 
       const result = await checker.getTableInfo('chains');
 
@@ -65,20 +80,16 @@ describe('SchemaChecker', () => {
         table_name: 'chains',
         columns: mockColumns
       });
-      expect(mockSupabase.from).toHaveBeenCalledWith('information_schema.columns');
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'exec_sql',
+        expect.objectContaining({
+          sql: expect.stringContaining("table_name = 'chains'")
+        })
+      );
     });
 
     test('should handle table not found gracefully', async () => {
-      mockSupabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: [],
-              error: null
-            })
-          })
-        })
-      } as any);
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null } as any);
 
       const result = await checker.getTableInfo('nonexistent_table');
 
@@ -91,31 +102,14 @@ describe('SchemaChecker', () => {
     test('should handle database errors properly', async () => {
       const mockError = { message: 'Permission denied', code: 'PGRST116' };
       
-      mockSupabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: null,
-              error: mockError
-            })
-          })
-        })
-      } as any);
+      mockSupabase.rpc.mockResolvedValueOnce({ data: null, error: mockError } as any);
 
       const result = await checker.getTableInfo('restricted_table');
       expect(result).toBeNull();
     });
 
     test('should handle network/connection errors', async () => {
-      mockSupabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            eq: () => {
-              throw new Error('Network error');
-            }
-          })
-        })
-      } as any);
+      mockSupabase.rpc.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await checker.getTableInfo('test_table');
       expect(result).toBeNull();
@@ -128,26 +122,17 @@ describe('SchemaChecker', () => {
         { column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }
       ];
 
-      mockSupabase.from.mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: mockColumns,
-              error: null
-            })
-          })
-        })
-      } as any);
+      mockSupabase.rpc.mockResolvedValueOnce({ data: mockColumns, error: null } as any);
 
       // First call
       const result1 = await checker.getTableInfo('chains');
       expect(result1?.columns).toEqual(mockColumns);
-      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1);
 
       // Second call should use cache
       const result2 = await checker.getTableInfo('chains');
       expect(result2?.columns).toEqual(mockColumns);
-      expect(mockSupabase.from).toHaveBeenCalledTimes(1); // Still only called once
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1); // Still only called once
     });
 
     test('should respect cache TTL and refetch when expired', async () => {
@@ -159,26 +144,11 @@ describe('SchemaChecker', () => {
       const originalCacheDuration = (checker as any).CACHE_DURATION;
       (checker as any).CACHE_DURATION = 1; // 1ms
 
-      mockSupabase.from
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              eq: () => ({
-                data: mockColumns,
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              eq: () => ({
-                data: [...mockColumns, { column_name: 'new_field', data_type: 'text', is_nullable: 'YES', column_default: null }],
-                error: null
-              })
-            })
-          })
+      mockSupabase.rpc
+        .mockResolvedValueOnce({ data: mockColumns, error: null } as any)
+        .mockResolvedValueOnce({
+          data: [...mockColumns, { column_name: 'new_field', data_type: 'text', is_nullable: 'YES', column_default: null }],
+          error: null
         } as any);
 
       // First call
@@ -191,7 +161,7 @@ describe('SchemaChecker', () => {
       // Second call should refetch
       const result2 = await checker.getTableInfo('chains');
       expect(result2?.columns).toHaveLength(2);
-      expect(mockSupabase.from).toHaveBeenCalledTimes(2);
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(2);
 
       // Restore original cache duration
       (checker as any).CACHE_DURATION = originalCacheDuration;
@@ -202,52 +172,34 @@ describe('SchemaChecker', () => {
         { column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }
       ];
 
-      mockSupabase.from.mockReturnValue({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: mockColumns,
-              error: null
-            })
-          })
-        })
-      } as any);
+      mockSupabase.rpc.mockResolvedValue({ data: mockColumns, error: null } as any);
 
       // First call
       await checker.getTableInfo('chains');
-      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1);
 
       // Clear cache
       checker.clearSchemaCache();
 
       // Next call should refetch
       await checker.getTableInfo('chains');
-      expect(mockSupabase.from).toHaveBeenCalledTimes(2);
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(2);
     });
 
     test('should cache null results to avoid repeated failed queries', async () => {
       const mockError = { message: 'Table does not exist', code: 'PGRST116' };
       
-      mockSupabase.from.mockReturnValue({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: null,
-              error: mockError
-            })
-          })
-        })
-      } as any);
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: mockError } as any);
 
       // First call - should fail and cache null result
       const result1 = await checker.getTableInfo('missing_table');
       expect(result1).toBeNull();
-      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1);
 
       // Second call - should return cached null result
       const result2 = await checker.getTableInfo('missing_table');
       expect(result2).toBeNull();
-      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -284,21 +236,7 @@ describe('SchemaChecker', () => {
         ].map(name => ({ column_name: name, data_type: 'text', is_nullable: 'YES', column_default: null }))
       };
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'information_schema.columns') {
-          return {
-            select: () => ({
-              eq: (column: string, value: string) => ({
-                eq: () => ({
-                  data: mockTableResponses[value as keyof typeof mockTableResponses] || [],
-                  error: null
-                })
-              })
-            })
-          } as any;
-        }
-        return {} as any;
-      });
+      mockExecSqlColumns(mockTableResponses);
 
       const status = await checker.getSchemaStatus();
 
@@ -323,21 +261,7 @@ describe('SchemaChecker', () => {
         rsip_meta: []
       };
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'information_schema.columns') {
-          return {
-            select: () => ({
-              eq: (column: string, value: string) => ({
-                eq: () => ({
-                  data: mockTableResponses[value as keyof typeof mockTableResponses] || [],
-                  error: null
-                })
-              })
-            })
-          } as any;
-        }
-        return {} as any;
-      });
+      mockExecSqlColumns(mockTableResponses);
 
       const status = await checker.getSchemaStatus();
 
@@ -371,21 +295,7 @@ describe('SchemaChecker', () => {
         rsip_meta: [{ column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO', column_default: null }]
       };
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'information_schema.columns') {
-          return {
-            select: () => ({
-              eq: (column: string, value: string) => ({
-                eq: () => ({
-                  data: mockTableResponses[value as keyof typeof mockTableResponses] || [],
-                  error: null
-                })
-              })
-            })
-          } as any;
-        }
-        return {} as any;
-      });
+      mockExecSqlColumns(mockTableResponses);
 
       const status = await checker.getSchemaStatus();
 
@@ -410,21 +320,7 @@ describe('SchemaChecker', () => {
         rsip_meta: []
       };
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'information_schema.columns') {
-          return {
-            select: () => ({
-              eq: (column: string, value: string) => ({
-                eq: () => ({
-                  data: mockTableResponses[value as keyof typeof mockTableResponses] || [],
-                  error: null
-                })
-              })
-            })
-          } as any;
-        }
-        return {} as any;
-      });
+      mockExecSqlColumns(mockTableResponses);
 
       const status = await checker.getSchemaStatus();
 
@@ -455,21 +351,7 @@ describe('SchemaChecker', () => {
         rsip_meta: []
       };
 
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'information_schema.columns') {
-          return {
-            select: () => ({
-              eq: (column: string, value: string) => ({
-                eq: () => ({
-                  data: mockTableResponses[value as keyof typeof mockTableResponses] || [],
-                  error: null
-                })
-              })
-            })
-          } as any;
-        }
-        return {} as any;
-      });
+      mockExecSqlColumns(mockTableResponses);
 
       const report = await checker.generateMigrationReport();
 
@@ -486,16 +368,7 @@ describe('SchemaChecker', () => {
 
     test('should handle empty schema status in report', async () => {
       // Mock complete empty database
-      mockSupabase.from.mockImplementation(() => ({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: [],
-              error: null
-            })
-          })
-        })
-      } as any));
+      mockSupabase.rpc.mockResolvedValue({ data: [], error: null } as any);
 
       const report = await checker.generateMigrationReport();
 
@@ -507,19 +380,16 @@ describe('SchemaChecker', () => {
   describe('Error Resilience', () => {
     test('should handle partial query failures gracefully', async () => {
       let callCount = 0;
-      mockSupabase.from.mockImplementation(() => ({
-        select: () => ({
-          eq: () => ({
-            eq: () => {
-              callCount++;
-              if (callCount <= 2) {
-                return { data: null, error: { message: 'Temporary failure', code: 'PGRST503' } };
-              }
-              return { data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }], error: null };
-            }
-          })
-        })
-      } as any));
+      mockSupabase.rpc.mockImplementation(() => {
+        callCount++;
+        if (callCount <= 2) {
+          return Promise.resolve({ data: null, error: { message: 'Temporary failure', code: 'PGRST503' } });
+        }
+        return Promise.resolve({
+          data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
+          error: null
+        });
+      });
 
       const status = await checker.getSchemaStatus();
 
@@ -529,15 +399,9 @@ describe('SchemaChecker', () => {
     });
 
     test('should handle concurrent schema checks', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
-              error: null
-            })
-          })
-        })
+      mockSupabase.rpc.mockResolvedValue({
+        data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
+        error: null
       } as any);
 
       // Run multiple concurrent checks
@@ -554,15 +418,12 @@ describe('SchemaChecker', () => {
     });
 
     test('should handle database connection timeouts', async () => {
-      mockSupabase.from.mockImplementation(() => ({
-        select: () => ({
-          eq: () => ({
-            eq: () => new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Connection timeout')), 100);
-            })
+      mockSupabase.rpc.mockImplementation(
+        () =>
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Connection timeout')), 100);
           })
-        })
-      } as any));
+      );
 
       const result = await checker.getTableInfo('test_table');
       expect(result).toBeNull();
@@ -572,15 +433,9 @@ describe('SchemaChecker', () => {
   describe('Performance Characteristics', () => {
     test('should complete schema check within reasonable time', async () => {
       // Mock responses for all tables
-      mockSupabase.from.mockReturnValue({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
-              error: null
-            })
-          })
-        })
+      mockSupabase.rpc.mockResolvedValue({
+        data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
+        error: null
       } as any);
 
       const startTime = Date.now();
@@ -592,15 +447,9 @@ describe('SchemaChecker', () => {
     });
 
     test('should batch multiple table info requests efficiently', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
-              error: null
-            })
-          })
-        })
+      mockSupabase.rpc.mockResolvedValue({
+        data: [{ column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null }],
+        error: null
       } as any);
 
       const startTime = Date.now();

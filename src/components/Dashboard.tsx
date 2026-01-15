@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense } from 'react';
-import { Chain, ScheduledSession, CompletionHistory } from '../types';
+import type { Chain, CompletionHistory, ExceptionRule, RSIPMeta, RSIPNode, ScheduledSession } from '../types';
 import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { ThemeToggle } from './ThemeToggle';
@@ -35,12 +35,12 @@ interface DashboardProps {
   onCancelScheduledSession?: (chainId: string) => void;
   onCompleteBooking?: (chainId: string) => void;
   onDeleteChain: (chainId: string) => void;
-  onImportChains: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: any[]; rsipMeta?: any; exceptionRules?: any[] }) => Promise<void>;
+  onImportChains: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: RSIPNode[]; rsipMeta?: RSIPMeta; exceptionRules?: ExceptionRule[] }) => Promise<void>;
   onRestoreChains?: (chainIds: string[]) => void;
   onPermanentDeleteChains?: (chainIds: string[]) => void;
   history?: CompletionHistory[];
-  rsipNodes?: any[];
-  rsipMeta?: any;
+  rsipNodes?: RSIPNode[];
+  rsipMeta?: RSIPMeta;
 }
 
 // Performance optimized Dashboard component with React.memo and proper memoization
@@ -147,7 +147,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
     }
   }, [onPermanentDeleteChains, loadRecycleBinStats]);
 
-  const handleImport = useCallback(async (newChains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: any[]; rsipMeta?: any; exceptionRules?: any[] }) => {
+  const handleImport = useCallback(async (newChains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: RSIPNode[]; rsipMeta?: RSIPMeta; exceptionRules?: ExceptionRule[] }) => {
     await onImportChains(newChains, options);
   }, [onImportChains]);
 

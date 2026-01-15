@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ExceptionRuleManager } from '../components/ExceptionRuleManager';
+import { RuleManagerView } from '../components/RuleManagerView';
 import { RuleSelectionDialog } from '../components/RuleSelectionDialog';
 import { ResponsiveContainer } from '../components/ResponsiveContainer';
 import { layoutStabilityMonitor } from '../utils/LayoutStabilityMonitor';
@@ -23,25 +23,29 @@ vi.mock('../services/ExceptionRuleManager', () => ({
     },
 }));
 
-vi.mock('../utils/exceptionRuleCache', () => ({
-    ExceptionRuleCache: vi.fn().mockImplementation(() => ({
-        getChainRules: vi.fn(() => null),
-        setChainRules: vi.fn(),
-        updateChainRules: vi.fn(),
-    })),
-}));
+vi.mock('../utils/exceptionRuleCache', () => {
+    class ExceptionRuleCache {
+        getChainRules = vi.fn(() => null);
+        setChainRules = vi.fn();
+        updateChainRules = vi.fn();
+    }
 
-vi.mock('../utils/ruleSearchOptimizer', () => ({
-    RuleSearchOptimizer: vi.fn().mockImplementation(() => ({
-        updateIndex: vi.fn(),
-        searchRulesDebounced: vi.fn((_rules, _query, callback) => callback([])),
-        detectDuplicates: vi.fn(() => ({
+    return { ExceptionRuleCache };
+});
+
+vi.mock('../utils/ruleSearchOptimizer', () => {
+    class RuleSearchOptimizer {
+        updateIndex = vi.fn();
+        searchRulesDebounced = vi.fn((_rules, _query, callback) => callback([]));
+        detectDuplicates = vi.fn(() => ({
             hasExactMatch: false,
             exactMatches: [],
             similarRules: [],
-        })),
-    })),
-}));
+        }));
+    }
+
+    return { RuleSearchOptimizer };
+});
 
 vi.mock('../utils/LayoutStabilityMonitor', async () => {
     const actual = await vi.importActual<any>('../utils/LayoutStabilityMonitor');
@@ -90,7 +94,7 @@ describe('UI Fixes and Improvements', () => {
 
     describe('Horizontal Scroll Fixes', () => {
         test('ExceptionRuleManager should not cause horizontal overflow', async () => {
-            const { container } = renderWithI18n(<ExceptionRuleManager onClose={() => { }} />);
+            const { container } = renderWithI18n(<RuleManagerView onClose={() => { }} />);
 
             await screen.findByText('例外规则管理');
 
@@ -237,7 +241,7 @@ describe('UI Fixes and Improvements', () => {
                 value: 375,
             });
 
-            const { container } = renderWithI18n(<ExceptionRuleManager onClose={() => { }} />);
+            const { container } = renderWithI18n(<RuleManagerView onClose={() => { }} />);
             await screen.findByText('例外规则管理');
 
             const modal = container.querySelector('div[style*="100vw"]');
@@ -344,7 +348,7 @@ describe('UI Integration Tests', () => {
     test('Complete rule creation flow should work without layout issues', async () => {
         const onClose = vi.fn();
 
-        const { container } = renderWithI18n(<ExceptionRuleManager onClose={onClose} />);
+        const { container } = renderWithI18n(<RuleManagerView onClose={onClose} />);
         await screen.findByText('例外规则管理');
 
         // Test create button

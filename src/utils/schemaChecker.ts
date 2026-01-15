@@ -56,6 +56,59 @@ export class SchemaChecker {
   private schemaCache: Map<string, { result: TableInfo | null; timestamp: number }> = new Map();
   private readonly CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache
 
+  private isValidTableName(tableName: string): boolean {
+    return /^[a-zA-Z0-9_]+$/.test(tableName);
+  }
+
+  private buildColumnQuery(tableName: string): string {
+    const escapedTableName = tableName.replace(/'/g, "''");
+    return [
+      'SELECT column_name, data_type, is_nullable, column_default',
+      'FROM information_schema.columns',
+      "WHERE table_schema = 'public'",
+      `  AND table_name = '${escapedTableName}'`,
+      'ORDER BY ordinal_position'
+    ].join('\n');
+  }
+
+  private parseColumnInfoRows(data: unknown): ColumnInfo[] | null {
+    if (!Array.isArray(data)) {
+      return null;
+    }
+
+    const columns: ColumnInfo[] = [];
+
+    for (const row of data) {
+      if (typeof row !== 'object' || row === null) {
+        continue;
+      }
+
+      const record = row as Record<string, unknown>;
+      const columnName = record['column_name'];
+      const dataType = record['data_type'];
+      const isNullable = record['is_nullable'];
+      const columnDefault = record['column_default'];
+
+      if (typeof columnName !== 'string') continue;
+      if (typeof dataType !== 'string') continue;
+      if (typeof isNullable !== 'string') continue;
+      if (columnDefault !== null && typeof columnDefault !== 'string') continue;
+
+      columns.push({
+        column_name: columnName,
+        data_type: dataType,
+        is_nullable: isNullable,
+        column_default: columnDefault
+      });
+    }
+
+    if (data.length > 0 && columns.length === 0) {
+      return null;
+    }
+
+    return columns;
+  }
+
   /**
    * Clear schema cache
    */
@@ -80,11 +133,14 @@ export class SchemaChecker {
         return null;
       }
 
-      const { data, error } = await client
-        .from('information_schema.columns')
-        .select('column_name, data_type, is_nullable, column_default')
-        .eq('table_name', tableName)
-        .eq('table_schema', 'public');
+      if (!this.isValidTableName(tableName)) {
+        logger.warn('SCHEMA', `表名不合法，无法检查: ${tableName}`);
+        this.schemaCache.set(tableName, { result: null, timestamp: now });
+        return null;
+      }
+
+      const sql = this.buildColumnQuery(tableName);
+      const { data, error } = await client.rpc('exec_sql', { sql });
 
       if (error) {
         logger.error('SCHEMA', `获取表 ${tableName} 信息失败`, { error: error.message });
@@ -93,9 +149,16 @@ export class SchemaChecker {
         return null;
       }
 
+      const columns = this.parseColumnInfoRows(data);
+      if (!columns) {
+        logger.error('SCHEMA', `解析表 ${tableName} 列信息失败`, { rawDataType: typeof data });
+        this.schemaCache.set(tableName, { result: null, timestamp: now });
+        return null;
+      }
+
       const result: TableInfo = {
         table_name: tableName,
-        columns: data || []
+        columns
       };
       
       // Cache successful result

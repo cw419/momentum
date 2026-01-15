@@ -1,54 +1,20 @@
 import React, { useState } from 'react';
-import { Chain, CompletionHistory, RSIPNode, RSIPMeta } from '../types';
+import type { Chain, CompletionHistory, ExceptionRule, RSIPNode, RSIPMeta } from '../types';
 import { Download, Upload, X, FileText, AlertCircle, CheckCircle, Clock, Shield } from 'lucide-react';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
+import { importExportService, type ImportExportImportOptions, type MomentumExportDataV2 } from '../services/ImportExportService';
 import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
 import { useI18n } from '../i18n';
 import { getSafeErrorDetail } from '../utils/errorMessage';
-
-interface ExportData {
-  version: string;
-  exportedAt: string;
-  chains: any[];
-  completionHistory: any[];
-  rsipNodes?: any[];
-  rsipMeta?: any;
-  userPreferences?: any;
-  exceptionRules?: any;
-}
-
-interface ImportOptions {
-  preserveStatistics: boolean;
-  preserveTimestamps: boolean;
-  importCompletionHistory: boolean;
-}
-
-const allowedChainTypes = new Set([
-  'unit',
-  'group',
-  'assault',
-  'recon',
-  'command',
-  'special_ops',
-  'engineering',
-  'quartermaster',
-]);
-
-function generateId(prefix: string) {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-}
 
 interface ImportExportModalProps {
   chains: Chain[];
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
-  userPreferences?: any;
-  onImport: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: RSIPNode[]; rsipMeta?: RSIPMeta; exceptionRules?: any[] }) => Promise<void>;
+  userPreferences?: unknown;
+  onImport: (chains: Chain[], options?: { history?: CompletionHistory[]; rsipNodes?: RSIPNode[]; rsipMeta?: RSIPMeta; exceptionRules?: ExceptionRule[] }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -68,7 +34,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   const [importData, setImportData] = useState('');
   const [importStatus, setImportStatus] = useState<'idle' | 'checking-auth' | 'creating-session' | 'importing' | 'success' | 'error'>('idle');
   const [importError, setImportError] = useState('');
-  const [importOptions, setImportOptions] = useState<ImportOptions>({
+  const [importOptions, setImportOptions] = useState<ImportExportImportOptions>({
     preserveStatistics: false,
     preserveTimestamps: false,
     importCompletionHistory: true
@@ -78,33 +44,15 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
     try {
       // 获取例外规则数据
       const exceptionRulesData = await exceptionRuleManager.exportRules(true);
-      
-      const exportData: ExportData = {
-        version: '2.0',
-        exportedAt: new Date().toISOString(),
-        chains: chains.map(chain => ({
-          ...chain,
-          createdAt: chain.createdAt.toISOString(),
-          lastCompletedAt: chain.lastCompletedAt?.toISOString(),
-          groupStartedAt: chain.groupStartedAt?.toISOString(),
-          groupExpiresAt: chain.groupExpiresAt?.toISOString(),
-          deletedAt: chain.deletedAt?.toISOString(),
-        })),
-        completionHistory: (history || []).map(h => ({
-          ...h,
-          completedAt: h.completedAt.toISOString(),
-        })),
-        rsipNodes: (rsipNodes || []).map(node => ({
-          ...node,
-          createdAt: node.createdAt.toISOString(),
-        })),
-        rsipMeta: rsipMeta ? {
-          ...rsipMeta,
-          lastAddedAt: rsipMeta.lastAddedAt?.toISOString(),
-        } : undefined,
-        userPreferences: userPreferences,
-        exceptionRules: exceptionRulesData
-      };
+
+      const exportData: MomentumExportDataV2 = importExportService.createExportData({
+        chains,
+        history,
+        rsipNodes,
+        rsipMeta,
+        userPreferences,
+        exceptionRules: exceptionRulesData,
+      });
       
       const dataStr = JSON.stringify(exportData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -139,198 +87,30 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         }
       }
 
-      // 解析导入数据
-      const parsedData = JSON.parse(importData);
-      
-      if (!parsedData.chains || !Array.isArray(parsedData.chains)) {
-        throw new Error(tr('导入数据格式错误：未找到有效的链条数据', 'Invalid import format: no valid chains found'));
-      }
-
       setImportStatus('creating-session');
-      
-      const toNumber = (value: unknown, fallback: number) => {
-        const n = typeof value === 'number' ? value : Number(value);
-        return Number.isFinite(n) ? n : fallback;
-      };
 
-      const toStringArray = (value: unknown): string[] => {
-        if (!Array.isArray(value)) return [];
-        return value.map(v => String(v)).filter(v => v.length > 0);
-      };
-
-      const rawChains: any[] = parsedData.chains || [];
-
-      const chainEntries = rawChains.map((raw: any) => {
-        const sourceId = String(raw?.id ?? generateId('chain'));
-        return { raw, sourceId, newId: generateId('chain') };
+      const parsedData = importExportService.parseImportData({
+        json: importData,
+        options: importOptions,
+        existingRsipNodes: rsipNodes,
+        tr,
       });
 
-      const seenIds = new Set<string>();
-      for (const entry of chainEntries) {
-        if (seenIds.has(entry.sourceId)) {
-          throw new Error(
-            language === 'zh'
-              ? `导入数据包含重复的链条ID: ${entry.sourceId}`
-              : `Import data contains duplicate chain ID: ${entry.sourceId}`
-          );
-        }
-        seenIds.add(entry.sourceId);
-      }
-
-      const idMap = new Map<string, string>(chainEntries.map(e => [e.sourceId, e.newId]));
-      const preserveStatistics = Boolean(importOptions.preserveStatistics);
-      const preserveTimestamps = Boolean(importOptions.preserveTimestamps);
-
-      const importChains: Chain[] = chainEntries.map(({ raw, sourceId: _sourceId, newId }) => {
-        void _sourceId;
-
-        const rawType = String(raw?.type ?? 'unit');
-        const type = allowedChainTypes.has(rawType) ? rawType : 'unit';
-
-        const stats = preserveStatistics
-          ? {
-              currentStreak: toNumber(raw?.currentStreak, 0),
-              auxiliaryStreak: toNumber(raw?.auxiliaryStreak, 0),
-              totalCompletions: toNumber(raw?.totalCompletions, 0),
-              totalFailures: toNumber(raw?.totalFailures, 0),
-              auxiliaryFailures: toNumber(raw?.auxiliaryFailures, 0),
-            }
-          : {
-              currentStreak: 0,
-              auxiliaryStreak: 0,
-              totalCompletions: 0,
-              totalFailures: 0,
-              auxiliaryFailures: 0,
-            };
-
-        const createdAt = preserveTimestamps && raw?.createdAt ? new Date(raw.createdAt) : new Date();
-        const lastCompletedAt = preserveTimestamps && raw?.lastCompletedAt ? new Date(raw.lastCompletedAt) : undefined;
-
-        const sourceParentId = raw?.parentId ?? raw?.parent_id ?? undefined;
-        const parentId =
-          sourceParentId != null && idMap.has(String(sourceParentId)) ? idMap.get(String(sourceParentId)) : undefined;
-
-        const common = {
-          id: newId,
-          name: String(raw?.name ?? tr('未命名链条', 'Untitled chain')),
-          parentId,
-          sortOrder: toNumber(raw?.sortOrder ?? raw?.sort_order, Math.floor(Date.now() / 1000)),
-          trigger: String(raw?.trigger ?? ''),
-          duration: toNumber(raw?.duration, 45),
-          description: String(raw?.description ?? ''),
-          ...stats,
-          exceptions: toStringArray(raw?.exceptions),
-          auxiliaryExceptions: toStringArray(raw?.auxiliaryExceptions),
-          auxiliarySignal: String(raw?.auxiliarySignal ?? ''),
-          auxiliaryDuration: toNumber(raw?.auxiliaryDuration, 15),
-          auxiliaryCompletionTrigger: String(raw?.auxiliaryCompletionTrigger ?? ''),
-          timeLimitExceptions: toStringArray(raw?.timeLimitExceptions ?? raw?.time_limit_exceptions),
-          isDurationless: Boolean(raw?.isDurationless ?? raw?.is_durationless ?? false),
-          minimumDuration: raw?.minimumDuration ?? raw?.minimum_duration ?? undefined,
-          taskRepeatCount: raw?.taskRepeatCount ?? raw?.task_repeat_count ?? undefined,
-          createdAt,
-          lastCompletedAt,
-          deletedAt: null as null,
-        };
-
-        if (type === 'group') {
-          return {
-            ...common,
-            type: 'group',
-            timeLimitHours: raw?.timeLimitHours ?? raw?.time_limit_hours ?? undefined,
-            groupRepeatCount: raw?.groupRepeatCount ?? raw?.group_repeat_count ?? undefined,
-            isTaskGroup: Boolean(raw?.isTaskGroup ?? raw?.is_task_group ?? false) || undefined,
-            groupStartedAt: undefined,
-            groupExpiresAt: undefined,
-          } as Chain;
-        }
-
-        return {
-          ...common,
-          type: type as Chain['type'],
-        } as Chain;
-      });
-
-      let importHistory: CompletionHistory[] = [];
-      if (importOptions.importCompletionHistory && Array.isArray(parsedData.completionHistory)) {
-        importHistory = (parsedData.completionHistory || [])
-          .filter((h: any) => h && h.chainId)
-          .map((h: any): CompletionHistory | null => {
-            const mappedChainId = idMap.get(String(h.chainId));
-            if (!mappedChainId) return null;
-
-            const duration = Math.max(0, toNumber(h.duration, 0));
-
-            return {
-              chainId: mappedChainId,
-              completedAt: new Date(h.completedAt || Date.now()),
-              duration,
-              wasSuccessful: Boolean(h.wasSuccessful),
-              reasonForFailure: h.reasonForFailure ? String(h.reasonForFailure) : undefined,
-              actualDuration:
-                h.actualDuration != null ? Math.max(0, toNumber(h.actualDuration, duration)) : undefined,
-              isForwardTimed: Boolean(h.isForwardTimed || false),
-              description: h.description ? String(h.description) : undefined,
-              notes: h.notes ? String(h.notes) : undefined,
-            };
-          })
-          .filter((h: CompletionHistory | null): h is CompletionHistory => Boolean(h));
-      }
-
-      // 处理RSIP节点（保持原有逻辑，因为量较小且复杂度较低）
-      let importedRsipNodes: RSIPNode[] = [];
-      if (parsedData.rsipNodes) {
-        const existingRsipIds = new Set((rsipNodes || []).map(node => node.id));
-        
-        importedRsipNodes = (parsedData.rsipNodes || []).map((node: any) => {
-          let nodeId = node.id;
-          
-          // 简单的ID冲突处理
-          if (existingRsipIds.has(nodeId)) {
-            nodeId = crypto.randomUUID ? crypto.randomUUID() : `rsip_${Date.now()}_${Math.random()}`;
-            logger.debug('IMPORT_EXPORT', 'RSIP 节点 ID 冲突，生成新 ID', { from: node.id, to: nodeId });
-          }
-          
-          existingRsipIds.add(nodeId);
-          
-          return {
-            ...node,
-            id: nodeId,
-            createdAt: node.createdAt ? new Date(node.createdAt) : new Date(),
-            lastScheduledAt: node.lastScheduledAt ? new Date(node.lastScheduledAt) : undefined,
-          };
-        });
-      }
-
-      // 处理RSIP元数据
-      const importedRsipMeta = parsedData.rsipMeta ? {
-        ...parsedData.rsipMeta,
-        lastAddedAt: parsedData.rsipMeta.lastAddedAt ? new Date(parsedData.rsipMeta.lastAddedAt) : undefined,
-      } : undefined;
-
-      // 处理例外规则
-      let importedExceptionRules: any[] = [];
-      if (parsedData.exceptionRules && parsedData.exceptionRules.rules) {
-        const rulesToImport = parsedData.exceptionRules.rules.map((rule: any) => ({
-          name: rule.name,
-          type: rule.type,
-          description: rule.description
-        }));
-        
-        const importResult = await exceptionRuleManager.importRules(rulesToImport, {
+      let importedExceptionRules: ExceptionRule[] = [];
+      if (parsedData.exceptionRulesToImport.length > 0) {
+        const importResult = await exceptionRuleManager.importRules(parsedData.exceptionRulesToImport, {
           skipDuplicates: true,
-          updateExisting: false
+          updateExisting: false,
         });
-        
         importedExceptionRules = importResult.imported;
       }
 
       setImportStatus('importing');
 
-      await onImport(importChains, {
-        history: importHistory,
-        rsipNodes: importedRsipNodes,
-        rsipMeta: importedRsipMeta,
+      await onImport(parsedData.chains, {
+        history: parsedData.history,
+        rsipNodes: parsedData.rsipNodes,
+        rsipMeta: parsedData.rsipMeta,
         exceptionRules: importedExceptionRules,
       });
       

@@ -1,19 +1,21 @@
 import { SupabaseStorage } from '../supabaseStorage';
 import { MigrationHelper } from '../migrationHelper';
+import { schemaChecker } from '../schemaChecker';
 import { Chain } from '../../types';
 import { supabase } from '../../lib/supabase';
 
 // Mock Supabase for testing
 vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: vi.fn()
+    from: vi.fn(),
+    rpc: vi.fn()
   },
   getCurrentUser: vi.fn(() => Promise.resolve({ id: 'test-user' })),
   waitForAuthentication: vi.fn(() => Promise.resolve({ user: { id: 'test-user' }, isAuthenticated: true })),
   isUserAuthenticated: vi.fn(() => Promise.resolve(true))
 }));
 
-const mockSupabase = supabase as unknown as { from: ReturnType<typeof vi.fn> };
+const mockSupabase = supabase as unknown as { from: ReturnType<typeof vi.fn>; rpc: ReturnType<typeof vi.fn> };
 
 describe('Schema Compatibility Tests', () => {
   let storage: SupabaseStorage;
@@ -24,6 +26,8 @@ describe('Schema Compatibility Tests', () => {
     migrationHelper = new MigrationHelper();
     vi.clearAllMocks();
     mockSupabase.from.mockReset();
+    mockSupabase.rpc.mockReset();
+    schemaChecker.clearSchemaCache();
   });
 
   describe('Complete Schema Compatibility', () => {
@@ -155,43 +159,14 @@ describe('Schema Compatibility Tests', () => {
 
   describe('Migration Status Detection', () => {
     it('should correctly identify applied migrations', async () => {
-      // Mock that chains table exists (basic migration applied)
-      mockSupabase.from
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              eq: () => ({
-                data: [{ table_name: 'chains' }],
-                error: null
-              })
-            })
-          })
-        })
-        // Mock that hierarchy columns exist
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              in: () => ({
-                data: [
-                  { column_name: 'parent_id' },
-                  { column_name: 'type' }
-                ],
-                error: null
-              })
-            })
-          })
-        })
-        // Mock that time limit columns don't exist
-        .mockReturnValueOnce({
-          select: () => ({
-            eq: () => ({
-              in: () => ({
-                data: [],
-                error: null
-              })
-            })
-          })
-        });
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: [
+          { column_name: 'id', data_type: 'uuid', is_nullable: 'NO', column_default: null },
+          { column_name: 'parent_id', data_type: 'uuid', is_nullable: 'YES', column_default: null },
+          { column_name: 'type', data_type: 'text', is_nullable: 'NO', column_default: null }
+        ],
+        error: null
+      });
 
       const basicApplied = await migrationHelper.isMigrationApplied('20250730021823_winter_flame');
       const hierarchyApplied = await migrationHelper.isMigrationApplied('20250801160754_peaceful_palace');

@@ -109,6 +109,7 @@ export interface Database {
           last_completed_at?: string | null
           user_id?: string
         }
+        Relationships: []
       }
       scheduled_sessions: {
         Row: {
@@ -135,6 +136,7 @@ export interface Database {
           auxiliary_signal?: string
           user_id?: string
         }
+        Relationships: []
       }
       active_sessions: {
         Row: {
@@ -173,6 +175,7 @@ export interface Database {
           forward_elapsed_time?: number | null
           user_id?: string
         }
+        Relationships: []
       }
       completion_history: {
         Row: {
@@ -214,6 +217,7 @@ export interface Database {
           actual_duration?: number | null
           is_forward_timed?: boolean | null
         }
+        Relationships: []
       }
       rsip_nodes: {
         Row: {
@@ -249,6 +253,7 @@ export interface Database {
           timer_minutes?: number | null
           created_at?: string
         }
+        Relationships: []
       }
       rsip_meta: {
         Row: {
@@ -266,6 +271,7 @@ export interface Database {
           last_added_at?: string | null
           allow_multiple_per_day?: boolean
         }
+        Relationships: []
       }
       user_points: {
         Row: {
@@ -286,6 +292,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       user_settings: {
         Row: {
@@ -315,6 +322,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       daily_checkins: {
         Row: {
@@ -341,6 +349,7 @@ export interface Database {
           consecutive_days?: number
           created_at?: string
         }
+        Relationships: []
       }
       point_transactions: {
         Row: {
@@ -376,6 +385,7 @@ export interface Database {
           reference_id?: string | null
           created_at?: string
         }
+        Relationships: []
       }
     }
     Views: {
@@ -386,19 +396,106 @@ export interface Database {
         Args: {
           target_user_id: string
         }
-        Returns: Json
+        Returns: {
+          success: boolean
+          message: string
+          already_checked_in: boolean
+          checkin_date: string
+          points_earned: number
+          consecutive_days: number
+          total_points?: number | null
+          checkin_id?: string | null
+        }
       }
       get_user_checkin_stats: {
         Args: {
           target_user_id: string
         }
-        Returns: Json
+        Returns: {
+          user_id: string
+          total_points: number
+          total_checkins: number
+          current_streak: number
+          longest_streak: number
+          last_checkin_date: string | null
+          has_checked_in_today: boolean
+        }
       }
       get_user_checkin_history: {
         Args: {
           target_user_id: string
           page_size?: number
           page_offset?: number
+        }
+        Returns: {
+          checkins: Array<{
+            id: string
+            checkin_date: string
+            points_earned: number
+            consecutive_days: number
+            created_at: string
+          }>
+          total_count: number
+          page_size: number
+          page_offset: number
+          has_more: boolean
+        }
+      }
+      create_write_session: {
+        Args: {
+          session_type: string
+          duration_minutes: number
+        }
+        Returns: {
+          success: boolean
+          session_token: string | null
+          error: string | null
+        }
+      }
+      complete_write_session: {
+        Args: {
+          p_session_token: string
+        }
+        Returns: Json
+      }
+      place_task_bet: {
+        Args: {
+          p_user_id: string
+          p_session_id: string
+          p_bet_amount: number
+          p_write_session_token: string
+        }
+        Returns: {
+          success: boolean
+          message: string
+          bet_id?: string
+          bet_amount?: number
+          potential_payout?: number
+          points_before?: number
+          points_after?: number
+          session_id?: string
+          chain_id?: string
+          error_code?: string
+          max_bet?: number
+          daily_limit?: number
+          daily_spent?: number
+          current_points?: number
+          required_points?: number
+          existing_bet_id?: string
+          existing_bet_amount?: number
+        }
+      }
+      complete_task_with_betting: {
+        Args: {
+          p_session_id: string
+          p_was_successful: boolean
+          p_completion_notes: string | null
+        }
+        Returns: Json
+      }
+      exec_sql: {
+        Args: {
+          sql: string
         }
         Returns: Json
       }
