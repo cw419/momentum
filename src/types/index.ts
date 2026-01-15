@@ -270,11 +270,26 @@ export class ExceptionRuleException extends Error {
   constructor(
     public type: ExceptionRuleError,
     message: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'ExceptionRuleException';
   }
+}
+
+export interface EnhancedExceptionRuleExceptionSerialized {
+  name: string;
+  type: ExceptionRuleError;
+  message: string;
+  userMessage?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  recoverable?: boolean;
+  suggestedActions?: string[];
+  context?: unknown;
+  technicalDetails?: unknown;
+  category: 'user_error' | 'system_error' | 'data_error' | 'network_error';
+  timestamp: string;
+  stack?: string;
 }
 
 // 增强的异常类
@@ -282,12 +297,12 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
   constructor(
     type: ExceptionRuleError,
     message: string,
-    public context?: any,
+    public context?: unknown,
     public recoverable?: boolean,
     public suggestedActions?: string[],
     public severity?: 'low' | 'medium' | 'high' | 'critical',
     public userMessage?: string,
-    public technicalDetails?: any
+    public technicalDetails?: unknown
   ) {
     super(type, message, context);
     this.name = 'EnhancedExceptionRuleException';
@@ -300,7 +315,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     type: ExceptionRuleError,
     userMessage: string,
     technicalMessage?: string,
-    context?: any
+    context?: unknown
   ): EnhancedExceptionRuleException {
     return new EnhancedExceptionRuleException(
       type,
@@ -317,7 +332,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
   static createCritical(
     type: ExceptionRuleError,
     message: string,
-    context?: any
+    context?: unknown
   ): EnhancedExceptionRuleException {
     return new EnhancedExceptionRuleException(
       type,
@@ -335,7 +350,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     type: ExceptionRuleError,
     message: string,
     suggestedActions: string[],
-    context?: any
+    context?: unknown
   ): EnhancedExceptionRuleException {
     return new EnhancedExceptionRuleException(
       type,
@@ -399,7 +414,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     }
   }
 
-  toJSON(): any {
+  toJSON(): EnhancedExceptionRuleExceptionSerialized {
     return {
       name: this.name,
       type: this.type,
@@ -416,7 +431,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     };
   }
 
-  static fromJSON(data: any): EnhancedExceptionRuleException {
+  static fromJSON(data: EnhancedExceptionRuleExceptionSerialized): EnhancedExceptionRuleException {
     const error = new EnhancedExceptionRuleException(
       data.type,
       data.message,

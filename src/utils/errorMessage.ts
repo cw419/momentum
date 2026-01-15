@@ -111,3 +111,22 @@ export function getSafeErrorDetail(errorMessage: string, language: Language): st
   return code ? `Error code: ${code}` : null;
 }
 
+export function getSafeErrorDetailFromUnknown(error: unknown, language: Language): string | null {
+  if (error instanceof Error) {
+    return getSafeErrorDetail(error.message, language);
+  }
+
+  if (typeof error === 'string') {
+    return getSafeErrorDetail(error, language);
+  }
+
+  if (error && typeof error === 'object' && 'message' in error) {
+    const candidateMessage = (error as { message?: unknown }).message;
+    if (typeof candidateMessage === 'string') {
+      return getSafeErrorDetail(candidateMessage, language);
+    }
+  }
+
+  return null;
+}
+

@@ -18,7 +18,7 @@ import { realTimeSyncService } from '../../services/RealTimeSyncService';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 import { useI18n } from '../../i18n';
-import { getSafeErrorDetail } from '../../utils/errorMessage';
+import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 
 interface UseRecycleBinDomainParams {
   state: AppState;
@@ -53,7 +53,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         viewingChainId: prev.viewingChainId === chainId ? null : prev.viewingChainId,
       }));
     } catch (error) {
-      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       logger.error('RECYCLE_BIN', 'Delete failed', { chainId }, error as Error);
       toast.error(
         safeDetail
@@ -87,7 +87,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         chains: updatedChains,
       }));
     } catch (error) {
-      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
 
       const rawMessage = error instanceof Error ? error.message : '';
       if (rawMessage.includes('Partial restore failure') || rawMessage.includes('failed to restore')) {
@@ -130,7 +130,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         chains: updatedChains,
       }));
     } catch (error) {
-      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       logger.error('RECYCLE_BIN', 'Permanent delete failed', { chainIds }, error as Error);
       toast.error(
         safeDetail

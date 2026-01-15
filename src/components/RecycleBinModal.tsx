@@ -7,7 +7,7 @@ import { Trash2, RotateCcw, X, CheckSquare, Square } from 'lucide-react';
 import { logger } from '../utils/logger';
 import { toast } from '../utils/toast';
 import { useI18n } from '../i18n';
-import { getSafeErrorDetail } from '../utils/errorMessage';
+import { getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 
 interface RecycleBinModalProps {
   isOpen: boolean;
@@ -149,7 +149,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
           logger.debug('RECYCLE_BIN', 'Restore completed', operationResult.details);
         } catch (error) {
           const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
-          const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+          const safeDetail = getSafeErrorDetailFromUnknown(error, language);
           operationResult = {
             success: false,
             message: safeDetail
@@ -189,7 +189,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
           logger.debug('RECYCLE_BIN', 'Permanent delete completed', operationResult.details);
         } catch (error) {
           const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
-          const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+          const safeDetail = getSafeErrorDetailFromUnknown(error, language);
           operationResult = {
             success: false,
             message: safeDetail
@@ -220,7 +220,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
       
     } catch (error) {
       logger.error('RECYCLE_BIN', 'Operation failed with unexpected error', { type: showConfirmDialog?.type }, error as Error);
-      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       toast.error(
         safeDetail
           ? tr(`操作失败: ${safeDetail}`, `Operation failed: ${safeDetail}`)

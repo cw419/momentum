@@ -17,7 +17,7 @@ import { queryOptimizer } from '../../utils/queryOptimizer';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 import { useI18n } from '../../i18n';
-import { getSafeErrorDetail } from '../../utils/errorMessage';
+import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 
 export type SafelySaveChains = (updatedActiveChains: Chain[], retryCount?: number) => Promise<void>;
 
@@ -184,7 +184,7 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
     } catch (error) {
       logger.error('CHAINS', 'Failed to save chain', undefined, error as Error);
 
-      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       toast.error(
         safeDetail
           ? tr(`保存失败: ${safeDetail}`, `Save failed: ${safeDetail}`)

@@ -59,7 +59,7 @@ export function useExceptionRuleFlow({
     );
   };
 
-  const handleRuleError = async (error: unknown, operation: string, context: any) => {
+  const handleRuleError = async (error: unknown, operation: string, context: unknown) => {
     try {
       if (error instanceof EnhancedExceptionRuleException) {
         const messageId = userFeedbackHandler.showErrorMessage(error, context);

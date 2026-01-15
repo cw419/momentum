@@ -8,7 +8,7 @@ import { ExceptionRule, ExceptionRuleError, ExceptionRuleException, ExceptionRul
 import { exceptionRuleManager } from '../../services/ExceptionRuleManager';
 import { asyncOperationManager } from '../../utils/AsyncOperationManager';
 import { useI18n } from '../../i18n';
-import { getSafeErrorDetail } from '../../utils/errorMessage';
+import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 import { RuleManagerViewView } from './RuleManagerViewView';
 
 interface RuleManagerViewProps {
@@ -58,7 +58,7 @@ export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: Rule
       setRules(allRules);
       setError(null);
     } catch (err) {
-      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      const safe = getSafeErrorDetailFromUnknown(err, language);
       setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
     } finally {
       setLoading(false);
@@ -268,7 +268,7 @@ export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: Rule
       await exceptionRuleManager.deleteRule(rule.id);
       await loadRules();
     } catch (err) {
-      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      const safe = getSafeErrorDetailFromUnknown(err, language);
       setError(safe ?? tr('删除规则失败', 'Failed to delete rule'));
     }
   }, [deleteConfirmationRule, loadRules, tr, language]);

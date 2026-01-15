@@ -5,7 +5,7 @@ import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
-import { getSafeErrorDetail } from '../utils/errorMessage';
+import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 
 interface BettingModalProps {
   isOpen: boolean;
@@ -78,7 +78,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
       
     } catch (err) {
       logger.error('BETTING', 'Failed to load betting data', undefined, err as Error);
-      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(err, language);
       setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
     } finally {
       setIsLoading(false);
@@ -204,7 +204,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
       }
     } catch (err) {
       logger.error('BETTING', 'Failed to place bet', { sessionId }, err as Error);
-      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(err, language);
       setError(safeDetail ?? tr('押注失败，请重试（详情见控制台）', 'Bet failed. Check the console for details, then try again.'));
     } finally {
       setIsPlacingBet(false);

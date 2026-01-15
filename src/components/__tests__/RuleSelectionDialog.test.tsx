@@ -48,6 +48,7 @@ vi.mock('../../utils/exceptionRuleCache', () => {
     getChainRules = vi.fn(() => null);
     setChainRules = vi.fn();
     updateChainRules = vi.fn();
+    addRuleToChain = vi.fn();
   }
   return { ExceptionRuleCache };
 });

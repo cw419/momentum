@@ -5,7 +5,7 @@ import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
-import { getSafeErrorDetail } from '../utils/errorMessage';
+import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 import { Switch } from './Switch';
 
 interface AccountModalProps {
@@ -132,7 +132,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
       }
     } catch (err) {
       logger.error('ACCOUNT', 'Failed to toggle gambling mode', undefined, err as Error);
-      const safeDetail = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(err, language);
       setGamblingError(safeDetail ?? tr('设置更新失败，请重试（详情见控制台）', 'Failed to update settings. Check the console for details, then try again.'));
     } finally {
       setGamblingLoading(false);

@@ -14,14 +14,14 @@ export interface RecoveryStrategy {
   errorType: ExceptionRuleError;
   strategy: 'auto_fix' | 'user_choice' | 'fallback' | 'reset';
   priority: number;
-  handler: (error: ExceptionRuleException, context: any) => Promise<RecoveryResult>;
+  handler: (error: ExceptionRuleException, context: RecoveryContext) => Promise<RecoveryResult>;
 }
 
 export interface RecoveryResult {
   success: boolean;
   message: string;
   actions?: RecoveryAction[];
-  recoveredData?: any;
+  recoveredData?: unknown;
   requiresUserAction?: boolean;
 }
 
@@ -36,7 +36,7 @@ export interface RecoveryAction {
 export interface RecoveryContext {
   errorType: ExceptionRuleError;
   originalOperation: string;
-  operationData: any;
+  operationData: unknown;
   timestamp: Date;
   retryCount: number;
 }
@@ -74,7 +74,7 @@ export class ErrorRecoveryManager {
    */
   async attemptRecovery(
     error: ExceptionRuleException, 
-    context: any,
+    context: unknown,
     originalOperation?: string
   ): Promise<RecoveryResult> {
     const recoveryContext: RecoveryContext = {
@@ -437,12 +437,17 @@ export class ErrorRecoveryManager {
 
   private async handleUseExistingRule(error: ExceptionRuleException): Promise<RecoveryResult> {
     try {
-      const existingRules = error.details?.existingRules || [];
-      if (existingRules.length > 0) {
+      const existingRules =
+        error.details && typeof error.details === 'object'
+          ? (error.details as { existingRules?: unknown }).existingRules
+          : undefined;
+
+      const rules = Array.isArray(existingRules) ? existingRules : [];
+      if (rules.length > 0) {
         return {
           success: true,
           message: tr('使用现有规则', 'Using existing rule'),
-          recoveredData: existingRules[0]
+          recoveredData: rules[0]
         };
       }
     } catch {

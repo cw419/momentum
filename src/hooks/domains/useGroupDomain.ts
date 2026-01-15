@@ -21,7 +21,7 @@ import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { useI18n } from '../../i18n';
-import { getSafeErrorDetail } from '../../utils/errorMessage';
+import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 
 interface UseGroupDomainParams {
   state: AppState;
@@ -84,7 +84,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       logger.info('APP_SHELL', '导入完成，UI状态更新完成');
     } catch (error) {
       logger.error('APP_SHELL', 'Failed to import units', undefined, error as Error);
-      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       toast.error(
         safeDetail
           ? tr(
@@ -129,7 +129,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       logger.info('APP_SHELL', '重复次数更新完成，UI状态更新完成');
     } catch (error) {
       logger.error('APP_SHELL', 'Failed to update task repeat count', undefined, error as Error);
-      const safeDetail = error instanceof Error ? getSafeErrorDetail(error.message, language) : null;
+      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       toast.error(
         safeDetail
           ? tr(

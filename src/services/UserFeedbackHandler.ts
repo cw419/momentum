@@ -48,7 +48,7 @@ export class UserFeedbackHandler {
   /**
    * 显示用户友好的错误信息
    */
-  showErrorMessage(error: ExceptionRuleException, context?: any): string {
+  showErrorMessage(error: ExceptionRuleException, context?: unknown): string {
     void context;
     const messageId = this.generateMessageId();
     const userFriendlyMessage = this.getUserFriendlyMessage(error);
@@ -345,9 +345,13 @@ export class UserFeedbackHandler {
    */
   private formatDuplicateNameMessage(error: ExceptionRuleException): string {
     const language = getCurrentLanguage();
-    const existingRules = error.details?.existingRules || [];
+    const existingRules =
+      error.details && typeof error.details === 'object'
+        ? (error.details as { existingRules?: unknown }).existingRules
+        : undefined;
+    const hasExistingRules = Array.isArray(existingRules) && existingRules.length > 0;
     
-    if (existingRules.length > 0) {
+    if (hasExistingRules) {
       return tr(
         '规则名称已存在。您可以使用现有规则或为新规则选择不同的名称。',
         'This rule name already exists. You can use the existing rule or choose a different name.',

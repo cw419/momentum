@@ -10,7 +10,7 @@ import {
   exceptionRuleMigration 
 } from '../services/ExceptionRuleMigration';
 import { useI18n } from '../i18n';
-import { getSafeErrorDetail } from '../utils/errorMessage';
+import { getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 import { 
   Database, 
   AlertTriangle, 
@@ -72,7 +72,7 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
         }
       } catch (err) {
         if (cancelled) return;
-        const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+        const safe = getSafeErrorDetailFromUnknown(err, language);
         setError(safe ?? tr('检查迁移需求失败', 'Failed to check migration status'));
       } finally {
         if (!cancelled) {
@@ -103,7 +103,7 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
       onMigrationComplete?.(result);
       
     } catch (err) {
-      const safe = err instanceof Error ? getSafeErrorDetail(err.message, language) : null;
+      const safe = getSafeErrorDetailFromUnknown(err, language);
       setError(safe ?? tr('迁移失败', 'Migration failed'));
     } finally {
       setMigrating(false);

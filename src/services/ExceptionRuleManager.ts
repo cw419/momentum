@@ -6,6 +6,7 @@
 import {
   ExceptionRule,
   ExceptionRuleType,
+  PauseOptions,
   RuleUsageRecord,
   SessionContext,
   RuleUsageStats,
@@ -132,10 +133,23 @@ export class ExceptionRuleManager {
       );
 
       if (recoveryResult.success && recoveryResult.recoveredData) {
-        return {
-          rule: recoveryResult.recoveredData,
-          warnings: [tr('通过错误恢复创建了规则', 'Rule was created via error recovery')]
-        };
+        const recoveredRuleId =
+          typeof recoveryResult.recoveredData === 'object' &&
+          recoveryResult.recoveredData !== null &&
+          'id' in recoveryResult.recoveredData &&
+          typeof (recoveryResult.recoveredData as { id: unknown }).id === 'string'
+            ? (recoveryResult.recoveredData as { id: string }).id
+            : null;
+
+        if (recoveredRuleId) {
+          const recoveredRule = await exceptionRuleStorage.getRuleById(recoveredRuleId);
+          if (recoveredRule) {
+            return {
+              rule: recoveredRule,
+              warnings: [tr('通过错误恢复创建了规则', 'Rule was created via error recovery')],
+            };
+          }
+        }
       }
 
       throw analysis.error;
@@ -393,13 +407,12 @@ export class ExceptionRuleManager {
     ruleId: string, 
     sessionContext: SessionContext, 
     actionType: 'pause' | 'early_completion',
-    pauseOptions?: any
+    pauseOptions?: PauseOptions
   ): Promise<{
     record: RuleUsageRecord;
     rule: ExceptionRule;
   }> {
     try {
-      void pauseOptions;
       // 验证规则ID
       if (isDev) {
         logger.debug('EXCEPTION_RULE_MANAGER', 'Validating ruleId', { ruleId });
@@ -439,7 +452,7 @@ export class ExceptionRuleManager {
       await ruleClassificationService.validateRuleForAction(realRuleId, actionType);
 
       // 记录使用
-      const record = await ruleUsageTracker.recordUsage(realRuleId, sessionContext, actionType);
+      const record = await ruleUsageTracker.recordUsage(realRuleId, sessionContext, actionType, pauseOptions);
 
       return { record, rule };
     } catch (error) {

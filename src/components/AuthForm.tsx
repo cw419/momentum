@@ -3,7 +3,7 @@ import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
 import { Eye, EyeOff, Loader2, Mail, Lock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useI18n } from '../i18n';
-import { getSafeErrorDetail } from '../utils/errorMessage';
+import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 
 export interface AuthFormProps {
     initialIsSignUp?: boolean;
@@ -52,7 +52,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                 }
             }
         } catch (err: any) {
-            const safeDetail = err?.message ? getSafeErrorDetail(String(err.message), language) : null;
+            const safeDetail = getSafeErrorDetailFromUnknown(err, language);
             setError(safeDetail ?? tr('发生了意外错误（详情见控制台）', 'An unexpected error occurred. Check the console for details.'));
             logger.error('AUTH', 'Unexpected error during auth', err);
         } finally {
