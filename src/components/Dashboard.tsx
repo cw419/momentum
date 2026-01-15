@@ -222,7 +222,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
           <div className="text-center py-20 animate-slide-up">
             <div className="bento-card max-w-lg mx-auto">
               <div className="w-24 h-24 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
-                <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-[3px] border-white/30 border-t-white rounded-full animate-spin"></div>
               </div>
               <h2 className="text-3xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-4">
                 {tr('正在加载任务链...', 'Loading task chains…')}
