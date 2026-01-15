@@ -1,0 +1,232 @@
+import React from 'react';
+import { CornerUpLeft, X } from 'lucide-react';
+import { TransformComponent, TransformWrapper, type ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import type { RSIPTreeNode } from '../../types';
+import { RSIPNodeCard } from './RSIPNodeCard';
+import { RSIPControls } from './RSIPControls';
+
+export type RSIPConnector = { id: string; d: string; isHovered: boolean };
+
+interface RSIPTreeProps {
+  tree: RSIPTreeNode[];
+  nodePositions: Record<string, { node: RSIPTreeNode; style: React.CSSProperties }>;
+  connectors: RSIPConnector[];
+  containerHeight: number;
+  contentBounds: { minX: number; minY: number; width: number; height: number } | null;
+  viewportRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement>;
+  transformRef: React.RefObject<ReactZoomPanPinchContentRef>;
+  onTransformed: (state: { scale: number; positionX: number; positionY: number }) => void;
+  onFitToContent: () => void;
+  now: number;
+  activeTimers: Record<string, number>;
+  hoveredChainIds: Set<string>;
+  pinnedId: string | null;
+  reparentingId: string | null;
+  invalidParentIds: Set<string>;
+  reparentingTitle: string | null;
+  relationError: string | null;
+  onTogglePinned: (nodeId: string) => void;
+  onHoverStart: (nodeId: string) => void;
+  onHoverEnd: () => void;
+  onToggleReparent: (nodeId: string) => void;
+  onCommitReparent: (childId: string, parentId?: string) => void;
+  onCancelReparent: () => void;
+  onSetRelationError: (next: string | null) => void;
+  onMarkFailed: (nodeId: string) => void;
+  onStartTimer: (nodeId: string, minutes: number) => void;
+  onStopTimer: (nodeId: string) => void;
+  setNodeRef: (nodeId: string, el: HTMLDivElement | null) => void;
+  formatRemaining: (ms: number) => string;
+  formatMinutesLabel: (minutes: number) => string;
+  tr: (zh: string, en: string) => string;
+}
+
+export const RSIPTree: React.FC<RSIPTreeProps> = ({
+  tree,
+  nodePositions,
+  connectors,
+  containerHeight,
+  contentBounds,
+  viewportRef,
+  containerRef,
+  transformRef,
+  onTransformed,
+  onFitToContent,
+  now,
+  activeTimers,
+  hoveredChainIds,
+  pinnedId,
+  reparentingId,
+  invalidParentIds,
+  reparentingTitle,
+  relationError,
+  onTogglePinned,
+  onHoverStart,
+  onHoverEnd,
+  onToggleReparent,
+  onCommitReparent,
+  onCancelReparent,
+  onSetRelationError,
+  onMarkFailed,
+  onStartTimer,
+  onStopTimer,
+  setNodeRef,
+  formatRemaining,
+  formatMinutesLabel,
+  tr,
+}) => {
+  return (
+    <div ref={viewportRef} className="relative w-full h-[60vh] min-h-[400px]">
+      {tree.length === 0 ? (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-600 dark:text-slate-400 font-chinese">
+          {tr('尚无国策，先从上方表单添加一个吧。', 'No policies yet. Add one from the form above.')}
+        </div>
+      ) : (
+        <TransformWrapper
+          ref={transformRef}
+          initialScale={1}
+          initialPositionX={0}
+          initialPositionY={0}
+          minScale={0.1}
+          maxScale={2}
+          limitToBounds={false}
+          panning={{ excluded: ['rsip-node'] }}
+          onTransformed={(_, state) => onTransformed(state)}
+        >
+          {({ zoomIn, zoomOut }) => (
+            <>
+              <TransformComponent
+                wrapperClass="rsip-canvas-wrapper w-full h-full rounded-2xl overflow-hidden"
+                contentClass="relative rsip-canvas-content"
+              >
+                <div
+                  ref={containerRef}
+                  className="relative"
+                  style={{
+                    width: contentBounds ? Math.ceil(contentBounds.width + 120) : '100%',
+                    height: Math.ceil(Math.max(containerHeight, (contentBounds?.height ?? 0) + 120)),
+                  }}
+                >
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <marker
+                        id="rsip-arrow"
+                        markerWidth="8"
+                        markerHeight="8"
+                        refX="6"
+                        refY="4"
+                        orient="auto"
+                        markerUnits="userSpaceOnUse"
+                      >
+                        <path d="M0,0 L8,4 L0,8 z" fill="#6b7280" />
+                      </marker>
+                    </defs>
+                    {connectors.map(({ id, d, isHovered }) => (
+                      <path
+                        key={id}
+                        d={d}
+                        fill="none"
+                        stroke={isHovered ? '#f59e0b' : '#9ca3af'}
+                        strokeWidth={isHovered ? 3 : 2}
+                        className="transition-all duration-200"
+                        markerEnd="url(#rsip-arrow)"
+                      />
+                    ))}
+                  </svg>
+
+                  {Object.values(nodePositions).map(({ node, style }) => {
+                    const endsAt = activeTimers[node.id];
+                    const isRunning = Boolean(endsAt && endsAt > now);
+                    const remaining = isRunning && endsAt ? endsAt - now : 0;
+                    const timerMinutes = node.timerMinutes || 15;
+                    const isInvalidParentTarget = Boolean(reparentingId && invalidParentIds.has(node.id));
+                    const isReparentingSelected = reparentingId === node.id;
+
+                    return (
+                      <RSIPNodeCard
+                        key={node.id}
+                        node={node}
+                        style={style}
+                        setNodeRef={(el) => setNodeRef(node.id, el)}
+                        isHighlighted={hoveredChainIds.has(node.id)}
+                        isPinned={pinnedId === node.id}
+                        isInvalidParentTarget={isInvalidParentTarget}
+                        isReparentingSelected={isReparentingSelected}
+                        onCardClick={() => {
+                          if (reparentingId) {
+                            if (isInvalidParentTarget) {
+                              onSetRelationError(
+                                tr('不能选择该节点作为父节点（会形成循环）。', 'Cannot choose this node as parent (would create a cycle).')
+                              );
+                              return;
+                            }
+                            onCommitReparent(reparentingId, node.id);
+                            return;
+                          }
+                          onTogglePinned(node.id);
+                        }}
+                        onHoverStart={() => onHoverStart(node.id)}
+                        onHoverEnd={onHoverEnd}
+                        onToggleReparent={() => onToggleReparent(node.id)}
+                        onMarkFailed={() => onMarkFailed(node.id)}
+                        timer={{
+                          isRunning,
+                          remainingMs: remaining,
+                          minutes: timerMinutes,
+                          onStart: () => onStartTimer(node.id, timerMinutes),
+                          onStop: () => onStopTimer(node.id),
+                        }}
+                        formatRemaining={formatRemaining}
+                        formatMinutesLabel={formatMinutesLabel}
+                        tr={tr}
+                      />
+                    );
+                  })}
+                </div>
+              </TransformComponent>
+
+              {reparentingId && (
+                <div className="absolute top-4 left-4 right-4 z-30 pointer-events-none">
+                  <div className="pointer-events-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-white/50 dark:border-white/10 bg-white/70 dark:bg-slate-900/50 backdrop-blur-xl px-4 py-3 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.5)]">
+                    <div className="min-w-0">
+                      <div className="text-sm font-chinese text-gray-900 dark:text-slate-100">
+                        {tr('选择新的父节点', 'Select a new parent')}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-slate-300 font-chinese">
+                        {tr('正在移动：', 'Moving: ')}
+                        <span className="font-semibold">{reparentingTitle ?? reparentingId}</span>
+                        {tr('。点击目标节点作为父节点，或设为根。', '. Tap a node to set as parent, or make it a root.')}
+                      </div>
+                      {relationError && <div className="mt-1 text-xs text-red-600 dark:text-red-300 font-chinese">{relationError}</div>}
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => onCommitReparent(reparentingId, undefined)}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
+                      >
+                        <CornerUpLeft size={16} />
+                        <span className="text-sm font-chinese">{tr('设为根', 'Make root')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onCancelReparent}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
+                      >
+                        <X size={16} />
+                        <span className="text-sm font-chinese">{tr('取消', 'Cancel')}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <RSIPControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFitToContent={onFitToContent} tr={tr} />
+            </>
+          )}
+        </TransformWrapper>
+      )}
+    </div>
+  );
+};

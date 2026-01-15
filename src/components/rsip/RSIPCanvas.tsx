@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CornerUpLeft, Maximize2, Minus, Plus, X } from 'lucide-react';
-import { TransformComponent, TransformWrapper, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
+import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import type { RSIPNode, RSIPTreeNode } from '../../types';
 import { buildRSIPTree, countDescendants, deleteNodeAndDescendants } from '../../utils/rsipTree';
 import { useCanvasState, type CanvasState } from '../../hooks/useCanvasState';
 import { ConfirmationDialog } from '../ConfirmationDialog';
-import { RSIPNodeCard } from './RSIPNodeCard';
-import { getRsipTypeLabel, rsipTypeColorMap, rsipTypeEmojiMap } from './rsipUi';
+import { RSIPFilters } from './RSIPFilters';
+import { RSIPTree, type RSIPConnector } from './RSIPTree';
 
 const MIN_RSIP_NODE_SPACING_Y = 220;
 const RSIP_NODE_SPACING_PADDING_Y = 40;
@@ -19,7 +18,6 @@ interface RSIPCanvasProps {
   tr: (zh: string, en: string) => string;
 }
 
-type Connector = { id: string; d: string; isHovered: boolean };
 type ConfirmAction =
   | { kind: 'stopTimer'; nodeId: string }
   | { kind: 'rollbackFailure'; nodeId: string; nodeTitle: string; descendants: number };
@@ -29,10 +27,9 @@ export const RSIPCanvas: React.FC<RSIPCanvasProps> = ({ nodes, tree, onSaveNodes
 
   const [filterType, setFilterType] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const connectorRefs = useRef<Record<string, SVGPathElement | null>>({});
-  const [connectors, setConnectors] = useState<Connector[]>([]);
+  const [connectors, setConnectors] = useState<RSIPConnector[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [reparentingId, setReparentingId] = useState<string | null>(null);
@@ -42,12 +39,43 @@ export const RSIPCanvas: React.FC<RSIPCanvasProps> = ({ nodes, tree, onSaveNodes
   const [layoutNodeHeight, setLayoutNodeHeight] = useState<number>(MIN_RSIP_NODE_SPACING_Y);
   const [nodePositions, setNodePositions] = useState<Record<string, { node: RSIPTreeNode; style: React.CSSProperties }>>({});
   const [containerHeight, setContainerHeight] = useState<number>(600);
-  const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
-  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const transformRef = useRef<ReactZoomPanPinchContentRef>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const latestTransformRef = useRef<CanvasState>({ scale: 1, positionX: 0, positionY: 0 });
   const didInitCameraRef = useRef(false);
 
+  const setNodeRef = useCallback((nodeId: string, el: HTMLDivElement | null) => {
+    nodeRefs.current[nodeId] = el;
+  }, []);
+
   const nodesById = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
+  const reparentingTitle = useMemo(() => {
+    if (!reparentingId) return null;
+    return nodesById.get(reparentingId)?.title ?? reparentingId;
+  }, [nodesById, reparentingId]);
+
+  const handleTransformed = useCallback((state: { scale: number; positionX: number; positionY: number }) => {
+    const next: CanvasState = {
+      scale: state.scale,
+      positionX: state.positionX,
+      positionY: state.positionY,
+    };
+    latestTransformRef.current = next;
+    saveCanvasState(next);
+  }, [saveCanvasState]);
+
+  const togglePinned = useCallback((nodeId: string) => {
+    setPinnedId(prev => (prev === nodeId ? null : nodeId));
+  }, []);
+
+  const handleHoverStart = useCallback((nodeId: string) => setHoveredId(nodeId), []);
+  const handleHoverEnd = useCallback(() => setHoveredId(null), []);
+
+  const toggleReparenting = useCallback((nodeId: string) => {
+    setPinnedId(nodeId);
+    setRelationError(null);
+    setReparentingId(prev => (prev === nodeId ? null : nodeId));
+  }, []);
 
   const filteredTree = useMemo(() => {
     if (!filterType) return tree;
@@ -302,7 +330,7 @@ export const RSIPCanvas: React.FC<RSIPCanvasProps> = ({ nodes, tree, onSaveNodes
     const compute = () => {
       const container = containerRef.current;
       if (!container) return;
-      const newConnectors: Connector[] = [];
+      const newConnectors: RSIPConnector[] = [];
 
       const getAnchor = (nodeId: string, side: 'left' | 'right') => {
         const pos = nodePositions[nodeId];
@@ -482,242 +510,44 @@ export const RSIPCanvas: React.FC<RSIPCanvasProps> = ({ nodes, tree, onSaveNodes
         }}
         onCancel={() => setConfirmAction(null)}
       />
-      {/* 过滤与图例栏 */}
-      <div className="bento-card mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <label className="text-sm font-chinese text-gray-700 dark:text-slate-300">{tr('按类型筛选：', 'Filter by type:')}</label>
-            <select
-              value={filterType || ''}
-              onChange={e => setFilterType(e.target.value || null)}
-              className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-3 py-2 text-gray-900 dark:text-slate-100"
-            >
-              <option value="">{tr('全部', 'All')}</option>
-              {Object.keys(rsipTypeEmojiMap).map(t => (
-                <option key={t} value={t}>
-                  {getRsipTypeLabel(language, t)}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setFilterType(null)}
-              className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-slate-700 text-xs"
-            >
-              {tr('清除', 'Clear')}
-            </button>
-          </div>
-          <div className="flex items-center space-x-2">
-            {Object.keys(rsipTypeColorMap).map(t => {
-              const col = rsipTypeColorMap[t];
-              return (
-                <div key={t} className={`px-2 py-1 rounded-lg ${col.badge} text-xs font-chinese`}>
-                  {getRsipTypeLabel(language, t)}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+
+      <RSIPFilters filterType={filterType} onFilterTypeChange={setFilterType} language={language} tr={tr} />
 
       {/* Tree */}
-      <div ref={viewportRef} className="relative w-full h-[60vh] min-h-[400px]">
-        {tree.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-600 dark:text-slate-400 font-chinese">
-            {tr('尚无国策，先从上方表单添加一个吧。', 'No policies yet. Add one from the form above.')}
-          </div>
-        ) : (
-          <TransformWrapper
-            ref={transformRef}
-            initialScale={1}
-            initialPositionX={0}
-            initialPositionY={0}
-            minScale={0.1}
-            maxScale={2}
-            limitToBounds={false}
-            panning={{ excluded: ['rsip-node'] }}
-            onTransformed={(_, state) => {
-              const next: CanvasState = {
-                scale: state.scale,
-                positionX: state.positionX,
-                positionY: state.positionY,
-              };
-              latestTransformRef.current = next;
-              saveCanvasState(next);
-            }}
-          >
-            {({ zoomIn, zoomOut }) => (
-              <>
-                <TransformComponent
-                  wrapperClass="rsip-canvas-wrapper w-full h-full rounded-2xl overflow-hidden"
-                  contentClass="relative rsip-canvas-content"
-                >
-                  <div
-                    ref={containerRef}
-                    className="relative"
-                    style={{
-                      width: contentBounds ? Math.ceil(contentBounds.width + 120) : '100%',
-                      height: Math.ceil(Math.max(containerHeight, (contentBounds?.height ?? 0) + 120)),
-                    }}
-                  >
-                    {/* SVG overlay for connectors */}
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <marker
-                          id="rsip-arrow"
-                          markerWidth="8"
-                          markerHeight="8"
-                          refX="6"
-                          refY="4"
-                          orient="auto"
-                          markerUnits="userSpaceOnUse"
-                        >
-                          <path d="M0,0 L8,4 L0,8 z" fill="#6b7280" />
-                        </marker>
-                      </defs>
-                      {connectors.map(({ id, d, isHovered }) => (
-                        <path
-                          key={id}
-                          ref={el => {
-                            if (el) connectorRefs.current[id] = el;
-                          }}
-                          d={d}
-                          fill="none"
-                          stroke={isHovered ? '#f59e0b' : '#9ca3af'}
-                          strokeWidth={isHovered ? 3 : 2}
-                          className="transition-all duration-200"
-                          markerEnd="url(#rsip-arrow)"
-                        />
-                      ))}
-                    </svg>
-
-                    {/* Render nodes */}
-                    {Object.values(nodePositions).map(({ node, style }) => {
-                      const endsAt = activeTimers[node.id];
-                      const isRunning = Boolean(endsAt && endsAt > now);
-                      const remaining = isRunning && endsAt ? endsAt - now : 0;
-                      const timerMinutes = node.timerMinutes || 15;
-                      const isInvalidParentTarget = Boolean(reparentingId && invalidParentIds.has(node.id));
-                      const isReparentingSelected = reparentingId === node.id;
-
-                      return (
-                        <RSIPNodeCard
-                          key={node.id}
-                          node={node}
-                          style={style}
-                          setNodeRef={(el) => {
-                            nodeRefs.current[node.id] = el;
-                          }}
-                          isHighlighted={hoveredChainIds.has(node.id)}
-                          isPinned={pinnedId === node.id}
-                          isInvalidParentTarget={isInvalidParentTarget}
-                          isReparentingSelected={isReparentingSelected}
-                          onCardClick={() => {
-                            if (reparentingId) {
-                              if (isInvalidParentTarget) {
-                                setRelationError(tr('不能选择该节点作为父节点（会形成循环）。', 'Cannot choose this node as parent (would create a cycle).'));
-                                return;
-                              }
-                              commitReparent(reparentingId, node.id);
-                              return;
-                            }
-                            setPinnedId(prev => (prev === node.id ? null : node.id));
-                          }}
-                          onHoverStart={() => setHoveredId(node.id)}
-                          onHoverEnd={() => setHoveredId(null)}
-                          onToggleReparent={() => {
-                            setPinnedId(node.id);
-                            setRelationError(null);
-                            setReparentingId(prev => (prev === node.id ? null : node.id));
-                          }}
-                          onMarkFailed={() => handleFailure(node.id)}
-                          timer={{
-                            isRunning,
-                            remainingMs: remaining,
-                            minutes: timerMinutes,
-                            onStart: () => handleStartTimer(node.id, timerMinutes),
-                            onStop: () => handleStopTimer(node.id),
-                          }}
-                          formatRemaining={formatRemaining}
-                          formatMinutesLabel={formatMinutesLabel}
-                          tr={tr}
-                        />
-                      );
-                    })}
-                  </div>
-                </TransformComponent>
-
-                {reparentingId && (
-                  <div className="absolute top-4 left-4 right-4 z-30 pointer-events-none">
-                    <div className="pointer-events-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-white/50 dark:border-white/10 bg-white/70 dark:bg-slate-900/50 backdrop-blur-xl px-4 py-3 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.5)]">
-                      <div className="min-w-0">
-                        <div className="text-sm font-chinese text-gray-900 dark:text-slate-100">{tr('选择新的父节点', 'Select a new parent')}</div>
-                        <div className="text-xs text-gray-600 dark:text-slate-300 font-chinese">
-                          {tr('正在移动：', 'Moving: ')}
-                          <span className="font-semibold">{nodesById.get(reparentingId)?.title ?? reparentingId}</span>
-                          {tr('。点击目标节点作为父节点，或设为根。', '. Tap a node to set as parent, or make it a root.')}
-                        </div>
-                        {relationError && (
-                          <div className="mt-1 text-xs text-red-600 dark:text-red-300 font-chinese">{relationError}</div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 self-end sm:self-auto">
-                        <button
-                          type="button"
-                          onClick={() => commitReparent(reparentingId, undefined)}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
-                        >
-                          <CornerUpLeft size={16} />
-                          <span className="text-sm font-chinese">{tr('设为根', 'Make root')}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => cancelReparent()}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
-                        >
-                          <X size={16} />
-                          <span className="text-sm font-chinese">{tr('取消', 'Cancel')}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Controls */}
-                <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-20">
-                  <button
-                    type="button"
-                    onClick={() => zoomIn()}
-                    className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
-                    aria-label={tr('放大', 'Zoom in')}
-                    title={tr('放大', 'Zoom in')}
-                  >
-                    <Plus size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => zoomOut()}
-                    className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
-                    aria-label={tr('缩小', 'Zoom out')}
-                    title={tr('缩小', 'Zoom out')}
-                  >
-                    <Minus size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fitToContent()}
-                    className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
-                    aria-label={tr('适应内容', 'Fit to content')}
-                    title={tr('适应内容', 'Fit to content')}
-                  >
-                    <Maximize2 size={18} />
-                  </button>
-                </div>
-              </>
-            )}
-          </TransformWrapper>
-        )}
-      </div>
+      <RSIPTree
+        tree={tree}
+        nodePositions={nodePositions}
+        connectors={connectors}
+        containerHeight={containerHeight}
+        contentBounds={contentBounds}
+        viewportRef={viewportRef}
+        containerRef={containerRef}
+        transformRef={transformRef}
+        onTransformed={handleTransformed}
+        onFitToContent={fitToContent}
+        now={now}
+        activeTimers={activeTimers}
+        hoveredChainIds={hoveredChainIds}
+        pinnedId={pinnedId}
+        reparentingId={reparentingId}
+        invalidParentIds={invalidParentIds}
+        reparentingTitle={reparentingTitle}
+        relationError={relationError}
+        onTogglePinned={togglePinned}
+        onHoverStart={handleHoverStart}
+        onHoverEnd={handleHoverEnd}
+        onToggleReparent={toggleReparenting}
+        onCommitReparent={commitReparent}
+        onCancelReparent={cancelReparent}
+        onSetRelationError={setRelationError}
+        onMarkFailed={handleFailure}
+        onStartTimer={handleStartTimer}
+        onStopTimer={handleStopTimer}
+        setNodeRef={setNodeRef}
+        formatRemaining={formatRemaining}
+        formatMinutesLabel={formatMinutesLabel}
+        tr={tr}
+      />
     </>
   );
 };
