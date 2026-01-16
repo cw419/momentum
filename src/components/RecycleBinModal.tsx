@@ -33,6 +33,20 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
     chainNames: string[];
   } | null>(null);
 
+  // ESC 键关闭
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !showConfirmDialog) {
+      onClose();
+    }
+  }, [onClose, showConfirmDialog]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
+
   // 加载已删除的链条
   const loadDeletedChains = useCallback(async () => {
     setIsLoading(true);
@@ -258,7 +272,12 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recycle-bin-modal-title"
+        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-gray-200 dark:border-slate-600">
           <div className="flex items-center space-x-3">
@@ -266,7 +285,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
               <Trash2 size={20} className="text-gray-600 dark:text-slate-300" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+              <h2 id="recycle-bin-modal-title" className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
                 {tr('回收箱', 'Recycle bin')}
               </h2>
               <p className="text-sm text-gray-500 dark:text-slate-400 font-mono">
@@ -277,7 +296,9 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={tr('关闭', 'Close')}
             className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
           >
             <X size={20} className="text-gray-600 dark:text-slate-300" />
@@ -320,7 +341,9 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <button
+                        type="button"
                         onClick={handleSelectAll}
+                        aria-label={selectedChains.size === deletedChains.length ? tr('取消全选', 'Clear selection') : tr('全选', 'Select all')}
                         className="flex items-center space-x-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 transition-colors"
                       >
                         {selectedChains.size === deletedChains.length ? (
@@ -344,14 +367,18 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
                     {selectedChains.size > 0 && (
                       <div className="flex items-center space-x-2">
                         <button
+                          type="button"
                           onClick={handleBulkRestore}
+                          aria-label={tr('批量恢复', 'Restore selected')}
                           className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors text-sm font-medium"
                         >
                           <RotateCcw size={16} />
                           <span>{tr('批量恢复', 'Restore selected')}</span>
                         </button>
                         <button
+                          type="button"
                           onClick={handleBulkPermanentDelete}
+                          aria-label={tr('永久删除', 'Delete permanently')}
                           className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors text-sm font-medium"
                         >
                           <Trash2 size={16} />
@@ -364,7 +391,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
               )}
 
               {/* Chains List */}
-              <div className="flex-1 overflow-y-auto p-8">
+              <div className="flex-1 overflow-y-auto p-8" style={{ overscrollBehavior: 'contain' }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {deletedChains.map(chain => (
                     <DeletedChainCard

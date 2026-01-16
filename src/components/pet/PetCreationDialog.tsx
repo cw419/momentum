@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../../i18n';
 
 interface PetCreationDialogProps {
@@ -10,6 +10,18 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
   const { tr } = useI18n();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+
+  // ESC 键关闭
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onCancel();
+    }
+  }, [onCancel]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +42,17 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 animate-scale-in">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pet-creation-dialog-title"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 animate-scale-in"
+        style={{ overscrollBehavior: 'contain' }}
+      >
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-5xl mb-3">🥒</div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+          <h2 id="pet-creation-dialog-title" className="text-xl font-bold text-gray-800 dark:text-gray-100">
             {tr('领养你的宠物', 'Adopt Your Pet')}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
@@ -47,12 +65,16 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
           <div className="mb-4">
             <input
               type="text"
+              name="petName"
               value={name}
               onChange={e => {
                 setName(e.target.value);
                 setError('');
               }}
               placeholder={tr('宠物名称...', 'Pet name...')}
+              aria-label={tr('宠物名称', 'Pet name')}
+              aria-invalid={!!error}
+              aria-describedby={error ? 'pet-name-error' : undefined}
               className={`
                 w-full px-4 py-3 rounded-xl border-2
                 ${error ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'}
@@ -65,7 +87,7 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
               autoFocus
               maxLength={20}
             />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p id="pet-name-error" className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
 
           {/* Buttons */}

@@ -161,19 +161,24 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
         {/* Menu button */}
         <div className="absolute top-6 right-6">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
+            aria-label={tr('更多选项', 'More options')}
+            aria-expanded={showMenu ? 'true' : 'false'}
             className="p-2 text-gray-400 hover:text-[#161615] transition-colors rounded-lg hover:bg-gray-100"
           >
             <MoreHorizontal size={16} />
           </button>
-          
+
           {showMenu && (
             <div className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl border border-gray-200 dark:border-slate-600 py-2 z-10 min-w-[140px]">
               <button
+                type="button"
                 onClick={handleDeleteClick}
+                aria-label={tr('删除链条', 'Delete chain')}
                 className="w-full px-4 py-3 text-left text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
               >
                 <Trash2 size={14} />
@@ -185,26 +190,26 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
 
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
-          <div className="flex-1 pr-4">
+          <div className="flex-1 min-w-0 pr-4">
             <div className="flex items-center space-x-3 mb-3">
-              <div className={`w-8 h-8 rounded-xl ${typeConfig.bgColor} flex items-center justify-center`}>
+              <div className={`w-8 h-8 rounded-xl ${typeConfig.bgColor} flex items-center justify-center flex-shrink-0`}>
                 <Icon name={typeConfig.icon} size={14} className={typeConfig.color} />
               </div>
-              <div>
-                <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 group-hover:text-primary-500 transition-colors">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 group-hover:text-primary-500 transition-colors truncate">
                   {chain.name}
                 </h3>
                 {chain.type !== 'unit' && (
-                  <p className="text-xs font-mono text-gray-500 tracking-wide">
+                  <p className="text-xs font-mono text-gray-500 tracking-wide truncate">
                     {typeConfig.name}
                   </p>
                 )}
               </div>
             </div>
-            <p className="text-gray-600 dark:text-slate-400 text-sm mb-3 font-mono tracking-wide">
+            <p className="text-gray-600 dark:text-slate-400 text-sm mb-3 font-mono tracking-wide truncate">
               {getTriggerLabel(chain.trigger, language)}
             </p>
-            <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed">
+            <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed line-clamp-2">
               {chain.description}
             </p>
           </div>
@@ -257,23 +262,24 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
         {isScheduled && (
           <div className="bg-gradient-to-r from-blue-500/10 to-blue-600/5 dark:from-blue-500/20 dark:to-blue-600/10 rounded-2xl p-4 mb-6 border border-blue-200/50 dark:border-blue-400/30">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2 text-blue-600">
-                <Bell size={14} />
-                <span className="text-sm font-chinese font-medium">
+              <div className="flex items-center space-x-2 text-blue-600 min-w-0 flex-1 mr-2">
+                <Bell size={14} className="flex-shrink-0" />
+                <span className="text-sm font-chinese font-medium truncate">
                   {tr('预约信号: ', 'Signal: ')}
                   {getAuxiliarySignalLabel(scheduledSession.auxiliarySignal, language)}
                 </span>
               </div>
-              <div className="text-blue-700 dark:text-blue-400 font-mono font-bold text-lg">
+              <div className="text-blue-700 dark:text-blue-400 font-mono font-bold text-lg flex-shrink-0">
                 {formatDuration(timeRemaining)}
               </div>
             </div>
-            <div className="text-blue-600 dark:text-blue-400 text-xs mb-3 font-chinese">
+            <div className="text-blue-600 dark:text-blue-400 text-xs mb-3 font-chinese truncate">
               {tr('请在时间结束前完成: ', 'Complete before time runs out: ')}
               {getTriggerLabel(chain.auxiliaryCompletionTrigger, language)}
             </div>
             <div className="flex space-x-2">
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onCompleteBooking?.(chain.id);
@@ -284,6 +290,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
                 <span className="font-chinese font-medium">{tr('完成预约', 'Complete booking')}</span>
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onCancelScheduledSession?.(chain.id);
@@ -300,15 +307,17 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
         {/* Action buttons */}
         <div className="flex space-x-3" onClick={(e) => e.stopPropagation()}>
           <button
+            type="button"
             onClick={() => onStartChain(chain.id)}
             className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
           >
             <Play size={16} />
             <span className="font-chinese font-semibold">{tr('开始任务', 'Start')}</span>
           </button>
-          
+
           {!isScheduled && (
             <button
+              type="button"
               onClick={() => onScheduleChain(chain.id)}
               className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
             >
@@ -434,12 +443,14 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
             
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
+                type="button"
                 onClick={handleCancelDelete}
                 className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
               >
                 {tr('取消', 'Cancel')}
               </button>
               <button
+                type="button"
                 onClick={handleConfirmDelete}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese"
               >

@@ -150,7 +150,12 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="task-completion-dialog-title"
+        className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center space-x-3">
@@ -158,7 +163,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               <CheckCircle className="text-green-600 dark:text-green-400" size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 id="task-completion-dialog-title" className="text-xl font-bold text-gray-900 dark:text-white">
                 {tr('完成任务', 'Complete task')}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -168,7 +173,9 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
           </div>
           
           <button
+            type="button"
             onClick={handleCancel}
+            aria-label={tr('关闭', 'Close')}
             className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors"
           >
             <X size={20} />
@@ -193,8 +200,9 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowQuickFill(!showQuickFill)}
+                  aria-label={tr('显示历史描述', 'Show history')}
+                  aria-expanded={showQuickFill}
                   className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                  title={tr('显示历史描述 (Shift+Tab)', 'Show history (Shift+Tab)')}
                 >
                   <History size={14} />
                   <span>{tr('历史', 'History')}</span>
@@ -205,6 +213,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
             <input
               ref={descriptionInputRef}
               type="text"
+              name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onKeyDown={handleDescriptionKeyDown}
@@ -213,6 +222,8 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
                   ? tr('例如：完成 CS61A 的第一部分（按 Tab 添加备注或自动填充）', 'e.g. Finish CS61A Part 1 (Tab to add notes or auto-fill)')
                   : tr('例如：完成 CS61A 的第一部分（可选，按 Tab 添加备注）', 'e.g. Finish CS61A Part 1 (optional, Tab to add notes)')
               }
+              aria-label={tr('任务描述', 'Task description')}
+              aria-required={isDurationless}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
               required={isDurationless}
             />
@@ -263,11 +274,13 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               </div>
               <textarea
                 ref={notesTextareaRef}
+                name="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 onKeyDown={handleNotesKeyDown}
                 placeholder={tr('添加更多详细信息或感想…', 'Add more details or thoughts…')}
                 rows={3}
+                aria-label={tr('备注', 'Notes')}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -285,6 +298,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
                   notesTextareaRef.current?.focus();
                 }, 100);
               }}
+              aria-label={tr('添加备注', 'Add notes')}
               className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
               {tr('+ 添加备注', '+ Add notes')}
@@ -296,14 +310,18 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
         <div className="flex-shrink-0 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
           <div className="flex justify-end space-x-3">
             <button
+              type="button"
               onClick={handleCancel}
+              aria-label={tr('取消', 'Cancel')}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               {tr('取消', 'Cancel')}
             </button>
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={isDurationless && !description.trim()}
+              aria-label={tr('完成任务', 'Complete task')}
               className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
             >
               {tr('完成任务', 'Complete')}

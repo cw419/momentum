@@ -65,7 +65,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
             <div className="w-full max-w-md">
                 {onBack && (
                     <button
+                        type="button"
                         onClick={onBack}
+                        aria-label={tr('返回', 'Go back')}
                         className="mb-8 flex items-center space-x-2 text-[#6C6C70] hover:text-[#1C1C1E] dark:text-[#8E8E93] dark:hover:text-white transition-colors pl-2"
                     >
                         <ArrowLeft size={20} />
@@ -93,10 +95,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                             <div className="relative">
                                 <input
                                     type="email"
+                                    name="email"
+                                    autoComplete="email"
+                                    spellCheck="false"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full h-14 pl-12 pr-4 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
+                                    className="w-full h-14 pl-12 pr-4 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 focus:ring-2 focus:ring-[#007AFF]/20 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
                                     placeholder="name@example.com"
                                 />
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={20} />
@@ -110,17 +115,22 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                             <div className="relative">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                                    spellCheck="false"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full h-14 pl-12 pr-12 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
+                                    className="w-full h-14 pl-12 pr-12 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 focus:ring-2 focus:ring-[#007AFF]/20 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
                                     placeholder="••••••••"
                                 />
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={20} />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white transition-colors"
+                                    aria-label={showPassword ? tr('隐藏密码', 'Hide password') : tr('显示密码', 'Show password')}
+                                    aria-pressed={showPassword}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 rounded"
                                 >
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
@@ -160,8 +170,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                         <p className="text-sm text-[#6C6C70] dark:text-[#8E8E93]">
                             {isSignUp ? tr('已有账号？', 'Already have an account?') : tr('没有账号？', "Don't have an account?")}{' '}
                             <button
+                                type="button"
                                 onClick={() => setIsSignUp(!isSignUp)}
-                                className="font-bold text-[#1C1C1E] dark:text-white hover:underline transition-all"
+                                aria-label={isSignUp ? tr('切换到登录', 'Switch to sign in') : tr('切换到注册', 'Switch to sign up')}
+                                className="font-bold text-[#1C1C1E] dark:text-white hover:underline transition-all focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 rounded"
                             >
                                 {isSignUp ? tr('登录', 'Sign In') : tr('注册', 'Sign Up')}
                             </button>

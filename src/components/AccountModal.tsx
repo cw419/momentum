@@ -164,14 +164,22 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 w-full max-w-md">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="account-modal-title"
+        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 w-full max-w-md"
+        style={{ overscrollBehavior: 'contain' }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+          <h2 id="account-modal-title" className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
             {t('settings.title')}
           </h2>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={tr('关闭', 'Close')}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
           >
             <X size={24} />
@@ -247,7 +255,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                 {error}
               </p>
               <button
+                type="button"
                 onClick={loadUser}
+                aria-label={tr('重试加载用户信息', 'Retry loading user info')}
                 className="text-primary-500 hover:text-primary-600 font-medium transition-colors font-chinese"
               >
                 {tr('重试', 'Retry')}
@@ -356,8 +366,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
                       <p className="text-sm text-red-700 dark:text-red-300">
                         {gamblingError}
                       </p>
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => setGamblingError(null)}
+                        aria-label={tr('关闭错误消息', 'Dismiss error')}
                         className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
                       >
                         <X size={14} />
@@ -369,8 +381,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
 
               {/* Sign Out Button */}
               <button
+                type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
+                aria-label={tr('退出登录', 'Sign out')}
                 className="w-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 px-6 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese border border-red-200 dark:border-red-800"
               >
                 {signingOut ? (

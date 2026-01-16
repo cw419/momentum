@@ -233,19 +233,25 @@ export const BettingModal: React.FC<BettingModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="betting-modal-title"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg">
               <Dices className="text-white" size={20} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            <h2 id="betting-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
               {tr('任务押注', 'Task bet')}
             </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={tr('关闭', 'Close')}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <X size={24} />
@@ -264,7 +270,9 @@ export const BettingModal: React.FC<BettingModalProps> = ({
               <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
               <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
               <button
+                type="button"
                 onClick={loadData}
+                aria-label={tr('重新加载数据', 'Reload data')}
                 className="text-primary-500 hover:text-primary-600 font-medium transition-colors"
               >
                 {tr('重新加载', 'Reload')}
@@ -331,13 +339,15 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                 <div className="relative">
                   <input
                     type="number"
+                    name="betAmount"
                     min="1"
                     max={availablePoints}
-                     value={betAmount}
-                     onChange={(e) => handleBetAmountChange(e.target.value)}
-                     placeholder={tr('输入押注积分数', 'Enter points to bet')}
-                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                   />
+                    value={betAmount}
+                    onChange={(e) => handleBetAmountChange(e.target.value)}
+                    placeholder={tr('输入押注积分数', 'Enter points to bet')}
+                    aria-label={tr('押注金额', 'Bet amount')}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                  />
                     {betAmount && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
                       {language === 'zh' ? `→ ${betAmount} 积分` : `→ ${betAmount} pts`}
@@ -350,8 +360,10 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                   <div className="flex flex-wrap gap-2">
                     {quickBetOptions.map(amount => (
                       <button
+                        type="button"
                         key={amount}
                         onClick={() => setQuickBetAmount(amount)}
+                        aria-label={tr(`快速押注 ${amount} 积分`, `Quick bet ${amount} points`)}
                         className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
                       >
                         {amount}
@@ -359,7 +371,9 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                     ))}
                     {availablePoints > 0 && (
                       <button
+                        type="button"
                         onClick={() => setQuickBetAmount(availablePoints)}
+                        aria-label={tr(`押注全部 ${availablePoints} 积分`, `Bet all ${availablePoints} points`)}
                         className="px-3 py-1 text-sm bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-lg transition-colors"
                       >
                         {tr('全部', 'All')}
@@ -396,8 +410,10 @@ export const BettingModal: React.FC<BettingModalProps> = ({
               {/* 押注按钮 */}
               <div className="space-y-3">
                 <button
+                  type="button"
                   onClick={handlePlaceBet}
                   disabled={isPlacingBet || !betAmount || validationError !== null || availablePoints === 0}
+                  aria-label={tr('确认押注', 'Confirm bet')}
                   className={`
                     w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200
                     ${isPlacingBet || !betAmount || validationError !== null || availablePoints === 0
@@ -422,7 +438,9 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                 </button>
 
                 <button
+                  type="button"
                   onClick={onClose}
+                  aria-label={tr('取消押注', 'Cancel bet')}
                   className="w-full py-3 px-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
                 >
                   {tr('取消', 'Cancel')}

@@ -3,7 +3,7 @@
  * 处理从旧例外规则系统到新系统的迁移
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   MigrationResult, 
   MigrationProgress,
@@ -49,6 +49,20 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
   const [migrationProgress, setMigrationProgress] = useState<MigrationProgress | null>(null);
   const [migrationResult, setMigrationResult] = useState<MigrationResult | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+
+  // ESC 键关闭
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !migrating) {
+      onClose();
+    }
+  }, [onClose, migrating]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
 
   // 检查迁移需求
   useEffect(() => {
@@ -148,7 +162,12 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="migration-dialog-title"
+        className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl"
+      >
         {/* 头部 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -156,7 +175,7 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
               <Database className="text-blue-500" size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 id="migration-dialog-title" className="text-xl font-bold text-gray-900 dark:text-white">
                 {tr('数据迁移', 'Data migration')}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -166,15 +185,17 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
           </div>
           
           <button
+            type="button"
             onClick={onClose}
             disabled={migrating}
+            aria-label={tr('关闭', 'Close')}
             className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]" style={{ overscrollBehavior: 'contain' }}>
           {/* 加载状态 */}
           {loading && (
             <div className="text-center py-8">
@@ -255,7 +276,10 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
                       {tr('重复规则详情', 'Duplicate rule details')}
                     </h4>
                     <button
+                      type="button"
                       onClick={() => setShowDetails(!showDetails)}
+                      aria-expanded={showDetails}
+                      aria-label={showDetails ? tr('收起重复规则详情', 'Collapse duplicate rule details') : tr('展开重复规则详情', 'Expand duplicate rule details')}
                       className="text-sm text-primary-500 hover:text-primary-600"
                     >
                       {showDetails ? tr('收起', 'Collapse') : tr('展开', 'Expand')}
@@ -291,13 +315,17 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
               {/* 迁移按钮 */}
               <div className="flex items-center justify-end space-x-3">
                 <button
+                  type="button"
                   onClick={onClose}
+                  aria-label={tr('稍后迁移', 'Later')}
                   className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
                 >
                   {tr('稍后迁移', 'Later')}
                 </button>
                 <button
+                  type="button"
                   onClick={handleStartMigration}
+                  aria-label={tr('开始迁移', 'Start migration')}
                   className="px-6 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white transition-colors flex items-center space-x-2"
                 >
                   <Database size={16} />
@@ -415,14 +443,18 @@ export const MigrationDialog: React.FC<MigrationDialogProps> = ({
               {/* 操作按钮 */}
               <div className="flex items-center justify-end space-x-3">
                 <button
+                  type="button"
                   onClick={handleDownloadReport}
+                  aria-label={tr('下载报告', 'Download report')}
                   className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors flex items-center space-x-2"
                 >
                   <Download size={16} />
                   <span>{tr('下载报告', 'Download report')}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={onClose}
+                  aria-label={tr('完成', 'Done')}
                   className="px-6 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white transition-colors"
                 >
                   {tr('完成', 'Done')}

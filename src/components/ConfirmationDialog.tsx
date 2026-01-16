@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 interface ConfirmationDialogProps {
@@ -22,23 +22,45 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  // ESC 键关闭
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onCancel();
+    }
+  }, [onCancel]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-dialog-title"
+        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md"
+        style={{ overscrollBehavior: 'contain' }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-600">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
               <AlertTriangle size={20} className="text-orange-600 dark:text-orange-400" />
             </div>
-            <h3 className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+            <h3 id="confirmation-dialog-title" className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100">
               {title}
             </h3>
           </div>
           <button
+            type="button"
             onClick={onCancel}
+            aria-label="关闭"
             className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
           >
             <X size={16} className="text-gray-600 dark:text-slate-300" />
@@ -55,12 +77,14 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         {/* Actions */}
         <div className="flex space-x-3 p-6 pt-0">
           <button
+            type="button"
             onClick={onCancel}
             className="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-xl transition-colors font-medium"
           >
             {cancelText}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             className={`flex-1 px-4 py-3 text-white rounded-xl transition-colors font-medium ${confirmButtonClass}`}
           >

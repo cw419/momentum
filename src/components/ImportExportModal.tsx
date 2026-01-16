@@ -172,7 +172,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-slate-600 shadow-2xl animate-scale-in">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="import-export-modal-title"
+        className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-slate-600 shadow-2xl animate-scale-in"
+        style={{ overscrollBehavior: 'contain' }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-3">
@@ -180,7 +186,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               <FileText className="text-primary-500" size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+              <h2 id="import-export-modal-title" className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
                 {tr('数据管理', 'Data management')}
               </h2>
               <p className="text-sm font-mono text-gray-500 tracking-wide">
@@ -189,7 +195,9 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={tr('关闭', 'Close')}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700"
           >
             <X size={20} />
@@ -200,6 +208,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         <div className="flex bg-gray-100 dark:bg-slate-700 rounded-2xl p-1 mb-8">
           {chains.length > 0 && (
             <button
+              type="button"
               onClick={() => setActiveTab('export')}
               className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 font-chinese ${
                 activeTab === 'export'
@@ -212,6 +221,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </button>
           )}
           <button
+            type="button"
             onClick={() => setActiveTab('import')}
             className={`${chains.length > 0 ? 'flex-1' : 'w-full'} px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 font-chinese ${
               activeTab === 'import'
@@ -273,8 +283,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 )}
               </p>
               <button
+                type="button"
                 onClick={handleExport}
                 disabled={chains.length === 0}
+                aria-label={tr('导出为 JSON 文件', 'Export as JSON')}
                 className="gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 mx-auto hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese"
               >
                 <Download size={20} />
@@ -326,8 +338,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               </label>
               <input
                 type="file"
+                name="importFile"
                 accept=".json"
                 onChange={handleFileUpload}
+                aria-label={tr('选择要导入的文件', 'Choose a file to import')}
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300"
               />
             </div>
@@ -338,9 +352,11 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 {tr('或手动粘贴 JSON 数据', 'Or paste JSON manually')}
               </label>
               <textarea
+                name="importData"
                 value={importData}
                 onChange={(e) => setImportData(e.target.value)}
                 placeholder={tr('粘贴从 Momentum 导出的 JSON 数据...', 'Paste the JSON exported from Momentum...')}
+                aria-label={tr('JSON 数据', 'JSON data')}
                 className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 resize-none font-mono text-sm"
                 rows={8}
               />
@@ -356,11 +372,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
+                    name="preserveStatistics"
                     checked={importOptions.preserveStatistics}
                     onChange={(e) => setImportOptions(prev => ({
                       ...prev,
                       preserveStatistics: e.target.checked
                     }))}
+                    aria-label={tr('保留统计数据', 'Preserve statistics')}
                     className="form-checkbox h-4 w-4 text-primary-500 rounded focus:ring-primary-500"
                   />
                   <div className="flex items-center space-x-2">
@@ -374,11 +392,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
+                    name="preserveTimestamps"
                     checked={importOptions.preserveTimestamps}
                     onChange={(e) => setImportOptions(prev => ({
                       ...prev,
                       preserveTimestamps: e.target.checked
                     }))}
+                    aria-label={tr('保留原始时间戳', 'Preserve original timestamps')}
                     className="form-checkbox h-4 w-4 text-primary-500 rounded focus:ring-primary-500"
                   />
                   <div className="flex items-center space-x-2">
@@ -392,11 +412,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
+                    name="importCompletionHistory"
                     checked={importOptions.importCompletionHistory}
                     onChange={(e) => setImportOptions(prev => ({
                       ...prev,
                       importCompletionHistory: e.target.checked
                     }))}
+                    aria-label={tr('导入完成历史记录', 'Import completion history')}
                     className="form-checkbox h-4 w-4 text-primary-500 rounded focus:ring-primary-500"
                   />
                   <div className="flex items-center space-x-2">
@@ -473,8 +495,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             {/* Import Button */}
             <div className="text-center">
               <button
+                type="button"
                 onClick={handleImport}
                 disabled={!importData.trim() || importStatus === 'success' || importStatus === 'checking-auth' || importStatus === 'creating-session' || importStatus === 'importing'}
+                aria-label={tr('导入数据', 'Import data')}
                 className="gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 mx-auto hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese"
               >
                 {(importStatus === 'checking-auth' || importStatus === 'creating-session' || importStatus === 'importing') ? (
