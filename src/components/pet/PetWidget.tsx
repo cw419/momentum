@@ -240,6 +240,7 @@ export function PetWidget({
                 }}
                 className="p-2 rounded-full bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:scale-105 transition-all"
                 title={tr('展开宠物', 'Expand pet')}
+                aria-label={tr('展开宠物', 'Expand pet')}
               >
                 <PetAvatar stage={pet.stage} mood={mood} size="sm" />
               </button>
@@ -266,8 +267,9 @@ export function PetWidget({
                     }}
                     className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
                     title={tr('最小化', 'Minimize')}
+                    aria-label={tr('最小化', 'Minimize')}
                   >
-                    <Minimize2 size={14} />
+                    <Minimize2 size={14} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -284,6 +286,7 @@ export function PetWidget({
                   type="button"
                   onClick={handleFeed}
                   disabled={isFeeding || pet.hunger <= 5}
+                  aria-label={tr('喂食', 'Feed')}
                   className={`
                     w-full flex items-center justify-center gap-2
                     py-2 px-3 rounded-xl mb-2
@@ -296,7 +299,7 @@ export function PetWidget({
                     ${isFeeding ? 'animate-pulse' : ''}
                   `}
                 >
-                  <Cookie size={16} />
+                  <Cookie size={16} aria-hidden="true" />
                   {isFeeding ? tr('喂食中...', 'Feeding...') : tr('喂食', 'Feed')}
                 </button>
 

@@ -187,11 +187,13 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
         }}
       >
         <button
+          type="button"
           onClick={() => onCreateNew(searchQuery)}
+          aria-label={tr(`创建新规则: "${searchQuery}"`, `Create new rule: "${searchQuery}"`)}
           className="w-full flex items-center space-x-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors text-left"
           style={{ height: itemHeight }}
         >
-          <Plus className="text-primary-500 flex-shrink-0" size={20} />
+          <Plus className="text-primary-500 flex-shrink-0" size={20} aria-hidden="true" />
           <div className="flex-1 min-w-0">
             <div className="font-medium text-primary-700 dark:text-primary-300 truncate">
               {tr(`创建新规则: "${searchQuery}"`, `Create new rule: "${searchQuery}"`)}
@@ -223,6 +225,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
         data-rule-item
       >
         <button
+          type="button"
           onClick={() => onSelect(rule)}
           className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 text-left border border-transparent hover:border-primary-200 dark:hover:border-primary-500/30"
           style={{ height: itemHeight }}
@@ -233,14 +236,14 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center space-x-4">
               <span className="flex items-center space-x-1">
-                <TrendingUp size={12} />
+                <TrendingUp size={12} aria-hidden="true" />
                 <span>
                   {language === 'zh' ? `使用过 ${rule.usageCount || 0} 次` : `Used ${rule.usageCount || 0} time${(rule.usageCount || 0) === 1 ? '' : 's'}`}
                 </span>
               </span>
               {rule.lastUsedAt && (
                 <span className="flex items-center space-x-1">
-                  <History size={12} />
+                  <History size={12} aria-hidden="true" />
                   <span>{formatLastUsed(rule.lastUsedAt)}</span>
                 </span>
               )}
@@ -251,7 +254,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2 ml-4">
             {/* 使用频率可视化 */}
             <div className="flex items-center space-x-1">
@@ -266,7 +269,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
                 />
               ))}
             </div>
-            <CheckCircle className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0" size={20} />
+            <CheckCircle className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0" size={20} aria-hidden="true" />
           </div>
         </button>
       </div>
@@ -281,10 +284,12 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
       </div>
       {searchQuery && onCreateNew && (
         <button
+          type="button"
           onClick={() => onCreateNew(searchQuery)}
+          aria-label={tr(`创建 "${searchQuery}"`, `Create "${searchQuery}"`)}
           className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
         >
-          <Plus size={16} />
+          <Plus size={16} aria-hidden="true" />
           <span>{tr(`创建 "${searchQuery}"`, `Create "${searchQuery}"`)}</span>
         </button>
       )}

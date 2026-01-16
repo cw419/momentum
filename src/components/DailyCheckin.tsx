@@ -44,8 +44,10 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           <div className="ml-3">
             <p className="text-red-600 dark:text-red-400 font-medium">{tr('签到功能暂不可用', 'Daily check-in unavailable')}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{error}</p>
-            <button 
+            <button
+              type="button"
               onClick={loadStats}
+              aria-label={tr('重试', 'Retry')}
               className="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
             >
               {tr('重试', 'Retry')}
@@ -61,15 +63,18 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
       {/* 标题 */}
       <div className="flex items-center justify-between mb-6">
         <button
+          type="button"
           onClick={toggleCollapsed}
+          aria-label={tr('展开/折叠签到', 'Toggle check-in')}
+          aria-expanded={!isCollapsed}
           className="flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
-          <Calendar className="w-5 h-5 mr-2 text-primary-500" />
+          <Calendar className="w-5 h-5 mr-2 text-primary-500" aria-hidden="true" />
           {tr('每日签到', 'Daily Check-in')}
           {isCollapsed ? (
-            <ChevronDown className="w-5 h-5 ml-2 text-gray-500" />
+            <ChevronDown className="w-5 h-5 ml-2 text-gray-500" aria-hidden="true" />
           ) : (
-            <ChevronUp className="w-5 h-5 ml-2 text-gray-500" />
+            <ChevronUp className="w-5 h-5 ml-2 text-gray-500" aria-hidden="true" />
           )}
         </button>
         <div className="flex items-center space-x-2">
@@ -87,12 +92,14 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
               )}
             </div>
           )}
-          <button 
+          <button
+            type="button"
             onClick={loadStats}
+            aria-label={tr('刷新数据', 'Refresh')}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             title={tr('刷新数据', 'Refresh')}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
@@ -154,11 +161,13 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           </div>
         ) : (
           <button
+            type="button"
             onClick={handleCheckin}
             disabled={isCheckingIn}
+            aria-label={tr('立即签到', 'Check in now')}
             className={`
               w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200
-              ${isCheckingIn 
+              ${isCheckingIn
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'
               }
@@ -166,12 +175,12 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
           >
             {isCheckingIn ? (
               <div className="flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin mr-3" />
+                <Loader2 className="w-6 h-6 animate-spin mr-3" aria-hidden="true" />
                 {tr('签到中...', 'Checking in...')}
               </div>
             ) : (
               <div className="flex items-center justify-center">
-                <Gift className="w-6 h-6 mr-3" />
+                <Gift className="w-6 h-6 mr-3" aria-hidden="true" />
                 {tr('立即签到', 'Check in now')}
               </div>
             )}
@@ -196,11 +205,13 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
                 <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
                 <p className="text-red-700 dark:text-red-300">{error}</p>
               </div>
-              <button 
+              <button
+                type="button"
                 onClick={clearError}
+                aria-label={tr('关闭', 'Close')}
                 className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>

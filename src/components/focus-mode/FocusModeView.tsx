@@ -98,19 +98,23 @@ export function FocusModeView({
       <div className="absolute top-4 right-4 z-20 flex items-center space-x-2">
         {!isFullscreen ? (
           <button
+            type="button"
             onClick={onEnterFullscreen}
+            aria-label={tr('进入全屏', 'Enter fullscreen')}
             className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-gray-600 dark:text-gray-300 transition-all duration-300 border border-white/20"
             title={tr('进入全屏 (F11)', 'Enter fullscreen (F11)')}
           >
-            <Maximize size={20} />
+            <Maximize size={20} aria-hidden="true" />
           </button>
         ) : (
           <button
+            type="button"
             onClick={onExitFullscreen}
+            aria-label={tr('退出全屏', 'Exit fullscreen')}
             className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-gray-600 dark:text-gray-300 transition-all duration-300 border border-white/20"
             title={tr('退出全屏 (ESC)', 'Exit fullscreen (ESC)')}
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -222,11 +226,13 @@ export function FocusModeView({
       {!session.isPaused && (
         <div className="fixed bottom-6 right-6 z-30">
           <button
+            type="button"
             onClick={onInterruptClick}
+            aria-label={tr('中断任务', 'Interrupt')}
             className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center border-2 border-red-400"
             title={tr('中断任务', 'Interrupt')}
           >
-            <AlertTriangle size={24} />
+            <AlertTriangle size={24} aria-hidden="true" />
           </button>
         </div>
       )}

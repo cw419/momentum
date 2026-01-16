@@ -114,22 +114,26 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
         {/* Menu button */}
         <div className="absolute top-6 right-6">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
+            aria-label={tr('更多选项', 'More options')}
+            aria-expanded={showMenu}
             className="p-2 text-gray-400 hover:text-[#161615] transition-colors rounded-lg hover:bg-gray-100"
           >
-            <MoreHorizontal size={20} />
+            <MoreHorizontal size={20} aria-hidden="true" />
           </button>
-          
+
           {showMenu && (
             <div className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl border border-gray-200 dark:border-slate-600 py-2 z-10 min-w-[140px]">
               <button
+                type="button"
                 onClick={handleDeleteClick}
                 className="w-full px-4 py-3 text-left text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
               >
-                <Trash2 size={14} />
+                <Trash2 size={14} aria-hidden="true" />
                 <span className="font-chinese font-medium">{tr('删除任务群', 'Delete group')}</span>
               </button>
             </div>
@@ -227,27 +231,31 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             </div>
             <div className="flex space-x-2">
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (activeScheduledSession) {
                     onCompleteBooking?.(activeScheduledSession.chainId);
                   }
                 }}
+                aria-label={tr('完成预约', 'Complete booking')}
                 className="flex-1 bg-green-500/10 hover:bg-green-500/20 dark:bg-green-500/20 dark:hover:bg-green-500/30 text-green-600 dark:text-green-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-green-200/50 dark:border-green-400/30"
               >
-                <Check size={16} />
+                <Check size={16} aria-hidden="true" />
                 <span className="font-chinese font-medium">{tr('完成预约', 'Complete booking')}</span>
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (activeScheduledSession) {
                     onCancelScheduledSession?.(activeScheduledSession.chainId);
                   }
                 }}
+                aria-label={tr('中断/规则判定', 'Interrupt / Adjudicate')}
                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-3 rounded-xl text-sm transition-colors duration-200 flex items-center justify-center space-x-2 border border-red-200/50 dark:border-red-400/30"
               >
-                <AlertTriangle size={16} />
+                <AlertTriangle size={16} aria-hidden="true" />
                 <span className="font-chinese font-medium">{tr('中断/规则判定', 'Interrupt / Adjudicate')}</span>
               </button>
             </div>
@@ -257,19 +265,23 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
         {/* Action buttons */}
         <div className="flex space-x-3" onClick={(e) => e.stopPropagation()}>
           <button
+            type="button"
             onClick={() => onStartChain(nextUnit ? nextUnit.id : group.id)}
+            aria-label={tr('开始下一个', 'Start next')}
             className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
           >
-            <Play size={16} />
+            <Play size={16} aria-hidden="true" />
             <span className="font-chinese font-semibold">{tr('开始下一个', 'Start next')}</span>
           </button>
-          
+
           {!isScheduled && (
             <button
+              type="button"
               onClick={() => onScheduleChain(nextUnit ? nextUnit.id : group.id)}
+              aria-label={tr('预约', 'Schedule')}
               className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
             >
-              <Clock size={16} />
+              <Clock size={16} aria-hidden="true" />
               <span className="font-chinese font-semibold">{tr('预约', 'Schedule')}</span>
             </button>
           )}
@@ -312,16 +324,20 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
+                type="button"
                 onClick={handleCancelDelete}
+                aria-label={tr('取消', 'Cancel')}
                 className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
               >
                 {tr('取消', 'Cancel')}
               </button>
               <button
+                type="button"
                 onClick={handleConfirmDelete}
+                aria-label={tr('确认删除', 'Delete')}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese"
               >
-                <Trash2 size={16} />
+                <Trash2 size={16} aria-hidden="true" />
                 <span>{tr('确认删除', 'Delete')}</span>
               </button>
             </div>

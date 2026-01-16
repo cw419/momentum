@@ -4,6 +4,7 @@ import { ChainCard } from './ChainCard';
 import { GroupCard } from './GroupCard';
 import { getNextUnitInGroup } from '../utils/chainTree';
 import { isDev } from '../utils/env';
+import { useI18n } from '../i18n';
 
 interface VirtualizedChainListProps {
   topLevelChains: ChainTreeNode[];
@@ -39,6 +40,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
 }) => {
   const [containerHeight, setContainerHeight] = useState(600);
   const [scrollTop, setScrollTop] = useState(0);
+  const { tr } = useI18n();
 
   // Use regular grid for small lists, virtual scrolling for large lists
   const shouldVirtualize = topLevelChains.length > VIRTUALIZATION_THRESHOLD;
@@ -141,9 +143,13 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
   // Regular grid rendering for small lists
   if (!shouldVirtualize) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div
+        role="list"
+        aria-label={tr('任务链列表', 'Task chains list')}
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+      >
         {topLevelChains.map((chainNode, index) => (
-          <div key={`${chainNode.id}-${index}`}>
+          <div key={`${chainNode.id}-${index}`} role="listitem">
             {renderChainItem(chainNode)}
           </div>
         ))}
@@ -155,6 +161,8 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
   return (
     <div
       id="chain-list-container"
+      role="list"
+      aria-label={tr('任务链列表', 'Task chains list')}
       className="relative overflow-auto max-h-[800px] border border-gray-200 dark:border-slate-600 rounded-lg"
       onScroll={handleScroll}
       style={{ height: Math.min(totalHeight, 800) }}
@@ -170,7 +178,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
           }}
         >
           {visibleItems.map((chainNode, index) => (
-            <div key={`${chainNode.id}-${index}`}>
+            <div key={`${chainNode.id}-${index}`} role="listitem">
               {renderChainItem(chainNode)}
             </div>
           ))}

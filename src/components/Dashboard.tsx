@@ -162,11 +162,12 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
         {/* Theme toggle in header */}
         <div className="flex justify-end items-center space-x-4 mb-6">
           <button
+            type="button"
             onClick={handleShowAccountModal}
+            aria-label={t('settings.title')}
             className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105"
-            title={t('settings.title')}
           >
-            <Settings size={18} />
+            <Settings size={18} aria-hidden="true" />
             <span className="font-chinese text-sm">{t('settings.button')}</span>
           </button>
           <NotificationToggle />
@@ -250,26 +251,31 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                   <button
+                    type="button"
                     onClick={onCreateChain}
+                    aria-label={tr('创建第一条链', 'Create chain')}
                     className="gradient-primary hover:shadow-2xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 hover:scale-105 shadow-xl"
                   >
-                    <Plus size={18} />
+                    <Plus size={18} aria-hidden="true" />
                     <span className="font-chinese font-semibold">{tr('创建第一条链', 'Create chain')}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={handleShowImportExport}
+                    aria-label={tr('数据管理', 'Data')}
                     className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
-                    <Download size={16} />
+                    <Download size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('数据管理', 'Data')}</span>
                   </button>
                   {onOpenRSIP && (
                     <button
+                      type="button"
                       onClick={onOpenRSIP}
+                      aria-label={tr('国策树', 'RSIP Tree')}
                       className="bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-6 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
-                      title={tr('国策树（RSIP）', 'RSIP Policy Tree')}
                     >
-                      <TreePine size={16} />
+                      <TreePine size={16} aria-hidden="true" />
                       <span className="font-chinese font-medium">{tr('国策树', 'RSIP Tree')}</span>
                     </button>
                   )}
@@ -289,11 +295,12 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <button
+                    type="button"
                     onClick={handleShowRecycleBin}
+                    aria-label={tr('回收箱', 'Recycle bin')}
                     className="relative shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
-                    title={tr('回收箱', 'Recycle bin')}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('回收箱', 'Recycle bin')}</span>
                     {recycleBinCount > 0 && (
                       <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
@@ -302,33 +309,40 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     )}
                   </button>
                   <button
+                    type="button"
                     onClick={handleShowImportExport}
+                    aria-label={tr('数据管理', 'Data')}
                     className="shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
-                    <Download size={16} />
+                    <Download size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('数据管理', 'Data')}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={onOpenRSIP}
+                    aria-label={tr('国策树', 'RSIP Tree')}
                     className="shrink-0 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
-                    title={tr('国策树（RSIP）', 'RSIP Policy Tree')}
                   >
-                    <TreePine size={16} />
+                    <TreePine size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('国策树', 'RSIP Tree')}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={onCreateChain}
+                    aria-label={tr('新建链', 'New Chain')}
                     className="shrink-0 gradient-dark hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
-                    <Plus size={16} />
+                    <Plus size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('新建链', 'New Chain')}</span>
                   </button>
                   {onCreateTaskGroup && (
                     <button
+                      type="button"
                       onClick={onCreateTaskGroup}
+                      aria-label={tr('新建任务群', 'New Group')}
                       className="shrink-0 bg-green-500 hover:bg-green-600 hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                     >
-                      <Layers size={16} />
+                      <Layers size={16} aria-hidden="true" />
                       <span className="font-chinese font-medium">{tr('新建任务群', 'New Group')}</span>
                     </button>
                   )}
