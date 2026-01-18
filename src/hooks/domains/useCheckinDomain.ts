@@ -12,7 +12,7 @@
  * @see src/domain/checkin.ts - 类型定义
  * @see docs/api/daily-checkin-api-guide.md - API 文档
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
@@ -28,6 +28,26 @@ export function useCheckinDomain() {
   const [stats, setStats] = useState<CheckinStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+
+  // Refs to access latest values without re-creating callbacks
+  const statsRef = useRef(stats);
+  const isCheckingInRef = useRef(isCheckingIn);
+  const languageRef = useRef(language);
+  const trRef = useRef(tr);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
+
+  useEffect(() => {
+    isCheckingInRef.current = isCheckingIn;
+  }, [isCheckingIn]);
+
+  useEffect(() => {
+    languageRef.current = language;
+    trRef.current = tr;
+  }, [language, tr]);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -69,7 +89,9 @@ export function useCheckinDomain() {
   }, [isSupabase, language, storage, tr]);
 
   const handleCheckin = useCallback(async () => {
-    if (!stats || stats.has_checked_in_today || isCheckingIn) {
+    // Use refs to get latest values without causing callback recreation
+    const currentStats = statsRef.current;
+    if (!currentStats || currentStats.has_checked_in_today || isCheckingInRef.current) {
       return;
     }
 
@@ -80,8 +102,8 @@ export function useCheckinDomain() {
 
       const op = await storage.performDailyCheckin();
       if (!op.ok) {
-        const safeDetail = getSafeErrorDetail(op.error.message, language);
-        setError(safeDetail ?? tr('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
+        const safeDetail = getSafeErrorDetail(op.error.message, languageRef.current);
+        setError(safeDetail ?? trRef.current('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
         return;
       }
 
@@ -102,25 +124,25 @@ export function useCheckinDomain() {
         );
 
         setSuccessMessage(
-          tr(
+          trRef.current(
             `签到成功！获得${result.points_earned} 积分，连续签到${result.consecutive_days} 天`,
             `Checked in! Earned ${result.points_earned} points. Streak: ${result.consecutive_days} days.`
           )
         );
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        const safeDetail = result.message ? getSafeErrorDetail(result.message, language) : null;
-        setError(safeDetail ?? tr('签到失败', 'Check-in failed'));
+        const safeDetail = result.message ? getSafeErrorDetail(result.message, languageRef.current) : null;
+        setError(safeDetail ?? trRef.current('签到失败', 'Check-in failed'));
       }
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       logger.error('CHECKIN', '签到失败', undefined, errorObj);
-      const safeDetail = getSafeErrorDetailFromUnknown(err, language);
-      setError(safeDetail ?? tr('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
+      const safeDetail = getSafeErrorDetailFromUnknown(err, languageRef.current);
+      setError(safeDetail ?? trRef.current('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
     } finally {
       setIsCheckingIn(false);
     }
-  }, [isCheckingIn, language, stats, storage, tr]);
+  }, [storage]); // Reduced dependencies: only storage is needed
 
   useEffect(() => {
     loadStats();

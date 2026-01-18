@@ -41,6 +41,28 @@ export class SupabaseStorage implements MomentumStorage {
   private schemaCache: Map<string, SchemaVerificationResult> = new Map();
   private sessionSchemaVerified: Set<string> = new Set();
 
+  // Request deduplication: prevents multiple concurrent calls from triggering duplicate queries
+  private pendingRequests: Map<string, Promise<unknown>> = new Map();
+
+  /**
+   * Deduplicates concurrent requests with the same key.
+   * If a request with the same key is already in-flight, returns the existing promise.
+   * This prevents redundant database queries when multiple components request the same data simultaneously.
+   */
+  private deduplicatedRequest<T>(key: string, request: () => Promise<T>): Promise<T> {
+    const existing = this.pendingRequests.get(key);
+    if (existing) {
+      return existing as Promise<T>;
+    }
+
+    const promise = request().finally(() => {
+      this.pendingRequests.delete(key);
+    });
+
+    this.pendingRequests.set(key, promise);
+    return promise;
+  }
+
   private getClient(): NonNullable<typeof supabase> {
     if (!supabase) {
       throw new Error('Supabase not configured');
@@ -97,18 +119,18 @@ export class SupabaseStorage implements MomentumStorage {
     clearSchemaCache: () => this.clearSchemaCache(),
   };
 
-  // Chains
+  // Chains (with request deduplication for read operations)
   getChains(): Promise<Chain[]> {
-    return chainsApi.getChains(this.ctx);
+    return this.deduplicatedRequest('getChains', () => chainsApi.getChains(this.ctx));
   }
   saveChains(chains: Chain[]): Promise<void> {
     return chainsApi.saveChains(this.ctx, chains);
   }
   getActiveChains(): Promise<Chain[]> {
-    return chainsApi.getActiveChains(this.ctx);
+    return this.deduplicatedRequest('getActiveChains', () => chainsApi.getActiveChains(this.ctx));
   }
   getDeletedChains(): Promise<DeletedChain[]> {
-    return chainsApi.getDeletedChains(this.ctx);
+    return this.deduplicatedRequest('getDeletedChains', () => chainsApi.getDeletedChains(this.ctx));
   }
   softDeleteChain(chainId: string): Promise<void> {
     return chainsApi.softDeleteChain(this.ctx, chainId);
@@ -123,39 +145,39 @@ export class SupabaseStorage implements MomentumStorage {
     return chainsApi.cleanupExpiredDeletedChains(this.ctx, olderThanDays);
   }
 
-  // Scheduled sessions
+  // Scheduled sessions (with request deduplication for read operations)
   getScheduledSessions(): Promise<ScheduledSession[]> {
-    return sessionsApi.getScheduledSessions(this.ctx);
+    return this.deduplicatedRequest('getScheduledSessions', () => sessionsApi.getScheduledSessions(this.ctx));
   }
   saveScheduledSessions(sessions: ScheduledSession[]): Promise<void> {
     return sessionsApi.saveScheduledSessions(this.ctx, sessions);
   }
 
-  // Active session
+  // Active session (with request deduplication for read operations)
   getActiveSession(): Promise<ActiveSession | null> {
-    return sessionsApi.getActiveSession(this.ctx);
+    return this.deduplicatedRequest('getActiveSession', () => sessionsApi.getActiveSession(this.ctx));
   }
   saveActiveSession(session: ActiveSession | null): Promise<void> {
     return sessionsApi.saveActiveSession(this.ctx, session);
   }
 
-  // Completion history
+  // Completion history (with request deduplication for read operations)
   getCompletionHistory(): Promise<CompletionHistory[]> {
-    return historyApi.getCompletionHistory(this.ctx);
+    return this.deduplicatedRequest('getCompletionHistory', () => historyApi.getCompletionHistory(this.ctx));
   }
   saveCompletionHistory(history: CompletionHistory[]): Promise<void> {
     return historyApi.saveCompletionHistory(this.ctx, history);
   }
 
-  // RSIP
+  // RSIP (with request deduplication for read operations)
   getRSIPNodes(): Promise<RSIPNode[]> {
-    return rsipApi.getRSIPNodes(this.ctx);
+    return this.deduplicatedRequest('getRSIPNodes', () => rsipApi.getRSIPNodes(this.ctx));
   }
   saveRSIPNodes(nodes: RSIPNode[]): Promise<void> {
     return rsipApi.saveRSIPNodes(this.ctx, nodes);
   }
   getRSIPMeta(): Promise<RSIPMeta> {
-    return rsipApi.getRSIPMeta(this.ctx);
+    return this.deduplicatedRequest('getRSIPMeta', () => rsipApi.getRSIPMeta(this.ctx));
   }
   saveRSIPMeta(meta: RSIPMeta): Promise<void> {
     return rsipApi.saveRSIPMeta(this.ctx, meta);

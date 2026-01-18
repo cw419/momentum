@@ -73,6 +73,10 @@
 }
 
 @layer utilities {
+    .focus-ring {
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800;
+    }
+
     .glass-panel {
         @apply backdrop-blur-[40px] bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)];
     }

@@ -6,14 +6,12 @@ import { logger } from '../utils/logger';
 import { toError } from '../utils/errorHandling';
 import { isSessionExpired } from '../utils/time';
 import { notificationManager } from '../utils/notifications';
-import { performanceDashboard } from '../utils/performanceDashboard';
 import { isGroupExpired, resetGroupProgress } from '../utils/timeLimit';
 import { initializeRuleSystem } from '../utils/initializeRuleSystem';
 import { runMigration } from '../utils/migration';
 import { soundManager } from '../utils/soundManager';
 import { forwardTimerManager } from '../utils/forwardTimer';
 import { exceptionRuleCache } from '../utils/exceptionRuleCache';
-import { performanceMonitor } from '../utils/performanceMonitor';
 import { ruleStateManager } from '../services/RuleStateManager';
 import { useSafeSaveChains } from '../hooks/domains/useSafeSaveChains';
 import { useChainsDomain } from '../hooks/domains/useChainsDomain';
@@ -110,9 +108,27 @@ export default function AppShellContainer() {
     forwardTimerManager.start();
     exceptionRuleCache.start();
     ruleStateManager.start();
+
+    // Dev-only tools: use conditional dynamic import to reduce production bundle size
+    let devCleanup: (() => void) | undefined;
     if (isDev) {
-      performanceDashboard.start();
-      performanceMonitor.start();
+      Promise.all([
+        import('../utils/performanceDashboard'),
+        import('../utils/performanceMonitor'),
+      ]).then(([{ performanceDashboard }, { performanceMonitor }]) => {
+        performanceDashboard.start();
+        performanceMonitor.start();
+
+        devCleanup = () => {
+          performanceDashboard.stop();
+          performanceMonitor.stop();
+        };
+
+        // Display console report after 5 seconds
+        setTimeout(() => {
+          performanceDashboard.displayConsoleReport();
+        }, 5000);
+      });
     }
 
     // 延迟执行非关键初始化，不阻塞首屏渲染
@@ -128,12 +144,6 @@ export default function AppShellContainer() {
         });
 
       runMigration();
-
-      if (isDev) {
-        setTimeout(() => {
-          performanceDashboard.displayConsoleReport();
-        }, 5000);
-      }
     };
 
     const requestIdleCallbackFn = window.requestIdleCallback;
@@ -150,31 +160,37 @@ export default function AppShellContainer() {
       forwardTimerManager.stop();
       exceptionRuleCache.stop();
       ruleStateManager.stop();
-      performanceDashboard.stop();
-      performanceMonitor.stop();
+      devCleanup?.();
     };
   }, []);
 
   const shouldLoadData = isInitialized && (storage.kind !== 'supabase' || Boolean(authUserId));
   const { isLoadingData } = useAppDataLoad({ storage, isInitialized: shouldLoadData, setState });
 
+  // Extract primitive values for narrower effect dependencies (rerender-dependencies)
+  const currentView = state.currentView;
+  const activeSessionChainId = state.activeSession?.chainId ?? null;
+  const viewingChainId = state.viewingChainId;
+
+  // Validate focus view - only re-run when currentView or activeSessionChainId changes
   useEffect(() => {
-    if (state.currentView === 'focus') {
-      const activeChain = state.chains.find(c => c.id === state.activeSession?.chainId);
-      if (!state.activeSession || !activeChain) {
+    if (currentView === 'focus') {
+      const activeChain = stateRef.current.chains.find(c => c.id === activeSessionChainId);
+      if (!activeSessionChainId || !activeChain) {
         setState(prev => ({ ...prev, currentView: 'dashboard', editingChain: null, viewingChainId: null }));
       }
     }
-  }, [state.activeSession, state.chains, state.currentView]);
+  }, [currentView, activeSessionChainId]);
 
+  // Validate detail/group view - only re-run when currentView or viewingChainId changes
   useEffect(() => {
-    if (state.currentView === 'detail' || state.currentView === 'group') {
-      const viewingChain = state.chains.find(c => c.id === state.viewingChainId);
+    if (currentView === 'detail' || currentView === 'group') {
+      const viewingChain = stateRef.current.chains.find(c => c.id === viewingChainId);
       if (!viewingChain) {
         setState(prev => ({ ...prev, currentView: 'dashboard', editingChain: null, viewingChainId: null }));
       }
     }
-  }, [state.chains, state.currentView, state.viewingChainId]);
+  }, [currentView, viewingChainId]);
 
   // 定期检查任务群过期状态
   useEffect(() => {

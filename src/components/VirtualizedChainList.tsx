@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useEffect, useTransition } from 'react';
 import { ChainTreeNode, ScheduledSession } from '../types';
 import { ChainCard } from './ChainCard';
 import { GroupCard } from './GroupCard';
@@ -22,7 +22,28 @@ const VIRTUALIZATION_THRESHOLD = 20;
 
 // Item height estimation for virtual scrolling
 const ITEM_HEIGHT = 280; // Approximate height of a chain card in pixels
-const ITEMS_PER_ROW = 3; // Default grid columns on xl screens
+
+/**
+ * Hook to calculate responsive items per row based on screen width
+ */
+const useItemsPerRow = () => {
+  const [itemsPerRow, setItemsPerRow] = useState(3);
+
+  useEffect(() => {
+    const updateItemsPerRow = () => {
+      const width = window.innerWidth;
+      if (width < 768) setItemsPerRow(1);       // mobile
+      else if (width < 1280) setItemsPerRow(2); // tablet (md)
+      else setItemsPerRow(3);                   // desktop (xl)
+    };
+
+    updateItemsPerRow();
+    window.addEventListener('resize', updateItemsPerRow);
+    return () => window.removeEventListener('resize', updateItemsPerRow);
+  }, []);
+
+  return itemsPerRow;
+};
 
 /**
  * High-performance virtualized list component for large chain collections
@@ -40,7 +61,9 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
 }) => {
   const [containerHeight, setContainerHeight] = useState(600);
   const [scrollTop, setScrollTop] = useState(0);
+  const [isPending, startTransition] = useTransition();
   const { tr } = useI18n();
+  const itemsPerRow = useItemsPerRow();
 
   // Use regular grid for small lists, virtual scrolling for large lists
   const shouldVirtualize = topLevelChains.length > VIRTUALIZATION_THRESHOLD;
@@ -51,9 +74,9 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
       return { visibleItems: topLevelChains, totalHeight: 0 };
     }
 
-    const rowCount = Math.ceil(topLevelChains.length / ITEMS_PER_ROW);
+    const rowCount = Math.ceil(topLevelChains.length / itemsPerRow);
     const totalHeight = rowCount * ITEM_HEIGHT;
-    
+
     // Calculate which rows are visible
     const startRow = Math.floor(scrollTop / ITEM_HEIGHT);
     const endRow = Math.min(
@@ -66,20 +89,23 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
     const bufferedStartRow = Math.max(0, startRow - bufferRows);
     const bufferedEndRow = Math.min(rowCount - 1, endRow + bufferRows);
 
-    const startIndex = bufferedStartRow * ITEMS_PER_ROW;
+    const startIndex = bufferedStartRow * itemsPerRow;
     const endIndex = Math.min(
-      (bufferedEndRow + 1) * ITEMS_PER_ROW,
+      (bufferedEndRow + 1) * itemsPerRow,
       topLevelChains.length
     );
 
     const visibleItems = topLevelChains.slice(startIndex, endIndex);
 
     return { visibleItems, totalHeight };
-  }, [topLevelChains, scrollTop, containerHeight, shouldVirtualize]);
+  }, [topLevelChains, scrollTop, containerHeight, shouldVirtualize, itemsPerRow]);
 
-  // Handle scroll events for virtual scrolling
+  // Handle scroll events for virtual scrolling with startTransition for non-urgent updates
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    setScrollTop(e.currentTarget.scrollTop);
+    const newScrollTop = e.currentTarget.scrollTop;
+    startTransition(() => {
+      setScrollTop(newScrollTop);
+    });
   }, []);
 
   // Update container dimensions
@@ -163,9 +189,9 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
       id="chain-list-container"
       role="list"
       aria-label={tr('任务链列表', 'Task chains list')}
-      className="relative overflow-auto max-h-[800px] border border-gray-200 dark:border-slate-600 rounded-lg"
+      className={`relative overflow-auto max-h-[calc(100vh-16rem)] md:max-h-[calc(100vh-12rem)] border border-gray-200 dark:border-slate-600 rounded-lg transition-opacity ${isPending ? 'opacity-70' : ''}`}
       onScroll={handleScroll}
-      style={{ height: Math.min(totalHeight, 800) }}
+      style={{ height: Math.min(totalHeight, typeof window !== 'undefined' ? window.innerHeight - 200 : 800) }}
     >
       <div
         className="relative"
@@ -184,7 +210,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
           ))}
         </div>
       </div>
-      
+
       {/* Virtual scrolling indicator */}
       {isDev && (
         <div className="absolute top-2 right-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs">

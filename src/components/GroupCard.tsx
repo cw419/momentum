@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { ChainTreeNode, ScheduledSession } from '../types';
 import { Play, Users, MoreHorizontal, Trash2, Flame, Bell, Check, AlertTriangle, Clock, Layers, Minus } from 'lucide-react';
 import { getTimeRemaining, formatDuration } from '../utils/time';
@@ -34,6 +34,27 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [hasShownWarning, setHasShownWarning] = useState(false);
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  // Focus management for delete confirmation dialog
+  useEffect(() => {
+    if (showDeleteConfirm && deleteDialogRef.current) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement;
+      const cancelButton = deleteDialogRef.current.querySelector('[data-cancel-button]') as HTMLElement;
+      cancelButton?.focus();
+    } else if (!showDeleteConfirm && previouslyFocusedRef.current) {
+      previouslyFocusedRef.current.focus();
+      previouslyFocusedRef.current = null;
+    }
+  }, [showDeleteConfirm]);
+
+  // Handle Escape key for delete dialog
+  const handleDialogKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setShowDeleteConfirm(false);
+    }
+  }, []);
 
   // Memoize expensive calculations to prevent recalculation on every render
   const progress = useMemo(() => getGroupProgress(group), [group]);
@@ -121,15 +142,20 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             }}
             aria-label={tr('更多选项', 'More options')}
             aria-expanded={showMenu}
-            className="p-2 text-gray-400 hover:text-[#161615] transition-colors rounded-lg hover:bg-gray-100"
+            className="p-3 min-w-[44px] min-h-[44px] text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 focus-ring"
           >
             <MoreHorizontal size={20} aria-hidden="true" />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl border border-gray-200 dark:border-slate-600 py-2 z-10 min-w-[140px]">
+            <div
+              role="menu"
+              aria-orientation="vertical"
+              className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl border border-gray-200 dark:border-slate-600 py-2 z-10 min-w-[140px]"
+            >
               <button
                 type="button"
+                role="menuitem"
                 onClick={handleDeleteClick}
                 className="w-full px-4 py-3 text-left text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
               >
@@ -267,8 +293,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
           <button
             type="button"
             onClick={() => onStartChain(nextUnit ? nextUnit.id : group.id)}
-            aria-label={tr('开始下一个', 'Start next')}
-            className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
+            className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg focus-ring"
           >
             <Play size={16} aria-hidden="true" />
             <span className="font-chinese font-semibold">{tr('开始下一个', 'Start next')}</span>
@@ -278,8 +303,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             <button
               type="button"
               onClick={() => onScheduleChain(nextUnit ? nextUnit.id : group.id)}
-              aria-label={tr('预约', 'Schedule')}
-              className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg"
+              className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg focus-ring"
             >
               <Clock size={16} aria-hidden="true" />
               <span className="font-chinese font-semibold">{tr('预约', 'Schedule')}</span>
@@ -291,21 +315,29 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border border-gray-200/60 dark:border-slate-600/60 shadow-2xl animate-scale-in">
+          <div
+            ref={deleteDialogRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="group-delete-dialog-title"
+            aria-describedby="group-delete-dialog-description"
+            onKeyDown={handleDialogKeyDown}
+            className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border border-gray-200/60 dark:border-slate-600/60 shadow-2xl animate-scale-in"
+          >
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-6">
-                <Layers className="text-red-500" size={24} />
+                <Layers className="text-red-500" size={24} aria-hidden="true" />
               </div>
-              <h3 className="text-2xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-3">
+              <h3 id="group-delete-dialog-title" className="text-2xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-3">
                 {tr('确认删除任务群', 'Delete group?')}
               </h3>
-              <p className="text-gray-600 dark:text-slate-300 mb-6">
-                {tr('你确定要删除任务群 “', 'Are you sure you want to delete the group “')}
+              <p id="group-delete-dialog-description" className="text-gray-600 dark:text-slate-300 mb-6">
+                {tr('你确定要删除任务群 "', 'Are you sure you want to delete the group "')}
                 <span className="text-primary-500 font-semibold">{group.name}</span>
-                {tr('” 吗？', '”?')}
+                {tr('" 吗？', '"?')}
               </p>
             </div>
-            
+
             <div className="bg-red-50/80 dark:bg-red-900/20 rounded-2xl p-6 border border-red-200/60 dark:border-red-800/40 mb-8">
               <div className="text-center mb-6">
                 <p className="text-red-600 dark:text-red-400 text-sm font-medium font-chinese">
@@ -315,27 +347,26 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {group.children.map((child) => (
                   <div key={child.id} className="text-red-600 dark:text-red-400 text-sm flex items-center space-x-2">
-                    <Minus size={12} />
+                    <Minus size={12} aria-hidden="true" />
                     <span className="font-chinese">{child.name}</span>
                   </div>
                 ))}
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
                 type="button"
+                data-cancel-button
                 onClick={handleCancelDelete}
-                aria-label={tr('取消', 'Cancel')}
-                className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
+                className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese focus-ring"
               >
                 {tr('取消', 'Cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                aria-label={tr('确认删除', 'Delete')}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese"
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese focus-ring"
               >
                 <Trash2 size={16} aria-hidden="true" />
                 <span>{tr('确认删除', 'Delete')}</span>

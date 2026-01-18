@@ -2,12 +2,28 @@ import type { TaskTimeStats } from '../../../types';
 
 const STORAGE_KEY = 'momentum_task_time_stats';
 
+// In-memory cache to reduce localStorage I/O operations
+let statsCache: TaskTimeStats[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5000; // 5 seconds
+
 export async function getTaskTimeStats(): Promise<TaskTimeStats[]> {
+  const now = Date.now();
+
+  // Return cached data if valid
+  if (statsCache !== null && (now - cacheTimestamp) < CACHE_TTL) {
+    return statsCache;
+  }
+
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return [];
-    return JSON.parse(data);
+    const parsed: TaskTimeStats[] = data ? JSON.parse(data) : [];
+    statsCache = parsed;
+    cacheTimestamp = now;
+    return parsed;
   } catch {
+    statsCache = [];
+    cacheTimestamp = now;
     return [];
   }
 }
@@ -15,8 +31,11 @@ export async function getTaskTimeStats(): Promise<TaskTimeStats[]> {
 export async function saveTaskTimeStats(stats: TaskTimeStats[]): Promise<void> {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+    // Update cache to keep it in sync
+    statsCache = stats;
+    cacheTimestamp = Date.now();
   } catch {
-    // ignore
+    // ignore quota errors
   }
 }
 
@@ -61,3 +80,10 @@ export async function getTaskAverageTime(chainId: string): Promise<number | null
   return chainStats?.averageCompletionTime || null;
 }
 
+/**
+ * Invalidate cache - useful when stats might have changed externally
+ */
+export function invalidateTaskTimeStatsCache(): void {
+  statsCache = null;
+  cacheTimestamp = 0;
+}
