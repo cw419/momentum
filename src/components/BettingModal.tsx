@@ -6,6 +6,7 @@ import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface BettingModalProps {
   isOpen: boolean;
@@ -16,9 +17,9 @@ interface BettingModalProps {
   taskDuration: number; // 任务持续时间（分钟）
 }
 
-export const BettingModal: React.FC<BettingModalProps> = ({ 
-  isOpen, 
-  onClose, 
+export const BettingModal: React.FC<BettingModalProps> = ({
+  isOpen,
+  onClose,
   onBetPlaced,
   sessionId,
   chainName,
@@ -26,6 +27,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
 }) => {
   const storage = useStorage();
   const { language, tr } = useI18n();
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const [betAmount, setBetAmount] = useState<string>('');
   const [availablePoints, setAvailablePoints] = useState<number>(0);
   const [gamblingSettings, setGamblingSettings] = useState<GamblingSettings | null>(null);
@@ -234,6 +236,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div
+        ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="betting-modal-title"
@@ -252,7 +255,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label={tr('关闭', 'Close')}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-ring rounded"
           >
             <X size={24} />
           </button>
@@ -273,7 +276,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                 type="button"
                 onClick={loadData}
                 aria-label={tr('重新加载数据', 'Reload data')}
-                className="text-primary-500 hover:text-primary-600 font-medium transition-colors"
+                className="text-primary-500 hover:text-primary-600 font-medium transition-colors focus-ring rounded"
               >
                 {tr('重新加载', 'Reload')}
               </button>
@@ -364,7 +367,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                         key={amount}
                         onClick={() => setQuickBetAmount(amount)}
                         aria-label={tr(`快速押注 ${amount} 积分`, `Quick bet ${amount} points`)}
-                        className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                        className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 rounded-lg transition-colors focus-ring"
                       >
                         {amount}
                       </button>
@@ -374,7 +377,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                         type="button"
                         onClick={() => setQuickBetAmount(availablePoints)}
                         aria-label={tr(`押注全部 ${availablePoints} 积分`, `Bet all ${availablePoints} points`)}
-                        className="px-3 py-1 text-sm bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-lg transition-colors"
+                        className="px-3 py-1 text-sm bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-lg transition-colors focus-ring"
                       >
                         {tr('全部', 'All')}
                       </button>
@@ -415,7 +418,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                   disabled={isPlacingBet || !betAmount || validationError !== null || availablePoints === 0}
                   aria-label={tr('确认押注', 'Confirm bet')}
                   className={`
-                    w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200
+                    w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 focus-ring
                     ${isPlacingBet || !betAmount || validationError !== null || availablePoints === 0
                       ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                       : 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'
@@ -441,7 +444,7 @@ export const BettingModal: React.FC<BettingModalProps> = ({
                   type="button"
                   onClick={onClose}
                   aria-label={tr('取消押注', 'Cancel bet')}
-                  className="w-full py-3 px-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
+                  className="w-full py-3 px-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors focus-ring"
                 >
                   {tr('取消', 'Cancel')}
                 </button>

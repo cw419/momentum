@@ -7,6 +7,7 @@ import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 import { Switch } from './Switch';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface AccountModalProps {
 export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) => {
   const storage = useStorage();
   const { language, locale, setLanguage, t, tr } = useI18n();
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
@@ -165,6 +167,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div
+        ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="account-modal-title"
@@ -180,7 +183,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) =
             type="button"
             onClick={onClose}
             aria-label={tr('关闭', 'Close')}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors focus-ring rounded"
           >
             <X size={24} />
           </button>

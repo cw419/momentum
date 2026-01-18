@@ -90,7 +90,7 @@
     }
 
     .text-body {
-        @apply text-[#6C6C70] dark:text-[#A0A0A5] leading-relaxed;
+        @apply text-[#4A4A4E] dark:text-[#B8B8BC] leading-relaxed;
     }
 
     .btn-primary {
@@ -100,6 +100,41 @@
     .btn-secondary {
         @apply bg-white dark:bg-[#1C1C1E] text-black dark:text-white font-semibold rounded-2xl border border-gray-200/50 dark:border-white/10 transition-transform active:scale-95 shadow-md hover:shadow-lg;
     }
+
+    .btn-disabled {
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+    }
+}
+
+/* Toast animations */
+@keyframes toast-enter {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toast-exit {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.animate-toast-enter {
+    animation: toast-enter 220ms ease-out;
+}
+
+.animate-toast-exit {
+    animation: toast-exit 220ms ease-in forwards;
 }
 
 /* Custom Animation classes */
@@ -171,7 +206,9 @@
     .animate-scale-in,
     .animate-spin,
     .animate-pulse,
-    .animate-bounce {
+    .animate-bounce,
+    .animate-toast-enter,
+    .animate-toast-exit {
         animation: none !important;
     }
 

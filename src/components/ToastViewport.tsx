@@ -9,6 +9,8 @@ const DEFAULT_DURATION_MS: Record<ToastKind, number> = {
   error: 6000,
 };
 
+const ANIMATION_DURATION_MS = 220;
+
 function getKindStyles(kind: ToastKind) {
   switch (kind) {
     case 'success':
@@ -24,6 +26,7 @@ function getKindStyles(kind: ToastKind) {
 
 export function ToastViewport() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
   const timeoutsRef = useRef<Map<string, number>>(new Map());
 
   const dismiss = useCallback((id: string) => {
@@ -32,7 +35,17 @@ export function ToastViewport() {
       window.clearTimeout(handle);
       timeoutsRef.current.delete(id);
     }
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+
+    setExitingIds((prev) => new Set(prev).add(id));
+
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+      setExitingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, ANIMATION_DURATION_MS);
   }, []);
 
   useEffect(() => {
@@ -60,15 +73,20 @@ export function ToastViewport() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[100] space-y-3 w-[min(380px,calc(100vw-2rem))]">
+    <div
+      className="fixed top-4 right-4 z-[100] space-y-3 w-[min(380px,calc(100vw-2rem))]"
+      aria-live="polite"
+      aria-atomic="false"
+    >
       {toasts.map((t) => {
         const styles = getKindStyles(t.kind);
         const Icon = styles.icon;
+        const isExiting = exitingIds.has(t.id);
 
         return (
           <div
             key={t.id}
-            className={`${styles.bg} ${styles.border} ${styles.text} border rounded-2xl shadow-lg backdrop-blur-sm p-4 flex items-start gap-3`}
+            className={`${styles.bg} ${styles.border} ${styles.text} border rounded-2xl shadow-lg backdrop-blur-sm p-4 flex items-start gap-3 ${isExiting ? 'animate-toast-exit' : 'animate-toast-enter'}`}
             role={t.kind === 'error' ? 'alert' : 'status'}
           >
             <div className="mt-0.5">
@@ -82,7 +100,7 @@ export function ToastViewport() {
 
             <button
               onClick={() => dismiss(t.id)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors focus-ring rounded"
               aria-label="Close notification"
             >
               <X className="w-4 h-4" />
