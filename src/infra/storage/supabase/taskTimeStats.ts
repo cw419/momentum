@@ -1,6 +1,5 @@
 import type { TaskTimeStats } from '../../../types';
-
-const STORAGE_KEY = 'momentum_task_time_stats';
+import { localPreferences } from '../../../utils/localPreferences';
 
 // In-memory cache to reduce localStorage I/O operations
 let statsCache: TaskTimeStats[] | null = null;
@@ -16,7 +15,7 @@ export async function getTaskTimeStats(): Promise<TaskTimeStats[]> {
   }
 
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localPreferences.getTaskTimeStats();
     const parsed: TaskTimeStats[] = data ? JSON.parse(data) : [];
     statsCache = parsed;
     cacheTimestamp = now;
@@ -30,7 +29,7 @@ export async function getTaskTimeStats(): Promise<TaskTimeStats[]> {
 
 export async function saveTaskTimeStats(stats: TaskTimeStats[]): Promise<void> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+    localPreferences.setTaskTimeStats(JSON.stringify(stats));
     // Update cache to keep it in sync
     statsCache = stats;
     cacheTimestamp = Date.now();

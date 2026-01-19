@@ -14,23 +14,23 @@ import { isDev } from './env';
  * In production, these become no-ops for performance
  */
 export const devConsole = {
-  log: (message: string, ...args: any[]) => {
+  log: (message: string, ...args: unknown[]) => {
     if (isDev) {
       logger.debug('DEV', message, args.length > 0 ? { args } : undefined);
     }
   },
-  
-  warn: (message: string, ...args: any[]) => {
+
+  warn: (message: string, ...args: unknown[]) => {
     if (isDev) {
       logger.warn('DEV', message, args.length > 0 ? { args } : undefined);
     }
   },
-  
-  error: (message: string, ...args: any[]) => {
+
+  error: (message: string, ...args: unknown[]) => {
     logger.error('DEV', message, args.length > 0 ? { args } : undefined);
   },
-  
-  debug: (message: string, ...args: any[]) => {
+
+  debug: (message: string, ...args: unknown[]) => {
     if (isDev) {
       logger.debug('DEV', message, args.length > 0 ? { args } : undefined);
     }
@@ -41,7 +41,7 @@ export const devConsole = {
  * Conditional development logging function
  * Use this for temporary debug logs that should never reach production
  */
-export const devLog = (message: string, context?: Record<string, any>) => {
+export const devLog = (message: string, context?: Record<string, unknown>) => {
   if (isDev) {
     logger.debug('DEV-TEMP', message, context);
   }
@@ -51,7 +51,7 @@ export const devLog = (message: string, context?: Record<string, any>) => {
  * Performance-aware logging for hot paths
  * Only logs in development, and only if debug level is enabled
  */
-export const perfLog = (operation: string, data?: any) => {
+export const perfLog = (operation: string, data?: unknown) => {
   if (isDev && logger.getLogs().length === 0) { // Quick check to avoid overhead
     logger.debug('PERF', operation, data ? { data } : undefined);
   }

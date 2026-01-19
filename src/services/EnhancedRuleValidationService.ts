@@ -3,20 +3,21 @@
  * 提供更强大的规则验证、预验证和批量验证功能
  */
 
-import { 
-  ExceptionRule, 
-  ExceptionRuleType, 
-  ExceptionRuleError, 
-  ExceptionRuleException 
+import {
+  ExceptionRule,
+  ExceptionRuleType,
+  ExceptionRuleError,
+  ExceptionRuleException
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { getErrorMessage } from '../utils/errorMessage';
 
 export interface RuleValidationResult {
   isValid: boolean;
   errorType?: ExceptionRuleError;
   errorMessage?: string;
   suggestedActions?: ValidationAction[];
-  debugInfo?: any;
+  debugInfo?: Record<string, unknown>;
 }
 
 export interface ValidationAction {
@@ -125,7 +126,7 @@ export class EnhancedRuleValidationService {
       return {
         isValid: false,
         errorType: ExceptionRuleError.VALIDATION_ERROR,
-        errorMessage: `验证过程中发生错误: ${error instanceof Error ? error.message : '未知错误'}`,
+        errorMessage: `验证过程中发生错误: ${getErrorMessage(error)}`,
         debugInfo: { rule, actionType, error }
       };
     }
@@ -200,10 +201,10 @@ export class EnhancedRuleValidationService {
       const result: RuleValidationResult = {
         isValid: false,
         errorType: ExceptionRuleError.STORAGE_ERROR,
-        errorMessage: `预验证失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        errorMessage: `预验证失败: ${getErrorMessage(error)}`,
         debugInfo: { ruleId, actionType, error }
       };
-      
+
       return result;
     }
   }
@@ -238,7 +239,7 @@ export class EnhancedRuleValidationService {
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
-        `批量验证失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        `批量验证失败: ${getErrorMessage(error)}`,
         error
       );
     }

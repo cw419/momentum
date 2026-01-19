@@ -3,7 +3,7 @@
  * 用于管理无时长任务的正向计时功能
  */
 
-import { logger } from './logger';
+import { localPreferences, type TimerPersistData } from './localPreferences';
 
 interface TimerState {
   startTime: number;
@@ -225,21 +225,16 @@ export class ForwardTimerManager {
     const timer = this.timers.get(sessionId);
     if (!timer) return;
 
-    try {
-      const persistData = {
-        sessionId,
-        startTime: timer.startTime,
-        pausedTime: timer.pausedTime,
-        totalPausedDuration: timer.totalPausedDuration,
-        isPaused: timer.isPaused,
-        timestamp: Date.now()
-      };
+    const persistData: TimerPersistData = {
+      sessionId,
+      startTime: timer.startTime,
+      pausedTime: timer.pausedTime,
+      totalPausedDuration: timer.totalPausedDuration,
+      isPaused: timer.isPaused,
+      timestamp: Date.now()
+    };
 
-      localStorage.setItem(`momentum_timer_${sessionId}`, JSON.stringify(persistData));
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('FORWARD_TIMER', 'Failed to persist timer state', { sessionId }, err);
-    }
+    localPreferences.setTimerState(sessionId, persistData);
   }
 
   /**
@@ -248,37 +243,29 @@ export class ForwardTimerManager {
    * @returns 是否成功恢复
    */
   restoreTimerState(sessionId: string): boolean {
-    try {
-      const dataStr = localStorage.getItem(`momentum_timer_${sessionId}`);
-      if (!dataStr) return false;
+    const data = localPreferences.getTimerState(sessionId);
+    if (!data) return false;
 
-      const data = JSON.parse(dataStr);
-      const now = performance.now();
-      
-      // 检查数据是否过期（超过24小时）
-      if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
-        this.removePersistedState(sessionId);
-        return false;
-      }
+    const now = performance.now();
 
-      // 计算时间偏移
-      const timeOffset = now - data.startTime;
-      void timeOffset;
-      
-      this.timers.set(sessionId, {
-        startTime: data.startTime,
-        pausedTime: data.pausedTime,
-        totalPausedDuration: data.totalPausedDuration,
-        isPaused: data.isPaused
-      });
-
-      return true;
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('FORWARD_TIMER', 'Failed to restore timer state', { sessionId }, err);
-      this.removePersistedState(sessionId);
+    // 检查数据是否过期（超过24小时）
+    if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
+      localPreferences.clearTimerState(sessionId);
       return false;
     }
+
+    // 计算时间偏移
+    const timeOffset = now - data.startTime;
+    void timeOffset;
+
+    this.timers.set(sessionId, {
+      startTime: data.startTime,
+      pausedTime: data.pausedTime,
+      totalPausedDuration: data.totalPausedDuration,
+      isPaused: data.isPaused
+    });
+
+    return true;
   }
 
   /**
@@ -286,56 +273,14 @@ export class ForwardTimerManager {
    * @param sessionId 会话ID
    */
   private removePersistedState(sessionId: string): void {
-    try {
-      localStorage.removeItem(`momentum_timer_${sessionId}`);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('FORWARD_TIMER', 'Failed to remove persisted timer state', { sessionId }, err);
-    }
+    localPreferences.clearTimerState(sessionId);
   }
 
   /**
    * 清理所有过期的持久化数据
    */
   cleanupExpiredStates(): void {
-    try {
-      const keys: string[] = [];
-
-      // Prefer Storage API when available (real browser localStorage),
-      // but keep a fallback for test/mocked implementations.
-      const storage = localStorage as unknown;
-      const storageLike = storage as Partial<Storage>;
-      if (typeof storageLike.length === 'number' && typeof storageLike.key === 'function') {
-        for (let i = 0; i < storageLike.length; i++) {
-          const key = storageLike.key(i);
-          if (key) keys.push(key);
-        }
-      } else if (storage && typeof storage === 'object') {
-        keys.push(...Object.keys(storage as Record<string, unknown>));
-      }
-
-      const timerKeys = keys.filter(key => key.startsWith('momentum_timer_'));
-      const now = Date.now();
-
-      timerKeys.forEach(key => {
-        try {
-          const dataStr = localStorage.getItem(key);
-          if (dataStr) {
-            const data = JSON.parse(dataStr);
-            // 清理超过24小时的数据
-            if (now - data.timestamp > 24 * 60 * 60 * 1000) {
-              localStorage.removeItem(key);
-            }
-          }
-        } catch {
-          // 如果解析失败，直接删除
-          localStorage.removeItem(key);
-        }
-      });
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('FORWARD_TIMER', 'Failed to cleanup expired timer states', undefined, err);
-    }
+    localPreferences.cleanupExpiredTimers();
   }
 
   /**

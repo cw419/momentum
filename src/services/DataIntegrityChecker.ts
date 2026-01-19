@@ -19,7 +19,7 @@ export interface IntegrityIssue {
   affectedItems: string[];
   autoFixable: boolean;
   fixAction?: () => Promise<void>;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export interface IntegrityReport {
@@ -38,7 +38,7 @@ export interface FixResult {
   issueType: string;
   success: boolean;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export class DataIntegrityChecker {

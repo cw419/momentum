@@ -54,7 +54,7 @@ interface LogEntry {
   level: LogLevel;
   category: string;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   error?: Error;
 }
 
@@ -85,7 +85,7 @@ class Logger {
     level: LogLevel,
     category: string,
     message: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     error?: Error
   ): LogEntry {
     return {
@@ -132,32 +132,32 @@ class Logger {
     }
   }
 
-  debug(category: string, message: string, context?: Record<string, any>) {
+  debug(category: string, message: string, context?: Record<string, unknown>) {
     if (this.shouldLog(LogLevel.DEBUG)) {
       this.addLog(this.createLogEntry(LogLevel.DEBUG, category, message, context));
     }
   }
 
-  info(category: string, message: string, context?: Record<string, any>) {
+  info(category: string, message: string, context?: Record<string, unknown>) {
     if (this.shouldLog(LogLevel.INFO)) {
       this.addLog(this.createLogEntry(LogLevel.INFO, category, message, context));
     }
   }
 
-  warn(category: string, message: string, context?: Record<string, any>, error?: Error) {
+  warn(category: string, message: string, context?: Record<string, unknown>, error?: Error) {
     if (this.shouldLog(LogLevel.WARN)) {
       this.addLog(this.createLogEntry(LogLevel.WARN, category, message, context, error));
     }
   }
 
-  error(category: string, message: string, context?: Record<string, any>, error?: Error) {
+  error(category: string, message: string, context?: Record<string, unknown>, error?: Error) {
     if (this.shouldLog(LogLevel.ERROR)) {
       this.addLog(this.createLogEntry(LogLevel.ERROR, category, message, context, error));
     }
   }
 
   // Specialized logging methods for common operations
-  dbOperation(operation: string, success: boolean, context?: Record<string, any>, error?: Error) {
+  dbOperation(operation: string, success: boolean, context?: Record<string, unknown>, error?: Error) {
     const message = `Database operation ${operation} ${success ? 'success' : 'failed'}`;
     if (success) {
       this.info('DATABASE', message, context);
@@ -166,7 +166,7 @@ class Logger {
     }
   }
 
-  chainOperation(operation: string, chainId: string, success: boolean, context?: Record<string, any>, error?: Error) {
+  chainOperation(operation: string, chainId: string, success: boolean, context?: Record<string, unknown>, error?: Error) {
     const message = `Chain operation ${operation} (${chainId}) ${success ? 'success' : 'failed'}`;
     if (success) {
       this.info('CHAIN', message, context);
@@ -175,11 +175,11 @@ class Logger {
     }
   }
 
-  userAction(action: string, context?: Record<string, any>) {
+  userAction(action: string, context?: Record<string, unknown>) {
     this.info('USER', `User action: ${action}`, context);
   }
 
-  performance(operation: string, duration: number, context?: Record<string, any>) {
+  performance(operation: string, duration: number, context?: Record<string, unknown>) {
     this.debug('PERFORMANCE', `${operation} took ${duration}ms`, context);
   }
 
@@ -232,7 +232,7 @@ if (isDev) {
 export const measurePerformance = async <T>(
   operation: string,
   fn: () => Promise<T>,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): Promise<T> => {
   const start = performance.now();
   try {

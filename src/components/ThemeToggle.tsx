@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useI18n } from '../i18n';
+import { localPreferences } from '../utils/localPreferences';
 
 type Theme = 'light' | 'dark';
 
@@ -8,8 +9,8 @@ export const ThemeToggle: React.FC = () => {
     const { tr } = useI18n();
     const [theme, setTheme] = useState<Theme>(() => {
         if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('theme');
-            if (stored === 'light' || stored === 'dark') return stored;
+            const stored = localPreferences.getTheme();
+            if (stored) return stored;
 
             // Migrate old `system` value (or unset/invalid) to an explicit theme.
             const prefersDark =
@@ -24,7 +25,7 @@ export const ThemeToggle: React.FC = () => {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
         if (theme === 'dark') root.classList.add('dark');
-        localStorage.setItem('theme', theme);
+        localPreferences.setTheme(theme);
     }, [theme]);
 
     const cycleTheme = () => {

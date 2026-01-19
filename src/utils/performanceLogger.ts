@@ -6,7 +6,7 @@
 import { isDev } from './env';
 import { logger } from './logger';
 
-function parseLogArgs(args: any[]): { message: string; context?: Record<string, any>; error?: Error } {
+function parseLogArgs(args: unknown[]): { message: string; context?: Record<string, unknown>; error?: Error } {
   if (args.length === 0) return { message: '' };
 
   const [first, ...rest] = args;
@@ -26,7 +26,7 @@ export const performanceLogger = {
   /**
    * Log general information (only in development)
    */
-  log: (...args: any[]) => {
+  log: (...args: unknown[]) => {
     if (isDev) {
       const { message, context } = parseLogArgs(args);
       logger.debug('PERFORMANCE', message, context);
@@ -36,7 +36,7 @@ export const performanceLogger = {
   /**
    * Log warnings (only in development)
    */
-  warn: (...args: any[]) => {
+  warn: (...args: unknown[]) => {
     if (isDev) {
       const { message, context, error } = parseLogArgs(args);
       logger.warn('PERFORMANCE', message, context, error);
@@ -46,7 +46,7 @@ export const performanceLogger = {
   /**
    * Log errors (always logged for critical issues)
    */
-  error: (...args: any[]) => {
+  error: (...args: unknown[]) => {
     const { message, context, error } = parseLogArgs(args);
     logger.error('PERFORMANCE', message, context, error);
   },
@@ -95,7 +95,7 @@ export const performanceLogger = {
   /**
    * Debug-level logging for detailed troubleshooting (development only)
    */
-  debug: (...args: any[]) => {
+  debug: (...args: unknown[]) => {
     if (isDev) {
       const { message, context } = parseLogArgs(args);
       logger.debug('PERFORMANCE', message, context);
@@ -105,7 +105,7 @@ export const performanceLogger = {
   /**
    * Trace function calls and performance (development only)
    */
-  trace: (label: string, ...args: any[]) => {
+  trace: (label: string, ...args: unknown[]) => {
     if (isDev) {
       logger.debug('PERFORMANCE', `Trace: ${label}`, args.length > 0 ? { args } : undefined);
     }

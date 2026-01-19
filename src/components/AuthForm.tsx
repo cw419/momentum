@@ -39,7 +39,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                 } else {
                     const safeDetail = getSafeErrorDetail(result.error.message, language);
                     setError(safeDetail ?? tr('注册失败，请重试（详情见控制台）', 'Sign up failed. Check the console for details, then try again.'));
-                    logger.error('AUTH', 'Sign up failed', result.error);
+                    logger.error('AUTH', 'Sign up failed', undefined, new Error(result.error.message));
                 }
             } else {
                 const result = await storage.signIn(email, password);
@@ -48,13 +48,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                 } else {
                     const safeDetail = getSafeErrorDetail(result.error.message, language);
                     setError(safeDetail ?? tr('登录失败，请重试（详情见控制台）', 'Sign in failed. Check the console for details, then try again.'));
-                    logger.error('AUTH', 'Sign in failed', result.error);
+                    logger.error('AUTH', 'Sign in failed', undefined, new Error(result.error.message));
                 }
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             const safeDetail = getSafeErrorDetailFromUnknown(err, language);
             setError(safeDetail ?? tr('发生了意外错误（详情见控制台）', 'An unexpected error occurred. Check the console for details.'));
-            logger.error('AUTH', 'Unexpected error during auth', err);
+            const errToLog = err instanceof Error ? err : new Error(String(err));
+            logger.error('AUTH', 'Unexpected error during auth', undefined, errToLog);
         } finally {
             setLoading(false);
         }

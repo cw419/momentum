@@ -139,7 +139,7 @@ export class ErrorClassificationService {
   createEnhancedError(
     type: ExceptionRuleError,
     message: string,
-    context?: any
+    context?: unknown
   ): EnhancedExceptionRuleException {
     const classification = this.getDefaultClassification(type);
     const pattern = this.errorPatterns.get(type);

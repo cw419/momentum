@@ -388,7 +388,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
 };
 
 // 节流函数
-function throttle<T extends (...args: any[]) => any>(
+function throttle<T extends (...args: Parameters<T>) => ReturnType<T>>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

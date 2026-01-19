@@ -2,6 +2,7 @@ import React from 'react';
 import type { MomentumStorage } from '../storage/MomentumStorage';
 import type { Chain } from '../types';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorMessage';
 import { isDev } from '../utils/env';
 
 /**
@@ -9,7 +10,7 @@ import { isDev } from '../utils/env';
  * Ensures data consistency across operations and provides instant feedback
  */
 class RealTimeSyncService {
-  private syncCallbacks: Map<string, ((data: any) => void)[]> = new Map();
+  private syncCallbacks: Map<string, ((data: unknown) => void)[]> = new Map();
   private lastSyncTimestamp = Date.now();
   private isEnabled = true;
   private storage: MomentumStorage | null = null;
@@ -33,7 +34,7 @@ class RealTimeSyncService {
   /**
    * Subscribe to data changes for a specific data type
    */
-  subscribe(dataType: 'chains' | 'sessions' | 'history', callback: (data: any) => void): () => void {
+  subscribe(dataType: 'chains' | 'sessions' | 'history', callback: (data: unknown) => void): () => void {
     if (!this.syncCallbacks.has(dataType)) {
       this.syncCallbacks.set(dataType, []);
     }
@@ -54,7 +55,7 @@ class RealTimeSyncService {
   /**
    * Notify all subscribers of data changes with fresh data
    */
-  private async notifySubscribers(dataType: 'chains' | 'sessions' | 'history', freshData?: any): Promise<void> {
+  private async notifySubscribers(dataType: 'chains' | 'sessions' | 'history', freshData?: unknown): Promise<void> {
     if (!this.isEnabled) return;
     
     const callbacks = this.syncCallbacks.get(dataType);
@@ -89,15 +90,13 @@ class RealTimeSyncService {
         try {
           callback(data);
         } catch (error) {
-          const errorObj = error instanceof Error ? error : new Error(String(error));
-          logger.error('REALTIME_SYNC', 'Error in subscriber callback', { dataType }, errorObj);
+          logger.error('REALTIME_SYNC', 'Error in subscriber callback', { dataType }, toError(error));
         }
       });
-      
+
       logger.debug('REALTIME_SYNC', 'Notified subscribers', { dataType, subscriberCount: callbacks.length });
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
-      logger.error('REALTIME_SYNC', 'Failed to fetch fresh data', { dataType }, errorObj);
+      logger.error('REALTIME_SYNC', 'Failed to fetch fresh data', { dataType }, toError(error));
     }
   }
   
@@ -105,9 +104,9 @@ class RealTimeSyncService {
    * Trigger synchronization after a database operation
    */
   async syncAfterOperation(
-    dataType: 'chains' | 'sessions' | 'history', 
+    dataType: 'chains' | 'sessions' | 'history',
     operationType: 'create' | 'update' | 'delete' | 'restore',
-    freshData?: any
+    freshData?: unknown
   ): Promise<void> {
     if (!this.isEnabled) return;
     
@@ -147,8 +146,7 @@ class RealTimeSyncService {
       try {
         storage.clearCache();
       } catch (error) {
-        const errorObj = error instanceof Error ? error : new Error(String(error));
-        logger.warn('REALTIME_SYNC', 'Failed to clear storage cache', undefined, errorObj);
+        logger.warn('REALTIME_SYNC', 'Failed to clear storage cache', undefined, toError(error));
       }
     }
 
@@ -297,7 +295,7 @@ if (isDev) {
  * React hook for real-time data synchronization
  */
 export const useRealTimeSync = (dataType: 'chains' | 'sessions' | 'history') => {
-  const [data, setData] = React.useState<any>(null);
+  const [data, setData] = React.useState<unknown>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   
   React.useEffect(() => {

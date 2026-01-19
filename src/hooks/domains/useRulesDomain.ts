@@ -19,6 +19,7 @@ import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { logger } from '../../utils/logger';
+import { toError } from '../../utils/errorMessage';
 
 interface UseRulesDomainParams {
   state: AppState;
@@ -38,8 +39,7 @@ export function useRulesDomain({
   const persistChains = (chainId: string, updatedChains: AppState['chains'], context: string) => {
     safelySaveChains(updatedChains).catch(error => {
       queryOptimizer.onDataChange('chains');
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('RULES_DOMAIN', context, { chainId }, err);
+      logger.error('RULES_DOMAIN', context, { chainId }, toError(error));
     });
   };
 
@@ -49,8 +49,7 @@ export function useRulesDomain({
     context: string
   ) => {
     void storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('RULES_DOMAIN', context, { chainId }, err);
+      logger.error('RULES_DOMAIN', context, { chainId }, toError(error));
     });
   };
 

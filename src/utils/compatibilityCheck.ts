@@ -4,6 +4,7 @@
  */
 
 import { isDev } from './env';
+import { getErrorMessage } from './errorMessage';
 
 export interface CompatibilityResult {
   isCompatible: boolean;
@@ -121,7 +122,7 @@ export class CompatibilityChecker {
 
       return true;
     } catch (error) {
-      result.warnings.push(`正向计时器功能检查失败: ${error instanceof Error ? error.message : String(error)}`);
+      result.warnings.push(`正向计时器功能检查失败: ${getErrorMessage(error)}`);
       return false;
     }
   }
@@ -143,7 +144,7 @@ export class CompatibilityChecker {
       // 这些调用不应该抛出错误
       return true;
     } catch (error) {
-      result.warnings.push(`任务用时统计功能检查失败: ${error instanceof Error ? error.message : String(error)}`);
+      result.warnings.push(`任务用时统计功能检查失败: ${getErrorMessage(error)}`);
       return false;
     }
   }
@@ -164,7 +165,7 @@ export class CompatibilityChecker {
 
       return true;
     } catch (error) {
-      result.warnings.push(`数据完整性检查失败: ${error instanceof Error ? error.message : String(error)}`);
+      result.warnings.push(`数据完整性检查失败: ${getErrorMessage(error)}`);
       return false;
     }
   }

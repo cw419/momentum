@@ -9,6 +9,7 @@ import { useStorage } from '../storage/useStorage';
 import { soundManager } from '../utils/soundManager';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorMessage';
 import { useI18n } from '../i18n';
 import { getAuxiliarySignalLabel, getTriggerLabel } from './chain-editor/constants';
 
@@ -93,8 +94,7 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(({
           setLastCompletionTime(null);
         }
         if (isDev) {
-          const err = error instanceof Error ? error : new Error(String(error));
-          logger.warn('CHAIN_CARD', 'Failed to load last completion time', { chainId: chain.id }, err);
+          logger.warn('CHAIN_CARD', 'Failed to load last completion time', { chainId: chain.id }, toError(error));
         }
       }
     })();

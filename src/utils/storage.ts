@@ -1,6 +1,29 @@
 import { Chain, DeletedChain, ScheduledSession, ActiveSession, CompletionHistory, RSIPNode, RSIPMeta, TaskTimeStats } from '../types';
 import type { PetState, SerializedPetState } from '../types/pet';
 
+interface RawChainData {
+  auxiliaryStreak?: number;
+  auxiliaryFailures?: number;
+  auxiliaryExceptions?: unknown[];
+  deletedAt?: string | null;
+  createdAt: string;
+  lastCompletedAt?: string;
+}
+
+interface RawSessionData {
+  auxiliarySignal?: string;
+  scheduledAt: string;
+  expiresAt: string;
+}
+
+interface RawHistoryData {
+  completedAt: string;
+}
+
+interface RawNodeData {
+  createdAt: string;
+}
+
 const STORAGE_KEYS = {
   CHAINS: 'momentum_chains',
   SCHEDULED_SESSIONS: 'momentum_scheduled_sessions',
@@ -16,7 +39,7 @@ export const storage = {
   getChains: (): Chain[] => {
     const data = localStorage.getItem(STORAGE_KEYS.CHAINS);
     if (!data) return [];
-    return JSON.parse(data).map((chain: any) => ({
+    return JSON.parse(data).map((chain: RawChainData & Record<string, unknown>) => ({
       ...chain,
       auxiliaryStreak: chain.auxiliaryStreak || 0,
       auxiliaryFailures: chain.auxiliaryFailures || 0,
@@ -34,7 +57,7 @@ export const storage = {
   getScheduledSessions: (): ScheduledSession[] => {
     const data = localStorage.getItem(STORAGE_KEYS.SCHEDULED_SESSIONS);
     if (!data) return [];
-    return JSON.parse(data).map((session: any) => ({
+    return JSON.parse(data).map((session: RawSessionData & Record<string, unknown>) => ({
       ...session,
       auxiliarySignal: session.auxiliarySignal || '预约信号',
       scheduledAt: new Date(session.scheduledAt),
@@ -68,7 +91,7 @@ export const storage = {
   getCompletionHistory: (): CompletionHistory[] => {
     const data = localStorage.getItem(STORAGE_KEYS.COMPLETION_HISTORY);
     if (!data) return [];
-    return JSON.parse(data).map((history: any) => ({
+    return JSON.parse(data).map((history: RawHistoryData & Record<string, unknown>) => ({
       ...history,
       completedAt: new Date(history.completedAt),
     }));
@@ -82,7 +105,7 @@ export const storage = {
   getRSIPNodes: (): RSIPNode[] => {
     const data = localStorage.getItem(STORAGE_KEYS.RSIP_NODES);
     if (!data) return [];
-    return JSON.parse(data).map((node: any) => ({
+    return JSON.parse(data).map((node: RawNodeData & Record<string, unknown>) => ({
       ...node,
       createdAt: new Date(node.createdAt),
     }));

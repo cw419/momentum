@@ -9,6 +9,7 @@ import { dataIntegrityChecker } from '../services/DataIntegrityChecker';
 import { enhancedRuleValidationService } from '../services/EnhancedRuleValidationService';
 import { ExceptionRuleType, EnhancedExceptionRuleException } from '../types';
 import { logger } from './logger';
+import { getErrorMessage } from './errorMessage';
 
 export interface ValidationResult {
   passed: boolean;
@@ -23,7 +24,7 @@ export interface TestResult {
   passed: boolean;
   duration: number;
   error?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export class DeploymentValidator {
@@ -98,7 +99,7 @@ export class DeploymentValidator {
         name: '系统健康检查',
         passed: false,
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -147,7 +148,7 @@ export class DeploymentValidator {
         name: '规则创建测试',
         passed: false,
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -196,7 +197,7 @@ export class DeploymentValidator {
         name: '规则验证测试',
         passed: false,
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -252,7 +253,7 @@ export class DeploymentValidator {
         name: '错误处理测试',
         passed: false,
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -286,7 +287,7 @@ export class DeploymentValidator {
         name: '数据完整性测试',
         passed: false,
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -341,7 +342,7 @@ export class DeploymentValidator {
         name: '重复处理测试',
         passed: false,
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -389,7 +390,7 @@ export class DeploymentValidator {
         name: '状态管理测试',
         passed: false,
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }

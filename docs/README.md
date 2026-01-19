@@ -8,12 +8,14 @@
 - 数据库 Schema：`docs/api/DATABASE_SCHEMA.md`
 - 部署：`docs/guides/DEPLOYMENT.md`
 - 调试：`docs/guides/DEBUGGING_GUIDE.md`
+- 性能基准：`docs/guides/PERFORMANCE_BENCHMARKS.md`
 
 ## 指南
 
 - 入门：`docs/guides/for-beginners.md`
 - 链编辑器：`docs/guides/CHAIN_EDITOR_GUIDE.md`
 - 手动迁移：`docs/guides/apply-migration.md`
+- 性能基准与优化：`docs/guides/PERFORMANCE_BENCHMARKS.md`
 - 自控力背景阅读（EN）：`docs/guides/How to Improve Self-Control by edmond EN.md`
 - 自控力背景阅读（中文）：`docs/guides/如何提高自制力？-edmond的回答.md`
 
@@ -41,6 +43,12 @@
 ## API
 
 - 每日打卡 API：`docs/api/daily-checkin-api-guide.md`
+
+## 模块文档
+
+- `docs/modules/EXCEPTION_RULE_SYSTEM.md` - 例外规则系统设计
+- `docs/modules/RSIP_PROTOCOL.md` - RSIP 协议概述
+- `docs/modules/CHAIN_TYPES.md` - 链条类型说明
 
 ## 历史记录
 

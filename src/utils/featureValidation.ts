@@ -7,6 +7,7 @@ import { forwardTimerManager } from './forwardTimer';
 import { storage } from './storage';
 import { formatElapsedTime, formatTimeDescription, formatActualDuration, formatLastCompletionReference } from './time';
 import { isDev } from './env';
+import { getErrorMessage } from './errorMessage';
 
 export interface ValidationResult {
   feature: string;
@@ -107,7 +108,7 @@ export class FeatureValidator {
         feature: '正向计时器功能',
         passed: false,
         details: '测试过程中发生错误',
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     }
   }
@@ -185,7 +186,7 @@ export class FeatureValidator {
         feature: '时间格式化功能',
         passed: false,
         details: '测试过程中发生错误',
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     }
   }
@@ -234,7 +235,7 @@ export class FeatureValidator {
         feature: '存储功能',
         passed: false,
         details: '测试过程中发生错误',
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     }
   }
@@ -267,7 +268,7 @@ export class FeatureValidator {
         feature: '数据迁移功能',
         passed: false,
         details: '测试过程中发生错误',
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     }
   }

@@ -3,15 +3,16 @@
  * 跟踪规则状态，解决乐观更新和ID管理问题
  */
 
-import { 
-  ExceptionRule, 
+import {
+  ExceptionRule,
   ExceptionRuleType,
-  ExceptionRuleError, 
-  ExceptionRuleException 
+  ExceptionRuleError,
+  ExceptionRuleException
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { logger } from '../utils/logger';
 import { isDev } from '../utils/env';
+import { toError, getErrorMessage } from '../utils/errorMessage';
 
 export interface RuleState {
   id: string;
@@ -171,7 +172,7 @@ export class RuleStateManager {
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
-        `规则创建失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        `规则创建失败: ${getErrorMessage(error)}`,
         error
       );
     }
@@ -233,7 +234,7 @@ export class RuleStateManager {
         // 等待创建完成
         return await pending.promise;
       } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
+        const err = toError(error);
         logger.error('RULE_STATE', '获取临时规则失败', { ruleId }, err);
         return null;
       }
@@ -301,7 +302,7 @@ export class RuleStateManager {
       return {
         isValid: false,
         isTemporary: false,
-        error: error instanceof Error ? error.message : '验证失败'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -334,7 +335,7 @@ export class RuleStateManager {
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
-        `创建规则失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        `创建规则失败: ${getErrorMessage(error)}`,
         error
       );
     }
@@ -374,11 +375,9 @@ export class RuleStateManager {
   /**
    * 处理创建错误
    */
-  private handleCreationError(temporaryId: string, error: any): void {
-    {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('RULE_STATE', `规则创建失败: ${temporaryId}`, undefined, err);
-    }
+  private handleCreationError(temporaryId: string, error: unknown): void {
+    const err = toError(error);
+    logger.error('RULE_STATE', `规则创建失败: ${temporaryId}`, undefined, err);
 
     // 更新状态
     this.trackRuleState(temporaryId, 'error');
@@ -386,7 +385,7 @@ export class RuleStateManager {
     // 添加错误信息
     const state = this.states.get(temporaryId);
     if (state) {
-      state.validationErrors = [error instanceof Error ? error.message : '创建失败'];
+      state.validationErrors = [err.message];
       this.states.set(temporaryId, state);
     }
 
@@ -469,7 +468,7 @@ export class RuleStateManager {
       }
 
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_STATE', '同步规则状态失败', undefined, err);
     }
   }

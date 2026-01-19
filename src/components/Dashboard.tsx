@@ -10,6 +10,7 @@ import { Download, TreePine, Trash2, Rocket, Link, Plus, Layers, Settings } from
 import { NotificationToggle } from './NotificationToggle';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorMessage';
 
 const ImportExportModal = lazy(() => import('./ImportExportModal').then(m => ({ default: m.ImportExportModal })));
 const RecycleBinModal = lazy(() => import('./RecycleBinModal').then(m => ({ default: m.RecycleBinModal })));
@@ -108,8 +109,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
       setRecycleBinCount(deletedChains.length);
     } catch (error) {
       if (isDev) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        logger.error('DASHBOARD', 'Failed to load recycle bin statistics', undefined, err);
+        logger.error('DASHBOARD', 'Failed to load recycle bin statistics', undefined, toError(error));
       }
     }
   }, [storage]);

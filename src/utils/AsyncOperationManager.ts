@@ -3,7 +3,7 @@
  * 优化耗时操作，提供乐观更新和错误恢复
  */
 
-interface AsyncOperation<T = any> {
+interface AsyncOperation<T = unknown> {
   id: string;
   operation: () => Promise<T>;
   timeout?: number;
@@ -13,7 +13,7 @@ interface AsyncOperation<T = any> {
   onRetry?: (attempt: number) => void;
 }
 
-interface OptimisticUpdate<T = any> {
+interface OptimisticUpdate<T = unknown> {
   id: string;
   operation: () => Promise<T>;
   optimisticValue: T;
@@ -23,7 +23,7 @@ interface OptimisticUpdate<T = any> {
   retryCount?: number;
 }
 
-interface OperationState<T = any> {
+interface OperationState<T = unknown> {
   id: string;
   status: 'pending' | 'success' | 'error' | 'cancelled';
   result?: T;
@@ -34,8 +34,8 @@ interface OperationState<T = any> {
 
 export class AsyncOperationManager {
   private operations = new Map<string, OperationState>();
-  private operationQueue: AsyncOperation[] = [];
-  private pendingOperations = new Map<string, Promise<any>>();
+  private operationQueue: AsyncOperation<unknown>[] = [];
+  private pendingOperations = new Map<string, Promise<unknown>>();
   private isProcessing = false;
   private maxConcurrent = 3;
   private defaultTimeout = 5000;
@@ -100,7 +100,7 @@ export class AsyncOperationManager {
         }
       };
 
-      this.operationQueue.push(wrappedOperation);
+      this.operationQueue.push(wrappedOperation as AsyncOperation<unknown>);
       this.processQueue();
     });
   }

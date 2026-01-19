@@ -3,6 +3,7 @@ import { X, CheckCircle, FileText, MessageSquare, History, RotateCcw } from 'luc
 import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorMessage';
 
 interface TaskCompletionDialogProps {
   isOpen: boolean;
@@ -46,8 +47,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
           const uniqueDescriptions = Array.from(new Set(descriptions));
           setRecentDescriptions(uniqueDescriptions);
         } catch (error) {
-          const err = error instanceof Error ? error : new Error(String(error));
-          logger.error('TASK_COMPLETION', 'Failed to load recent descriptions', { chainId }, err);
+          logger.error('TASK_COMPLETION', 'Failed to load recent descriptions', { chainId }, toError(error));
         }
       };
       

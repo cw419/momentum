@@ -1,12 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { localPreferences, type CanvasState } from '../utils/localPreferences';
 
-export interface CanvasState {
-  scale: number;
-  positionX: number;
-  positionY: number;
-}
+export type { CanvasState };
 
-const STORAGE_KEY = 'momentum:rsip-canvas-state';
 const DEBOUNCE_MS = 500;
 
 export function useCanvasState() {
@@ -16,20 +12,9 @@ export function useCanvasState() {
 
   // Load state from localStorage on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CanvasState;
-        if (
-          typeof parsed.scale === 'number' &&
-          typeof parsed.positionX === 'number' &&
-          typeof parsed.positionY === 'number'
-        ) {
-          setSavedState(parsed);
-        }
-      }
-    } catch {
-      // Ignore parse errors
+    const stored = localPreferences.getCanvasState();
+    if (stored) {
+      setSavedState(stored);
     }
     setIsLoaded(true);
   }, []);
@@ -40,23 +25,15 @@ export function useCanvasState() {
       clearTimeout(saveTimeoutRef.current);
     }
     saveTimeoutRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        setSavedState(state);
-      } catch {
-        // Ignore storage errors
-      }
+      localPreferences.setCanvasState(state);
+      setSavedState(state);
     }, DEBOUNCE_MS);
   }, []);
 
   // Clear saved state
   const clearCanvasState = useCallback(() => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      setSavedState(null);
-    } catch {
-      // Ignore storage errors
-    }
+    localPreferences.clearCanvasState();
+    setSavedState(null);
   }, []);
 
   // Cleanup timeout on unmount

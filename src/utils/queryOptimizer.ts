@@ -28,8 +28,8 @@ interface BatchedData {
 }
 
 class QueryOptimizer {
-  private cache = new Map<string, CacheEntry<any>>();
-  private pendingQueries = new Map<string, Promise<any>>();
+  private cache = new Map<string, CacheEntry<unknown>>();
+  private pendingQueries = new Map<string, Promise<unknown>>();
   private readonly CACHE_TTL = 30 * 1000; // 30 seconds
   private readonly TREE_CACHE_KEY = 'chainTree';
   private lastChainHash: string = '';
@@ -52,13 +52,13 @@ class QueryOptimizer {
   private getCachedData<T>(key: string): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
-    
+
     if (Date.now() - entry.timestamp > this.CACHE_TTL) {
       this.cache.delete(key);
       return null;
     }
-    
-    return entry.data;
+
+    return entry.data as T;
   }
   
   /**
@@ -89,7 +89,7 @@ class QueryOptimizer {
   async deduplicateQuery<T>(key: string, queryFn: () => Promise<T>): Promise<T> {
     // If query is already pending, return the same promise
     if (this.pendingQueries.has(key)) {
-      return this.pendingQueries.get(key)!;
+      return this.pendingQueries.get(key) as Promise<T>;
     }
     
     // Check cache first

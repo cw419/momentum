@@ -23,7 +23,7 @@ export interface ComponentHealth {
   status: 'healthy' | 'warning' | 'critical';
   score: number;
   issues: string[];
-  metrics?: any;
+  metrics?: Record<string, unknown>;
 }
 
 export class SystemHealthService {
@@ -318,12 +318,19 @@ export class SystemHealthService {
         recommendations.push('运行数据修复工具');
       }
 
-      if (component.name === '规则状态管理' && component.metrics?.errorStates > 0) {
-        recommendations.push('清理错误状态的规则');
+      const metrics = component.metrics;
+      if (component.name === '规则状态管理' && metrics && typeof metrics === 'object' && 'errorStates' in metrics) {
+        const errorStates = metrics.errorStates;
+        if (typeof errorStates === 'number' && errorStates > 0) {
+          recommendations.push('清理错误状态的规则');
+        }
       }
 
-      if (component.name === '错误处理' && component.metrics?.criticalErrors > 0) {
-        recommendations.push('检查并解决严重错误');
+      if (component.name === '错误处理' && metrics && typeof metrics === 'object' && 'criticalErrors' in metrics) {
+        const criticalErrors = metrics.criticalErrors;
+        if (typeof criticalErrors === 'number' && criticalErrors > 0) {
+          recommendations.push('检查并解决严重错误');
+        }
       }
     }
 

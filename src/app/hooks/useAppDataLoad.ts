@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { logger } from '../../utils/logger';
+import { toError } from '../../utils/errorMessage';
 import { isDev } from '../../utils/env';
 import { isSessionExpired } from '../../utils/time';
 
@@ -19,7 +20,6 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
     const loadData = async () => {
       logger.debug('APP_SHELL', 'Starting data load', { storage: storage.kind });
       setIsLoadingData(true);
-      const toError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)));
       try {
         if (storage.kind === 'supabase') {
           const authResult = await storage.waitForAuthentication(10000);

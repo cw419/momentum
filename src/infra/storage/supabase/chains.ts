@@ -1,5 +1,6 @@
 import type { Chain, DeletedChain } from '../../../types';
 import { logger } from '../../../utils/logger';
+import { toError } from '../../../utils/errorMessage';
 import type { SupabaseStorageContext, SchemaVerificationResult } from './types';
 import { buildChainRow, mapChainRowToChain } from './mappers';
 import type { Database } from '../../../lib/database.types';
@@ -76,7 +77,7 @@ export async function getChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
   try {
     return await ctx.retryOperation(fetchChains, 2, 100);
   } catch (error) {
-    const errorObj = error instanceof Error ? error : new Error(String(error));
+    const errorObj = toError(error);
     logger.warn('SUPABASE_STORAGE', 'getChains failed; returning empty array', { message: errorObj.message });
     return [];
   }
@@ -130,7 +131,7 @@ export async function softDeleteChain(ctx: SupabaseStorageContext, chainId: stri
       throw new Error(`Soft delete chain failed: ${error.message}`);
     }
   } catch (error) {
-    const errorObj = error instanceof Error ? error : new Error(String(error));
+    const errorObj = toError(error);
     if (errorObj.message.includes('deleted_at') || errorObj.message.includes('PGRST204')) {
       logger.warn('SUPABASE_STORAGE', 'Database does not support soft delete; falling back to permanent delete');
       await permanentlyDeleteChain(ctx, chainId);
@@ -246,7 +247,7 @@ export async function cleanupExpiredDeletedChains(ctx: SupabaseStorageContext, o
 
     return expiredChains.length;
   } catch (error) {
-    const errorObj = error instanceof Error ? error : new Error(String(error));
+    const errorObj = toError(error);
     if (errorObj.message.includes('deleted_at does not exist')) {
       return 0;
     }

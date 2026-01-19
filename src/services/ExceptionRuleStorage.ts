@@ -12,23 +12,22 @@ import {
   ExceptionRuleType
 } from '../types';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorMessage';
 import { isDev } from '../utils/env';
+import { localPreferences } from '../utils/localPreferences';
 
 type ExceptionRuleCreateInput = Pick<ExceptionRule, 'name' | 'type'> &
   Partial<Pick<ExceptionRule, 'description' | 'chainId' | 'scope' | 'isArchived'>>;
 
 export class ExceptionRuleStorageService {
-  private static readonly STORAGE_KEY = 'momentum_exception_rules';
-  private static readonly USAGE_RECORDS_KEY = 'momentum_rule_usage_records';
-
   /**
    * 获取所有例外规则
    */
   async getRules(): Promise<ExceptionRule[]> {
     try {
-      const data = localStorage.getItem(ExceptionRuleStorageService.STORAGE_KEY);
+      const data = localPreferences.getExceptionRules();
       if (!data) return [];
-      
+
       const rules = JSON.parse(data) as Array<Partial<ExceptionRule> & { createdAt: string; lastUsedAt?: string | null }>;
       return rules.map((rule) => {
         const normalizedChainId =
@@ -248,11 +247,8 @@ export class ExceptionRuleStorageService {
     try {
       const records = await this.getUsageRecords();
       const filteredRecords = records.filter(record => record.id !== recordId);
-      
-      localStorage.setItem(
-        ExceptionRuleStorageService.USAGE_RECORDS_KEY,
-        JSON.stringify(filteredRecords)
-      );
+
+      localPreferences.setExceptionRulesUsage(JSON.stringify(filteredRecords));
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
@@ -290,9 +286,9 @@ export class ExceptionRuleStorageService {
    */
   async getUsageRecords(): Promise<RuleUsageRecord[]> {
     try {
-      const data = localStorage.getItem(ExceptionRuleStorageService.USAGE_RECORDS_KEY);
+      const data = localPreferences.getExceptionRulesUsage();
       if (!data) return [];
-      
+
       const records = JSON.parse(data) as RuleUsageRecord[];
       return records.map(record => ({
         ...record,
@@ -472,8 +468,7 @@ export class ExceptionRuleStorageService {
         await this.saveUsageRecords(validRecords);
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('EXCEPTION_RULE_STORAGE', '清理过期数据失败', undefined, err);
+      logger.warn('EXCEPTION_RULE_STORAGE', '清理过期数据失败', undefined, toError(error));
     }
   }
 
@@ -532,7 +527,7 @@ export class ExceptionRuleStorageService {
    */
   private async saveRules(rules: ExceptionRule[]): Promise<void> {
     try {
-      localStorage.setItem(ExceptionRuleStorageService.STORAGE_KEY, JSON.stringify(rules));
+      localPreferences.setExceptionRules(JSON.stringify(rules));
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
@@ -547,7 +542,7 @@ export class ExceptionRuleStorageService {
    */
   private async saveUsageRecords(records: RuleUsageRecord[]): Promise<void> {
     try {
-      localStorage.setItem(ExceptionRuleStorageService.USAGE_RECORDS_KEY, JSON.stringify(records));
+      localPreferences.setExceptionRulesUsage(JSON.stringify(records));
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
@@ -571,8 +566,7 @@ export class ExceptionRuleStorageService {
         await this.saveRules(rules);
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('EXCEPTION_RULE_STORAGE', '更新规则使用统计失败', { ruleId }, err);
+      logger.warn('EXCEPTION_RULE_STORAGE', '更新规则使用统计失败', { ruleId }, toError(error));
     }
   }
 

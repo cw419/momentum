@@ -3,6 +3,7 @@
  */
 
 import { logger } from './logger';
+import { localPreferences } from './localPreferences';
 
 type Language = 'en' | 'zh';
 
@@ -22,13 +23,8 @@ const detectBrowserLanguage = (): Language => {
 };
 
 const getCurrentLanguage = (): Language => {
-  try {
-    const stored = localStorage.getItem('language');
-    if (stored === 'en' || stored === 'zh') return stored;
-  } catch {
-    // ignore
-  }
-
+  const stored = localPreferences.getLanguage();
+  if (stored) return stored;
   return detectBrowserLanguage();
 };
 
@@ -81,15 +77,15 @@ class NotificationManager {
    * 从本地存储加载启用状态
    */
   private loadEnabledState() {
-    const stored = localStorage.getItem('notifications_enabled');
-    this.isEnabled = stored === 'true' && this.permission === 'granted';
+    const stored = localPreferences.getNotificationsEnabled();
+    this.isEnabled = stored === true && this.permission === 'granted';
   }
 
   /**
    * 保存启用状态到本地存储
    */
   private saveEnabledState() {
-    localStorage.setItem('notifications_enabled', this.isEnabled.toString());
+    localPreferences.setNotificationsEnabled(this.isEnabled);
   }
 
   /**

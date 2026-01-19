@@ -146,7 +146,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
       logger.debug('RECYCLE_BIN', 'Starting operation', { type: showConfirmDialog.type, chainIds: showConfirmDialog.chainIds });
       
       const startTime = Date.now();
-      let operationResult: { success: boolean; message: string; details?: any } = { success: false, message: '' };
+      let operationResult: { success: boolean; message: string; details?: Record<string, unknown> } = { success: false, message: '' };
       
       if (showConfirmDialog.type === 'restore') {
         try {

@@ -5,6 +5,7 @@
 
 import { ExceptionRule, ExceptionRuleType, RuleUsageRecord } from '../types';
 import { logger } from './logger';
+import { toError } from './errorMessage';
 
 export interface CacheEntry<T> {
   data: T;
@@ -21,7 +22,7 @@ export interface CacheStats {
 }
 
 export class ExceptionRuleCache {
-  private cache: Map<string, CacheEntry<any>> = new Map();
+  private cache: Map<string, CacheEntry<unknown>> = new Map();
   private subscribers = new Set<(chainId: string, rules: ExceptionRule[]) => void>();
   private hitCount = 0;
   private missCount = 0;
@@ -111,14 +112,14 @@ export class ExceptionRuleCache {
   /**
    * 获取缓存的统计数据
    */
-  getStats(key: string): any | null {
-    return this.get(`stats_${key}`);
+  getStats<T = unknown>(key: string): T | null {
+    return this.get<T>(`stats_${key}`);
   }
 
   /**
    * 缓存统计数据
    */
-  setStats(key: string, stats: any, ttl?: number): void {
+  setStats<T>(key: string, stats: T, ttl?: number): void {
     this.set(`stats_${key}`, stats, ttl || 10 * 60 * 1000); // 统计数据缓存10分钟
   }
 
@@ -352,7 +353,7 @@ export class ExceptionRuleCache {
   /**
    * 估算对象大小（简化版本）
    */
-  private estimateSize(obj: any): number {
+  private estimateSize(obj: unknown): number {
     const jsonString = JSON.stringify(obj);
     return jsonString.length * 2; // 假设每个字符占用2字节
   }
@@ -373,8 +374,7 @@ export class ExceptionRuleCache {
       try {
         callback(chainId, rules);
       } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        logger.error('EXCEPTION_RULE_CACHE', 'Subscriber notification failed', undefined, err);
+        logger.error('EXCEPTION_RULE_CACHE', 'Subscriber notification failed', undefined, toError(error));
       }
     });
   }
@@ -516,8 +516,7 @@ export class ExceptionRuleCache {
         this.setRule(rule);
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('EXCEPTION_RULE_CACHE', `预加载链 ${chainId} 数据失败`, undefined, err);
+      logger.warn('EXCEPTION_RULE_CACHE', `预加载链 ${chainId} 数据失败`, undefined, toError(error));
     }
   }
 
@@ -531,9 +530,11 @@ export class ExceptionRuleCache {
   } {
     const cacheKey = `chain_rules_${chainId}`;
     const entry = this.cache.get(cacheKey);
-    
+    const data = entry?.data;
+    const rulesCount = Array.isArray(data) ? data.length : 0;
+
     return {
-      rulesCount: entry?.data?.length || 0,
+      rulesCount,
       cacheHit: !!entry,
       lastUpdated: entry?.timestamp || null
     };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { applyThemeWithTransition } from '../utils/theme';
+import { localPreferences } from '../utils/localPreferences';
 
 export type Theme = 'light' | 'dark';
 
@@ -15,8 +16,8 @@ export const useDarkMode = (): UseDarkModeReturn => {
     if (typeof window === 'undefined') return 'light';
 
     // Check localStorage first
-    const stored = localStorage.getItem('theme');
-    if (stored === 'light' || stored === 'dark') return stored;
+    const stored = localPreferences.getTheme();
+    if (stored) return stored;
 
     // Migrate old `system` value (or unset/invalid) to an explicit theme.
     const prefersDark =
@@ -54,8 +55,8 @@ export const useDarkMode = (): UseDarkModeReturn => {
   // Set theme and persist to localStorage
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
-    
+    localPreferences.setTheme(newTheme);
+
     applyTheme(newTheme);
   };
 

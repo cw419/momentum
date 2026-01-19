@@ -14,6 +14,15 @@ interface PerformanceMetrics {
   fps: number;
 }
 
+interface PerformanceBufferEntry {
+  type: 'layout-shift' | 'paint' | 'measure' | 'slow-interaction';
+  value?: number;
+  name?: string;
+  startTime?: number;
+  duration?: number;
+  timestamp: number;
+}
+
 function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShift {
   if (entry.entryType !== 'layout-shift') return false;
   const candidate = entry as Partial<LayoutShift>;
@@ -47,7 +56,7 @@ class PerformanceMonitor {
 
   private isMonitoring = false;
   private backgroundMode = true; // 默认后台模式
-  private dataBuffer: any[] = [];
+  private dataBuffer: PerformanceBufferEntry[] = [];
   private maxBufferSize = 100;
   private reportingEnabled = isDev;
   private initialized = false;
@@ -168,7 +177,7 @@ class PerformanceMonitor {
   }
 
   // 添加数据到缓冲区
-  private addToBuffer(data: any) {
+  private addToBuffer(data: PerformanceBufferEntry) {
     if (this.dataBuffer.length >= this.maxBufferSize) {
       // 移除最旧的数据
       this.dataBuffer.shift();

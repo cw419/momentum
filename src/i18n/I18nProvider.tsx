@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { translations, type Language } from './translations';
 import { I18nContext, type I18nContextValue, type TranslationParams } from './context';
+import { localPreferences } from '../utils/localPreferences';
 
-const LANGUAGE_STORAGE_KEY = 'language';
 const HAN_CHARACTER_REGEX = /[\u4E00-\u9FFF]/;
 
 const WIN1252_CODEPOINT_TO_BYTE = new Map<number, number>([
@@ -98,18 +98,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     if (typeof localStorage === 'undefined') return detectBrowserLanguage();
 
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (stored === 'en' || stored === 'zh') return stored;
+    const stored = localPreferences.getLanguage();
+    if (stored) return stored;
     return detectBrowserLanguage();
   });
 
   const setLanguage = useCallback((next: Language) => {
     setLanguageState(next);
-    try {
-      localStorage.setItem(LANGUAGE_STORAGE_KEY, next);
-    } catch {
-      // ignore
-    }
+    localPreferences.setLanguage(next);
   }, []);
 
   const locale = useMemo(() => getLocale(language), [language]);

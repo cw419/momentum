@@ -15,6 +15,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { BetPlacementResult } from '../../domain/betting';
 import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
+import { toError } from '../../utils/errorMessage';
 import { isDev } from '../../utils/env';
 import { emitPointsChanged } from '../../utils/pointsEvents';
 
@@ -73,8 +74,7 @@ export function useBettingDomain({
           logger.debug('BETTING', 'Cancelled session deleted (refund handled by trigger)', { sessionId: currentSessionId });
         }
       } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        logger.error('BETTING', '删除取消的会话记录失败', { sessionId: currentSessionId }, err);
+        logger.error('BETTING', '删除取消的会话记录失败', { sessionId: currentSessionId }, toError(error));
       }
 
       emitPointsChanged();

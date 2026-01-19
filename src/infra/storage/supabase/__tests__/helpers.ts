@@ -1,0 +1,157 @@
+import { vi } from 'vitest';
+import type { SupabaseStorageContext } from '../types';
+import type { User } from '@supabase/supabase-js';
+
+export const TEST_USER_ID = 'test-user-123';
+
+export const mockUser: User = {
+  id: TEST_USER_ID,
+  email: 'test@momentum.app',
+  created_at: new Date().toISOString(),
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+};
+
+export interface MockQueryBuilder {
+  select: ReturnType<typeof vi.fn>;
+  insert: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  upsert: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  in: ReturnType<typeof vi.fn>;
+  order: ReturnType<typeof vi.fn>;
+  limit: ReturnType<typeof vi.fn>;
+  single: ReturnType<typeof vi.fn>;
+  not: ReturnType<typeof vi.fn>;
+  lt: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
+  rpc: ReturnType<typeof vi.fn>;
+}
+
+export function createMockQueryBuilder(
+  dataOrError: { data?: unknown; error?: unknown } = { data: [], error: null }
+): MockQueryBuilder {
+  const builder: MockQueryBuilder = {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    upsert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnValue(dataOrError),
+    not: vi.fn().mockReturnThis(),
+    lt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    rpc: vi.fn().mockResolvedValue(dataOrError),
+  };
+
+  builder.select.mockImplementation(() => {
+    const obj = { ...builder, ...dataOrError };
+    obj.eq = vi.fn().mockImplementation(() => {
+      const inner = { ...obj, ...dataOrError };
+      inner.order = vi.fn().mockReturnValue({ ...inner, ...dataOrError });
+      inner.limit = vi.fn().mockReturnValue({ ...inner, ...dataOrError });
+      inner.single = vi.fn().mockReturnValue(dataOrError);
+      inner.not = vi.fn().mockImplementation(() => ({
+        ...inner,
+        lt: vi.fn().mockReturnValue(dataOrError),
+      }));
+      return inner;
+    });
+    return obj;
+  });
+
+  builder.insert.mockImplementation(() => {
+    const obj = { ...builder, ...dataOrError };
+    obj.select = vi.fn().mockImplementation(() => ({
+      ...obj,
+      ...dataOrError,
+      single: vi.fn().mockReturnValue(dataOrError),
+    }));
+    return obj;
+  });
+
+  builder.update.mockImplementation(() => {
+    const obj = { ...builder, ...dataOrError };
+    obj.in = vi.fn().mockImplementation(() => ({
+      ...obj,
+      eq: vi.fn().mockImplementation(() => ({
+        ...obj,
+        ...dataOrError,
+        select: vi.fn().mockReturnValue(dataOrError),
+      })),
+    }));
+    obj.eq = vi.fn().mockReturnThis();
+    return obj;
+  });
+
+  builder.upsert.mockImplementation(() => {
+    const obj = { ...builder, ...dataOrError };
+    obj.select = vi.fn().mockReturnValue(dataOrError);
+    return obj;
+  });
+
+  builder.delete.mockImplementation(() => {
+    const obj = { ...builder, ...dataOrError };
+    obj.eq = vi.fn().mockImplementation(() => ({
+      ...obj,
+      ...dataOrError,
+    }));
+    obj.in = vi.fn().mockImplementation(() => ({
+      ...obj,
+      eq: vi.fn().mockReturnValue(dataOrError),
+    }));
+    return obj;
+  });
+
+  return builder;
+}
+
+export function createMockSupabaseClient(
+  queryBuilder: MockQueryBuilder = createMockQueryBuilder()
+) {
+  return {
+    from: vi.fn().mockReturnValue(queryBuilder),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+  };
+}
+
+export function createMockContext(
+  options: {
+    user?: User | null;
+    isAuthenticated?: boolean;
+    queryBuilder?: MockQueryBuilder;
+  } = {}
+): SupabaseStorageContext & { mockClient: ReturnType<typeof createMockSupabaseClient> } {
+  const {
+    user = mockUser,
+    isAuthenticated = true,
+    queryBuilder = createMockQueryBuilder(),
+  } = options;
+
+  const mockClient = createMockSupabaseClient(queryBuilder);
+
+  return {
+    getClient: () => mockClient as unknown as ReturnType<SupabaseStorageContext['getClient']>,
+    getCurrentUser: vi.fn().mockResolvedValue(user),
+    waitForAuthentication: vi.fn().mockResolvedValue({ user, isAuthenticated }),
+    isUserAuthenticated: vi.fn().mockResolvedValue(isAuthenticated),
+    retryOperation: vi.fn().mockImplementation((op) => op()),
+    retryWithAuth: vi.fn().mockImplementation((op) => op()),
+    verifySchemaColumns: vi.fn().mockResolvedValue({
+      hasAllColumns: true,
+      missingColumns: [],
+    }),
+    clearSchemaCache: vi.fn(),
+    mockClient,
+  };
+}
+
+export function createSupabaseError(code: string, message: string) {
+  return { code, message, details: null, hint: null };
+}

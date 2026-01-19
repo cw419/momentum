@@ -8,10 +8,12 @@ import { systemHealthService } from '../services/SystemHealthService';
 import { dataIntegrityChecker } from '../services/DataIntegrityChecker';
 import { logger } from './logger';
 
+import { SystemHealthReport } from '../services/SystemHealthService';
+
 export async function initializeRuleSystem(): Promise<{
   success: boolean;
   message: string;
-  healthReport?: any;
+  healthReport?: SystemHealthReport;
 }> {
   logger.info('RULE_SYSTEM', '🚀 开始初始化规则系统...');
 

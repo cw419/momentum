@@ -1,6 +1,5 @@
 import type { Language } from '../i18n';
-
-const LANGUAGE_STORAGE_KEY = 'language';
+import { localPreferences } from './localPreferences';
 
 export const detectBrowserLanguage = (): Language => {
   if (typeof navigator === 'undefined') return 'en';
@@ -18,13 +17,8 @@ export const detectBrowserLanguage = (): Language => {
 };
 
 export const getCurrentLanguage = (): Language => {
-  try {
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (stored === 'en' || stored === 'zh') return stored;
-  } catch {
-    // ignore
-  }
-
+  const stored = localPreferences.getLanguage();
+  if (stored) return stored;
   return detectBrowserLanguage();
 };
 

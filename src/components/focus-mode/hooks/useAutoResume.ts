@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActiveSession } from '../../../types';
-
-const AUTO_RESUME_STORAGE_KEY = 'momentum_auto_resume';
+import { localPreferences } from '../../../utils/localPreferences';
 
 interface UseAutoResumeParams {
   session: ActiveSession;
@@ -15,16 +14,9 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
   const resumeTimeoutRef = useRef<number | null>(null);
 
   const clearAutoResumeSchedule = useCallback(() => {
-    try {
-      const dataStr = localStorage.getItem(AUTO_RESUME_STORAGE_KEY);
-      if (dataStr) {
-        const data = JSON.parse(dataStr);
-        if (data.chainId === session.chainId) {
-          localStorage.removeItem(AUTO_RESUME_STORAGE_KEY);
-        }
-      }
-    } catch {
-      // ignore
+    const data = localPreferences.getAutoResume();
+    if (data && data.chainId === session.chainId) {
+      localPreferences.clearAutoResume();
     }
 
     if (resumeTimeoutRef.current) {
@@ -58,18 +50,11 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     const resumeTime = Date.now() + minutes * 60 * 1000;
     setAutoResumeAt(resumeTime);
 
-    try {
-      localStorage.setItem(
-        AUTO_RESUME_STORAGE_KEY,
-        JSON.stringify({
-          chainId: session.chainId,
-          startedAt: session.startedAt.toISOString(),
-          resumeAt: new Date(resumeTime).toISOString(),
-        })
-      );
-    } catch {
-      // ignore
-    }
+    localPreferences.setAutoResume({
+      chainId: session.chainId,
+      startedAt: session.startedAt.toISOString(),
+      resumeAt: new Date(resumeTime).toISOString(),
+    });
 
     setupAutoResumeTimer(resumeTime);
   }, [session.chainId, session.startedAt, setupAutoResumeTimer]);
@@ -78,23 +63,18 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
   useEffect(() => {
     if (!session.isPaused) return;
 
-    try {
-      const dataStr = localStorage.getItem(AUTO_RESUME_STORAGE_KEY);
-      if (!dataStr) return;
+    const data = localPreferences.getAutoResume();
+    if (!data) return;
 
-      const data = JSON.parse(dataStr);
-      if (data.chainId === session.chainId && data.startedAt === session.startedAt.toISOString()) {
-        const ts = new Date(data.resumeAt).getTime();
-        if (ts > Date.now()) {
-          setAutoResumeAt(ts);
-          setupAutoResumeTimer(ts);
-        } else {
-          clearAutoResumeSchedule();
-          onResume();
-        }
+    if (data.chainId === session.chainId && data.startedAt === session.startedAt.toISOString()) {
+      const ts = new Date(data.resumeAt).getTime();
+      if (ts > Date.now()) {
+        setAutoResumeAt(ts);
+        setupAutoResumeTimer(ts);
+      } else {
+        clearAutoResumeSchedule();
+        onResume();
       }
-    } catch {
-      // ignore
     }
   }, [clearAutoResumeSchedule, onResume, session.chainId, session.isPaused, session.startedAt, setupAutoResumeTimer]);
 

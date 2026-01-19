@@ -1,16 +1,24 @@
 import { supabase } from '../lib/supabase';
 import { logger } from './logger';
 import { schemaChecker } from './schemaChecker';
+import { getErrorMessage } from './errorMessage';
+
+interface OptimizationStatus {
+  isOptimized: boolean;
+  lastOptimized?: Date;
+  issues: string[];
+  recommendations: string[];
+}
 
 /**
  * Database Schema Optimization Helper
- * 
+ *
  * This helper provides utilities for optimizing database performance,
  * managing schema migrations, and monitoring database health.
  */
 export class SchemaOptimizer {
   private static instance: SchemaOptimizer;
-  private optimizationCache: Map<string, { timestamp: number; result: any }> = new Map();
+  private optimizationCache: Map<string, { timestamp: number; result: OptimizationStatus }> = new Map();
   private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
   public static getInstance(): SchemaOptimizer {
@@ -73,7 +81,7 @@ export class SchemaOptimizer {
         errors
       };
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : '未知错误';
+      const errorMsg = getErrorMessage(error);
       logger.error('SCHEMA_OPTIMIZER', '数据库优化过程中发生异常', { error: errorMsg });
       errors.push(`优化过程异常: ${errorMsg}`);
       
@@ -129,7 +137,7 @@ export class SchemaOptimizer {
           created.push(`创建性能索引: ${index.description}`);
         }
       } catch (error) {
-        errors.push(`创建索引 ${index.name} 异常: ${error instanceof Error ? error.message : '未知错误'}`);
+        errors.push(`创建索引 ${index.name} 异常: ${getErrorMessage(error)}`);
       }
     }
 
@@ -161,7 +169,7 @@ export class SchemaOptimizer {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : '未知错误'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -257,7 +265,7 @@ export class SchemaOptimizer {
     } catch (error) {
       const errorResult = {
         isOptimized: false,
-        issues: [`检查优化状态失败: ${error instanceof Error ? error.message : '未知错误'}`],
+        issues: [`检查优化状态失败: ${getErrorMessage(error)}`],
         recommendations: ['手动检查数据库连接和权限设置']
       };
 

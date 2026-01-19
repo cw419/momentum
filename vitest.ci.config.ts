@@ -20,7 +20,8 @@ export default defineConfig({
       '**/*performance.test.*',
       '**/__tests__/**/*.integration.*',
       '**/__tests__/**/*.db.*',
-      '**/__tests__/**/*.performance.*'
+      '**/__tests__/**/*.performance.*',
+      '**/__tests__/**/helpers.ts'
     ]
   }
 });

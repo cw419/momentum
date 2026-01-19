@@ -7,6 +7,8 @@ import { storage } from './storage';
 import { CompletionHistory, TaskTimeStats } from '../types';
 import { isDev } from './env';
 import { logger } from './logger';
+import { localPreferences } from './localPreferences';
+import { toError, getErrorMessage } from './errorMessage';
 
 export interface MigrationResult {
   success: boolean;
@@ -58,7 +60,7 @@ export class DataMigrationManager {
       result.success = result.errors.length === 0;
     } catch (error) {
       result.success = false;
-      result.errors.push(`迁移过程中发生错误: ${error instanceof Error ? error.message : String(error)}`);
+      result.errors.push(`迁移过程中发生错误: ${getErrorMessage(error)}`);
     }
 
     return result;
@@ -96,7 +98,7 @@ export class DataMigrationManager {
           migratedCount++;
           return migratedRecord;
         } catch (error) {
-          errors.push(`迁移历史记录 ${index} 时出错: ${error instanceof Error ? error.message : String(error)}`);
+          errors.push(`迁移历史记录 ${index} 时出错: ${getErrorMessage(error)}`);
           return record; // 返回原记录
         }
       });
@@ -105,7 +107,7 @@ export class DataMigrationManager {
         storage.saveCompletionHistory(updatedHistory);
       }
     } catch (error) {
-      errors.push(`迁移完成历史记录时出错: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`迁移完成历史记录时出错: ${getErrorMessage(error)}`);
     }
 
     return { migratedCount, errors };
@@ -166,7 +168,7 @@ export class DataMigrationManager {
           statsMap.set(chainId, stats);
           createdCount++;
         } catch (error) {
-          errors.push(`处理历史记录 ${index} 时出错: ${error instanceof Error ? error.message : String(error)}`);
+          errors.push(`处理历史记录 ${index} 时出错: ${getErrorMessage(error)}`);
         }
       });
 
@@ -175,7 +177,7 @@ export class DataMigrationManager {
         storage.saveTaskTimeStats(Array.from(statsMap.values()));
       }
     } catch (error) {
-      errors.push(`创建任务用时统计时出错: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`创建任务用时统计时出错: ${getErrorMessage(error)}`);
     }
 
     return { createdCount, errors };
@@ -227,7 +229,7 @@ export class DataMigrationManager {
 
           return updatedChain;
         } catch (error) {
-          errors.push(`更新链条 ${index} 时出错: ${error instanceof Error ? error.message : String(error)}`);
+          errors.push(`更新链条 ${index} 时出错: ${getErrorMessage(error)}`);
           return chain; // 返回原链条
         }
       });
@@ -236,7 +238,7 @@ export class DataMigrationManager {
         storage.saveChains(updatedChains);
       }
     } catch (error) {
-      errors.push(`更新链条结构时出错: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`更新链条结构时出错: ${getErrorMessage(error)}`);
     }
 
     return { updatedCount, errors };
@@ -248,39 +250,20 @@ export class DataMigrationManager {
   private async cleanupInvalidData(): Promise<void> {
     try {
       // 清理过期的计时器持久化数据
-      const keys = Object.keys(localStorage);
-      const timerKeys = keys.filter(key => key.startsWith('momentum_timer_'));
-      const now = Date.now();
-
-      timerKeys.forEach(key => {
-        try {
-          const dataStr = localStorage.getItem(key);
-          if (dataStr) {
-            const data = JSON.parse(dataStr);
-            // 清理超过24小时的数据
-            if (now - data.timestamp > 24 * 60 * 60 * 1000) {
-              localStorage.removeItem(key);
-            }
-          }
-        } catch {
-          // 如果解析失败，直接删除
-          localStorage.removeItem(key);
-        }
-      });
+      localPreferences.cleanupExpiredTimers();
 
       // 清理孤立的任务用时统计（对应的链条已被删除）
       const chains = storage.getChains();
       const stats = storage.getTaskTimeStats();
       const validChainIds = new Set(chains.map(c => c.id));
-      
+
       const validStats = stats.filter(stat => validChainIds.has(stat.chainId));
-      
+
       if (validStats.length !== stats.length) {
         storage.saveTaskTimeStats(validStats);
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('DATA_MIGRATION', '清理无效数据时出错', undefined, err);
+      logger.warn('DATA_MIGRATION', '清理无效数据时出错', undefined, toError(error));
     }
   }
 
@@ -333,7 +316,7 @@ export class DataMigrationManager {
         }
       });
     } catch (error) {
-      issues.push(`验证数据完整性时出错: ${error instanceof Error ? error.message : String(error)}`);
+      issues.push(`验证数据完整性时出错: ${getErrorMessage(error)}`);
     }
 
     return {

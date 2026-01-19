@@ -1,6 +1,7 @@
 import { createClient, type User } from '@supabase/supabase-js';
 import { Database } from './database.types';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorMessage';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -36,8 +37,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
     return user;
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.warn('SUPABASE', 'Failed to get current user', undefined, err);
+    logger.warn('SUPABASE', 'Failed to get current user', undefined, toError(error));
     return null;
   }
 };
@@ -77,8 +77,7 @@ export const waitForAuthentication = async (maxWaitTime: number = 10000): Promis
       // Wait before next check
       await new Promise(resolve => setTimeout(resolve, checkInterval));
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.warn('SUPABASE', 'Authentication check failed', undefined, err);
+      logger.warn('SUPABASE', 'Authentication check failed', undefined, toError(error));
       await new Promise(resolve => setTimeout(resolve, checkInterval));
     }
   }
@@ -101,8 +100,7 @@ export const isUserAuthenticated = async (): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     return !!user;
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.warn('SUPABASE', 'Authentication check failed', undefined, err);
+    logger.warn('SUPABASE', 'Authentication check failed', undefined, toError(error));
     return false;
   }
 };

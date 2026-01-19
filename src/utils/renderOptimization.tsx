@@ -11,7 +11,7 @@ import { logger } from './logger';
  * 防抖Hook
  * 延迟执行函数，在指定时间内多次调用只执行最后一次
  */
-export const useDebounce = <T extends (...args: any[]) => any>(
+export const useDebounce = <T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
 ): T => {
@@ -45,7 +45,7 @@ export const useDebounce = <T extends (...args: any[]) => any>(
  * 节流Hook
  * 限制函数执行频率，在指定时间内最多执行一次
  */
-export const useThrottle = <T extends (...args: any[]) => any>(
+export const useThrottle = <T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
 ): T => {
@@ -120,13 +120,13 @@ export const useRenderCount = (componentName: string) => {
  * 智能重渲染检测
  * 检测不必要的重渲染
  */
-export const useWhyDidYouUpdate = (name: string, props: Record<string, any>) => {
-  const previousProps = useRef<Record<string, any>>();
+export const useWhyDidYouUpdate = (name: string, props: Record<string, unknown>) => {
+  const previousProps = useRef<Record<string, unknown>>();
 
   useEffect(() => {
     if (previousProps.current && isDev) {
       const allKeys = Object.keys({ ...previousProps.current, ...props });
-      const changedProps: Record<string, { from: any; to: any }> = {};
+      const changedProps: Record<string, { from: unknown; to: unknown }> = {};
 
       allKeys.forEach(key => {
         if (previousProps.current![key] !== props[key]) {

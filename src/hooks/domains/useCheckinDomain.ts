@@ -17,7 +17,7 @@ import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
 import { useI18n } from '../../i18n';
-import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
+import { getSafeErrorDetail, getSafeErrorDetailFromUnknown, toError } from '../../utils/errorMessage';
 import { POINTS_CHANGED_EVENT } from '../../utils/pointsEvents';
 
 export function useCheckinDomain() {
@@ -79,8 +79,7 @@ export function useCheckinDomain() {
       }
       setStats(result.value);
     } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error(String(err));
-      logger.error('CHECKIN', '加载签到统计失败', undefined, errorObj);
+      logger.error('CHECKIN', '加载签到统计失败', undefined, toError(err));
       const safeDetail = getSafeErrorDetailFromUnknown(err, language);
       setError(safeDetail ?? tr('加载签到数据失败，请重试（详情见控制台）', 'Failed to load check-in data. Check the console for details, then try again.'));
     } finally {
@@ -135,8 +134,7 @@ export function useCheckinDomain() {
         setError(safeDetail ?? trRef.current('签到失败', 'Check-in failed'));
       }
     } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error(String(err));
-      logger.error('CHECKIN', '签到失败', undefined, errorObj);
+      logger.error('CHECKIN', '签到失败', undefined, toError(err));
       const safeDetail = getSafeErrorDetailFromUnknown(err, languageRef.current);
       setError(safeDetail ?? trRef.current('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
     } finally {

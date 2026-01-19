@@ -7,6 +7,7 @@ import { ExceptionRule, ExceptionRuleType } from '../types';
 import { exceptionRuleManager } from './ExceptionRuleManager';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { logger } from '../utils/logger';
+import { toError } from '../utils/errorMessage';
 
 export class RuleScopeManager {
   /**
@@ -34,7 +35,7 @@ export class RuleScopeManager {
         return b.usageCount - a.usageCount;
       });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_SCOPE', '获取可用规则失败', { chainId, actionType }, err);
       return [];
     }
@@ -55,7 +56,7 @@ export class RuleScopeManager {
       
       return updatedRule;
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_SCOPE', '创建链专属规则失败', { chainId, name, type }, err);
       throw error;
     }
@@ -71,7 +72,7 @@ export class RuleScopeManager {
       // 规则默认就是全局的，直接返回
       return result.rule;
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_SCOPE', '创建全局规则失败', { name, type }, err);
       throw error;
     }
@@ -94,7 +95,7 @@ export class RuleScopeManager {
       
       await exceptionRuleStorage.updateRule(ruleId, updates);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_SCOPE', '转换规则作用域失败', { ruleId, newScope, chainId }, err);
       throw error;
     }
@@ -108,7 +109,7 @@ export class RuleScopeManager {
       const allRules = await exceptionRuleManager.getAllRules();
       return allRules.filter(rule => rule.scope === 'chain' && rule.chainId === chainId).length;
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_SCOPE', '获取链规则数量失败', { chainId }, err);
       return 0;
     }
@@ -122,7 +123,7 @@ export class RuleScopeManager {
       const allRules = await exceptionRuleManager.getAllRules();
       return allRules.filter(rule => rule.scope === 'global').length;
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_SCOPE', '获取全局规则数量失败', undefined, err);
       return 0;
     }
@@ -152,7 +153,7 @@ export class RuleScopeManager {
       
       return false;
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error('RULE_SCOPE', '检查规则名称重复失败', { name, chainId }, err);
       return false;
     }

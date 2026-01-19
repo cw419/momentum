@@ -5,6 +5,7 @@
 
 import { isDev } from './env';
 import { logger } from './logger';
+import { toError } from './errorMessage';
 
 function describeElement(element: HTMLElement): { tagName: string; id?: string; className?: string } {
   const className = typeof element.className === 'string' ? element.className : String(element.className);
@@ -380,8 +381,7 @@ export class LayoutStabilityMonitor {
         try {
           callback();
         } catch (error) {
-          const err = error instanceof Error ? error : new Error(String(error));
-          logger.error('LAYOUT', 'Stabilization callback error', undefined, err);
+          logger.error('LAYOUT', 'Stabilization callback error', undefined, toError(error));
         }
       });
       
