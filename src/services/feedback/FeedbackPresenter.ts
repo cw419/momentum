@@ -1,0 +1,149 @@
+/**
+ * 反馈展示器
+ * 负责显示各类反馈消息（错误、警告、信息、成功）
+ */
+
+import {
+  ExceptionRuleError,
+  ExceptionRuleException
+} from '../../types';
+import { errorRecoveryManager, RecoveryAction } from '../ErrorRecoveryManager';
+import { getSafeErrorDetail } from '../../utils/errorMessage';
+import { getCurrentLanguage, tr } from '../../utils/runtimeI18n';
+import { MessageStore } from './MessageStore';
+import { ErrorMessageFormatter } from './ErrorMessageFormatter';
+import type { FeedbackMessage, FeedbackAction, ProgressInfo } from './types';
+
+export class FeedbackPresenter {
+  constructor(
+    private readonly store: MessageStore,
+    private readonly formatter: ErrorMessageFormatter
+  ) {}
+
+  showErrorMessage(error: ExceptionRuleException, context?: unknown): string {
+    void context;
+    const messageId = this.store.generateMessageId();
+    const userFriendlyMessage = this.formatter.getUserFriendlyMessage(error);
+    const recoveryActions = errorRecoveryManager.getRecoveryOptions(error);
+
+    const feedbackMessage: FeedbackMessage = {
+      id: messageId,
+      type: 'error',
+      title: this.formatter.getErrorTitle(error.type),
+      message: userFriendlyMessage,
+      actions: this.convertRecoveryActionsToFeedbackActions(recoveryActions),
+      persistent: true,
+      timestamp: new Date()
+    };
+
+    this.store.addMessage(feedbackMessage);
+    return messageId;
+  }
+
+  showWarning(title: string, message: string, actions?: FeedbackAction[]): string {
+    const messageId = this.store.generateMessageId();
+
+    const feedbackMessage: FeedbackMessage = {
+      id: messageId,
+      type: 'warning',
+      title,
+      message,
+      actions,
+      autoHide: true,
+      duration: 8000,
+      timestamp: new Date()
+    };
+
+    this.store.addMessage(feedbackMessage);
+    return messageId;
+  }
+
+  showInfo(title: string, message: string, autoHide: boolean = true): string {
+    const messageId = this.store.generateMessageId();
+
+    const feedbackMessage: FeedbackMessage = {
+      id: messageId,
+      type: 'info',
+      title,
+      message,
+      autoHide,
+      duration: autoHide ? 5000 : undefined,
+      timestamp: new Date()
+    };
+
+    this.store.addMessage(feedbackMessage);
+    return messageId;
+  }
+
+  showSuccess(title: string, message: string, autoHide: boolean = true): string {
+    const messageId = this.store.generateMessageId();
+
+    const feedbackMessage: FeedbackMessage = {
+      id: messageId,
+      type: 'success',
+      title,
+      message,
+      autoHide,
+      duration: autoHide ? 3000 : undefined,
+      timestamp: new Date()
+    };
+
+    this.store.addMessage(feedbackMessage);
+    return messageId;
+  }
+
+  showProgress(operation: string, progress?: number, message?: string): void {
+    this.store.setProgress({
+      operation,
+      progress,
+      message,
+      isIndeterminate: progress === undefined
+    });
+  }
+
+  hideProgress(): void {
+    this.store.setProgress(null);
+  }
+
+  updateProgress(progress: number, message?: string): void {
+    this.store.updateProgress(progress, message);
+  }
+
+  getProgress(): ProgressInfo | null {
+    return this.store.getProgress();
+  }
+
+  private convertRecoveryActionsToFeedbackActions(recoveryActions: RecoveryAction[]): FeedbackAction[] {
+    return recoveryActions.map(action => ({
+      id: action.id,
+      label: action.label,
+      type: action.type,
+      handler: async () => {
+        try {
+          this.showProgress(action.description);
+          const result = await action.handler();
+          this.hideProgress();
+
+          if (result.success) {
+            this.showSuccess(tr('操作成功', 'Success'), result.message);
+          } else {
+            this.showWarning(tr('操作未完成', 'Not completed'), result.message);
+          }
+        } catch (error) {
+          this.hideProgress();
+          const language = getCurrentLanguage();
+          this.showErrorMessage(
+            error instanceof ExceptionRuleException
+              ? error
+              : new ExceptionRuleException(
+                  ExceptionRuleError.STORAGE_ERROR,
+                  error instanceof Error
+                    ? (getSafeErrorDetail(error.message, language) ?? tr('操作失败', 'Operation failed', language))
+                    : tr('操作失败', 'Operation failed', language)
+                )
+          );
+        }
+      }
+    }));
+  }
+}
