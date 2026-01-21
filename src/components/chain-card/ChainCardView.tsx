@@ -55,24 +55,17 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
           </button>
 
           {showMenu && (
-            <div
-              role="menu"
-              aria-orientation="vertical"
-              className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl border border-gray-200 dark:border-slate-600 py-2 z-10 min-w-[140px]"
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShowDeleteConfirm();
+              }}
+              aria-label={tr('删除链条', 'Delete chain')}
+              className="absolute right-0 top-12 w-14 h-14 bg-white dark:bg-slate-800 rounded-xl shadow-xl dark:shadow-2xl border border-gray-200 dark:border-slate-600 z-10 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center transition-colors"
             >
-              <button
-                type="button"
-                role="menuitem"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowDeleteConfirm();
-                }}
-                className="w-full px-4 py-3 text-left text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
-              >
-                <Trash2 size={14} aria-hidden="true" />
-                <span className="font-chinese font-medium">{tr('删除链条', 'Delete chain')}</span>
-              </button>
-            </div>
+              <Trash2 size={22} aria-hidden="true" />
+            </button>
           )}
         </div>
 
@@ -132,9 +125,9 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
             <span className="font-medium">
               {(chain.isDurationless || chain.duration === 0)
                 ? (lastCompletionTime
-                    ? `${tr('上次：', 'Last: ')}${formatTimeDescriptionByLanguage(lastCompletionTime, language)}`
-                    : tr('首次执行', 'First time')
-                  )
+                  ? `${tr('上次：', 'Last: ')}${formatTimeDescriptionByLanguage(lastCompletionTime, language)}`
+                  : tr('首次执行', 'First time')
+                )
                 : formatTime(chain.duration, language)
               }
             </span>
