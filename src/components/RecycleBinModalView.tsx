@@ -146,9 +146,9 @@ const Header: React.FC<HeaderProps> = ({ deletedChainsCount, language, tr, onClo
       type="button"
       onClick={onClose}
       aria-label={tr('关闭', 'Close')}
-      className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
+      className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
     >
-      <X size={20} className="text-gray-600 dark:text-slate-300" />
+      <X size={24} className="text-gray-600 dark:text-slate-300" />
     </button>
   </div>
 );
@@ -165,15 +165,15 @@ const LoadingState: React.FC<{ tr: (zh: string, en: string) => string }> = ({ tr
 );
 
 const EmptyState: React.FC<{ tr: (zh: string, en: string) => string }> = ({ tr }) => (
-  <div className="flex-1 flex items-center justify-center">
-    <div className="text-center max-w-md">
+  <div className="flex-1 flex items-center justify-center py-16">
+    <div className="text-center max-w-md px-8">
       <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-6">
         <Trash2 size={32} className="text-gray-400 dark:text-slate-500" />
       </div>
       <h3 className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
         {tr('回收箱为空', 'Recycle bin is empty')}
       </h3>
-      <p className="text-gray-600 dark:text-slate-400 leading-relaxed">
+      <p className="text-gray-600 dark:text-slate-400 leading-relaxed mb-4">
         {tr(
           '删除的链条会出现在这里，你可以选择恢复或永久删除它们。',
           'Deleted chains appear here. You can restore them or delete them permanently.'

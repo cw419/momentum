@@ -65,9 +65,9 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             type="button"
             onClick={onCancel}
             aria-label="关闭"
-            className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors focus-ring"
+            className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors focus-ring"
           >
-            <X size={16} className="text-gray-600 dark:text-slate-300" />
+            <X size={22} className="text-gray-600 dark:text-slate-300" />
           </button>
         </div>
 
