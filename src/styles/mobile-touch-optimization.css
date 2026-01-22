@@ -58,6 +58,17 @@ input, textarea, select {
   overscroll-behavior: contain;
 }
 
+/* Desktop scroll fix:
+ * `.chain-editor-container` uses `overflow-x: hidden` (scroll container). With `overscroll-behavior: contain`
+ * this can block vertical scroll chaining and make wheel/trackpad scrolling stop working.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .chain-editor-container,
+  .chain-editor-scroll-container {
+    overscroll-behavior-y: auto;
+  }
+}
+
 /* 基础触摸区域优化（保持原有功能） */
 .touch-target {
   min-height: 44px;
