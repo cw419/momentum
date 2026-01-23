@@ -93,7 +93,7 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> = React.mem
         className={`py-4 md:py-6 ${mobileInfo.isMobile ? 'px-4' : ''}`}
       >
         {/* Header */}
-        <header className="flex items-center justify-between mb-12 animate-fade-in">
+        <header className="flex items-center justify-between mb-8 md:mb-10 animate-fade-in">
           <div className="flex items-center space-x-4">
             <button
               onClick={onCancel}
@@ -127,7 +127,7 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> = React.mem
           )}
         </header>
 
-        <form onSubmit={onSubmit} className="space-y-8 animate-slide-up">
+        <form onSubmit={onSubmit} className="space-y-6 md:space-y-8 animate-slide-up">
           {/* 基础信息区 */}
           <BasicInfoSection
             name={name}
@@ -287,139 +287,184 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
     icon={<Calendar className="text-blue-500" size={20} />}
     description={tr('配置预约信号、时长和完成条件', 'Configure booking signal, duration, and completion condition')}
   >
-    {/* 预约信号 */}
-    <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in">
-      <div className="flex items-center space-x-3 mb-4">
-        <Bell className="text-blue-500" size={20} />
-        <div>
-          <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('预约信号', 'Booking signal')}</h4>
-          <p className="text-xs font-mono text-gray-500">{tr('预约信号', 'BOOKING SIGNAL')}</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* 预约信号 */}
+      <div className="bento-card p-4 md:p-5 border-l-4 border-l-blue-500 animate-scale-in">
+        <div className="flex items-center gap-3 mb-3">
+          <Bell className="text-blue-500" size={18} />
+          <div className="min-w-0">
+            <h4 className="text-base font-semibold font-chinese text-gray-900 dark:text-slate-100">
+              {tr('预约信号', 'Booking signal')}
+            </h4>
+            <p className="text-[11px] font-mono text-gray-500">{tr('预约信号', 'BOOKING SIGNAL')}</p>
+          </div>
+        </div>
+
+        <select
+          id="auxiliary-signal"
+          name="auxiliarySignal"
+          value={auxiliarySignal}
+          onChange={(e) => onAuxiliarySignalSelect(e.target.value)}
+          className={`w-full bg-gray-50 dark:bg-slate-700 border ${
+            errors.auxiliarySignal
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
+          } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
+          required
+        >
+          <option value="" disabled className="text-gray-400">
+            {tr('选择预约信号', 'Choose a booking signal')}
+          </option>
+          {AUXILIARY_SIGNAL_TEMPLATES.map((template, index) => (
+            <option
+              key={index}
+              value={template.value}
+              className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700"
+            >
+              {template.label[language]}
+            </option>
+          ))}
+        </select>
+
+        {auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE && (
+          <input
+            type="text"
+            id="custom-auxiliary-signal"
+            name="customAuxiliarySignal"
+            value={customAuxiliarySignal}
+            onChange={(e) => onCustomAuxiliarySignalChange(e.target.value)}
+            placeholder={tr('输入你的自定义预约信号', 'Enter your custom booking signal')}
+            className={`w-full mt-3 bg-gray-50 dark:bg-slate-700 border ${
+              errors.auxiliarySignal
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
+            } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
+            required
+          />
+        )}
+
+        {errors.auxiliarySignal && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400 font-chinese">{errors.auxiliarySignal}</p>
+        )}
+      </div>
+
+      {/* 预约时长 */}
+      <div className="bento-card p-4 md:p-5 border-l-4 border-l-blue-500 animate-scale-in">
+        <div className="flex items-center gap-3 mb-3">
+          <Hourglass className="text-blue-500" size={18} />
+          <div className="min-w-0">
+            <h4 className="text-base font-semibold font-chinese text-gray-900 dark:text-slate-100">
+              {tr('预约时长', 'Booking duration')}
+            </h4>
+            <p className="text-[11px] font-mono text-gray-500">{tr('预约时长', 'BOOKING DURATION')}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <select
+            id="auxiliary-duration"
+            name="auxiliaryDuration"
+            value={isCustomAuxiliaryDuration ? "custom" : auxiliaryDuration}
+            onChange={(e) => {
+              if (e.target.value === "custom") {
+                onAuxiliaryDurationModeChange(true, 25);
+              } else {
+                onAuxiliaryDurationModeChange(false, Number(e.target.value));
+              }
+            }}
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
+            required
+          >
+            {AUXILIARY_DURATION_PRESETS.map((preset) => (
+              <option
+                key={preset}
+                value={preset}
+                className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700"
+              >
+                {tr(`${preset}分钟`, `${preset} min`)}
+              </option>
+            ))}
+            <option value="custom" className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
+              {tr('自定义时长', 'Custom duration')}
+            </option>
+          </select>
+
+          {isCustomAuxiliaryDuration && (
+            <SliderContainer
+              label={tr('自定义预约时长', 'Custom booking duration')}
+              description={tr('设置预约阶段的持续时间', 'Set how long the booking phase lasts')}
+              orientation="horizontal"
+              showKeyboardInput={true}
+              keyboardInputProps={{
+                value: auxiliaryDuration,
+                onChange: onAuxiliaryDurationChange,
+                min: 1,
+                max: 120,
+                unit: tr('分钟', 'min'),
+                placeholder: tr('输入时长', 'Enter duration'),
+              }}
+            >
+              <PureDOMSlider
+                id="auxiliary-duration-slider"
+                name="auxiliaryDurationSlider"
+                min={1}
+                max={120}
+                initialValue={auxiliaryDuration}
+                onValueChange={onAuxiliaryDurationChange}
+                valueFormatter={(v) => tr(`${v}分钟`, `${v} min`)}
+                debounceMs={50}
+                showValue={true}
+              />
+            </SliderContainer>
+          )}
+
+          <p className="text-gray-500 text-xs leading-relaxed">
+            {tr('预约阶段的持续时间，用于准备和调整状态', 'How long the booking phase lasts for preparation and alignment')}
+          </p>
         </div>
       </div>
-      <select
-        id="auxiliary-signal"
-        name="auxiliarySignal"
-        value={auxiliarySignal}
-        onChange={(e) => onAuxiliarySignalSelect(e.target.value)}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.auxiliarySignal ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'} rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all duration-300 mb-4 font-chinese`}
-        required
-      >
-        <option value="" disabled className="text-gray-400">
-          {tr('选择预约信号', 'Choose a booking signal')}
-        </option>
-        {AUXILIARY_SIGNAL_TEMPLATES.map((template, index) => (
-          <option key={index} value={template.value} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-            {template.label[language]}
-          </option>
-        ))}
-      </select>
-      {auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE && (
+
+      {/* 预约完成条件 */}
+      <div className="bento-card p-4 md:p-5 border-l-4 border-l-blue-500 animate-scale-in md:col-span-2">
+        <div className="flex items-center gap-3 mb-3">
+          <CheckCircle className="text-blue-500" size={18} />
+          <div className="min-w-0">
+            <h4 className="text-base font-semibold font-chinese text-gray-900 dark:text-slate-100">
+              {tr('预约完成条件', 'Completion condition')}
+            </h4>
+            <p className="text-[11px] font-mono text-gray-500">{tr('完成条件', 'COMPLETION CONDITION')}</p>
+          </div>
+        </div>
+
         <input
           type="text"
-          id="custom-auxiliary-signal"
-          name="customAuxiliarySignal"
-          value={customAuxiliarySignal}
-          onChange={(e) => onCustomAuxiliarySignalChange(e.target.value)}
-          placeholder={tr('输入你的自定义预约信号', 'Enter your custom booking signal')}
-          className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.auxiliarySignal ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'} rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
+          id="auxiliary-completion-trigger"
+          name="auxiliaryCompletionTrigger"
+          value={getTriggerLabel(auxiliaryCompletionTrigger, language)}
+          onChange={(e) => onAuxiliaryCompletionTriggerChange(e.target.value)}
+          placeholder={tr('例如：打开第一个子任务、准备好工作材料', 'e.g. Open the first subtask, prepare your materials')}
+          className={`w-full bg-gray-50 dark:bg-slate-700 border ${
+            errors.auxiliaryCompletionTrigger
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
+          } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
           required
         />
-      )}
-      {errors.auxiliarySignal && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400 font-chinese">{errors.auxiliarySignal}</p>
-      )}
-    </div>
 
-    {/* 预约时长 */}
-    <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in">
-      <div className="flex items-center space-x-3 mb-4">
-        <Hourglass className="text-blue-500" size={20} />
-        <div>
-          <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('预约时长', 'Booking duration')}</h4>
-          <p className="text-xs font-mono text-gray-500">{tr('预约时长', 'BOOKING DURATION')}</p>
-        </div>
-      </div>
-      <select
-        id="auxiliary-duration"
-        name="auxiliaryDuration"
-        value={isCustomAuxiliaryDuration ? "custom" : auxiliaryDuration}
-        onChange={(e) => {
-          if (e.target.value === "custom") {
-            onAuxiliaryDurationModeChange(true, 25);
-          } else {
-            onAuxiliaryDurationModeChange(false, Number(e.target.value));
-          }
-        }}
-        className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 mb-4 font-chinese"
-        required
-      >
-        {AUXILIARY_DURATION_PRESETS.map((preset) => (
-          <option key={preset} value={preset} className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-            {tr(`${preset}分钟`, `${preset} min`)}
-          </option>
-        ))}
-        <option value="custom" className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-          {tr('自定义时长', 'Custom duration')}
-        </option>
-      </select>
-      {isCustomAuxiliaryDuration && (
-        <SliderContainer
-          label={tr('自定义预约时长', 'Custom booking duration')}
-          description={tr('设置预约阶段的持续时间', 'Set how long the booking phase lasts')}
-          orientation="vertical"
-          showKeyboardInput={true}
-          keyboardInputProps={{
-            value: auxiliaryDuration,
-            onChange: onAuxiliaryDurationChange,
-            min: 1,
-            max: 120,
-            unit: tr('分钟', 'min'),
-            placeholder: tr('输入时长', 'Enter duration'),
-          }}
-        >
-          <PureDOMSlider
-            id="auxiliary-duration-slider"
-            name="auxiliaryDurationSlider"
-            min={1}
-            max={120}
-            initialValue={auxiliaryDuration}
-            onValueChange={onAuxiliaryDurationChange}
-            valueFormatter={(v) => tr(`${v}分钟`, `${v} min`)}
-            debounceMs={50}
-            showValue={true}
-          />
-        </SliderContainer>
-      )}
-      <p className="text-gray-500 text-xs leading-relaxed">
-        {tr('预约阶段的持续时间，用于准备和调整状态', 'How long the booking phase lasts for preparation and alignment')}
-      </p>
-    </div>
+        {errors.auxiliaryCompletionTrigger && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400 font-chinese">{errors.auxiliaryCompletionTrigger}</p>
+        )}
 
-    {/* 预约完成条件 */}
-    <div className="bento-card border-l-4 border-l-blue-500 animate-scale-in">
-      <div className="flex items-center space-x-3 mb-4">
-        <CheckCircle className="text-blue-500" size={20} />
-        <div>
-          <h4 className="text-lg font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('预约完成条件', 'Completion condition')}</h4>
-          <p className="text-xs font-mono text-gray-500">{tr('完成条件', 'COMPLETION CONDITION')}</p>
-        </div>
+        <details className="mt-3 text-xs text-gray-500 dark:text-slate-400">
+          <summary className="cursor-pointer font-chinese">{tr('说明', 'Note')}</summary>
+          <p className="mt-2 leading-relaxed">
+            {tr(
+              '这是你在预约时间内必须完成的动作，标志着正式开始执行任务群。',
+              'This is the action you must complete during booking—signaling the start of the group execution.'
+            )}
+          </p>
+        </details>
       </div>
-      <input
-        type="text"
-        id="auxiliary-completion-trigger"
-        name="auxiliaryCompletionTrigger"
-        value={getTriggerLabel(auxiliaryCompletionTrigger, language)}
-        onChange={(e) => onAuxiliaryCompletionTriggerChange(e.target.value)}
-        placeholder={tr('例如：打开第一个子任务、准备好工作材料', 'e.g. Open the first subtask, prepare your materials')}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.auxiliaryCompletionTrigger ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'} rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
-        required
-      />
-      {errors.auxiliaryCompletionTrigger && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400 font-chinese">{errors.auxiliaryCompletionTrigger}</p>
-      )}
-      <p className="text-gray-500 text-xs mt-3 leading-relaxed">
-        {tr('这是你在预约时间内必须完成的动作，标志着正式开始执行任务群', 'This is the action you must complete during booking—signaling the start of the group execution.')}
-      </p>
     </div>
   </SettingSection>
 ));
