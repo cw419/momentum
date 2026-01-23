@@ -106,3 +106,42 @@ Services with explicit `start()`/`stop()` lifecycle (managed in `AppShellContain
 - **SOLID**: Single responsibility, dependency inversion
 - Minimize comments; delete removed code (don't comment it out)
 - Prioritize fixing errors before continuing with tasks
+
+## Naming Conventions
+
+### Service/Utility Class Naming
+
+Use consistent suffixes based on the class's primary responsibility:
+
+| Suffix | Purpose | Examples |
+|--------|---------|----------|
+| `*Service` | Business logic, external API interactions | `BettingService`, `CheckinService`, `SessionService` |
+| `*Manager` | State management, lifecycle coordination | `RuleStateManager`, `ErrorRecoveryManager`, `AsyncOperationManager` |
+| `*Cache` | Caching logic, data memoization | `ExceptionRuleCache`, `CacheCore` |
+| `*Monitor` | Performance metrics, observability | `PerformanceMonitor`, `LayoutStabilityMonitor` |
+| `*Storage` | Data persistence, storage abstraction | `ExceptionRuleStorage`, `SupabaseStorage` |
+| `*Handler` | Event/action processing, user interactions | `EnhancedDuplicationHandler`, `UserFeedbackHandler` |
+| `*Tracker` | Usage tracking, analytics | `RuleUsageTracker` |
+| `*Detector` | Pattern detection, validation | `RuleDuplicationDetector` |
+| `*Checker` | Data integrity, validation checks | `DataIntegrityChecker` |
+
+### File Naming
+
+- **Components**: PascalCase (`ChainDetailView.tsx`)
+- **Hooks**: camelCase with `use` prefix (`useChainsDomain.ts`)
+- **Utils/Services**: PascalCase for classes, camelCase for instances (`ExceptionRuleCache.ts`, `exceptionRuleCache`)
+- **Types**: PascalCase (`CacheTypes.ts`)
+- **Tests**: Same name as source file with `.test.ts(x)` suffix
+
+### Directory Structure
+
+```
+src/
+├── components/           # UI components (PascalCase)
+│   └── chain-detail/     # Component subdirectories (kebab-case)
+├── services/             # Business logic services
+├── utils/                # Utility functions and classes
+│   └── cache/            # Utility subdirectories (kebab-case)
+├── hooks/domains/        # Domain-specific hooks
+└── types/                # Type definitions
+```

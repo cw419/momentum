@@ -3,15 +3,16 @@
  * 提供实时重复检测、用户友好的处理选项和智能建议
  */
 
-import { 
-  ExceptionRule, 
-  ExceptionRuleType, 
-  ExceptionRuleError, 
-  ExceptionRuleException 
+import {
+  ExceptionRule,
+  ExceptionRuleType,
+  ExceptionRuleError,
+  ExceptionRuleException
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { ruleDuplicationDetector } from './RuleDuplicationDetector';
 import { getCurrentLanguage, tr } from '../utils/runtimeI18n';
+import { calculateSimilarity } from '../utils/stringUtils';
 
 export interface DuplicationCheckResult {
   hasConflict: boolean;
@@ -100,9 +101,9 @@ export class EnhancedDuplicationHandler {
       );
 
       // 检查相似匹配
-      const similarMatches = activeRules.filter(rule => 
+      const similarMatches = activeRules.filter(rule =>
         rule.name.toLowerCase() !== name.toLowerCase() &&
-        this.calculateSimilarity(rule.name, name) > 0.7
+        calculateSimilarity(rule.name.toLowerCase(), name.toLowerCase()) > 0.7
       );
 
       let conflictType: 'exact' | 'similar' | 'none' = 'none';
@@ -266,48 +267,7 @@ export class EnhancedDuplicationHandler {
       suggestions.push(timestampSuggestion);
     }
     
-    return suggestions.slice(0, 3); // 返回最多3个建议
-  }
-
-  /**
-   * 计算字符串相似度
-   */
-  private calculateSimilarity(str1: string, str2: string): number {
-    const s1 = str1.toLowerCase();
-    const s2 = str2.toLowerCase();
-    
-    if (s1 === s2) return 1;
-    
-    // 使用简单的编辑距离算法
-    const matrix: number[][] = [];
-    const len1 = s1.length;
-    const len2 = s2.length;
-    
-    for (let i = 0; i <= len1; i++) {
-      matrix[i] = [i];
-    }
-    
-    for (let j = 0; j <= len2; j++) {
-      matrix[0][j] = j;
-    }
-    
-    for (let i = 1; i <= len1; i++) {
-      for (let j = 1; j <= len2; j++) {
-        if (s1[i - 1] === s2[j - 1]) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j - 1] + 1
-          );
-        }
-      }
-    }
-    
-    const maxLen = Math.max(len1, len2);
-    // Add a small smoothing factor so short strings don't get overly penalized.
-    return maxLen === 0 ? 1 : 1 - (matrix[len1][len2] / (maxLen + 1));
+    return suggestions.slice(0, 3);
   }
 
   /**

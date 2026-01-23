@@ -4,6 +4,7 @@
  */
 
 import { ExceptionRule, ExceptionRuleType } from '../types';
+import { calculateSimilarity } from './stringUtils';
 
 export interface SearchResult {
   rule: ExceptionRule;
@@ -164,7 +165,7 @@ export class RuleSearchOptimizer {
           normalizedName.length >= 2 &&
           (ruleName.includes(normalizedName) || normalizedName.includes(ruleName));
 
-        if (hasSubstringMatch || this.calculateSimilarity(ruleName, normalizedName) > 0.7) {
+        if (hasSubstringMatch || calculateSimilarity(ruleName, normalizedName) > 0.7) {
         similarRules.push(rule);
         }
       }
@@ -263,7 +264,7 @@ export class RuleSearchOptimizer {
     }
     // 模糊匹配
     else {
-      const similarity = this.calculateSimilarity(name, query);
+      const similarity = calculateSimilarity(name, query);
       if (similarity > 0.3) {
         score = Math.floor(similarity * 300);
         matchType = 'fuzzy';
@@ -290,50 +291,6 @@ export class RuleSearchOptimizer {
       matchType,
       highlightRanges
     };
-  }
-
-  /**
-   * 计算字符串相似度
-   */
-  private calculateSimilarity(str1: string, str2: string): number {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
-    
-    if (longer.length === 0) return 1.0;
-    
-    const editDistance = this.levenshteinDistance(longer, shorter);
-    return (longer.length - editDistance) / longer.length;
-  }
-
-  /**
-   * 计算编辑距离
-   */
-  private levenshteinDistance(str1: string, str2: string): number {
-    const matrix = [];
-    
-    for (let i = 0; i <= str2.length; i++) {
-      matrix[i] = [i];
-    }
-    
-    for (let j = 0; j <= str1.length; j++) {
-      matrix[0][j] = j;
-    }
-    
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
-          );
-        }
-      }
-    }
-    
-    return matrix[str2.length][str1.length];
   }
 
   /**
@@ -402,7 +359,7 @@ export class RuleSearchOptimizer {
     const suggestions: SearchSuggestion[] = [];
     
     for (const rule of rules) {
-      const similarity = this.calculateSimilarity(String(rule.name || '').toLowerCase(), query);
+      const similarity = calculateSimilarity(String(rule.name || '').toLowerCase(), query);
       if (similarity > 0.5 && similarity < 0.9) {
         suggestions.push({
           text: String(rule.name || ''),

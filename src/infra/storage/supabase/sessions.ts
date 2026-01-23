@@ -58,7 +58,12 @@ export async function getActiveSession(ctx: SupabaseStorageContext): Promise<Act
   if (!user) return null;
 
   const client = ctx.getClient();
-  const { data, error } = await client.from('active_sessions').select('*').eq('user_id', user.id).limit(1);
+  const { data, error } = await client
+    .from('active_sessions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('started_at', { ascending: false })
+    .limit(1);
   if (error || !data || data.length === 0) return null;
 
   const sessionData = data[0] as ActiveSessionRow;

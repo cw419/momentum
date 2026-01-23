@@ -20,10 +20,12 @@ export interface MockQueryBuilder {
   upsert: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
+  is: ReturnType<typeof vi.fn>;
   in: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
   single: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
   not: ReturnType<typeof vi.fn>;
   lt: ReturnType<typeof vi.fn>;
   gte: ReturnType<typeof vi.fn>;
@@ -33,81 +35,30 @@ export interface MockQueryBuilder {
 export function createMockQueryBuilder(
   dataOrError: { data?: unknown; error?: unknown } = { data: [], error: null }
 ): MockQueryBuilder {
-  const builder: MockQueryBuilder = {
+  const result = {
+    data: dataOrError.data ?? null,
+    error: dataOrError.error ?? null,
+  };
+
+  const builder: MockQueryBuilder & typeof result = {
+    ...result,
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     upsert: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnValue(dataOrError),
+    single: vi.fn().mockReturnValue(result),
+    maybeSingle: vi.fn().mockReturnValue(result),
     not: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
     gte: vi.fn().mockReturnThis(),
-    rpc: vi.fn().mockResolvedValue(dataOrError),
+    rpc: vi.fn().mockResolvedValue(result),
   };
-
-  builder.select.mockImplementation(() => {
-    const obj = { ...builder, ...dataOrError };
-    obj.eq = vi.fn().mockImplementation(() => {
-      const inner = { ...obj, ...dataOrError };
-      inner.order = vi.fn().mockReturnValue({ ...inner, ...dataOrError });
-      inner.limit = vi.fn().mockReturnValue({ ...inner, ...dataOrError });
-      inner.single = vi.fn().mockReturnValue(dataOrError);
-      inner.not = vi.fn().mockImplementation(() => ({
-        ...inner,
-        lt: vi.fn().mockReturnValue(dataOrError),
-      }));
-      return inner;
-    });
-    return obj;
-  });
-
-  builder.insert.mockImplementation(() => {
-    const obj = { ...builder, ...dataOrError };
-    obj.select = vi.fn().mockImplementation(() => ({
-      ...obj,
-      ...dataOrError,
-      single: vi.fn().mockReturnValue(dataOrError),
-    }));
-    return obj;
-  });
-
-  builder.update.mockImplementation(() => {
-    const obj = { ...builder, ...dataOrError };
-    obj.in = vi.fn().mockImplementation(() => ({
-      ...obj,
-      eq: vi.fn().mockImplementation(() => ({
-        ...obj,
-        ...dataOrError,
-        select: vi.fn().mockReturnValue(dataOrError),
-      })),
-    }));
-    obj.eq = vi.fn().mockReturnThis();
-    return obj;
-  });
-
-  builder.upsert.mockImplementation(() => {
-    const obj = { ...builder, ...dataOrError };
-    obj.select = vi.fn().mockReturnValue(dataOrError);
-    return obj;
-  });
-
-  builder.delete.mockImplementation(() => {
-    const obj = { ...builder, ...dataOrError };
-    obj.eq = vi.fn().mockImplementation(() => ({
-      ...obj,
-      ...dataOrError,
-    }));
-    obj.in = vi.fn().mockImplementation(() => ({
-      ...obj,
-      eq: vi.fn().mockReturnValue(dataOrError),
-    }));
-    return obj;
-  });
 
   return builder;
 }

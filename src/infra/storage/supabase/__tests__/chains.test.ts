@@ -163,7 +163,6 @@ describe('chains.ts', () => {
     it('should filter out deleted chains', async () => {
       const mockData = [
         createMockChainRow({ id: 'chain-1', deleted_at: null }),
-        createMockChainRow({ id: 'chain-2', deleted_at: '2024-01-15T00:00:00Z' }),
       ];
       const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
       const ctx = createMockContext({ queryBuilder });
@@ -178,9 +177,8 @@ describe('chains.ts', () => {
   describe('getDeletedChains', () => {
     it('should return only deleted chains sorted by deletedAt descending', async () => {
       const mockData = [
-        createMockChainRow({ id: 'chain-1', deleted_at: null }),
-        createMockChainRow({ id: 'chain-2', deleted_at: '2024-01-15T00:00:00Z' }),
         createMockChainRow({ id: 'chain-3', deleted_at: '2024-01-20T00:00:00Z' }),
+        createMockChainRow({ id: 'chain-2', deleted_at: '2024-01-15T00:00:00Z' }),
       ];
       const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
       const ctx = createMockContext({ queryBuilder });

@@ -5,6 +5,7 @@
 
 import { ExceptionRule } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { calculateSimilarity, normalizeName } from '../utils/stringUtils';
 
 export class RuleDuplicationDetector {
   /**
@@ -12,12 +13,12 @@ export class RuleDuplicationDetector {
    */
   async checkDuplication(name: string, excludeId?: string): Promise<ExceptionRule[]> {
     const rules = await exceptionRuleStorage.getRules();
-    const normalizedName = this.normalizeName(name);
-    
-    return rules.filter(rule => 
+    const normalizedInputName = normalizeName(name);
+
+    return rules.filter(rule =>
       rule.isActive &&
       rule.id !== excludeId &&
-      this.normalizeName(rule.name) === normalizedName
+      normalizeName(rule.name) === normalizedInputName
     );
   }
 
@@ -26,22 +27,21 @@ export class RuleDuplicationDetector {
    */
   async findSimilarRules(name: string, threshold: number = 0.8): Promise<ExceptionRule[]> {
     const rules = await exceptionRuleStorage.getRules();
-    const normalizedName = this.normalizeName(name);
-    
+    const normalizedInputName = normalizeName(name);
+
     const similarRules: Array<{ rule: ExceptionRule; similarity: number }> = [];
-    
+
     for (const rule of rules) {
       if (!rule.isActive) continue;
-      
-      const normalizedRuleName = this.normalizeName(rule.name);
-      const similarity = this.calculateSimilarity(normalizedName, normalizedRuleName);
-      
-      if (similarity >= threshold && similarity < 1.0) { // 排除完全相同的
+
+      const normalizedRuleName = normalizeName(rule.name);
+      const similarity = calculateSimilarity(normalizedInputName, normalizedRuleName);
+
+      if (similarity >= threshold && similarity < 1.0) {
         similarRules.push({ rule, similarity });
       }
     }
-    
-    // 按相似度降序排列
+
     return similarRules
       .sort((a, b) => b.similarity - a.similarity)
       .map(item => item.rule);
@@ -110,98 +110,37 @@ export class RuleDuplicationDetector {
    */
   private async findSimilarRulesWithSimilarity(name: string, threshold: number = 0.8): Promise<Array<{ rule: ExceptionRule; similarity: number }>> {
     const rules = await exceptionRuleStorage.getRules();
-    const normalizedName = this.normalizeName(name);
-    
+    const normalizedInputName = normalizeName(name);
+
     const similarRules: Array<{ rule: ExceptionRule; similarity: number }> = [];
-    
+
     for (const rule of rules) {
       if (!rule.isActive) continue;
-      
-      const normalizedRuleName = this.normalizeName(rule.name);
-      const similarity = this.calculateSimilarity(normalizedName, normalizedRuleName);
-      
+
+      const normalizedRuleName = normalizeName(rule.name);
+      const similarity = calculateSimilarity(normalizedInputName, normalizedRuleName);
+
       if (similarity >= threshold && similarity < 1.0) {
         similarRules.push({ rule, similarity });
       }
     }
-    
+
     return similarRules.sort((a, b) => b.similarity - a.similarity);
-  }
-
-  /**
-   * 规范化规则名称
-   * 移除多余空格、转换为小写、移除标点符号
-   */
-  private normalizeName(name: string): string {
-    return name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, ' ') // 多个空格替换为单个空格
-      .replace(/[^\w\s\u4e00-\u9fff]/g, '') // 移除标点符号，保留中文字符
-      .replace(/\s/g, ''); // 移除所有空格
-  }
-
-  /**
-   * 计算两个字符串的相似度
-   * 使用 Levenshtein 距离算法
-   */
-  private calculateSimilarity(str1: string, str2: string): number {
-    if (str1 === str2) return 1.0;
-    if (str1.length === 0 || str2.length === 0) return 0.0;
-    
-    const distance = this.levenshteinDistance(str1, str2);
-    const maxLength = Math.max(str1.length, str2.length);
-    
-    // Add a small smoothing factor so short strings don't get overly penalized.
-    return 1 - (distance / (maxLength + 1));
-  }
-
-  /**
-   * 计算 Levenshtein 距离
-   */
-  private levenshteinDistance(str1: string, str2: string): number {
-    const matrix: number[][] = [];
-    
-    // 初始化矩阵
-    for (let i = 0; i <= str2.length; i++) {
-      matrix[i] = [i];
-    }
-    
-    for (let j = 0; j <= str1.length; j++) {
-      matrix[0][j] = j;
-    }
-    
-    // 填充矩阵
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1, // 替换
-            matrix[i][j - 1] + 1,     // 插入
-            matrix[i - 1][j] + 1      // 删除
-          );
-        }
-      }
-    }
-    
-    return matrix[str2.length][str1.length];
   }
 
   /**
    * 检查是否为常见的规则模式
    */
   isCommonPattern(name: string): boolean {
-    const normalizedName = this.normalizeName(name);
+    const normalizedInputName = normalizeName(name);
     const commonPatterns = [
       '上厕所', '喝水', '休息', '接电话', '查看消息', '吃东西',
       '伸懒腰', '眼睛休息', '起身活动', '整理桌面', '记录想法'
     ];
     
-    return commonPatterns.some(pattern => 
-      this.normalizeName(pattern) === normalizedName ||
-      normalizedName.includes(this.normalizeName(pattern))
+    return commonPatterns.some(pattern =>
+      normalizeName(pattern) === normalizedInputName ||
+      normalizedInputName.includes(normalizeName(pattern))
     );
   }
 
@@ -210,51 +149,46 @@ export class RuleDuplicationDetector {
    */
   generateNameSuggestions(baseName: string, existingNames: string[]): string[] {
     const suggestions: string[] = [];
-    const normalizedExisting = existingNames.map(name => this.normalizeName(name));
+    const normalizedExisting = existingNames.map(name => normalizeName(name));
     const seen = new Set<string>(normalizedExisting);
 
     const addSuggestion = (suggestion: string) => {
-      const normalized = this.normalizeName(suggestion);
+      const normalized = normalizeName(suggestion);
       if (seen.has(normalized)) return;
       seen.add(normalized);
       suggestions.push(suggestion);
     };
-    
-    // 添加数字后缀
+
     const numericSuggestions: string[] = [];
     for (let i = 2; i <= 10; i++) {
       const suggestion = `${baseName} ${i}`;
-      if (!seen.has(this.normalizeName(suggestion))) {
+      if (!seen.has(normalizeName(suggestion))) {
         numericSuggestions.push(suggestion);
       }
     }
-    
-    // 添加描述性后缀
+
     const descriptiveSuggestions: string[] = [];
     const suffixes = ['(紧急)', '(短暂)', '(必要)', '(临时)', '(重要)'];
     for (const suffix of suffixes) {
       const suggestion = `${baseName}${suffix}`;
-      if (!seen.has(this.normalizeName(suggestion))) {
+      if (!seen.has(normalizeName(suggestion))) {
         descriptiveSuggestions.push(suggestion);
       }
     }
-    
-    // 添加时间相关后缀
+
     const timeSuggestions: string[] = [];
     const timeRelated = ['快速', '5分钟', '短时间', '临时'];
     for (const prefix of timeRelated) {
       const suggestion = `${prefix}${baseName}`;
-      if (!seen.has(this.normalizeName(suggestion))) {
+      if (!seen.has(normalizeName(suggestion))) {
         timeSuggestions.push(suggestion);
       }
     }
-    
-    // Ensure variety in the top suggestions: numeric + descriptive + time-related.
+
     numericSuggestions.slice(0, 2).forEach(addSuggestion);
     descriptiveSuggestions.slice(0, 2).forEach(addSuggestion);
     timeSuggestions.slice(0, 2).forEach(addSuggestion);
 
-    // Fill remaining slots (if any)
     numericSuggestions.slice(2).forEach(addSuggestion);
     descriptiveSuggestions.slice(2).forEach(addSuggestion);
     timeSuggestions.slice(1).forEach(addSuggestion);

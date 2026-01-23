@@ -12,6 +12,18 @@ function formatDbError(error: unknown): string {
   return formatSupabaseError(error, 'Unknown error');
 }
 
+function isMissingDeletedAtColumnError(error: unknown): boolean {
+  const msg = formatSupabaseError(error, '').toLowerCase();
+  const code = getSupabaseErrorCode(error) ?? '';
+  return (
+    code === '42703' ||
+    code === 'PGRST204' ||
+    msg.includes('deleted_at') ||
+    msg.includes('schema cache') ||
+    msg.includes('column') && msg.includes('does not exist')
+  );
+}
+
 function findChainAndChildren(chainId: string, allChains: Chain[]): Chain[] {
   const result: Chain[] = [];
   const visited = new Set<string>();
@@ -84,18 +96,88 @@ export async function getChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
 }
 
 export async function getActiveChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
-  const allChains = await getChains(ctx);
-  return allChains.filter(chain => chain.deletedAt == null);
+  const user = await ctx.getCurrentUser();
+  if (!user) return [];
+
+  const client = ctx.getClient();
+
+  const fetchActiveChains = async () => {
+    const { data, error } = await client
+      .from('chains')
+      .select('*')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (isMissingDeletedAtColumnError(error)) {
+        const allChains = await getChains(ctx);
+        return allChains.filter(chain => chain.deletedAt == null);
+      }
+
+      if (
+        error.code === 'PGRST116' ||
+        error.message?.includes('relation') ||
+        error.message?.includes('does not exist')
+      ) {
+        return [];
+      }
+
+      throw new Error(`Failed to fetch active chains: ${error.message}`);
+    }
+
+    return (data || []).map(mapChainRowToChain);
+  };
+
+  try {
+    return await ctx.retryOperation(fetchActiveChains, 2, 100);
+  } catch (error) {
+    logger.warn('SUPABASE_STORAGE', 'getActiveChains failed; returning empty array', { message: toError(error).message });
+    return [];
+  }
 }
 
 export async function getDeletedChains(ctx: SupabaseStorageContext): Promise<DeletedChain[]> {
   try {
-    const allChains = await getChains(ctx);
-    const deletedChains = allChains.filter(chain => chain.deletedAt != null);
+    const user = await ctx.getCurrentUser();
+    if (!user) return [];
 
-    return deletedChains
-      .map(chain => ({ ...chain, deletedAt: chain.deletedAt! }))
-      .sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime());
+    const client = ctx.getClient();
+    const fetchDeletedChains = async () => {
+      const { data, error } = await client
+        .from('chains')
+        .select('*')
+        .eq('user_id', user.id)
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false });
+
+      if (error) {
+        if (isMissingDeletedAtColumnError(error)) {
+          const allChains = await getChains(ctx);
+          const deletedChains = allChains.filter(chain => chain.deletedAt != null);
+          return deletedChains
+            .map(chain => ({ ...chain, deletedAt: chain.deletedAt! }))
+            .sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime());
+        }
+
+        if (
+          error.code === 'PGRST116' ||
+          error.message?.includes('relation') ||
+          error.message?.includes('does not exist')
+        ) {
+          return [];
+        }
+
+        throw new Error(`Failed to fetch deleted chains: ${error.message}`);
+      }
+
+      const chains = (data || []).map(mapChainRowToChain);
+      return chains
+        .filter(chain => chain.deletedAt != null)
+        .map(chain => ({ ...chain, deletedAt: chain.deletedAt! })) as DeletedChain[];
+    };
+
+    return await ctx.retryOperation(fetchDeletedChains, 2, 100);
   } catch (error) {
     logger.warn('SUPABASE_STORAGE', 'Failed to get deleted chains', { error });
     return [];
@@ -354,4 +436,3 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
     logger.warn('SUPABASE_STORAGE', 'Some saved ids missing from result', { missingSavedIds });
   }
 }
-

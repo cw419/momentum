@@ -5,6 +5,7 @@
 import { RuleDuplicationDetector } from '../RuleDuplicationDetector';
 import { ExceptionRuleStorageService } from '../ExceptionRuleStorage';
 import { ExceptionRuleType } from '../../types';
+import { calculateSimilarity } from '../../utils/stringUtils';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -271,21 +272,17 @@ describe('RuleDuplicationDetector', () => {
 
   describe('字符串相似度计算', () => {
     test('相同字符串应该返回1.0', () => {
-      const detector = new RuleDuplicationDetector();
-      // 通过反射访问私有方法进行测试
-      const similarity = (detector as any).calculateSimilarity('test', 'test');
+      const similarity = calculateSimilarity('test', 'test');
       expect(similarity).toBe(1.0);
     });
 
     test('完全不同的字符串应该返回较低相似度', () => {
-      const detector = new RuleDuplicationDetector();
-      const similarity = (detector as any).calculateSimilarity('abc', 'xyz');
+      const similarity = calculateSimilarity('abc', 'xyz');
       expect(similarity).toBeLessThan(0.5);
     });
 
     test('部分相似的字符串应该返回中等相似度', () => {
-      const detector = new RuleDuplicationDetector();
-      const similarity = (detector as any).calculateSimilarity('上厕所', '去厕所');
+      const similarity = calculateSimilarity('上厕所', '去厕所');
       expect(similarity).toBeGreaterThan(0.5);
       expect(similarity).toBeLessThan(1.0);
     });
