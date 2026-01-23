@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
-import { Eye, EyeOff, Loader2, Mail, Lock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 
@@ -62,14 +62,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-[#F2F2F7] dark:bg-black font-sans transition-colors duration-500">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-background font-sans transition-colors duration-500">
             <div className="w-full max-w-md">
                 {onBack && (
                     <button
                         type="button"
                         onClick={onBack}
                         aria-label={tr('返回', 'Go back')}
-                        className="mb-8 flex items-center space-x-2 text-[#6C6C70] hover:text-[#1C1C1E] dark:text-[#8E8E93] dark:hover:text-white transition-colors pl-2"
+                        className="mb-8 flex items-center space-x-2 text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400 transition-colors pl-2"
                     >
                         <ArrowLeft size={20} />
                         <span className="font-bold tracking-wide text-xs uppercase">{tr('返回', 'Back')}</span>
@@ -78,10 +78,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
 
                 <div className="glass-panel p-10 rounded-[40px] shadow-2xl">
                     <div className="text-center mb-10">
-                        <h2 className="text-2xl font-extrabold text-[#1C1C1E] dark:text-white tracking-tight mb-2">
+                        <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight mb-2">
                             {isSignUp ? tr('创建账号', 'Create Account') : tr('欢迎回来', 'Welcome Back')}
                         </h2>
-                        <p className="text-sm font-medium text-[#6C6C70] dark:text-[#8E8E93]">
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                             {isSignUp
                                 ? tr('开启你的掌控之旅', 'Start your journey to mastery')
                                 : tr('输入账号信息以继续', 'Enter your credentials to continue')}
@@ -90,7 +90,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">
+                            <label className="text-[10px] font-bold tracking-widest text-violet-600 dark:text-violet-400 uppercase ml-4">
                                 {tr('邮箱', 'Email')}
                             </label>
                             <div className="relative">
@@ -102,15 +102,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full h-14 pl-12 pr-4 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 focus:ring-2 focus:ring-[#007AFF]/20 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
-                                    placeholder="name@example.com"
+                                    className="w-full h-14 pl-4 pr-4 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-200/50 dark:border-violet-500/20 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 rounded-2xl outline-none transition-all text-slate-800 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                    placeholder={tr('输入邮箱地址', 'Enter your email')}
                                 />
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={20} />
                             </div>
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#8E8E93] uppercase ml-4">
+                            <label className="text-[10px] font-bold tracking-widest text-violet-600 dark:text-violet-400 uppercase ml-4">
                                 {tr('密码', 'Password')}
                             </label>
                             <div className="relative">
@@ -122,16 +121,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full h-14 pl-12 pr-12 bg-gray-100/50 dark:bg-white/5 border border-transparent focus:border-[#007AFF]/50 focus:ring-2 focus:ring-[#007AFF]/20 rounded-2xl outline-none transition-all shadow-inner text-[#1C1C1E] dark:text-white font-medium"
-                                    placeholder="••••••••"
+                                    className="w-full h-14 pl-4 pr-12 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-200/50 dark:border-violet-500/20 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 rounded-2xl outline-none transition-all text-slate-800 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                    placeholder={tr('输入密码', 'Enter your password')}
                                 />
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={20} />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     aria-label={showPassword ? tr('隐藏密码', 'Hide password') : tr('显示密码', 'Show password')}
                                     aria-pressed={showPassword}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 rounded"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/50 rounded"
                                 >
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
@@ -155,7 +153,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full h-14 btn-primary flex items-center justify-center space-x-2 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full h-14 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all active:scale-95 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 flex items-center justify-center space-x-2 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
                                 <Loader2 className="animate-spin" size={20} />
@@ -168,13 +166,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                     </form>
 
                     <div className="mt-8 text-center">
-                        <p className="text-sm text-[#6C6C70] dark:text-[#8E8E93]">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
                             {isSignUp ? tr('已有账号？', 'Already have an account?') : tr('没有账号？', "Don't have an account?")}{' '}
                             <button
                                 type="button"
                                 onClick={() => setIsSignUp(!isSignUp)}
                                 aria-label={isSignUp ? tr('切换到登录', 'Switch to sign in') : tr('切换到注册', 'Switch to sign up')}
-                                className="font-bold text-[#1C1C1E] dark:text-white hover:underline transition-all focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 rounded"
+                                className="font-bold text-violet-600 dark:text-violet-400 hover:underline transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/50 rounded"
                             >
                                 {isSignUp ? tr('登录', 'Sign In') : tr('注册', 'Sign Up')}
                             </button>
