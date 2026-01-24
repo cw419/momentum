@@ -4,6 +4,7 @@ import type { Database } from '../../../lib/database.types';
 
 type RSIPNodeRow = Database['public']['Tables']['rsip_nodes']['Row'];
 type RSIPMetaRow = Database['public']['Tables']['rsip_meta']['Row'];
+type RSIPExecutionRecordRow = Database['public']['Tables']['rsip_execution_records']['Row'];
 
 export async function getRSIPNodes(ctx: SupabaseStorageContext): Promise<RSIPNode[]> {
   const user = await ctx.getCurrentUser();
@@ -28,21 +29,15 @@ export async function getRSIPNodes(ctx: SupabaseStorageContext): Promise<RSIPNod
     useTimer: row.use_timer ?? false,
     timerMinutes: row.timer_minutes ?? undefined,
     // 新增字段（严格模式）
-    emoji: (row as Record<string, unknown>).emoji as string | undefined,
-    stabilityPhase: ((row as Record<string, unknown>).stability_phase as RSIPStabilityPhase) || 'E0',
-    phaseStartedAt: (row as Record<string, unknown>).phase_started_at
-      ? new Date((row as Record<string, unknown>).phase_started_at as string)
-      : undefined,
-    lastExecutedAt: (row as Record<string, unknown>).last_executed_at
-      ? new Date((row as Record<string, unknown>).last_executed_at as string)
-      : undefined,
-    lastViolatedAt: (row as Record<string, unknown>).last_violated_at
-      ? new Date((row as Record<string, unknown>).last_violated_at as string)
-      : undefined,
-    consecutiveExecutions: ((row as Record<string, unknown>).consecutive_executions as number) ?? 0,
-    consecutiveViolations: ((row as Record<string, unknown>).consecutive_violations as number) ?? 0,
-    totalExecutions: ((row as Record<string, unknown>).total_executions as number) ?? 0,
-    totalViolations: ((row as Record<string, unknown>).total_violations as number) ?? 0,
+    emoji: row.emoji ?? undefined,
+    stabilityPhase: (row.stability_phase as RSIPStabilityPhase) || 'E0',
+    phaseStartedAt: row.phase_started_at ? new Date(row.phase_started_at) : undefined,
+    lastExecutedAt: row.last_executed_at ? new Date(row.last_executed_at) : undefined,
+    lastViolatedAt: row.last_violated_at ? new Date(row.last_violated_at) : undefined,
+    consecutiveExecutions: row.consecutive_executions ?? 0,
+    consecutiveViolations: row.consecutive_violations ?? 0,
+    totalExecutions: row.total_executions ?? 0,
+    totalViolations: row.total_violations ?? 0,
   }));
 }
 
@@ -105,16 +100,13 @@ export async function getRSIPMeta(ctx: SupabaseStorageContext): Promise<RSIPMeta
   if (error || !data || data.length === 0) return {};
 
   const row = data[0] as RSIPMetaRow;
-  const extRow = row as Record<string, unknown>;
   return {
     lastAddedAt: row.last_added_at ? new Date(row.last_added_at) : undefined,
     allowMultiplePerDay: !!row.allow_multiple_per_day,
     // 新增字段（严格模式）
-    lastTreeOpenedAt: extRow.last_tree_opened_at
-      ? new Date(extRow.last_tree_opened_at as string)
-      : undefined,
-    dailyTreeOpenRequired: (extRow.daily_tree_open_required as boolean) ?? false,
-    treeOpenStreak: (extRow.tree_open_streak as number) ?? 0,
+    lastTreeOpenedAt: row.last_tree_opened_at ? new Date(row.last_tree_opened_at) : undefined,
+    dailyTreeOpenRequired: row.daily_tree_open_required ?? false,
+    treeOpenStreak: row.tree_open_streak ?? 0,
   };
 }
 
@@ -139,8 +131,7 @@ export async function saveRSIPMeta(ctx: SupabaseStorageContext, meta: RSIPMeta):
     tree_open_streak: meta.treeOpenStreak ?? 0,
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (client as any).from('rsip_meta').upsert(fullData, { onConflict: 'user_id' });
+  const { error } = await client.from('rsip_meta').upsert(fullData, { onConflict: 'user_id' });
 
   if (error) {
     // 如果失败（可能是新列不存在），尝试只保存基础字段
@@ -155,8 +146,6 @@ export async function saveRSIPMeta(ctx: SupabaseStorageContext, meta: RSIPMeta):
 }
 
 // === 执行记录 CRUD 操作（严格模式）===
-// 注意：rsip_execution_records 表在迁移后需要重新生成数据库类型
-// 在此之前使用类型断言绕过类型检查
 
 export async function getRSIPExecutionRecords(
   ctx: SupabaseStorageContext
@@ -165,8 +154,7 @@ export async function getRSIPExecutionRecords(
   if (!user) return [];
 
   const client = ctx.getClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (client as any)
+  const { data, error } = await client
     .from('rsip_execution_records')
     .select('*')
     .eq('user_id', user.id)
@@ -174,13 +162,13 @@ export async function getRSIPExecutionRecords(
 
   if (error) return [];
 
-  return (data || []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    userId: row.user_id as string,
-    nodeId: row.node_id as string,
-    executedAt: new Date(row.executed_at as string),
-    status: row.status as RSIPExecutionRecord['status'],
-    notes: row.notes as string | undefined,
+  return (data || []).map((row: RSIPExecutionRecordRow) => ({
+    id: row.id,
+    userId: row.user_id,
+    nodeId: row.node_id,
+    executedAt: new Date(row.executed_at),
+    status: row.status,
+    notes: row.notes ?? undefined,
   }));
 }
 
@@ -192,8 +180,7 @@ export async function saveRSIPExecutionRecord(
   if (!user) return null;
 
   const client = ctx.getClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (client as any)
+  const { data, error } = await client
     .from('rsip_execution_records')
     .insert({
       user_id: user.id,
@@ -227,8 +214,7 @@ export async function deleteRSIPExecutionRecords(
   if (!user || nodeIds.length === 0) return;
 
   const client = ctx.getClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (client as any)
+  const { error } = await client
     .from('rsip_execution_records')
     .delete()
     .eq('user_id', user.id)

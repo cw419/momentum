@@ -19,6 +19,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, RSIPMeta, RSIPNode, RSIPStabilityPhase, RSIPMode } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { getDescendantIds, getDescendantCount } from '../../utils/rsipTree';
+import { logger } from '../../utils/logger';
+import { toError } from '../../utils/errorHandling';
 
 interface UseRsipDomainParams {
   setState: Dispatch<SetStateAction<AppState>>;
@@ -42,7 +44,7 @@ export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
       await storage.saveRSIPMeta(meta);
     } catch (error) {
       // 保存失败时记录错误，但不回滚状态（允许用户继续操作）
-      console.error('Failed to save RSIP meta:', error);
+      logger.error('RSIP', 'Failed to save RSIP meta', { meta }, toError(error));
     }
   };
 

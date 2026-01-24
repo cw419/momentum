@@ -10,12 +10,17 @@ import './styles/rsip-canvas.css';
 
 // Web Vitals 性能监控
 import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
+import type { Metric } from 'web-vitals';
+import { logger } from './utils/logger';
 
 function reportWebVitals() {
-  const logVital = (metric: { name: string; value: number; rating: string }) => {
-    if (import.meta.env.DEV) {
-      console.log(`[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`);
-    }
+  if (!import.meta.env.DEV) return;
+
+  const logVital = (metric: Metric) => {
+    logger.debug('WEB_VITALS', metric.name, {
+      value: Number(metric.value.toFixed(2)),
+      rating: metric.rating,
+    });
   };
 
   onCLS(logVital);

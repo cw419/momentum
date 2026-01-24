@@ -230,6 +230,15 @@ export interface Database {
           use_timer: boolean
           timer_minutes: number | null
           created_at: string
+          emoji: string | null
+          stability_phase: 'E0' | 'E1' | 'E2' | null
+          phase_started_at: string | null
+          last_executed_at: string | null
+          last_violated_at: string | null
+          consecutive_executions: number | null
+          consecutive_violations: number | null
+          total_executions: number | null
+          total_violations: number | null
         }
         Insert: {
           id?: string
@@ -241,6 +250,15 @@ export interface Database {
           use_timer?: boolean
           timer_minutes?: number | null
           created_at?: string
+          emoji?: string | null
+          stability_phase?: 'E0' | 'E1' | 'E2' | null
+          phase_started_at?: string | null
+          last_executed_at?: string | null
+          last_violated_at?: string | null
+          consecutive_executions?: number | null
+          consecutive_violations?: number | null
+          total_executions?: number | null
+          total_violations?: number | null
         }
         Update: {
           id?: string
@@ -252,6 +270,15 @@ export interface Database {
           use_timer?: boolean
           timer_minutes?: number | null
           created_at?: string
+          emoji?: string | null
+          stability_phase?: 'E0' | 'E1' | 'E2' | null
+          phase_started_at?: string | null
+          last_executed_at?: string | null
+          last_violated_at?: string | null
+          consecutive_executions?: number | null
+          consecutive_violations?: number | null
+          total_executions?: number | null
+          total_violations?: number | null
         }
         Relationships: []
       }
@@ -260,16 +287,55 @@ export interface Database {
           user_id: string
           last_added_at: string | null
           allow_multiple_per_day: boolean
+          last_tree_opened_at: string | null
+          daily_tree_open_required: boolean | null
+          tree_open_streak: number | null
         }
         Insert: {
           user_id: string
           last_added_at?: string | null
           allow_multiple_per_day?: boolean
+          last_tree_opened_at?: string | null
+          daily_tree_open_required?: boolean | null
+          tree_open_streak?: number | null
         }
         Update: {
           user_id?: string
           last_added_at?: string | null
           allow_multiple_per_day?: boolean
+          last_tree_opened_at?: string | null
+          daily_tree_open_required?: boolean | null
+          tree_open_streak?: number | null
+        }
+        Relationships: []
+      }
+      rsip_execution_records: {
+        Row: {
+          id: string
+          user_id: string
+          node_id: string
+          executed_at: string
+          status: 'pending' | 'executed' | 'violated' | 'skipped'
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          node_id: string
+          executed_at?: string
+          status: 'pending' | 'executed' | 'violated' | 'skipped'
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          node_id?: string
+          executed_at?: string
+          status?: 'pending' | 'executed' | 'violated' | 'skipped'
+          notes?: string | null
+          created_at?: string
         }
         Relationships: []
       }

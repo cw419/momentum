@@ -32,6 +32,8 @@ src/**/temp_fix.txt
 
 # Local tooling artifacts
 .lighthouse/
+stats.html
+lighthouse-report.report.*
 vitest-results*.json
 ui-fixes-results.json
 chaineditor-results.json
