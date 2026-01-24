@@ -2,6 +2,11 @@
 
 本目录存放 Momentum 的开发者文档（架构、领域说明、部署与排错等）。
 
+## 功能概览
+
+- **功能总览**：`docs/FEATURES_OVERVIEW.md` - 所有功能模块的完整说明
+- **人工测试指南**：`docs/guides/TESTING_GUIDE.md` - 测试人员检查清单
+
 ## 快速入口
 
 - 架构总览：`docs/guides/ARCHITECTURE.md`

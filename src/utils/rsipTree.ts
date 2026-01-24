@@ -71,4 +71,34 @@ export const deleteNodeAndDescendants = (nodes: RSIPNode[], nodeId: string): RSI
   return nodes.filter(n => !idsToDelete.has(n.id));
 };
 
+/**
+ * 获取某节点的所有子孙节点ID（用于堆栈删除）
+ */
+export const getDescendantIds = (nodes: RSIPNode[], nodeId: string): string[] => {
+  const index = new Map<string, RSIPNode[]>();
+  nodes.forEach(n => {
+    const list = index.get(n.parentId || '') || [];
+    list.push(n);
+    index.set(n.parentId || '', list);
+  });
+
+  const ids: string[] = [];
+  const collect = (id: string) => {
+    const children = index.get(id) || [];
+    children.forEach(ch => {
+      ids.push(ch.id);
+      collect(ch.id);
+    });
+  };
+  collect(nodeId);
+
+  return ids;
+};
+
+/**
+ * 计算某节点的子孙数量（基于扁平数组）
+ */
+export const getDescendantCount = (nodes: RSIPNode[], nodeId: string): number => {
+  return getDescendantIds(nodes, nodeId).length;
+};
 
