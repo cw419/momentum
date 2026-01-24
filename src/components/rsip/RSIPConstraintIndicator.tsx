@@ -1,24 +1,21 @@
-import { GitBranch, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, GitBranch } from 'lucide-react';
 
 interface RSIPConstraintIndicatorProps {
   descendantCount: number;
   failureCost: number;
 }
 
-export function RSIPConstraintIndicator({
-  descendantCount,
-  failureCost,
-}: RSIPConstraintIndicatorProps) {
+export function RSIPConstraintIndicator({ descendantCount, failureCost }: RSIPConstraintIndicatorProps) {
   const costColorClass =
     failureCost > 5
-      ? 'text-red-400'
+      ? 'text-rose-700 dark:text-red-300'
       : failureCost > 2
-      ? 'text-amber-400'
-      : 'text-white/60';
+        ? 'text-amber-700 dark:text-amber-300'
+        : 'text-slate-600 dark:text-white/60';
 
   return (
     <div className="flex items-center gap-4 text-xs">
-      <div className="flex items-center gap-1.5 text-white/60">
+      <div className="flex items-center gap-1.5 text-slate-600 dark:text-white/60">
         <GitBranch size={14} />
         <span>{descendantCount} 子节点</span>
       </div>

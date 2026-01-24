@@ -228,7 +228,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
         {/* 严格模式：定式列表视图 */}
         {isStrictMode && nodes.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-xl font-bold text-white mb-4">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               {tr('定式执行追踪', 'Policy Execution Tracking')}
             </h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

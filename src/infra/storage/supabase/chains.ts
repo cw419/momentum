@@ -25,6 +25,17 @@ function isMissingDeletedAtColumnError(error: unknown): boolean {
 }
 
 function findChainAndChildren(chainId: string, allChains: Chain[]): Chain[] {
+  // 预构建 Map 查找表，将 O(n²) 降为 O(n)
+  const chainById = new Map(allChains.map(c => [c.id, c]));
+  const childrenByParentId = new Map<string, Chain[]>();
+
+  for (const chain of allChains) {
+    const parentId = chain.parentId || '';
+    const children = childrenByParentId.get(parentId) || [];
+    children.push(chain);
+    childrenByParentId.set(parentId, children);
+  }
+
   const result: Chain[] = [];
   const visited = new Set<string>();
 
@@ -32,10 +43,10 @@ function findChainAndChildren(chainId: string, allChains: Chain[]): Chain[] {
     if (visited.has(id)) return;
     visited.add(id);
 
-    const chain = allChains.find(c => c.id === id);
+    const chain = chainById.get(id);
     if (chain) {
       result.push(chain);
-      const children = allChains.filter(c => c.parentId === id);
+      const children = childrenByParentId.get(id) || [];
       children.forEach(child => findRecursive(child.id));
     }
   };

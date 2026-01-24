@@ -23,8 +23,8 @@ export function RSIPDailyReminder({
             <Bell className="text-amber-400" size={20} />
           </div>
           <div>
-            <p className="font-medium text-amber-200">今日尚未查看国策树</p>
-            <p className="text-sm text-amber-300/70">
+            <p className="font-medium text-amber-800 dark:text-amber-200">今日尚未查看国策树</p>
+            <p className="text-sm text-amber-700 dark:text-amber-300/70">
               连续 {treeOpenStreak} 天打卡
             </p>
           </div>

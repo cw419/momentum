@@ -216,3 +216,14 @@
         transform: none;
     }
 }
+
+/* 性能优化：content-visibility 延迟渲染屏幕外内容 */
+.chain-card-item {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 280px;
+}
+
+.rule-list-item {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 60px;
+}

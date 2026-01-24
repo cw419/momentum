@@ -1,11 +1,93 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
+
+// 自定义插件：性能优化（预连接 + 首屏样式）
+function performanceOptimizations() {
+  let supabaseUrl: string | undefined;
+  return {
+    name: 'performance-optimizations',
+    configResolved(config: { env: Record<string, string> }) {
+      supabaseUrl = config.env.VITE_SUPABASE_URL;
+    },
+    transformIndexHtml(html: string) {
+      // 1. 预连接放到 <head> 最前面
+      const preconnect = supabaseUrl
+        ? `<link rel="preconnect" href="${supabaseUrl}" crossorigin>\n    <link rel="dns-prefetch" href="${supabaseUrl}">\n    `
+        : '';
+
+      // 2. 首屏背景色 - 根据系统主题自动切换
+      const criticalBg = `<style>
+      @media(prefers-color-scheme:dark){html,body{background:#0F0F12}}
+      @media(prefers-color-scheme:light){html,body{background:#f8fafc}}
+    </style>\n    `;
+
+      // 插入到 <meta charset> 之后
+      return html.replace(
+        '<meta charset="UTF-8" />',
+        `<meta charset="UTF-8" />\n    ${preconnect}${criticalBg}`
+      );
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    performanceOptimizations(),
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['vite.svg'],
+      manifest: {
+        name: 'Momentum - 心理学驱动的专注力应用',
+        short_name: 'Momentum',
+        description: '帮助您建立高效的工作习惯，通过任务链和专注模式提升生产力',
+        theme_color: '#6366F1',
+        background_color: '#0F0F12',
+        display: 'standalone',
+        icons: [
+          {
+            src: 'vite.svg',
+            sizes: '192x192',
+            type: 'image/svg+xml',
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-api',
+              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+            },
+          },
+        ],
+      },
+    }),
+    // Bundle 分析工具 - 运行 npm run build 后查看 stats.html
+    visualizer({
+      filename: 'stats.html',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  ],
+  resolve: {
+    alias: {
+      // 优化 lucide-react barrel file 导入
+      // 将 import { X } from 'lucide-react' 转换为直接导入
+      'lucide-react': 'lucide-react/dist/esm/lucide-react',
+    },
+  },
   optimizeDeps: {
     include: ['lucide-react'],
+    // 强制预构建以避免开发时的延迟
+    force: false,
   },
   build: {
     rollupOptions: {

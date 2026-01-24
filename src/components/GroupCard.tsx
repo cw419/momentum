@@ -6,6 +6,7 @@ import { getGroupProgress, getChainTypeConfig, getNextUnitInGroup } from '../uti
 import { notificationManager } from '../utils/notifications';
 import { Icon } from '../utils/iconMap';
 import { useI18n } from '../i18n';
+import { Portal } from './Portal';
 
 interface GroupCardProps {
   group: ChainTreeNode;
@@ -314,7 +315,8 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
       
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <Portal>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/50 overflow-y-auto">
           <div
             ref={deleteDialogRef}
             role="alertdialog"
@@ -322,7 +324,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             aria-labelledby="group-delete-dialog-title"
             aria-describedby="group-delete-dialog-description"
             onKeyDown={handleDialogKeyDown}
-            className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border border-gray-200/60 dark:border-slate-600/60 shadow-2xl animate-scale-in"
+            className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border border-gray-200/60 dark:border-slate-600/60 shadow-2xl animate-scale-in max-h-[calc(100vh-2rem)] overflow-y-auto"
           >
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-6">
@@ -374,6 +376,7 @@ export const GroupCard: React.FC<GroupCardProps> = React.memo(({
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

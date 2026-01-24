@@ -17,8 +17,8 @@ interface VirtualizedChainListProps {
   onDelete: (chainId: string) => void;
 }
 
-// Threshold for when to use virtual scrolling
-const VIRTUALIZATION_THRESHOLD = 20;
+// Threshold for when to use virtual scrolling (lowered for better performance with complex cards)
+const VIRTUALIZATION_THRESHOLD = 12;
 
 // Item height estimation for virtual scrolling
 const ITEM_HEIGHT = 280; // Approximate height of a chain card in pixels
@@ -175,7 +175,7 @@ export const VirtualizedChainList: React.FC<VirtualizedChainListProps> = React.m
         className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
       >
         {topLevelChains.map((chainNode, index) => (
-          <div key={`${chainNode.id}-${index}`} role="listitem">
+          <div key={`${chainNode.id}-${index}`} role="listitem" className="chain-card-item">
             {renderChainItem(chainNode)}
           </div>
         ))}
