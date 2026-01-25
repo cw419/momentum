@@ -1,0 +1,124 @@
+<svg width="1000" height="520" viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 滤镜定义保持不变 -->
+    <filter id="glow-red-small" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glow-green-small" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <style>
+      .math-it { font-family: "Times New Roman", serif; font-style: italic; }
+      .label-font { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 15px; fill: #333; font-weight: 500; }
+      .time-font { font-family: Arial, sans-serif; font-size: 13px; fill: #555; }
+    </style>
+
+    <!-- 组件定义保持逻辑一致 -->
+    <symbol id="graph-play" viewBox="0 0 120 150">
+      <rect x="2" y="2" width="116" height="146" fill="white" stroke="#4DFF4D" stroke-width="2" filter="url(#glow-green-small)" rx="2" />
+      <line x1="20" y1="130" x2="20" y2="15" stroke="#333" stroke-width="0.8" />
+      <line x1="10" y1="80" x2="110" y2="80" stroke="#333" stroke-width="0.8" />
+      <path d="M 22 25 C 30 65 50 75 110 78" fill="none" stroke="#1060a0" stroke-width="1" stroke-dasharray="2,2" />
+      <path d="M 20 30 C 25 65 30 75 35 80 C 45 100 60 120 85 110 C 105 100 110 85 115 82" fill="none" stroke="#c00000" stroke-width="1.2" />
+      <path d="M 20 30 C 25 65 30 75 35 80 L 20 80 Z" fill="#b3dfb3" opacity="0.6" />
+      <path d="M 35 80 C 45 100 60 120 85 110 C 105 100 110 85 115 82 L 115 80 L 35 80 Z" fill="#ffb3b3" opacity="0.5" />
+      <path d="M 80 45 L 95 60 L 115 30" fill="none" stroke="#28a745" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    </symbol>
+
+    <symbol id="graph-study" viewBox="0 0 120 150">
+      <rect x="2" y="2" width="116" height="146" fill="white" stroke="#FF4D4D" stroke-width="2" filter="url(#glow-red-small)" rx="2" />
+      <line x1="20" y1="130" x2="20" y2="15" stroke="#333" stroke-width="0.8" />
+      <line x1="10" y1="80" x2="110" y2="80" stroke="#333" stroke-width="0.8" />
+      <path d="M 22 25 C 30 65 50 75 110 78" fill="none" stroke="#1060a0" stroke-width="1" stroke-dasharray="2,2" />
+      <path d="M 20 130 C 25 100 30 85 35 80 C 45 65 60 55 85 60 C 105 65 110 75 115 78" fill="none" stroke="#c00000" stroke-width="1.2" />
+      <path d="M 20 130 C 25 100 30 85 35 80 L 20 80 Z" fill="#ffb3b3" opacity="0.5" />
+      <path d="M 35 80 C 45 65 60 55 85 60 C 105 65 110 75 115 78 L 115 80 L 35 80 Z" fill="#b3dfb3" opacity="0.6" />
+      <path d="M 85 35 L 110 60 M 110 35 L 85 60" stroke="red" stroke-width="4" stroke-linecap="round" />
+    </symbol>
+
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+  </defs>
+
+  <rect width="1000" height="520" fill="white" />
+
+  <!-- 各个时间节点的图表组 -->
+  <!-- 调整 y 坐标，增加下方文字间距 -->
+  <g transform="translate(150, 40)">
+    <text x="60" y="-12" text-anchor="middle" class="label-font">短视频A</text>
+    <use href="#graph-play" x="0" y="0" width="120" height="150" />
+    <use href="#graph-study" x="0" y="210" width="120" height="150" />
+    <!-- 这里的 y="395" 确保文字在红色框下方 35px 处 -->
+    <text x="60" y="395" text-anchor="middle" class="label-font">放下手机</text>
+  </g>
+
+  <g transform="translate(350, 40)">
+    <text x="60" y="-12" text-anchor="middle" class="label-font">短视频B</text>
+    <use href="#graph-play" x="0" y="0" width="120" height="150" />
+    <use href="#graph-study" x="0" y="210" width="120" height="150" />
+    <text x="60" y="395" text-anchor="middle" class="label-font">放下手机</text>
+  </g>
+
+  <g transform="translate(550, 40)">
+    <text x="60" y="-12" text-anchor="middle" class="label-font">短视频C</text>
+    <use href="#graph-play" x="0" y="0" width="120" height="150" />
+    <use href="#graph-study" x="0" y="210" width="120" height="150" />
+    <text x="60" y="395" text-anchor="middle" class="label-font">放下手机</text>
+  </g>
+
+  <g transform="translate(750, 40)">
+    <text x="60" y="-12" text-anchor="middle" class="label-font">短视频D</text>
+    <use href="#graph-play" x="0" y="0" width="120" height="150" />
+    <use href="#graph-study" x="0" y="210" width="120" height="150" />
+    <text x="60" y="395" text-anchor="middle" class="label-font">放下手机</text>
+  </g>
+
+  <!-- 连线箭头，根据新的 y 坐标调整 -->
+  <g>
+    <!-- 主流程 y = 40 + 75 = 115 -->
+    <line x1="20" y1="115" x2="140" y2="115" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+    
+    <!-- A -> B -->
+    <line x1="270" y1="115" x2="340" y2="115" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+    <!-- 虚线连接到红色框 y = 40 + 210 + 75 = 325 -->
+    <path d="M 300 115 L 300 325 L 340 325" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)" />
+    
+    <!-- B -> C -->
+    <line x1="470" y1="115" x2="540" y2="115" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+    <path d="M 500 115 L 500 325 L 540 325" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)" />
+    
+    <!-- C -> D -->
+    <line x1="670" y1="115" x2="740" y2="115" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+    <path d="M 700 115 L 700 325 L 740 325" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)" />
+
+    <line x1="870" y1="115" x2="930" y2="115" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+    <text x="945" y="120" font-size="24" font-weight="bold">...</text>
+  </g>
+
+  <!-- 底部时间轴：将位置从 420 下移到 475，预留充足空间 -->
+  <g transform="translate(0, 475)">
+    <line x1="50" y1="0" x2="950" y2="0" stroke="#333" stroke-width="1.2" marker-end="url(#arrowhead)" />
+    <text x="965" y="5" class="math-it" font-size="20">t</text>
+    
+    <g transform="translate(210, 0)">
+      <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" />
+      <text x="0" y="22" text-anchor="middle" class="time-font">19:00</text>
+    </g>
+    <g transform="translate(410, 0)">
+      <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" />
+      <text x="0" y="22" text-anchor="middle" class="time-font">19:30</text>
+    </g>
+    <g transform="translate(610, 0)">
+      <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" />
+      <text x="0" y="22" text-anchor="middle" class="time-font">20:00</text>
+    </g>
+    <g transform="translate(810, 0)">
+      <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" />
+      <text x="0" y="22" text-anchor="middle" class="time-font">20:30</text>
+    </g>
+  </g>
+</svg>

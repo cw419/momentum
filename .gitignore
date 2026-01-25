@@ -51,3 +51,11 @@ coverage/
 
 # Local backups / scratch
 archive/
+nul
+
+# Manim generated files
+manim/media/
+manim/__pycache__/
+manim/*.jpg
+manim/*.png
+manim/*.mp4
