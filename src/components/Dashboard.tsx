@@ -165,7 +165,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
             type="button"
             onClick={handleShowAccountModal}
             aria-label={t('settings.title')}
-            className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105"
+            className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition duration-300 hover:scale-105"
           >
             <Settings size={18} aria-hidden="true" />
             <span className="font-chinese text-sm">{t('settings.button')}</span>
@@ -254,7 +254,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     type="button"
                     onClick={onCreateChain}
                     aria-label={tr('创建第一条链', 'Create chain')}
-                    className="gradient-primary hover:shadow-2xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 hover:scale-105 shadow-xl"
+                    className="gradient-primary hover:shadow-2xl text-white px-8 py-4 rounded-2xl font-medium transition duration-300 flex items-center space-x-3 hover:scale-105 shadow-xl"
                   >
                     <Plus size={18} aria-hidden="true" />
                     <span className="font-chinese font-semibold">{tr('创建第一条链', 'Create chain')}</span>
@@ -263,7 +263,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     type="button"
                     onClick={handleShowImportExport}
                     aria-label={tr('数据管理', 'Data')}
-                    className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
                     <Download size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('数据管理', 'Data')}</span>
@@ -273,7 +273,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                       type="button"
                       onClick={onOpenRSIP}
                       aria-label={tr('国策树', 'RSIP Tree')}
-                      className="bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-6 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                      className="bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-6 py-4 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                     >
                       <TreePine size={16} aria-hidden="true" />
                       <span className="font-chinese font-medium">{tr('国策树', 'RSIP Tree')}</span>
@@ -298,7 +298,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     type="button"
                     onClick={handleShowRecycleBin}
                     aria-label={tr('回收箱', 'Recycle bin')}
-                    className="relative shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="relative shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
                     <Trash2 size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('回收箱', 'Recycle bin')}</span>
@@ -312,7 +312,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     type="button"
                     onClick={handleShowImportExport}
                     aria-label={tr('数据管理', 'Data')}
-                    className="shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="shrink-0 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
                     <Download size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('数据管理', 'Data')}</span>
@@ -321,7 +321,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     type="button"
                     onClick={onOpenRSIP}
                     aria-label={tr('国策树', 'RSIP Tree')}
-                    className="shrink-0 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="shrink-0 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
                     <TreePine size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('国策树', 'RSIP Tree')}</span>
@@ -330,7 +330,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                     type="button"
                     onClick={onCreateChain}
                     aria-label={tr('新建链', 'New Chain')}
-                    className="shrink-0 gradient-dark hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                    className="shrink-0 gradient-dark hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                   >
                     <Plus size={16} aria-hidden="true" />
                     <span className="font-chinese font-medium">{tr('新建链', 'New Chain')}</span>
@@ -340,7 +340,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                       type="button"
                       onClick={onCreateTaskGroup}
                       aria-label={tr('新建任务群', 'New Group')}
-                      className="shrink-0 bg-green-500 hover:bg-green-600 hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
+                      className="shrink-0 bg-green-500 hover:bg-green-600 hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
                     >
                       <Layers size={16} aria-hidden="true" />
                       <span className="font-chinese font-medium">{tr('新建任务群', 'New Group')}</span>

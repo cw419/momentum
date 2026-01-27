@@ -22,6 +22,7 @@ import type {
 } from '../../../types';
 import type { PetState } from '../../../types/pet';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
+import { migrateCompletionHistoryForTiming } from '../../../utils/completionHistoryTimingMigration';
 import { storage as localStorageUtils } from '../../../utils/storage';
 import { retryOperation, retryWithAuth } from './retry';
 import type { SchemaVerificationResult, SupabaseStorageContext } from './types';
@@ -203,25 +204,8 @@ export class SupabaseStorage implements MomentumStorage {
   // Compatibility / maintenance
   async migrateCompletionHistoryForTiming(): Promise<void> {
     try {
-      const history = await this.getCompletionHistory();
-      const chains = await this.getChains();
-      let hasChanges = false;
-
-      const updatedHistory = history.map(record => {
-        if (record.actualDuration !== undefined && record.isForwardTimed !== undefined) {
-          return record;
-        }
-
-        const chain = chains.find(c => c.id === record.chainId);
-        const migratedRecord = {
-          ...record,
-          actualDuration: record.duration,
-          isForwardTimed: chain?.isDurationless || false,
-        };
-
-        hasChanges = true;
-        return migratedRecord;
-      });
+      const [history, chains] = await Promise.all([this.getCompletionHistory(), this.getChains()]);
+      const { updatedHistory, hasChanges } = migrateCompletionHistoryForTiming(history, chains);
 
       if (hasChanges) {
         await this.saveCompletionHistory(updatedHistory);

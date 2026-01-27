@@ -42,7 +42,7 @@ export function RSIPStrictModeCard({
   return (
     <div
       className={`
-        relative p-4 rounded-2xl border transition-all
+        relative p-4 rounded-2xl border transition
         ${cardBgClass} ${depthShadowClass}
         hover:shadow-lg ${hoverBorderClass}
       `}
@@ -56,7 +56,7 @@ export function RSIPStrictModeCard({
           <div
             className="absolute left-0 top-full mt-1 z-50 max-w-xs p-2 bg-gray-800 rounded-lg text-sm text-white
               opacity-0 invisible group-hover/title:opacity-100 group-hover/title:visible
-              transition-all shadow-xl pointer-events-none break-words"
+              transition shadow-xl pointer-events-none break-words"
           >
             {node.title}
           </div>
@@ -76,7 +76,7 @@ export function RSIPStrictModeCard({
         <button
           type="button"
           onClick={onMarkExecuted}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all cursor-pointer font-medium
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition cursor-pointer font-medium
             bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm
             dark:bg-emerald-500/20 dark:hover:bg-emerald-500/30 dark:text-emerald-200 dark:shadow-none
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
@@ -89,7 +89,7 @@ export function RSIPStrictModeCard({
         <button
           type="button"
           onClick={onMarkViolated}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all cursor-pointer font-medium
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition cursor-pointer font-medium
             bg-red-600 hover:bg-red-700 text-white shadow-sm
             dark:bg-red-500/20 dark:hover:bg-red-500/30 dark:text-red-200 dark:shadow-none
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white

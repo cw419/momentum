@@ -11,7 +11,7 @@
   background-color: rgb(229, 231, 235);
   border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .dark .slider-track {
@@ -39,7 +39,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   cursor: grab;
   transform: translate(-50%, -50%);
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .slider-thumb:hover {

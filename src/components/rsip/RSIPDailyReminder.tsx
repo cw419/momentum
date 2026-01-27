@@ -32,7 +32,7 @@ export function RSIPDailyReminder({
         <button
           type="button"
           onClick={onRecordOpened}
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-medium rounded-xl transition-all cursor-pointer"
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-medium rounded-xl transition cursor-pointer"
         >
           立即打卡
         </button>

@@ -421,7 +421,7 @@ const BetButtons: React.FC<BetButtonsProps> = ({
         disabled={isDisabled}
         aria-label={tr('确认押注', 'Confirm bet')}
         className={`
-          w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 focus-ring
+          w-full py-4 px-6 rounded-xl font-semibold text-lg transition duration-200 focus-ring
           ${isDisabled
             ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
             : 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'

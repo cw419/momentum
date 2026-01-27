@@ -53,6 +53,8 @@ const RuleItem: React.FC<RuleItemProps> = memo(({
     return language === 'zh' ? `${months}个月前` : `${months}mo ago`;
   };
 
+  const isSelectable = Boolean(onSelect);
+
   const handleSelect = () => {
     if (onSelect) {
       onSelect(rule);
@@ -60,9 +62,21 @@ const RuleItem: React.FC<RuleItemProps> = memo(({
   };
 
   return (
-    <div 
-      className={`bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${onSelect ? 'cursor-pointer' : ''}`}
-      onClick={handleSelect}
+    <div
+      className={`bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isSelectable ? 'cursor-pointer focus-ring' : ''}`}
+      role={isSelectable ? 'button' : undefined}
+      tabIndex={isSelectable ? 0 : undefined}
+      onClick={isSelectable ? handleSelect : undefined}
+      onKeyDown={
+        isSelectable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleSelect();
+              }
+            }
+          : undefined
+      }
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">

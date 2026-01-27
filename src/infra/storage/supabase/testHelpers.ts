@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { SupabaseStorageContext } from '../types';
+import type { SupabaseStorageContext } from './types';
 import type { User } from '@supabase/supabase-js';
 
 export const TEST_USER_ID = 'test-user-123';
@@ -63,9 +63,7 @@ export function createMockQueryBuilder(
   return builder;
 }
 
-export function createMockSupabaseClient(
-  queryBuilder: MockQueryBuilder = createMockQueryBuilder()
-) {
+export function createMockSupabaseClient(queryBuilder: MockQueryBuilder = createMockQueryBuilder()) {
   return {
     from: vi.fn().mockReturnValue(queryBuilder),
     rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -79,11 +77,7 @@ export function createMockContext(
     queryBuilder?: MockQueryBuilder;
   } = {}
 ): SupabaseStorageContext & { mockClient: ReturnType<typeof createMockSupabaseClient> } {
-  const {
-    user = mockUser,
-    isAuthenticated = true,
-    queryBuilder = createMockQueryBuilder(),
-  } = options;
+  const { user = mockUser, isAuthenticated = true, queryBuilder = createMockQueryBuilder() } = options;
 
   const mockClient = createMockSupabaseClient(queryBuilder);
 
@@ -106,3 +100,4 @@ export function createMockContext(
 export function createSupabaseError(code: string, message: string) {
   return { code, message, details: null, hint: null };
 }
+

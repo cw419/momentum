@@ -23,9 +23,11 @@ export function RSIPViolationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div
+      <button
+        type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onCancel}
+        aria-label="Close dialog"
       />
 
       {/* Dialog */}
@@ -34,9 +36,10 @@ export function RSIPViolationDialog({
         <button
           type="button"
           onClick={onCancel}
-          className="absolute top-4 right-4 p-1 text-white/40 hover:text-white/70 transition-colors cursor-pointer"
+          aria-label="Close dialog"
+          className="absolute top-4 right-4 p-1 text-white/40 hover:text-white/70 transition-colors cursor-pointer focus-ring rounded"
         >
-          <X size={20} />
+          <X size={20} aria-hidden="true" />
         </button>
 
         {/* Header */}
@@ -75,14 +78,14 @@ export function RSIPViolationDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer"
+            className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition cursor-pointer"
           >
             取消
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 py-2.5 bg-red-500 hover:bg-red-400 text-white font-medium rounded-xl transition-all cursor-pointer"
+            className="flex-1 py-2.5 bg-red-500 hover:bg-red-400 text-white font-medium rounded-xl transition cursor-pointer"
           >
             确认违反
           </button>

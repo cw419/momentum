@@ -227,7 +227,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
         <button
           type="button"
           onClick={() => onSelect(rule)}
-          className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 text-left border border-transparent hover:border-primary-200 dark:hover:border-primary-500/30"
+          className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-200 text-left border border-transparent hover:border-primary-200 dark:hover:border-primary-500/30"
           style={{ height: itemHeight }}
         >
           <div className="flex-1 min-w-0">

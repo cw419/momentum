@@ -50,7 +50,7 @@ export const FileUploadSection: React.FC<{
       accept=".json"
       onChange={onFileUpload}
       aria-label={tr('选择要导入的文件', 'Choose a file to import')}
-      className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300"
+      className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300"
     />
   </div>
 );
@@ -70,7 +70,7 @@ export const ManualInputSection: React.FC<{
       onChange={(e) => onImportDataChange(e.target.value)}
       placeholder={tr('粘贴从 Momentum 导出的 JSON 数据...', 'Paste the JSON exported from Momentum...')}
       aria-label={tr('JSON 数据', 'JSON data')}
-      className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 resize-none font-mono text-sm"
+      className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 resize-none font-mono text-sm"
       rows={8}
     />
   </div>
@@ -201,7 +201,7 @@ export const ImportButton: React.FC<{
   return (
     <div className="text-center">
       <button type="button" onClick={onImport} disabled={isImportDisabled} aria-label={tr('导入数据', 'Import data')}
-        className="gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 mx-auto hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese">
+        className="gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition duration-300 flex items-center space-x-3 mx-auto hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese">
         {isImporting ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : <Upload size={20} />}
         <span>{buttonText}</span>
       </button>
@@ -237,7 +237,7 @@ export const ExportTab: React.FC<{
         {language === 'zh' ? <>当前共有 <span className="font-bold text-primary-500">{chainsCount}</span> 条任务链</> : <>You have <span className="font-bold text-primary-500">{chainsCount}</span> chain{chainsCount === 1 ? '' : 's'}</>}
       </p>
       <button type="button" onClick={onExport} disabled={chainsCount === 0} aria-label={tr('导出为 JSON 文件', 'Export as JSON')}
-        className="gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-3 mx-auto hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese">
+        className="gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition duration-300 flex items-center space-x-3 mx-auto hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese">
         <Download size={20} />
         <span>{tr('导出为 JSON 文件', 'Export as JSON')}</span>
       </button>

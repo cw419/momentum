@@ -127,7 +127,7 @@ export const PureDOMSlider: React.FC<PureDOMSliderProps> = ({
     touch-manipulation
     ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
     ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-    transition-all duration-150 ease-out
+    transition duration-150 ease-out
     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
     ${isTouchDevice ? 'active:scale-[0.98]' : 'hover:bg-gray-300 dark:hover:bg-gray-500'}
   `.trim().replace(/\s+/g, ' ');

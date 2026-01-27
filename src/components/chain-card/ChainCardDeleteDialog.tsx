@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Chain, ChainTreeNode } from '../../types';
 import { Trash2, Flame, Calendar, TrendingUp, Settings } from 'lucide-react';
 import { useI18n } from '../../i18n';
@@ -27,14 +27,18 @@ export const ChainCardDeleteDialog: React.FC<ChainCardDeleteDialogProps> = React
       };
     }, []);
 
-    const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent) => {
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           onCancel();
         }
-      },
-      [onCancel]
-    );
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [onCancel]);
 
     const handleConfirmClick = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -61,7 +65,6 @@ export const ChainCardDeleteDialog: React.FC<ChainCardDeleteDialogProps> = React
           aria-modal="true"
           aria-labelledby="delete-dialog-title"
           aria-describedby="delete-dialog-description"
-          onKeyDown={handleKeyDown}
           className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border border-gray-200/60 dark:border-slate-600/60 shadow-2xl animate-scale-in"
         >
           <div className="text-center mb-8">
@@ -178,14 +181,14 @@ export const ChainCardDeleteDialog: React.FC<ChainCardDeleteDialogProps> = React
               type="button"
               data-cancel-button
               onClick={handleCancelClick}
-              className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese focus-ring"
+              className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition duration-300 hover:scale-105 font-chinese focus-ring"
             >
               {tr('取消', 'Cancel')}
             </button>
             <button
               type="button"
               onClick={handleConfirmClick}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese focus-ring"
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese focus-ring"
             >
               <Trash2 size={16} aria-hidden="true" />
               <span>{tr('确认删除', 'Delete')}</span>

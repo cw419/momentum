@@ -134,7 +134,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, chainsCount, o
       <button
         type="button"
         onClick={() => onTabChange('export')}
-        className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 font-chinese ${
+        className={`flex-1 px-4 py-3 rounded-xl font-medium transition duration-300 flex items-center justify-center space-x-2 font-chinese ${
           activeTab === 'export'
             ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-slate-100 shadow-sm'
             : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
@@ -147,7 +147,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, chainsCount, o
     <button
       type="button"
       onClick={() => onTabChange('import')}
-      className={`${chainsCount > 0 ? 'flex-1' : 'w-full'} px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 font-chinese ${
+      className={`${chainsCount > 0 ? 'flex-1' : 'w-full'} px-4 py-3 rounded-xl font-medium transition duration-300 flex items-center justify-center space-x-2 font-chinese ${
         activeTab === 'import'
           ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-slate-100 shadow-sm'
           : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'

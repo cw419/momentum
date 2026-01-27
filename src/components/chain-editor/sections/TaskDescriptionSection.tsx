@@ -24,7 +24,7 @@ export function TaskDescriptionSection({ form }: TaskDescriptionSectionProps) {
           onChange={(e) => form.setDescription(e.target.value)}
           placeholder={tr('具体要做什么？例如：完成 CS61A 项目的第一部分', 'What exactly will you do? e.g. Finish Part 1 of CS61A')}
           rows={4}
-          className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 resize-none font-chinese leading-relaxed"
+          className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 resize-none font-chinese leading-relaxed"
           required
         />
       </div>

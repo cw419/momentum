@@ -65,7 +65,17 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
       onClick={onCardClick}
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
-      className={`rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition-all duration-300 transform-gpu ${color.bg} ${color.border} ${isHighlighted ? `ring-2 ${color.ring} scale-105 shadow-2xl` : ''} ${isInvalidParentTarget ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer'} ${isReparentingSelected ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${node.emoji || '📌'} ${node.title}`}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onCardClick();
+        }
+      }}
+      className={`rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition duration-300 transform-gpu ${color.bg} ${color.border} ${isHighlighted ? `ring-2 ${color.ring} scale-105 shadow-2xl` : ''} ${isInvalidParentTarget ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer'} ${isReparentingSelected ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : ''}`}
     >
       <div className="flex items-start space-x-3">
         <div className="text-3xl leading-none pt-1" aria-hidden>
@@ -134,4 +144,3 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
     </div>
   );
 };
-

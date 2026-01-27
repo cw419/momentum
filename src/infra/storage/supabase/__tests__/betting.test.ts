@@ -11,7 +11,7 @@ import {
   createMockContext,
   createMockQueryBuilder,
   createSupabaseError,
-} from './helpers';
+} from '../testHelpers';
 import type { BetPlacementRequest } from '../../../../domain/betting';
 
 vi.mock('../../../../utils/logger', () => ({

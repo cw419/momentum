@@ -36,7 +36,7 @@ export function RSIPPhaseProgress({ phase, consecutiveDays }: RSIPPhaseProgressP
 
       <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${gradientClass}`}
+          className={`h-full rounded-full transition-[width] duration-500 ${gradientClass}`}
           style={{ width: `${progress}%` }}
         />
       </div>

@@ -57,31 +57,34 @@ export const useMobileOptimization = () => {
 
   // 添加iOS Safari特定修复
   useEffect(() => {
-    // 修复iOS Safari的视窗问题
-    const fixIOSViewport = () => {
-      if (typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-          viewport.setAttribute('content', 
-            'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
-          );
-        }
-        
-        // 修复iOS Safari的100vh问题
-        const setVH = () => {
-          const vh = window.innerHeight * 0.01;
-          document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-        
-        setVH();
-        window.addEventListener('resize', setVH);
-        window.addEventListener('orientationchange', () => {
-          setTimeout(setVH, 100);
-        });
-      }
+    if (typeof window === 'undefined') return;
+    if (!/iPad|iPhone|iPod/.test(navigator.userAgent)) return;
+
+    // 修复 iOS Safari 的 viewport 问题：不要禁用缩放（可访问性）。
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
+    }
+
+    // 修复 iOS Safari 的 100vh 问题
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
     };
 
-    fixIOSViewport();
+    const handleResize = () => setVH();
+    const handleOrientationChange = () => {
+      setTimeout(setVH, 100);
+    };
+
+    setVH();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -92,10 +95,10 @@ export const useMobileOptimization = () => {
     window.addEventListener('resize', updateMobileInfo);
     
     // 监听屏幕方向变化
-    window.addEventListener('orientationchange', () => {
-      // 延迟执行，等待方向变化完成
+    const handleOrientationChange = () => {
       setTimeout(updateMobileInfo, 100);
-    });
+    };
+    window.addEventListener('orientationchange', handleOrientationChange);
 
     // 监听虚拟键盘
     const handleVisualViewportChange = () => {
@@ -114,7 +117,7 @@ export const useMobileOptimization = () => {
 
     return () => {
       window.removeEventListener('resize', updateMobileInfo);
-      window.removeEventListener('orientationchange', updateMobileInfo);
+      window.removeEventListener('orientationchange', handleOrientationChange);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', handleVisualViewportChange);
       }

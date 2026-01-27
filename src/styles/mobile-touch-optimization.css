@@ -188,7 +188,7 @@ input:not([type="range"]), textarea, select {
 
 /* 触摸反馈优化 */
 .touch-feedback {
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .touch-feedback:active {
@@ -206,7 +206,15 @@ input:not([type="range"]), textarea, select {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  outline: none;
+}
+
+.mobile-optimized-slider:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 4px;
+}
+
+.dark .mobile-optimized-slider:focus-visible {
+  outline-color: #60a5fa;
 }
 
 /* WebKit浏览器滑块轨道 */
@@ -234,7 +242,7 @@ input:not([type="range"]), textarea, select {
   border-radius: 50%;
   cursor: grab;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
   position: relative;
   z-index: 10;
 }
@@ -277,7 +285,7 @@ input:not([type="range"]), textarea, select {
   border-radius: 50%;
   cursor: grab;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
   -moz-appearance: none;
 }
 

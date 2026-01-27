@@ -15,6 +15,7 @@ import { useAppDataLoad } from './hooks/useAppDataLoad';
 import { useAuthController } from './hooks/useAuthController';
 import { useServiceLifecycle } from './hooks/useServiceLifecycle';
 import { useViewValidation } from './hooks/useViewValidation';
+import { useViewUrlSync } from './hooks/useViewUrlSync';
 import { usePeriodicCleanup } from './hooks/usePeriodicCleanup';
 import { AppShellView } from './AppShellView';
 
@@ -67,6 +68,7 @@ export default function AppShellContainer() {
   });
 
   useViewValidation({ state, setState, isInitialized });
+  useViewUrlSync({ state, setState, shouldLoadData, isLoadingData });
 
   usePeriodicCleanup({
     state,

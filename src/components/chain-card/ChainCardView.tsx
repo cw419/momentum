@@ -31,7 +31,6 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
   onShowDeleteConfirm,
   onConfirmDelete,
   onCancelDelete,
-  onDialogKeyDown,
   deleteDialogRef,
 }) => {
   return (
@@ -39,6 +38,16 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
       <div
         className="bento-card cursor-pointer group animate-scale-in"
         onClick={onViewDetail}
+        role="button"
+        tabIndex={0}
+        aria-label={tr(`查看详情：${chain.name}`, `View details: ${chain.name}`)}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onViewDetail();
+          }
+        }}
       >
         {/* Menu button */}
         <div className="absolute top-6 right-6">
@@ -187,11 +196,14 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
         )}
 
         {/* Action buttons */}
-        <div className="flex space-x-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex space-x-3">
           <button
             type="button"
-            onClick={onStartChain}
-            className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg focus-ring"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartChain();
+            }}
+            className="flex-1 gradient-primary hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg focus-ring"
           >
             <Play size={16} aria-hidden="true" />
             <span className="font-chinese font-semibold">{tr('开始任务', 'Start')}</span>
@@ -200,8 +212,11 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
           {!isScheduled && (
             <button
               type="button"
-              onClick={onScheduleChain}
-              className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg focus-ring"
+              onClick={(e) => {
+                e.stopPropagation();
+                onScheduleChain();
+              }}
+              className="flex-1 gradient-dark hover:shadow-xl text-white px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center justify-center space-x-2 hover:scale-105 shadow-lg focus-ring"
             >
               <Clock size={16} aria-hidden="true" />
               <span className="font-chinese font-semibold">{tr('预约', 'Schedule')}</span>
@@ -220,7 +235,6 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
             aria-describedby="delete-dialog-description"
-            onKeyDown={onDialogKeyDown}
             className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border border-gray-200/60 dark:border-slate-600/60 shadow-2xl animate-scale-in max-h-[calc(100vh-2rem)] overflow-y-auto"
           >
             <div className="text-center mb-8">
@@ -340,7 +354,7 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
                   e.stopPropagation();
                   onCancelDelete();
                 }}
-                className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese focus-ring"
+                className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-6 py-4 rounded-2xl font-medium transition duration-300 hover:scale-105 font-chinese focus-ring"
               >
                 {tr('取消', 'Cancel')}
               </button>
@@ -350,7 +364,7 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
                   e.stopPropagation();
                   onConfirmDelete();
                 }}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese focus-ring"
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-medium transition duration-300 hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl font-chinese focus-ring"
               >
                 <Trash2 size={16} aria-hidden="true" />
                 <span>{tr('确认删除', 'Delete')}</span>

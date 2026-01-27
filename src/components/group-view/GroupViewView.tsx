@@ -2,7 +2,6 @@ import React from 'react';
 import type { Chain, ChainTreeNode, ScheduledSession } from '../../types';
 import {
   AlertTriangle,
-  ArrowLeft,
   Clock,
   Hash,
   Import,
@@ -14,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { ImportUnitsModal } from '../ImportUnitsModal';
+import { BackButton } from '../BackButton';
 import { Icon, type IconName } from '../../utils/iconMap';
 import { UnitCard } from './UnitCard';
 
@@ -103,12 +103,11 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
       <div className="max-w-6xl mx-auto">
         <header className="flex items-center justify-between mb-12 animate-fade-in">
           <div className="flex items-center space-x-4">
-            <button
+            <BackButton
               onClick={onBack}
+              label={tr('返回', 'Back')}
               className="p-3 text-gray-400 hover:text-[#161615] dark:hover:text-slate-200 transition-colors rounded-2xl hover:bg-white/50 dark:hover:bg-slate-700/50"
-            >
-              <ArrowLeft size={24} />
-            </button>
+            />
             <div className="flex items-center space-x-4">
               <div className={`w-16 h-16 rounded-3xl ${typeConfig.bgColor} flex items-center justify-center`}>
                 <Icon name={typeConfig.icon} size={24} className={typeConfig.color} />
@@ -140,7 +139,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
           <div className="flex items-center space-x-3">
             <button
               onClick={onAddUnit}
-              className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
+              className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
             >
               <Plus size={16} />
               <span>{tr('添加单元', 'Add unit')}</span>
@@ -148,7 +147,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
 
             <button
               onClick={() => setShowImportModal(true)}
-              className="bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
+              className="bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
             >
               <Import size={16} />
               <span>{tr('导入单元', 'Import units')}</span>
@@ -156,7 +155,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
 
             <button
               onClick={() => onEditChain(group.id)}
-              className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
+              className="bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 px-4 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 font-chinese"
               title={tr('编辑任务群', 'Edit group')}
             >
               <Pencil size={16} />
@@ -165,7 +164,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
 
             <button
               onClick={() => onStartChain(group.id)}
-              className="gradient-primary hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg font-chinese"
+              className="gradient-primary hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg font-chinese"
             >
               <Play size={16} />
               <span>{nextUnit ? tr('开始下一个', 'Start next') : tr('开始新一轮', 'Start new cycle')}</span>
@@ -205,7 +204,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
 
           <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-4 mb-4">
             <div
-              className="bg-gradient-to-r from-primary-500 to-primary-600 h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+              className="bg-gradient-to-r from-primary-500 to-primary-600 h-4 rounded-full transition-[width] duration-500 flex items-center justify-end pr-2"
               style={{ width: `${unitProgress.total > 0 ? (unitProgress.completed / unitProgress.total) * 100 : 0}%` }}
             >
               {unitProgress.completed > 0 && (
@@ -247,7 +246,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
                   <div className="flex items-center space-x-2">
                     <div className="w-24 bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
+                        className={`h-2 rounded-full transition-[width,background-color] duration-300 ${
                           timeStatus.progress > 0.8 ? 'bg-red-500' : timeStatus.progress > 0.6 ? 'bg-orange-500' : 'bg-green-500'
                         }`}
                         style={{ width: `${timeStatus.progress * 100}%` }}
@@ -287,7 +286,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
               <p className="font-chinese text-lg mb-4">{tr('此任务群还没有子单元', 'This group has no units yet')}</p>
               <button
                 onClick={onAddUnit}
-                className="gradient-primary hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 flex items-center space-x-2 mx-auto hover:scale-105 shadow-lg font-chinese"
+                className="gradient-primary hover:shadow-xl text-white px-6 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 mx-auto hover:scale-105 shadow-lg font-chinese"
               >
                 <Plus size={16} />
                 <span>{tr('添加第一个单元', 'Add your first unit')}</span>

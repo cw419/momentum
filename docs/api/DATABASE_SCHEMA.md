@@ -118,6 +118,7 @@ erDiagram
 **索引**：
 - `idx_scheduled_sessions_user_id` (user_id)
 - `idx_scheduled_sessions_expires_at` (expires_at)
+- `idx_scheduled_sessions_user_chain_unique` (user_id, chain_id) UNIQUE
 
 ---
 
@@ -143,6 +144,7 @@ erDiagram
 - `idx_completion_history_user_id` (user_id)
 - `idx_completion_history_chain_id` (chain_id)
 - `idx_completion_history_completed_at` (completed_at DESC)
+- `idx_completion_history_user_chain_completed_unique` (user_id, chain_id, completed_at) UNIQUE
 
 ---
 

@@ -90,7 +90,7 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
                 value={keyboardInputProps.value || ''}
                 onChange={handleKeyboardInputChange}
                 placeholder={keyboardInputProps.placeholder}
-                className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300"
+                className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300"
               />
               {keyboardInputProps.unit && (
                 <span className="text-gray-500 dark:text-slate-400 font-chinese text-sm">
@@ -148,7 +148,7 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
                 value={keyboardInputProps.value || ''}
                 onChange={handleKeyboardInputChange}
                 placeholder={keyboardInputProps.placeholder}
-                className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300"
+                className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300"
               />
               {keyboardInputProps.unit && (
                 <span className="text-gray-500 dark:text-slate-400 font-chinese text-sm">

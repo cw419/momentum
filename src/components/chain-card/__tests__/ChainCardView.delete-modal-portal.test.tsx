@@ -61,7 +61,6 @@ describe('ChainCardView delete modal', () => {
           onShowDeleteConfirm={() => {}}
           onConfirmDelete={onConfirmDelete}
           onCancelDelete={onCancelDelete}
-          onDialogKeyDown={() => {}}
           deleteDialogRef={deleteDialogRef}
         />
       </div>
@@ -77,4 +76,3 @@ describe('ChainCardView delete modal', () => {
     expect(onConfirmDelete).toHaveBeenCalledTimes(1);
   });
 });
-

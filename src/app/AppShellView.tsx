@@ -331,7 +331,17 @@ export function AppShellView({
 
   return (
     <>
-      {content}
+      <a
+        href="#main"
+        onClick={() => document.getElementById('main')?.focus()}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-[200] focus-ring rounded-xl bg-white/95 dark:bg-slate-900/90 px-4 py-2 text-sm font-medium text-gray-900 dark:text-slate-100 shadow-lg"
+      >
+        {tr('跳转到主要内容', 'Skip to main content')}
+      </a>
+
+      <main id="main" tabIndex={-1}>
+        {content}
+      </main>
 
       {/* Pet Widget - 懒加载 */}
       <Suspense fallback={null}>

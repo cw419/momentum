@@ -3,7 +3,7 @@ import { performDailyCheckin, getUserCheckinStats } from '../checkin';
 import {
   createMockContext,
   createSupabaseError,
-} from './helpers';
+} from '../testHelpers';
 
 vi.mock('../../../../utils/logger', () => ({
   logger: {

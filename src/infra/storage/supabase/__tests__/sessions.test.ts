@@ -9,7 +9,7 @@ import {
   createMockContext,
   createMockQueryBuilder,
   createSupabaseError,
-} from './helpers';
+} from '../testHelpers';
 import type { ActiveSession, ScheduledSession } from '../../../../types';
 
 vi.mock('../../../../utils/logger', () => ({
@@ -110,7 +110,7 @@ describe('sessions.ts', () => {
       expect(ctx.mockClient.from).not.toHaveBeenCalled();
     });
 
-    it('should delete existing sessions before inserting new ones', async () => {
+    it('should delete removed sessions and upsert current sessions', async () => {
       const sessions: ScheduledSession[] = [
         {
           chainId: 'chain-1',
@@ -119,18 +119,48 @@ describe('sessions.ts', () => {
           auxiliarySignal: 'Signal',
         },
       ];
-      const queryBuilder = createMockQueryBuilder({ data: null, error: null });
-      const ctx = createMockContext({ queryBuilder });
+      const ctx = createMockContext();
+
+      const selectEq = vi.fn().mockReturnValue({
+        data: [{ chain_id: 'chain-2' }], // existing row to be deleted
+        error: null,
+      });
+
+      const deleteIn = vi.fn().mockReturnValue({ data: null, error: null });
+      const deleteEq = vi.fn().mockReturnValue({ in: deleteIn, data: null, error: null });
+
+      const upsert = vi.fn().mockReturnValue({ data: null, error: null });
+
+      ctx.mockClient.from = vi.fn().mockImplementation((table) => {
+        if (table !== 'scheduled_sessions') return createMockQueryBuilder();
+        return {
+          select: vi.fn().mockReturnValue({ eq: selectEq }),
+          delete: vi.fn().mockReturnValue({ eq: deleteEq }),
+          upsert,
+          insert: vi.fn(),
+        };
+      });
 
       await saveScheduledSessions(ctx, sessions);
 
       expect(ctx.mockClient.from).toHaveBeenCalledWith('scheduled_sessions');
+      expect(deleteIn).toHaveBeenCalledWith('chain_id', ['chain-2']);
+      expect(upsert).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            chain_id: 'chain-1',
+            auxiliary_signal: 'Signal',
+            user_id: 'test-user-123',
+          }),
+        ],
+        { onConflict: 'user_id,chain_id' }
+      );
     });
 
     it('should not insert when sessions array is empty', async () => {
       const ctx = createMockContext();
       let deleteCall = false;
-      let insertCall = false;
+      let upsertCall = false;
 
       ctx.mockClient.from = vi.fn().mockImplementation((table) => {
         if (table === 'scheduled_sessions') {
@@ -139,8 +169,8 @@ describe('sessions.ts', () => {
               deleteCall = true;
               return { eq: vi.fn().mockReturnValue({ data: null, error: null }) };
             }),
-            insert: vi.fn().mockImplementation(() => {
-              insertCall = true;
+            upsert: vi.fn().mockImplementation(() => {
+              upsertCall = true;
               return { data: null, error: null };
             }),
           };
@@ -151,7 +181,49 @@ describe('sessions.ts', () => {
       await saveScheduledSessions(ctx, []);
 
       expect(deleteCall).toBe(true);
-      expect(insertCall).toBe(false);
+      expect(upsertCall).toBe(false);
+    });
+
+    it('should fall back to delete+insert when unique index is missing', async () => {
+      const sessions: ScheduledSession[] = [
+        {
+          chainId: 'chain-1',
+          scheduledAt: new Date('2024-01-15T10:00:00Z'),
+          expiresAt: new Date('2024-01-15T11:00:00Z'),
+          auxiliarySignal: 'Signal',
+        },
+      ];
+      const ctx = createMockContext();
+
+      const upsert = vi
+        .fn()
+        .mockReturnValueOnce({ data: null, error: createSupabaseError('42P10', 'no unique or exclusion constraint matching') });
+
+      const deleteEq = vi.fn().mockReturnValue({ data: null, error: null });
+      const insert = vi.fn().mockReturnValue({ data: null, error: null });
+
+      ctx.mockClient.from = vi.fn().mockImplementation((table) => {
+        if (table !== 'scheduled_sessions') return createMockQueryBuilder();
+        return {
+          select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ data: [], error: null }) }),
+          delete: vi.fn().mockReturnValue({ eq: deleteEq }),
+          upsert,
+          insert,
+        };
+      });
+
+      await saveScheduledSessions(ctx, sessions);
+
+      expect(upsert).toHaveBeenCalled();
+      expect(deleteEq).toHaveBeenCalledWith('user_id', 'test-user-123');
+      expect(insert).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            chain_id: 'chain-1',
+            user_id: 'test-user-123',
+          }),
+        ]
+      );
     });
   });
 

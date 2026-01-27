@@ -386,7 +386,7 @@ const MigrationInProgress: React.FC<MigrationInProgressProps> = ({
       </div>
       <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-primary-500 transition-all duration-300 ease-out"
+          className="h-full bg-primary-500 transition-[width] duration-300 ease-out"
           style={{ width: `${progressPercentage}%` }}
         />
       </div>

@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import type { RSIPMeta, RSIPNode, RSIPTreeNode, RSIPMode } from '../types';
 import { useI18n } from '../i18n';
 import { buildRSIPTree, getDescendantIds, getDescendantCount } from '../utils/rsipTree';
@@ -9,6 +8,7 @@ import { RSIPModeSwitch } from './rsip/RSIPModeSwitch';
 import { RSIPDailyReminder } from './rsip/RSIPDailyReminder';
 import { RSIPStrictModeCard } from './rsip/RSIPStrictModeCard';
 import { RSIPViolationDialog } from './rsip/RSIPViolationDialog';
+import { BackButton } from './BackButton';
 
 interface RSIPViewProps {
   nodes: RSIPNode[];
@@ -154,12 +154,12 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
       <div className="max-w-7xl mx-auto relative">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-3">
-            <button
+            <BackButton
               onClick={onBack}
+              label={tr('返回', 'Back')}
+              iconSize={22}
               className="p-3 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60"
-            >
-              <ArrowLeft size={22} />
-            </button>
+            />
             <div>
               <h1 className="text-3xl md:text-4xl font-bold font-chinese text-gray-900 dark:text-slate-100">
                 {tr('国策树 · RSIP', 'RSIP Policy Tree')}
@@ -265,4 +265,3 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
     </div>
   );
 };
-

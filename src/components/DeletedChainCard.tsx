@@ -32,17 +32,27 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
   return (
     <div
       className={`
-        relative rounded-2xl shadow-lg border-2 transition-all duration-300 overflow-hidden cursor-pointer
+        relative rounded-2xl shadow-lg border-2 transition duration-300 overflow-hidden cursor-pointer
         ${isSelected
           ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-blue-200 dark:shadow-blue-900/30 scale-[1.02]'
           : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-500 opacity-80 hover:opacity-100'
         }
       `}
       onClick={handleSelectToggle}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleSelectToggle();
+        }
+      }}
     >
       {/* Selection Indicator */}
       <div className={`
-        absolute top-4 right-4 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200
+        absolute top-4 right-4 z-10 w-7 h-7 rounded-full flex items-center justify-center transition duration-200
         ${isSelected
           ? 'bg-blue-500 text-white shadow-md'
           : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-600'
@@ -103,19 +113,25 @@ export const DeletedChainCard: React.FC<DeletedChainCardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+        <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => onRestore(chain.id)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white dark:text-emerald-400 dark:hover:text-white rounded-xl transition-all duration-200 text-sm font-medium"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRestore(chain.id);
+            }}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white dark:text-emerald-400 dark:hover:text-white rounded-xl transition duration-200 text-sm font-medium"
           >
             <RotateCcw size={14} />
             <span>{tr('恢复', 'Restore')}</span>
           </button>
           <button
             type="button"
-            onClick={() => onPermanentDelete(chain.id)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-600 hover:text-white dark:text-red-400 dark:hover:text-white rounded-xl transition-all duration-200 text-sm font-medium"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPermanentDelete(chain.id);
+            }}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-600 hover:text-white dark:text-red-400 dark:hover:text-white rounded-xl transition duration-200 text-sm font-medium"
           >
             <Trash2 size={14} />
             <span>{tr('删除', 'Delete')}</span>

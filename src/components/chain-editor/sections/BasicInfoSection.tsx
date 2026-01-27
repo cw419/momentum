@@ -33,7 +33,7 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
           value={form.name}
           onChange={(e) => form.setName(e.target.value)}
           placeholder={tr('例如：学习 Python、健身 30 分钟、无干扰写作', 'e.g. Learn Python, Workout 30 minutes, Distraction-free writing')}
-          className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
+          className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 font-chinese"
           required
         />
       </div>
@@ -50,7 +50,7 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
           name="chainType"
           value={form.type}
           onChange={(e) => form.setType(e.target.value as UnitChainType)}
-          className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 transition-all duration-300 hover:border-primary-300 dark:hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 font-chinese"
+          className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 transition duration-300 hover:border-primary-300 dark:hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 font-chinese"
         >
           <option value="unit">{tr('基础单元', 'Unit')}</option>
           <option value="assault">{tr('突击单元（学习、实验、论文）', 'Assault (study, experiments, papers)')}</option>

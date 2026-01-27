@@ -1,5 +1,5 @@
-import { ArrowLeft } from 'lucide-react';
 import { useI18n } from '../../i18n';
+import { BackButton } from '../BackButton';
 
 interface ChainEditorHeaderProps {
   isEditing: boolean;
@@ -11,12 +11,11 @@ export function ChainEditorHeader({ isEditing, onCancel }: ChainEditorHeaderProp
 
   return (
     <header className="flex items-center space-x-4 mb-12 animate-fade-in">
-      <button
+      <BackButton
         onClick={onCancel}
+        label={tr('返回', 'Back')}
         className="p-3 text-gray-400 hover:text-[#161615] transition-colors rounded-2xl hover:bg-white/50"
-      >
-        <ArrowLeft size={24} />
-      </button>
+      />
       <div>
         <h1 className="text-4xl md:text-5xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-2">
           {isEditing ? tr('编辑链条', 'Edit chain') : tr('创建新链条', 'Create a new chain')}

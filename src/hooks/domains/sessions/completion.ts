@@ -93,6 +93,7 @@ export function createCompletionHandlers({
     }
 
     const updatedHistory = [...state.completionHistory, completionRecord];
+    const historyToPersist = storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
 
     safelySaveChains(updatedChains).catch(error => {
       queryOptimizer.onDataChange('chains');
@@ -102,7 +103,7 @@ export function createCompletionHandlers({
     if (activeSessionId && storage.kind === 'supabase') {
       void (async () => {
         try {
-          await storage.saveCompletionHistory(updatedHistory);
+          await storage.saveCompletionHistory(historyToPersist);
         } catch (error) {
           logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
         } finally {
@@ -123,7 +124,7 @@ export function createCompletionHandlers({
         logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
       });
 
-      void storage.saveCompletionHistory(updatedHistory).catch(error => {
+      void storage.saveCompletionHistory(historyToPersist).catch(error => {
         logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
       });
     }
@@ -186,6 +187,7 @@ export function createCompletionHandlers({
     }
 
     const updatedHistory = [...state.completionHistory, completionRecord];
+    const historyToPersist = storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
 
     safelySaveChains(updatedChains).catch(error => {
       queryOptimizer.onDataChange('chains');
@@ -195,7 +197,7 @@ export function createCompletionHandlers({
     if (activeSessionId && storage.kind === 'supabase') {
       void (async () => {
         try {
-          await storage.saveCompletionHistory(updatedHistory);
+          await storage.saveCompletionHistory(historyToPersist);
         } catch (error) {
           logger.error('SESSIONS', 'Failed to persist completion history after interrupt', undefined, error as Error);
         } finally {
@@ -216,7 +218,7 @@ export function createCompletionHandlers({
         logger.error('SESSIONS', 'Failed to clear active session after interrupt', undefined, error as Error);
       });
 
-      void storage.saveCompletionHistory(updatedHistory).catch(error => {
+      void storage.saveCompletionHistory(historyToPersist).catch(error => {
         logger.error('SESSIONS', 'Failed to persist completion history after interrupt', undefined, error as Error);
       });
     }
@@ -232,4 +234,3 @@ export function createCompletionHandlers({
 
   return { handleCompleteSession, handleInterruptSession };
 }
-

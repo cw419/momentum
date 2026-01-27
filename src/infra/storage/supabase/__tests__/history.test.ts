@@ -4,7 +4,7 @@ import {
   createMockContext,
   createMockQueryBuilder,
   createSupabaseError,
-} from './helpers';
+} from '../testHelpers';
 import type { CompletionHistory } from '../../../../types';
 
 vi.mock('../../../../utils/logger', () => ({
@@ -166,147 +166,24 @@ describe('history.ts', () => {
       expect(ctx.mockClient.from).not.toHaveBeenCalled();
     });
 
-    it('should not insert when all records already exist', async () => {
-      const existingHistory = [
-        {
-          chain_id: 'chain-1',
-          completed_at: '2024-01-15T10:00:00.000Z',
-        },
-      ];
+    it('should return early when history is empty', async () => {
       const ctx = createMockContext();
-      ctx.mockClient.from = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            data: existingHistory,
-            error: null,
-          }),
-        }),
-        insert: vi.fn(),
-      });
-
-      const history: CompletionHistory[] = [
-        {
-          chainId: 'chain-1',
-          completedAt: new Date('2024-01-15T10:00:00.000Z'),
-          duration: 30,
-          wasSuccessful: true,
-        },
-      ];
-
-      await saveCompletionHistory(ctx, history);
-
-      expect(ctx.mockClient.from).toHaveBeenCalledWith('completion_history');
-    });
-
-    it('should insert only new records', async () => {
-      const existingHistory = [
-        {
-          chain_id: 'chain-1',
-          completed_at: '2024-01-15T10:00:00.000Z',
-        },
-      ];
-      const ctx = createMockContext();
-      let insertCalled = false;
-      ctx.mockClient.from = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            data: existingHistory,
-            error: null,
-          }),
-        }),
-        insert: vi.fn().mockImplementation(() => {
-          insertCalled = true;
-          return { error: null };
-        }),
-      });
-
-      const history: CompletionHistory[] = [
-        {
-          chainId: 'chain-1',
-          completedAt: new Date('2024-01-15T10:00:00.000Z'),
-          duration: 30,
-          wasSuccessful: true,
-        },
-        {
-          chainId: 'chain-2',
-          completedAt: new Date('2024-01-16T10:00:00.000Z'),
-          duration: 45,
-          wasSuccessful: true,
-        },
-      ];
-
-      await saveCompletionHistory(ctx, history);
-
-      expect(insertCalled).toBe(true);
-    });
-
-    it('should fallback to basic fields when new columns are missing', async () => {
-      const ctx = createMockContext();
-      let insertCallCount = 0;
-      ctx.mockClient.from = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            data: [],
-            error: null,
-          }),
-        }),
-        insert: vi.fn().mockImplementation(() => {
-          insertCallCount++;
-          if (insertCallCount === 1) {
-            return {
-              error: createSupabaseError('42703', 'actual_duration does not exist'),
-            };
-          }
-          return { error: null };
-        }),
-      });
-
-      const history: CompletionHistory[] = [
-        {
-          chainId: 'chain-1',
-          completedAt: new Date('2024-01-15T10:00:00.000Z'),
-          duration: 30,
-          wasSuccessful: true,
-          actualDuration: 28,
-          isForwardTimed: true,
-        },
-      ];
-
-      await saveCompletionHistory(ctx, history);
-
-      expect(insertCallCount).toBe(2);
-    });
-
-    it('should handle empty history array by returning early after filtering', async () => {
-      const ctx = createMockContext();
-      ctx.mockClient.from = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            data: [],
-            error: null,
-          }),
-        }),
-        insert: vi.fn(),
-      });
 
       await saveCompletionHistory(ctx, []);
 
-      expect(ctx.mockClient.from).toHaveBeenCalledWith('completion_history');
+      expect(ctx.mockClient.from).not.toHaveBeenCalled();
     });
 
-    it('should map all fields correctly for insert', async () => {
+    it('should upsert mapped rows with conflict target', async () => {
       const ctx = createMockContext();
-      let insertedData: unknown[] = [];
+      let upsertedData: unknown[] = [];
+      let upsertOptions: unknown = null;
+
       ctx.mockClient.from = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            data: [],
-            error: null,
-          }),
-        }),
-        insert: vi.fn().mockImplementation((data: unknown[]) => {
-          insertedData = data;
-          return { error: null };
+        upsert: vi.fn().mockImplementation((data: unknown[], options: unknown) => {
+          upsertedData = data;
+          upsertOptions = options;
+          return { data: null, error: null };
         }),
       });
 
@@ -326,9 +203,11 @@ describe('history.ts', () => {
 
       await saveCompletionHistory(ctx, history);
 
-      expect(insertedData).toHaveLength(1);
-      const record = insertedData[0] as Record<string, unknown>;
+      expect(upsertOptions).toEqual({ onConflict: 'user_id,chain_id,completed_at', ignoreDuplicates: true });
+      expect(upsertedData).toHaveLength(1);
+      const record = upsertedData[0] as Record<string, unknown>;
       expect(record.chain_id).toBe('chain-1');
+      expect(record.user_id).toBe('test-user-123');
       expect(record.duration).toBe(30);
       expect(record.was_successful).toBe(false);
       expect(record.reason_for_failure).toBe('Interrupted');
@@ -338,19 +217,84 @@ describe('history.ts', () => {
       expect(record.notes).toBe('Some notes');
     });
 
-    it('should handle null optional fields', async () => {
+    it('should fallback to basic fields when timing columns are missing', async () => {
       const ctx = createMockContext();
-      let insertedData: unknown[] = [];
+      let callCount = 0;
+      let secondCallRow: Record<string, unknown> | null = null;
       ctx.mockClient.from = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            data: [],
-            error: null,
-          }),
+        upsert: vi.fn().mockImplementation((data: unknown[]) => {
+          callCount++;
+          if (callCount === 1) {
+            return { data: null, error: createSupabaseError('42703', 'actual_duration does not exist') };
+          }
+          secondCallRow = data[0] as Record<string, unknown>;
+          return { data: null, error: null };
         }),
-        insert: vi.fn().mockImplementation((data: unknown[]) => {
-          insertedData = data;
-          return { error: null };
+      });
+
+      const history: CompletionHistory[] = [
+        {
+          chainId: 'chain-1',
+          completedAt: new Date('2024-01-15T10:00:00.000Z'),
+          duration: 30,
+          wasSuccessful: true,
+          actualDuration: 28,
+          isForwardTimed: true,
+        },
+      ];
+
+      await saveCompletionHistory(ctx, history);
+
+      expect(callCount).toBe(2);
+      expect(secondCallRow).not.toBeNull();
+      expect('actual_duration' in (secondCallRow || {})).toBe(false);
+      expect('is_forward_timed' in (secondCallRow || {})).toBe(false);
+    });
+
+    it('should fall back to legacy insert when unique index is missing', async () => {
+      const ctx = createMockContext();
+      let insertCalled = false;
+      const upsert = vi.fn().mockReturnValue({ data: null, error: createSupabaseError('42P10', 'no unique or exclusion constraint matching') });
+      const selectEq = vi.fn().mockReturnValue({ data: [], error: null });
+      const insert = vi.fn().mockImplementation(() => {
+        insertCalled = true;
+        return { data: null, error: null };
+      });
+
+      ctx.mockClient.from = vi.fn().mockReturnValue({
+        upsert,
+        select: vi.fn().mockReturnValue({ eq: selectEq }),
+        insert,
+      });
+
+      const history: CompletionHistory[] = [
+        {
+          chainId: 'chain-1',
+          completedAt: new Date('2024-01-15T10:00:00.000Z'),
+          duration: 30,
+          wasSuccessful: false,
+          reasonForFailure: 'Interrupted',
+          actualDuration: 15,
+          isForwardTimed: true,
+          description: 'Task description',
+          notes: 'Some notes',
+        },
+      ];
+
+      await saveCompletionHistory(ctx, history);
+
+      expect(upsert).toHaveBeenCalled();
+      expect(selectEq).toHaveBeenCalledWith('user_id', 'test-user-123');
+      expect(insertCalled).toBe(true);
+    });
+
+    it('should map null optional fields', async () => {
+      const ctx = createMockContext();
+      let upsertedData: unknown[] = [];
+      ctx.mockClient.from = vi.fn().mockReturnValue({
+        upsert: vi.fn().mockImplementation((data: unknown[]) => {
+          upsertedData = data;
+          return { data: null, error: null };
         }),
       });
 
@@ -365,9 +309,10 @@ describe('history.ts', () => {
 
       await saveCompletionHistory(ctx, history);
 
-      const record = insertedData[0] as Record<string, unknown>;
+      const record = upsertedData[0] as Record<string, unknown>;
       expect(record.description).toBeNull();
       expect(record.notes).toBeNull();
+      expect(record.reason_for_failure).toBeNull();
     });
   });
 });

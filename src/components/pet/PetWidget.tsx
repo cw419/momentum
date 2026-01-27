@@ -189,7 +189,7 @@ export function PetWidget({
         <button
           type="button"
           onClick={() => setShowCreationDialog(true)}
-          className="fixed z-40 right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 shadow-lg shadow-black/5 px-3 py-2 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          className="fixed z-40 right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/60 dark:border-gray-700/60 shadow-lg shadow-black/5 px-3 py-2 hover:shadow-xl hover:-translate-y-0.5 transition"
           title={tr('领养宠物', 'Adopt a pet')}
           aria-label={tr('领养宠物', 'Adopt a pet')}
         >
@@ -213,7 +213,7 @@ export function PetWidget({
           ref={widgetRef}
           className={`
             fixed z-40 select-none
-            ${isDragging ? 'transition-none' : 'transition-all duration-200'}
+            ${isDragging ? 'transition-none' : 'transition duration-200'}
             ${pet.isMinimized ? '' : 'w-52'}
             ${isDragging ? 'cursor-grabbing scale-105' : 'cursor-default'}
           `}
@@ -225,39 +225,40 @@ export function PetWidget({
         >
           {pet.isMinimized ? (
             /* Minimized View - Just Avatar, draggable, click to expand */
-            <div
-              className="cursor-grab active:cursor-grabbing"
+            <button
+              type="button"
               onMouseDown={handleMouseDown}
+              onClick={e => {
+                // Only expand if no drag occurred (click without movement)
+                if (!hasDraggedRef.current) {
+                  e.stopPropagation();
+                  void onExpand();
+                }
+              }}
+              className="cursor-grab active:cursor-grabbing p-2 rounded-full bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:scale-105 transition"
+              title={tr('展开宠物', 'Expand pet')}
+              aria-label={tr('展开宠物', 'Expand pet')}
             >
-              <button
-                type="button"
-                onClick={e => {
-                  // Only expand if no drag occurred (click without movement)
-                  if (!hasDraggedRef.current) {
-                    e.stopPropagation();
-                    void onExpand();
-                  }
-                }}
-                className="p-2 rounded-full bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:scale-105 transition-all"
-                title={tr('展开宠物', 'Expand pet')}
-                aria-label={tr('展开宠物', 'Expand pet')}
-              >
-                <PetAvatar stage={pet.stage} mood={mood} size="sm" />
-              </button>
-            </div>
+              <PetAvatar stage={pet.stage} mood={mood} size="sm" />
+            </button>
           ) : (
             /* Expanded View */
             <div
               className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 overflow-hidden"
             >
               {/* Header - Draggable */}
-              <div
-                className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-3 py-2 cursor-grab active:cursor-grabbing"
-                onMouseDown={handleMouseDown}
-              >
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate max-w-24">
-                  {pet.name}
-                </span>
+              <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-3 py-2">
+                <button
+                  type="button"
+                  onMouseDown={handleMouseDown}
+                  className="min-w-0 flex-1 text-left cursor-grab active:cursor-grabbing"
+                  aria-label={tr('拖拽移动宠物', 'Drag to move pet')}
+                  title={tr('拖拽移动', 'Drag to move')}
+                >
+                  <span className="block text-sm font-medium text-gray-700 dark:text-gray-200 truncate max-w-24">
+                    {pet.name}
+                  </span>
+                </button>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
@@ -295,7 +296,7 @@ export function PetWidget({
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                         : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:from-amber-500 hover:to-orange-600'
                     }
-                    transition-all text-sm font-medium
+                    transition text-sm font-medium
                     ${isFeeding ? 'animate-pulse' : ''}
                   `}
                 >

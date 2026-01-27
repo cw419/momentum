@@ -224,7 +224,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
               }
               aria-label={tr('任务描述', 'Task description')}
               aria-required={isDurationless}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
               required={isDurationless}
             />
             
@@ -281,7 +281,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
                 placeholder={tr('添加更多详细信息或感想…', 'Add more details or thoughts…')}
                 rows={3}
                 aria-label={tr('备注', 'Notes')}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition resize-none"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {tr('按 Ctrl+Enter 完成，按 Esc 取消', 'Ctrl+Enter to complete, Esc to cancel')}

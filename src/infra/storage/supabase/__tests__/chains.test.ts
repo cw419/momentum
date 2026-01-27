@@ -14,7 +14,7 @@ import {
   createMockQueryBuilder,
   createSupabaseError,
   TEST_USER_ID,
-} from './helpers';
+} from '../testHelpers';
 import type { Chain } from '../../../../types';
 
 vi.mock('../../../../utils/logger', () => ({

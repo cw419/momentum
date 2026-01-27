@@ -68,7 +68,7 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
           <select
             value={selectedParentId || ''}
             onChange={e => setSelectedParentId(e.target.value || undefined)}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 font-chinese"
           >
             <option value="">{tr('（无父节点，建立新根）', '(No parent; create new root)')}</option>
             {parentOptions.map(n => (
@@ -87,7 +87,7 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder={tr('例如：进门5分钟内开始洗澡', 'e.g. Start showering within 15 minutes of getting home')}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 font-chinese"
           />
         </div>
         <div>
@@ -99,7 +99,7 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
               '例如：回家即启动15分钟计时，计时内进浴室',
               'e.g. Start a 15-minute timer when home; enter the bathroom before it ends'
             )}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 font-chinese"
           />
         </div>
       </div>
@@ -111,14 +111,17 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
             <Clock size={16} className="text-emerald-600" />
             <span className="text-sm font-chinese text-gray-700 dark:text-slate-300">{tr('启用计时', 'Enable timer')}</span>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label
+            className="relative inline-flex items-center cursor-pointer"
+            aria-label={tr('启用计时', 'Enable timer')}
+          >
             <input
               type="checkbox"
               checked={createUseTimer}
               onChange={(e) => setCreateUseTimer(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition dark:border-gray-600 peer-checked:bg-emerald-500"></div>
           </label>
         </div>
 
@@ -131,7 +134,7 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
             disabled={!createUseTimer}
             value={createTimerMinutes}
             onChange={(e) => setCreateTimerMinutes(Math.max(1, Math.min(180, Number(e.target.value) || 1)))}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition duration-300 font-chinese"
           />
         </div>
       </div>
@@ -147,7 +150,7 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
               setCreateType(t);
               setCreateEmoji(rsipTypeEmojiMap[t] || '📜');
             }}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-3 py-2 text-gray-900 dark:text-slate-100 focus:outline-none transition-all duration-200 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-3 py-2 text-gray-900 dark:text-slate-100 focus:outline-none transition duration-200 font-chinese"
           >
             {Object.entries(rsipTypeEmojiMap).map(([type, emoji]) => (
               <option key={type} value={type}>
@@ -171,7 +174,7 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
         <button
           onClick={onAdd}
           disabled={isAddDisabled}
-          className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-all duration-300 shadow-lg ${isAddDisabled ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500' : 'gradient-primary text-white hover:shadow-xl hover:scale-105'}`}
+          className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition duration-300 shadow-lg ${isAddDisabled ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500' : 'gradient-primary text-white hover:shadow-xl hover:scale-105'}`}
         >
           <Plus size={18} />
           <span className="font-chinese">{tr('新增国策', 'Add policy')}</span>
@@ -180,4 +183,3 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
     </div>
   );
 };
-

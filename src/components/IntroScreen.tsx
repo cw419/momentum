@@ -206,23 +206,28 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                     <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-8 w-full max-w-xs mx-auto">
                         <button
                             onClick={onSignIn}
-                            className="w-full h-14 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all active:scale-95 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 flex items-center justify-center space-x-2"
+                            className="w-full h-14 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition active:scale-95 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 flex items-center justify-center space-x-2"
                         >
                             <span className="text-sm font-bold tracking-wide">{translations.nav.signIn[lang]}</span>
                             <ArrowRight size={16} />
                         </button>
                         <button
                             onClick={onSignUp}
-                            className="w-full h-14 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-white font-semibold rounded-2xl border border-violet-200 dark:border-violet-500/30 transition-all active:scale-95 shadow-md hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-500/50 backdrop-blur-sm flex items-center justify-center space-x-2"
+                            className="w-full h-14 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-white font-semibold rounded-2xl border border-violet-200 dark:border-violet-500/30 transition active:scale-95 shadow-md hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-500/50 backdrop-blur-sm flex items-center justify-center space-x-2"
                         >
                             <span className="text-sm font-bold tracking-wide">{translations.nav.signUp[lang]}</span>
                         </button>
                     </div>
                 </div>
 
-                <div className="absolute bottom-12 animate-float cursor-pointer" onClick={scrollToNext}>
-                    <ChevronDown size={28} className="text-[#6C6C70] opacity-50" />
-                </div>
+                <button
+                    type="button"
+                    onClick={scrollToNext}
+                    aria-label={lang === 'zh' ? '向下滚动' : 'Scroll down'}
+                    className="absolute bottom-12 animate-float cursor-pointer bg-transparent border-0 p-2 rounded-full focus-ring"
+                >
+                    <ChevronDown size={28} className="text-[#6C6C70] opacity-50" aria-hidden="true" />
+                </button>
             </section>
 
             {/* Theory Section */}
@@ -325,7 +330,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                                     <div className="absolute top-0 left-8 px-4 py-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-[10px] font-bold tracking-widest uppercase rounded-full z-20">
                                         0{index + 1}
                                     </div>
-                                    <div className="glass-panel p-10 rounded-[32px] h-full transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden">
+                                    <div className="glass-panel p-10 rounded-[32px] h-full transition duration-500 hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden">
                                         <div className="w-16 h-16 bg-violet-100 dark:bg-violet-900/30 rounded-2xl flex items-center justify-center mb-10 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform duration-500">
                                             <Icon size={32} strokeWidth={1.5} />
                                         </div>
@@ -399,7 +404,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                     </div>
                     <button
                         onClick={onSignUp}
-                        className="w-12 h-12 rounded-full border-2 border-violet-200 dark:border-violet-500/30 flex items-center justify-center group hover:bg-gradient-to-r hover:from-violet-600 hover:to-purple-600 hover:border-transparent transition-all"
+                        className="w-12 h-12 rounded-full border-2 border-violet-200 dark:border-violet-500/30 flex items-center justify-center group hover:bg-gradient-to-r hover:from-violet-600 hover:to-purple-600 hover:border-transparent transition"
                     >
                         <ArrowRight className="w-5 h-5 text-violet-600 dark:text-violet-400 group-hover:text-white" />
                     </button>

@@ -1,11 +1,12 @@
 import React from 'react';
 import { Chain } from '../types';
-import { ArrowLeft, Save, Tag, Calendar, Bell, Hash, Hourglass, CheckCircle } from 'lucide-react';
+import { Save, Tag, Calendar, Bell, Hash, Hourglass, CheckCircle } from 'lucide-react';
 import { ResponsiveContainer } from './ResponsiveContainer';
 import { SettingSection } from './SettingSection';
 import { SliderContainer } from './SliderContainer';
 import { PureDOMSlider } from './PureDOMSlider';
 import { useI18n } from '../i18n';
+import { BackButton } from './BackButton';
 import {
   AUXILIARY_DURATION_PRESETS,
   AUXILIARY_SIGNAL_TEMPLATES,
@@ -95,12 +96,11 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> = React.mem
         {/* Header */}
         <header className="flex items-center justify-between mb-8 md:mb-10 animate-fade-in">
           <div className="flex items-center space-x-4">
-            <button
+            <BackButton
               onClick={onCancel}
+              label={tr('返回', 'Back')}
               className="p-3 text-gray-400 hover:text-[#161615] transition-colors rounded-2xl hover:bg-white/50"
-            >
-              <ArrowLeft size={24} />
-            </button>
+            />
             <div>
               <h1 className="text-4xl md:text-5xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-2">
                 {isEditing ? tr('编辑任务群', 'Edit group') : tr('创建任务群', 'Create group')}
@@ -211,7 +211,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = React.memo(({
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder={tr('例如：期末复习计划、网站开发项目、健身训练计划', 'e.g. Finals study plan, Website project, Workout plan')}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
+        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
         required
       />
       {errors.name && (
@@ -239,7 +239,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = React.memo(({
           'Describe the goal and scope, e.g. Finals study plan with review, practice problems, and mock exams.'
         )}
         rows={4}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 resize-none font-chinese leading-relaxed`}
+        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 resize-none font-chinese leading-relaxed`}
         required
       />
       {errors.description && (
@@ -309,7 +309,7 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
             errors.auxiliarySignal
               ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
               : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
-          } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
+          } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
           required
         >
           <option value="" disabled className="text-gray-400">
@@ -338,7 +338,7 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
               errors.auxiliarySignal
                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                 : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
-            } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
+            } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
             required
           />
         )}
@@ -372,7 +372,7 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
                 onAuxiliaryDurationModeChange(false, Number(e.target.value));
               }
             }}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
             required
           >
             {AUXILIARY_DURATION_PRESETS.map((preset) => (
@@ -447,7 +447,7 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
             errors.auxiliaryCompletionTrigger
               ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
               : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
-          } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 font-chinese`}
+          } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
           required
         />
 
@@ -488,13 +488,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = React.memo(({
     <button
       type="button"
       onClick={onCancel}
-      className={`mobile-touch-target flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-900 dark:text-slate-100 px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-3 ${mobileInfo.touchSupport ? 'active:scale-98' : 'hover:scale-105'} font-chinese ${mobileInfo.isMobile ? 'min-h-[48px] text-base' : ''}`}
+      className={`mobile-touch-target flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-900 dark:text-slate-100 px-8 py-4 rounded-2xl font-medium transition duration-300 flex items-center justify-center space-x-3 ${mobileInfo.touchSupport ? 'active:scale-98' : 'hover:scale-105'} font-chinese ${mobileInfo.isMobile ? 'min-h-[48px] text-base' : ''}`}
     >
       <span>{tr('取消', 'Cancel')}</span>
     </button>
     <button
       type="submit"
-      className={`mobile-touch-target flex-1 gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center space-x-3 ${mobileInfo.touchSupport ? 'active:scale-98' : 'hover:scale-105'} shadow-lg font-chinese ${mobileInfo.isMobile ? 'min-h-[48px] text-base' : ''}`}
+      className={`mobile-touch-target flex-1 gradient-primary hover:shadow-xl text-white px-8 py-4 rounded-2xl font-medium transition duration-300 flex items-center justify-center space-x-3 ${mobileInfo.touchSupport ? 'active:scale-98' : 'hover:scale-105'} shadow-lg font-chinese ${mobileInfo.isMobile ? 'min-h-[48px] text-base' : ''}`}
     >
       <Save size={20} />
       <span>{isEditing ? tr('保存更改', 'Save changes') : tr('创建任务群', 'Create group')}</span>

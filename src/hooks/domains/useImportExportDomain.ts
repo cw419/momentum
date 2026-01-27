@@ -111,9 +111,13 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
 
       // 保存完成历史
       if (Array.isArray(importedHistory) && importedHistory.length > 0) {
-        const existing = await storage.getCompletionHistory();
-        const merged = [...existing, ...importedHistory];
-        await storage.saveCompletionHistory(merged);
+        if (storage.kind === 'supabase') {
+          await storage.saveCompletionHistory(importedHistory);
+        } else {
+          const existing = await storage.getCompletionHistory();
+          const merged = [...existing, ...importedHistory];
+          await storage.saveCompletionHistory(merged);
+        }
       }
 
       // 保存 RSIP 节点数据

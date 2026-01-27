@@ -42,7 +42,6 @@ export interface ChainCardViewProps {
   onShowDeleteConfirm: () => void;
   onConfirmDelete: () => void;
   onCancelDelete: () => void;
-  onDialogKeyDown: (e: React.KeyboardEvent) => void;
 
   // Refs
   deleteDialogRef: React.RefObject<HTMLDivElement>;

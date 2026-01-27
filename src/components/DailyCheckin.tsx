@@ -108,7 +108,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
 
       {/* 可折叠内容区域 */}
       <div className={`
-        transition-all duration-300 ease-in-out overflow-hidden
+        transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden
         ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'}
       `}>
         {/* 统计信息 */}
@@ -166,7 +166,7 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
             disabled={isCheckingIn}
             aria-label={tr('立即签到', 'Check in now')}
             className={`
-              w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200
+              w-full py-4 px-6 rounded-xl font-semibold text-lg transition duration-200
               ${isCheckingIn
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'

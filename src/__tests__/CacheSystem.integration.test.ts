@@ -3,9 +3,9 @@
  * 测试缓存失效、会话生命周期等场景
  */
 
-import { ExceptionRuleCache } from '../../utils/cache/ExceptionRuleCache';
-import { CacheCore } from '../../utils/cache/CacheCore';
-import { ExceptionRule, ExceptionRuleType } from '../../types';
+import { ExceptionRuleCache } from '../utils/cache/ExceptionRuleCache';
+import { CacheCore } from '../utils/cache/CacheCore';
+import { ExceptionRule, ExceptionRuleType } from '../types';
 
 describe('Cache System Integration', () => {
   describe('Cache Invalidation Scenarios', () => {

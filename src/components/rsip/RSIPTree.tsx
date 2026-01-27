@@ -129,7 +129,7 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                         fill="none"
                         stroke={isHovered ? '#f59e0b' : '#9ca3af'}
                         strokeWidth={isHovered ? 3 : 2}
-                        className="transition-all duration-200"
+                        className="transition duration-200"
                         markerEnd="url(#rsip-arrow)"
                       />
                     ))}
@@ -204,7 +204,7 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                       <button
                         type="button"
                         onClick={() => onCommitReparent(reparentingId, undefined)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition"
                       >
                         <CornerUpLeft size={16} />
                         <span className="text-sm font-chinese">{tr('设为根', 'Make root')}</span>
@@ -212,7 +212,7 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                       <button
                         type="button"
                         onClick={onCancelReparent}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition-all"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition"
                       >
                         <X size={16} />
                         <span className="text-sm font-chinese">{tr('取消', 'Cancel')}</span>

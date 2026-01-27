@@ -33,13 +33,13 @@ export function InterruptConfirmDialog({ isOpen, onCancel, onConfirm }: Interrup
           <div className="flex space-x-4">
             <button
               onClick={onCancel}
-              className="flex-1 px-6 py-3 rounded-2xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-chinese transition-all duration-300"
+              className="flex-1 px-6 py-3 rounded-2xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-chinese transition duration-300"
             >
               {tr('取消', 'Cancel')}
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 px-6 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-chinese transition-all duration-300 shadow-lg"
+              className="flex-1 px-6 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-chinese transition duration-300 shadow-lg"
             >
               {tr('确认中断', 'Interrupt')}
             </button>

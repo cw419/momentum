@@ -150,7 +150,7 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
               <select
                 value={selectedExistingRule}
                 onChange={(e) => setSelectedExistingRule(e.target.value)}
-                className="w-full bg-white dark:bg-slate-700 border border-green-300 dark:border-green-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 font-chinese"
+                className="w-full bg-white dark:bg-slate-700 border border-green-300 dark:border-green-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition duration-300 font-chinese"
               >
                 {[...new Set(chain.auxiliaryExceptions)].map((exception, index) => (
                   <option key={index} value={exception} className="bg-white dark:bg-slate-700">
@@ -182,7 +182,7 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
                   '例如：忘记了预约、被紧急事务打断、身体不适、临时有其他安排等',
                   'e.g. Forgot the booking, got interrupted by an urgent issue, felt unwell, had a sudden schedule change, etc.'
                 )}
-                className="w-full bg-white dark:bg-slate-700 border border-yellow-300 dark:border-yellow-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20 transition-all duration-300 resize-none font-chinese"
+                className="w-full bg-white dark:bg-slate-700 border border-yellow-300 dark:border-yellow-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20 transition duration-300 resize-none font-chinese"
                 rows={3}
               />
               {reason.trim() && chain.auxiliaryExceptions?.includes(reason.trim()) && (
@@ -199,7 +199,7 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
         <div className="space-y-3">
           <button
             onClick={() => onJudgmentFailure(reason || tr('用户主动中断预约', 'User interrupted booking'))}
-            className="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-2xl font-medium transition-all duration-300 hover:scale-105 shadow-lg font-chinese"
+            className="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-2xl font-medium transition duration-300 hover:scale-105 shadow-lg font-chinese"
           >
             <div className="text-left">
               <div className="font-bold text-lg">{tr('判定失败', 'Mark as failed')}</div>
@@ -214,7 +214,7 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
           <button
             onClick={handleJudgmentAllowClick}
             disabled={useExistingRule ? !selectedExistingRule : !reason.trim()}
-            className={`w-full px-6 py-3 rounded-2xl font-medium transition-all duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed text-white hover:scale-105 shadow-lg font-chinese ${
+            className={`w-full px-6 py-3 rounded-2xl font-medium transition duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed text-white hover:scale-105 shadow-lg font-chinese ${
               useExistingRule 
                 ? 'bg-green-500 hover:bg-green-600' 
                 : 'bg-yellow-500 hover:bg-yellow-600'
@@ -233,7 +233,7 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
           
           <button
             onClick={onCancel}
-            className="w-full bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-900 dark:text-slate-100 px-4 py-2 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
+            className="w-full bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-900 dark:text-slate-100 px-4 py-2 rounded-2xl font-medium transition duration-300 hover:scale-105 font-chinese"
           >
             {tr('取消 - 继续预约', 'Cancel — continue booking')}
           </button>

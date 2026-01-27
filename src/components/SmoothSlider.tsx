@@ -192,14 +192,14 @@ export const SmoothSlider: React.FC<SmoothSliderProps> = ({
       >
         {/* 填充轨道 */}
         <div
-          className={`absolute top-0 left-0 h-full rounded-full transition-all duration-150 ease-out ${fillColor}`}
+          className={`absolute top-0 left-0 h-full rounded-full transition-[width] duration-150 ease-out ${fillColor}`}
           style={{ width: `${percentage}%` }}
         />
         
         {/* 滑块拇指 */}
         <div
           ref={thumbRef}
-          className={`absolute top-1/2 w-5 h-5 rounded-full border-2 shadow-md transform -translate-y-1/2 -translate-x-1/2 transition-all duration-150 ease-out ${thumbColor} ${
+          className={`absolute top-1/2 w-5 h-5 rounded-full border-2 shadow-md transform -translate-y-1/2 -translate-x-1/2 transition-[left,transform,box-shadow] duration-150 ease-out ${thumbColor} ${
             isDragging ? 'scale-110 shadow-lg' : 'hover:scale-105'
           } ${disabled ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
           style={{ left: `${percentage}%` }}

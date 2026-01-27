@@ -41,7 +41,7 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
             name="auxiliarySignal"
             value={form.auxiliarySignal}
             onChange={(e) => form.handleAuxiliarySignalSelect(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
             required
           >
             <option value="" disabled className="text-gray-400">
@@ -66,7 +66,7 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
               value={form.customAuxiliarySignal}
               onChange={(e) => form.setCustomAuxiliarySignal(e.target.value)}
               placeholder={tr('输入你的自定义预约信号', 'Enter your custom booking signal')}
-              className="w-full mt-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
+              className="w-full mt-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
               required
             />
           )}
@@ -97,7 +97,7 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
                   form.setAuxiliaryDuration(Number(e.target.value));
                 }
               }}
-              className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
+              className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
               required
             >
               {AUXILIARY_DURATION_PRESETS.map((preset) => (
@@ -163,7 +163,7 @@ export function AuxiliaryChainSettingsSection({ form }: AuxiliaryChainSettingsSe
             value={getTriggerLabel(form.auxiliaryCompletionTrigger, language)}
             onChange={(e) => form.setAuxiliaryCompletionTrigger(e.target.value)}
             placeholder={tr('例如：打开编程软件、坐到书房书桌前', 'e.g. Open your IDE, sit at your desk')}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
             required
           />
 

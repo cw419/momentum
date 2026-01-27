@@ -14,7 +14,7 @@ export const RSIPControls: React.FC<RSIPControlsProps> = ({ onZoomIn, onZoomOut,
       <button
         type="button"
         onClick={onZoomIn}
-        className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
+        className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition"
         aria-label={tr('放大', 'Zoom in')}
         title={tr('放大', 'Zoom in')}
       >
@@ -23,7 +23,7 @@ export const RSIPControls: React.FC<RSIPControlsProps> = ({ onZoomIn, onZoomOut,
       <button
         type="button"
         onClick={onZoomOut}
-        className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
+        className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition"
         aria-label={tr('缩小', 'Zoom out')}
         title={tr('缩小', 'Zoom out')}
       >
@@ -32,7 +32,7 @@ export const RSIPControls: React.FC<RSIPControlsProps> = ({ onZoomIn, onZoomOut,
       <button
         type="button"
         onClick={onFitToContent}
-        className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-all"
+        className="w-11 h-11 inline-flex items-center justify-center rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm hover:shadow-md transition"
         aria-label={tr('适应内容', 'Fit to content')}
         title={tr('适应内容', 'Fit to content')}
       >

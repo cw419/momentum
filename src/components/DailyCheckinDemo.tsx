@@ -110,7 +110,7 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({ className = 
             onClick={handleCheckin}
             disabled={isCheckingIn}
             className={`
-              w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200
+              w-full py-4 px-6 rounded-xl font-semibold text-lg transition duration-200
               ${isCheckingIn 
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'

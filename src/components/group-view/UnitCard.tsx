@@ -75,10 +75,20 @@ export const UnitCard: React.FC<UnitCardProps> = ({
 
   return (
     <div
-      className={`bento-card transition-all duration-300 relative cursor-pointer hover:shadow-md ${
+      className={`bento-card transition duration-300 relative cursor-pointer hover:shadow-md ${
         isNext ? 'ring-2 ring-primary-500 ring-opacity-50' : ''
       } ${isCompleted ? 'bg-green-50 dark:bg-green-900/10' : ''}`}
       onClick={() => onViewDetail(unit.id)}
+      role="button"
+      tabIndex={0}
+      aria-label={tr(`查看任务：${unit.name}`, `View task: ${unit.name}`)}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onViewDetail(unit.id);
+        }
+      }}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4 flex-1">
@@ -124,7 +134,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-2" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center space-x-2">
             {scheduledSession && timeRemaining > 0 && (
               <span className="px-2 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs rounded-full font-chinese font-mono animate-pulse">
                 {formatCountdown(timeRemaining)}
@@ -133,7 +143,11 @@ export const UnitCard: React.FC<UnitCardProps> = ({
 
             <div className="flex items-center">
               <button
-                onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'up')}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReorderUnit?.(group.id, unit.id, 'up');
+                }}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
                 title={tr('上移', 'Move up')}
                 disabled={index === 0}
@@ -141,7 +155,11 @@ export const UnitCard: React.FC<UnitCardProps> = ({
                 <ArrowUp size={14} />
               </button>
               <button
-                onClick={() => onReorderUnit && onReorderUnit(group.id, unit.id, 'down')}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReorderUnit?.(group.id, unit.id, 'down');
+                }}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
                 title={tr('下移', 'Move down')}
                 disabled={index === group.children.length - 1}
@@ -151,14 +169,22 @@ export const UnitCard: React.FC<UnitCardProps> = ({
             </div>
 
             <button
-              onClick={() => onEditChain(unit.id)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditChain(unit.id);
+              }}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
               title={tr('编辑单元', 'Edit unit')}
             >
               <Edit size={14} />
             </button>
             <button
-              onClick={() => onDeleteChain(unit.id)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteChain(unit.id);
+              }}
               className="p-2 text-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
               title={tr('删除单元', 'Delete unit')}
             >
@@ -168,14 +194,22 @@ export const UnitCard: React.FC<UnitCardProps> = ({
             {!isCompleted && (
               <>
                 <button
-                  onClick={() => onScheduleChain(unit.id)}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onScheduleChain(unit.id);
+                  }}
                   className="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm transition-colors font-chinese"
                   disabled={!!scheduledSession}
                 >
                   {tr('预约', 'Schedule')}
                 </button>
                 <button
-                  onClick={() => onStartChain(unit.id)}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartChain(unit.id);
+                  }}
                   className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors font-chinese"
                 >
                   {tr('开始', 'Start')}
@@ -194,7 +228,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
         className="absolute bottom-3 right-3 flex items-center space-x-1 px-2 py-1 
                    bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 
                    hover:bg-slate-700 dark:hover:bg-slate-300 
-                   rounded-md text-xs font-bold transition-all duration-200 
+                   rounded-md text-xs font-bold transition duration-200 
                    shadow-md hover:shadow-lg border border-slate-600 dark:border-slate-400
                    hover:scale-105"
         title={tr(`设置重复次数 (当前: ${currentRepeatCount})`, `Set repeat count (current: ${currentRepeatCount})`)}

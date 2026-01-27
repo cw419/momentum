@@ -102,7 +102,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full h-14 pl-4 pr-4 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-200/50 dark:border-violet-500/20 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 rounded-2xl outline-none transition-all text-slate-800 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                    className="w-full h-14 pl-4 pr-4 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-200/50 dark:border-violet-500/20 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 rounded-2xl outline-none transition text-slate-800 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                     placeholder={tr('输入邮箱地址', 'Enter your email')}
                                 />
                             </div>
@@ -121,7 +121,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full h-14 pl-4 pr-12 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-200/50 dark:border-violet-500/20 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 rounded-2xl outline-none transition-all text-slate-800 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                    className="w-full h-14 pl-4 pr-12 bg-violet-50/50 dark:bg-violet-900/10 border border-violet-200/50 dark:border-violet-500/20 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 rounded-2xl outline-none transition text-slate-800 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                     placeholder={tr('输入密码', 'Enter your password')}
                                 />
                                 <button
@@ -153,7 +153,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full h-14 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all active:scale-95 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 flex items-center justify-center space-x-2 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full h-14 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition active:scale-95 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 flex items-center justify-center space-x-2 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
                                 <Loader2 className="animate-spin" size={20} />
@@ -172,7 +172,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ initialIsSignUp = false, onB
                                 type="button"
                                 onClick={() => setIsSignUp(!isSignUp)}
                                 aria-label={isSignUp ? tr('切换到登录', 'Switch to sign in') : tr('切换到注册', 'Switch to sign up')}
-                                className="font-bold text-violet-600 dark:text-violet-400 hover:underline transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/50 rounded"
+                                className="font-bold text-violet-600 dark:text-violet-400 hover:underline transition focus:outline-none focus:ring-2 focus:ring-violet-500/50 rounded"
                             >
                                 {isSignUp ? tr('登录', 'Sign In') : tr('注册', 'Sign Up')}
                             </button>

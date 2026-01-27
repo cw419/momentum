@@ -4,6 +4,7 @@ import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorMessage';
+import { migrateCompletionHistoryForTiming } from '../../utils/completionHistoryTimingMigration';
 import { isDev } from '../../utils/env';
 import { isSessionExpired } from '../../utils/time';
 
@@ -134,7 +135,20 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
         logger.debug('APP_SHELL', 'Chain data details', { chains: chains.map(c => ({ id: c.id, name: c.name })) });
 
         // 执行数据迁移以确保历史记录包含用时信息
-        storage.migrateCompletionHistoryForTiming();
+        const { updatedHistory: migratedCompletionHistory, hasChanges: didMigrateCompletionHistory } =
+          migrateCompletionHistoryForTiming(completionHistory, chains);
+        if (didMigrateCompletionHistory) {
+          scheduleIdle(() => {
+            void storage.saveCompletionHistory(migratedCompletionHistory).catch(error => {
+              logger.warn(
+                'APP_SHELL',
+                'Failed to persist completion history timing migration',
+                undefined,
+                toError(error)
+              );
+            });
+          });
+        }
 
         // 执行完整的数据迁移（仅在开发环境中记录详细信息）
         if (isDev && storage.kind === 'local') {
@@ -160,7 +174,7 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
           chains,
           scheduledSessions,
           activeSession,
-          completionHistory,
+          completionHistory: migratedCompletionHistory,
           rsipNodes,
           rsipMeta,
           taskTimeStats,
@@ -188,4 +202,3 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
 
   return { isLoadingData };
 }
-

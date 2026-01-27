@@ -9,7 +9,7 @@ import {
   createMockContext,
   createMockQueryBuilder,
   createSupabaseError,
-} from './helpers';
+} from '../testHelpers';
 import type { RSIPNode, RSIPMeta } from '../../../../types';
 
 vi.mock('../../../../utils/logger', () => ({

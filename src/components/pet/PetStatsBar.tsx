@@ -31,7 +31,7 @@ function StatBar({ label, value, maxValue = 100, colorClass, icon, inverted }: S
       </span>
       <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
-          className={`h-full ${colorClass} transition-all duration-300`}
+          className={`h-full ${colorClass} transition-[width] duration-300`}
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -63,7 +63,7 @@ export function PetStatsBar({ hunger, happiness, health, level, experience, stag
       {/* XP Progress */}
       <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-purple-400 to-purple-600 transition-all duration-300"
+          className="h-full bg-gradient-to-r from-purple-400 to-purple-600 transition-[width] duration-300"
           style={{ width: `${levelProgress}%` }}
         />
       </div>

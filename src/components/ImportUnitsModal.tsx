@@ -67,10 +67,12 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+            aria-label={tr('关闭', 'Close')}
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 focus-ring"
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 
@@ -80,7 +82,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
             {tr('导入模式', 'Import mode')}
           </h3>
           <div className="flex space-x-4">
-            <label className="flex items-center space-x-3 cursor-pointer">
+            <label className="flex items-center space-x-3 cursor-pointer" aria-label={tr('复制模式', 'Copy')}>
               <input
                 type="radio"
                 name="importMode"
@@ -96,7 +98,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                 </p>
               </div>
             </label>
-            <label className="flex items-center space-x-3 cursor-pointer">
+            <label className="flex items-center space-x-3 cursor-pointer" aria-label={tr('移动模式', 'Move')}>
               <input
                 type="radio"
                 name="importMode"
@@ -125,7 +127,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={tr('搜索任务单元...', 'Search units...')}
-              className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl pl-12 pr-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 font-chinese"
+              className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl pl-12 pr-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
             />
           </div>
         </div>
@@ -150,9 +152,10 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
               const isSelected = selectedUnits.has(unit.id);
               
               return (
-                <div
+                <button
+                  type="button"
                   key={unit.id}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
+                  className={`w-full text-left p-4 rounded-2xl border-2 cursor-pointer transition duration-300 ${
                     isSelected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-600 bg-white dark:bg-slate-700/50'
@@ -213,7 +216,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })
           )}
@@ -229,14 +232,14 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="px-6 py-3 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-2xl font-medium transition-all duration-300 hover:scale-105 font-chinese"
+              className="px-6 py-3 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-2xl font-medium transition duration-300 hover:scale-105 font-chinese"
             >
               {tr('取消', 'Cancel')}
             </button>
             <button
               onClick={handleImport}
               disabled={selectedUnits.size === 0}
-              className="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl font-medium transition-all duration-300 hover:scale-105 shadow-lg disabled:hover:scale-100 font-chinese"
+              className="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl font-medium transition duration-300 hover:scale-105 shadow-lg disabled:hover:scale-100 font-chinese"
             >
               {tr('导入', 'Import')} {selectedUnits.size > 0 && `(${selectedUnits.size})`}
             </button>

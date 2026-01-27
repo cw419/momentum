@@ -36,7 +36,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
             name="sacredSeatTrigger"
             value={form.trigger}
             onChange={(e) => form.handleTriggerSelect(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
+            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 font-chinese"
             required
           >
             <option value="" disabled className="text-gray-400">
@@ -61,7 +61,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
               value={form.customTrigger}
               onChange={(e) => form.setCustomTrigger(e.target.value)}
               placeholder={tr('输入你的自定义触发动作', 'Enter your custom trigger')}
-              className="w-full mt-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
+              className="w-full mt-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 font-chinese"
               required
             />
           )}
@@ -88,14 +88,17 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                 <InfinityIcon className="text-purple-500" size={16} />
                 <span className="whitespace-nowrap">{tr('无时长任务', 'No timer')}</span>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label
+                className="relative inline-flex items-center cursor-pointer"
+                aria-label={tr('无时长任务', 'No timer')}
+              >
                 <input
                   type="checkbox"
                   checked={form.isDurationless}
                   onChange={(e) => form.setIsDurationless(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-500" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition dark:border-gray-600 peer-checked:bg-purple-500" />
               </label>
             </div>
           </div>
@@ -115,7 +118,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                     form.setDuration(Number(e.target.value));
                   }
                 }}
-                className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 font-chinese"
+                className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 font-chinese"
                 required
               >
                 {DURATION_PRESETS.map((preset) => (
@@ -197,7 +200,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                           form.setMinimumDuration(preset);
                           form.setIsCustomMinimumDuration(false);
                         }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-chinese transition-all duration-200 ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-chinese transition duration-200 ${
                           form.minimumDuration === preset && !form.isCustomMinimumDuration
                             ? 'bg-indigo-500 text-white shadow-sm'
                             : 'bg-white/70 dark:bg-slate-800/60 text-gray-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-gray-200/60 dark:border-slate-600/60'
@@ -223,7 +226,7 @@ export function MainChainSettingsSection({ form }: MainChainSettingsSectionProps
                         }
                       }}
                       placeholder={tr('自定义分钟数', 'Custom minutes')}
-                      className="flex-1 bg-white/70 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-2.5 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 font-chinese"
+                      className="flex-1 bg-white/70 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-2.5 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition duration-200 font-chinese"
                     />
                     <button
                       type="button"

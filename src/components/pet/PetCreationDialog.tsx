@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useI18n } from '../../i18n';
 
 interface PetCreationDialogProps {
@@ -10,6 +10,11 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
   const { tr } = useI18n();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const shouldAutoFocus =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   // ESC 键关闭
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -22,6 +27,11 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    if (!shouldAutoFocus) return;
+    inputRef.current?.focus();
+  }, [shouldAutoFocus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +74,10 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <input
+              ref={inputRef}
               type="text"
               name="petName"
+              autoComplete="off"
               value={name}
               onChange={e => {
                 setName(e.target.value);
@@ -84,7 +96,6 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
                 focus:outline-none focus:border-green-400 dark:focus:border-green-500
                 transition-colors
               `}
-              autoFocus
               maxLength={20}
             />
             {error && <p id="pet-name-error" className="text-red-500 text-sm mt-1">{error}</p>}

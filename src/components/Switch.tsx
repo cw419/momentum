@@ -43,7 +43,7 @@ export const Switch: React.FC<SwitchProps> = ({
       className={[
         'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full',
         'p-0 min-h-0',
-        'transition-all duration-200 ease-in-out',
+        'transition duration-200 ease-in-out',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
         'ring-1 ring-inset ring-black/10 dark:ring-white/10',
         checked ? checkedTrack : uncheckedTrack,

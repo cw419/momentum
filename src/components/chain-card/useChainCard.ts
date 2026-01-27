@@ -65,6 +65,19 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
     }
   }, [showDeleteConfirm]);
 
+  useEffect(() => {
+    if (!showDeleteConfirm) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowDeleteConfirm(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showDeleteConfirm]);
+
   // 获取上次完成时间（仅对无时长任务）
   useEffect(() => {
     let didCancel = false;
@@ -140,13 +153,6 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
     setHasShownWarning(false);
   }, [scheduledSession?.scheduledAt, scheduledSession?.chainId]);
 
-  // Event handlers
-  const handleDialogKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setShowDeleteConfirm(false);
-    }
-  }, []);
-
   const handleToggleMenu = useCallback(() => {
     setShowMenu(prev => !prev);
   }, []);
@@ -182,7 +188,6 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
     deleteDialogRef,
 
     // Handlers
-    handleDialogKeyDown,
     handleToggleMenu,
     handleShowDeleteConfirm,
     handleConfirmDelete,
