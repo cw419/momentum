@@ -2,7 +2,7 @@ import React from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import {
     Rocket, ArrowRight, Brain, Scale, Clock,
-    Smartphone, Target, ShieldCheck, TrendingUp, Zap, Armchair, ChevronDown
+    Smartphone, Target, ShieldCheck, TrendingUp, Zap, Armchair, ChevronDown, Github
 } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { IntroIllustrationDeck } from './intro/IntroIllustrationDeck';
@@ -19,6 +19,7 @@ const translations = {
         signIn: { en: 'Sign In', zh: '登录' },
         signUp: { en: 'Sign Up', zh: '注册' },
         startJourney: { en: 'Start Journey', zh: '开启旅程' },
+        startJourneySubtext: { en: 'Open-source on GitHub. Free to use.', zh: '开源项目，免费使用。' },
     },
     hero: {
         tag: { en: 'MOMENTUM v2.0', zh: 'MOMENTUM v2.0' },
@@ -157,6 +158,7 @@ const translations = {
 export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) => {
     const { language } = useI18n();
     const lang: Lang = language;
+    const githubUrl = 'https://github.com/KenXiao1/momentum';
 
     const scrollToNext = () => {
         const theorySection = document.getElementById('theory-section');
@@ -206,6 +208,16 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                     <span className="font-bold text-lg tracking-tight text-slate-800 dark:text-white">MOMENTUM</span>
                 </div>
                 <div className="flex items-center space-x-4">
+                    <a
+                        href={githubUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={lang === 'zh' ? '在 GitHub 打开项目' : 'Open project on GitHub'}
+                        title={lang === 'zh' ? '在 GitHub 打开项目' : 'Open project on GitHub'}
+                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/60 text-slate-700 shadow-sm transition hover:bg-white/80 hover:text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                    >
+                        <Github className="h-5 w-5" aria-hidden="true" />
+                    </a>
                     <ThemeToggle />
                 </div>
             </nav>
@@ -453,7 +465,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                             {translations.nav.startJourney[lang]}
                         </h4>
                         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Free for early adopters. No credit card.
+                            {translations.nav.startJourneySubtext[lang]}
                         </p>
                     </div>
                     <button

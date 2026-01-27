@@ -13,7 +13,6 @@ const DARK_MODE_FILTER =
 export const IntroIllustrationDeck: React.FC<IntroIllustrationDeckProps> = ({ lang, className }) => {
   const label = {
     title: { en: 'Proof, not vibes.', zh: 'Proof, not vibes.' },
-    subtitle: { en: 'CTDP diagrams snapshot', zh: 'CTDP diagrams snapshot' },
   } as const;
 
   return (
@@ -65,9 +64,6 @@ export const IntroIllustrationDeck: React.FC<IntroIllustrationDeckProps> = ({ la
         <div className="mt-6 flex items-start justify-between gap-6 px-1">
           <div className="space-y-1">
             <div className="text-sm font-extrabold tracking-tight text-slate-800 dark:text-white">{label.title[lang]}</div>
-            <div className="text-[11px] font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
-              {label.subtitle[lang]}
-            </div>
           </div>
 
           <div className="flex items-center gap-2 pt-2" aria-hidden="true">
