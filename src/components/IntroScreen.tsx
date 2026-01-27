@@ -156,7 +156,7 @@ const translations = {
 };
 
 export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) => {
-    const { language } = useI18n();
+    const { language, setLanguage } = useI18n();
     const lang: Lang = language;
     const githubUrl = 'https://github.com/KenXiao1/momentum';
 
@@ -208,6 +208,40 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                     <span className="font-bold text-lg tracking-tight text-slate-800 dark:text-white">MOMENTUM</span>
                 </div>
                 <div className="flex items-center space-x-4">
+                    <div
+                        className="inline-flex items-center rounded-full border border-black/5 bg-white/60 p-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                        role="radiogroup"
+                        aria-label="Language"
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setLanguage('en')}
+                            className={`focus-ring inline-flex h-8 w-10 items-center justify-center rounded-full transition ${
+                                language === 'en'
+                                    ? 'bg-white/90 text-slate-900 dark:bg-white/15 dark:text-white'
+                                    : 'hover:bg-white/60 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white'
+                            }`}
+                            aria-checked={language === 'en'}
+                            role="radio"
+                            title="English"
+                        >
+                            EN
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLanguage('zh')}
+                            className={`focus-ring inline-flex h-8 w-10 items-center justify-center rounded-full transition ${
+                                language === 'zh'
+                                    ? 'bg-white/90 text-slate-900 dark:bg-white/15 dark:text-white'
+                                    : 'hover:bg-white/60 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white'
+                            }`}
+                            aria-checked={language === 'zh'}
+                            role="radio"
+                            title="Chinese"
+                        >
+                            CN
+                        </button>
+                    </div>
                     <a
                         href={githubUrl}
                         target="_blank"
