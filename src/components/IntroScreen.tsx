@@ -5,6 +5,7 @@ import {
     Smartphone, Target, ShieldCheck, TrendingUp, Zap, Armchair, ChevronDown
 } from 'lucide-react';
 import { useI18n } from '../i18n';
+import { IntroIllustrationDeck } from './intro/IntroIllustrationDeck';
 
 interface IntroScreenProps {
     onSignIn: () => void;
@@ -162,6 +163,37 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
         theorySection?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    type PrincipleIllustrationSpec = {
+        src: string;
+        wrapperClassName: string;
+        imgClassName: string;
+        imgPaddingClassName: string;
+    };
+
+    const diagramDarkFilter =
+        'dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:brightness-150 dark:contrast-150 dark:saturate-125 dark:drop-shadow-[0_0_14px_rgba(167,139,250,0.16)]';
+
+    const principleIllustrations: Record<string, PrincipleIllustrationSpec> = {
+        'sacred-seat': {
+            src: '/intro/sacred-seat.svg',
+            wrapperClassName: 'w-[260px] opacity-[0.18] dark:opacity-[0.34] -right-12 -bottom-12 rotate-[8deg]',
+            imgClassName: `h-auto object-contain ${diagramDarkFilter}`,
+            imgPaddingClassName: 'p-4',
+        },
+        'precedent': {
+            src: '/intro/integral-model.svg',
+            wrapperClassName: 'w-[260px] opacity-[0.18] dark:opacity-[0.30] -right-12 -bottom-12 rotate-[8deg]',
+            imgClassName: `h-auto object-contain ${diagramDarkFilter}`,
+            imgPaddingClassName: 'p-4',
+        },
+        'time-delay': {
+            src: '/intro/timeline.svg',
+            wrapperClassName: 'w-[360px] opacity-[0.14] dark:opacity-[0.44] -right-16 -bottom-16 rotate-[10deg]',
+            imgClassName: 'h-[240px] object-cover object-left scale-[1.45] intro-principle-ill--timeline',
+            imgPaddingClassName: 'p-0',
+        },
+    };
+
     return (
         <div className="min-h-screen relative overflow-x-hidden bg-background transition-colors duration-500 font-sans selection:bg-violet-600 selection:text-white dark:selection:bg-violet-400 dark:selection:text-black">
 
@@ -184,39 +216,45 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                 <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-violet-400/20 to-purple-500/20 dark:from-violet-600/15 dark:to-purple-700/15 rounded-full blur-[100px] pointer-events-none" />
                 <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-gradient-to-br from-cyan-400/15 to-blue-500/15 dark:from-cyan-600/10 dark:to-blue-700/10 rounded-full blur-[100px] pointer-events-none" />
 
-                <div className="max-w-2xl w-full text-center space-y-10 relative">
-                    <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/50 dark:bg-white/10 border border-black/5 dark:border-white/10 shadow-[inner_0_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-md">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] shadow-[0_0_8px_rgba(52,199,89,0.5)]"></span>
-                        <span className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#98989D] uppercase">{translations.hero.tag[lang]}</span>
+                <div className="max-w-6xl w-full grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-16 items-center relative">
+                    <div className="text-center lg:text-left space-y-10">
+                        <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/50 dark:bg-white/10 border border-black/5 dark:border-white/10 shadow-[inner_0_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] shadow-[0_0_8px_rgba(52,199,89,0.5)]"></span>
+                            <span className="text-[10px] font-bold tracking-widest text-[#6C6C70] dark:text-[#98989D] uppercase">{translations.hero.tag[lang]}</span>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter text-slate-800 dark:text-white leading-[0.9]">
+                                {translations.hero.titleline1[lang]}
+                                <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-400 dark:via-purple-400 dark:to-indigo-400">
+                                    {translations.hero.titleline2[lang]}
+                                </span>
+                            </h1>
+                            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-lg mx-auto lg:mx-0 font-medium leading-relaxed">
+                                {translations.hero.desc[lang]}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start pt-8 w-full max-w-xs mx-auto lg:mx-0">
+                            <button
+                                onClick={onSignIn}
+                                className="w-full h-14 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition active:scale-95 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 flex items-center justify-center space-x-2"
+                            >
+                                <span className="text-sm font-bold tracking-wide">{translations.nav.signIn[lang]}</span>
+                                <ArrowRight size={16} />
+                            </button>
+                            <button
+                                onClick={onSignUp}
+                                className="w-full h-14 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-white font-semibold rounded-2xl border border-violet-200 dark:border-violet-500/30 transition active:scale-95 shadow-md hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-500/50 backdrop-blur-sm flex items-center justify-center space-x-2"
+                            >
+                                <span className="text-sm font-bold tracking-wide">{translations.nav.signUp[lang]}</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter text-slate-800 dark:text-white leading-[0.9]">
-                            {translations.hero.titleline1[lang]}
-                            <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-400 dark:via-purple-400 dark:to-indigo-400">
-                                {translations.hero.titleline2[lang]}
-                            </span>
-                        </h1>
-                        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-medium leading-relaxed">
-                            {translations.hero.desc[lang]}
-                        </p>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-8 w-full max-w-xs mx-auto">
-                        <button
-                            onClick={onSignIn}
-                            className="w-full h-14 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition active:scale-95 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 flex items-center justify-center space-x-2"
-                        >
-                            <span className="text-sm font-bold tracking-wide">{translations.nav.signIn[lang]}</span>
-                            <ArrowRight size={16} />
-                        </button>
-                        <button
-                            onClick={onSignUp}
-                            className="w-full h-14 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-white font-semibold rounded-2xl border border-violet-200 dark:border-violet-500/30 transition active:scale-95 shadow-md hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-500/50 backdrop-blur-sm flex items-center justify-center space-x-2"
-                        >
-                            <span className="text-sm font-bold tracking-wide">{translations.nav.signUp[lang]}</span>
-                        </button>
+                    <div className="w-full flex justify-center lg:justify-end">
+                        <IntroIllustrationDeck lang={lang} className="w-full" />
                     </div>
                 </div>
 
@@ -325,12 +363,28 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onSignIn, onSignUp }) 
                         {translations.principles.list.map((item, index) => {
                             const icons = [Armchair, Scale, Clock];
                             const Icon = icons[index];
+                            const illustration = principleIllustrations[item.id];
                             return (
                                 <div key={item.id} className="group relative pt-12">
                                     <div className="absolute top-0 left-8 px-4 py-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-[10px] font-bold tracking-widest uppercase rounded-full z-20">
                                         0{index + 1}
                                     </div>
                                     <div className="glass-panel p-10 rounded-[32px] h-full transition duration-500 hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden">
+                                        {illustration ? (
+                                            <div className={`absolute pointer-events-none select-none ${illustration.wrapperClassName}`}>
+                                                <div className="rounded-[28px] border border-black/5 dark:border-white/10 bg-white/60 dark:bg-white/[0.08] backdrop-blur-sm shadow-[0_20px_80px_rgba(0,0,0,0.18)] overflow-hidden">
+                                                    <img
+                                                        src={illustration.src}
+                                                        alt=""
+                                                        aria-hidden="true"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        className={`w-full ${illustration.imgPaddingClassName} ${illustration.imgClassName}`}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : null}
+
                                         <div className="w-16 h-16 bg-violet-100 dark:bg-violet-900/30 rounded-2xl flex items-center justify-center mb-10 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform duration-500">
                                             <Icon size={32} strokeWidth={1.5} />
                                         </div>
