@@ -117,66 +117,9 @@ export class RuleClassificationService {
    */
   async validateRuleForAction(ruleId: string, actionType: 'pause' | 'early_completion'): Promise<void> {
     try {
-      // 首先获取规则
-      const rule = await exceptionRuleStorage.getRuleById(ruleId);
-      
-      if (!rule) {
-        throw EnhancedExceptionRuleException.createUserFriendly(
-          ExceptionRuleError.RULE_NOT_FOUND,
-          '找不到指定的规则，可能已被删除',
-          `规则 ID ${ruleId} 不存在`,
-          { ruleId, actionType }
-        ).addSuggestedAction('创建新规则').addSuggestedAction('选择其他规则');
-      }
-      
-      if (!rule.isActive) {
-        throw EnhancedExceptionRuleException.createUserFriendly(
-          ExceptionRuleError.RULE_NOT_FOUND,
-          '规则已被删除或停用',
-          `规则 "${rule.name}" 已被删除`,
-          { rule, actionType }
-        ).addSuggestedAction('选择其他规则').addSuggestedAction('恢复规则');
-      }
-
-      // 检查规则类型是否存在
-      if (!rule.type) {
-        // 尝试自动修复
-        const fixResult = await this.fixRuleTypeIssues(ruleId);
-        if (fixResult.fixed) {
-          logger.info('RULE_CLASSIFICATION', '已自动修复规则类型问题', {
-            ruleId,
-            actions: fixResult.actions,
-          });
-          // 重新获取规则
-          const fixedRule = await exceptionRuleStorage.getRuleById(ruleId);
-          if (fixedRule && fixedRule.type) {
-            rule.type = fixedRule.type;
-          }
-        } else {
-          throw EnhancedExceptionRuleException.createUserFriendly(
-            ExceptionRuleError.INVALID_RULE_TYPE,
-            '规则类型缺失，无法使用',
-            `规则 "${rule.name}" 缺少类型定义`,
-            { rule, actionType }
-          ).addSuggestedAction('修复规则类型').addSuggestedAction('选择其他规则');
-        }
-      }
-      
-      // 类型匹配验证
-      const isValidForAction = this.validateRuleTypeForAction(rule, actionType);
-      
-      if (!isValidForAction) {
-        const actionName = actionType === 'pause' ? '暂停' : '提前完成';
-        const messageActionName = actionType === 'pause' ? '暂停计时' : actionName;
-        const typeName = rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
-        
-        throw EnhancedExceptionRuleException.createUserFriendly(
-          ExceptionRuleError.RULE_TYPE_MISMATCH,
-          `规则类型与操作不匹配`,
-          `规则 "${rule.name}" 是${typeName}类型，不能用于${messageActionName}操作`,
-          { rule, actionType, expectedType: actionName, actualType: typeName }
-        ).addSuggestedAction(`创建${actionName}类型的规则`).addSuggestedAction(`选择${actionName}类型的规则`);
-      }
+      const rule = await this.getActiveRuleOrThrow(ruleId, actionType);
+      const typedRule = await this.ensureRuleHasType(rule, ruleId, actionType);
+      this.ensureRuleMatchesAction(typedRule, actionType);
 
       if (isDev) {
         logger.debug('RULE_CLASSIFICATION', 'Rule validation passed', { ruleId, actionType });
@@ -195,6 +138,83 @@ export class RuleClassificationService {
         { ruleId, actionType, error }
       ).addSuggestedAction('重试操作').addSuggestedAction('选择其他规则');
     }
+  }
+
+  private async getActiveRuleOrThrow(ruleId: string, actionType: 'pause' | 'early_completion'): Promise<ExceptionRule> {
+    const rule = await exceptionRuleStorage.getRuleById(ruleId);
+
+    if (!rule) {
+      throw EnhancedExceptionRuleException.createUserFriendly(
+        ExceptionRuleError.RULE_NOT_FOUND,
+        '找不到指定的规则，可能已被删除',
+        `规则 ID ${ruleId} 不存在`,
+        { ruleId, actionType }
+      ).addSuggestedAction('创建新规则').addSuggestedAction('选择其他规则');
+    }
+
+    if (!rule.isActive) {
+      throw EnhancedExceptionRuleException.createUserFriendly(
+        ExceptionRuleError.RULE_NOT_FOUND,
+        '规则已被删除或停用',
+        `规则 "${rule.name}" 已被删除`,
+        { rule, actionType }
+      ).addSuggestedAction('选择其他规则').addSuggestedAction('恢复规则');
+    }
+
+    return rule;
+  }
+
+  private async ensureRuleHasType(
+    rule: ExceptionRule,
+    ruleId: string,
+    actionType: 'pause' | 'early_completion'
+  ): Promise<ExceptionRule> {
+    if (rule.type) {
+      return rule;
+    }
+
+    const fixResult = await this.fixRuleTypeIssues(ruleId);
+    if (!fixResult.fixed) {
+      throw EnhancedExceptionRuleException.createUserFriendly(
+        ExceptionRuleError.INVALID_RULE_TYPE,
+        '规则类型缺失，无法使用',
+        `规则 "${rule.name}" 缺少类型定义`,
+        { rule, actionType }
+      ).addSuggestedAction('修复规则类型').addSuggestedAction('选择其他规则');
+    }
+
+    logger.info('RULE_CLASSIFICATION', '已自动修复规则类型问题', {
+      ruleId,
+      actions: fixResult.actions,
+    });
+
+    const fixedRule = await exceptionRuleStorage.getRuleById(ruleId);
+    if (fixedRule && fixedRule.type) {
+      return { ...rule, type: fixedRule.type };
+    }
+
+    throw EnhancedExceptionRuleException.createUserFriendly(
+      ExceptionRuleError.INVALID_RULE_TYPE,
+      '规则类型缺失，无法使用',
+      `规则 "${rule.name}" 缺少类型定义`,
+      { rule, actionType }
+    ).addSuggestedAction('修复规则类型').addSuggestedAction('选择其他规则');
+  }
+
+  private ensureRuleMatchesAction(rule: ExceptionRule, actionType: 'pause' | 'early_completion'): void {
+    const isValidForAction = this.validateRuleTypeForAction(rule, actionType);
+    if (isValidForAction) return;
+
+    const actionName = actionType === 'pause' ? '暂停' : '提前完成';
+    const messageActionName = actionType === 'pause' ? '暂停计时' : actionName;
+    const typeName = rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
+
+    throw EnhancedExceptionRuleException.createUserFriendly(
+      ExceptionRuleError.RULE_TYPE_MISMATCH,
+      `规则类型与操作不匹配`,
+      `规则 "${rule.name}" 是${typeName}类型，不能用于${messageActionName}操作`,
+      { rule, actionType, expectedType: actionName, actualType: typeName }
+    ).addSuggestedAction(`创建${actionName}类型的规则`).addSuggestedAction(`选择${actionName}类型的规则`);
   }
 
   /**

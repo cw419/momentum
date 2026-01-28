@@ -52,6 +52,55 @@ const EXPECTED_SCHEMA = {
   ]
 };
 
+function getMigrationStatus(
+  missingTables: string[],
+  missingColumns: Record<string, string[]>
+): 'complete' | 'partial' | 'missing' {
+  if (missingTables.length > 0) return 'missing';
+  if (Object.keys(missingColumns).length > 0) return 'partial';
+  return 'complete';
+}
+
+function buildSchemaRecommendations(
+  missingTables: string[],
+  missingColumns: Record<string, string[]>
+): string[] {
+  const recommendations: string[] = [];
+  const missingChainColumns = new Set(missingColumns.chains ?? []);
+
+  if (missingTables.length > 0) {
+    recommendations.push(`需要创建以下表: ${missingTables.join(', ')}`);
+    recommendations.push('运行基础迁移脚本 20250730021823_winter_flame.sql');
+  }
+
+  if (missingChainColumns.has('parent_id') || missingChainColumns.has('type')) {
+    recommendations.push('运行任务群支持迁移: 20250801160754_peaceful_palace.sql');
+  }
+
+  if (missingChainColumns.has('time_limit_hours') || missingChainColumns.has('group_expires_at')) {
+    recommendations.push('运行时间限制迁移: 20250808000000_add_group_time_limit.sql');
+  }
+
+  if (missingChainColumns.has('is_durationless')) {
+    recommendations.push('运行无时长任务迁移: 20250808001000_add_durationless_flag.sql');
+  }
+
+  if (missingChainColumns.has('deleted_at')) {
+    recommendations.push('运行软删除功能迁移: 20250814000000_add_soft_delete.sql');
+  }
+
+  if (missingTables.includes('rsip_nodes') || missingTables.includes('rsip_meta')) {
+    recommendations.push('运行RSIP功能迁移: 20250810000000_add_rsip_tables.sql');
+  }
+
+  const isSchemaComplete = missingTables.length === 0 && Object.keys(missingColumns).length === 0;
+  if (isSchemaComplete) {
+    recommendations.push('数据库架构完整，建议运行性能优化索引脚本以提升查询性能');
+  }
+
+  return recommendations;
+}
+
 export class SchemaChecker {
   private schemaCache: Map<string, { result: TableInfo | null; timestamp: number }> = new Map();
   private readonly CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache
@@ -215,47 +264,8 @@ export class SchemaChecker {
       }
     }
     
-    // Determine migration status
-    let migrationStatus: 'complete' | 'partial' | 'missing';
-    if (missingTables.length > 0) {
-      migrationStatus = 'missing';
-    } else if (Object.keys(missingColumns).length > 0) {
-      migrationStatus = 'partial';
-    } else {
-      migrationStatus = 'complete';
-    }
-    
-    // Generate recommendations
-    const recommendations: string[] = [];
-    
-    if (missingTables.length > 0) {
-      recommendations.push(`需要创建以下表: ${missingTables.join(', ')}`);
-      recommendations.push('运行基础迁移脚本 20250730021823_winter_flame.sql');
-    }
-    
-    if (missingColumns.chains?.includes('parent_id') || missingColumns.chains?.includes('type')) {
-      recommendations.push('运行任务群支持迁移: 20250801160754_peaceful_palace.sql');
-    }
-    
-    if (missingColumns.chains?.includes('time_limit_hours') || missingColumns.chains?.includes('group_expires_at')) {
-      recommendations.push('运行时间限制迁移: 20250808000000_add_group_time_limit.sql');
-    }
-    
-    if (missingColumns.chains?.includes('is_durationless')) {
-      recommendations.push('运行无时长任务迁移: 20250808001000_add_durationless_flag.sql');
-    }
-    
-    if (missingColumns.chains?.includes('deleted_at')) {
-      recommendations.push('运行软删除功能迁移: 20250814000000_add_soft_delete.sql');
-    }
-    
-    if (missingTables.includes('rsip_nodes') || missingTables.includes('rsip_meta')) {
-      recommendations.push('运行RSIP功能迁移: 20250810000000_add_rsip_tables.sql');
-    }
-    
-    if (Object.keys(missingColumns).length === 0 && missingTables.length === 0) {
-      recommendations.push('数据库架构完整，建议运行性能优化索引脚本以提升查询性能');
-    }
+    const migrationStatus = getMigrationStatus(missingTables, missingColumns);
+    const recommendations = buildSchemaRecommendations(missingTables, missingColumns);
     
     const status: SchemaStatus = {
       tablesExist: missingTables.length === 0,

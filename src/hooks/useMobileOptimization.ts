@@ -197,13 +197,14 @@ export const useTouchOptimization = () => {
             // 延迟阻止，给滚动手势一个机会
             setTimeout(() => {
               const initialTouch = target._initialTouch;
-              if (initialTouch && Date.now() - initialTouch.time > 150) {
-                // 检查是否为静止状态或非滚动手势
-                if (Math.abs(touch.clientX - initialTouch.x) < 10 && 
-                    Math.abs(touch.clientY - initialTouch.y) < 10) {
-                  // 只在静止状态下阻止长按
-                  e.preventDefault();
-                }
+              if (
+                initialTouch &&
+                Date.now() - initialTouch.time > 150 &&
+                Math.abs(touch.clientX - initialTouch.x) < 10 &&
+                Math.abs(touch.clientY - initialTouch.y) < 10
+              ) {
+                // 只在静止状态下阻止长按
+                e.preventDefault();
               }
             }, 200);
           }

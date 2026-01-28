@@ -26,6 +26,8 @@ interface MobileInfo {
   touchSupport: boolean;
 }
 
+const ERROR_INPUT_BORDER_CLASSES = 'border-red-500 focus:border-red-500 focus:ring-red-500/20';
+
 export interface TaskGroupEditorViewProps {
   // Data
   chain?: Chain;
@@ -211,7 +213,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = React.memo(({
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder={tr('例如：期末复习计划、网站开发项目、健身训练计划', 'e.g. Finals study plan, Website project, Workout plan')}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
+        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.name ? ERROR_INPUT_BORDER_CLASSES : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
         required
       />
       {errors.name && (
@@ -239,7 +241,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = React.memo(({
           'Describe the goal and scope, e.g. Finals study plan with review, practice problems, and mock exams.'
         )}
         rows={4}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 resize-none font-chinese leading-relaxed`}
+        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.description ? ERROR_INPUT_BORDER_CLASSES : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 resize-none font-chinese leading-relaxed`}
         required
       />
       {errors.description && (
@@ -307,7 +309,7 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
           onChange={(e) => onAuxiliarySignalSelect(e.target.value)}
           className={`w-full bg-gray-50 dark:bg-slate-700 border ${
             errors.auxiliarySignal
-              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              ? ERROR_INPUT_BORDER_CLASSES
               : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
           } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
           required
@@ -336,7 +338,7 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
             placeholder={tr('输入你的自定义预约信号', 'Enter your custom booking signal')}
             className={`w-full mt-3 bg-gray-50 dark:bg-slate-700 border ${
               errors.auxiliarySignal
-                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                ? ERROR_INPUT_BORDER_CLASSES
                 : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
             } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
             required
@@ -445,7 +447,7 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
           placeholder={tr('例如：打开第一个子任务、准备好工作材料', 'e.g. Open the first subtask, prepare your materials')}
           className={`w-full bg-gray-50 dark:bg-slate-700 border ${
             errors.auxiliaryCompletionTrigger
-              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              ? ERROR_INPUT_BORDER_CLASSES
               : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
           } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
           required

@@ -58,6 +58,8 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
         ? 70
         : 10 + Math.floor(baseZ / 10);
 
+  const highlightClass = isHighlighted ? `ring-2 ${color.ring} scale-105 shadow-2xl` : '';
+
   return (
     <div
       ref={setNodeRef}
@@ -75,7 +77,7 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
           onCardClick();
         }
       }}
-      className={`rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition duration-300 transform-gpu ${color.bg} ${color.border} ${isHighlighted ? `ring-2 ${color.ring} scale-105 shadow-2xl` : ''} ${isInvalidParentTarget ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer'} ${isReparentingSelected ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : ''}`}
+      className={`rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition duration-300 transform-gpu ${color.bg} ${color.border} ${highlightClass} ${isInvalidParentTarget ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer'} ${isReparentingSelected ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : ''}`}
     >
       <div className="flex items-start space-x-3">
         <div className="text-3xl leading-none pt-1" aria-hidden>

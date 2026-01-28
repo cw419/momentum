@@ -52,7 +52,7 @@ export const IntroIllustrationDeck: React.FC<IntroIllustrationDeckProps> = ({ la
               <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-violet-200/20 dark:from-white/10 dark:to-violet-500/10 pointer-events-none" />
               <img
                 src="/intro/integral-model.svg"
-                alt={lang === 'zh' ? 'CTDP integral model diagram' : 'CTDP integral model diagram'}
+                alt="CTDP integral model diagram"
                 decoding="async"
                 fetchPriority="high"
                 className={`relative z-10 h-full w-full object-contain p-6 select-none ${DARK_MODE_FILTER}`}

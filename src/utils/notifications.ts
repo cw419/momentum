@@ -51,9 +51,8 @@ class NotificationManager {
 
     const language = getCurrentLanguage();
     const title = language === 'zh' ? '任务失败' : 'Task failed';
-    const body = language === 'zh'
-      ? `"${chainName}"${reason ? `：${reason}` : ''}`
-      : `"${chainName}"${reason ? `: ${reason}` : ''}`;
+    const reasonSuffix = reason ? (language === 'zh' ? `：${reason}` : `: ${reason}`) : '';
+    const body = `"${chainName}"${reasonSuffix}`;
 
     return this.showNotification({
       title,

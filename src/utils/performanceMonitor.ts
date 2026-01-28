@@ -83,95 +83,102 @@ class PerformanceMonitor {
     if (typeof window === 'undefined') return;
     if (!this.isMonitoring) return;
 
-    // 监控布局偏移 (CLS - Cumulative Layout Shift)
-    if ('PerformanceObserver' in window) {
-      try {
-        this.observers.layout = new PerformanceObserver((list) => {
-          // 使用 requestIdleCallback 在空闲时处理数据
-          this.runWhenIdle(() => {
-            for (const entry of list.getEntries()) {
-              if (isLayoutShiftEntry(entry) && !entry.hadRecentInput) {
-                this.metrics.layoutShifts += entry.value;
-                
-                // 只在后台模式下记录，不立即输出
-                if (this.backgroundMode) {
-                  this.addToBuffer({
-                    type: 'layout-shift',
-                    value: entry.value,
-                    timestamp: Date.now()
-                  });
-                } else if (entry.value > 0.1) {
-                  performanceLogger.warn('🚨 检测到大幅布局偏移:', {
-                    value: entry.value,
-                    sources: entry.sources
-                  });
-                }
-              }
-            }
-          });
-        });
+    if (!('PerformanceObserver' in window)) return;
 
-        this.observers.layout.observe({ entryTypes: ['layout-shift'] });
-      } catch (e) {
-        // 静默处理错误，不影响用户体验
-        if (!this.backgroundMode) {
-          performanceLogger.warn('布局偏移监控不可用:', e);
-        }
-      }
+    this.initializeLayoutObserver();
+    this.initializePaintObserver();
+    this.initializeMeasureObserver();
+  }
 
-      // 监控绘制性能
-      try {
-        this.observers.paint = new PerformanceObserver((list) => {
-          this.runWhenIdle(() => {
-            for (const entry of list.getEntries()) {
-              if (entry.name === 'first-contentful-paint') {
-                this.metrics.renderTime = entry.startTime;
+  private initializeLayoutObserver() {
+    try {
+      this.observers.layout = new PerformanceObserver((list) => {
+        // 使用 requestIdleCallback 在空闲时处理数据
+        this.runWhenIdle(() => {
+          for (const entry of list.getEntries()) {
+            if (isLayoutShiftEntry(entry) && !entry.hadRecentInput) {
+              this.metrics.layoutShifts += entry.value;
+
+              // 只在后台模式下记录，不立即输出
+              if (this.backgroundMode) {
                 this.addToBuffer({
-                  type: 'paint',
-                  name: entry.name,
-                  startTime: entry.startTime,
+                  type: 'layout-shift',
+                  value: entry.value,
                   timestamp: Date.now()
+                });
+              } else if (entry.value > 0.1) {
+                performanceLogger.warn('🚨 检测到大幅布局偏移:', {
+                  value: entry.value,
+                  sources: entry.sources
                 });
               }
             }
-          });
+          }
         });
+      });
 
-        this.observers.paint.observe({ entryTypes: ['paint'] });
-      } catch (e) {
-        // 静默处理错误
-        if (!this.backgroundMode) {
-          performanceLogger.warn('绘制性能监控不可用:', e);
-        }
+      this.observers.layout.observe({ entryTypes: ['layout-shift'] });
+    } catch (e) {
+      // 静默处理错误，不影响用户体验
+      if (!this.backgroundMode) {
+        performanceLogger.warn('布局偏移监控不可用:', e);
       }
+    }
+  }
 
-      // 监控自定义测量
-      try {
-        this.observers.measure = new PerformanceObserver((list) => {
-          this.runWhenIdle(() => {
-            for (const entry of list.getEntries()) {
-              if (entry.name.startsWith('chain-editor-')) {
-                this.addToBuffer({
-                  type: 'measure',
-                  name: entry.name,
-                  duration: entry.duration,
-                  timestamp: Date.now()
-                });
-                
-                if (!this.backgroundMode) {
-                  performanceLogger.debug('性能测量:', entry.name, entry.duration + 'ms');
-                }
+  private initializePaintObserver() {
+    try {
+      this.observers.paint = new PerformanceObserver((list) => {
+        this.runWhenIdle(() => {
+          for (const entry of list.getEntries()) {
+            if (entry.name === 'first-contentful-paint') {
+              this.metrics.renderTime = entry.startTime;
+              this.addToBuffer({
+                type: 'paint',
+                name: entry.name,
+                startTime: entry.startTime,
+                timestamp: Date.now()
+              });
+            }
+          }
+        });
+      });
+
+      this.observers.paint.observe({ entryTypes: ['paint'] });
+    } catch (e) {
+      // 静默处理错误
+      if (!this.backgroundMode) {
+        performanceLogger.warn('绘制性能监控不可用:', e);
+      }
+    }
+  }
+
+  private initializeMeasureObserver() {
+    try {
+      this.observers.measure = new PerformanceObserver((list) => {
+        this.runWhenIdle(() => {
+          for (const entry of list.getEntries()) {
+            if (entry.name.startsWith('chain-editor-')) {
+              this.addToBuffer({
+                type: 'measure',
+                name: entry.name,
+                duration: entry.duration,
+                timestamp: Date.now()
+              });
+
+              if (!this.backgroundMode) {
+                performanceLogger.debug('性能测量:', entry.name, entry.duration + 'ms');
               }
             }
-          });
+          }
         });
+      });
 
-        this.observers.measure.observe({ entryTypes: ['measure'] });
-      } catch (e) {
-        // 静默处理错误
-        if (!this.backgroundMode) {
-          performanceLogger.warn('自定义测量监控不可用:', e);
-        }
+      this.observers.measure.observe({ entryTypes: ['measure'] });
+    } catch (e) {
+      // 静默处理错误
+      if (!this.backgroundMode) {
+        performanceLogger.warn('自定义测量监控不可用:', e);
       }
     }
   }

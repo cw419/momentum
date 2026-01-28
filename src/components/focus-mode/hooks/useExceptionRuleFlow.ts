@@ -59,30 +59,44 @@ export function useExceptionRuleFlow({
     );
   };
 
+  const handleEnhancedExceptionRuleError = async (
+    error: EnhancedExceptionRuleException,
+    operation: string,
+    context: unknown
+  ) => {
+    const messageId = userFeedbackHandler.showErrorMessage(error, context);
+    const recoveryResult = await errorRecoveryManager.attemptRecovery(error, context, operation);
+
+    if (!recoveryResult.success) {
+      if (recoveryResult.requiresUserAction && recoveryResult.actions) {
+        logger.error('FOCUS_MODE', '需要用户操作的恢复失败', { recoveryResult, operation, context });
+      }
+      return;
+    }
+
+    userFeedbackHandler.removeMessage(messageId);
+    userFeedbackHandler.showSuccess(tr('问题已解决', 'Issue resolved'), recoveryResult.message);
+
+    if (!recoveryResult.recoveredData || operation !== 'create_rule') {
+      return;
+    }
+
+    if (isExceptionRule(recoveryResult.recoveredData)) {
+      await handleRuleSelected(recoveryResult.recoveredData);
+      return;
+    }
+
+    logger.warn('FOCUS_MODE', 'Recovery returned invalid rule data', {
+      operation,
+      context,
+      recoveredData: recoveryResult.recoveredData,
+    });
+  };
+
   const handleRuleError = async (error: unknown, operation: string, context: unknown) => {
     try {
       if (error instanceof EnhancedExceptionRuleException) {
-        const messageId = userFeedbackHandler.showErrorMessage(error, context);
-        const recoveryResult = await errorRecoveryManager.attemptRecovery(error, context, operation);
-
-        if (recoveryResult.success) {
-          userFeedbackHandler.removeMessage(messageId);
-          userFeedbackHandler.showSuccess(tr('问题已解决', 'Issue resolved'), recoveryResult.message);
-
-          if (recoveryResult.recoveredData && operation === 'create_rule') {
-            if (isExceptionRule(recoveryResult.recoveredData)) {
-              await handleRuleSelected(recoveryResult.recoveredData);
-            } else {
-              logger.warn('FOCUS_MODE', 'Recovery returned invalid rule data', {
-                operation,
-                context,
-                recoveredData: recoveryResult.recoveredData,
-              });
-            }
-          }
-        } else if (recoveryResult.requiresUserAction && recoveryResult.actions) {
-          logger.error('FOCUS_MODE', '需要用户操作的恢复失败', { recoveryResult, operation, context });
-        }
+        await handleEnhancedExceptionRuleError(error, operation, context);
         return;
       }
 

@@ -22,7 +22,8 @@ function safeStringify(value: unknown, space?: number): string {
           return val.toString();
         }
         if (typeof val === 'function') {
-          return `[Function${val.name ? `: ${val.name}` : ''}]`;
+          const nameSuffix = val.name ? `: ${val.name}` : '';
+          return `[Function${nameSuffix}]`;
         }
         if (typeof val === 'symbol') {
           return val.toString();

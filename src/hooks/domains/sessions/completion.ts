@@ -34,6 +34,38 @@ export function createCompletionHandlers({
   onPetTaskCompleted,
   tr,
 }: CreateCompletionHandlersParams) {
+  const persistCompletionAndClearActiveSession = (historyToPersist: CompletionHistory[]) => {
+    if (activeSessionId && storage.kind === 'supabase') {
+      void (async () => {
+        try {
+          await storage.saveCompletionHistory(historyToPersist);
+        } catch (error) {
+          logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
+        } finally {
+          setActiveSessionId(null);
+          try {
+            await storage.saveActiveSession(null);
+          } catch (error) {
+            logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
+          } finally {
+            emitPointsChanged();
+          }
+        }
+      })();
+      return;
+    }
+
+    setActiveSessionId(null);
+
+    void storage.saveActiveSession(null).catch(error => {
+      logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
+    });
+
+    void storage.saveCompletionHistory(historyToPersist).catch(error => {
+      logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
+    });
+  };
+
   const handleCompleteSession = (description?: string, notes?: string) => {
     const activeSession = state.activeSession;
     if (!activeSession) return;
@@ -79,15 +111,13 @@ export function createCompletionHandlers({
       const chainTree = queryOptimizer.memoizedBuildChainTree(updatedChains);
       const groupNode = chainTree.find(node => node.id === chain.parentId);
 
-      if (groupNode && groupNode.type === 'group') {
-        if (isGroupFullyCompleted(groupNode)) {
-          logger.debug('SESSIONS', `任务群 ${groupNode.name} 已完成所有任务，增加完成计数`);
-          updatedChains = incrementGroupCompletionCount(updatedChains, chain.parentId);
+      if (groupNode && groupNode.type === 'group' && isGroupFullyCompleted(groupNode)) {
+        logger.debug('SESSIONS', `任务群 ${groupNode.name} 已完成所有任务，增加完成计数`);
+        updatedChains = incrementGroupCompletionCount(updatedChains, chain.parentId);
 
-          const parentChain = updatedChains.find(c => c.id === chain.parentId);
-          if (parentChain) {
-            notificationManager.notifyTaskCompleted(parentChain.name, parentChain.currentStreak, tr('任务群完成一轮', 'Group completed a cycle'));
-          }
+        const parentChain = updatedChains.find(c => c.id === chain.parentId);
+        if (parentChain) {
+          notificationManager.notifyTaskCompleted(parentChain.name, parentChain.currentStreak, tr('任务群完成一轮', 'Group completed a cycle'));
         }
       }
     }
@@ -100,34 +130,7 @@ export function createCompletionHandlers({
       logger.error('SESSIONS', '完成任务时保存链条数据失败', undefined, error as Error);
     });
 
-    if (activeSessionId && storage.kind === 'supabase') {
-      void (async () => {
-        try {
-          await storage.saveCompletionHistory(historyToPersist);
-        } catch (error) {
-          logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
-        } finally {
-          setActiveSessionId(null);
-          try {
-            await storage.saveActiveSession(null);
-          } catch (error) {
-            logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
-          } finally {
-            emitPointsChanged();
-          }
-        }
-      })();
-    } else {
-      setActiveSessionId(null);
-
-      void storage.saveActiveSession(null).catch(error => {
-        logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
-      });
-
-      void storage.saveCompletionHistory(historyToPersist).catch(error => {
-        logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
-      });
-    }
+    persistCompletionAndClearActiveSession(historyToPersist);
 
     if (completionRecord.actualDuration) {
       void storage.updateTaskTimeStats(chain.id, completionRecord.actualDuration).catch(error => {

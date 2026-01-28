@@ -39,6 +39,11 @@ export interface RuleImportData {
   description?: string;
 }
 
+type SingleImportResult =
+  | { type: 'imported'; rule: ExceptionRule }
+  | { type: 'skipped'; name: string; reason: string }
+  | { type: 'error'; name: string; error: string };
+
 /**
  * 规则导入导出服务类
  * 单一职责：处理规则的导入和导出
@@ -66,6 +71,43 @@ export class RuleExportImportService {
     this.ruleCreator = creator;
   }
 
+  private async importSingleRule(ruleData: RuleImportData, options: ImportOptions): Promise<SingleImportResult> {
+    const duplicates = await ruleDuplicationDetector.checkDuplication(ruleData.name);
+
+    if (duplicates.length > 0) {
+      if (options.updateExisting && this.ruleUpdater) {
+        const existingRule = duplicates[0];
+        const updated = await this.ruleUpdater.updateRule(existingRule.id, {
+          type: ruleData.type,
+          description: ruleData.description
+        });
+        return { type: 'imported', rule: updated.rule };
+      }
+
+      if (options.skipDuplicates) {
+        return { type: 'skipped', name: ruleData.name, reason: 'Rule name already exists' };
+      }
+
+      return { type: 'error', name: ruleData.name, error: 'Rule name already exists' };
+    }
+
+    if (this.ruleCreator) {
+      const result = await this.ruleCreator.createRule(
+        ruleData.name,
+        ruleData.type,
+        ruleData.description
+      );
+      return { type: 'imported', rule: result.rule };
+    }
+
+    const rule = await exceptionRuleStorage.createRule({
+      name: ruleData.name,
+      type: ruleData.type,
+      description: ruleData.description
+    });
+    return { type: 'imported', rule };
+  }
+
   /**
    * 批量导入规则
    */
@@ -79,48 +121,14 @@ export class RuleExportImportService {
 
     for (const ruleData of rules) {
       try {
-        const duplicates = await ruleDuplicationDetector.checkDuplication(ruleData.name);
-
-        if (duplicates.length > 0) {
-          if (options.skipDuplicates) {
-            skipped.push({
-              name: ruleData.name,
-              reason: 'Rule name already exists'
-            });
-            continue;
-          } else if (options.updateExisting && this.ruleUpdater) {
-            const existingRule = duplicates[0];
-            const updated = await this.ruleUpdater.updateRule(existingRule.id, {
-              type: ruleData.type,
-              description: ruleData.description
-            });
-            imported.push(updated.rule);
-            continue;
-          } else {
-            errors.push({
-              name: ruleData.name,
-              error: 'Rule name already exists'
-            });
-            continue;
-          }
-        }
-
-        if (this.ruleCreator) {
-          const result = await this.ruleCreator.createRule(
-            ruleData.name,
-            ruleData.type,
-            ruleData.description
-          );
+        const result = await this.importSingleRule(ruleData, options);
+        if (result.type === 'imported') {
           imported.push(result.rule);
+        } else if (result.type === 'skipped') {
+          skipped.push({ name: result.name, reason: result.reason });
         } else {
-          const rule = await exceptionRuleStorage.createRule({
-            name: ruleData.name,
-            type: ruleData.type,
-            description: ruleData.description
-          });
-          imported.push(rule);
+          errors.push({ name: result.name, error: result.error });
         }
-
       } catch (error) {
         errors.push({
           name: ruleData.name,

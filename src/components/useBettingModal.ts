@@ -86,7 +86,7 @@ export function useBettingModal({
   }, [isOpen, language, storage, tr]);
 
   // 验证押注金额
-  const validateBetAmount = useCallback(async (amount: string): Promise<boolean> => {
+  const validateBetAmount = useCallback((amount: string): boolean => {
     setValidationError(null);
 
     if (!amount || amount.trim() === '') {
@@ -107,18 +107,20 @@ export function useBettingModal({
 
     if (numAmount > availablePoints) {
       setValidationError(
-        language === 'zh'
-          ? `可用积分不足，当前可用：${availablePoints}`
-          : `Not enough points. Available: ${availablePoints}`
+        tr(
+          `可用积分不足，当前可用：${availablePoints}`,
+          `Not enough points. Available: ${availablePoints}`
+        )
       );
       return false;
     }
 
     if (gamblingSettings?.max_single_bet && numAmount > gamblingSettings.max_single_bet) {
       setValidationError(
-        language === 'zh'
-          ? `超出单次押注限制：${gamblingSettings.max_single_bet}`
-          : `Exceeds max single bet: ${gamblingSettings.max_single_bet}`
+        tr(
+          `超出单次押注限制：${gamblingSettings.max_single_bet}`,
+          `Exceeds max single bet: ${gamblingSettings.max_single_bet}`
+        )
       );
       return false;
     }
@@ -127,16 +129,17 @@ export function useBettingModal({
       const totalToday = todayBetAmount + numAmount;
       if (totalToday > gamblingSettings.daily_bet_limit) {
         setValidationError(
-          language === 'zh'
-            ? `超出每日押注限制：${gamblingSettings.daily_bet_limit}（今日已用：${todayBetAmount}）`
-            : `Exceeds daily limit: ${gamblingSettings.daily_bet_limit} (used today: ${todayBetAmount})`
+          tr(
+            `超出每日押注限制：${gamblingSettings.daily_bet_limit}（今日已用：${todayBetAmount}）`,
+            `Exceeds daily limit: ${gamblingSettings.daily_bet_limit} (used today: ${todayBetAmount})`
+          )
         );
         return false;
       }
     }
 
     return true;
-  }, [availablePoints, gamblingSettings, todayBetAmount, language, tr]);
+  }, [availablePoints, gamblingSettings, todayBetAmount, tr]);
 
   // 处理押注金额变化
   const handleBetAmountChange = useCallback((value: string) => {
@@ -152,7 +155,7 @@ export function useBettingModal({
 
   // 提交押注
   const handlePlaceBet = useCallback(async () => {
-    if (!await validateBetAmount(betAmount)) {
+    if (!validateBetAmount(betAmount)) {
       return;
     }
 

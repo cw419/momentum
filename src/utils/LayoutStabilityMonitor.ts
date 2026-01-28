@@ -162,11 +162,9 @@ export class LayoutStabilityMonitor {
             this.checkElement(node as HTMLElement);
           }
         });
-      } else if (mutation.type === 'attributes') {
+      } else if (mutation.type === 'attributes' && mutation.target.nodeType === Node.ELEMENT_NODE) {
         // 检查样式变化
-        if (mutation.target.nodeType === Node.ELEMENT_NODE) {
-          this.checkElement(mutation.target as HTMLElement);
-        }
+        this.checkElement(mutation.target as HTMLElement);
       }
     }
   }

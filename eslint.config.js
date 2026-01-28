@@ -3,6 +3,7 @@ import globals from 'globals';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import sonarjs from 'eslint-plugin-sonarjs';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -31,6 +32,7 @@ export default tseslint.config(
       'jsx-a11y': jsxA11y,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      sonarjs,
     },
     rules: {
       ...jsxA11y.configs.recommended.rules,
@@ -62,6 +64,38 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      'sonarjs/cognitive-complexity': ['warn', 15],
+      'sonarjs/no-all-duplicated-branches': 'warn',
+      'sonarjs/no-collapsible-if': 'warn',
+      'sonarjs/no-duplicated-branches': 'warn',
+      'sonarjs/no-identical-conditions': 'warn',
+      'sonarjs/no-identical-expressions': 'warn',
+      'sonarjs/no-identical-functions': 'warn',
+      'sonarjs/no-inverted-boolean-check': 'warn',
+      'sonarjs/no-nested-template-literals': 'warn',
+      'sonarjs/no-redundant-boolean': 'warn',
+      'sonarjs/no-redundant-jump': 'warn',
+      'sonarjs/no-use-of-empty-return-value': 'warn',
+      'sonarjs/no-duplicate-string': [
+        'warn',
+        {
+          threshold: 5,
+          ignoreStrings: 'application/json',
+        },
+      ],
+    },
+  },
+  {
+    files: [
+      'src/components/BettingModal.tsx',
+      'src/components/ChainCard.tsx',
+      'src/components/ChainDetail.tsx',
+      'src/components/MigrationDialog.tsx',
+      'src/components/RecycleBinModal.tsx',
+      'src/components/TaskGroupEditor.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
   {

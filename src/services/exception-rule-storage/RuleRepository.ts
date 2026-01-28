@@ -109,13 +109,16 @@ export class RuleRepository {
         );
       }
 
-      if (updates.name && updates.name !== rules[ruleIndex].name) {
-        if (rules.some(r => r.name === updates.name && r.id !== id && r.isActive)) {
-          throw new ExceptionRuleException(
-            ExceptionRuleError.DUPLICATE_RULE_NAME,
-            `规则名称 "${updates.name}" 已存在`
-          );
-        }
+      const updatedName = updates.name;
+      if (
+        updatedName &&
+        updatedName !== rules[ruleIndex].name &&
+        rules.some(r => r.name === updatedName && r.id !== id && r.isActive)
+      ) {
+        throw new ExceptionRuleException(
+          ExceptionRuleError.DUPLICATE_RULE_NAME,
+          `规则名称 "${updatedName}" 已存在`
+        );
       }
 
       const updatedRule = { ...rules[ruleIndex], ...updates };
