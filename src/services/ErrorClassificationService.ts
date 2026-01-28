@@ -4,17 +4,4 @@
  * 此文件保持向后兼容性
  */
 
-export {
-  ErrorClassificationService,
-  errorClassificationService
-} from './errorClassification';
-
-export type {
-  ErrorClassification,
-  ErrorPattern,
-  ErrorAnalysis,
-  ErrorTrends,
-  ErrorStatistics,
-  BatchAnalysisResult,
-  ErrorClassifier
-} from './errorClassification';
+export { errorClassificationService } from './errorClassification/ErrorClassificationService';

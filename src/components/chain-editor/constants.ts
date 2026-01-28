@@ -1,9 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
 import { Bell, BookOpen, Code, Coffee, Clock, Dumbbell, Headphones, Target } from 'lucide-react';
 
-export type PresetLanguage = 'en' | 'zh';
+type PresetLanguage = 'en' | 'zh';
 
-export interface PresetTemplate {
+interface PresetTemplate {
   icon: LucideIcon;
   value: string;
   label: Record<PresetLanguage, string>;

@@ -14,11 +14,6 @@ export function getSupabaseErrorCode(error: unknown): string | undefined {
   return getStringField(error, 'code');
 }
 
-export function getSupabaseErrorMessage(error: unknown, fallback: string): string {
-  if (!isRecord(error)) return fallback;
-  return getStringField(error, 'message') ?? fallback;
-}
-
 export function formatSupabaseError(error: unknown, fallback: string): string {
   if (!isRecord(error)) return fallback;
 
@@ -35,4 +30,3 @@ export function formatSupabaseError(error: unknown, fallback: string): string {
 
   return parts.length > 0 ? parts.join(' | ') : fallback;
 }
-

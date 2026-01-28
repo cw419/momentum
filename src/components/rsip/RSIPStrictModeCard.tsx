@@ -4,6 +4,18 @@ import { RSIPConstraintIndicator } from './RSIPConstraintIndicator';
 import { RSIPPhaseBadge } from './RSIPPhaseBadge';
 import { RSIPPhaseProgress } from './RSIPPhaseProgress';
 
+const CARD_BG_CLASS_BY_PHASE: Record<RSIPStabilityPhase, string> = {
+  E0: 'bg-white border-slate-200 dark:bg-white/5 dark:border-white/10',
+  E1: 'bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30',
+  E2: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30',
+};
+
+const HOVER_BORDER_CLASS_BY_PHASE: Record<RSIPStabilityPhase, string> = {
+  E0: 'hover:border-slate-300 dark:hover:border-white/20',
+  E1: 'hover:border-blue-300 dark:hover:border-blue-500/50',
+  E2: 'hover:border-emerald-300 dark:hover:border-emerald-500/50',
+};
+
 interface RSIPStrictModeCardProps {
   node: RSIPNode;
   descendantCount: number;
@@ -22,19 +34,9 @@ export function RSIPStrictModeCard({
   const phase: RSIPStabilityPhase = node.stabilityPhase ?? 'E0';
   const consecutiveExecutions = node.consecutiveExecutions ?? 0;
 
-  const cardBgClass =
-    phase === 'E2'
-      ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30'
-      : phase === 'E1'
-        ? 'bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30'
-        : 'bg-white border-slate-200 dark:bg-white/5 dark:border-white/10';
+  const cardBgClass = CARD_BG_CLASS_BY_PHASE[phase];
 
-  const hoverBorderClass =
-    phase === 'E2'
-      ? 'hover:border-emerald-300 dark:hover:border-emerald-500/50'
-      : phase === 'E1'
-        ? 'hover:border-blue-300 dark:hover:border-blue-500/50'
-        : 'hover:border-slate-300 dark:hover:border-white/20';
+  const hoverBorderClass = HOVER_BORDER_CLASS_BY_PHASE[phase];
 
   const depthShadowClass =
     descendantCount > 3 ? 'shadow-md shadow-indigo-500/10 dark:shadow-indigo-500/10' : 'shadow-sm';

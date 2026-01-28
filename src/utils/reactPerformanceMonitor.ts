@@ -155,14 +155,3 @@ class ReactPerformanceMonitor {
 
 // Singleton instance
 export const reactPerformanceMonitor = new ReactPerformanceMonitor();
-
-/**
- * React hook for performance monitoring
- */
-export const usePerformanceMonitor = (componentName: string) => {
-  const trackRender = (renderTime: number) => {
-    reactPerformanceMonitor.trackRender(componentName, renderTime);
-  };
-
-  return { trackRender };
-};

@@ -236,35 +236,18 @@ export const isGroupFullyCompleted = (groupNode: ChainTreeNode): boolean => {
 /**
  * 检查单个任务是否已完成其重复次数
  */
-export const isTaskCompleted = (task: ChainTreeNode): boolean => {
-  if (task.type === 'group') {
-    return false;
-  }
-
-  const requiredRepeats = task.taskRepeatCount || 1;
-  return task.currentStreak >= requiredRepeats;
-};
 
 /**
  * 获取任务还需要重复的次数
  */
-export const getRemainingRepeats = (task: ChainTreeNode): number => {
-  if (task.type !== 'unit') {
-    return 0;
-  }
-  
-  const requiredRepeats = task.taskRepeatCount || 1;
-  const remaining = requiredRepeats - task.currentStreak;
-  return Math.max(0, remaining);
-};
 
 /**
  * 重置任务群中所有任务的完成进度
  */
-export const resetGroupTaskProgress = (chains: Chain[], groupId: string): Chain[] => {
+const resetGroupTaskProgress = (chains: Chain[], groupId: string): Chain[] => {
   const chainTree = buildChainTree(chains);
   const groupNode = chainTree.find(node => node.id === groupId);
-  
+
   if (!groupNode || groupNode.type !== 'group') {
     performanceLogger.warn(`resetGroupTaskProgress: 群组节点未找到或类型不正确`, {
       groupId,
@@ -356,41 +339,8 @@ export const resetGroupCompletionCount = (chains: Chain[], groupId: string): Cha
 /**
  * 完成任务群时更新所有子单元的完成次数（保持向后兼容）
  */
-export const updateGroupCompletions = (chains: Chain[], groupId: string): Chain[] => {
-  const chainTree = buildChainTree(chains);
-  const groupNode = chainTree.find(node => node.id === groupId);
-  
-  if (!groupNode || groupNode.type !== 'group') {
-    return chains;
-  }
-  
   // 获取所有子单元的ID
-  const getAllChildIds = (node: ChainTreeNode): string[] => {
-    let ids: string[] = [];
-    if (node.type === 'unit') {
-      ids.push(node.id);
-    }
-    node.children.forEach(child => {
-      ids = ids.concat(getAllChildIds(child));
-    });
-    return ids;
-  };
-  
-  const childIds = getAllChildIds(groupNode);
-  
   // 更新任务群和所有子单元的完成次数
-  return chains.map(chain => {
-    if (chain.id === groupId || childIds.includes(chain.id)) {
-      return {
-        ...chain,
-        currentStreak: chain.currentStreak + 1,
-        totalCompletions: chain.totalCompletions + 1,
-        lastCompletedAt: new Date(),
-      };
-    }
-    return chain;
-  });
-};
 
 /**
  * 获取所有顶层任务（用于仪表盘显示）

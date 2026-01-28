@@ -26,7 +26,7 @@ export interface RuleTypeStats {
  * 规则统计服务类
  * 单一职责：处理所有规则统计相关的逻辑
  */
-export class RuleStatsService {
+class RuleStatsService {
   /**
    * 获取规则统计信息
    */

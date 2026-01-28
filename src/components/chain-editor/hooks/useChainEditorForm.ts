@@ -142,7 +142,12 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
       return;
     }
 
-    const finalDuration = isDurationless ? 0 : duration === 0 ? 45 : duration;
+    let finalDuration = duration;
+    if (isDurationless) {
+      finalDuration = 0;
+    } else if (duration === 0) {
+      finalDuration = 45;
+    }
     const finalAuxiliaryDuration = auxiliaryDuration === 0 ? 15 : auxiliaryDuration;
 
     let finalParentId = parentId;

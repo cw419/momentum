@@ -108,4 +108,3 @@ export class RecoveryStrategyRegistry {
 }
 
 // 创建全局策略注册表实例
-export const recoveryStrategyRegistry = new RecoveryStrategyRegistry();

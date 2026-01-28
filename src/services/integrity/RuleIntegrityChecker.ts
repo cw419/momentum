@@ -4,9 +4,10 @@
 
 import { ExceptionRule, ExceptionRuleType } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
-import type { IntegrityIssue } from './types';
+import type { IntegrityIssue } from './IntegrityTypes';
+import { randomId } from '../../utils/random';
 
-export class RuleIntegrityChecker {
+class RuleIntegrityChecker {
   validateRuleIds(rules: ExceptionRule[]): IntegrityIssue[] {
     const issues: IntegrityIssue[] = [];
     const seenIds = new Set<string>();
@@ -190,7 +191,7 @@ export class RuleIntegrityChecker {
   }
 
   private generateUniqueId(): string {
-    return `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return randomId('rule');
   }
 
   private isValidId(id: string): boolean {

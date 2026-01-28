@@ -7,7 +7,7 @@ import type { Chain, ChainDraft } from '../types';
 import { TaskGroupEditorView } from './TaskGroupEditorView';
 import { useTaskGroupEditor } from './useTaskGroupEditor';
 
-export interface TaskGroupEditorContainerProps {
+interface TaskGroupEditorContainerProps {
   chain?: Chain;
   isEditing: boolean;
   initialParentId?: string;

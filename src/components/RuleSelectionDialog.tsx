@@ -18,6 +18,20 @@ import { RuleSelectionDialogView } from './RuleSelectionDialogView';
 
 type ActionType = 'pause' | 'early_completion';
 
+function getDefaultRuleNames(action: ActionType, language: string) {
+  if (action === 'pause') {
+    return language === 'zh' ? ['上厕所', '接电话'] : ['Bathroom break', 'Phone call'];
+  }
+
+  return language === 'zh' ? ['提前达成目标'] : ['Reached goal early'];
+}
+
+function getPauseOptions(actionType: ActionType, isIndefinite: boolean, durationMinutes: number | undefined): PauseOptions | undefined {
+  if (actionType !== 'pause') return undefined;
+  if (isIndefinite) return { autoResume: false };
+  return { duration: (durationMinutes ?? 15) * 60, autoResume: true };
+}
+
 interface RuleSelectionDialogProps {
   isOpen: boolean;
   actionType: ActionType;
@@ -54,14 +68,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
   const createDefaultPresetRules = useCallback(
     async (chainId: string, action: ActionType): Promise<ExceptionRule[]> => {
-      const defaultRuleNames =
-        action === 'pause'
-          ? language === 'zh'
-            ? ['上厕所', '接电话']
-            : ['Bathroom break', 'Phone call']
-          : language === 'zh'
-            ? ['提前达成目标']
-            : ['Reached goal early'];
+      const defaultRuleNames = getDefaultRuleNames(action, language);
 
       const ruleType = action === 'pause' ? ExceptionRuleType.PAUSE_ONLY : ExceptionRuleType.EARLY_COMPLETION_ONLY;
 
@@ -195,12 +202,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
           logger.debug('RULE_SELECTION', '选择规则', { ruleId: rule.id, actionType });
         }
 
-        const pauseOptions: PauseOptions | undefined =
-          actionType === 'pause'
-            ? isIndefinite
-              ? { autoResume: false }
-              : { duration: (duration ?? 15) * 60, autoResume: true }
-            : undefined;
+        const pauseOptions = getPauseOptions(actionType, isIndefinite, duration);
 
         onRuleSelected(rule, pauseOptions);
       } catch (err) {

@@ -69,10 +69,7 @@ class PerformanceMonitor {
 
     const requestIdleCallbackFn = window.requestIdleCallback;
     if (typeof requestIdleCallbackFn === 'function') {
-      requestIdleCallbackFn((_deadline) => {
-        void _deadline;
-        callback();
-      }, { timeout });
+      requestIdleCallbackFn(() => callback(), { timeout });
       return;
     }
 
@@ -82,7 +79,6 @@ class PerformanceMonitor {
   private initializeObservers() {
     if (typeof window === 'undefined') return;
     if (!this.isMonitoring) return;
-
     if (!('PerformanceObserver' in window)) return;
 
     this.initializeLayoutObserver();
@@ -90,7 +86,7 @@ class PerformanceMonitor {
     this.initializeMeasureObserver();
   }
 
-  private initializeLayoutObserver() {
+  private initializeLayoutObserver(): void {
     try {
       this.observers.layout = new PerformanceObserver((list) => {
         // 使用 requestIdleCallback 在空闲时处理数据
@@ -98,18 +94,17 @@ class PerformanceMonitor {
           for (const entry of list.getEntries()) {
             if (isLayoutShiftEntry(entry) && !entry.hadRecentInput) {
               this.metrics.layoutShifts += entry.value;
-
               // 只在后台模式下记录，不立即输出
               if (this.backgroundMode) {
                 this.addToBuffer({
                   type: 'layout-shift',
                   value: entry.value,
-                  timestamp: Date.now()
+                  timestamp: Date.now(),
                 });
               } else if (entry.value > 0.1) {
                 performanceLogger.warn('🚨 检测到大幅布局偏移:', {
                   value: entry.value,
-                  sources: entry.sources
+                  sources: entry.sources,
                 });
               }
             }
@@ -126,7 +121,7 @@ class PerformanceMonitor {
     }
   }
 
-  private initializePaintObserver() {
+  private initializePaintObserver(): void {
     try {
       this.observers.paint = new PerformanceObserver((list) => {
         this.runWhenIdle(() => {
@@ -137,7 +132,7 @@ class PerformanceMonitor {
                 type: 'paint',
                 name: entry.name,
                 startTime: entry.startTime,
-                timestamp: Date.now()
+                timestamp: Date.now(),
               });
             }
           }
@@ -153,7 +148,7 @@ class PerformanceMonitor {
     }
   }
 
-  private initializeMeasureObserver() {
+  private initializeMeasureObserver(): void {
     try {
       this.observers.measure = new PerformanceObserver((list) => {
         this.runWhenIdle(() => {
@@ -163,7 +158,7 @@ class PerformanceMonitor {
                 type: 'measure',
                 name: entry.name,
                 duration: entry.duration,
-                timestamp: Date.now()
+                timestamp: Date.now(),
               });
 
               if (!this.backgroundMode) {
@@ -408,26 +403,3 @@ class PerformanceMonitor {
 
 // 单例实例
 export const performanceMonitor = new PerformanceMonitor();
-
-// React Hook
-export const usePerformanceMonitoring = (componentName: string) => {
-  const startMonitoring = () => performanceMonitor.startMonitoring();
-  const stopMonitoring = () => performanceMonitor.stopMonitoring();
-  
-  const measureRender = <T>(renderFn: () => T): T => {
-    return performanceMonitor.measureRender(componentName, renderFn);
-  };
-
-  const measureInteraction = <T>(interactionName: string, interactionFn: () => T): T => {
-    return performanceMonitor.measureInteraction(`${componentName}-${interactionName}`, interactionFn);
-  };
-
-  return {
-    startMonitoring,
-    stopMonitoring,
-    measureRender,
-    measureInteraction,
-    reportMetrics: () => performanceMonitor.reportMetrics(),
-    checkPerformance: () => performanceMonitor.checkPerformance()
-  };
-};

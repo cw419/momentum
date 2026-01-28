@@ -86,10 +86,10 @@ export function useRSIPReparent({
         const node = findInTree(tree, id);
         if (!node) return res;
         const walk = (n: RSIPTreeNode) => {
-          n.children.forEach(c => {
+          for (const c of n.children) {
             res.push(c.id);
             walk(c);
-          });
+          }
         };
         walk(node);
         return res;

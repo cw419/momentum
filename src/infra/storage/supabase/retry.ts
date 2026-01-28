@@ -1,7 +1,7 @@
+import type { User } from '@supabase/supabase-js';
 import { logger } from '../../../utils/logger';
 import { isDev } from '../../../utils/env';
 import { formatSupabaseError, getSupabaseErrorCode } from './supabaseError';
-import type { User } from '@supabase/supabase-js';
 
 const NON_RETRYABLE_ERROR_CODES = new Set(['PGRST204', 'PGRST116', '42703', '42P01']);
 const NON_RETRYABLE_ERROR_MESSAGES = [
@@ -30,43 +30,30 @@ function toErrorWithMetadata(error: unknown): ErrorWithSupabaseMetadata {
   // unreachable
 }
 
-function isNonRetryableErrorMessage(message: string): boolean {
+function isNonRetryableMessage(message: string): boolean {
   const normalizedMessage = message.toLowerCase();
-  return NON_RETRYABLE_ERROR_MESSAGES.some(fragment => normalizedMessage.includes(fragment));
+  return NON_RETRYABLE_ERROR_MESSAGES.some((fragment) => normalizedMessage.includes(fragment));
 }
 
-function isAuthRelatedErrorMessage(message: string): boolean {
-  const normalizedMessage = message.toLowerCase();
-  return AUTH_ERROR_MESSAGE_FRAGMENTS.some(fragment => normalizedMessage.includes(fragment));
-}
-
-function isNonRetryableErrorCode(error: unknown): boolean {
+function isNonRetryableCode(error: unknown): boolean {
   const errorCode = getSupabaseErrorCode(error);
-  return !!(errorCode && NON_RETRYABLE_ERROR_CODES.has(errorCode));
+  return Boolean(errorCode) && NON_RETRYABLE_ERROR_CODES.has(errorCode as string);
 }
 
-function shouldAbortRetry(error: unknown, lastError: ErrorWithSupabaseMetadata): boolean {
-  return isNonRetryableErrorMessage(lastError.message) || isNonRetryableErrorCode(error);
-}
-
-function shouldAbortRetryWithAuth(
-  error: unknown,
-  lastError: ErrorWithSupabaseMetadata
-): { shouldAbort: boolean; isAuthError: boolean } {
-  const isAuthError = isAuthRelatedErrorMessage(lastError.message);
-  const shouldAbort = isNonRetryableErrorMessage(lastError.message) || (!isAuthError && isNonRetryableErrorCode(error));
-  return { shouldAbort, isAuthError };
+function isAuthRelatedMessage(message: string): boolean {
+  const normalizedMessage = message.toLowerCase();
+  return AUTH_ERROR_MESSAGE_FRAGMENTS.some((fragment) => normalizedMessage.includes(fragment));
 }
 
 function getRetryDelayMs(baseDelay: number, attempt: number): number {
   return baseDelay * Math.pow(2, attempt);
 }
 
-async function sleep(ms: number): Promise<void> {
-  await new Promise(resolve => setTimeout(resolve, ms));
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function maybeWaitForAuthentication(
+async function ensureAuthenticatedForRetry(
   deps: {
     isUserAuthenticated(): Promise<boolean>;
     waitForAuthentication(maxWaitTime?: number): Promise<{ user: User | null; isAuthenticated: boolean }>;
@@ -76,10 +63,21 @@ async function maybeWaitForAuthentication(
   const isAuthenticated = await deps.isUserAuthenticated();
   if (isAuthenticated || attempt === 0) return;
 
-  const { user, isAuthenticated: isAuthAfterWait } = await deps.waitForAuthentication(5000);
-  if (!isAuthAfterWait || !user) {
+  const { user, isAuthenticated: isAuthenticatedAfterWait } = await deps.waitForAuthentication(5000);
+  if (!isAuthenticatedAfterWait || !user) {
     throw new Error('Authentication failed after waiting');
   }
+}
+
+function logAuthAwareRetryAttempt(details: {
+  delay: number;
+  attempt: number;
+  maxRetries: number;
+  error: string;
+  isAuthError: boolean;
+}): void {
+  if (!isDev) return;
+  logger.warn('SUPABASE_STORAGE', 'Auth-aware retry', details);
 }
 
 export async function retryOperation<T>(
@@ -95,7 +93,7 @@ export async function retryOperation<T>(
     } catch (error) {
       lastError = toErrorWithMetadata(error);
 
-      if (shouldAbortRetry(error, lastError)) {
+      if (isNonRetryableMessage(lastError.message) || isNonRetryableCode(error)) {
         throw lastError;
       }
 
@@ -136,14 +134,17 @@ export async function retryWithAuth<T>(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      await maybeWaitForAuthentication(deps, attempt);
-
+      await ensureAuthenticatedForRetry(deps, attempt);
       return await operation();
     } catch (error) {
       lastError = toErrorWithMetadata(error);
 
-      const decision = shouldAbortRetryWithAuth(error, lastError);
-      if (decision.shouldAbort) {
+      if (isNonRetryableMessage(lastError.message)) {
+        throw lastError;
+      }
+
+      const isAuthError = isAuthRelatedMessage(lastError.message);
+      if (!isAuthError && isNonRetryableCode(error)) {
         throw lastError;
       }
 
@@ -151,21 +152,19 @@ export async function retryWithAuth<T>(
         logger.error('SUPABASE_STORAGE', 'Database operation failed after retries with auth', {
           maxRetries,
           error: lastError.message,
-          isAuthError: decision.isAuthError,
+          isAuthError,
         });
         throw lastError;
       }
 
       const delay = getRetryDelayMs(baseDelay, attempt);
-      if (isDev) {
-        logger.warn('SUPABASE_STORAGE', 'Auth-aware retry', {
-          delay,
-          attempt: attempt + 1,
-          maxRetries,
-          error: lastError.message,
-          isAuthError: decision.isAuthError,
-        });
-      }
+      logAuthAwareRetryAttempt({
+        delay,
+        attempt: attempt + 1,
+        maxRetries,
+        error: lastError.message,
+        isAuthError,
+      });
 
       await sleep(delay);
     }
@@ -173,3 +172,4 @@ export async function retryWithAuth<T>(
 
   throw lastError ?? new Error('Retry with auth failed');
 }
+

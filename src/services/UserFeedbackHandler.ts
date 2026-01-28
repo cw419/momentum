@@ -25,7 +25,7 @@ import {
 
 export type { FeedbackMessage, FeedbackAction, ProgressInfo };
 
-export class UserFeedbackHandler {
+class UserFeedbackHandler {
   private readonly store: MessageStore;
   private readonly formatter: ErrorMessageFormatter;
   private readonly presenter: FeedbackPresenter;

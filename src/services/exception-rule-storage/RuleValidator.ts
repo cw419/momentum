@@ -131,6 +131,12 @@ export class RuleValidator {
   /**
    * 验证创建时的作用域设置
    */
+  private inferScope(scope: ExceptionRule['scope'] | undefined, chainId: string | undefined): ExceptionRule['scope'] {
+    if (scope === 'chain' || scope === 'global') return scope;
+    if (typeof chainId === 'string' && chainId.trim().length > 0) return 'chain';
+    return 'global';
+  }
+
   private validateScopeForCreation(rule: Partial<ExceptionRule>): void {
     if (rule.scope !== undefined && rule.scope !== 'chain' && rule.scope !== 'global') {
       throw new ExceptionRuleException(
@@ -139,12 +145,7 @@ export class RuleValidator {
       );
     }
 
-    const inferredScope: ExceptionRule['scope'] =
-      rule.scope === 'chain' || rule.scope === 'global'
-        ? rule.scope
-        : rule.chainId && rule.chainId.trim().length > 0
-          ? 'chain'
-          : 'global';
+    const inferredScope = this.inferScope(rule.scope, rule.chainId);
 
     if (inferredScope === 'chain' && (!rule.chainId || rule.chainId.trim().length === 0)) {
       throw new ExceptionRuleException(
@@ -163,12 +164,7 @@ export class RuleValidator {
         ? rule.chainId
         : undefined;
 
-    const scope: ExceptionRule['scope'] =
-      rule.scope === 'chain' || rule.scope === 'global'
-        ? rule.scope
-        : normalizedChainId
-          ? 'chain'
-          : 'global';
+    const scope = this.inferScope(rule.scope, normalizedChainId);
 
     return {
       name: rule.name,

@@ -1,18 +1,20 @@
 /**
- * 桌面通知工具类
+ * Desktop notification utilities.
  */
 
 import { logger } from './logger';
 import { localPreferences } from './localPreferences';
+import { randomId } from './random';
 
 type Language = 'en' | 'zh';
 
 const detectBrowserLanguage = (): Language => {
   if (typeof navigator === 'undefined') return 'en';
 
-  const candidates = Array.isArray(navigator.languages) && navigator.languages.length > 0
-    ? navigator.languages
-    : [navigator.language];
+  const candidates =
+    Array.isArray(navigator.languages) && navigator.languages.length > 0
+      ? navigator.languages
+      : [navigator.language];
 
   for (const candidate of candidates) {
     if (typeof candidate !== 'string') continue;
@@ -28,7 +30,13 @@ const getCurrentLanguage = (): Language => {
   return detectBrowserLanguage();
 };
 
-export interface NotificationOptions {
+const formatChainWithReason = (language: Language, chainName: string, reason?: string) => {
+  const quotedChainName = `"${chainName}"`;
+  if (!reason) return quotedChainName;
+  return language === 'zh' ? `${quotedChainName}：${reason}` : `${quotedChainName}: ${reason}`;
+};
+
+interface NotificationOptions {
   title: string;
   body: string;
   icon?: string;
@@ -39,7 +47,7 @@ export interface NotificationOptions {
 
 class NotificationManager {
   private permission: NotificationPermission = 'default';
-  private isEnabled: boolean = false;
+  private isEnabled = false;
 
   constructor() {
     this.checkPermission();
@@ -50,49 +58,100 @@ class NotificationManager {
     if (!this.isNotificationsEnabled()) return null;
 
     const language = getCurrentLanguage();
-    const title = language === 'zh' ? '任务失败' : 'Task failed';
-    const reasonSuffix = reason ? (language === 'zh' ? `：${reason}` : `: ${reason}`) : '';
-    const body = `"${chainName}"${reasonSuffix}`;
-
     return this.showNotification({
-      title,
-      body,
+      title: language === 'zh' ? '任务失败' : 'Task failed',
+      body: formatChainWithReason(language, chainName, reason),
       icon: '/vite.svg',
-      tag: `task-failed-${Date.now()}`,
+      tag: randomId('task-failed'),
       requireInteraction: true,
     });
   }
 
-  /**
-   * 检查通知权限
-   */
+  async notifyTaskCompleted(chainName: string, streak: number, message?: string) {
+    if (!this.isNotificationsEnabled()) return null;
+
+    const language = getCurrentLanguage();
+    const messageSuffix = message ? ` ${message}` : '';
+
+    return this.showNotification({
+      title: language === 'zh' ? '任务完成' : 'Task completed',
+      body:
+        language === 'zh'
+          ? `"${chainName}"已完成！${messageSuffix}当前记录: #${streak}`
+          : `"${chainName}" completed!${messageSuffix}Current streak: #${streak}`,
+      icon: '/vite.svg',
+      tag: randomId('task-completed'),
+      requireInteraction: false,
+    });
+  }
+
+  async notifyTaskWarning(chainName: string, timeRemaining: string) {
+    if (!this.isNotificationsEnabled()) return null;
+
+    const language = getCurrentLanguage();
+    return this.showNotification({
+      title: language === 'zh' ? '任务即将结束' : 'Task ending soon',
+      body:
+        language === 'zh'
+          ? `"${chainName}"还剩${timeRemaining}，请继续保持专注！`
+          : `"${chainName}" has ${timeRemaining} left. Stay focused!`,
+      icon: '/vite.svg',
+      tag: randomId('task-warning'),
+      requireInteraction: false,
+    });
+  }
+
+  async notifyScheduleWarning(chainName: string, timeRemaining: string) {
+    if (!this.isNotificationsEnabled()) return null;
+
+    const language = getCurrentLanguage();
+    return this.showNotification({
+      title: language === 'zh' ? '预约即将到期' : 'Schedule expiring',
+      body:
+        language === 'zh'
+          ? `"${chainName}"预约还剩${timeRemaining}，请准备开始任务！`
+          : `"${chainName}" schedule has ${timeRemaining} left. Get ready to start!`,
+      icon: '/vite.svg',
+      tag: randomId('schedule-warning'),
+      requireInteraction: true,
+    });
+  }
+
+  async notifyScheduleFailed(chainName: string) {
+    if (!this.isNotificationsEnabled()) return null;
+
+    const language = getCurrentLanguage();
+    return this.showNotification({
+      title: language === 'zh' ? '预约失败' : 'Schedule failed',
+      body:
+        language === 'zh'
+          ? `"${chainName}"预约时间已到期，需要进行规则判定。`
+          : `"${chainName}" schedule expired. Adjudication required.`,
+      icon: '/vite.svg',
+      tag: randomId('schedule-failed'),
+      requireInteraction: true,
+    });
+  }
+
   private checkPermission() {
+    if (typeof window === 'undefined') return;
     if ('Notification' in window) {
       this.permission = Notification.permission;
     }
   }
 
-  /**
-   * 从本地存储加载启用状态
-   */
   private loadEnabledState() {
     const stored = localPreferences.getNotificationsEnabled();
     this.isEnabled = stored === true && this.permission === 'granted';
   }
 
-  /**
-   * 保存启用状态到本地存储
-   */
   private saveEnabledState() {
     localPreferences.setNotificationsEnabled(this.isEnabled);
   }
 
-  /**
-   * 请求通知权限
-   */
   async requestPermission(): Promise<boolean> {
-    if (!('Notification' in window)) {
-      logger.warn('NOTIFICATIONS', 'Desktop notifications are not supported in this browser');
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      logger.warn('NOTIFICATIONS', 'Desktop notifications are not supported in this environment');
       return false;
     }
 
@@ -119,9 +178,6 @@ class NotificationManager {
     }
   }
 
-  /**
-   * 启用通知
-   */
   async enableNotifications(): Promise<boolean> {
     const hasPermission = await this.requestPermission();
     if (hasPermission) {
@@ -131,28 +187,17 @@ class NotificationManager {
     return hasPermission;
   }
 
-  /**
-   * 禁用通知
-   */
   disableNotifications(): void {
     this.isEnabled = false;
     this.saveEnabledState();
   }
 
-  /**
-   * 检查通知是否启用
-   */
   isNotificationsEnabled(): boolean {
     return this.isEnabled && this.permission === 'granted';
   }
-  /**
-   * 显示通知
-   */
+
   async showNotification(options: NotificationOptions): Promise<Notification | null> {
-    // 如果用户主动关闭了通知，直接返回null，不显示任何提示
-    if (!this.isNotificationsEnabled()) {
-      return null;
-    }
+    if (!this.isNotificationsEnabled()) return null;
 
     try {
       const notification = new Notification(options.title, {
@@ -163,115 +208,29 @@ class NotificationManager {
         silent: options.silent || false,
       });
 
-      // 添加点击事件处理
       notification.onclick = () => {
         window.focus();
         notification.close();
       };
 
-      // 自动关闭通知（除非需要用户交互）
       if (!options.requireInteraction) {
-        setTimeout(() => {
-          if (notification) {
-            notification.close();
-          }
-        }, 5000);
+        window.setTimeout(() => notification.close(), 5000);
       }
 
       return notification;
     } catch {
-      // 静默处理错误，不显示任何提示
       return null;
     }
   }
 
-  /**
-   * 任务完成通知
-   */
-  async notifyTaskCompleted(chainName: string, streak: number, message?: string) {
-    if (!this.isNotificationsEnabled()) return null;
-    const messageSuffix = message ? ` ${message}` : '';
-    const language = getCurrentLanguage();
-
-    return this.showNotification({
-      title: language === 'zh' ? '任务完成' : 'Task completed',
-      body: language === 'zh'
-        ? `"${chainName}"已完成！${messageSuffix}当前记录: #${streak}`
-        : `"${chainName}" completed!${messageSuffix}Current streak: #${streak}`,
-      icon: '/vite.svg',
-      tag: `task-completed-${Date.now()}`, // 确保每次通知都是唯一的
-      requireInteraction: false,
-    });
-  }
-
-  /**
-   * 任务即将结束通知
-   */
-  async notifyTaskWarning(chainName: string, timeRemaining: string) {
-    if (!this.isNotificationsEnabled()) return null;
-    const language = getCurrentLanguage();
-    
-    return this.showNotification({
-      title: language === 'zh' ? '任务即将结束' : 'Task ending soon',
-      body: language === 'zh'
-        ? `"${chainName}"还剩${timeRemaining}，请继续保持专注！`
-        : `"${chainName}" has ${timeRemaining} left. Stay focused!`,
-      icon: '/vite.svg',
-      tag: `task-warning-${Date.now()}`, // 确保每次通知都是唯一的
-      requireInteraction: false,
-    });
-  }
-
-  /**
-   * 预约即将到期通知
-   */
-  async notifyScheduleWarning(chainName: string, timeRemaining: string) {
-    if (!this.isNotificationsEnabled()) return null;
-    const language = getCurrentLanguage();
-    
-    return this.showNotification({
-      title: language === 'zh' ? '预约即将到期' : 'Schedule expiring',
-      body: language === 'zh'
-        ? `"${chainName}"预约还剩${timeRemaining}，请准备开始任务！`
-        : `"${chainName}" schedule has ${timeRemaining} left. Get ready to start!`,
-      icon: '/vite.svg',
-      tag: `schedule-warning-${Date.now()}`, // 确保每次通知都是唯一的
-      requireInteraction: true,
-    });
-  }
-
-  /**
-   * 预约失败通知
-   */
-  async notifyScheduleFailed(chainName: string) {
-    if (!this.isNotificationsEnabled()) return null;
-    const language = getCurrentLanguage();
-    
-    return this.showNotification({
-      title: language === 'zh' ? '预约失败' : 'Schedule failed',
-      body: language === 'zh'
-        ? `"${chainName}"预约时间已到期，需要进行规则判定`
-        : `"${chainName}" schedule expired. Adjudication required.`,
-      icon: '/vite.svg',
-      tag: `schedule-failed-${Date.now()}`, // 确保每次通知都是唯一的
-      requireInteraction: true,
-    });
-  }
-
-  /**
-   * 检查是否支持通知
-   */
   isSupported(): boolean {
+    if (typeof window === 'undefined') return false;
     return 'Notification' in window;
   }
 
-  /**
-   * 获取当前权限状态
-   */
   getPermission(): NotificationPermission {
     return this.permission;
   }
 }
 
-// 导出单例实例
 export const notificationManager = new NotificationManager();

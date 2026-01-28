@@ -14,7 +14,7 @@
 import { logger } from './logger';
 
 // Storage keys - centralized for easy management
-export const LOCAL_STORAGE_KEYS = {
+const LOCAL_STORAGE_KEYS = {
   // UI Preferences
   THEME: 'theme',
   LANGUAGE: 'language',
@@ -41,7 +41,7 @@ export interface CanvasState {
   positionY: number;
 }
 
-export interface AutoResumeData {
+interface AutoResumeData {
   chainId: string;
   startedAt: string;
   resumeAt: string;

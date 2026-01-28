@@ -1,7 +1,7 @@
 import type { Chain, DeletedChain } from '../../../types';
 import { logger } from '../../../utils/logger';
 import { toError } from '../../../utils/errorMessage';
-import type { SupabaseStorageContext, SchemaVerificationResult } from './types';
+import type { SupabaseStorageContext } from './types';
 import { buildChainRow, mapChainRowToChain } from './mappers';
 import type { Database } from '../../../lib/database.types';
 import { formatSupabaseError, getSupabaseErrorCode } from './supabaseError';
@@ -362,13 +362,6 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
       throw new Error(`Duplicate chain id detected: ${chain.id}`);
     }
   }
-
-  const schemaCheck: SchemaVerificationResult = {
-    hasAllColumns: true,
-    missingColumns: [],
-    error: 'Schema verification simplified for reliable imports',
-  };
-  void schemaCheck;
 
   const rowsWithNew = chains.map(c => buildChainRow(c, user.id, true));
   const rowsBase = chains.map(c => buildChainRow(c, user.id, false));

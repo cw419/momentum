@@ -4,7 +4,7 @@
  *
  * 职责：
  * - 导入链条数据（支持增量合并）
- * - 导入完成历史、RSIP 节点、例外规则
+ * - 导入完成历史、RSIP 节点
  * - 处理 ID 冲突检测
  * - Supabase 模式下的身份验证检查
  *
@@ -12,17 +12,14 @@
  * 1. 数据有效性
  * 2. ID 冲突
  * 3. 用户身份验证（Supabase 模式）
- *
- * @see src/types/index.ts - 导入数据类型定义
  */
 import type { Dispatch, SetStateAction } from 'react';
-import type { Chain, CompletionHistory, ExceptionRule, RSIPMeta, RSIPNode } from '../../types';
-import type { AppState } from '../../types';
+import type { AppState, Chain, CompletionHistory, ExceptionRule, RSIPMeta, RSIPNode } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
+import { useI18n } from '../../i18n';
 import { logger } from '../../utils/logger';
 import { queryOptimizer } from '../../utils/queryOptimizer';
-import { useI18n } from '../../i18n';
 
 interface ImportChainsOptions {
   history?: CompletionHistory[];
@@ -37,137 +34,144 @@ interface UseImportExportDomainParams {
   setState: Dispatch<SetStateAction<AppState>>;
 }
 
+function appendIfNonEmpty<T>(existing: T[], incoming: T[] | undefined): T[] {
+  if (!incoming || incoming.length === 0) return existing;
+  return [...existing, ...incoming];
+}
+
 export function useImportExportDomain({ storage, safelySaveChains, setState }: UseImportExportDomainParams) {
   const { tr } = useI18n();
+
+  async function ensureAuthenticatedForImport(): Promise<void> {
+    if (storage.kind !== 'supabase') return;
+
+    logger.debug('APP_SHELL', 'Double-checking authentication state before import operations');
+    const isAuth = await storage.isUserAuthenticated();
+
+    if (!isAuth.ok) {
+      logger.warn('IMPORT', 'isUserAuthenticated failed', {
+        code: isAuth.error.code,
+        message: isAuth.error.message,
+      });
+    }
+
+    if (isAuth.ok && isAuth.value) return;
+
+    logger.debug('IMPORT', 'Authentication not ready; waiting');
+    const authResult = await storage.waitForAuthentication(10000);
+
+    if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
+      throw new Error(
+        tr(
+          '导入时身份验证失败：请确保您已正确登录，然后重试导入操作。',
+          'Authentication failed during import. Please make sure you are signed in and try again.'
+        )
+      );
+    }
+
+    logger.debug('IMPORT', 'Authentication confirmed after wait', { userId: authResult.value.user.id });
+  }
+
+  function assertValidImportedChains(importedChains: Chain[]): void {
+    if (!Array.isArray(importedChains) || importedChains.length === 0) {
+      throw new Error(tr('没有有效的链条数据可导入', 'No valid chains found to import'));
+    }
+  }
+
+  function assertNoIdConflicts(currentChains: Chain[], importedChains: Chain[]): void {
+    const existingIds = new Set(currentChains.map((chain) => chain.id));
+    const conflictingIds = importedChains.filter((chain) => existingIds.has(chain.id)).map((chain) => chain.id);
+
+    if (conflictingIds.length === 0) return;
+
+    logger.error('IMPORT', 'Detected chain ID conflicts', { conflictingIds });
+    throw new Error(
+      tr(
+        `导入失败：发现 ${conflictingIds.length} 个ID冲突的链条`,
+        `Import failed: found ${conflictingIds.length} chains with conflicting IDs`
+      )
+    );
+  }
+
+  async function persistImportedHistory(history: CompletionHistory[] | undefined): Promise<void> {
+    if (!history || history.length === 0) return;
+
+    if (storage.kind === 'supabase') {
+      await storage.saveCompletionHistory(history);
+      return;
+    }
+
+    const existing = await storage.getCompletionHistory();
+    await storage.saveCompletionHistory([...existing, ...history]);
+  }
+
+  async function persistImportedRsipNodes(nodes: RSIPNode[] | undefined): Promise<void> {
+    if (!nodes || nodes.length === 0) return;
+
+    const existingNodes = await storage.getRSIPNodes();
+    await storage.saveRSIPNodes([...existingNodes, ...nodes]);
+  }
+
+  async function persistImportedRsipMeta(meta: RSIPMeta | undefined): Promise<void> {
+    if (!meta) return;
+
+    const existingMeta = await storage.getRSIPMeta();
+    await storage.saveRSIPMeta({ ...existingMeta, ...meta });
+  }
+
+  async function reloadStateAfterImportFailure(): Promise<void> {
+    const currentChains = await storage.getChains();
+    const currentRsipNodes = await storage.getRSIPNodes();
+    const currentRsipMeta = await storage.getRSIPMeta();
+
+    setState((prev) => ({
+      ...prev,
+      chains: currentChains,
+      rsipNodes: currentRsipNodes,
+      rsipMeta: currentRsipMeta,
+    }));
+  }
+
   const handleImportChains = async (importedChains: Chain[], options?: ImportChainsOptions) => {
     logger.info('APP_SHELL', '开始导入数据', { chainCount: importedChains.length, options });
 
     try {
-      if (storage.kind === 'supabase') {
-        // CRITICAL FIX: Additional authentication check as a safety net
-        logger.debug('APP_SHELL', 'Double-checking authentication state before import operations');
-        const isAuth = await storage.isUserAuthenticated();
-
-        if (!isAuth.ok) {
-          logger.warn('IMPORT', 'isUserAuthenticated failed', {
-            code: isAuth.error.code,
-            message: isAuth.error.message,
-          });
-        }
-
-        if (!isAuth.ok || !isAuth.value) {
-          logger.debug('IMPORT', 'Authentication not ready; waiting');
-          const authResult = await storage.waitForAuthentication(10000);
-
-          if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
-            throw new Error(
-              tr(
-                '导入时身份验证失败：请确保您已正确登录，然后重试导入操作。',
-                'Authentication failed during import. Please make sure you are signed in and try again.'
-              )
-            );
-          }
-
-          logger.debug('IMPORT', 'Authentication confirmed after wait', { userId: authResult.value.user.id });
-        }
-      }
+      await ensureAuthenticatedForImport();
+      assertValidImportedChains(importedChains);
 
       logger.debug('APP_SHELL', '准备保存导入的数据到存储');
 
-      // 验证导入的链条数据
-      if (!Array.isArray(importedChains) || importedChains.length === 0) {
-        throw new Error(tr('没有有效的链条数据可导入', 'No valid chains found to import'));
-      }
-
-      // 获取当前最新的链条数据（避免使用可能过期的 state.chains）
       const currentChains = await storage.getChains();
       logger.debug('APP_SHELL', '当前数据库中的链条数量', { count: currentChains.length });
       logger.debug('APP_SHELL', '准备导入的链条数量', { count: importedChains.length });
 
-      // 检查ID冲突（双重保险）
-      const existingIds = new Set(currentChains.map(c => c.id));
-      const conflictingChains = importedChains.filter(c => existingIds.has(c.id));
-      if (conflictingChains.length > 0) {
-        logger.error('APP_SHELL', '发现ID冲突的链条', { conflictingIds: conflictingChains.map(c => c.id) });
-        throw new Error(
-          tr(
-            `导入失败：发现${conflictingChains.length}个ID冲突的链条`,
-            `Import failed: found ${conflictingChains.length} chains with conflicting IDs`
-          )
-        );
-      }
+      assertNoIdConflicts(currentChains, importedChains);
 
-      // 创建合并后的链条列表（但只保存导入的部分）
       const updatedChains = [...currentChains, ...importedChains];
-
-      // 仅保存合并后的完整链条列表（让 saveChains 处理用户权限）
       await safelySaveChains(updatedChains);
       queryOptimizer.onDataChange('chains');
 
-      // 获取导入的其他数据
-      const importedHistory = options?.history || [];
-      const importedRsipNodes = options?.rsipNodes || [];
-      const importedRsipMeta = options?.rsipMeta;
+      await persistImportedHistory(options?.history);
+      await persistImportedRsipNodes(options?.rsipNodes);
+      await persistImportedRsipMeta(options?.rsipMeta);
 
-      // 保存完成历史
-      if (Array.isArray(importedHistory) && importedHistory.length > 0) {
-        if (storage.kind === 'supabase') {
-          await storage.saveCompletionHistory(importedHistory);
-        } else {
-          const existing = await storage.getCompletionHistory();
-          const merged = [...existing, ...importedHistory];
-          await storage.saveCompletionHistory(merged);
-        }
-      }
+      logger.info('APP_SHELL', '导入数据保存成功，更新 UI 状态');
 
-      // 保存 RSIP 节点数据
-      if (Array.isArray(importedRsipNodes) && importedRsipNodes.length > 0) {
-        const existingNodes = await storage.getRSIPNodes();
-        const mergedNodes = [...existingNodes, ...importedRsipNodes];
-        await storage.saveRSIPNodes(mergedNodes);
-      }
-
-      // 保存 RSIP 元数据
-      if (importedRsipMeta) {
-        const existingMeta = await storage.getRSIPMeta();
-        const mergedMeta = { ...existingMeta, ...importedRsipMeta };
-        await storage.saveRSIPMeta(mergedMeta);
-      }
-
-      logger.info('APP_SHELL', '导入数据保存成功，更新UI状态');
-
-      // 更新状态
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         chains: updatedChains,
-        completionHistory:
-          Array.isArray(importedHistory) && importedHistory.length > 0
-            ? [...prev.completionHistory, ...importedHistory]
-            : prev.completionHistory,
-        rsipNodes:
-          Array.isArray(importedRsipNodes) && importedRsipNodes.length > 0
-            ? [...prev.rsipNodes, ...importedRsipNodes]
-            : prev.rsipNodes,
-        rsipMeta: importedRsipMeta ? { ...prev.rsipMeta, ...importedRsipMeta } : prev.rsipMeta,
+        completionHistory: appendIfNonEmpty(prev.completionHistory, options?.history),
+        rsipNodes: appendIfNonEmpty(prev.rsipNodes, options?.rsipNodes),
+        rsipMeta: options?.rsipMeta ? { ...prev.rsipMeta, ...options.rsipMeta } : prev.rsipMeta,
       }));
 
-      logger.info('APP_SHELL', '导入完成，UI状态更新完成');
+      logger.info('APP_SHELL', '导入完成，UI 状态更新完成');
     } catch (error) {
-      // 提供更详细的错误信息
       const errorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
       logger.error('IMPORT', 'Failed to import data', { errorMessage }, error instanceof Error ? error : undefined);
 
-      // 如果导入失败，重新加载数据以确保状态一致性
       try {
-        const currentChains = await storage.getChains();
-        const currentRsipNodes = await storage.getRSIPNodes();
-        const currentRsipMeta = await storage.getRSIPMeta();
-        setState(prev => ({
-          ...prev,
-          chains: currentChains,
-          rsipNodes: currentRsipNodes,
-          rsipMeta: currentRsipMeta,
-        }));
+        await reloadStateAfterImportFailure();
       } catch (reloadError) {
         logger.error('IMPORT', 'Reload after import failure also failed', undefined, reloadError as Error);
       }
@@ -178,3 +182,4 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
 
   return { handleImportChains };
 }
+

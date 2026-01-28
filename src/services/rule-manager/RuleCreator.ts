@@ -44,7 +44,7 @@ export interface OptimisticCreationResult {
 /**
  * 规则创建服务类 - 处理所有规则创建相关的逻辑
  */
-export class RuleCreator {
+class RuleCreator {
   /** 创建新的例外规则（增强版本） */
   async createRule(
     name: string,

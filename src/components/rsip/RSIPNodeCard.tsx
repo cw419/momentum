@@ -50,15 +50,15 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
   const color = rsipTypeColorMap[ntype] || rsipTypeColorMap.policy;
 
   const baseZ = Number(style.top) || 0;
-  const zIndex = isReparentingSelected
-    ? 90
-    : isPinned
-      ? 80
-      : isHighlighted
-        ? 70
-        : 10 + Math.floor(baseZ / 10);
+  let zIndex = 10 + Math.floor(baseZ / 10);
+  if (isHighlighted) zIndex = 70;
+  if (isPinned) zIndex = 80;
+  if (isReparentingSelected) zIndex = 90;
 
   const highlightClass = isHighlighted ? `ring-2 ${color.ring} scale-105 shadow-2xl` : '';
+  const cursorClass = isInvalidParentTarget ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer';
+  const reparentClass = isReparentingSelected ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : '';
+  const className = `rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition duration-300 transform-gpu ${color.bg} ${color.border} ${highlightClass} ${cursorClass} ${reparentClass}`;
 
   return (
     <div
@@ -77,7 +77,7 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
           onCardClick();
         }
       }}
-      className={`rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition duration-300 transform-gpu ${color.bg} ${color.border} ${highlightClass} ${isInvalidParentTarget ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer'} ${isReparentingSelected ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : ''}`}
+      className={className}
     >
       <div className="flex items-start space-x-3">
         <div className="text-3xl leading-none pt-1" aria-hidden>

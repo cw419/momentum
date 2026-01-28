@@ -57,8 +57,6 @@ export class ForwardTimerManager {
           // 页面恢复可见时处理时间差
           this.timers.forEach((timer) => {
             if (!timer.isPaused && timer.lastVisibilityChange) {
-              const hiddenDuration = now - timer.lastVisibilityChange;
-              void hiddenDuration;
               // 如果隐藏时间超过1秒，则认为是真正的标签页切换
               // 注释掉暂停时间累积，让计时器继续运行
               // if (hiddenDuration > 1000) {
@@ -246,8 +244,6 @@ export class ForwardTimerManager {
     const data = localPreferences.getTimerState(sessionId);
     if (!data) return false;
 
-    const now = performance.now();
-
     // 检查数据是否过期（超过24小时）
     if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
       localPreferences.clearTimerState(sessionId);
@@ -255,8 +251,6 @@ export class ForwardTimerManager {
     }
 
     // 计算时间偏移
-    const timeOffset = now - data.startTime;
-    void timeOffset;
 
     this.timers.set(sessionId, {
       startTime: data.startTime,

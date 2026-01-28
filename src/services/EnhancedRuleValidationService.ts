@@ -11,8 +11,9 @@ import {
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { getErrorMessage } from '../utils/errorMessage';
+import { ignoreUnused } from '../utils/ignoreUnused';
 
-export interface RuleValidationResult {
+interface RuleValidationResult {
   isValid: boolean;
   errorType?: ExceptionRuleError;
   errorMessage?: string;
@@ -20,21 +21,21 @@ export interface RuleValidationResult {
   debugInfo?: Record<string, unknown>;
 }
 
-export interface ValidationAction {
+interface ValidationAction {
   type: 'retry' | 'create_new' | 'use_existing' | 'fix_data';
   label: string;
   description: string;
   handler: () => Promise<void>;
 }
 
-export interface ValidationReport {
+interface ValidationReport {
   totalRules: number;
   validRules: number;
   invalidRules: ValidationIssue[];
   summary: string;
 }
 
-export interface ValidationIssue {
+interface ValidationIssue {
   ruleId: string;
   ruleName: string;
   issue: string;
@@ -42,9 +43,9 @@ export interface ValidationIssue {
   fixable: boolean;
 }
 
-export type ActionType = 'pause' | 'early_completion';
+type ActionType = 'pause' | 'early_completion';
 
-export class EnhancedRuleValidationService {
+class EnhancedRuleValidationService {
   private validationCache = new Map<string, { result: RuleValidationResult; timestamp: number }>();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
 
@@ -338,8 +339,7 @@ export class EnhancedRuleValidationService {
       : ExceptionRuleType.EARLY_COMPLETION_ONLY;
     
     const actionName = this.getActionTypeDisplayName(actionType);
-    void rule;
-    void correctType;
+    ignoreUnused(rule, correctType);
 
     return [
       {

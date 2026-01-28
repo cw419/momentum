@@ -16,8 +16,3 @@ export function toError(value: unknown, fallbackMessage: string = 'Unknown error
   const message = stringifyUnknown(value).trim();
   return new Error(message || fallbackMessage);
 }
-
-export function getErrorMessage(value: unknown, fallbackMessage: string = 'Unknown error'): string {
-  return toError(value, fallbackMessage).message;
-}
-

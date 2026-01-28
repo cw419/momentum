@@ -27,5 +27,3 @@ export function Icon({ name, size = 16, className }: IconProps) {
   }
   return <IconComponent size={size} className={className} />;
 }
-
-export default Icon;

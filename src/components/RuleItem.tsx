@@ -61,6 +61,11 @@ const RuleItem: React.FC<RuleItemProps> = memo(({
     }
   };
 
+  const usageUnit = rule.usageCount === 1 ? 'time' : 'times';
+  const usageText = language === 'zh'
+    ? `使用 ${rule.usageCount} 次`
+    : `Used ${rule.usageCount} ${usageUnit}`;
+
   return (
     <div
       className={`bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isSelectable ? 'cursor-pointer focus-ring' : ''}`}
@@ -102,7 +107,7 @@ const RuleItem: React.FC<RuleItemProps> = memo(({
             <div className="flex items-center space-x-1">
               <BarChart3 size={14} />
               <span>
-                {language === 'zh' ? `使用 ${rule.usageCount} 次` : `Used ${rule.usageCount} time${rule.usageCount === 1 ? '' : 's'}`}
+                {usageText}
               </span>
             </div>
             <div className="flex items-center space-x-1">

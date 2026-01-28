@@ -7,17 +7,17 @@ declare global {
   };
 
   interface Window {
-    requestIdleCallback?: (callback: (deadline: MomentumIdleDeadline) => void, options?: { timeout?: number }) => number;
+    requestIdleCallback?: (
+      callback: (deadline: MomentumIdleDeadline) => void,
+      options?: { timeout?: number }
+    ) => number;
     cancelIdleCallback?: (handle: number) => void;
+
     webkitAudioContext?: typeof AudioContext;
 
-    __realTimeSync?: typeof import('../services/RealTimeSyncService').realTimeSyncService;
-    checkTimerCompatibility?: typeof import('../utils/compatibilityCheck').checkTimerCompatibility;
-    compatibilityChecker?: typeof import('../utils/compatibilityCheck').compatibilityChecker;
-    migrateTimerData?: typeof import('../utils/dataMigration').migrateTimerData;
-    dataMigrationManager?: typeof import('../utils/dataMigration').dataMigrationManager;
-    validateTimerFeatures?: typeof import('../utils/featureValidation').validateTimerFeatures;
-    debugRuleCreation?: typeof import('../utils/debugRuleCreation').debugRuleCreation;
+    __realTimeSync?: unknown;
+    migrateTimerData?: unknown;
+    dataMigrationManager?: unknown;
   }
 
   interface Navigator {

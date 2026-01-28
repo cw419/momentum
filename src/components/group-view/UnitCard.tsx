@@ -45,6 +45,12 @@ export const UnitCard: React.FC<UnitCardProps> = ({
   const isCompleted = unit.currentStreak >= requiredRepeats;
   const isNext = nextUnit?.id === unit.id;
   const currentRepeatCount = unit.taskRepeatCount || 1;
+  let badgeClassName = 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400';
+  if (isCompleted) {
+    badgeClassName = 'bg-green-500 text-white';
+  } else if (isNext) {
+    badgeClassName = 'bg-primary-500 text-white';
+  }
 
   useEffect(() => {
     if (!scheduledSession) {
@@ -94,11 +100,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
         <div className="flex items-center space-x-4 flex-1">
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              isCompleted
-                ? 'bg-green-500 text-white'
-                : isNext
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400'
+              badgeClassName
             }`}
           >
             {isCompleted ? <Check size={12} /> : index + 1}

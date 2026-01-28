@@ -4,9 +4,9 @@
 
 import { ExceptionRule, RuleUsageRecord } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
-import type { IntegrityIssue } from './types';
+import type { IntegrityIssue } from './IntegrityTypes';
 
-export class UsageRecordIntegrityChecker {
+class UsageRecordIntegrityChecker {
   checkUsageRecordsIntegrity(
     records: RuleUsageRecord[],
     rules: ExceptionRule[]

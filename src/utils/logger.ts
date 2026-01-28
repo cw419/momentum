@@ -4,7 +4,7 @@
 
 import { isDev, isProd } from './env';
 
-export enum LogLevel {
+enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
@@ -230,20 +230,3 @@ if (isDev) {
 }
 
 // Performance measurement utility
-export const measurePerformance = async <T>(
-  operation: string,
-  fn: () => Promise<T>,
-  context?: Record<string, unknown>
-): Promise<T> => {
-  const start = performance.now();
-  try {
-    const result = await fn();
-    const duration = performance.now() - start;
-    logger.performance(operation, duration, context);
-    return result;
-  } catch (error) {
-    const duration = performance.now() - start;
-    logger.error('PERFORMANCE', `${operation} failed`, { ...context, duration }, error as Error);
-    throw error;
-  }
-};

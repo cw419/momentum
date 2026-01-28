@@ -1,7 +1,7 @@
 import type { Language } from '../i18n';
 import { localPreferences } from './localPreferences';
 
-export const detectBrowserLanguage = (): Language => {
+const detectBrowserLanguage = (): Language => {
   if (typeof navigator === 'undefined') return 'en';
 
   const candidates = Array.isArray(navigator.languages) && navigator.languages.length > 0

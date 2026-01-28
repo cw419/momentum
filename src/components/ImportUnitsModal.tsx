@@ -24,6 +24,14 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [importMode, setImportMode] = useState<'move' | 'copy'>('copy');
 
+  const importModeLabel = importMode === 'copy'
+    ? { zh: '复制模式', en: 'Copy' }
+    : { zh: '移动模式', en: 'Move' };
+
+  const selectionSummary = language === 'zh'
+    ? `已选择 ${selectedUnits.size} 个任务单元（${importModeLabel.zh}）`
+    : `${selectedUnits.size} selected (${importModeLabel.en})`;
+
   // 过滤可导入的单元（排除群组类型和已经有父节点的单元）
   const importableUnits = availableUnits.filter(unit => 
     unit.type !== 'group' && 
@@ -150,7 +158,11 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
             importableUnits.map(unit => {
               const typeConfig = getChainTypeConfig(unit.type, language);
               const isSelected = selectedUnits.has(unit.id);
-              
+              const completionUnit = unit.totalCompletions === 1 ? 'completion' : 'completions';
+              const completionsText = language === 'zh'
+                ? `${unit.totalCompletions} 次完成`
+                : `${unit.totalCompletions} ${completionUnit}`;
+               
               return (
                 <button
                   type="button"
@@ -207,9 +219,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                           <span className="flex items-center space-x-1">
                             <CheckCircle size={12} />
                             <span>
-                              {language === 'zh'
-                                ? `${unit.totalCompletions} 次完成`
-                                : `${unit.totalCompletions} completion${unit.totalCompletions === 1 ? '' : 's'}`}
+                              {completionsText}
                             </span>
                           </span>
                         </div>
@@ -225,9 +235,7 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
         {/* Actions */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
-            {language === 'zh'
-              ? `已选择 ${selectedUnits.size} 个任务单元（${importMode === 'copy' ? '复制模式' : '移动模式'}）`
-              : `${selectedUnits.size} selected (${importMode === 'copy' ? 'Copy' : 'Move'})`}
+            {selectionSummary}
           </div>
           <div className="flex space-x-3">
             <button

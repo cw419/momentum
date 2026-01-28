@@ -13,8 +13,9 @@ import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { logger } from '../utils/logger';
 import { isDev } from '../utils/env';
 import { toError, getErrorMessage } from '../utils/errorMessage';
+import { randomId } from '../utils/random';
 
-export interface RuleState {
+interface RuleState {
   id: string;
   status: 'active' | 'creating' | 'updating' | 'deleting' | 'error' | 'pending';
   lastValidated?: Date;
@@ -25,7 +26,7 @@ export interface RuleState {
   updatedAt: Date;
 }
 
-export interface PendingRuleCreation {
+interface PendingRuleCreation {
   temporaryId: string;
   name: string;
   type: ExceptionRuleType;
@@ -34,13 +35,13 @@ export interface PendingRuleCreation {
   promise: Promise<ExceptionRule>;
 }
 
-export interface IdMapping {
+interface IdMapping {
   temporaryId: string;
   realId: string;
   mappedAt: Date;
 }
 
-export class RuleStateManager {
+class RuleStateManager {
   private states = new Map<string, RuleState>();
   private pendingCreations = new Map<string, PendingRuleCreation>();
   private idMappings = new Map<string, IdMapping>();
@@ -59,7 +60,7 @@ export class RuleStateManager {
    * 生成真实ID
    */
   generateRealId(): string {
-    return `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return randomId('rule');
   }
 
   /**

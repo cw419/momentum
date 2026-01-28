@@ -334,4 +334,3 @@ export function PetWidget({
 }
 
 // Export a connected version that uses the domain hook
-export { PetWidget as PetWidgetView };

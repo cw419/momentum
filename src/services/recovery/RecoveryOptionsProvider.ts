@@ -12,7 +12,7 @@ import { recoveryHandlers } from './RecoveryHandlers';
  * 恢复选项提供器
  * 根据错误类型生成用户可选的恢复操作列表
  */
-export class RecoveryOptionsProvider {
+class RecoveryOptionsProvider {
   /**
    * 获取指定错误的恢复选项
    * @param error 异常规则错误

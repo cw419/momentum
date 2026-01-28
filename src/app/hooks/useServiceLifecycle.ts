@@ -15,7 +15,7 @@ interface ServiceLifecycleResult {
 /**
  * Manages global service lifecycle (start/stop) for the application.
  * Handles: forwardTimerManager, exceptionRuleCache, ruleStateManager,
- * and dev-only tools (performanceDashboard, performanceMonitor).
+ * and dev-only tools (performanceMonitor).
  */
 export function useServiceLifecycle(): ServiceLifecycleResult {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -29,21 +29,9 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
 
     let devCleanup: (() => void) | undefined;
     if (isDev) {
-      Promise.all([
-        import('../../utils/performanceDashboard'),
-        import('../../utils/performanceMonitor'),
-      ]).then(([{ performanceDashboard }, { performanceMonitor }]) => {
-        performanceDashboard.start();
-        performanceMonitor.start();
-
-        devCleanup = () => {
-          performanceDashboard.stop();
-          performanceMonitor.stop();
-        };
-
-        setTimeout(() => {
-          performanceDashboard.displayConsoleReport();
-        }, 5000);
+      import('../../utils/performanceMonitor').then((performanceMonitorModule) => {
+        performanceMonitorModule.performanceMonitor.start();
+        devCleanup = () => performanceMonitorModule.performanceMonitor.stop();
       });
     }
 
@@ -72,10 +60,7 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
     const requestIdleCallbackFn = window.requestIdleCallback;
     if (typeof requestIdleCallbackFn === 'function') {
       requestIdleCallbackFn(
-        (_deadline) => {
-          void _deadline;
-          initializeNonCritical();
-        },
+        () => initializeNonCritical(),
         { timeout: 2000 }
       );
     } else {

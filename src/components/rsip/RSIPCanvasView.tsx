@@ -11,7 +11,7 @@ export type ConfirmAction =
   | { kind: 'stopTimer'; nodeId: string }
   | { kind: 'rollbackFailure'; nodeId: string; nodeTitle: string; descendants: number };
 
-export interface RSIPCanvasViewProps {
+interface RSIPCanvasViewProps {
   tree: RSIPTreeNode[];
   nodePositions: Record<string, NodePosition>;
   connectors: RSIPConnector[];
@@ -92,34 +92,34 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   formatRemaining,
   formatMinutesLabel,
 }) => {
+  const isRollbackFailure = confirmAction?.kind === 'rollbackFailure';
+
+  let confirmationTitle = tr('停止计时', 'Stop timer');
+  let confirmationMessage = tr('确定要停止计时吗？', 'Stop the timer?');
+  let confirmationConfirmText = tr('停止', 'Stop');
+  let confirmationConfirmButtonClass = 'bg-amber-500 hover:bg-amber-600';
+
+  if (isRollbackFailure && confirmAction) {
+    confirmationTitle = tr('确认回溯', 'Confirm rollback');
+
+    const childNodesLabel = confirmAction.descendants === 1 ? 'child node' : 'child nodes';
+    confirmationMessage = tr(
+      `判定失败：将删除「${confirmAction.nodeTitle}」及其 ${confirmAction.descendants} 个子节点。确认回溯？`,
+      `Marked as failed: this will delete "${confirmAction.nodeTitle}" and its ${confirmAction.descendants} ${childNodesLabel}. Roll back?`
+    );
+    confirmationConfirmText = tr('回溯', 'Roll back');
+    confirmationConfirmButtonClass = 'bg-red-500 hover:bg-red-600';
+  }
+
   return (
     <>
       <ConfirmationDialog
         isOpen={confirmAction !== null}
-        title={
-          confirmAction && confirmAction.kind === 'rollbackFailure'
-            ? tr('确认回溯', 'Confirm rollback')
-            : tr('停止计时', 'Stop timer')
-        }
-        message={
-          confirmAction && confirmAction.kind === 'rollbackFailure'
-            ? tr(
-                `判定失败：将删除「${confirmAction.nodeTitle}」及其 ${confirmAction.descendants} 个子节点。确认回溯？`,
-                `Marked as failed: this will delete "${confirmAction.nodeTitle}" and its ${confirmAction.descendants} child node${confirmAction.descendants === 1 ? '' : 's'}. Roll back?`
-              )
-            : tr('确定要停止计时吗？', 'Stop the timer?')
-        }
-        confirmText={
-          confirmAction && confirmAction.kind === 'rollbackFailure'
-            ? tr('回溯', 'Roll back')
-            : tr('停止', 'Stop')
-        }
+        title={confirmationTitle}
+        message={confirmationMessage}
+        confirmText={confirmationConfirmText}
         cancelText={tr('取消', 'Cancel')}
-        confirmButtonClass={
-          confirmAction && confirmAction.kind === 'rollbackFailure'
-            ? 'bg-red-500 hover:bg-red-600'
-            : 'bg-amber-500 hover:bg-amber-600'
-        }
+        confirmButtonClass={confirmationConfirmButtonClass}
         onConfirm={onConfirmAction}
         onCancel={onCancelConfirm}
       />

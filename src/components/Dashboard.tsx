@@ -219,7 +219,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
           </Suspense>
         </div>
 
-        {isLoading ? (
+        {isLoading && (
           <div className="text-center py-20 animate-slide-up">
             <div className="bento-card max-w-lg mx-auto">
               <div className="w-24 h-24 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
@@ -233,8 +233,9 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
               </p>
             </div>
           </div>
-        ) : (
-          chains.length === 0 ? (
+        )}
+
+        {!isLoading && chains.length === 0 && (
             <div className="text-center py-20 animate-slide-up">
               <div className="bento-card max-w-lg mx-auto">
                 <div className="w-24 h-24 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-8 shadow-2xl">
@@ -282,7 +283,9 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                 </div>
               </div>
             </div>
-          ) : (
+        )}
+
+        {!isLoading && chains.length !== 0 && (
             <div className="animate-slide-up">
               <div className="flex flex-col gap-6 lg:flex-row lg:justify-between lg:items-center mb-12">
                 <div className="min-w-0">
@@ -360,7 +363,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
                 onDelete={onDeleteChain}
               />
             </div>
-          ))}
+        )}
       </div>
 
       {/* Import/Export Modal */}

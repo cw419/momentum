@@ -12,9 +12,7 @@ import {
   ExportTab,
 } from './ImportExportModalParts';
 
-export type { ImportStatus };
-
-export interface ImportExportModalViewProps {
+interface ImportExportModalViewProps {
   chainsCount: number;
   activeTab: 'export' | 'import';
   importData: string;

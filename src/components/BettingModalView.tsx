@@ -5,7 +5,7 @@
 import React from 'react';
 import { X, Dices, Star, TrendingUp, AlertCircle, Loader2, CheckCircle, Target, Zap } from 'lucide-react';
 
-export interface BettingModalViewProps {
+interface BettingModalViewProps {
   isOpen: boolean;
   chainName: string;
   taskDuration: number;
@@ -58,6 +58,34 @@ const BettingModalViewComponent: React.FC<BettingModalViewProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  let content: React.ReactNode;
+  if (isLoading) {
+    content = <LoadingState tr={tr} />;
+  } else if (error) {
+    content = <ErrorState error={error} tr={tr} onReload={onReload} />;
+  } else if (successMessage) {
+    content = <SuccessState successMessage={successMessage} tr={tr} />;
+  } else {
+    content = (
+      <BettingForm
+        chainName={chainName}
+        taskDuration={taskDuration}
+        language={language}
+        tr={tr}
+        betAmount={betAmount}
+        availablePoints={availablePoints}
+        todayBetAmount={todayBetAmount}
+        isPlacingBet={isPlacingBet}
+        validationError={validationError}
+        quickBetOptions={quickBetOptions}
+        onBetAmountChange={onBetAmountChange}
+        onQuickBetAmount={onQuickBetAmount}
+        onPlaceBet={onPlaceBet}
+        onClose={onClose}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div
@@ -71,30 +99,7 @@ const BettingModalViewComponent: React.FC<BettingModalViewProps> = ({
 
         {/* Content */}
         <div className="p-6">
-          {isLoading ? (
-            <LoadingState tr={tr} />
-          ) : error ? (
-            <ErrorState error={error} tr={tr} onReload={onReload} />
-          ) : successMessage ? (
-            <SuccessState successMessage={successMessage} tr={tr} />
-          ) : (
-            <BettingForm
-              chainName={chainName}
-              taskDuration={taskDuration}
-              language={language}
-              tr={tr}
-              betAmount={betAmount}
-              availablePoints={availablePoints}
-              todayBetAmount={todayBetAmount}
-              isPlacingBet={isPlacingBet}
-              validationError={validationError}
-              quickBetOptions={quickBetOptions}
-              onBetAmountChange={onBetAmountChange}
-              onQuickBetAmount={onQuickBetAmount}
-              onPlaceBet={onPlaceBet}
-              onClose={onClose}
-            />
-          )}
+          {content}
         </div>
       </div>
     </div>
@@ -413,6 +418,25 @@ const BetButtons: React.FC<BetButtonsProps> = ({
 }) => {
   const isDisabled = isPlacingBet || !betAmount || validationError !== null || availablePoints === 0;
 
+  let primaryButtonContent: React.ReactNode;
+  if (isPlacingBet) {
+    primaryButtonContent = (
+      <div className="flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin mr-3" />
+        {tr('押注中...', 'Placing bet...')}
+      </div>
+    );
+  } else if (availablePoints === 0) {
+    primaryButtonContent = tr('积分不足', 'Not enough points');
+  } else {
+    primaryButtonContent = (
+      <div className="flex items-center justify-center">
+        <Dices className="w-6 h-6 mr-3" />
+        {tr('确认押注', 'Confirm bet')}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <button
@@ -428,19 +452,7 @@ const BetButtons: React.FC<BetButtonsProps> = ({
           }
         `}
       >
-        {isPlacingBet ? (
-          <div className="flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin mr-3" />
-            {tr('押注中...', 'Placing bet...')}
-          </div>
-        ) : availablePoints === 0 ? (
-          tr('积分不足', 'Not enough points')
-        ) : (
-          <div className="flex items-center justify-center">
-            <Dices className="w-6 h-6 mr-3" />
-            {tr('确认押注', 'Confirm bet')}
-          </div>
-        )}
+        {primaryButtonContent}
       </button>
 
       <button
