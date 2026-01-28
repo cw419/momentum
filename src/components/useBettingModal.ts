@@ -17,6 +17,27 @@ interface UseBettingModalOptions {
   onBetPlaced?: (betResult: BetPlacementResult) => void;
 }
 
+function validateDailyBetLimit(params: {
+  numAmount: number;
+  todayBetAmount: number;
+  dailyBetLimit: number | undefined;
+  language: string;
+  setValidationError: (message: string) => void;
+}) {
+  const { numAmount, todayBetAmount, dailyBetLimit, language, setValidationError } = params;
+  if (!dailyBetLimit) return true;
+
+  const totalToday = todayBetAmount + numAmount;
+  if (totalToday <= dailyBetLimit) return true;
+
+  setValidationError(
+    language === 'zh'
+      ? `超出每日押注限制：${dailyBetLimit}（今日已用：${todayBetAmount}）`
+      : `Exceeds daily limit: ${dailyBetLimit} (used today: ${todayBetAmount})`
+  );
+  return false;
+}
+
 export function useBettingModal({
   isOpen,
   sessionId,
@@ -123,19 +144,13 @@ export function useBettingModal({
       return false;
     }
 
-    if (gamblingSettings?.daily_bet_limit) {
-      const totalToday = todayBetAmount + numAmount;
-      if (totalToday > gamblingSettings.daily_bet_limit) {
-        setValidationError(
-          language === 'zh'
-            ? `超出每日押注限制：${gamblingSettings.daily_bet_limit}（今日已用：${todayBetAmount}）`
-            : `Exceeds daily limit: ${gamblingSettings.daily_bet_limit} (used today: ${todayBetAmount})`
-        );
-        return false;
-      }
-    }
-
-    return true;
+    return validateDailyBetLimit({
+      numAmount,
+      todayBetAmount,
+      dailyBetLimit: gamblingSettings?.daily_bet_limit ?? undefined,
+      language,
+      setValidationError,
+    });
   }, [availablePoints, gamblingSettings, todayBetAmount, language, tr]);
 
   // 处理押注金额变化

@@ -19,6 +19,47 @@ import { toast } from '../../utils/toast';
 import { useI18n } from '../../i18n';
 import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 
+function normalizeOptionalParentId(parentId: unknown): string | undefined {
+  return typeof parentId === 'string' ? parentId : undefined;
+}
+
+function updateChainFromDraft(existing: Chain, chainData: ChainDraft, parentId: string | undefined): Chain {
+  if (chainData.type === 'group') {
+    const updated: GroupChain = { ...existing, ...chainData, parentId, type: 'group' };
+    return updated;
+  }
+
+  if (existing.type === 'group') {
+    const { timeLimitHours, groupStartedAt, groupExpiresAt, isTaskGroup, groupRepeatCount, ...rest } = existing;
+    const updated: UnitChain = { ...rest, ...chainData, parentId };
+    return updated;
+  }
+
+  const updated: UnitChain = { ...existing, ...chainData, parentId };
+  return updated;
+}
+
+function createNewChain(params: { chainData: ChainDraft; id: string; createdAt: Date; parentId: string | undefined }): Chain {
+  const base = {
+    id: params.id,
+    parentId: params.parentId,
+    currentStreak: 0,
+    auxiliaryStreak: 0,
+    totalCompletions: 0,
+    totalFailures: 0,
+    auxiliaryFailures: 0,
+    createdAt: params.createdAt,
+  };
+
+  if (params.chainData.type === 'group') {
+    const newChain: GroupChain = { ...base, ...params.chainData, type: 'group' };
+    return newChain;
+  }
+
+  const newChain: UnitChain = { ...base, ...params.chainData };
+  return newChain;
+}
+
 export type SafelySaveChains = (updatedActiveChains: Chain[], retryCount?: number) => Promise<void>;
 
 interface UseChainsDomainParams {
@@ -84,37 +125,18 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
       logger.debug('CHAINS', 'Chain counts', { active: activeChains.length, deleted: deletedChains.length });
 
       let updatedActiveChains: Chain[];
+      const normalizedParentId = normalizeOptionalParentId(chainData.parentId);
 
       if (state.editingChain && !isCopy) {
         logger.debug('CHAINS', 'Editing existing chain', { chainId: state.editingChain.id });
 
         const editingChainId = state.editingChain.id;
-        const normalizedParentId = typeof chainData.parentId === 'string' ? chainData.parentId : undefined;
+        updatedActiveChains = state.chains.map((chain) =>
+          chain.id === editingChainId ? updateChainFromDraft(chain, chainData, normalizedParentId) : chain
+        );
 
-        updatedActiveChains = state.chains.map(chain => {
-          if (chain.id !== editingChainId) return chain;
-
-          if (chainData.type === 'group') {
-            if (chain.type === 'group') {
-              const updated: GroupChain = { ...chain, ...chainData, parentId: normalizedParentId, type: 'group' };
-              return updated;
-            }
-
-            const updated: GroupChain = { ...chain, ...chainData, parentId: normalizedParentId, type: 'group' };
-            return updated;
-          }
-
-          if (chain.type === 'group') {
-            const { timeLimitHours, groupStartedAt, groupExpiresAt, isTaskGroup, groupRepeatCount, ...rest } = chain;
-            const updated: UnitChain = { ...rest, ...chainData, parentId: normalizedParentId };
-            return updated;
-          }
-
-          const updated: UnitChain = { ...chain, ...chainData, parentId: normalizedParentId };
-          return updated;
-        });
         logger.debug('CHAINS', 'Edited chain; updated active chains', { count: updatedActiveChains.length });
-        const editedChain = updatedActiveChains.find(c => c.id === state.editingChain!.id);
+        const editedChain = updatedActiveChains.find((chain) => chain.id === editingChainId);
         logger.debug('CHAINS', 'Edited chain snapshot', {
           chainId: editedChain?.id,
           name: editedChain?.name,
@@ -123,50 +145,14 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
       } else {
         const id = crypto.randomUUID();
         const createdAt = new Date();
-        const normalizedParentId = typeof chainData.parentId === 'string' ? chainData.parentId : undefined;
+        const newChain = createNewChain({ chainData, id, createdAt, parentId: normalizedParentId });
 
-        if (chainData.type === 'group') {
-          const newChain: GroupChain = {
-            id,
-            ...chainData,
-            parentId: normalizedParentId,
-            type: 'group',
-            currentStreak: 0,
-            auxiliaryStreak: 0,
-            totalCompletions: 0,
-            totalFailures: 0,
-            auxiliaryFailures: 0,
-            createdAt,
-          };
+        logger.debug('CHAINS', isCopy ? 'Copy chain' : 'Create chain', {
+          newChainId: newChain.id,
+          type: newChain.type === 'group' ? 'group' : 'unit',
+        });
 
-          if (isCopy) {
-            logger.debug('CHAINS', 'Copy chain', { newChainId: newChain.id, type: 'group' });
-          } else {
-            logger.debug('CHAINS', 'Create chain', { newChainId: newChain.id, type: 'group' });
-          }
-
-          updatedActiveChains = [...state.chains, newChain];
-        } else {
-          const newChain: UnitChain = {
-            id,
-            ...chainData,
-            parentId: normalizedParentId,
-            currentStreak: 0,
-            auxiliaryStreak: 0,
-            totalCompletions: 0,
-            totalFailures: 0,
-            auxiliaryFailures: 0,
-            createdAt,
-          };
-
-          if (isCopy) {
-            logger.debug('CHAINS', 'Copy chain', { newChainId: newChain.id, type: 'unit' });
-          } else {
-            logger.debug('CHAINS', 'Create chain', { newChainId: newChain.id, type: 'unit' });
-          }
-
-          updatedActiveChains = [...state.chains, newChain];
-        }
+        updatedActiveChains = [...state.chains, newChain];
         logger.debug('CHAINS', 'Added chain; updated active chains', { count: updatedActiveChains.length });
       }
 

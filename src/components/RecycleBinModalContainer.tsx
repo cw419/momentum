@@ -7,7 +7,7 @@ import React from 'react';
 import { RecycleBinModalView } from './RecycleBinModalView';
 import { useRecycleBinModal } from './useRecycleBinModal';
 
-export interface RecycleBinModalProps {
+interface RecycleBinModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRestore: (chainIds: string[]) => void;

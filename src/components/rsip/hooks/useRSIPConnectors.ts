@@ -62,7 +62,7 @@ export function useRSIPConnectors({
       };
 
       const walk = (node: RSIPTreeNode) => {
-        node.children.forEach(child => {
+        for (const child of node.children) {
           if (nodePositions[node.id] && nodePositions[child.id]) {
             const p1 = getAnchor(node.id, 'right');
             const p2 = getAnchor(child.id, 'left');
@@ -79,11 +79,16 @@ export function useRSIPConnectors({
             const isHovered = hoveredChainIds.has(node.id) && hoveredChainIds.has(child.id);
             newConnectors.push({ id, d, isHovered });
           }
-        });
-        node.children.forEach(walk);
+        }
+
+        for (const child of node.children) {
+          walk(child);
+        }
       };
 
-      filteredTree.forEach(root => walk(root));
+      for (const root of filteredTree) {
+        walk(root);
+      }
       setConnectors(newConnectors);
     };
 

@@ -9,7 +9,7 @@ export const rsipTypeEmojiMap: Record<string, string> = {
   reminder: '⏰',
 };
 
-export const rsipTypeLabelMap: Record<string, { zh: string; en: string }> = {
+const rsipTypeLabelMap: Record<string, { zh: string; en: string }> = {
   policy: { zh: '国策', en: 'Policy' },
   habit: { zh: '习惯', en: 'Habit' },
   reward: { zh: '奖励', en: 'Reward' },
@@ -84,4 +84,3 @@ export const rsipTypeColorMap: Record<
     border: 'border-violet-300 dark:border-violet-700',
   },
 };
-

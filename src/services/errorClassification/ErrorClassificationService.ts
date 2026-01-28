@@ -22,7 +22,7 @@ import {
   generateUserFriendlyMessage
 } from './ErrorClassifiers';
 
-export class ErrorClassificationService {
+class ErrorClassificationService {
   private classifier = new DefaultErrorClassifier();
   private errorHistory: ExceptionRuleException[] = [];
   private readonly MAX_HISTORY_SIZE = 100;

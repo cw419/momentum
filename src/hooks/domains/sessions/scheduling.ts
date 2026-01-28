@@ -76,7 +76,7 @@ export function createSchedulingHandlers({
       c.id === chainId ? { ...c, auxiliaryStreak: c.auxiliaryStreak + 1 } : c
     );
 
-    void storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
+    storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
       logger.error('SESSIONS', 'Failed to persist scheduled sessions after completing booking', { chainId }, error as Error);
     });
     safelySaveChains(updatedChains).catch(error => {
@@ -95,4 +95,3 @@ export function createSchedulingHandlers({
 
   return { handleScheduleChain, handleCancelScheduledSession, handleCompleteBooking };
 }
-

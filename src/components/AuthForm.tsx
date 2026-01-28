@@ -5,7 +5,7 @@ import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucid
 import { useI18n } from '../i18n';
 import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 
-export interface AuthFormProps {
+interface AuthFormProps {
     initialIsSignUp?: boolean;
     onBack?: () => void;
 }

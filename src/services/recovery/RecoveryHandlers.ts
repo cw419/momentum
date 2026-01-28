@@ -8,6 +8,7 @@ import { ruleStateManager } from '../RuleStateManager';
 import { dataIntegrityChecker } from '../DataIntegrityChecker';
 import { enhancedDuplicationHandler } from '../EnhancedDuplicationHandler';
 import { tr } from '../../utils/runtimeI18n';
+import { ignoreUnused } from '../../utils/ignoreUnused';
 import { RecoveryResult } from './RecoveryStrategy';
 
 /**
@@ -19,7 +20,7 @@ export const recoveryHandlers = {
    * 处理创建新规则
    */
   async handleCreateNewRule(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     return {
       success: false,
       message: tr('请创建新规则', 'Please create a new rule'),
@@ -31,7 +32,7 @@ export const recoveryHandlers = {
    * 处理选择现有规则
    */
   async handleSelectExistingRule(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     return {
       success: false,
       message: tr('请选择现有规则', 'Please select an existing rule'),
@@ -101,7 +102,7 @@ export const recoveryHandlers = {
    * 处理创建正确类型的规则
    */
   async handleCreateCorrectType(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     return {
       success: false,
       message: tr('请创建正确类型的规则', 'Please create a rule with the correct type'),
@@ -113,7 +114,7 @@ export const recoveryHandlers = {
    * 处理选择匹配类型的规则
    */
   async handleSelectMatchingRule(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     return {
       success: false,
       message: tr('请选择类型匹配的规则', 'Please select a rule with a matching type'),
@@ -125,7 +126,7 @@ export const recoveryHandlers = {
    * 处理重试操作
    */
   async handleRetryOperation(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     return {
       success: false,
       message: tr('请重试操作', 'Please retry the operation'),
@@ -137,7 +138,7 @@ export const recoveryHandlers = {
    * 处理数据完整性检查
    */
   async handleDataIntegrityCheck(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     try {
       const report = await dataIntegrityChecker.checkRuleDataIntegrity();
 
@@ -184,7 +185,7 @@ export const recoveryHandlers = {
    * 处理通用恢复
    */
   async handleGenericRecovery(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     try {
       await ruleStateManager.syncRuleStates();
       return {
@@ -203,7 +204,7 @@ export const recoveryHandlers = {
    * 处理验证修复
    */
   async handleValidationFix(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     return {
       success: false,
       message: tr('验证修复需要用户输入', 'Fixing validation requires your input'),
@@ -215,7 +216,7 @@ export const recoveryHandlers = {
    * 处理系统重置
    */
   async handleSystemReset(error: ExceptionRuleException): Promise<RecoveryResult> {
-    void error;
+    ignoreUnused(error);
     return {
       success: false,
       message: tr('系统重置是危险操作，需要用户确认', 'System reset is risky and requires confirmation'),
@@ -236,7 +237,7 @@ export function extractRuleIdFromError(error: ExceptionRuleException): string | 
 /**
  * 从错误信息中提取规则名称
  */
-export function extractRuleNameFromError(error: ExceptionRuleException): string | null {
+function extractRuleNameFromError(error: ExceptionRuleException): string | null {
   const message = error.message;
   const match = message.match(/(?:规则名称|Rule name)\s+"([^"]+)"/i);
   return match?.[1] ?? null;

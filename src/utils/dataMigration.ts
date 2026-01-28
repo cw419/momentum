@@ -10,7 +10,7 @@ import { logger } from './logger';
 import { localPreferences } from './localPreferences';
 import { toError, getErrorMessage } from './errorMessage';
 
-export interface MigrationResult {
+interface MigrationResult {
   success: boolean;
   migratedRecords: number;
   errors: string[];
@@ -21,7 +21,7 @@ export interface MigrationResult {
   };
 }
 
-export class DataMigrationManager {
+class DataMigrationManager {
   /**
    * 执行完整的数据迁移
    */
@@ -358,7 +358,7 @@ export const dataMigrationManager = new DataMigrationManager();
 /**
  * 执行数据迁移的便捷函数
  */
-export async function migrateTimerData(): Promise<string> {
+async function migrateTimerData(): Promise<string> {
   const result = await dataMigrationManager.migrateAll();
   return dataMigrationManager.generateMigrationReport(result);
 }

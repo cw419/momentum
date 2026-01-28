@@ -32,7 +32,7 @@ export interface RuleUsageSuggestions {
  * 规则查询服务类
  * 单一职责：处理所有规则查询和搜索相关的逻辑
  */
-export class RuleQueryService {
+class RuleQueryService {
   /**
    * 获取规则详情
    */

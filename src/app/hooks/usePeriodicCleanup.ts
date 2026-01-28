@@ -51,7 +51,7 @@ export function usePeriodicCleanup({
 
       if (!hasChanges) return;
 
-      void storage.saveChains(updatedChains).catch((error) => {
+      storage.saveChains(updatedChains).catch((error) => {
         logger.error(
           'PERIODIC_CLEANUP',
           'Failed to persist group expiry cleanup',
@@ -84,16 +84,16 @@ export function usePeriodicCleanup({
 
       soundManager.playTimerFinished();
 
-      expiredSessions.forEach((session) => {
+      for (const session of expiredSessions) {
         const chain = current.chains.find((c) => c.id === session.chainId);
         if (chain) {
           notificationManager.notifyScheduleFailed(chain.name);
         }
-      });
+      }
 
       setShowAuxiliaryJudgment(expiredSessions[0].chainId);
 
-      void storage.saveScheduledSessions(activeScheduledSessions).catch((error) => {
+      storage.saveScheduledSessions(activeScheduledSessions).catch((error) => {
         logger.error(
           'PERIODIC_CLEANUP',
           'Failed to persist scheduled session cleanup',

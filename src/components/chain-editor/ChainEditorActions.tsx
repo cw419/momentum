@@ -17,6 +17,15 @@ interface ChainEditorActionsProps {
 export function ChainEditorActions({ isEditing, onCancel, form, mobileInfo }: ChainEditorActionsProps) {
   const { tr } = useI18n();
 
+  let saveButtonLabel: string;
+  if (form.isCopyMode) {
+    saveButtonLabel = tr('创建副本', 'Create copy');
+  } else if (isEditing) {
+    saveButtonLabel = tr('保存更改', 'Save changes');
+  } else {
+    saveButtonLabel = tr('创建链条', 'Create chain');
+  }
+
   const containerClassName = `action-buttons flex ${
     mobileInfo.isMobile ? 'flex-col space-y-4' : 'flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6'
   } animate-scale-in pt-4`;
@@ -48,13 +57,7 @@ export function ChainEditorActions({ isEditing, onCancel, form, mobileInfo }: Ch
 
       <button type="submit" className={saveButtonClassName}>
         <Save size={20} />
-        <span>
-          {form.isCopyMode
-            ? tr('创建副本', 'Create copy')
-            : isEditing
-              ? tr('保存更改', 'Save changes')
-              : tr('创建链条', 'Create chain')}
-        </span>
+        <span>{saveButtonLabel}</span>
       </button>
     </div>
   );

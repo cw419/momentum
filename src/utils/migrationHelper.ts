@@ -328,4 +328,3 @@ ALTER TABLE IF EXISTS public.rsip_meta ENABLE ROW LEVEL SECURITY;
   }
 }
 
-export const migrationHelper = new MigrationHelper();

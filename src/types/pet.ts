@@ -4,9 +4,6 @@ export type PetStage = 'egg' | 'baby' | 'child' | 'teen' | 'adult' | 'elder';
 // Pet Mood States
 export type PetMood = 'ecstatic' | 'happy' | 'neutral' | 'sad' | 'depressed';
 
-// Pet Activity States (for animations)
-export type PetActivity = 'idle' | 'eating' | 'sleeping' | 'playing' | 'working' | 'celebrating';
-
 // Pet State Interface
 export interface PetState {
   id: string;
@@ -33,23 +30,6 @@ export interface PetState {
   isMinimized: boolean;
   position: { x: number; y: number };
   minimizedPosition: { x: number; y: number };
-}
-
-// Pet Event Types
-export type PetEventType =
-  | 'fed'
-  | 'played'
-  | 'task_completed'
-  | 'level_up'
-  | 'evolved'
-  | 'mood_changed'
-  | 'health_warning'
-  | 'starving';
-
-export interface PetEvent {
-  type: PetEventType;
-  timestamp: Date;
-  details?: Record<string, unknown>;
 }
 
 // Configuration Constants
@@ -103,10 +83,4 @@ export interface SerializedPetState {
   isMinimized: boolean;
   position: { x: number; y: number };
   minimizedPosition: { x: number; y: number };
-}
-
-export interface SerializedPetEvent {
-  type: PetEventType;
-  timestamp: string;
-  details?: Record<string, unknown>;
 }

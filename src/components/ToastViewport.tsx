@@ -11,6 +11,10 @@ const DEFAULT_DURATION_MS: Record<ToastKind, number> = {
 
 const ANIMATION_DURATION_MS = 220;
 
+function removeToastById(toasts: ToastMessage[], id: string) {
+  return toasts.filter((t) => t.id !== id);
+}
+
 function getKindStyles(kind: ToastKind) {
   switch (kind) {
     case 'success':
@@ -39,7 +43,7 @@ export function ToastViewport() {
     setExitingIds((prev) => new Set(prev).add(id));
 
     window.setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
+      setToasts((prev) => removeToastById(prev, id));
       setExitingIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -111,5 +115,3 @@ export function ToastViewport() {
     </div>
   );
 }
-
-export default ToastViewport;

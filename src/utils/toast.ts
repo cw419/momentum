@@ -1,3 +1,5 @@
+import { randomId } from './random';
+
 export type ToastKind = 'success' | 'error' | 'info' | 'warning';
 
 export interface ToastMessage {
@@ -12,10 +14,7 @@ export interface ToastMessage {
 type Listener = (toast: ToastMessage) => void;
 
 function generateToastId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `toast_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  return randomId('toast');
 }
 
 class ToastStore {

@@ -18,7 +18,7 @@ export const isGroupExpired = (group: Chain): boolean => {
 /**
  * 获取任务群剩余时间（毫秒）
  */
-export const getGroupRemainingTime = (group: Chain): number => {
+const getGroupRemainingTime = (group: Chain): number => {
   if (group.type !== 'group' || !group.timeLimitHours || !group.groupStartedAt) {
     return 0;
   }
@@ -32,7 +32,7 @@ export const getGroupRemainingTime = (group: Chain): number => {
 /**
  * 格式化剩余时间显示
  */
-export const formatRemainingTime = (remainingMs: number, language: TimeLanguage = 'en'): string => {
+const formatRemainingTime = (remainingMs: number, language: TimeLanguage = 'en'): string => {
   if (remainingMs <= 0) {
     return language === 'zh' ? '已过期' : 'Expired';
   }
@@ -71,32 +71,10 @@ export const startGroupTimer = (group: Chain): Chain => {
 /**
  * 检查是否满足例外规则
  */
-export const checkTimeLimitException = (group: Chain, reason: string): boolean => {
-  if (group.type !== 'group' || !group.timeLimitExceptions) {
-    return false;
-  }
-
-  return group.timeLimitExceptions.includes(reason);
-};
 
 /**
  * 添加时间限制例外规则
  */
-export const addTimeLimitException = (group: Chain, exception: string): Chain => {
-  if (group.type !== 'group') {
-    return group;
-  }
-
-  const currentExceptions = group.timeLimitExceptions || [];
-  if (!currentExceptions.includes(exception)) {
-    return {
-      ...group,
-      timeLimitExceptions: [...currentExceptions, exception],
-    };
-  }
-
-  return group;
-};
 
 /**
  * 清空任务群进度（超时失败）

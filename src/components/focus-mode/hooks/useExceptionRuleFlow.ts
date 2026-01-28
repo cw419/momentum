@@ -20,11 +20,33 @@ interface UseExceptionRuleFlowParams {
   onRuleUsed?: (rule: ExceptionRule, actionType: PendingActionType, pauseOptions?: PauseOptions) => void;
 }
 
+type ErrorRecoveryResult = Awaited<ReturnType<typeof errorRecoveryManager.attemptRecovery>>;
+
 function isExceptionRule(value: unknown): value is ExceptionRule {
   if (!value || typeof value !== 'object') return false;
 
   const candidate = value as Partial<ExceptionRule>;
   return typeof candidate.id === 'string' && typeof candidate.name === 'string';
+}
+
+async function maybeApplyRecoveredRule(
+  recoveryResult: ErrorRecoveryResult,
+  operation: string,
+  context: unknown,
+  applyRule: (rule: ExceptionRule) => Promise<void>
+) {
+  if (!recoveryResult.recoveredData || operation !== 'create_rule') return;
+
+  if (isExceptionRule(recoveryResult.recoveredData)) {
+    await applyRule(recoveryResult.recoveredData);
+    return;
+  }
+
+  logger.warn('FOCUS_MODE', 'Recovery returned invalid rule data', {
+    operation,
+    context,
+    recoveredData: recoveryResult.recoveredData,
+  });
 }
 
 export function useExceptionRuleFlow({
@@ -69,17 +91,7 @@ export function useExceptionRuleFlow({
           userFeedbackHandler.removeMessage(messageId);
           userFeedbackHandler.showSuccess(tr('问题已解决', 'Issue resolved'), recoveryResult.message);
 
-          if (recoveryResult.recoveredData && operation === 'create_rule') {
-            if (isExceptionRule(recoveryResult.recoveredData)) {
-              await handleRuleSelected(recoveryResult.recoveredData);
-            } else {
-              logger.warn('FOCUS_MODE', 'Recovery returned invalid rule data', {
-                operation,
-                context,
-                recoveredData: recoveryResult.recoveredData,
-              });
-            }
-          }
+          await maybeApplyRecoveredRule(recoveryResult, operation, context, handleRuleSelected);
         } else if (recoveryResult.requiresUserAction && recoveryResult.actions) {
           logger.error('FOCUS_MODE', '需要用户操作的恢复失败', { recoveryResult, operation, context });
         }

@@ -2,11 +2,53 @@ import { useEffect, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
-import { logger } from '../../utils/logger';
-import { toError } from '../../utils/errorMessage';
+import { fireAndForget } from '../../utils/fireAndForget';
 import { migrateCompletionHistoryForTiming } from '../../utils/completionHistoryTimingMigration';
+import { toError } from '../../utils/errorMessage';
 import { isDev } from '../../utils/env';
+import { logger } from '../../utils/logger';
+import { runWhenIdle } from '../../utils/runWhenIdle';
 import { isSessionExpired } from '../../utils/time';
+
+type CompletionHistory = Awaited<ReturnType<MomentumStorage['getCompletionHistory']>>;
+
+async function cleanupExpiredDeletedChains(storage: MomentumStorage): Promise<void> {
+  try {
+    const cleanedCount = await storage.cleanupExpiredDeletedChains(30);
+    if (cleanedCount > 0) {
+      logger.info('APP_SHELL', `Auto-cleaned ${cleanedCount} expired deleted chains`);
+    }
+  } catch (error) {
+    logger.warn('APP_SHELL', 'Auto cleanup failed', undefined, toError(error));
+  }
+}
+
+async function persistCompletionHistoryTimingMigration(
+  storage: MomentumStorage,
+  completionHistory: CompletionHistory
+): Promise<void> {
+  try {
+    await storage.saveCompletionHistory(completionHistory);
+  } catch (error) {
+    logger.warn('APP_SHELL', 'Failed to persist completion history timing migration', undefined, toError(error));
+  }
+}
+
+async function runDevDataMigration(): Promise<void> {
+  try {
+    const { dataMigrationManager } = await import('../../utils/dataMigration');
+    const migrationResult = await dataMigrationManager.migrateAll();
+
+    if (!migrationResult.success || migrationResult.errors.length > 0) {
+      logger.warn('APP_SHELL', 'Data migration completed with warnings', { migrationResult });
+      return;
+    }
+
+    logger.info('APP_SHELL', 'Data migration completed successfully');
+  } catch (error) {
+    logger.warn('APP_SHELL', 'Error occurred during data migration', undefined, toError(error));
+  }
+}
 
 interface UseAppDataLoadParams {
   storage: MomentumStorage;
@@ -21,6 +63,7 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
     const loadData = async () => {
       logger.debug('APP_SHELL', 'Starting data load', { storage: storage.kind });
       setIsLoadingData(true);
+
       try {
         if (storage.kind === 'supabase') {
           const authResult = await storage.waitForAuthentication(10000);
@@ -38,28 +81,9 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
           }
         }
 
-        // 在加载数据前先执行自动清理
-        const scheduleIdle = (fn: () => void, timeoutMs: number = 2000) => {
-          const requestIdleCallbackFn = window.requestIdleCallback;
-          if (typeof requestIdleCallbackFn === 'function') {
-            requestIdleCallbackFn(() => fn(), { timeout: timeoutMs });
-          } else {
-            setTimeout(fn, 0);
-          }
-        };
-
         // Run maintenance tasks without blocking initial render.
-        scheduleIdle(() => {
-          void storage
-            .cleanupExpiredDeletedChains(30)
-            .then(cleanedCount => {
-              if (cleanedCount > 0) {
-                logger.info('APP_SHELL', `Auto-cleaned ${cleanedCount} expired deleted chains`);
-              }
-            })
-            .catch(cleanupError => {
-              logger.warn('APP_SHELL', 'Auto cleanup failed', undefined, toError(cleanupError));
-            });
+        runWhenIdle(() => {
+          fireAndForget(cleanupExpiredDeletedChains(storage), { label: 'APP_SHELL auto cleanup' });
         });
 
         const [
@@ -71,43 +95,43 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
           rsipMeta,
           taskTimeStats,
         ] = await Promise.all([
-          storage.getActiveChains().catch(error => {
+          storage.getActiveChains().catch((error) => {
             logger.error('APP_SHELL', 'Failed to load chain data', undefined, toError(error));
             return [];
           }),
-          storage.getScheduledSessions().catch(error => {
+          storage.getScheduledSessions().catch((error) => {
             logger.warn('APP_SHELL', 'Failed to load scheduled sessions', undefined, toError(error));
             return [];
           }),
-          storage.getActiveSession().catch(error => {
+          storage.getActiveSession().catch((error) => {
             logger.warn('APP_SHELL', 'Failed to load active session', undefined, toError(error));
             return null;
           }),
-          storage.getCompletionHistory().catch(error => {
+          storage.getCompletionHistory().catch((error) => {
             logger.warn('APP_SHELL', 'Failed to load completion history', undefined, toError(error));
             return [];
           }),
-          storage.getRSIPNodes().catch(error => {
+          storage.getRSIPNodes().catch((error) => {
             logger.warn('APP_SHELL', 'Failed to load RSIP nodes', undefined, toError(error));
             return [];
           }),
-          storage.getRSIPMeta().catch(error => {
+          storage.getRSIPMeta().catch((error) => {
             logger.warn('APP_SHELL', 'Failed to load RSIP meta', undefined, toError(error));
             return {};
           }),
-          storage.getTaskTimeStats().catch(error => {
+          storage.getTaskTimeStats().catch((error) => {
             logger.warn('APP_SHELL', 'Failed to load task time stats', undefined, toError(error));
             return [];
           }),
         ]);
 
-        const scheduledSessions = allScheduledSessions.filter(session => !isSessionExpired(session.expiresAt));
+        const scheduledSessions = allScheduledSessions.filter((session) => !isSessionExpired(session.expiresAt));
 
-        // 检查并修复循环引用的数据
-        const hasCircularReferences = chains.some(chain => chain.parentId === chain.id);
+        // Check and fix circular reference data.
+        const hasCircularReferences = chains.some((chain) => chain.parentId === chain.id);
         if (hasCircularReferences) {
           logger.debug('APP_SHELL', 'Detected circular reference data; fixing');
-          const fixedChains = chains.map(chain => {
+          const fixedChains = chains.map((chain) => {
             if (chain.parentId === chain.id) {
               logger.debug('APP_SHELL', `Fixed circular reference for chain ${chain.name}`);
               return { ...chain, parentId: undefined };
@@ -115,12 +139,11 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
             return chain;
           });
 
-          // 将修复后的数据保存回数据库
+          // Persist the fixed data before continuing.
           await storage.saveChains(fixedChains);
           logger.info('APP_SHELL', 'Circular reference data fix completed and saved');
 
-          // 使用修复后的数据
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             chains: fixedChains,
             scheduledSessions: [],
@@ -132,44 +155,28 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
         }
 
         logger.debug('APP_SHELL', 'Loaded chain data', { count: chains.length });
-        logger.debug('APP_SHELL', 'Chain data details', { chains: chains.map(c => ({ id: c.id, name: c.name })) });
+        logger.debug('APP_SHELL', 'Chain data details', { chains: chains.map((c) => ({ id: c.id, name: c.name })) });
 
-        // 执行数据迁移以确保历史记录包含用时信息
+        // Migrate completion history to include timing info.
         const { updatedHistory: migratedCompletionHistory, hasChanges: didMigrateCompletionHistory } =
           migrateCompletionHistoryForTiming(completionHistory, chains);
         if (didMigrateCompletionHistory) {
-          scheduleIdle(() => {
-            void storage.saveCompletionHistory(migratedCompletionHistory).catch(error => {
-              logger.warn(
-                'APP_SHELL',
-                'Failed to persist completion history timing migration',
-                undefined,
-                toError(error)
-              );
+          runWhenIdle(() => {
+            fireAndForget(persistCompletionHistoryTimingMigration(storage, migratedCompletionHistory), {
+              label: 'APP_SHELL completion history timing migration',
             });
           });
         }
 
-        // 执行完整的数据迁移（仅在开发环境中记录详细信息）
+        // Run full data migration (dev-only) to validate data.
         if (isDev && storage.kind === 'local') {
-          scheduleIdle(() => {
-            void import('../../utils/dataMigration')
-              .then(({ dataMigrationManager }) => dataMigrationManager.migrateAll())
-              .then(migrationResult => {
-                if (!migrationResult.success || migrationResult.errors.length > 0) {
-                  logger.warn('APP_SHELL', 'Data migration completed with warnings', { migrationResult });
-                } else {
-                  logger.info('APP_SHELL', 'Data migration completed successfully');
-                }
-              })
-              .catch(migrationError => {
-                logger.warn('APP_SHELL', 'Error occurred during data migration', undefined, toError(migrationError));
-              });
+          runWhenIdle(() => {
+            fireAndForget(runDevDataMigration(), { label: 'APP_SHELL data migration' });
           }, 5000);
         }
 
         logger.debug('APP_SHELL', 'Setting app state', { chainCount: chains.length });
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           chains,
           scheduledSessions,
@@ -181,7 +188,7 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
           currentView: activeSession ? 'focus' : 'dashboard',
         }));
 
-        // Clean up expired sessions
+        // Clean up expired sessions.
         if (scheduledSessions.length !== allScheduledSessions.length) {
           await storage.saveScheduledSessions(scheduledSessions);
         }
@@ -194,7 +201,7 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
 
     if (isInitialized) {
       logger.debug('APP_SHELL', 'Application initialization complete; starting data load');
-      loadData();
+      fireAndForget(loadData(), { label: 'APP_SHELL loadData' });
     } else {
       setIsLoadingData(false);
     }
@@ -202,3 +209,4 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
 
   return { isLoadingData };
 }
+

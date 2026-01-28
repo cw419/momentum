@@ -299,18 +299,3 @@ class QueryOptimizer {
 
 // Singleton instance for global use
 export const queryOptimizer = new QueryOptimizer();
-
-/**
- * React hook for optimized data loading
- */
-export const useOptimizedData = (storage: MomentumStorage) => {
-  const loadData = async () => {
-    return queryOptimizer.batchLoadData(storage);
-  };
-  
-  const invalidateCache = (dataType: 'chains' | 'sessions' | 'history') => {
-    queryOptimizer.onDataChange(dataType);
-  };
-  
-  return { loadData, invalidateCache, clearCache: queryOptimizer.clearCache };
-};

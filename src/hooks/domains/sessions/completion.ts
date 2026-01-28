@@ -2,16 +2,107 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, CompletionHistory } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import type { SafelySaveChains } from '../useChainsDomain';
-import { queryOptimizer } from '../../../utils/queryOptimizer';
-import {
-  incrementGroupCompletionCount,
-  isGroupFullyCompleted,
-  resetGroupCompletionCount,
-} from '../../../utils/chainTree';
-import { notificationManager } from '../../../utils/notifications';
+import { incrementGroupCompletionCount, isGroupFullyCompleted, resetGroupCompletionCount } from '../../../utils/chainTree';
 import { forwardTimerManager } from '../../../utils/forwardTimer';
 import { logger } from '../../../utils/logger';
+import { notificationManager } from '../../../utils/notifications';
 import { emitPointsChanged } from '../../../utils/pointsEvents';
+import { queryOptimizer } from '../../../utils/queryOptimizer';
+
+type Chain = AppState['chains'][number];
+type ActiveSession = NonNullable<AppState['activeSession']>;
+
+function computeActualDuration(activeSession: ActiveSession, chain: Chain): number {
+  if (!chain.isDurationless) return activeSession.duration;
+
+  const sessionId = `${activeSession.chainId}_${activeSession.startedAt.getTime()}`;
+  const elapsedSeconds = forwardTimerManager.stopTimer(sessionId);
+  return Math.ceil(elapsedSeconds / 60);
+}
+
+function updateChainsForSuccess(chains: AppState['chains'], chainId: string, completedAt: Date): AppState['chains'] {
+  return chains.map((chain) => {
+    if (chain.id !== chainId) return chain;
+
+    return {
+      ...chain,
+      currentStreak: chain.currentStreak + 1,
+      totalCompletions: chain.totalCompletions + 1,
+      lastCompletedAt: completedAt,
+    };
+  });
+}
+
+function updateChainsForFailure(chains: AppState['chains'], chainId: string): AppState['chains'] {
+  return chains.map((chain) => {
+    if (chain.id !== chainId) return chain;
+
+    return {
+      ...chain,
+      currentStreak: 0,
+      totalFailures: chain.totalFailures + 1,
+    };
+  });
+}
+
+function maybeIncrementGroupCycleCompletion(
+  chains: AppState['chains'],
+  completedChain: Chain,
+  tr: (zh: string, en: string) => string
+): AppState['chains'] {
+  if (!completedChain.parentId || completedChain.type === 'group') return chains;
+
+  const chainTree = queryOptimizer.memoizedBuildChainTree(chains);
+  const groupNode = chainTree.find((node) => node.id === completedChain.parentId);
+  if (!groupNode || groupNode.type !== 'group') return chains;
+  if (!isGroupFullyCompleted(groupNode)) return chains;
+
+  logger.debug('SESSIONS', `任务群 ${groupNode.name} 已完成所有任务，增加完成计数`);
+  const updatedChains = incrementGroupCompletionCount(chains, completedChain.parentId);
+
+  const parentChain = updatedChains.find((chain) => chain.id === completedChain.parentId);
+  if (parentChain) {
+    notificationManager.notifyTaskCompleted(
+      parentChain.name,
+      parentChain.currentStreak,
+      tr('任务群完成一轮', 'Group completed a cycle')
+    );
+  }
+
+  return updatedChains;
+}
+
+async function persistCompletionHistoryAndCleanupSupabase(
+  storage: MomentumStorage,
+  historyToPersist: CompletionHistory[],
+  setActiveSessionId: Dispatch<SetStateAction<string | null>>,
+  context: 'completion' | 'interrupt'
+): Promise<void> {
+  try {
+    await storage.saveCompletionHistory(historyToPersist);
+  } catch (error) {
+    logger.error(
+      'SESSIONS',
+      `Failed to persist completion history after ${context}`,
+      undefined,
+      error as Error
+    );
+  } finally {
+    setActiveSessionId(null);
+    try {
+      await storage.saveActiveSession(null);
+    } catch (error) {
+      logger.error(
+        'SESSIONS',
+        `Failed to clear active session after ${context}`,
+        undefined,
+        error as Error
+      );
+    } finally {
+      emitPointsChanged();
+    }
+  }
+}
 
 interface CreateCompletionHandlersParams {
   state: AppState;
@@ -34,20 +125,55 @@ export function createCompletionHandlers({
   onPetTaskCompleted,
   tr,
 }: CreateCompletionHandlersParams) {
+  function persistChains(updatedChains: AppState['chains'], context: string): void {
+    safelySaveChains(updatedChains).catch((error) => {
+      queryOptimizer.onDataChange('chains');
+      logger.error('SESSIONS', context, undefined, error as Error);
+    });
+  }
+
+  function persistCompletionHistoryAndCleanup(
+    historyToPersist: CompletionHistory[],
+    context: 'completion' | 'interrupt'
+  ): void {
+    if (activeSessionId && storage.kind === 'supabase') {
+      persistCompletionHistoryAndCleanupSupabase(storage, historyToPersist, setActiveSessionId, context).catch(
+        (error) => {
+          logger.error('SESSIONS', `Unexpected ${context} cleanup error`, undefined, error as Error);
+        }
+      );
+      return;
+    }
+
+    setActiveSessionId(null);
+
+    storage.saveActiveSession(null).catch((error) => {
+      logger.error(
+        'SESSIONS',
+        `Failed to clear active session after ${context}`,
+        undefined,
+        error as Error
+      );
+    });
+
+    storage.saveCompletionHistory(historyToPersist).catch((error) => {
+      logger.error(
+        'SESSIONS',
+        `Failed to persist completion history after ${context}`,
+        undefined,
+        error as Error
+      );
+    });
+  }
+
   const handleCompleteSession = (description?: string, notes?: string) => {
     const activeSession = state.activeSession;
     if (!activeSession) return;
 
-    const chain = state.chains.find(c => c.id === activeSession.chainId);
+    const chain = state.chains.find((item) => item.id === activeSession.chainId);
     if (!chain) return;
 
-    let actualDuration = activeSession.duration;
-
-    if (chain.isDurationless) {
-      const sessionId = `${activeSession.chainId}_${activeSession.startedAt.getTime()}`;
-      const elapsedSeconds = forwardTimerManager.stopTimer(sessionId);
-      actualDuration = Math.ceil(elapsedSeconds / 60);
-    }
+    const actualDuration = computeActualDuration(activeSession, chain);
 
     const completedAt = new Date();
     const newStreak = chain.currentStreak + 1;
@@ -59,88 +185,36 @@ export function createCompletionHandlers({
       duration: activeSession.duration,
       wasSuccessful: true,
       actualDuration,
-      isForwardTimed: !!chain.isDurationless,
+      isForwardTimed: Boolean(chain.isDurationless),
       description,
       notes,
     };
 
-    let updatedChains = state.chains.map(c =>
-      c.id === chain.id
-        ? {
-            ...c,
-            currentStreak: c.currentStreak + 1,
-            totalCompletions: c.totalCompletions + 1,
-            lastCompletedAt: completedAt,
-          }
-        : c
-    );
-
-    if (chain.parentId && chain.type !== 'group') {
-      const chainTree = queryOptimizer.memoizedBuildChainTree(updatedChains);
-      const groupNode = chainTree.find(node => node.id === chain.parentId);
-
-      if (groupNode && groupNode.type === 'group') {
-        if (isGroupFullyCompleted(groupNode)) {
-          logger.debug('SESSIONS', `任务群 ${groupNode.name} 已完成所有任务，增加完成计数`);
-          updatedChains = incrementGroupCompletionCount(updatedChains, chain.parentId);
-
-          const parentChain = updatedChains.find(c => c.id === chain.parentId);
-          if (parentChain) {
-            notificationManager.notifyTaskCompleted(parentChain.name, parentChain.currentStreak, tr('任务群完成一轮', 'Group completed a cycle'));
-          }
-        }
-      }
-    }
-
     const updatedHistory = [...state.completionHistory, completionRecord];
     const historyToPersist = storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
 
-    safelySaveChains(updatedChains).catch(error => {
-      queryOptimizer.onDataChange('chains');
-      logger.error('SESSIONS', '完成任务时保存链条数据失败', undefined, error as Error);
-    });
+    let updatedChains = updateChainsForSuccess(state.chains, chain.id, completedAt);
+    updatedChains = maybeIncrementGroupCycleCompletion(updatedChains, chain, tr);
 
-    if (activeSessionId && storage.kind === 'supabase') {
-      void (async () => {
-        try {
-          await storage.saveCompletionHistory(historyToPersist);
-        } catch (error) {
-          logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
-        } finally {
-          setActiveSessionId(null);
-          try {
-            await storage.saveActiveSession(null);
-          } catch (error) {
-            logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
-          } finally {
-            emitPointsChanged();
-          }
-        }
-      })();
-    } else {
-      setActiveSessionId(null);
-
-      void storage.saveActiveSession(null).catch(error => {
-        logger.error('SESSIONS', 'Failed to clear active session after completion', undefined, error as Error);
-      });
-
-      void storage.saveCompletionHistory(historyToPersist).catch(error => {
-        logger.error('SESSIONS', 'Failed to persist completion history after completion', undefined, error as Error);
-      });
-    }
+    persistChains(updatedChains, '完成任务时保存链条数据失败');
+    persistCompletionHistoryAndCleanup(historyToPersist, 'completion');
 
     if (completionRecord.actualDuration) {
-      void storage.updateTaskTimeStats(chain.id, completionRecord.actualDuration).catch(error => {
-        logger.error('SESSIONS', 'Failed to update task time stats after completion', { chainId: chain.id }, error as Error);
+      storage.updateTaskTimeStats(chain.id, completionRecord.actualDuration).catch((error) => {
+        logger.error(
+          'SESSIONS',
+          'Failed to update task time stats after completion',
+          { chainId: chain.id },
+          error as Error
+        );
       });
     }
 
-    // Notify pet system of task completion
     if (onPetTaskCompleted && actualDuration) {
       onPetTaskCompleted(actualDuration, true);
     }
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       chains: updatedChains,
       activeSession: null,
@@ -153,7 +227,7 @@ export function createCompletionHandlers({
     const activeSession = state.activeSession;
     if (!activeSession) return;
 
-    const chain = state.chains.find(c => c.id === activeSession.chainId);
+    const chain = state.chains.find((item) => item.id === activeSession.chainId);
     if (!chain) return;
 
     if (chain.isDurationless) {
@@ -168,62 +242,22 @@ export function createCompletionHandlers({
       wasSuccessful: false,
       reasonForFailure: reason || '用户主动中断',
       actualDuration: activeSession.duration,
-      isForwardTimed: !!chain.isDurationless,
+      isForwardTimed: Boolean(chain.isDurationless),
     };
 
-    let updatedChains = state.chains.map(c =>
-      c.id === chain.id
-        ? {
-            ...c,
-            currentStreak: 0,
-            totalFailures: c.totalFailures + 1,
-          }
-        : c
-    );
+    const updatedHistory = [...state.completionHistory, completionRecord];
+    const historyToPersist = storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
 
+    let updatedChains = updateChainsForFailure(state.chains, chain.id);
     if (chain.parentId && chain.type !== 'group') {
       logger.debug('SESSIONS', `任务 ${chain.name} 失败/中断，重置任务群完成计数`);
       updatedChains = resetGroupCompletionCount(updatedChains, chain.parentId);
     }
 
-    const updatedHistory = [...state.completionHistory, completionRecord];
-    const historyToPersist = storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
+    persistChains(updatedChains, '中断任务时保存链条数据失败');
+    persistCompletionHistoryAndCleanup(historyToPersist, 'interrupt');
 
-    safelySaveChains(updatedChains).catch(error => {
-      queryOptimizer.onDataChange('chains');
-      logger.error('SESSIONS', '中断任务时保存链条数据失败', undefined, error as Error);
-    });
-
-    if (activeSessionId && storage.kind === 'supabase') {
-      void (async () => {
-        try {
-          await storage.saveCompletionHistory(historyToPersist);
-        } catch (error) {
-          logger.error('SESSIONS', 'Failed to persist completion history after interrupt', undefined, error as Error);
-        } finally {
-          setActiveSessionId(null);
-          try {
-            await storage.saveActiveSession(null);
-          } catch (error) {
-            logger.error('SESSIONS', 'Failed to clear active session after interrupt', undefined, error as Error);
-          } finally {
-            emitPointsChanged();
-          }
-        }
-      })();
-    } else {
-      setActiveSessionId(null);
-
-      void storage.saveActiveSession(null).catch(error => {
-        logger.error('SESSIONS', 'Failed to clear active session after interrupt', undefined, error as Error);
-      });
-
-      void storage.saveCompletionHistory(historyToPersist).catch(error => {
-        logger.error('SESSIONS', 'Failed to persist completion history after interrupt', undefined, error as Error);
-      });
-    }
-
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       chains: updatedChains,
       activeSession: null,
@@ -234,3 +268,4 @@ export function createCompletionHandlers({
 
   return { handleCompleteSession, handleInterruptSession };
 }
+

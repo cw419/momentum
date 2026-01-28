@@ -14,21 +14,12 @@ export type {
 
 export {
   RecoveryStrategyRegistry,
-  recoveryStrategyRegistry
 } from './RecoveryStrategy';
 
 // 恢复选项提供器
-export {
-  RecoveryOptionsProvider,
-  recoveryOptionsProvider
-} from './RecoveryOptionsProvider';
+export { recoveryOptionsProvider } from './RecoveryOptionsProvider';
 
 // 恢复处理器
-export {
-  recoveryHandlers,
-  extractRuleIdFromError,
-  extractRuleNameFromError
-} from './RecoveryHandlers';
 
 // 默认策略
 export {

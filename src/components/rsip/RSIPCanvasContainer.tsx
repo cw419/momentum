@@ -9,7 +9,7 @@ import { useRSIPReparent } from './hooks/useRSIPReparent';
 import { useRSIPCamera } from './hooks/useRSIPCamera';
 import { RSIPCanvasView, type ConfirmAction } from './RSIPCanvasView';
 
-export interface RSIPCanvasContainerProps {
+interface RSIPCanvasContainerProps {
   nodes: RSIPNode[];
   tree: RSIPTreeNode[];
   onSaveNodes: (nodes: RSIPNode[]) => void;

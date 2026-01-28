@@ -10,6 +10,7 @@ import {
   ExceptionRuleException
 } from '../../types';
 import { localPreferences } from '../../utils/localPreferences';
+import { randomId } from '../../utils/random';
 
 /**
  * 序列化的规则格式（存储时使用）
@@ -86,7 +87,7 @@ export class RulePersistence {
    * 生成唯一ID
    */
   generateId(): string {
-    return `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return randomId('rule');
   }
 
   /**
@@ -98,12 +99,14 @@ export class RulePersistence {
         ? rule.chainId
         : undefined;
 
-    const normalizedScope: ExceptionRule['scope'] =
-      rule.scope === 'chain' || rule.scope === 'global'
-        ? rule.scope
-        : normalizedChainId
-          ? 'chain'
-          : 'global';
+    let normalizedScope: ExceptionRule['scope'];
+    if (rule.scope === 'chain' || rule.scope === 'global') {
+      normalizedScope = rule.scope;
+    } else if (normalizedChainId) {
+      normalizedScope = 'chain';
+    } else {
+      normalizedScope = 'global';
+    }
 
     return {
       ...rule,

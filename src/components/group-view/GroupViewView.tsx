@@ -29,6 +29,12 @@ interface TimeStatus {
   progress: number;
 }
 
+function getProgressBarColor(progress: number) {
+  if (progress > 0.8) return 'bg-red-500';
+  if (progress > 0.6) return 'bg-orange-500';
+  return 'bg-green-500';
+}
+
 interface ChainTypeConfig {
   icon: IconName;
   color: string;
@@ -246,9 +252,7 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
                   <div className="flex items-center space-x-2">
                     <div className="w-24 bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-[width,background-color] duration-300 ${
-                          timeStatus.progress > 0.8 ? 'bg-red-500' : timeStatus.progress > 0.6 ? 'bg-orange-500' : 'bg-green-500'
-                        }`}
+                        className={`h-2 rounded-full transition-[width,background-color] duration-300 ${getProgressBarColor(timeStatus.progress)}`}
                         style={{ width: `${timeStatus.progress * 100}%` }}
                       ></div>
                     </div>

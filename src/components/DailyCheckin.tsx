@@ -235,5 +235,3 @@ export const DailyCheckin: React.FC<DailyCheckinProps> = ({ className = '' }) =>
     </div>
   );
 };
-
-export default DailyCheckin;

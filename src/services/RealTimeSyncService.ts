@@ -1,9 +1,11 @@
-import React from 'react';
 import type { MomentumStorage } from '../storage/MomentumStorage';
 import type { Chain } from '../types';
 import { logger } from '../utils/logger';
 import { toError } from '../utils/errorMessage';
 import { isDev } from '../utils/env';
+
+type RealTimeSyncDataType = 'chains' | 'sessions' | 'history';
+type RealTimeSyncOperationType = 'create' | 'update' | 'delete' | 'restore';
 
 /**
  * Real-time synchronization service for immediate UI updates
@@ -34,7 +36,7 @@ class RealTimeSyncService {
   /**
    * Subscribe to data changes for a specific data type
    */
-  subscribe(dataType: 'chains' | 'sessions' | 'history', callback: (data: unknown) => void): () => void {
+  subscribe(dataType: RealTimeSyncDataType, callback: (data: unknown) => void): () => void {
     if (!this.syncCallbacks.has(dataType)) {
       this.syncCallbacks.set(dataType, []);
     }
@@ -55,7 +57,7 @@ class RealTimeSyncService {
   /**
    * Notify all subscribers of data changes with fresh data
    */
-  private async notifySubscribers(dataType: 'chains' | 'sessions' | 'history', freshData?: unknown): Promise<void> {
+  private async notifySubscribers(dataType: RealTimeSyncDataType, freshData?: unknown): Promise<void> {
     if (!this.isEnabled) return;
     
     const callbacks = this.syncCallbacks.get(dataType);
@@ -104,8 +106,8 @@ class RealTimeSyncService {
    * Trigger synchronization after a database operation
    */
   async syncAfterOperation(
-    dataType: 'chains' | 'sessions' | 'history',
-    operationType: 'create' | 'update' | 'delete' | 'restore',
+    dataType: RealTimeSyncDataType,
+    operationType: RealTimeSyncOperationType,
     freshData?: unknown
   ): Promise<void> {
     if (!this.isEnabled) return;
@@ -290,27 +292,3 @@ if (isDev) {
     window.__realTimeSync = realTimeSyncService;
   }
 }
-
-/**
- * React hook for real-time data synchronization
- */
-export const useRealTimeSync = (dataType: 'chains' | 'sessions' | 'history') => {
-  const [data, setData] = React.useState<unknown>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  
-  React.useEffect(() => {
-    // Subscribe to real-time updates
-    const unsubscribe = realTimeSyncService.subscribe(dataType, (freshData) => {
-      setData(freshData);
-      setIsLoading(false);
-    });
-    
-    return unsubscribe;
-  }, [dataType]);
-  
-  const forceRefresh = React.useCallback(() => {
-    realTimeSyncService.forceRefresh();
-  }, []);
-  
-  return { data, isLoading, forceRefresh };
-};
