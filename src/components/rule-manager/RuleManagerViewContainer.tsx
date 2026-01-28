@@ -25,6 +25,14 @@ interface RuleManagerFormData {
   description: string;
 }
 
+function replaceRuleById(rules: ExceptionRule[], targetId: string, nextRule: ExceptionRule) {
+  return rules.map((rule) => (rule.id === targetId ? nextRule : rule));
+}
+
+function removeRuleById(rules: ExceptionRule[], targetId: string) {
+  return rules.filter((rule) => rule.id !== targetId);
+}
+
 export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: RuleManagerViewProps) {
   const { language, tr } = useI18n();
   const [rules, setRules] = useState<ExceptionRule[]>([]);
@@ -141,7 +149,7 @@ export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: Rule
         timeout: 3000,
         retryCount: 2,
         onSuccess: (result) => {
-          setRules(prev => prev.map(rule => (rule.id === operationId ? result.rule : rule)));
+          setRules((prev) => replaceRuleById(prev, operationId, result.rule));
           setOptimisticUpdates(prev => {
             const newMap = new Map(prev);
             newMap.delete(operationId);
@@ -156,7 +164,7 @@ export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: Rule
           }
         },
         onError: (error) => {
-          setRules(prev => prev.filter(rule => rule.id !== operationId));
+          setRules((prev) => removeRuleById(prev, operationId));
           setOptimisticUpdates(prev => {
             const newMap = new Map(prev);
             newMap.delete(operationId);
@@ -233,7 +241,7 @@ export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: Rule
           }
         },
         onError: (error) => {
-          setRules(prev => prev.map(rule => (rule.id === originalRule.id ? originalRule : rule)));
+          setRules((prev) => replaceRuleById(prev, originalRule.id, originalRule));
 
           if (error instanceof ExceptionRuleException) {
             const safe = getSafeErrorDetail(error.message, language);

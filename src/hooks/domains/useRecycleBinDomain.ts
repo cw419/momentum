@@ -35,11 +35,11 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
       const updatedScheduledSessions = state.scheduledSessions.filter(session => session.chainId !== chainId);
       const updatedActiveSession = state.activeSession?.chainId === chainId ? null : state.activeSession;
 
-      void storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
+      storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
         logger.error('RECYCLE_BIN', 'Failed to persist scheduled sessions after delete', { chainId }, error as Error);
       });
       if (!updatedActiveSession) {
-        void storage.saveActiveSession(null).catch(error => {
+        storage.saveActiveSession(null).catch(error => {
           logger.error('RECYCLE_BIN', 'Failed to clear active session after delete', { chainId }, error as Error);
         });
       }

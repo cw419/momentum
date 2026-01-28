@@ -13,7 +13,7 @@ import { ruleDuplicationDetector } from '../RuleDuplicationDetector';
 import { ruleUsageTracker } from '../RuleUsageTracker';
 import { tr } from '../../utils/runtimeI18n';
 
-export interface RuleUpdateResult {
+interface RuleUpdateResult {
   rule: ExceptionRule;
   warnings: string[];
 }
@@ -32,7 +32,7 @@ export interface SystemHealthStatus {
   issues: string[];
 }
 
-export interface CleanupOptions {
+interface CleanupOptions {
   removeExpiredRecords?: boolean;
   retentionDays?: number;
 }
@@ -41,7 +41,7 @@ export interface CleanupOptions {
  * 规则维护服务类
  * 单一职责：处理规则的维护和健康检查
  */
-export class RuleMaintenanceService {
+class RuleMaintenanceService {
   /**
    * 更新例外规则
    */

@@ -33,6 +33,22 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
   onCancelDelete,
   deleteDialogRef,
 }) => {
+  let durationText: string;
+  if (chain.isDurationless || chain.duration === 0) {
+    if (lastCompletionTime) {
+      durationText = `${tr('上次：', 'Last: ')}${formatTimeDescriptionByLanguage(lastCompletionTime, language)}`;
+    } else {
+      durationText = tr('首次执行', 'First time');
+    }
+  } else {
+    durationText = formatTime(chain.duration, language);
+  }
+
+  const completionUnit = chain.totalCompletions === 1 ? 'completion' : 'completions';
+  const completionsText = language === 'zh'
+    ? `${chain.totalCompletions} 次完成`
+    : `${chain.totalCompletions} ${completionUnit}`;
+
   return (
     <div className="relative">
       <div
@@ -133,19 +149,11 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(({
           <div className="flex items-center space-x-2 text-gray-700 dark:text-slate-300">
             <Clock size={16} />
             <span className="font-medium">
-              {(chain.isDurationless || chain.duration === 0)
-                ? (lastCompletionTime
-                  ? `${tr('上次：', 'Last: ')}${formatTimeDescriptionByLanguage(lastCompletionTime, language)}`
-                  : tr('首次执行', 'First time')
-                )
-                : formatTime(chain.duration, language)
-              }
+              {durationText}
             </span>
           </div>
           <div className="text-gray-600 dark:text-slate-400 text-sm font-mono">
-            {language === 'zh'
-              ? `${chain.totalCompletions} 次完成`
-              : `${chain.totalCompletions} completion${chain.totalCompletions === 1 ? '' : 's'}`}
+            {completionsText}
           </div>
         </div>
 

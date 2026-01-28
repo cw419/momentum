@@ -27,7 +27,7 @@ export interface RuleExecutionResult {
  * 规则执行服务类
  * 单一职责：处理规则的执行和验证
  */
-export class RuleExecutor {
+class RuleExecutor {
   /**
    * 使用规则执行操作（增强版本）
    */

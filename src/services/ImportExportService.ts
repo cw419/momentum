@@ -1,24 +1,23 @@
 import type { Chain, CompletionHistory, DistributiveOmit, ExceptionRule, ExceptionRuleType, RSIPMeta, RSIPNode } from '../types';
-
-type ISODateString = string;
+import { randomId } from '../utils/random';
 
 type ChainDateFields = 'createdAt' | 'lastCompletedAt' | 'groupStartedAt' | 'groupExpiresAt' | 'deletedAt';
 export type ExportedChain = DistributiveOmit<Chain, ChainDateFields> & {
-  createdAt: ISODateString;
-  lastCompletedAt?: ISODateString;
-  groupStartedAt?: ISODateString;
-  groupExpiresAt?: ISODateString;
-  deletedAt?: ISODateString | null;
+  createdAt: string;
+  lastCompletedAt?: string;
+  groupStartedAt?: string;
+  groupExpiresAt?: string;
+  deletedAt?: string | null;
 };
 
-export type ExportedCompletionHistory = Omit<CompletionHistory, 'completedAt'> & { completedAt: ISODateString };
+export type ExportedCompletionHistory = Omit<CompletionHistory, 'completedAt'> & { completedAt: string };
 
-export type ExportedRSIPNode = Omit<RSIPNode, 'createdAt'> & { createdAt: ISODateString };
-export type ExportedRSIPMeta = Omit<RSIPMeta, 'lastAddedAt'> & { lastAddedAt?: ISODateString };
+export type ExportedRSIPNode = Omit<RSIPNode, 'createdAt'> & { createdAt: string };
+export type ExportedRSIPMeta = Omit<RSIPMeta, 'lastAddedAt'> & { lastAddedAt?: string };
 
 export interface MomentumExportDataV2 {
   version: '2.0';
-  exportedAt: ISODateString;
+  exportedAt: string;
   chains: ExportedChain[];
   completionHistory: ExportedCompletionHistory[];
   rsipNodes?: ExportedRSIPNode[];
@@ -33,14 +32,17 @@ export interface ImportExportImportOptions {
   importCompletionHistory: boolean;
 }
 
-export interface ParsedImportData {
+interface ParsedImportData {
   chains: Chain[];
   history: CompletionHistory[];
   rsipNodes: RSIPNode[];
   rsipMeta?: RSIPMeta;
   userPreferences?: unknown;
-  exceptionRulesToImport: Array<Pick<ExceptionRule, 'name' | 'type' | 'description'>>;
+  exceptionRulesToImport: ExceptionRuleImportData[];
 }
+
+type ExceptionRuleImportFields = 'name' | 'type' | 'description';
+type ExceptionRuleImportData = Pick<ExceptionRule, ExceptionRuleImportFields>;
 
 const allowedChainTypes = new Set([
   'unit',
@@ -74,17 +76,289 @@ function toStringArray(value: unknown): string[] {
 }
 
 function generateId(prefix: string) {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  return randomId(prefix);
 }
 
 function isExceptionRuleType(value: unknown): value is ExceptionRuleType {
   return value === 'pause_only' || value === 'early_completion_only';
 }
 
-export class ImportExportService {
+function serializeDeletedAt(deletedAt: Date | null | undefined): string | null | undefined {
+  if (deletedAt === null) return null;
+  return deletedAt ? deletedAt.toISOString() : undefined;
+}
+
+type ImportTranslator = (zh: string, en: string) => string;
+
+type ChainImportEntry = { raw: Record<string, unknown>; sourceId: string; newId: string };
+
+function parseImportPayload(json: string, tr: ImportTranslator): Record<string, unknown> {
+  const parsed = JSON.parse(json) as unknown;
+
+  if (!isRecord(parsed)) {
+    throw new Error(tr('导入数据格式错误：文件内容不是对象。', 'Invalid import format: file content is not an object.'));
+  }
+
+  return parsed;
+}
+
+function getRawChainsFromPayload(payload: Record<string, unknown>, tr: ImportTranslator): unknown[] {
+  if (!('chains' in payload) || !Array.isArray(payload.chains)) {
+    throw new Error(tr('导入数据格式错误：未找到有效的链条数据。', 'Invalid import format: no valid chains found'));
+  }
+
+  return payload.chains as unknown[];
+}
+
+function buildChainEntriesAndIdMap(rawChains: unknown[], tr: ImportTranslator): {
+  chainEntries: ChainImportEntry[];
+  idMap: Map<string, string>;
+} {
+  const chainEntries: ChainImportEntry[] = [];
+  const seenIds = new Set<string>();
+
+  for (const raw of rawChains) {
+    const record = isRecord(raw) ? raw : {};
+    const sourceId = String(record.id ?? generateId('chain'));
+
+    if (seenIds.has(sourceId)) {
+      throw new Error(
+        tr(
+          `导入数据包包含重复的链条ID: ${sourceId}`,
+          `Import data contains duplicate chain ID: ${sourceId}`
+        )
+      );
+    }
+
+    seenIds.add(sourceId);
+    chainEntries.push({ raw: record, sourceId, newId: generateId('chain') });
+  }
+
+  const idMap = new Map<string, string>(chainEntries.map((e) => [e.sourceId, e.newId]));
+  return { chainEntries, idMap };
+}
+
+function buildImportChains(params: {
+  chainEntries: ChainImportEntry[];
+  idMap: Map<string, string>;
+  preserveStatistics: boolean;
+  preserveTimestamps: boolean;
+  tr: ImportTranslator;
+}): Chain[] {
+  const { chainEntries, idMap, preserveStatistics, preserveTimestamps, tr } = params;
+
+  return chainEntries.map(({ raw, newId }) => {
+    const rawType = String(raw.type ?? 'unit');
+    const type = allowedChainTypes.has(rawType) ? rawType : 'unit';
+
+    const stats = preserveStatistics
+      ? {
+          currentStreak: toNumber(raw.currentStreak, 0),
+          auxiliaryStreak: toNumber(raw.auxiliaryStreak, 0),
+          totalCompletions: toNumber(raw.totalCompletions, 0),
+          totalFailures: toNumber(raw.totalFailures, 0),
+          auxiliaryFailures: toNumber(raw.auxiliaryFailures, 0),
+        }
+      : {
+          currentStreak: 0,
+          auxiliaryStreak: 0,
+          totalCompletions: 0,
+          totalFailures: 0,
+          auxiliaryFailures: 0,
+        };
+
+    const createdAt = preserveTimestamps && raw.createdAt ? new Date(String(raw.createdAt)) : new Date();
+    const lastCompletedAt =
+      preserveTimestamps && raw.lastCompletedAt ? new Date(String(raw.lastCompletedAt)) : undefined;
+
+    const sourceParentId = raw.parentId ?? raw.parent_id ?? undefined;
+    const parentId =
+      sourceParentId != null && idMap.has(String(sourceParentId)) ? idMap.get(String(sourceParentId)) : undefined;
+
+    const common = {
+      id: newId,
+      name: String(raw.name ?? tr('未命名链条', 'Untitled chain')),
+      parentId,
+      sortOrder: toNumber(raw.sortOrder ?? raw.sort_order, Math.floor(Date.now() / 1000)),
+      trigger: String(raw.trigger ?? ''),
+      duration: toNumber(raw.duration, 45),
+      description: String(raw.description ?? ''),
+      ...stats,
+      exceptions: toStringArray(raw.exceptions),
+      auxiliaryExceptions: toStringArray(raw.auxiliaryExceptions),
+      auxiliarySignal: String(raw.auxiliarySignal ?? ''),
+      auxiliaryDuration: toNumber(raw.auxiliaryDuration, 15),
+      auxiliaryCompletionTrigger: String(raw.auxiliaryCompletionTrigger ?? ''),
+      timeLimitExceptions: toStringArray(raw.timeLimitExceptions ?? raw.time_limit_exceptions),
+      isDurationless: Boolean(raw.isDurationless ?? raw.is_durationless ?? false),
+      minimumDuration: toOptionalNumber(raw.minimumDuration ?? raw.minimum_duration),
+      taskRepeatCount: toOptionalNumber(raw.taskRepeatCount ?? raw.task_repeat_count),
+      createdAt,
+      lastCompletedAt,
+      deletedAt: null as null,
+    };
+
+    if (type === 'group') {
+      return {
+        ...common,
+        type: 'group',
+        timeLimitHours: toOptionalNumber(raw.timeLimitHours ?? raw.time_limit_hours),
+        groupRepeatCount: toOptionalNumber(raw.groupRepeatCount ?? raw.group_repeat_count),
+        isTaskGroup: Boolean(raw.isTaskGroup ?? raw.is_task_group ?? false) || undefined,
+        groupStartedAt: undefined,
+        groupExpiresAt: undefined,
+      } as Chain;
+    }
+
+    return {
+      ...common,
+      type: type as Chain['type'],
+    } as Chain;
+  });
+}
+
+function parseImportHistory(
+  completionHistory: unknown,
+  shouldImport: boolean,
+  idMap: Map<string, string>
+): CompletionHistory[] {
+  if (!shouldImport || !Array.isArray(completionHistory)) return [];
+
+  const result: CompletionHistory[] = [];
+  for (const raw of completionHistory as unknown[]) {
+    if (!isRecord(raw) || !('chainId' in raw)) continue;
+
+    const mappedChainId = idMap.get(String(raw.chainId));
+    if (!mappedChainId) continue;
+
+    const duration = Math.max(0, toNumber(raw.duration, 0));
+
+    result.push({
+      chainId: mappedChainId,
+      completedAt: new Date(String(raw.completedAt || Date.now())),
+      duration,
+      wasSuccessful: Boolean(raw.wasSuccessful),
+      reasonForFailure: raw.reasonForFailure ? String(raw.reasonForFailure) : undefined,
+      actualDuration: raw.actualDuration != null ? Math.max(0, toNumber(raw.actualDuration, duration)) : undefined,
+      isForwardTimed: Boolean(raw.isForwardTimed || false),
+      description: raw.description ? String(raw.description) : undefined,
+      notes: raw.notes ? String(raw.notes) : undefined,
+    });
+  }
+
+  return result;
+}
+
+function buildRsipIdMap(rawNodes: unknown[], existingIds: Set<string>) {
+  const idMapRsip = new Map<string, string>();
+
+  for (const raw of rawNodes) {
+    if (!isRecord(raw)) continue;
+
+    const originalId =
+      typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id : generateId('rsip');
+
+    let nextId = generateId('rsip');
+    while (existingIds.has(nextId)) nextId = generateId('rsip');
+
+    idMapRsip.set(originalId, nextId);
+    existingIds.add(nextId);
+  }
+
+  return idMapRsip;
+}
+
+function getTrimmedNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function toOptionalBoolean(value: unknown): boolean | undefined {
+  return value != null ? Boolean(value) : undefined;
+}
+
+function toOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getOriginalRsipId(raw: Record<string, unknown>): string {
+  return getTrimmedNonEmptyString(raw.id) ?? generateId('rsip');
+}
+
+function mapRsipParentId(raw: Record<string, unknown>, idMapRsip: Map<string, string>): string | undefined {
+  const originalParentId = getTrimmedNonEmptyString(raw.parentId);
+  if (!originalParentId) return undefined;
+  return idMapRsip.get(originalParentId) ?? originalParentId;
+}
+
+function parseTruthyDateOrNow(value: unknown): Date {
+  return value ? new Date(String(value)) : new Date();
+}
+
+function mapImportedRsipNode(raw: Record<string, unknown>, idMapRsip: Map<string, string>, tr: ImportTranslator): RSIPNode {
+  const originalId = getOriginalRsipId(raw);
+  const id = idMapRsip.get(originalId) ?? generateId('rsip');
+
+  return {
+    id,
+    parentId: mapRsipParentId(raw, idMapRsip),
+    title: String(raw.title ?? tr('未命名国策', 'Untitled policy')),
+    rule: String(raw.rule ?? ''),
+    sortOrder: toNumber(raw.sortOrder, Math.floor(Date.now() / 1000)),
+    createdAt: parseTruthyDateOrNow(raw.createdAt),
+    useTimer: toOptionalBoolean(raw.useTimer),
+    timerMinutes: toOptionalNumber(raw.timerMinutes),
+    emoji: toOptionalString(raw.emoji),
+    type: toOptionalString(raw.type),
+  };
+}
+
+function parseImportRsipNodes(rsipNodes: unknown, existingRsipNodes: RSIPNode[] | undefined, tr: ImportTranslator): RSIPNode[] {
+  if (!Array.isArray(rsipNodes)) return [];
+
+  const existingIds = new Set((existingRsipNodes || []).map((n) => n.id));
+  const idMapRsip = buildRsipIdMap(rsipNodes as unknown[], existingIds);
+
+  const imported: RSIPNode[] = [];
+  for (const raw of rsipNodes as unknown[]) {
+    if (!isRecord(raw)) continue;
+    imported.push(mapImportedRsipNode(raw, idMapRsip, tr));
+  }
+
+  return imported;
+}
+
+function parseImportRsipMeta(rsipMeta: unknown): RSIPMeta | undefined {
+  if (!isRecord(rsipMeta)) return undefined;
+
+  return {
+    ...rsipMeta,
+    lastAddedAt: rsipMeta.lastAddedAt != null ? new Date(String(rsipMeta.lastAddedAt)) : undefined,
+    allowMultiplePerDay: typeof rsipMeta.allowMultiplePerDay === 'boolean' ? rsipMeta.allowMultiplePerDay : undefined,
+  } as RSIPMeta;
+}
+
+function parseExceptionRulesToImport(exceptionRules: unknown): ExceptionRuleImportData[] {
+  const exceptionRulesToImport: ExceptionRuleImportData[] = [];
+  if (!isRecord(exceptionRules) || !Array.isArray(exceptionRules.rules)) return exceptionRulesToImport;
+
+  for (const raw of exceptionRules.rules as unknown[]) {
+    if (!isRecord(raw)) continue;
+    if (!('name' in raw) || !('type' in raw)) continue;
+    if (typeof raw.name !== 'string' || !isExceptionRuleType(raw.type)) continue;
+
+    exceptionRulesToImport.push({
+      name: raw.name,
+      type: raw.type,
+      description: typeof raw.description === 'string' ? raw.description : undefined,
+    });
+  }
+
+  return exceptionRulesToImport;
+}
+
+class ImportExportService {
   createExportData(params: {
     chains: Chain[];
     history?: CompletionHistory[];
@@ -104,7 +378,7 @@ export class ImportExportService {
         lastCompletedAt: chain.lastCompletedAt?.toISOString(),
         groupStartedAt: chain.groupStartedAt?.toISOString(),
         groupExpiresAt: chain.groupExpiresAt?.toISOString(),
-        deletedAt: chain.deletedAt ? chain.deletedAt.toISOString() : chain.deletedAt === null ? null : undefined,
+        deletedAt: serializeDeletedAt(chain.deletedAt),
       })),
       completionHistory: (history || []).map((h) => ({
         ...(h as unknown as ExportedCompletionHistory),
@@ -134,204 +408,23 @@ export class ImportExportService {
     tr: (zh: string, en: string) => string;
   }): ParsedImportData {
     const { json, options, existingRsipNodes, tr } = params;
-    const parsed = JSON.parse(json) as unknown;
 
-    if (!isRecord(parsed)) {
-      throw new Error(tr('导入数据格式错误：文件内容不是对象。', 'Invalid import format: file content is not an object.'));
-    }
+    const parsed = parseImportPayload(json, tr);
+    const rawChains = getRawChainsFromPayload(parsed, tr);
+    const { chainEntries, idMap } = buildChainEntriesAndIdMap(rawChains, tr);
 
-    if (!('chains' in parsed) || !Array.isArray(parsed.chains)) {
-      throw new Error(tr('导入数据格式错误：未找到有效的链条数据。', 'Invalid import format: no valid chains found'));
-    }
-
-    const rawChains = parsed.chains as unknown[];
-
-    const chainEntries = rawChains.map((raw) => {
-      const record = isRecord(raw) ? raw : {};
-      const sourceId = String(record.id ?? generateId('chain'));
-      return { raw: record, sourceId, newId: generateId('chain') };
+    const importChains = buildImportChains({
+      chainEntries,
+      idMap,
+      preserveStatistics: Boolean(options.preserveStatistics),
+      preserveTimestamps: Boolean(options.preserveTimestamps),
+      tr,
     });
 
-    const seenIds = new Set<string>();
-    for (const entry of chainEntries) {
-      if (seenIds.has(entry.sourceId)) {
-        throw new Error(tr(`导入数据包包含重复的链条ID: ${entry.sourceId}`, `Import data contains duplicate chain ID: ${entry.sourceId}`));
-      }
-      seenIds.add(entry.sourceId);
-    }
-
-    const idMap = new Map<string, string>(chainEntries.map(e => [e.sourceId, e.newId]));
-    const preserveStatistics = Boolean(options.preserveStatistics);
-    const preserveTimestamps = Boolean(options.preserveTimestamps);
-
-    const importChains: Chain[] = chainEntries.map(({ raw, newId }) => {
-      const rawType = String(raw.type ?? 'unit');
-      const type = allowedChainTypes.has(rawType) ? rawType : 'unit';
-
-      const stats = preserveStatistics
-        ? {
-            currentStreak: toNumber(raw.currentStreak, 0),
-            auxiliaryStreak: toNumber(raw.auxiliaryStreak, 0),
-            totalCompletions: toNumber(raw.totalCompletions, 0),
-            totalFailures: toNumber(raw.totalFailures, 0),
-            auxiliaryFailures: toNumber(raw.auxiliaryFailures, 0),
-          }
-        : {
-            currentStreak: 0,
-            auxiliaryStreak: 0,
-            totalCompletions: 0,
-            totalFailures: 0,
-            auxiliaryFailures: 0,
-          };
-
-      const createdAt = preserveTimestamps && raw.createdAt ? new Date(String(raw.createdAt)) : new Date();
-      const lastCompletedAt =
-        preserveTimestamps && raw.lastCompletedAt ? new Date(String(raw.lastCompletedAt)) : undefined;
-
-      const sourceParentId = raw.parentId ?? raw.parent_id ?? undefined;
-      const parentId =
-        sourceParentId != null && idMap.has(String(sourceParentId)) ? idMap.get(String(sourceParentId)) : undefined;
-
-      const common = {
-        id: newId,
-        name: String(raw.name ?? tr('未命名链条', 'Untitled chain')),
-        parentId,
-        sortOrder: toNumber(raw.sortOrder ?? raw.sort_order, Math.floor(Date.now() / 1000)),
-        trigger: String(raw.trigger ?? ''),
-        duration: toNumber(raw.duration, 45),
-        description: String(raw.description ?? ''),
-        ...stats,
-        exceptions: toStringArray(raw.exceptions),
-        auxiliaryExceptions: toStringArray(raw.auxiliaryExceptions),
-        auxiliarySignal: String(raw.auxiliarySignal ?? ''),
-        auxiliaryDuration: toNumber(raw.auxiliaryDuration, 15),
-        auxiliaryCompletionTrigger: String(raw.auxiliaryCompletionTrigger ?? ''),
-        timeLimitExceptions: toStringArray(raw.timeLimitExceptions ?? raw.time_limit_exceptions),
-        isDurationless: Boolean(raw.isDurationless ?? raw.is_durationless ?? false),
-        minimumDuration: toOptionalNumber(raw.minimumDuration ?? raw.minimum_duration),
-        taskRepeatCount: toOptionalNumber(raw.taskRepeatCount ?? raw.task_repeat_count),
-        createdAt,
-        lastCompletedAt,
-        deletedAt: null as null,
-      };
-
-      if (type === 'group') {
-        return {
-          ...common,
-          type: 'group',
-          timeLimitHours: toOptionalNumber(raw.timeLimitHours ?? raw.time_limit_hours),
-          groupRepeatCount: toOptionalNumber(raw.groupRepeatCount ?? raw.group_repeat_count),
-          isTaskGroup: Boolean(raw.isTaskGroup ?? raw.is_task_group ?? false) || undefined,
-          groupStartedAt: undefined,
-          groupExpiresAt: undefined,
-        } as Chain;
-      }
-
-      return {
-        ...common,
-        type: type as Chain['type'],
-      } as Chain;
-    });
-
-    let importHistory: CompletionHistory[] = [];
-    if (options.importCompletionHistory && Array.isArray(parsed.completionHistory)) {
-      importHistory = (parsed.completionHistory as unknown[])
-        .filter((h): h is Record<string, unknown> => isRecord(h) && 'chainId' in h)
-        .map((h): CompletionHistory | null => {
-          const mappedChainId = idMap.get(String(h.chainId));
-          if (!mappedChainId) return null;
-
-          const duration = Math.max(0, toNumber(h.duration, 0));
-
-          return {
-            chainId: mappedChainId,
-            completedAt: new Date(String(h.completedAt || Date.now())),
-            duration,
-            wasSuccessful: Boolean(h.wasSuccessful),
-            reasonForFailure: h.reasonForFailure ? String(h.reasonForFailure) : undefined,
-            actualDuration: h.actualDuration != null ? Math.max(0, toNumber(h.actualDuration, duration)) : undefined,
-            isForwardTimed: Boolean(h.isForwardTimed || false),
-            description: h.description ? String(h.description) : undefined,
-            notes: h.notes ? String(h.notes) : undefined,
-          };
-        })
-        .filter((h): h is CompletionHistory => Boolean(h));
-    }
-
-    let importedRsipNodes: RSIPNode[] = [];
-    if (Array.isArray(parsed.rsipNodes)) {
-      const existingIds = new Set((existingRsipNodes || []).map(n => n.id));
-      const idMapRsip = new Map<string, string>();
-
-      // First pass: assign new IDs to preserve structure and avoid collisions
-      for (const raw of parsed.rsipNodes as unknown[]) {
-        if (!isRecord(raw)) continue;
-        const originalId = typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id : generateId('rsip');
-
-        let nextId = generateId('rsip');
-        while (existingIds.has(nextId)) nextId = generateId('rsip');
-
-        idMapRsip.set(originalId, nextId);
-        existingIds.add(nextId);
-      }
-
-      importedRsipNodes = (parsed.rsipNodes as unknown[])
-        .filter(isRecord)
-        .map((raw): RSIPNode => {
-          const originalId = typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id : generateId('rsip');
-          const id = idMapRsip.get(originalId) ?? generateId('rsip');
-
-          const originalParentId = raw.parentId;
-          const parentId =
-            typeof originalParentId === 'string' && originalParentId.trim().length > 0
-              ? (idMapRsip.get(originalParentId) ?? originalParentId)
-              : undefined;
-
-          const createdAt = raw.createdAt ? new Date(String(raw.createdAt)) : new Date();
-
-          return {
-            id,
-            parentId,
-            title: String(raw.title ?? tr('未命名国策', 'Untitled policy')),
-            rule: String(raw.rule ?? ''),
-            sortOrder: toNumber(raw.sortOrder, Math.floor(Date.now() / 1000)),
-            createdAt,
-            useTimer: raw.useTimer != null ? Boolean(raw.useTimer) : undefined,
-            timerMinutes: toOptionalNumber(raw.timerMinutes),
-            emoji: typeof raw.emoji === 'string' ? raw.emoji : undefined,
-            type: typeof raw.type === 'string' ? raw.type : undefined,
-          };
-        });
-    }
-
-    const rsipMeta = isRecord(parsed.rsipMeta)
-      ? ({
-          ...(parsed.rsipMeta as Record<string, unknown>),
-          lastAddedAt:
-            (parsed.rsipMeta as Record<string, unknown>).lastAddedAt != null
-              ? new Date(String((parsed.rsipMeta as Record<string, unknown>).lastAddedAt))
-              : undefined,
-          allowMultiplePerDay:
-            typeof (parsed.rsipMeta as Record<string, unknown>).allowMultiplePerDay === 'boolean'
-              ? (parsed.rsipMeta as Record<string, unknown>).allowMultiplePerDay
-              : undefined,
-        } as RSIPMeta)
-      : undefined;
-
-    const exceptionRulesToImport: Array<Pick<ExceptionRule, 'name' | 'type' | 'description'>> = [];
-    if (isRecord(parsed.exceptionRules) && Array.isArray(parsed.exceptionRules.rules)) {
-      for (const raw of parsed.exceptionRules.rules as unknown[]) {
-        if (!isRecord(raw)) continue;
-        if (!('name' in raw) || !('type' in raw)) continue;
-        if (typeof raw.name !== 'string' || !isExceptionRuleType(raw.type)) continue;
-
-        exceptionRulesToImport.push({
-          name: raw.name,
-          type: raw.type,
-          description: typeof raw.description === 'string' ? raw.description : undefined,
-        });
-      }
-    }
+    const importHistory = parseImportHistory(parsed.completionHistory, Boolean(options.importCompletionHistory), idMap);
+    const importedRsipNodes = parseImportRsipNodes(parsed.rsipNodes, existingRsipNodes, tr);
+    const rsipMeta = parseImportRsipMeta(parsed.rsipMeta);
+    const exceptionRulesToImport = parseExceptionRulesToImport(parsed.exceptionRules);
 
     return {
       chains: importChains,
@@ -345,4 +438,3 @@ export class ImportExportService {
 }
 
 export const importExportService = new ImportExportService();
-

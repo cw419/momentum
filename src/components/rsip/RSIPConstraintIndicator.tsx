@@ -6,12 +6,12 @@ interface RSIPConstraintIndicatorProps {
 }
 
 export function RSIPConstraintIndicator({ descendantCount, failureCost }: RSIPConstraintIndicatorProps) {
-  const costColorClass =
-    failureCost > 5
-      ? 'text-rose-700 dark:text-red-300'
-      : failureCost > 2
-        ? 'text-amber-700 dark:text-amber-300'
-        : 'text-slate-600 dark:text-white/60';
+  let costColorClass = 'text-slate-600 dark:text-white/60';
+  if (failureCost > 5) {
+    costColorClass = 'text-rose-700 dark:text-red-300';
+  } else if (failureCost > 2) {
+    costColorClass = 'text-amber-700 dark:text-amber-300';
+  }
 
   return (
     <div className="flex items-center gap-4 text-xs">

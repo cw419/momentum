@@ -194,10 +194,12 @@ export const ImportButton: React.FC<{
   onImport: () => void;
   tr: (zh: string, en: string) => string;
 }> = ({ importStatus, isImportDisabled, isImporting, onImport, tr }) => {
-  const buttonText = importStatus === 'checking-auth' ? tr('验证身份中...', 'Verifying...')
-    : importStatus === 'creating-session' ? tr('创建会话中...', 'Creating session...')
-    : importStatus === 'importing' ? tr('安全导入中...', 'Importing...')
-    : tr('安全导入数据', 'Import data');
+  const buttonTextByStatus: Partial<Record<ImportStatus, string>> = {
+    'checking-auth': tr('验证身份中...', 'Verifying...'),
+    'creating-session': tr('创建会话中...', 'Creating session...'),
+    'importing': tr('安全导入中...', 'Importing...'),
+  };
+  const buttonText = buttonTextByStatus[importStatus] ?? tr('安全导入数据', 'Import data');
   return (
     <div className="text-center">
       <button type="button" onClick={onImport} disabled={isImportDisabled} aria-label={tr('导入数据', 'Import data')}

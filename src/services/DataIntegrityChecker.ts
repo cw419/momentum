@@ -9,17 +9,6 @@
  * @see src/services/integrity/
  */
 
-export {
-  RuleIntegrityChecker,
-  ruleIntegrityChecker,
-  UsageRecordIntegrityChecker,
-  usageRecordIntegrityChecker,
-  integrityReportGenerator
-} from './integrity';
-
-export * from './integrity/IntegrityTypes';
-export * from './integrity/IntegrityValidators';
-
 import { ExceptionRuleError, ExceptionRuleException } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { ruleIntegrityChecker } from './integrity/RuleIntegrityChecker';
@@ -27,7 +16,7 @@ import { usageRecordIntegrityChecker } from './integrity/UsageRecordIntegrityChe
 import { integrityReportGenerator } from './integrity/IntegrityReportGenerator';
 import type { IntegrityIssue, IntegrityReport, FixResult } from './integrity/IntegrityTypes';
 
-export class DataIntegrityChecker {
+class DataIntegrityChecker {
   private fixHistory: FixResult[] = [];
 
   async checkRuleDataIntegrity(): Promise<IntegrityReport> {

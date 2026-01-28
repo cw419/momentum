@@ -22,7 +22,7 @@ export const DEFAULT_PET_CONFIG: PetConfig = {
 };
 
 // Initial pet state (excluding id and createdAt which are set on creation)
-export const INITIAL_PET_STATE: Omit<PetState, 'id' | 'createdAt'> = {
+const INITIAL_PET_STATE: Omit<PetState, 'id' | 'createdAt'> = {
   name: '',
   hunger: 50,
   happiness: 70,
@@ -39,9 +39,6 @@ export const INITIAL_PET_STATE: Omit<PetState, 'id' | 'createdAt'> = {
   minimizedPosition: { x: 92, y: 2 }, // Top-right position (next to theme toggle)
 };
 
-// Stage order for evolution
-const STAGE_ORDER: PetStage[] = ['egg', 'baby', 'child', 'teen', 'adult', 'elder'];
-
 /**
  * Get the XP required for a specific level
  */
@@ -52,7 +49,7 @@ export function getXpForLevel(level: number): number {
 /**
  * Get the stage for a given level
  */
-export function getStageForLevel(level: number): PetStage {
+function getStageForLevel(level: number): PetStage {
   const thresholds = DEFAULT_PET_CONFIG.stageThresholds;
 
   if (level >= thresholds.elder) return 'elder';
@@ -61,17 +58,6 @@ export function getStageForLevel(level: number): PetStage {
   if (level >= thresholds.child) return 'child';
   if (level >= thresholds.baby) return 'baby';
   return 'egg';
-}
-
-/**
- * Get the next stage after the current one
- */
-export function getNextStage(currentStage: PetStage): PetStage | null {
-  const currentIndex = STAGE_ORDER.indexOf(currentStage);
-  if (currentIndex === -1 || currentIndex === STAGE_ORDER.length - 1) {
-    return null;
-  }
-  return STAGE_ORDER[currentIndex + 1];
 }
 
 /**
@@ -232,20 +218,6 @@ export function getStageName(stage: PetStage, language: 'zh' | 'en' = 'zh'): str
     elder: { zh: '元老', en: 'Elder' },
   };
   return names[stage][language];
-}
-
-/**
- * Get mood display name
- */
-export function getMoodName(mood: PetMood, language: 'zh' | 'en' = 'zh'): string {
-  const names: Record<PetMood, { zh: string; en: string }> = {
-    ecstatic: { zh: '兴奋', en: 'Ecstatic' },
-    happy: { zh: '开心', en: 'Happy' },
-    neutral: { zh: '普通', en: 'Neutral' },
-    sad: { zh: '难过', en: 'Sad' },
-    depressed: { zh: '沮丧', en: 'Depressed' },
-  };
-  return names[mood][language];
 }
 
 /**

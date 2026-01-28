@@ -9,7 +9,7 @@ import { ConfirmationDialog } from './ConfirmationDialog';
 import { Trash2, RotateCcw, X, CheckSquare, Square } from 'lucide-react';
 import type { ConfirmDialogState } from './useRecycleBinModal';
 
-export interface RecycleBinModalViewProps {
+interface RecycleBinModalViewProps {
   isOpen: boolean;
   language: 'zh' | 'en';
   tr: (zh: string, en: string) => string;
@@ -56,6 +56,38 @@ const RecycleBinModalViewComponent: React.FC<RecycleBinModalViewProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  let content: React.ReactNode;
+  if (isLoading) {
+    content = <LoadingState tr={tr} />;
+  } else if (deletedChains.length === 0) {
+    content = <EmptyState tr={tr} />;
+  } else {
+    content = (
+      <>
+        {/* Bulk Actions Bar */}
+        <BulkActionsBar
+          deletedChainsCount={deletedChains.length}
+          selectedChainsCount={selectedChains.size}
+          language={language}
+          tr={tr}
+          onSelectAll={onSelectAll}
+          onBulkRestore={onBulkRestore}
+          onBulkPermanentDelete={onBulkPermanentDelete}
+        />
+
+        {/* Chains List */}
+        <ChainsList
+          deletedChains={deletedChains}
+          selectedChains={selectedChains}
+          formatDeletedTime={formatDeletedTime}
+          onSelectChain={onSelectChain}
+          onRestore={onSingleRestore}
+          onPermanentDelete={onSinglePermanentDelete}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div
@@ -74,34 +106,7 @@ const RecycleBinModalViewComponent: React.FC<RecycleBinModalViewProps> = ({
 
         {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {isLoading ? (
-            <LoadingState tr={tr} />
-          ) : deletedChains.length === 0 ? (
-            <EmptyState tr={tr} />
-          ) : (
-            <>
-              {/* Bulk Actions Bar */}
-              <BulkActionsBar
-                deletedChainsCount={deletedChains.length}
-                selectedChainsCount={selectedChains.size}
-                language={language}
-                tr={tr}
-                onSelectAll={onSelectAll}
-                onBulkRestore={onBulkRestore}
-                onBulkPermanentDelete={onBulkPermanentDelete}
-              />
-
-              {/* Chains List */}
-              <ChainsList
-                deletedChains={deletedChains}
-                selectedChains={selectedChains}
-                formatDeletedTime={formatDeletedTime}
-                onSelectChain={onSelectChain}
-                onRestore={onSingleRestore}
-                onPermanentDelete={onSinglePermanentDelete}
-              />
-            </>
-          )}
+          {content}
         </div>
       </div>
 
@@ -125,33 +130,38 @@ interface HeaderProps {
   onClose: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ deletedChainsCount, language, tr, onClose }) => (
-  <div className="flex items-center justify-between p-8 border-b border-gray-200 dark:border-slate-600">
-    <div className="flex items-center space-x-3">
-      <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-        <Trash2 size={20} className="text-gray-600 dark:text-slate-300" />
+const Header: React.FC<HeaderProps> = ({ deletedChainsCount, language, tr, onClose }) => {
+  const itemLabel = deletedChainsCount === 1 ? 'ITEM' : 'ITEMS';
+  const subtitle = language === 'zh'
+    ? `回收箱 • ${deletedChainsCount} 项`
+    : `RECYCLE BIN • ${deletedChainsCount} ${itemLabel}`;
+
+  return (
+    <div className="flex items-center justify-between p-8 border-b border-gray-200 dark:border-slate-600">
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+          <Trash2 size={20} className="text-gray-600 dark:text-slate-300" />
+        </div>
+        <div>
+          <h2 id="recycle-bin-modal-title" className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+            {tr('回收箱', 'Recycle bin')}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400 font-mono">
+            {subtitle}
+          </p>
+        </div>
       </div>
-      <div>
-        <h2 id="recycle-bin-modal-title" className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-          {tr('回收箱', 'Recycle bin')}
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-slate-400 font-mono">
-          {language === 'zh'
-            ? `回收箱 • ${deletedChainsCount} 项`
-            : `RECYCLE BIN • ${deletedChainsCount} ITEM${deletedChainsCount === 1 ? '' : 'S'}`}
-        </p>
-      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label={tr('关闭', 'Close')}
+        className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
+      >
+        <X size={24} className="text-gray-600 dark:text-slate-300" />
+      </button>
     </div>
-    <button
-      type="button"
-      onClick={onClose}
-      aria-label={tr('关闭', 'Close')}
-      className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
-    >
-      <X size={24} className="text-gray-600 dark:text-slate-300" />
-    </button>
-  </div>
-);
+  );
+};
 
 const LoadingState: React.FC<{ tr: (zh: string, en: string) => string }> = ({ tr }) => (
   <div className="flex-1 flex items-center justify-center">

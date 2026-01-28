@@ -210,6 +210,9 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   // 渲染规则项
   const renderRuleItem = useCallback((result: SearchResult, index: number) => {
     const rule = result.rule;
+    const usageCount = rule.usageCount || 0;
+    const usageUnit = usageCount === 1 ? 'time' : 'times';
+    const usageText = language === 'zh' ? `使用过 ${usageCount} 次` : `Used ${usageCount} ${usageUnit}`;
     const actualIndex = onCreateNew && searchQuery ? index - 1 : index;
     
     if (actualIndex < 0 || actualIndex >= rules.length) return null;
@@ -238,7 +241,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
               <span className="flex items-center space-x-1">
                 <TrendingUp size={12} aria-hidden="true" />
                 <span>
-                  {language === 'zh' ? `使用过 ${rule.usageCount || 0} 次` : `Used ${rule.usageCount || 0} time${(rule.usageCount || 0) === 1 ? '' : 's'}`}
+                  {usageText}
                 </span>
               </span>
               {rule.lastUsedAt && (

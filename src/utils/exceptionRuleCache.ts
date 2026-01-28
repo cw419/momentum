@@ -10,11 +10,3 @@ export {
   ExceptionRuleCache,
   exceptionRuleCache
 } from './cache/ExceptionRuleCache';
-
-export { CacheCore } from './cache/CacheCore';
-
-export type {
-  CacheEntry,
-  CacheStats,
-  CacheConfig
-} from './cache/CacheTypes';

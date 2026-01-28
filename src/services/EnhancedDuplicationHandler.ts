@@ -14,16 +14,19 @@ import { ruleDuplicationDetector } from './RuleDuplicationDetector';
 import { getCurrentLanguage, tr } from '../utils/runtimeI18n';
 import { calculateSimilarity } from '../utils/stringUtils';
 
+type DuplicationConflictType = 'exact' | 'similar' | 'none';
+type DuplicationSuggestionType = 'use_existing' | 'modify_name' | 'create_anyway' | 'merge_rules';
+
 export interface DuplicationCheckResult {
   hasConflict: boolean;
-  conflictType: 'exact' | 'similar' | 'none';
+  conflictType: DuplicationConflictType;
   existingRules: ExceptionRule[];
   suggestions: DuplicationSuggestion[];
   canProceed: boolean;
 }
 
 export interface DuplicationSuggestion {
-  type: 'use_existing' | 'modify_name' | 'create_anyway' | 'merge_rules';
+  type: DuplicationSuggestionType;
   title: string;
   description: string;
   rule?: ExceptionRule;
@@ -106,7 +109,7 @@ export class EnhancedDuplicationHandler {
         calculateSimilarity(rule.name.toLowerCase(), name.toLowerCase()) > 0.7
       );
 
-      let conflictType: 'exact' | 'similar' | 'none' = 'none';
+      let conflictType: DuplicationConflictType = 'none';
       let existingRules: ExceptionRule[] = [];
       
       if (exactMatches.length > 0) {
@@ -275,7 +278,7 @@ export class EnhancedDuplicationHandler {
    */
   private generateSuggestions(
     name: string, 
-    conflictType: 'exact' | 'similar' | 'none', 
+    conflictType: DuplicationConflictType, 
     existingRules: ExceptionRule[]
   ): DuplicationSuggestion[] {
     const suggestions: DuplicationSuggestion[] = [];

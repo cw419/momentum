@@ -178,4 +178,3 @@ export class RuleScopeManager {
 }
 
 // 导出单例实例
-export const ruleScopeManager = new RuleScopeManager();

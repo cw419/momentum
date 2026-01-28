@@ -9,7 +9,7 @@
  * @param str2 第二个字符串
  * @returns 编辑距离
  */
-export function levenshteinDistance(str1: string, str2: string): number {
+function levenshteinDistance(str1: string, str2: string): number {
   const matrix: number[][] = [];
 
   for (let i = 0; i <= str2.length; i++) {

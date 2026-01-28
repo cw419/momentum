@@ -4,12 +4,63 @@ import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import { importExportService, type ImportExportImportOptions, type MomentumExportDataV2 } from '../services/ImportExportService';
 import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
-import { useI18n } from '../i18n';
+import { useI18n, type Language } from '../i18n';
 import { getSafeErrorDetail } from '../utils/errorMessage';
 import { ImportExportModalView } from './ImportExportModalView';
 import type { ImportStatus } from './ImportExportModalParts';
 
-export interface ImportExportModalContainerProps {
+async function ensureAuthenticatedForImport(storage: ReturnType<typeof useStorage>, tr: (zh: string, en: string) => string) {
+  if (storage.kind !== 'supabase') return;
+
+  const authResult = await storage.waitForAuthentication(10000);
+  if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
+    throw new Error(
+      tr(
+        '用户身份验证失败。请确保您已正确登录，然后重试导入操作。',
+        'Authentication failed. Please make sure you are signed in and try importing again.'
+      )
+    );
+  }
+}
+
+function getImportErrorMessage(error: unknown, language: Language, tr: (zh: string, en: string) => string) {
+  if (error instanceof SyntaxError) {
+    return tr(
+      '导入数据格式错误：请确保上传的是有效的JSON格式文件。',
+      'Invalid import format: please make sure you uploaded a valid JSON file.'
+    );
+  }
+
+  if (error instanceof Error) {
+    if (error.message.includes('身份验证失败') || error.message.includes('Authentication failed')) {
+      return tr(
+        '用户身份验证失败：请确保您已正确登录，然后重试导入操作。',
+        'Authentication failed: please make sure you are signed in and try importing again.'
+      );
+    }
+
+    if (error.message.includes('导入数据格式错误')) {
+      return tr(
+        '导入数据格式错误：文件中未找到有效的链条数据。请确保文件是从Momentum导出的有效数据。',
+        'Invalid import format: no valid chains found. Please make sure this file was exported from Momentum.'
+      );
+    }
+
+    const safeDetail = getSafeErrorDetail(error.message, language);
+    if (safeDetail) {
+      return tr(`导入失败：${safeDetail}`, `Import failed: ${safeDetail}`);
+    }
+
+    return tr(
+      '导入失败，请重试（详情见控制台）',
+      'Import failed. Check the console for details, then try again.'
+    );
+  }
+
+  return tr('导入失败：未知错误', 'Import failed: unknown error');
+}
+
+interface ImportExportModalContainerProps {
   chains: Chain[];
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
@@ -76,17 +127,7 @@ export const ImportExportModalContainer: React.FC<ImportExportModalContainerProp
       setImportStatus('checking-auth');
       setImportError('');
 
-      if (isSupabase) {
-        const authResult = await storage.waitForAuthentication(10000);
-        if (!authResult.ok || !authResult.value.isAuthenticated || !authResult.value.user) {
-          throw new Error(
-            tr(
-              '用户身份验证失败。请确保您已正确登录，然后重试导入操作。',
-              'Authentication failed. Please make sure you are signed in and try importing again.'
-            )
-          );
-        }
-      }
+      if (isSupabase) await ensureAuthenticatedForImport(storage, tr);
 
       setImportStatus('creating-session');
 
@@ -124,33 +165,7 @@ export const ImportExportModalContainer: React.FC<ImportExportModalContainerProp
     } catch (error) {
       logger.error('IMPORT_EXPORT', 'Import failed', undefined, error as Error);
 
-      let errorMessage = tr('导入失败', 'Import failed');
-
-      if (error instanceof SyntaxError) {
-        errorMessage = tr(
-          '导入数据格式错误：请确保上传的是有效的JSON格式文件。',
-          'Invalid import format: please make sure you uploaded a valid JSON file.'
-        );
-      } else if (error instanceof Error) {
-        if (error.message.includes('身份验证失败') || error.message.includes('Authentication failed')) {
-          errorMessage = tr(
-            '用户身份验证失败：请确保您已正确登录，然后重试导入操作。',
-            'Authentication failed: please make sure you are signed in and try importing again.'
-          );
-        } else if (error.message.includes('导入数据格式错误')) {
-          errorMessage = tr(
-            '导入数据格式错误：文件中未找到有效的链条数据。请确保文件是从Momentum导出的有效数据。',
-            'Invalid import format: no valid chains found. Please make sure this file was exported from Momentum.'
-          );
-        } else {
-          const safeDetail = getSafeErrorDetail(error.message, language);
-          errorMessage = safeDetail
-            ? tr(`导入失败：${safeDetail}`, `Import failed: ${safeDetail}`)
-            : tr('导入失败，请重试（详情见控制台）', 'Import failed. Check the console for details, then try again.');
-        }
-      } else {
-        errorMessage = tr('导入失败：未知错误', 'Import failed: unknown error');
-      }
+      const errorMessage = getImportErrorMessage(error, language, tr);
 
       setImportError(errorMessage);
       setImportStatus('error');

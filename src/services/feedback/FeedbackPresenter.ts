@@ -10,6 +10,7 @@ import {
 import { errorRecoveryManager, RecoveryAction } from '../ErrorRecoveryManager';
 import { getSafeErrorDetail } from '../../utils/errorMessage';
 import { getCurrentLanguage, tr } from '../../utils/runtimeI18n';
+import { ignoreUnused } from '../../utils/ignoreUnused';
 import { MessageStore } from './MessageStore';
 import { ErrorMessageFormatter } from './ErrorMessageFormatter';
 import type { FeedbackMessage, FeedbackAction, ProgressInfo } from './types';
@@ -21,7 +22,7 @@ export class FeedbackPresenter {
   ) {}
 
   showErrorMessage(error: ExceptionRuleException, context?: unknown): string {
-    void context;
+    ignoreUnused(context);
     const messageId = this.store.generateMessageId();
     const userFriendlyMessage = this.formatter.getUserFriendlyMessage(error);
     const recoveryActions = errorRecoveryManager.getRecoveryOptions(error);
@@ -132,16 +133,18 @@ export class FeedbackPresenter {
         } catch (error) {
           this.hideProgress();
           const language = getCurrentLanguage();
-          this.showErrorMessage(
-            error instanceof ExceptionRuleException
-              ? error
-              : new ExceptionRuleException(
-                  ExceptionRuleError.STORAGE_ERROR,
-                  error instanceof Error
-                    ? (getSafeErrorDetail(error.message, language) ?? tr('操作失败', 'Operation failed', language))
-                    : tr('操作失败', 'Operation failed', language)
-                )
-          );
+
+          if (error instanceof ExceptionRuleException) {
+            this.showErrorMessage(error);
+            return;
+          }
+
+          let message = tr('操作失败', 'Operation failed', language);
+          if (error instanceof Error) {
+            message = getSafeErrorDetail(error.message, language) ?? message;
+          }
+
+          this.showErrorMessage(new ExceptionRuleException(ExceptionRuleError.STORAGE_ERROR, message));
         }
       }
     }));

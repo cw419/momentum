@@ -48,7 +48,7 @@ export function useRulesDomain({
     updatedScheduledSessions: AppState['scheduledSessions'],
     context: string
   ) => {
-    void storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
+    storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
       logger.error('RULES_DOMAIN', context, { chainId }, toError(error));
     });
   };

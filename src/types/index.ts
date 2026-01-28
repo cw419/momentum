@@ -60,11 +60,6 @@ export type GroupChain = Omit<ChainRecord, 'type'> & {
   type: 'group';
 };
 
-export type TaskGroupChain = GroupChain & {
-  isTaskGroup: true;
-  groupRepeatCount: number;
-};
-
 export type Chain = UnitChain | GroupChain;
 
 export type DistributiveOmit<T, K extends PropertyKey> = T extends any ? Omit<T, K> : never;
@@ -148,7 +143,7 @@ export interface TaskTimeStats {
 // RSIP（递归稳态迭代协议）类型定义
 
 // 定式执行状态
-export type RSIPExecutionStatus = 'pending' | 'executed' | 'violated' | 'skipped';
+type RSIPExecutionStatus = 'pending' | 'executed' | 'violated' | 'skipped';
 
 // 稳态阶段：E0（新建）→ E1（稳定，7天）→ E2（内化，21天）
 export type RSIPStabilityPhase = 'E0' | 'E1' | 'E2';
@@ -317,17 +312,20 @@ export class ExceptionRuleException extends Error {
   }
 }
 
+export type ExceptionRuleExceptionSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type ExceptionRuleExceptionCategory = 'user_error' | 'system_error' | 'data_error' | 'network_error';
+
 export interface EnhancedExceptionRuleExceptionSerialized {
   name: string;
   type: ExceptionRuleError;
   message: string;
   userMessage?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  severity?: ExceptionRuleExceptionSeverity;
   recoverable?: boolean;
   suggestedActions?: string[];
   context?: unknown;
   technicalDetails?: unknown;
-  category: 'user_error' | 'system_error' | 'data_error' | 'network_error';
+  category: ExceptionRuleExceptionCategory;
   timestamp: string;
   stack?: string;
 }
@@ -340,7 +338,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     public context?: unknown,
     public recoverable?: boolean,
     public suggestedActions?: string[],
-    public severity?: 'low' | 'medium' | 'high' | 'critical',
+    public severity?: ExceptionRuleExceptionSeverity,
     public userMessage?: string,
     public technicalDetails?: unknown
   ) {
@@ -411,7 +409,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     return this;
   }
 
-  setSeverity(severity: 'low' | 'medium' | 'high' | 'critical'): this {
+  setSeverity(severity: ExceptionRuleExceptionSeverity): this {
     this.severity = severity;
     return this;
   }
@@ -429,7 +427,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     return this.severity === 'critical';
   }
 
-  getCategory(): 'user_error' | 'system_error' | 'data_error' | 'network_error' {
+  getCategory(): ExceptionRuleExceptionCategory {
     switch (this.type) {
       case ExceptionRuleError.VALIDATION_ERROR:
       case ExceptionRuleError.DUPLICATE_RULE_NAME:

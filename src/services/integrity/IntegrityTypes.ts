@@ -44,21 +44,7 @@ export interface FixResult {
 /**
  * 验证器接口 - 策略模式
  */
-export interface IntegrityValidator<T> {
-  validate(data: T, context?: ValidatorContext): IntegrityIssue[];
-}
-
-export interface ValidatorContext {
-  generateUniqueId: () => string;
-  updateRule: (rule: unknown) => Promise<void>;
-  updateUsageRecordsRuleId: (oldId: string, newId: string) => Promise<void>;
-  removeUsageRecord: (recordId: string) => Promise<void>;
-  updateUsageRecord: (record: unknown) => Promise<void>;
-}
 
 /**
  * 完整性规则接口 - 策略模式
  */
-export interface IntegrityRule<T, U = undefined> {
-  check(primary: T, secondary?: U): Promise<IntegrityIssue[]>;
-}

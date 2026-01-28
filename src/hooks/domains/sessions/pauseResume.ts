@@ -20,7 +20,7 @@ export function createPauseResumeHandlers({ state, setState, storage }: CreatePa
       pausedAt: new Date(),
     };
 
-    void storage.saveActiveSession(updatedSession).catch(error => {
+    storage.saveActiveSession(updatedSession).catch(error => {
       logger.error('SESSIONS', 'Failed to persist paused session', undefined, error as Error);
     });
 
@@ -42,7 +42,7 @@ export function createPauseResumeHandlers({ state, setState, storage }: CreatePa
       totalPausedTime: activeSession.totalPausedTime + pauseDuration,
     };
 
-    void storage.saveActiveSession(updatedSession).catch(error => {
+    storage.saveActiveSession(updatedSession).catch(error => {
       logger.error('SESSIONS', 'Failed to persist resumed session', undefined, error as Error);
     });
 
@@ -54,4 +54,3 @@ export function createPauseResumeHandlers({ state, setState, storage }: CreatePa
 
   return { handlePauseSession, handleResumeSession };
 }
-

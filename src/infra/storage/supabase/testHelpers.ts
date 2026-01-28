@@ -4,7 +4,7 @@ import type { User } from '@supabase/supabase-js';
 
 export const TEST_USER_ID = 'test-user-123';
 
-export const mockUser: User = {
+const mockUser: User = {
   id: TEST_USER_ID,
   email: 'test@momentum.app',
   created_at: new Date().toISOString(),
@@ -100,4 +100,3 @@ export function createMockContext(
 export function createSupabaseError(code: string, message: string) {
   return { code, message, details: null, hint: null };
 }
-

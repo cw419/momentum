@@ -8,6 +8,3 @@
  */
 
 export { ChainCard } from './ChainCardContainer';
-export { ChainCardView } from './ChainCardView';
-export { useChainCard } from './useChainCard';
-export type { ChainCardProps, ChainCardViewProps } from './types';

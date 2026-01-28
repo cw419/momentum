@@ -6,10 +6,130 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DeletedChain } from '../types';
 import { useStorage } from '../storage/useStorage';
-import { useI18n } from '../i18n';
+import { useI18n, type Language } from '../i18n';
 import { logger } from '../utils/logger';
 import { toast } from '../utils/toast';
 import { getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
+
+type AsyncOrSyncVoid = Promise<void> | void;
+
+type OperationResult = { success: boolean; message: string; details?: Record<string, unknown> };
+
+function isPartialRestoreFailureMessage(message: string) {
+  return message.includes('Partial restore failure') || message.includes('部分链条恢复可能失败');
+}
+
+async function performRestoreOperation(params: {
+  chainIds: string[];
+  onRestore: (chainIds: string[]) => AsyncOrSyncVoid;
+  language: Language;
+  tr: (zh: string, en: string) => string;
+}): Promise<OperationResult> {
+  const { chainIds, onRestore, language, tr } = params;
+
+  const startTime = Date.now();
+  try {
+    await onRestore(chainIds);
+    const duration = Date.now() - startTime;
+
+    const result: OperationResult = {
+      success: true,
+      message: tr(
+        `成功恢复 ${chainIds.length} 个链条（耗时 ${duration}ms）`,
+        `Restored ${chainIds.length} chain(s) (took ${duration}ms)`
+      ),
+      details: { count: chainIds.length, duration },
+    };
+    logger.debug('RECYCLE_BIN', 'Restore completed', result.details);
+    return result;
+  } catch (error) {
+    const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
+    const safeDetail = getSafeErrorDetailFromUnknown(error, language);
+
+    const defaultMessage = safeDetail
+      ? tr(`恢复失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
+      : tr('恢复失败，请重试（详情见控制台）', 'Restore failed. Check the console for details, then try again.');
+
+    const result: OperationResult = {
+      success: false,
+      message: defaultMessage,
+      details: { error: rawErrorMessage, chainIds },
+    };
+    logger.error('RECYCLE_BIN', 'Restore operation failed', result.details, error as Error);
+
+    if (isPartialRestoreFailureMessage(rawErrorMessage)) {
+      result.message = tr(
+        '部分链条恢复可能失败，请检查主界面确认结果。如有问题请刷新页面。',
+        'Some chains may not have been restored. Please check the dashboard. If needed, refresh the page.'
+      );
+      toast.warning(result.message);
+      return result;
+    }
+
+    toast.error(defaultMessage);
+    return result;
+  }
+}
+
+async function performPermanentDeleteOperation(params: {
+  chainIds: string[];
+  onPermanentDelete: (chainIds: string[]) => AsyncOrSyncVoid;
+  language: Language;
+  tr: (zh: string, en: string) => string;
+}): Promise<OperationResult> {
+  const { chainIds, onPermanentDelete, language, tr } = params;
+
+  const startTime = Date.now();
+  try {
+    await onPermanentDelete(chainIds);
+    const duration = Date.now() - startTime;
+
+    const result: OperationResult = {
+      success: true,
+      message: tr(
+        `成功永久删除 ${chainIds.length} 个链条（耗时 ${duration}ms）`,
+        `Permanently deleted ${chainIds.length} chain(s) (took ${duration}ms)`
+      ),
+      details: { count: chainIds.length, duration },
+    };
+    logger.debug('RECYCLE_BIN', 'Permanent delete completed', result.details);
+    return result;
+  } catch (error) {
+    const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
+    const safeDetail = getSafeErrorDetailFromUnknown(error, language);
+
+    const message = safeDetail
+      ? tr(`永久删除失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
+      : tr('永久删除失败，请重试（详情见控制台）', 'Permanent delete failed. Check the console for details, then try again.');
+
+    const result: OperationResult = {
+      success: false,
+      message,
+      details: { error: rawErrorMessage, chainIds },
+    };
+    logger.error('RECYCLE_BIN', 'Permanent delete operation failed', result.details, error as Error);
+    toast.error(message);
+    return result;
+  }
+}
+
+async function performRecycleBinOperation(params: {
+  dialog: ConfirmDialogState;
+  onRestore: (chainIds: string[]) => AsyncOrSyncVoid;
+  onPermanentDelete: (chainIds: string[]) => AsyncOrSyncVoid;
+  language: Language;
+  tr: (zh: string, en: string) => string;
+}): Promise<OperationResult> {
+  const { dialog, onRestore, onPermanentDelete, language, tr } = params;
+  if (dialog.type === 'restore') {
+    return performRestoreOperation({ chainIds: dialog.chainIds, onRestore, language, tr });
+  }
+  return performPermanentDeleteOperation({ chainIds: dialog.chainIds, onPermanentDelete, language, tr });
+}
+
+function pluralizeEn(count: number, singular: string, plural = `${singular}s`) {
+  return count === 1 ? singular : plural;
+}
 
 interface ConfirmDialogState {
   type: 'restore' | 'delete';
@@ -149,89 +269,24 @@ export function useRecycleBinModal({
 
     setIsLoading(true);
     try {
-      logger.debug('RECYCLE_BIN', 'Starting operation', { type: showConfirmDialog.type, chainIds: showConfirmDialog.chainIds });
+      const dialog = showConfirmDialog;
+      logger.debug('RECYCLE_BIN', 'Starting operation', { type: dialog.type, chainIds: dialog.chainIds });
 
-      const startTime = Date.now();
-      let operationResult: { success: boolean; message: string; details?: Record<string, unknown> } = { success: false, message: '' };
+      const operationResult = await performRecycleBinOperation({
+        dialog,
+        onRestore,
+        onPermanentDelete,
+        language,
+        tr,
+      });
 
-      if (showConfirmDialog.type === 'restore') {
-        try {
-          await onRestore(showConfirmDialog.chainIds);
-          const duration = Date.now() - startTime;
-          operationResult = {
-            success: true,
-            message: tr(
-              `成功恢复 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
-              `Restored ${showConfirmDialog.chainIds.length} chain(s) (took ${duration}ms)`
-            ),
-            details: { count: showConfirmDialog.chainIds.length, duration }
-          };
-          logger.debug('RECYCLE_BIN', 'Restore completed', operationResult.details);
-        } catch (error) {
-          const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
-          const safeDetail = getSafeErrorDetailFromUnknown(error, language);
-          operationResult = {
-            success: false,
-            message: safeDetail
-              ? tr(`恢复操作失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
-              : tr('恢复操作失败，请重试（详情见控制台）', 'Restore failed. Check the console for details, then try again.'),
-            details: { error: rawErrorMessage, chainIds: showConfirmDialog.chainIds }
-          };
-          logger.error('RECYCLE_BIN', 'Restore operation failed', operationResult.details, error as Error);
-
-          if (rawErrorMessage.includes('Partial restore failure') || rawErrorMessage.includes('部分链条恢复可能失败')) {
-            operationResult.message = tr(
-              '部分链条恢复可能失败，请检查主界面确认结果。如有问题请刷新页面。',
-              'Some chains may not have been restored. Please check the dashboard. If needed, refresh the page.'
-            );
-            toast.warning(operationResult.message);
-          } else {
-            toast.error(
-              safeDetail
-                ? tr(`恢复失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
-                : tr('恢复失败，请重试（详情见控制台）', 'Restore failed. Check the console for details, then try again.')
-            );
-          }
-        }
-      } else {
-        try {
-          await onPermanentDelete(showConfirmDialog.chainIds);
-          const duration = Date.now() - startTime;
-          operationResult = {
-            success: true,
-            message: tr(
-              `成功永久删除 ${showConfirmDialog.chainIds.length} 个链条（耗时 ${duration}ms）`,
-              `Permanently deleted ${showConfirmDialog.chainIds.length} chain(s) (took ${duration}ms)`
-            ),
-            details: { count: showConfirmDialog.chainIds.length, duration }
-          };
-          logger.debug('RECYCLE_BIN', 'Permanent delete completed', operationResult.details);
-        } catch (error) {
-          const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
-          const safeDetail = getSafeErrorDetailFromUnknown(error, language);
-          operationResult = {
-            success: false,
-            message: safeDetail
-              ? tr(`永久删除操作失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
-              : tr('永久删除操作失败，请重试（详情见控制台）', 'Permanent delete failed. Check the console for details, then try again.'),
-            details: { error: rawErrorMessage, chainIds: showConfirmDialog.chainIds }
-          };
-          logger.error('RECYCLE_BIN', 'Permanent delete operation failed', operationResult.details, error as Error);
-          toast.error(
-            safeDetail
-              ? tr(`永久删除失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
-              : tr('永久删除失败，请重试（详情见控制台）', 'Permanent delete failed. Check the console for details, then try again.')
-          );
-        }
-      }
-
-      logger.debug('RECYCLE_BIN', 'Refreshing local recycle bin data', { type: showConfirmDialog.type });
+      logger.debug('RECYCLE_BIN', 'Refreshing local recycle bin data', { type: dialog.type });
       await loadDeletedChains();
-      logger.debug('RECYCLE_BIN', 'Local data refreshed successfully', { type: showConfirmDialog.type });
+      logger.debug('RECYCLE_BIN', 'Local data refreshed successfully', { type: dialog.type });
 
       if (operationResult.success) {
         toast.success(operationResult.message);
-        logger.info('RECYCLE_BIN', 'Operation completed successfully', { type: showConfirmDialog.type, chainIds: showConfirmDialog.chainIds });
+        logger.info('RECYCLE_BIN', 'Operation completed successfully', { type: dialog.type, chainIds: dialog.chainIds });
       }
 
     } catch (error) {
@@ -262,14 +317,15 @@ export function useRecycleBinModal({
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
     if (diffDays > 0) {
-      return language === 'zh' ? `${diffDays}天前` : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-    } else if (diffHours > 0) {
-      return language === 'zh' ? `${diffHours}小时前` : `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-    } else if (diffMinutes > 0) {
-      return language === 'zh' ? `${diffMinutes}分钟前` : `${diffMinutes} min ago`;
-    } else {
-      return tr('刚刚', 'just now');
+      return language === 'zh' ? `${diffDays}天前` : `${diffDays} ${pluralizeEn(diffDays, 'day')} ago`;
     }
+    if (diffHours > 0) {
+      return language === 'zh' ? `${diffHours}小时前` : `${diffHours} ${pluralizeEn(diffHours, 'hour')} ago`;
+    }
+    if (diffMinutes > 0) {
+      return language === 'zh' ? `${diffMinutes}分钟前` : `${diffMinutes} min ago`;
+    }
+    return tr('刚刚', 'just now');
   }, [language, tr]);
 
   return {

@@ -11,9 +11,7 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
   ? createClient<Database>(supabaseUrl, supabaseAnonKey)
   : null;
 
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
-
-export interface AuthenticationResult {
+interface AuthenticationResult {
   user: User | null;
   isAuthenticated: boolean;
 }

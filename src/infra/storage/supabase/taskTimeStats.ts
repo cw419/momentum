@@ -78,11 +78,3 @@ export async function getTaskAverageTime(chainId: string): Promise<number | null
   const chainStats = stats.find(s => s.chainId === chainId);
   return chainStats?.averageCompletionTime || null;
 }
-
-/**
- * Invalidate cache - useful when stats might have changed externally
- */
-export function invalidateTaskTimeStatsCache(): void {
-  statsCache = null;
-  cacheTimestamp = 0;
-}

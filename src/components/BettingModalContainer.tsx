@@ -9,7 +9,7 @@ import { useBettingModal } from './useBettingModal';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import type { BetPlacementResult } from '../domain/betting';
 
-export interface BettingModalProps {
+interface BettingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBetPlaced?: (betResult: BetPlacementResult) => void;

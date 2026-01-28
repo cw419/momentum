@@ -267,7 +267,6 @@ export class RuleSearchOptimizer {
       const similarity = calculateSimilarity(name, query);
       if (similarity > 0.3) {
         score = Math.floor(similarity * 300);
-        matchType = 'fuzzy';
       }
     }
 
@@ -472,4 +471,3 @@ export class RuleSearchOptimizer {
 }
 
 // 导出单例实例
-export const ruleSearchOptimizer = new RuleSearchOptimizer();

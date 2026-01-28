@@ -26,7 +26,7 @@ interface MobileInfo {
   touchSupport: boolean;
 }
 
-export interface TaskGroupEditorViewProps {
+interface TaskGroupEditorViewProps {
   // Data
   chain?: Chain;
   isEditing: boolean;

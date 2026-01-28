@@ -72,7 +72,6 @@ export async function saveScheduledSessions(ctx: SupabaseStorageContext, session
     // Legacy schema fallback: no composite UNIQUE index yet. Use the previous "replace-all" strategy.
     await client.from('scheduled_sessions').delete().eq('user_id', user.id);
     await client.from('scheduled_sessions').insert(payload);
-    return;
   }
 
   // best-effort: ignore

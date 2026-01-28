@@ -8,7 +8,7 @@ import { ChainDetailView } from './ChainDetailView';
 import { useChainDetail } from './useChainDetail';
 import type { Chain, CompletionHistory } from '../types';
 
-export interface ChainDetailProps {
+interface ChainDetailProps {
   chain: Chain;
   history: CompletionHistory[];
   onBack: () => void;

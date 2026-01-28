@@ -33,17 +33,14 @@ import {
 
 // 重新导出类型以保持向后兼容
 export type {
-  RecoveryResult,
-  RecoveryAction,
-  RecoveryContext,
-  RecoveryStrategy
+  RecoveryAction
 };
 
 /**
  * 错误恢复管理器
  * 提供智能的错误恢复策略和用户友好的错误处理
  */
-export class ErrorRecoveryManager {
+class ErrorRecoveryManager {
   private registry: RecoveryStrategyRegistry;
   private recoveryHistory: RecoveryHistoryEntry[] = [];
 

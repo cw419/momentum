@@ -38,5 +38,3 @@ export class CheckinService {
   }
 }
 
-export default CheckinService;
-

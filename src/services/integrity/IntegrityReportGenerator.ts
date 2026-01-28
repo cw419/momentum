@@ -2,9 +2,9 @@
  * 完整性报告生成器
  */
 
-import type { IntegrityIssue, IntegrityReport } from './types';
+import type { IntegrityIssue, IntegrityReport } from './IntegrityTypes';
 
-export class IntegrityReportGenerator {
+class IntegrityReportGenerator {
   generateSummary(issues: IntegrityIssue[]): IntegrityReport['summary'] {
     const summary = {
       totalIssues: issues.length,

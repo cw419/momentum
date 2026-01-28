@@ -1,10 +1,9 @@
-import type { RSIPMeta, RSIPNode, RSIPExecutionRecord, RSIPStabilityPhase } from '../../../types';
+import type { RSIPMeta, RSIPNode, RSIPStabilityPhase } from '../../../types';
 import type { SupabaseStorageContext } from './types';
 import type { Database } from '../../../lib/database.types';
 
 type RSIPNodeRow = Database['public']['Tables']['rsip_nodes']['Row'];
 type RSIPMetaRow = Database['public']['Tables']['rsip_meta']['Row'];
-type RSIPExecutionRecordRow = Database['public']['Tables']['rsip_execution_records']['Row'];
 
 export async function getRSIPNodes(ctx: SupabaseStorageContext): Promise<RSIPNode[]> {
   const user = await ctx.getCurrentUser();
@@ -146,81 +145,3 @@ export async function saveRSIPMeta(ctx: SupabaseStorageContext, meta: RSIPMeta):
 }
 
 // === 执行记录 CRUD 操作（严格模式）===
-
-export async function getRSIPExecutionRecords(
-  ctx: SupabaseStorageContext
-): Promise<RSIPExecutionRecord[]> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return [];
-
-  const client = ctx.getClient();
-  const { data, error } = await client
-    .from('rsip_execution_records')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('executed_at', { ascending: false });
-
-  if (error) return [];
-
-  return (data || []).map((row: RSIPExecutionRecordRow) => ({
-    id: row.id,
-    userId: row.user_id,
-    nodeId: row.node_id,
-    executedAt: new Date(row.executed_at),
-    status: row.status,
-    notes: row.notes ?? undefined,
-  }));
-}
-
-export async function saveRSIPExecutionRecord(
-  ctx: SupabaseStorageContext,
-  record: Omit<RSIPExecutionRecord, 'id' | 'userId'>
-): Promise<RSIPExecutionRecord | null> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return null;
-
-  const client = ctx.getClient();
-  const { data, error } = await client
-    .from('rsip_execution_records')
-    .insert({
-      user_id: user.id,
-      node_id: record.nodeId,
-      executed_at: record.executedAt.toISOString(),
-      status: record.status,
-      notes: record.notes ?? null,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(`Failed to save execution record: ${error.message}`);
-  }
-
-  return {
-    id: data.id,
-    userId: data.user_id,
-    nodeId: data.node_id,
-    executedAt: new Date(data.executed_at),
-    status: data.status,
-    notes: data.notes ?? undefined,
-  };
-}
-
-export async function deleteRSIPExecutionRecords(
-  ctx: SupabaseStorageContext,
-  nodeIds: string[]
-): Promise<void> {
-  const user = await ctx.getCurrentUser();
-  if (!user || nodeIds.length === 0) return;
-
-  const client = ctx.getClient();
-  const { error } = await client
-    .from('rsip_execution_records')
-    .delete()
-    .eq('user_id', user.id)
-    .in('node_id', nodeIds);
-
-  if (error) {
-    throw new Error(`Failed to delete execution records: ${error.message}`);
-  }
-}

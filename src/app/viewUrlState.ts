@@ -16,6 +16,56 @@ const VALID_VIEWS: ReadonlySet<ViewState> = new Set([
   'taskgroup-editor',
 ]);
 
+function dashboardState(): UrlSyncedViewState {
+  return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
+}
+
+function parseViewParam(rawView: string | null): ViewState | null {
+  if (!rawView) return null;
+  if (!VALID_VIEWS.has(rawView as ViewState)) return null;
+  return rawView as ViewState;
+}
+
+function parseDetailOrGroupView(params: URLSearchParams, chains: Chain[]): UrlSyncedViewState {
+  const chainId = params.get('chain');
+  if (!chainId) return dashboardState();
+
+  const chain = chains.find((c) => c.id === chainId);
+  if (!chain) return dashboardState();
+
+  return {
+    currentView: chain.type === 'group' ? 'group' : 'detail',
+    viewingChainId: chainId,
+    editingChain: null,
+  };
+}
+
+function parseEditorView(
+  params: URLSearchParams,
+  view: 'editor' | 'taskgroup-editor',
+  chains: Chain[]
+): UrlSyncedViewState {
+  const editChainId = params.get('edit');
+  if (editChainId) {
+    const chain = chains.find((c) => c.id === editChainId);
+    if (!chain) return dashboardState();
+
+    const isTaskGroup = chain.type === 'group' || chain.isTaskGroup;
+    return {
+      currentView: isTaskGroup ? 'taskgroup-editor' : 'editor',
+      viewingChainId: null,
+      editingChain: chain,
+    };
+  }
+
+  const parentId = params.get('parent');
+  return {
+    currentView: view,
+    viewingChainId: parentId || null,
+    editingChain: null,
+  };
+}
+
 export function serializeViewStateToSearch(state: {
   currentView: ViewState;
   viewingChainId: string | null;
@@ -54,73 +104,24 @@ export function parseViewStateFromSearch(input: {
   activeSession: ActiveSession | null;
 }): UrlSyncedViewState {
   const params = new URLSearchParams(input.search);
-  const rawView = params.get('view');
-
-  if (!rawView) {
-    return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
-  }
-
-  if (!VALID_VIEWS.has(rawView as ViewState)) {
-    return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
-  }
-
-  const view = rawView as ViewState;
-  if (view === 'dashboard') {
-    return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
-  }
+  const view = parseViewParam(params.get('view'));
+  if (!view || view === 'dashboard') return dashboardState();
 
   if (view === 'rsip') {
     return { currentView: 'rsip', viewingChainId: null, editingChain: null };
   }
 
   if (view === 'focus') {
-    if (!input.activeSession) {
-      return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
-    }
-    return { currentView: 'focus', viewingChainId: null, editingChain: null };
+    return input.activeSession ? { currentView: 'focus', viewingChainId: null, editingChain: null } : dashboardState();
   }
 
   if (view === 'detail' || view === 'group') {
-    const chainId = params.get('chain');
-    if (!chainId) {
-      return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
-    }
-
-    const chain = input.chains.find((c) => c.id === chainId);
-    if (!chain) {
-      return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
-    }
-
-    return {
-      currentView: chain.type === 'group' ? 'group' : 'detail',
-      viewingChainId: chainId,
-      editingChain: null,
-    };
+    return parseDetailOrGroupView(params, input.chains);
   }
 
   if (view === 'editor' || view === 'taskgroup-editor') {
-    const editChainId = params.get('edit');
-    if (editChainId) {
-      const chain = input.chains.find((c) => c.id === editChainId);
-      if (!chain) {
-        return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
-      }
-
-      const isTaskGroup = chain.type === 'group' || chain.isTaskGroup;
-      return {
-        currentView: isTaskGroup ? 'taskgroup-editor' : 'editor',
-        viewingChainId: null,
-        editingChain: chain,
-      };
-    }
-
-    const parentId = params.get('parent');
-    return {
-      currentView: view,
-      viewingChainId: parentId || null,
-      editingChain: null,
-    };
+    return parseEditorView(params, view, input.chains);
   }
 
-  return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
+  return dashboardState();
 }

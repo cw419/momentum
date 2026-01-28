@@ -19,17 +19,3 @@ export interface CheckinResult {
   checkin_id?: string;
 }
 
-export interface CheckinHistory {
-  checkins: Array<{
-    id: string;
-    checkin_date: string;
-    points_earned: number;
-    consecutive_days: number;
-    created_at: string;
-  }>;
-  total_count: number;
-  page_size: number;
-  page_offset: number;
-  has_more: boolean;
-}
-

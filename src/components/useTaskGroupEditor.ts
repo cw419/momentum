@@ -221,5 +221,3 @@ export function useTaskGroupEditor({
     CUSTOM_AUXILIARY_SIGNAL_VALUE,
   };
 }
-
-export type UseTaskGroupEditorReturn = ReturnType<typeof useTaskGroupEditor>;

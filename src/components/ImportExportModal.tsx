@@ -9,6 +9,3 @@
  */
 
 export { ImportExportModalContainer as ImportExportModal } from './ImportExportModalContainer';
-export type { ImportExportModalContainerProps as ImportExportModalProps } from './ImportExportModalContainer';
-export { ImportExportModalView } from './ImportExportModalView';
-export type { ImportExportModalViewProps, ImportStatus } from './ImportExportModalView';

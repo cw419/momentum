@@ -9,7 +9,6 @@ import {
 } from './chain-detail';
 import type { ChainDetailViewProps } from './chain-detail';
 
-export type { ChainDetailViewProps };
 
 const ChainDetailViewComponent: React.FC<ChainDetailViewProps> = ({
   chain,
