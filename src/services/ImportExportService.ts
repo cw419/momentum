@@ -75,6 +75,36 @@ function toStringArray(value: unknown): string[] {
   return value.map(v => String(v)).filter(v => v.length > 0);
 }
 
+function toStringWithDefault(value: unknown, fallback: string): string {
+  if (value == null) return fallback;
+  return String(value);
+}
+
+function toOptionalStringFromTruthy(value: unknown): string | undefined {
+  if (!value) return undefined;
+  return String(value);
+}
+
+function toBooleanWithDefault(value: unknown, fallback: boolean): boolean {
+  if (value == null) return fallback;
+  return Boolean(value);
+}
+
+function toOptionalTruthyBoolean(value: unknown): true | undefined {
+  if (!value) return undefined;
+  return true;
+}
+
+function pickNonNullish(raw: Record<string, unknown>, primaryKey: string, secondaryKey: string): unknown {
+  const primaryValue = raw[primaryKey];
+  if (primaryValue != null) return primaryValue;
+
+  const secondaryValue = raw[secondaryKey];
+  if (secondaryValue != null) return secondaryValue;
+
+  return undefined;
+}
+
 function generateId(prefix: string) {
   return randomId(prefix);
 }
@@ -138,6 +168,49 @@ function buildChainEntriesAndIdMap(rawChains: unknown[], tr: ImportTranslator): 
   return { chainEntries, idMap };
 }
 
+function getImportedChainType(raw: Record<string, unknown>): string {
+  const rawType = raw.type != null ? String(raw.type) : 'unit';
+  return allowedChainTypes.has(rawType) ? rawType : 'unit';
+}
+
+function buildImportedChainStats(raw: Record<string, unknown>, preserveStatistics: boolean) {
+  if (!preserveStatistics) {
+    return {
+      currentStreak: 0,
+      auxiliaryStreak: 0,
+      totalCompletions: 0,
+      totalFailures: 0,
+      auxiliaryFailures: 0,
+    };
+  }
+
+  return {
+    currentStreak: toNumber(raw.currentStreak, 0),
+    auxiliaryStreak: toNumber(raw.auxiliaryStreak, 0),
+    totalCompletions: toNumber(raw.totalCompletions, 0),
+    totalFailures: toNumber(raw.totalFailures, 0),
+    auxiliaryFailures: toNumber(raw.auxiliaryFailures, 0),
+  };
+}
+
+function parsePreservedDateOrNow(value: unknown, preserveTimestamps: boolean): Date {
+  if (!preserveTimestamps) return new Date();
+  if (!value) return new Date();
+  return new Date(String(value));
+}
+
+function parseOptionalPreservedDate(value: unknown, preserveTimestamps: boolean): Date | undefined {
+  if (!preserveTimestamps) return undefined;
+  if (!value) return undefined;
+  return new Date(String(value));
+}
+
+function mapImportedChainParentId(raw: Record<string, unknown>, idMap: Map<string, string>): string | undefined {
+  const sourceParentId = pickNonNullish(raw, 'parentId', 'parent_id');
+  if (sourceParentId == null) return undefined;
+  return idMap.get(String(sourceParentId));
+}
+
 function buildImportChains(params: {
   chainEntries: ChainImportEntry[];
   idMap: Map<string, string>;
@@ -148,51 +221,31 @@ function buildImportChains(params: {
   const { chainEntries, idMap, preserveStatistics, preserveTimestamps, tr } = params;
 
   return chainEntries.map(({ raw, newId }) => {
-    const rawType = String(raw.type ?? 'unit');
-    const type = allowedChainTypes.has(rawType) ? rawType : 'unit';
+    const type = getImportedChainType(raw);
+    const stats = buildImportedChainStats(raw, preserveStatistics);
 
-    const stats = preserveStatistics
-      ? {
-          currentStreak: toNumber(raw.currentStreak, 0),
-          auxiliaryStreak: toNumber(raw.auxiliaryStreak, 0),
-          totalCompletions: toNumber(raw.totalCompletions, 0),
-          totalFailures: toNumber(raw.totalFailures, 0),
-          auxiliaryFailures: toNumber(raw.auxiliaryFailures, 0),
-        }
-      : {
-          currentStreak: 0,
-          auxiliaryStreak: 0,
-          totalCompletions: 0,
-          totalFailures: 0,
-          auxiliaryFailures: 0,
-        };
-
-    const createdAt = preserveTimestamps && raw.createdAt ? new Date(String(raw.createdAt)) : new Date();
-    const lastCompletedAt =
-      preserveTimestamps && raw.lastCompletedAt ? new Date(String(raw.lastCompletedAt)) : undefined;
-
-    const sourceParentId = raw.parentId ?? raw.parent_id ?? undefined;
-    const parentId =
-      sourceParentId != null && idMap.has(String(sourceParentId)) ? idMap.get(String(sourceParentId)) : undefined;
+    const createdAt = parsePreservedDateOrNow(raw.createdAt, preserveTimestamps);
+    const lastCompletedAt = parseOptionalPreservedDate(raw.lastCompletedAt, preserveTimestamps);
+    const parentId = mapImportedChainParentId(raw, idMap);
 
     const common = {
       id: newId,
       name: String(raw.name ?? tr('未命名链条', 'Untitled chain')),
       parentId,
-      sortOrder: toNumber(raw.sortOrder ?? raw.sort_order, Math.floor(Date.now() / 1000)),
-      trigger: String(raw.trigger ?? ''),
+      sortOrder: toNumber(pickNonNullish(raw, 'sortOrder', 'sort_order'), Math.floor(Date.now() / 1000)),
+      trigger: toStringWithDefault(raw.trigger, ''),
       duration: toNumber(raw.duration, 45),
-      description: String(raw.description ?? ''),
+      description: toStringWithDefault(raw.description, ''),
       ...stats,
       exceptions: toStringArray(raw.exceptions),
       auxiliaryExceptions: toStringArray(raw.auxiliaryExceptions),
-      auxiliarySignal: String(raw.auxiliarySignal ?? ''),
+      auxiliarySignal: toStringWithDefault(raw.auxiliarySignal, ''),
       auxiliaryDuration: toNumber(raw.auxiliaryDuration, 15),
-      auxiliaryCompletionTrigger: String(raw.auxiliaryCompletionTrigger ?? ''),
-      timeLimitExceptions: toStringArray(raw.timeLimitExceptions ?? raw.time_limit_exceptions),
-      isDurationless: Boolean(raw.isDurationless ?? raw.is_durationless ?? false),
-      minimumDuration: toOptionalNumber(raw.minimumDuration ?? raw.minimum_duration),
-      taskRepeatCount: toOptionalNumber(raw.taskRepeatCount ?? raw.task_repeat_count),
+      auxiliaryCompletionTrigger: toStringWithDefault(raw.auxiliaryCompletionTrigger, ''),
+      timeLimitExceptions: toStringArray(pickNonNullish(raw, 'timeLimitExceptions', 'time_limit_exceptions')),
+      isDurationless: toBooleanWithDefault(pickNonNullish(raw, 'isDurationless', 'is_durationless'), false),
+      minimumDuration: toOptionalNumber(pickNonNullish(raw, 'minimumDuration', 'minimum_duration')),
+      taskRepeatCount: toOptionalNumber(pickNonNullish(raw, 'taskRepeatCount', 'task_repeat_count')),
       createdAt,
       lastCompletedAt,
       deletedAt: null as null,
@@ -202,9 +255,9 @@ function buildImportChains(params: {
       return {
         ...common,
         type: 'group',
-        timeLimitHours: toOptionalNumber(raw.timeLimitHours ?? raw.time_limit_hours),
-        groupRepeatCount: toOptionalNumber(raw.groupRepeatCount ?? raw.group_repeat_count),
-        isTaskGroup: Boolean(raw.isTaskGroup ?? raw.is_task_group ?? false) || undefined,
+        timeLimitHours: toOptionalNumber(pickNonNullish(raw, 'timeLimitHours', 'time_limit_hours')),
+        groupRepeatCount: toOptionalNumber(pickNonNullish(raw, 'groupRepeatCount', 'group_repeat_count')),
+        isTaskGroup: toOptionalTruthyBoolean(pickNonNullish(raw, 'isTaskGroup', 'is_task_group')),
         groupStartedAt: undefined,
         groupExpiresAt: undefined,
       } as Chain;
@@ -217,33 +270,40 @@ function buildImportChains(params: {
   });
 }
 
+function mapImportedCompletionHistoryEntry(raw: unknown, idMap: Map<string, string>): CompletionHistory | undefined {
+  if (!isRecord(raw)) return undefined;
+  if (!('chainId' in raw)) return undefined;
+
+  const mappedChainId = idMap.get(String(raw.chainId));
+  if (!mappedChainId) return undefined;
+
+  const duration = Math.max(0, toNumber(raw.duration, 0));
+
+  return {
+    chainId: mappedChainId,
+    completedAt: parseTruthyDateOrNow(raw.completedAt),
+    duration,
+    wasSuccessful: Boolean(raw.wasSuccessful),
+    reasonForFailure: toOptionalStringFromTruthy(raw.reasonForFailure),
+    actualDuration: raw.actualDuration != null ? Math.max(0, toNumber(raw.actualDuration, duration)) : undefined,
+    isForwardTimed: Boolean(raw.isForwardTimed),
+    description: toOptionalStringFromTruthy(raw.description),
+    notes: toOptionalStringFromTruthy(raw.notes),
+  };
+}
+
 function parseImportHistory(
   completionHistory: unknown,
   shouldImport: boolean,
   idMap: Map<string, string>
 ): CompletionHistory[] {
-  if (!shouldImport || !Array.isArray(completionHistory)) return [];
+  if (!shouldImport) return [];
+  if (!Array.isArray(completionHistory)) return [];
 
   const result: CompletionHistory[] = [];
   for (const raw of completionHistory as unknown[]) {
-    if (!isRecord(raw) || !('chainId' in raw)) continue;
-
-    const mappedChainId = idMap.get(String(raw.chainId));
-    if (!mappedChainId) continue;
-
-    const duration = Math.max(0, toNumber(raw.duration, 0));
-
-    result.push({
-      chainId: mappedChainId,
-      completedAt: new Date(String(raw.completedAt || Date.now())),
-      duration,
-      wasSuccessful: Boolean(raw.wasSuccessful),
-      reasonForFailure: raw.reasonForFailure ? String(raw.reasonForFailure) : undefined,
-      actualDuration: raw.actualDuration != null ? Math.max(0, toNumber(raw.actualDuration, duration)) : undefined,
-      isForwardTimed: Boolean(raw.isForwardTimed || false),
-      description: raw.description ? String(raw.description) : undefined,
-      notes: raw.notes ? String(raw.notes) : undefined,
-    });
+    const entry = mapImportedCompletionHistoryEntry(raw, idMap);
+    if (entry) result.push(entry);
   }
 
   return result;
