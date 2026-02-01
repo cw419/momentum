@@ -1,0 +1,19 @@
+{
+  "ignorePatterns": ["dist", "coverage", "reports"],
+  "ignoreMatches": [
+    "@types/*",
+    "terser",
+    "autoprefixer",
+    "postcss",
+    "tailwindcss",
+    "globals",
+    "@vitest/coverage-v8",
+    "knip",
+    "jscpd",
+    "madge",
+    "type-coverage",
+    "depcheck",
+    "npm-run-all2"
+  ],
+  "specials": ["eslint", "vite"]
+}

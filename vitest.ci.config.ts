@@ -22,6 +22,23 @@ export default defineConfig({
       '**/__tests__/**/*.db.*',
       '**/__tests__/**/*.performance.*',
       '**/__tests__/**/helpers.ts'
-    ]
+    ],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      thresholds: {
+        statements: 59,
+        branches: 50,
+        functions: 57,
+        lines: 60
+      },
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/coverage/**'
+      ]
+    }
   }
 });

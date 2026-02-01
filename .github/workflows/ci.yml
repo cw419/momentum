@@ -27,6 +27,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Type Coverage
+        run: npm run quality:type-coverage
+
       - name: Test (Coverage)
         run: npm run test:coverage
 
