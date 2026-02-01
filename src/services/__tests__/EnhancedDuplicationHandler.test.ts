@@ -4,7 +4,6 @@
 
 import { EnhancedDuplicationHandler } from '../EnhancedDuplicationHandler';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
-import { ruleDuplicationDetector } from '../RuleDuplicationDetector';
 import { ExceptionRule, ExceptionRuleType, ExceptionRuleException } from '../../types';
 
 // Mock dependencies
@@ -12,12 +11,6 @@ vi.mock('../ExceptionRuleStorage', () => ({
   exceptionRuleStorage: {
     getRules: vi.fn(),
     createRule: vi.fn()
-  }
-}));
-
-vi.mock('../RuleDuplicationDetector', () => ({
-  ruleDuplicationDetector: {
-    isCommonPattern: vi.fn()
   }
 }));
 
@@ -193,7 +186,6 @@ describe('EnhancedDuplicationHandler', () => {
         usageCount: 0,
         isActive: true
       });
-      vi.mocked(ruleDuplicationDetector.isCommonPattern).mockReturnValue(false);
 
       const result = await handler.handleDuplicateCreation(
         '新规则',
@@ -216,7 +208,6 @@ describe('EnhancedDuplicationHandler', () => {
         usageCount: 0,
         isActive: true
       });
-      vi.mocked(ruleDuplicationDetector.isCommonPattern).mockReturnValue(true);
 
       const result = await handler.handleDuplicateCreation(
         '上厕所',

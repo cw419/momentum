@@ -9,7 +9,7 @@ import {
   ExceptionRuleException
 } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
-import { ruleDuplicationDetector } from '../RuleDuplicationDetector';
+import { getDuplicationReport } from '../duplication/duplicationDetection';
 import { ruleUsageTracker } from '../RuleUsageTracker';
 import { tr } from '../../utils/runtimeI18n';
 
@@ -57,7 +57,8 @@ class RuleMaintenanceService {
       }
 
       if (updates.name) {
-        const duplicationReport = await ruleDuplicationDetector.getDuplicationReport(updates.name, id);
+        const allRules = await exceptionRuleStorage.getRules();
+        const duplicationReport = getDuplicationReport(allRules, updates.name, id);
 
         if (duplicationReport.hasExactMatch) {
           throw new ExceptionRuleException(

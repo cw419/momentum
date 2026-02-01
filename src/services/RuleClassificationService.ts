@@ -7,6 +7,22 @@ import { ExceptionRule, ExceptionRuleType, ExceptionRuleError, EnhancedException
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { logger } from '../utils/logger';
 import { isDev } from '../utils/env';
+import {
+  RuleActionType,
+  doesRuleTypeMatchAction,
+  getRuleTypeForAction,
+  getRuleTypeDisplayName as getRuleTypeDisplayNamePure,
+  getActionTypeDisplayName as getActionTypeDisplayNamePure,
+  isValidRuleType as isValidRuleTypePure,
+  isValidActionType as isValidActionTypePure,
+} from './rule-classification/RuleTypeValidator';
+import { groupActiveRulesByType, searchRulesInList } from './rule-classification/RuleSearcher';
+import {
+  buildRuleTypeChangeSuggestion,
+  getRuleTypeStatsFromGrouped,
+  getRecommendedRuleTypeFromStats,
+  getRuleUsageSuggestionsFromList,
+} from './rule-classification/RuleSuggestionEngine';
 
 export class RuleClassificationService {
   /**
@@ -21,45 +37,13 @@ export class RuleClassificationService {
    */
   async getRulesGroupedByType(): Promise<Record<ExceptionRuleType, ExceptionRule[]>> {
     const allRules = await exceptionRuleStorage.getRules();
-    const activeRules = allRules.filter(rule => rule.isActive);
-    
-    const grouped: Record<ExceptionRuleType, ExceptionRule[]> = {
-      [ExceptionRuleType.PAUSE_ONLY]: [],
-      [ExceptionRuleType.EARLY_COMPLETION_ONLY]: []
-    };
-    
-    for (const rule of activeRules) {
-      grouped[rule.type].push(rule);
-    }
-    
-    // 按使用频率和最近使用时间排序
-    for (const type in grouped) {
-      grouped[type as ExceptionRuleType].sort((a, b) => {
-        // 首先按使用次数排序
-        if (a.usageCount !== b.usageCount) {
-          return b.usageCount - a.usageCount;
-        }
-        
-        // 然后按最近使用时间排序
-        if (a.lastUsedAt && b.lastUsedAt) {
-          return b.lastUsedAt.getTime() - a.lastUsedAt.getTime();
-        }
-        
-        if (a.lastUsedAt && !b.lastUsedAt) return -1;
-        if (!a.lastUsedAt && b.lastUsedAt) return 1;
-        
-        // 最后按创建时间排序
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      });
-    }
-    
-    return grouped;
+    return groupActiveRulesByType(allRules);
   }
 
   /**
    * 验证规则类型是否匹配指定操作
    */
-  validateRuleTypeForAction(rule: ExceptionRule, actionType: 'pause' | 'early_completion'): boolean {
+  validateRuleTypeForAction(rule: ExceptionRule, actionType: RuleActionType): boolean {
     if (isDev) {
       logger.debug('RULE_CLASSIFICATION', 'Validating rule type match', {
         ruleId: rule.id,
@@ -77,45 +61,31 @@ export class RuleClassificationService {
       });
       return false;
     }
-    
-    switch (actionType) {
-      case 'pause':
-        {
-          const pauseMatch = rule.type === ExceptionRuleType.PAUSE_ONLY;
-          if (isDev) {
-            logger.debug('RULE_CLASSIFICATION', 'Pause action match result', { pauseMatch });
-          }
-          return pauseMatch;
-        }
-      case 'early_completion':
-        {
-          const completionMatch = rule.type === ExceptionRuleType.EARLY_COMPLETION_ONLY;
-          if (isDev) {
-            logger.debug('RULE_CLASSIFICATION', 'Early completion action match result', { completionMatch });
-          }
-          return completionMatch;
-        }
-      default:
-        logger.error('RULE_CLASSIFICATION', 'Unknown action type', { actionType });
-        return false;
+
+    const matches = doesRuleTypeMatchAction(rule.type, actionType);
+
+    if (isDev) {
+      if (actionType === 'pause') {
+        logger.debug('RULE_CLASSIFICATION', 'Pause action match result', { pauseMatch: matches });
+      } else {
+        logger.debug('RULE_CLASSIFICATION', 'Early completion action match result', { completionMatch: matches });
+      }
     }
+
+    return matches;
   }
 
   /**
    * 获取适用于指定操作的规则
    */
-  async getRulesForAction(actionType: 'pause' | 'early_completion'): Promise<ExceptionRule[]> {
-    const targetType = actionType === 'pause' 
-      ? ExceptionRuleType.PAUSE_ONLY 
-      : ExceptionRuleType.EARLY_COMPLETION_ONLY;
-    
-    return await this.getRulesByType(targetType);
+  async getRulesForAction(actionType: RuleActionType): Promise<ExceptionRule[]> {
+    return await this.getRulesByType(getRuleTypeForAction(actionType));
   }
 
   /**
    * 验证规则是否可以用于指定操作，如果不可以则抛出异常（增强版本）
    */
-  private async getActiveRuleOrThrow(ruleId: string, actionType: 'pause' | 'early_completion'): Promise<ExceptionRule> {
+  private async getActiveRuleOrThrow(ruleId: string, actionType: RuleActionType): Promise<ExceptionRule> {
     const rule = await exceptionRuleStorage.getRuleById(ruleId);
 
     if (!rule) {
@@ -139,7 +109,7 @@ export class RuleClassificationService {
     return rule;
   }
 
-  private async ensureRuleTypeOrThrow(rule: ExceptionRule, ruleId: string, actionType: 'pause' | 'early_completion') {
+  private async ensureRuleTypeOrThrow(rule: ExceptionRule, ruleId: string, actionType: RuleActionType) {
     if (rule.type) return;
 
     const fixResult = await this.fixRuleTypeIssues(ruleId);
@@ -170,7 +140,7 @@ export class RuleClassificationService {
     rule.type = fixedRule.type;
   }
 
-  private ensureRuleTypeMatchesActionOrThrow(rule: ExceptionRule, actionType: 'pause' | 'early_completion') {
+  private ensureRuleTypeMatchesActionOrThrow(rule: ExceptionRule, actionType: RuleActionType) {
     const isValidForAction = this.validateRuleTypeForAction(rule, actionType);
     if (isValidForAction) return;
 
@@ -186,7 +156,7 @@ export class RuleClassificationService {
     ).addSuggestedAction(`创建${actionName}类型的规则`).addSuggestedAction(`选择${actionName}类型的规则`);
   }
 
-  async validateRuleForAction(ruleId: string, actionType: 'pause' | 'early_completion'): Promise<void> {
+  async validateRuleForAction(ruleId: string, actionType: RuleActionType): Promise<void> {
     try {
       const rule = await this.getActiveRuleOrThrow(ruleId, actionType);
       await this.ensureRuleTypeOrThrow(rule, ruleId, actionType);
@@ -286,21 +256,14 @@ export class RuleClassificationService {
   /**
    * 建议规则类型转换
    */
-  async suggestRuleTypeChange(ruleId: string, desiredAction: 'pause' | 'early_completion'): Promise<string> {
+  async suggestRuleTypeChange(ruleId: string, desiredAction: RuleActionType): Promise<string> {
     const rule = await exceptionRuleStorage.getRuleById(ruleId);
     
     if (!rule) {
       return '规则不存在，无法提供建议';
     }
-    
-    const currentTypeName = rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
-    const desiredTypeName = desiredAction === 'pause' ? '暂停' : '提前完成';
-    
-    if (this.validateRuleTypeForAction(rule, desiredAction)) {
-      return '规则类型已经匹配，无需更改';
-    }
-    
-    return `规则 "${rule.name}" 当前只能用于${currentTypeName}操作。如需用于${desiredTypeName}操作，请创建新规则或修改现有规则类型。`;
+
+    return buildRuleTypeChangeSuggestion(rule, desiredAction);
   }
 
   /**
@@ -314,43 +277,7 @@ export class RuleClassificationService {
     leastUsedType: ExceptionRuleType | null;
   }> {
     const grouped = await this.getRulesGroupedByType();
-    
-    const pauseCount = grouped[ExceptionRuleType.PAUSE_ONLY].length;
-    const completionCount = grouped[ExceptionRuleType.EARLY_COMPLETION_ONLY].length;
-    const total = pauseCount + completionCount;
-    
-    let mostUsedType: ExceptionRuleType | null = null;
-    let leastUsedType: ExceptionRuleType | null = null;
-    
-    if (total > 0) {
-      if (pauseCount > completionCount) {
-        mostUsedType = ExceptionRuleType.PAUSE_ONLY;
-        leastUsedType = ExceptionRuleType.EARLY_COMPLETION_ONLY;
-      } else if (completionCount > pauseCount) {
-        mostUsedType = ExceptionRuleType.EARLY_COMPLETION_ONLY;
-        leastUsedType = ExceptionRuleType.PAUSE_ONLY;
-      } else {
-        // 数量相等时，比较使用频率
-        const pauseUsage = grouped[ExceptionRuleType.PAUSE_ONLY].reduce((sum, rule) => sum + rule.usageCount, 0);
-        const completionUsage = grouped[ExceptionRuleType.EARLY_COMPLETION_ONLY].reduce((sum, rule) => sum + rule.usageCount, 0);
-        
-        if (pauseUsage > completionUsage) {
-          mostUsedType = ExceptionRuleType.PAUSE_ONLY;
-          leastUsedType = ExceptionRuleType.EARLY_COMPLETION_ONLY;
-        } else if (completionUsage > pauseUsage) {
-          mostUsedType = ExceptionRuleType.EARLY_COMPLETION_ONLY;
-          leastUsedType = ExceptionRuleType.PAUSE_ONLY;
-        }
-      }
-    }
-    
-    return {
-      total,
-      pauseOnly: pauseCount,
-      earlyCompletionOnly: completionCount,
-      mostUsedType,
-      leastUsedType
-    };
+    return getRuleTypeStatsFromGrouped(grouped);
   }
 
   /**
@@ -363,14 +290,7 @@ export class RuleClassificationService {
     }
     
     const stats = await this.getRuleTypeStats();
-    
-    // 如果有明显的偏好，推荐最常用的类型
-    if (stats.mostUsedType) {
-      return stats.mostUsedType;
-    }
-    
-    // 否则推荐暂停类型
-    return ExceptionRuleType.PAUSE_ONLY;
+    return getRecommendedRuleTypeFromStats(stats, true);
   }
 
   /**
@@ -389,130 +309,48 @@ export class RuleClassificationService {
     if (!query.trim()) {
       return rules;
     }
-    
-    const normalizedQuery = query.toLowerCase().trim();
-    
-    return rules.filter(rule => {
-      const nameMatch = rule.name.toLowerCase().includes(normalizedQuery);
-      const descriptionMatch = rule.description?.toLowerCase().includes(normalizedQuery) || false;
-      
-      return nameMatch || descriptionMatch;
-    }).sort((a, b) => {
-      // 优先显示名称匹配的结果
-      const aNameMatch = a.name.toLowerCase().includes(normalizedQuery);
-      const bNameMatch = b.name.toLowerCase().includes(normalizedQuery);
-      
-      if (aNameMatch && !bNameMatch) return -1;
-      if (!aNameMatch && bNameMatch) return 1;
-      
-      // 然后按使用频率排序
-      return b.usageCount - a.usageCount;
-    });
+
+    return searchRulesInList(rules, query);
   }
 
   /**
    * 获取规则类型的显示名称
    */
   getRuleTypeDisplayName(type: ExceptionRuleType): string {
-    switch (type) {
-      case ExceptionRuleType.PAUSE_ONLY:
-        return '仅暂停';
-      case ExceptionRuleType.EARLY_COMPLETION_ONLY:
-        return '仅提前完成';
-      default:
-        return '未知类型';
-    }
+    return getRuleTypeDisplayNamePure(type);
   }
 
   /**
    * 获取操作类型的显示名称
    */
-  getActionTypeDisplayName(actionType: 'pause' | 'early_completion'): string {
-    switch (actionType) {
-      case 'pause':
-        return '暂停计时';
-      case 'early_completion':
-        return '提前完成';
-      default:
-        return '未知操作';
-    }
+  getActionTypeDisplayName(actionType: RuleActionType): string {
+    return getActionTypeDisplayNamePure(actionType);
   }
 
   /**
    * 检查规则类型是否有效
    */
   isValidRuleType(type: string): type is ExceptionRuleType {
-    return Object.values(ExceptionRuleType).includes(type as ExceptionRuleType);
+    return isValidRuleTypePure(type);
   }
 
   /**
    * 检查操作类型是否有效
    */
-  isValidActionType(actionType: string): actionType is 'pause' | 'early_completion' {
-    return actionType === 'pause' || actionType === 'early_completion';
+  isValidActionType(actionType: string): actionType is RuleActionType {
+    return isValidActionTypePure(actionType);
   }
 
   /**
    * 获取规则使用建议
    */
-  async getRuleUsageSuggestions(actionType: 'pause' | 'early_completion'): Promise<{
+  async getRuleUsageSuggestions(actionType: RuleActionType): Promise<{
     mostUsed: ExceptionRule[];
     recentlyUsed: ExceptionRule[];
     suggested: ExceptionRule[];
   }> {
     const rules = await this.getRulesForAction(actionType);
-    
-    // 最常用的规则（按使用次数排序）
-    const mostUsed = [...rules]
-      .sort((a, b) => b.usageCount - a.usageCount)
-      .slice(0, 3);
-    
-    // 最近使用的规则
-    const recentlyUsed = [...rules]
-      .filter(rule => rule.lastUsedAt)
-      .sort((a, b) => (b.lastUsedAt?.getTime() || 0) - (a.lastUsedAt?.getTime() || 0))
-      .slice(0, 3);
-    
-    // 建议的规则（综合考虑使用频率和最近使用时间）
-    const suggested = [...rules]
-      .sort((a, b) => {
-        const aScore = this.calculateRuleScore(a);
-        const bScore = this.calculateRuleScore(b);
-        return bScore - aScore;
-      })
-      .slice(0, 5);
-    
-    return {
-      mostUsed,
-      recentlyUsed,
-      suggested
-    };
-  }
-
-  /**
-   * 计算规则推荐分数
-   */
-  private calculateRuleScore(rule: ExceptionRule): number {
-    let score = 0;
-    
-    // 使用频率权重 (40%)
-    score += rule.usageCount * 0.4;
-    
-    // 最近使用时间权重 (30%)
-    if (rule.lastUsedAt) {
-      const daysSinceLastUse = (Date.now() - rule.lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
-      score += Math.max(0, 30 - daysSinceLastUse) * 0.3;
-    }
-    
-    // 规则创建时间权重 (20%) - 较新的规则得分稍高
-    const daysSinceCreation = (Date.now() - rule.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    score += Math.max(0, 365 - daysSinceCreation) / 365 * 20 * 0.2;
-    
-    // 规则名称长度权重 (10%) - 较短的名称得分稍高（更简洁）
-    const nameLength = rule.name.length;
-    score += Math.max(0, 50 - nameLength) / 50 * 10 * 0.1;
-    
-    return score;
+    return getRuleUsageSuggestionsFromList(rules);
   }
 }
 

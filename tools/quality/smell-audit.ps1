@@ -10,7 +10,8 @@ function Write-Section([string]$title) {
   "`n=== $title ===`n"
 }
 
-$tsconfig = "tsconfig.app.json"
+$tsconfigApp = "tsconfig.app.json"
+$tsconfigTsPrune = "tsconfig.ts-prune.json"
 
 Write-Output (Write-Section "Environment")
 Write-Output ("Node: " + (node -v))
@@ -23,10 +24,10 @@ Write-Output (Write-Section "Knip (unused deps/exports/files)")
 knip --config .knip.json | Tee-Object -FilePath (Join-Path $OutDir "knip.txt")
 
 Write-Output (Write-Section "ts-prune (unused exports)")
-ts-prune -p $tsconfig | Tee-Object -FilePath (Join-Path $OutDir "ts-prune.txt")
+ts-prune -p $tsconfigTsPrune | Tee-Object -FilePath (Join-Path $OutDir "ts-prune.txt")
 
 Write-Output (Write-Section "Madge (circular deps)")
-madge --circular --ts-config $tsconfig --extensions ts,tsx src/main.tsx | Tee-Object -FilePath (Join-Path $OutDir "madge-circular.txt")
+madge --circular --ts-config $tsconfigApp --extensions ts,tsx src/main.tsx | Tee-Object -FilePath (Join-Path $OutDir "madge-circular.txt")
 
 Write-Output (Write-Section "depcheck (unused/missing deps)")
 depcheck | Tee-Object -FilePath (Join-Path $OutDir "depcheck.txt")

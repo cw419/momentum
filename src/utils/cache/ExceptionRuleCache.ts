@@ -16,6 +16,27 @@ export class ExceptionRuleCache extends CacheCore {
     super();
   }
 
+  private getNamespacePrefix(namespace: string): string {
+    return `__ns__${namespace}__`;
+  }
+
+  private getNamespacedKey(namespace: string, key: string): string {
+    return `${this.getNamespacePrefix(namespace)}${key}`;
+  }
+
+  getNamespaced<T>(namespace: string, key: string): T | null {
+    return this.get<T>(this.getNamespacedKey(namespace, key));
+  }
+
+  setNamespaced<T>(namespace: string, key: string, data: T, ttl?: number): void {
+    this.set(this.getNamespacedKey(namespace, key), data, ttl);
+  }
+
+  invalidateNamespace(namespace: string): void {
+    const prefix = this.getNamespacePrefix(namespace);
+    this.invalidateByPattern(key => key.startsWith(prefix));
+  }
+
   getChainRules(chainId: string): ExceptionRule[] | null {
     return this.get<ExceptionRule[]>(`chain_rules_${chainId}`);
   }

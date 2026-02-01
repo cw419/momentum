@@ -12,6 +12,7 @@ import {
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { getErrorMessage } from '../utils/errorMessage';
 import { ignoreUnused } from '../utils/ignoreUnused';
+import { exceptionRuleCache } from '../utils/exceptionRuleCache';
 
 interface RuleValidationResult {
   isValid: boolean;
@@ -46,7 +47,6 @@ interface ValidationIssue {
 type ActionType = 'pause' | 'early_completion';
 
 class EnhancedRuleValidationService {
-  private validationCache = new Map<string, { result: RuleValidationResult; timestamp: number }>();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
 
   /**
@@ -137,12 +137,12 @@ class EnhancedRuleValidationService {
    * 预验证规则可用性
    */
   async preValidateRuleUsage(ruleId: string, actionType: ActionType): Promise<RuleValidationResult> {
-    const cacheKey = `${ruleId}_${actionType}`;
+    const cacheKey = `prevalidate_${ruleId}_${actionType}`;
     
     // 检查缓存
-    const cached = this.validationCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-      return cached.result;
+    const cached = exceptionRuleCache.getNamespaced<RuleValidationResult>('validation', cacheKey);
+    if (cached) {
+      return cached;
     }
 
     try {
@@ -165,7 +165,7 @@ class EnhancedRuleValidationService {
           debugInfo: { ruleId, actionType }
         };
         
-        this.validationCache.set(cacheKey, { result, timestamp: Date.now() });
+        exceptionRuleCache.setNamespaced('validation', cacheKey, result, this.CACHE_TTL);
         return result;
       }
 
@@ -186,7 +186,7 @@ class EnhancedRuleValidationService {
           debugInfo: { rule, actionType }
         };
         
-        this.validationCache.set(cacheKey, { result, timestamp: Date.now() });
+        exceptionRuleCache.setNamespaced('validation', cacheKey, result, this.CACHE_TTL);
         return result;
       }
 
@@ -194,7 +194,7 @@ class EnhancedRuleValidationService {
       const typeValidation = this.validateRuleTypeForAction(rule, actionType);
       
       // 缓存结果
-      this.validationCache.set(cacheKey, { result: typeValidation, timestamp: Date.now() });
+      exceptionRuleCache.setNamespaced('validation', cacheKey, typeValidation, this.CACHE_TTL);
       
       return typeValidation;
 
@@ -407,19 +407,14 @@ class EnhancedRuleValidationService {
    * 清除验证缓存
    */
   clearValidationCache(): void {
-    this.validationCache.clear();
+    exceptionRuleCache.invalidateNamespace('validation');
   }
 
   /**
    * 清除过期的缓存条目
    */
   cleanupExpiredCache(): void {
-    const now = Date.now();
-    for (const [key, value] of this.validationCache.entries()) {
-      if (now - value.timestamp > this.CACHE_TTL) {
-        this.validationCache.delete(key);
-      }
-    }
+    exceptionRuleCache.clearExpired();
   }
 }
 

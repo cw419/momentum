@@ -6,8 +6,14 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ExceptionRule } from '../types';
 import { SearchResult } from '../utils/ruleSearchOptimizer';
-import { CheckCircle, Plus, TrendingUp, History } from 'lucide-react';
 import { useI18n } from '../i18n';
+import { CreateNewRuleItem } from './virtualized-rule-list/CreateNewRuleItem';
+import { EmptyState } from './virtualized-rule-list/EmptyState';
+import { formatLastUsed, getMatchTypeLabel } from './virtualized-rule-list/formatting';
+import { highlightText } from './virtualized-rule-list/highlightText';
+import { LoadingState } from './virtualized-rule-list/LoadingState';
+import { RuleListItem } from './virtualized-rule-list/RuleListItem';
+import { throttle } from './virtualized-rule-list/throttle';
 
 interface VirtualizedRuleListProps {
   rules: SearchResult[];
@@ -41,6 +47,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   const [containerSize, setContainerSize] = useState({ width: 0, height: containerHeight });
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollElementRef = useRef<HTMLDivElement>(null);
+  const showCreateNew = Boolean(onCreateNew && searchQuery);
 
   // 计算可见项目范围
   const visibleRange = useMemo(() => {
@@ -121,196 +128,17 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
     };
   }, []);
 
-  // 高亮搜索匹配的文本
-  const highlightText = useCallback((text: string, ranges: Array<{ start: number; end: number }>) => {
-    // 确保text是字符串
-    const safeText = String(text || '');
-    if (!ranges.length) return safeText;
-
-    const parts = [];
-    let lastIndex = 0;
-
-    for (const range of ranges) {
-      if (range.start > lastIndex) {
-        parts.push(safeText.slice(lastIndex, range.start));
-      }
-      parts.push(
-        <mark key={`${range.start}-${range.end}`} className="bg-yellow-200 dark:bg-yellow-600 px-1 rounded">
-          {safeText.slice(range.start, range.end)}
-        </mark>
-      );
-      lastIndex = range.end;
-    }
-
-    if (lastIndex < safeText.length) {
-      parts.push(safeText.slice(lastIndex));
-    }
-
-    return parts;
-  }, []);
-
-  // 格式化最后使用时间
-  const formatLastUsed = useCallback((date: Date): string => {
-    const now = new Date();
-    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-    if (diffHours < 1) return tr('刚刚', 'Just now');
-    if (diffHours < 24) return language === 'zh' ? `${diffHours}小时前` : `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return tr('昨天', 'Yesterday');
-    if (diffDays < 7) return language === 'zh' ? `${diffDays}天前` : `${diffDays}d ago`;
-    const weeks = Math.floor(diffDays / 7);
-    return language === 'zh' ? `${weeks}周前` : `${weeks}w ago`;
-  }, [language, tr]);
-
-  // 获取匹配类型标签
-  const getMatchTypeLabel = useCallback((matchType: string): string => {
-    switch (matchType) {
-      case 'prefix': return tr('前缀匹配', 'Prefix match');
-      case 'contains': return tr('包含匹配', 'Contains match');
-      case 'fuzzy': return tr('模糊匹配', 'Fuzzy match');
-      default: return '';
-    }
-  }, [tr]);
-
-  // 渲染创建新规则项
-  const renderCreateNewItem = useCallback(() => {
-    if (!onCreateNew || !searchQuery) return null;
-
-	  return (
-      <div
-        className="absolute w-full"
-        style={{
-          height: itemHeight,
-          top: 0,
-          left: 0
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => onCreateNew(searchQuery)}
-          aria-label={tr(`创建新规则: "${searchQuery}"`, `Create new rule: "${searchQuery}"`)}
-          className="w-full flex items-center space-x-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors text-left"
-          style={{ height: itemHeight }}
-        >
-          <Plus className="text-primary-500 flex-shrink-0" size={20} aria-hidden="true" />
-          <div className="flex-1 min-w-0">
-            <div className="font-medium text-primary-700 dark:text-primary-300 truncate">
-              {tr(`创建新规则: "${searchQuery}"`, `Create new rule: "${searchQuery}"`)}
-            </div>
-            <div className="text-sm text-primary-600 dark:text-primary-400">
-              {tr('为当前任务链创建专属规则', 'Create a chain-specific rule')}
-            </div>
-          </div>
-        </button>
-      </div>
-    );
-  }, [onCreateNew, searchQuery, itemHeight, tr]);
-
-  // 渲染规则项
-  const renderRuleItem = useCallback((result: SearchResult, index: number) => {
-    const rule = result.rule;
-    const usageCount = rule.usageCount || 0;
-    const usageUnit = usageCount === 1 ? 'time' : 'times';
-    const usageText = language === 'zh' ? `使用过 ${usageCount} 次` : `Used ${usageCount} ${usageUnit}`;
-    const actualIndex = onCreateNew && searchQuery ? index - 1 : index;
-    
-    if (actualIndex < 0 || actualIndex >= rules.length) return null;
-
-    return (
-      <div
-        className="absolute w-full rule-item"
-        style={{
-          height: itemHeight,
-          top: index * itemHeight,
-          left: 0
-        }}
-        data-rule-item
-      >
-        <button
-          type="button"
-          onClick={() => onSelect(rule)}
-          className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-200 text-left border border-transparent hover:border-primary-200 dark:hover:border-primary-500/30"
-          style={{ height: itemHeight }}
-        >
-          <div className="flex-1 min-w-0">
-            <div className="font-medium text-gray-900 dark:text-white truncate">
-              {highlightText(rule.name, result.highlightRanges)}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center space-x-4">
-              <span className="flex items-center space-x-1">
-                <TrendingUp size={12} aria-hidden="true" />
-                <span>
-                  {usageText}
-                </span>
-              </span>
-              {rule.lastUsedAt && (
-                <span className="flex items-center space-x-1">
-                  <History size={12} aria-hidden="true" />
-                  <span>{formatLastUsed(rule.lastUsedAt)}</span>
-                </span>
-              )}
-              {result.matchType !== 'exact' && (
-                <span className="text-primary-500 text-xs">
-                  {getMatchTypeLabel(result.matchType)}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2 ml-4">
-            {/* 使用频率可视化 */}
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-1 h-4 rounded-full ${
-                    i < Math.min((rule.usageCount || 0) / 2, 5)
-                      ? 'bg-primary-500'
-                      : 'bg-gray-200 dark:bg-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-            <CheckCircle className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0" size={20} aria-hidden="true" />
-          </div>
-        </button>
-      </div>
-    );
-  }, [rules, onSelect, itemHeight, onCreateNew, searchQuery, language, highlightText, formatLastUsed, getMatchTypeLabel]);
-
-  // 渲染空状态
-  const renderEmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="text-gray-500 dark:text-gray-400 mb-4">
-        {searchQuery ? tr('未找到匹配的规则', 'No matching rules found') : tr('暂无可用规则', 'No rules available')}
-      </div>
-      {searchQuery && onCreateNew && (
-        <button
-          type="button"
-          onClick={() => onCreateNew(searchQuery)}
-          aria-label={tr(`创建 "${searchQuery}"`, `Create "${searchQuery}"`)}
-          className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-        >
-          <Plus size={16} aria-hidden="true" />
-          <span>{tr(`创建 "${searchQuery}"`, `Create "${searchQuery}"`)}</span>
-        </button>
-      )}
-    </div>
+  const formatLastUsedLabel = useCallback(
+    (date: Date) => formatLastUsed(date, language, tr),
+    [language, tr]
   );
 
-  // 渲染加载状态
-  const renderLoadingState = () => (
-    <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-      <span className="ml-3 text-gray-600 dark:text-gray-400">{tr('加载规则中...', 'Loading rules...')}</span>
-    </div>
-  );
+  const matchTypeLabel = useCallback((matchType: string) => getMatchTypeLabel(matchType, tr), [tr]);
 
   if (isLoading) {
     return (
       <div ref={containerRef} style={{ height: containerHeight }}>
-        {renderLoadingState()}
+        <LoadingState tr={tr} />
       </div>
     );
   }
@@ -318,7 +146,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   if (visibleRange.totalItems === 0) {
     return (
       <div ref={containerRef} style={{ height: containerHeight }}>
-        {renderEmptyState()}
+        <EmptyState searchQuery={searchQuery} onCreateNew={onCreateNew} tr={tr} />
       </div>
     );
   }
@@ -359,7 +187,14 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
                     height: itemHeight
                   }}
                 >
-                  {renderCreateNewItem()}
+                  {onCreateNew && (
+                    <CreateNewRuleItem
+                      itemHeight={itemHeight}
+                      onCreateNew={onCreateNew}
+                      searchQuery={searchQuery}
+                      tr={tr}
+                    />
+                  )}
                 </div>
               );
             }
@@ -380,7 +215,19 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
                   height: itemHeight
                 }}
               >
-                {renderRuleItem(result, virtualItem.index)}
+                <RuleListItem
+                  index={virtualItem.index}
+                  itemHeight={itemHeight}
+                  language={language}
+                  onSelect={onSelect}
+                  result={result}
+                  rulesLength={rules.length}
+                  searchQuery={searchQuery}
+                  showCreateNew={showCreateNew}
+                  formatLastUsed={formatLastUsedLabel}
+                  getMatchTypeLabel={matchTypeLabel}
+                  highlightText={highlightText}
+                />
               </div>
             );
           })}
@@ -389,32 +236,3 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
     </div>
   );
 };
-
-// 节流函数
-function throttle<T extends (...args: Parameters<T>) => ReturnType<T>>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  let previous = 0;
-
-  return function executedFunction(...args: Parameters<T>) {
-    const now = Date.now();
-    const remaining = wait - (now - previous);
-
-    if (remaining <= 0 || remaining > wait) {
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      previous = now;
-      func(...args);
-    } else if (!timeout) {
-      timeout = setTimeout(() => {
-        previous = Date.now();
-        timeout = null;
-        func(...args);
-      }, remaining);
-    }
-  };
-}

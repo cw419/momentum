@@ -1,18 +1,14 @@
 import React from 'react';
 import { Chain } from '../types';
-import { Save, Tag, Calendar, Bell, Hash, Hourglass, CheckCircle } from 'lucide-react';
+import { Save, Calendar, Hash, CheckCircle } from 'lucide-react';
 import { ResponsiveContainer } from './ResponsiveContainer';
 import { SettingSection } from './SettingSection';
-import { SliderContainer } from './SliderContainer';
-import { PureDOMSlider } from './PureDOMSlider';
 import { useI18n } from '../i18n';
 import { BackButton } from './BackButton';
 import {
-  AUXILIARY_DURATION_PRESETS,
-  AUXILIARY_SIGNAL_TEMPLATES,
-  CUSTOM_AUXILIARY_SIGNAL_VALUE,
   getTriggerLabel,
 } from './chain-editor/constants';
+import { AuxiliarySignalSection, BasicInfoSection, DurationSection } from './task-group-editor';
 
 interface FormErrors {
   name?: string;
@@ -28,7 +24,7 @@ interface MobileInfo {
 
 const ERROR_INPUT_BORDER_CLASSES = 'border-red-500 focus:border-red-500 focus:ring-red-500/20';
 
-export interface TaskGroupEditorViewProps {
+interface TaskGroupEditorViewProps {
   // Data
   chain?: Chain;
   isEditing: boolean;
@@ -172,87 +168,6 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> = React.mem
 
 TaskGroupEditorView.displayName = 'TaskGroupEditorView';
 
-// Sub-components for better organization
-
-interface BasicInfoSectionProps {
-  name: string;
-  description: string;
-  errors: FormErrors;
-  onNameChange: (value: string) => void;
-  onDescriptionChange: (value: string) => void;
-  tr: (zh: string, en: string) => string;
-}
-
-const BasicInfoSection: React.FC<BasicInfoSectionProps> = React.memo(({
-  name,
-  description,
-  errors,
-  onNameChange,
-  onDescriptionChange,
-  tr,
-}) => (
-  <SettingSection
-    title={tr('基础信息', 'Basic info')}
-    icon={<Tag className="text-primary-500" size={20} />}
-    description={tr('设置任务群的基本信息', 'Set the basic information for this group')}
-  >
-    {/* Task Group Name */}
-    <div className="bento-card animate-scale-in">
-      <div className="mb-4">
-        <label htmlFor="taskgroup-name" className="block text-lg font-semibold font-chinese text-gray-900 dark:text-slate-100 mb-2">
-          {tr('任务群名称', 'Group name')}
-        </label>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mb-4 font-chinese">
-          {tr('为您的任务群起一个清晰易懂的名称', 'Give your group a clear and recognizable name')}
-        </p>
-      </div>
-      <input
-        type="text"
-        id="taskgroup-name"
-        name="taskGroupName"
-        value={name}
-        onChange={(e) => onNameChange(e.target.value)}
-        placeholder={tr('例如：期末复习计划、网站开发项目、健身训练计划', 'e.g. Finals study plan, Website project, Workout plan')}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.name ? ERROR_INPUT_BORDER_CLASSES : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
-        required
-      />
-      {errors.name && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400 font-chinese">{errors.name}</p>
-      )}
-    </div>
-
-    {/* Task Group Description */}
-    <div className="bento-card animate-scale-in">
-      <div className="mb-4">
-        <label htmlFor="taskgroup-description" className="block text-lg font-semibold font-chinese text-gray-900 dark:text-slate-100 mb-2">
-          {tr('任务群描述', 'Group description')}
-        </label>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mb-4 font-chinese">
-          {tr('详细描述这个任务群的目标和范围', 'Describe the goal and scope of this group')}
-        </p>
-      </div>
-      <textarea
-        id="taskgroup-description"
-        name="taskGroupDescription"
-        value={description}
-        onChange={(e) => onDescriptionChange(e.target.value)}
-        placeholder={tr(
-          '描述这个任务群的目标和范围，例如：期末复习计划，包含各科目的复习、练习题和模拟考试等',
-          'Describe the goal and scope, e.g. Finals study plan with review, practice problems, and mock exams.'
-        )}
-        rows={4}
-        className={`w-full bg-gray-50 dark:bg-slate-700 border ${errors.description ? ERROR_INPUT_BORDER_CLASSES : 'border-gray-200 dark:border-slate-600 focus:border-primary-500 focus:ring-primary-500/20'} rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 resize-none font-chinese leading-relaxed`}
-        required
-      />
-      {errors.description && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400 font-chinese">{errors.description}</p>
-      )}
-    </div>
-  </SettingSection>
-));
-
-BasicInfoSection.displayName = 'BasicInfoSection';
-
 interface BookingSettingsSectionProps {
   auxiliarySignal: string;
   customAuxiliarySignal: string;
@@ -290,141 +205,23 @@ const BookingSettingsSection: React.FC<BookingSettingsSectionProps> = React.memo
     description={tr('配置预约信号、时长和完成条件', 'Configure booking signal, duration, and completion condition')}
   >
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* 预约信号 */}
-      <div className="bento-card p-4 md:p-5 border-l-4 border-l-blue-500 animate-scale-in">
-        <div className="flex items-center gap-3 mb-3">
-          <Bell className="text-blue-500" size={18} />
-          <div className="min-w-0">
-            <h4 className="text-base font-semibold font-chinese text-gray-900 dark:text-slate-100">
-              {tr('预约信号', 'Booking signal')}
-            </h4>
-            <p className="text-[11px] font-mono text-gray-500">{tr('预约信号', 'BOOKING SIGNAL')}</p>
-          </div>
-        </div>
+      <AuxiliarySignalSection
+        auxiliarySignal={auxiliarySignal}
+        customAuxiliarySignal={customAuxiliarySignal}
+        errors={errors}
+        language={language}
+        onAuxiliarySignalSelect={onAuxiliarySignalSelect}
+        onCustomAuxiliarySignalChange={onCustomAuxiliarySignalChange}
+        tr={tr}
+      />
 
-        <select
-          id="auxiliary-signal"
-          name="auxiliarySignal"
-          value={auxiliarySignal}
-          onChange={(e) => onAuxiliarySignalSelect(e.target.value)}
-          className={`w-full bg-gray-50 dark:bg-slate-700 border ${
-            errors.auxiliarySignal
-              ? ERROR_INPUT_BORDER_CLASSES
-              : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
-          } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
-          required
-        >
-          <option value="" disabled className="text-gray-400">
-            {tr('选择预约信号', 'Choose a booking signal')}
-          </option>
-          {AUXILIARY_SIGNAL_TEMPLATES.map((template, index) => (
-            <option
-              key={index}
-              value={template.value}
-              className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700"
-            >
-              {template.label[language]}
-            </option>
-          ))}
-        </select>
-
-        {auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE && (
-          <input
-            type="text"
-            id="custom-auxiliary-signal"
-            name="customAuxiliarySignal"
-            value={customAuxiliarySignal}
-            onChange={(e) => onCustomAuxiliarySignalChange(e.target.value)}
-            placeholder={tr('输入你的自定义预约信号', 'Enter your custom booking signal')}
-            className={`w-full mt-3 bg-gray-50 dark:bg-slate-700 border ${
-              errors.auxiliarySignal
-                ? ERROR_INPUT_BORDER_CLASSES
-                : 'border-gray-200 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500/20'
-            } rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition duration-300 font-chinese`}
-            required
-          />
-        )}
-
-        {errors.auxiliarySignal && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400 font-chinese">{errors.auxiliarySignal}</p>
-        )}
-      </div>
-
-      {/* 预约时长 */}
-      <div className="bento-card p-4 md:p-5 border-l-4 border-l-blue-500 animate-scale-in">
-        <div className="flex items-center gap-3 mb-3">
-          <Hourglass className="text-blue-500" size={18} />
-          <div className="min-w-0">
-            <h4 className="text-base font-semibold font-chinese text-gray-900 dark:text-slate-100">
-              {tr('预约时长', 'Booking duration')}
-            </h4>
-            <p className="text-[11px] font-mono text-gray-500">{tr('预约时长', 'BOOKING DURATION')}</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <select
-            id="auxiliary-duration"
-            name="auxiliaryDuration"
-            value={isCustomAuxiliaryDuration ? "custom" : auxiliaryDuration}
-            onChange={(e) => {
-              if (e.target.value === "custom") {
-                onAuxiliaryDurationModeChange(true, 25);
-              } else {
-                onAuxiliaryDurationModeChange(false, Number(e.target.value));
-              }
-            }}
-            className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
-            required
-          >
-            {AUXILIARY_DURATION_PRESETS.map((preset) => (
-              <option
-                key={preset}
-                value={preset}
-                className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700"
-              >
-                {tr(`${preset}分钟`, `${preset} min`)}
-              </option>
-            ))}
-            <option value="custom" className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
-              {tr('自定义时长', 'Custom duration')}
-            </option>
-          </select>
-
-          {isCustomAuxiliaryDuration && (
-            <SliderContainer
-              label={tr('自定义预约时长', 'Custom booking duration')}
-              description={tr('设置预约阶段的持续时间', 'Set how long the booking phase lasts')}
-              orientation="horizontal"
-              showKeyboardInput={true}
-              keyboardInputProps={{
-                value: auxiliaryDuration,
-                onChange: onAuxiliaryDurationChange,
-                min: 1,
-                max: 120,
-                unit: tr('分钟', 'min'),
-                placeholder: tr('输入时长', 'Enter duration'),
-              }}
-            >
-              <PureDOMSlider
-                id="auxiliary-duration-slider"
-                name="auxiliaryDurationSlider"
-                min={1}
-                max={120}
-                initialValue={auxiliaryDuration}
-                onValueChange={onAuxiliaryDurationChange}
-                valueFormatter={(v) => tr(`${v}分钟`, `${v} min`)}
-                debounceMs={50}
-                showValue={true}
-              />
-            </SliderContainer>
-          )}
-
-          <p className="text-gray-500 text-xs leading-relaxed">
-            {tr('预约阶段的持续时间，用于准备和调整状态', 'How long the booking phase lasts for preparation and alignment')}
-          </p>
-        </div>
-      </div>
+      <DurationSection
+        auxiliaryDuration={auxiliaryDuration}
+        isCustomAuxiliaryDuration={isCustomAuxiliaryDuration}
+        onAuxiliaryDurationChange={onAuxiliaryDurationChange}
+        onAuxiliaryDurationModeChange={onAuxiliaryDurationModeChange}
+        tr={tr}
+      />
 
       {/* 预约完成条件 */}
       <div className="bento-card p-4 md:p-5 border-l-4 border-l-blue-500 animate-scale-in md:col-span-2">

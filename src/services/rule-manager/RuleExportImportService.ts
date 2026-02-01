@@ -10,7 +10,7 @@ import {
   ExceptionRuleException
 } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
-import { ruleDuplicationDetector } from '../RuleDuplicationDetector';
+import { findExactDuplicateRules } from '../duplication/duplicationDetection';
 
 interface ImportOptions {
   skipDuplicates?: boolean;
@@ -122,7 +122,8 @@ class RuleExportImportService {
 
     for (const ruleData of rules) {
       try {
-        const duplicates = await ruleDuplicationDetector.checkDuplication(ruleData.name);
+        const existingRules = await exceptionRuleStorage.getRules();
+        const duplicates = findExactDuplicateRules(existingRules, ruleData.name);
 
         const wasDuplicateHandled = await this.handleDuplicateImport({
           ruleData,

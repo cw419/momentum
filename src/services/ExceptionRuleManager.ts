@@ -3,9 +3,7 @@
  *
  * 此类作为外部接口的统一入口，委托到各专门服务：
  * - RuleCreator: 规则创建逻辑
- * - RuleQueryService: 规则查询逻辑
  * - RuleExecutor: 规则执行/使用逻辑
- * - RuleStatsService: 统计逻辑
  * - RuleExportImportService: 导入导出逻辑
  * - RuleMaintenanceService: 维护和健康检查
  *
@@ -15,6 +13,8 @@
 import {
   ExceptionRule,
   ExceptionRuleType,
+  ExceptionRuleError,
+  ExceptionRuleException,
   PauseOptions,
   RuleUsageRecord,
   SessionContext,
@@ -25,28 +25,66 @@ import { dataIntegrityChecker } from './DataIntegrityChecker';
 import { ruleStateManager } from './RuleStateManager';
 import { enhancedRuleValidationService } from './EnhancedRuleValidationService';
 import { enhancedDuplicationHandler } from './EnhancedDuplicationHandler';
+import { exceptionRuleStorage } from './ExceptionRuleStorage';
+import { ruleClassificationService } from './RuleClassificationService';
+import { ruleUsageTracker } from './RuleUsageTracker';
+import {
+  generateNameSuggestions,
+  getDuplicationReport,
+  type DuplicationReport
+} from './duplication/duplicationDetection';
 import { logger } from '../utils/logger';
 import { toError } from '../utils/errorMessage';
 
 import {
   ruleCreator,
-  ruleQueryService,
   ruleExecutor,
-  ruleStatsService,
   ruleExportImportService,
   ruleMaintenanceService,
   type RuleCreationResult,
   type RealTimeCheckResult,
   type OptimisticCreationResult,
-  type DuplicationSuggestions,
-  type RuleUsageSuggestions,
   type RuleExecutionResult,
-  type RuleTypeStats,
   type ImportResult,
   type ExportResult,
   type CleanupResult,
   type SystemHealthStatus
 } from './rule-manager';
+
+export type DuplicationSuggestions = DuplicationReport & { nameSuggestions: string[] };
+
+export interface RuleUsageSuggestions {
+  mostUsed: ExceptionRule[];
+  recentlyUsed: ExceptionRule[];
+  suggested: ExceptionRule[];
+}
+
+export interface RuleTypeStats {
+  total: number;
+  pauseOnly: number;
+  earlyCompletionOnly: number;
+  mostUsedType: ExceptionRuleType | null;
+  leastUsedType: ExceptionRuleType | null;
+}
+
+type WithRuleErrorHandlingOptions = {
+  preserveRuleExceptions?: boolean;
+};
+
+async function withRuleErrorHandling<T>(
+  operation: () => Promise<T>,
+  message: string,
+  options: WithRuleErrorHandlingOptions = {}
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (options.preserveRuleExceptions && error instanceof ExceptionRuleException) {
+      throw error;
+    }
+    throw new ExceptionRuleException(ExceptionRuleError.STORAGE_ERROR, message, error);
+  }
+}
 
 export class ExceptionRuleManager {
   private initialized = false;
@@ -125,19 +163,31 @@ export class ExceptionRuleManager {
   // ==================== Query Methods ====================
 
   async getRuleById(id: string): Promise<ExceptionRule | null> {
-    return ruleQueryService.getRuleById(id);
+    return withRuleErrorHandling(
+      () => exceptionRuleStorage.getRuleById(id),
+      'Failed to get rule'
+    );
   }
 
   async getAllRules(): Promise<ExceptionRule[]> {
-    return ruleQueryService.getAllRules();
+    return withRuleErrorHandling(
+      () => exceptionRuleStorage.getRules(),
+      'Failed to get rule list'
+    );
   }
 
   async getRulesByType(type: ExceptionRuleType): Promise<ExceptionRule[]> {
-    return ruleQueryService.getRulesByType(type);
+    return withRuleErrorHandling(
+      () => ruleClassificationService.getRulesByType(type),
+      'Failed to get rules by type'
+    );
   }
 
   async getRulesForAction(actionType: 'pause' | 'early_completion'): Promise<ExceptionRule[]> {
-    return ruleQueryService.getRulesForAction(actionType);
+    return withRuleErrorHandling(
+      () => ruleClassificationService.getRulesForAction(actionType),
+      'Failed to get rules for action'
+    );
   }
 
   async searchRules(
@@ -145,15 +195,36 @@ export class ExceptionRuleManager {
     type?: ExceptionRuleType,
     actionType?: 'pause' | 'early_completion'
   ): Promise<ExceptionRule[]> {
-    return ruleQueryService.searchRules(query, type, actionType);
+    return withRuleErrorHandling(async () => {
+      let searchType = type;
+      if (!searchType && actionType) {
+        searchType = actionType === 'pause'
+          ? ExceptionRuleType.PAUSE_ONLY
+          : ExceptionRuleType.EARLY_COMPLETION_ONLY;
+      }
+
+      return ruleClassificationService.searchRules(query, searchType);
+    }, 'Failed to search rules');
   }
 
   async getRuleUsageSuggestions(actionType: 'pause' | 'early_completion'): Promise<RuleUsageSuggestions> {
-    return ruleQueryService.getRuleUsageSuggestions(actionType);
+    return withRuleErrorHandling(
+      () => ruleClassificationService.getRuleUsageSuggestions(actionType),
+      'Failed to get usage suggestions'
+    );
   }
 
   async getDuplicationSuggestions(name: string, excludeId?: string): Promise<DuplicationSuggestions> {
-    return ruleQueryService.getDuplicationSuggestions(name, excludeId);
+    return withRuleErrorHandling(async () => {
+      const allRules = await exceptionRuleStorage.getRules();
+      const report = getDuplicationReport(allRules, name, excludeId);
+      const nameSuggestions = generateNameSuggestions(name, allRules.map(r => r.name));
+
+      return {
+        ...report,
+        nameSuggestions
+      };
+    }, 'Failed to get duplication suggestions');
   }
 
   // ==================== Execution Methods ====================
@@ -174,23 +245,39 @@ export class ExceptionRuleManager {
   // ==================== Stats Methods ====================
 
   async getRuleStats(ruleId: string): Promise<RuleUsageStats> {
-    return ruleStatsService.getRuleStats(ruleId);
+    return withRuleErrorHandling(
+      () => ruleUsageTracker.getRuleUsageStats(ruleId),
+      'Failed to get rule stats',
+      { preserveRuleExceptions: true }
+    );
   }
 
   async getOverallStats(): Promise<OverallUsageStats> {
-    return ruleStatsService.getOverallStats();
+    return withRuleErrorHandling(
+      () => ruleUsageTracker.getOverallUsageStats(),
+      'Failed to get overall stats'
+    );
   }
 
   async getRuleUsageHistory(ruleId: string, limit?: number): Promise<RuleUsageRecord[]> {
-    return ruleStatsService.getRuleUsageHistory(ruleId, limit);
+    return withRuleErrorHandling(
+      () => ruleUsageTracker.getRuleUsageHistory(ruleId, limit),
+      'Failed to get usage history'
+    );
   }
 
   async getRuleTypeStats(): Promise<RuleTypeStats> {
-    return ruleStatsService.getRuleTypeStats();
+    return withRuleErrorHandling(
+      () => ruleClassificationService.getRuleTypeStats(),
+      'Failed to get rule type stats'
+    );
   }
 
   async getRecommendedRuleType(basedOnUsage: boolean = true): Promise<ExceptionRuleType> {
-    return ruleStatsService.getRecommendedRuleType(basedOnUsage);
+    return withRuleErrorHandling(
+      () => ruleClassificationService.getRecommendedRuleType(basedOnUsage),
+      'Failed to get recommended rule type'
+    );
   }
 
   // ==================== Import/Export Methods ====================

@@ -2,7 +2,15 @@
  * 规则重复检测服务测试
  */
 
-import { RuleDuplicationDetector } from '../RuleDuplicationDetector';
+import {
+  batchCheckDuplication,
+  findExactDuplicateRules,
+  findSimilarRules,
+  generateNameSuggestions,
+  getDuplicationReport,
+  isCommonRulePattern,
+  suggestExistingRule,
+} from '../duplication/duplicationDetection';
 import { ExceptionRuleStorageService } from '../ExceptionRuleStorage';
 import { ExceptionRuleType } from '../../types';
 import { calculateSimilarity } from '../../utils/stringUtils';
@@ -30,11 +38,9 @@ Object.defineProperty(window, 'localStorage', {
 });
 
 describe('RuleDuplicationDetector', () => {
-  let detector: RuleDuplicationDetector;
   let storage: ExceptionRuleStorageService;
 
   beforeEach(() => {
-    detector = new RuleDuplicationDetector();
     storage = new ExceptionRuleStorageService();
     localStorage.clear();
   });
@@ -46,7 +52,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const duplicates = await detector.checkDuplication('上厕所');
+      const duplicates = findExactDuplicateRules(await storage.getRules(), '上厕所');
       expect(duplicates).toHaveLength(1);
       expect(duplicates[0].name).toBe('上厕所');
     });
@@ -57,8 +63,8 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const duplicates1 = await detector.checkDuplication('上 厕 所');
-      const duplicates2 = await detector.checkDuplication('  上厕所  ');
+      const duplicates1 = findExactDuplicateRules(await storage.getRules(), '上 厕 所');
+      const duplicates2 = findExactDuplicateRules(await storage.getRules(), '  上厕所  ');
       
       expect(duplicates1).toHaveLength(1);
       expect(duplicates2).toHaveLength(1);
@@ -70,7 +76,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const duplicates = await detector.checkDuplication('上厕所', rule.id);
+      const duplicates = findExactDuplicateRules(await storage.getRules(), '上厕所', rule.id);
       expect(duplicates).toHaveLength(0);
     });
 
@@ -82,7 +88,7 @@ describe('RuleDuplicationDetector', () => {
 
       await storage.deleteRule(rule.id); // 软删除
 
-      const duplicates = await detector.checkDuplication('上厕所');
+      const duplicates = findExactDuplicateRules(await storage.getRules(), '上厕所');
       expect(duplicates).toHaveLength(0);
     });
   });
@@ -94,7 +100,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const similarRules = await detector.findSimilarRules('去厕所', 0.7);
+      const similarRules = findSimilarRules(await storage.getRules(), '去厕所', 0.7);
       expect(similarRules.length).toBeGreaterThan(0);
     });
 
@@ -112,7 +118,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const similarRules = await detector.findSimilarRules('上厕所间', 0.5);
+      const similarRules = findSimilarRules(await storage.getRules(), '上厕所间', 0.5);
       expect(similarRules.length).toBeGreaterThan(0);
       
       // 验证是否按相似度排序（这里我们不能直接访问相似度，但可以验证顺序合理性）
@@ -125,7 +131,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const similarRules = await detector.findSimilarRules('上厕所', 0.8);
+      const similarRules = findSimilarRules(await storage.getRules(), '上厕所', 0.8);
       expect(similarRules).toHaveLength(0); // 完全相同的应该被排除
     });
   });
@@ -137,7 +143,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const suggestion = await detector.suggestExistingRule('上厕所');
+      const suggestion = suggestExistingRule(await storage.getRules(), '上厕所');
       expect(suggestion).not.toBeNull();
       expect(suggestion!.id).toBe(rule.id);
     });
@@ -148,7 +154,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const suggestion = await detector.suggestExistingRule('去厕所');
+      const suggestion = suggestExistingRule(await storage.getRules(), '去厕所');
       expect(suggestion).not.toBeNull();
       expect(suggestion!.name).toBe('上厕所');
     });
@@ -159,7 +165,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const suggestion = await detector.suggestExistingRule('完全不同的规则');
+      const suggestion = suggestExistingRule(await storage.getRules(), '完全不同的规则');
       expect(suggestion).toBeNull();
     });
   });
@@ -175,7 +181,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const report = await detector.getDuplicationReport('上厕所');
+      const report = getDuplicationReport(await storage.getRules(), '上厕所');
       
       expect(report.hasExactMatch).toBe(true);
       expect(report.exactMatches).toHaveLength(1);
@@ -185,7 +191,7 @@ describe('RuleDuplicationDetector', () => {
     });
 
     test('没有重复时应该返回空报告', async () => {
-      const report = await detector.getDuplicationReport('独特的规则名称');
+      const report = getDuplicationReport(await storage.getRules(), '独特的规则名称');
       
       expect(report.hasExactMatch).toBe(false);
       expect(report.exactMatches).toHaveLength(0);
@@ -206,7 +212,7 @@ describe('RuleDuplicationDetector', () => {
         type: ExceptionRuleType.PAUSE_ONLY
       });
 
-      const results = await detector.batchCheckDuplication(['上厕所', '喝水', '新规则']);
+      const results = batchCheckDuplication(await storage.getRules(), ['上厕所', '喝水', '新规则']);
       
       expect(results.size).toBe(2);
       expect(results.has('上厕所')).toBe(true);
@@ -217,38 +223,38 @@ describe('RuleDuplicationDetector', () => {
 
   describe('常见模式检测', () => {
     test('应该识别常见的规则模式', () => {
-      expect(detector.isCommonPattern('上厕所')).toBe(true);
-      expect(detector.isCommonPattern('喝水')).toBe(true);
-      expect(detector.isCommonPattern('休息')).toBe(true);
-      expect(detector.isCommonPattern('接电话')).toBe(true);
-      expect(detector.isCommonPattern('查看消息')).toBe(true);
+      expect(isCommonRulePattern('上厕所')).toBe(true);
+      expect(isCommonRulePattern('喝水')).toBe(true);
+      expect(isCommonRulePattern('休息')).toBe(true);
+      expect(isCommonRulePattern('接电话')).toBe(true);
+      expect(isCommonRulePattern('查看消息')).toBe(true);
       
-      expect(detector.isCommonPattern('非常特殊的规则')).toBe(false);
+      expect(isCommonRulePattern('非常特殊的规则')).toBe(false);
     });
 
     test('应该忽略大小写和空格', () => {
-      expect(detector.isCommonPattern('上 厕 所')).toBe(true);
-      expect(detector.isCommonPattern('  喝水  ')).toBe(true);
+      expect(isCommonRulePattern('上 厕 所')).toBe(true);
+      expect(isCommonRulePattern('  喝水  ')).toBe(true);
     });
   });
 
   describe('名称建议生成', () => {
     test('应该生成数字后缀建议', () => {
-      const suggestions = detector.generateNameSuggestions('上厕所', ['上厕所']);
+      const suggestions = generateNameSuggestions('上厕所', ['上厕所']);
       
       expect(suggestions).toContain('上厕所 2');
       expect(suggestions).toContain('上厕所 3');
     });
 
     test('应该生成描述性后缀建议', () => {
-      const suggestions = detector.generateNameSuggestions('上厕所', ['上厕所']);
+      const suggestions = generateNameSuggestions('上厕所', ['上厕所']);
       
       expect(suggestions.some(s => s.includes('(紧急)'))).toBe(true);
       expect(suggestions.some(s => s.includes('(短暂)'))).toBe(true);
     });
 
     test('应该生成时间相关前缀建议', () => {
-      const suggestions = detector.generateNameSuggestions('上厕所', ['上厕所']);
+      const suggestions = generateNameSuggestions('上厕所', ['上厕所']);
       
       expect(suggestions.some(s => s.startsWith('快速'))).toBe(true);
       expect(suggestions.some(s => s.startsWith('5分钟'))).toBe(true);
@@ -256,7 +262,7 @@ describe('RuleDuplicationDetector', () => {
 
     test('应该避免与现有名称冲突', () => {
       const existingNames = ['上厕所', '上厕所 2', '上厕所(紧急)', '快速上厕所'];
-      const suggestions = detector.generateNameSuggestions('上厕所', existingNames);
+      const suggestions = generateNameSuggestions('上厕所', existingNames);
       
       // 所有建议都不应该与现有名称冲突
       for (const suggestion of suggestions) {
@@ -265,7 +271,7 @@ describe('RuleDuplicationDetector', () => {
     });
 
     test('应该限制建议数量', () => {
-      const suggestions = detector.generateNameSuggestions('上厕所', []);
+      const suggestions = generateNameSuggestions('上厕所', []);
       expect(suggestions.length).toBeLessThanOrEqual(5);
     });
   });

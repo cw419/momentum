@@ -5,7 +5,6 @@
 
 import { ExceptionRuleManager } from '../services/ExceptionRuleManager';
 import { ExceptionRuleStorageService } from '../services/ExceptionRuleStorage';
-import { RuleDuplicationDetector } from '../services/RuleDuplicationDetector';
 import { RuleClassificationService } from '../services/RuleClassificationService';
 import { RuleUsageTracker } from '../services/RuleUsageTracker';
 import { ExceptionRuleType, SessionContext } from '../types';
@@ -13,7 +12,6 @@ import { ExceptionRuleType, SessionContext } from '../types';
 describe('例外规则系统端到端测试', () => {
   let manager: ExceptionRuleManager;
   let storage: ExceptionRuleStorageService;
-  let duplicationDetector: RuleDuplicationDetector;
   let classificationService: RuleClassificationService;
   let usageTracker: RuleUsageTracker;
 
@@ -22,7 +20,6 @@ describe('例外规则系统端到端测试', () => {
     localStorage.setItem('language', 'zh');
     manager = new ExceptionRuleManager();
     storage = new ExceptionRuleStorageService();
-    duplicationDetector = new RuleDuplicationDetector();
     classificationService = new RuleClassificationService();
     usageTracker = new RuleUsageTracker();
   });
