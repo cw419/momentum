@@ -7,6 +7,44 @@
 - Typecheck: `npm run typecheck`
 - Lint: `npm run lint`
 
+## Local Static Analysis (Dev-Friendly, No Hooks)
+
+All tools are available via explicit `npm run ...` scripts (no pre-commit hooks). Run what you need while iterating.
+
+### Formatting
+
+- Format (write): `npm run format`
+- Format (check): `npm run format:check`
+
+### Code / Types
+
+- ESLint: `npm run lint`
+- ESLint (fix): `npm run lint:fix`
+- TypeScript: `npm run typecheck`
+
+### CSS / Docs
+
+- CSS (Stylelint): `npm run lint:css` / `npm run lint:css:fix`
+- Markdown (markdownlint-cli2): `npm run lint:md`
+- Spelling (code): `npm run lint:spell`
+- Spelling (docs): `npm run lint:spell:docs`
+
+### Smell / Dependency Hygiene
+
+- Knip (unused files/exports/deps): `npm run quality:knip`
+- ts-prune (unused exports): `npm run quality:ts-prune`
+- depcheck (unused/missing deps): `npm run quality:depcheck`
+- One-shot report bundle: `npm run quality:smell-audit` (writes to `reports/quality/`)
+- Licenses summary: `npm run quality:licenses`
+
+### Security / SQL (Optional Locally)
+
+These commands auto-skip if the underlying tool is not installed.
+
+- npm audit (high+): `npm run security:npm-audit`
+- Semgrep: `npm run security:semgrep` (recommended install: `pipx install semgrep`)
+- SQL lint (Supabase migrations): `npm run lint:sql` (recommended install: `pipx install sqlfluff`)
+
 ## Testing (Vitest)
 
 ### Commands

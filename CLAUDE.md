@@ -7,8 +7,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev              # Start development server (Vite)
 npm run build            # Production build
+npm run format           # Prettier (write)
+npm run format:check     # Prettier (check)
 npm run lint             # Run ESLint
+npm run lint:fix         # ESLint (fix)
 npm run typecheck        # TypeScript type checking (tsconfig.app.json)
+
+# CSS / Docs
+npm run lint:css         # Stylelint (CSS)
+npm run lint:css:fix     # Stylelint (fix)
+npm run lint:md          # markdownlint-cli2 (Markdown)
+npm run lint:spell       # cspell (code)
+npm run lint:spell:docs  # cspell (docs/README/root *.md)
+
+# Smell / Dependency Hygiene
+npm run quality:knip       # Unused files/exports/deps
+npm run quality:ts-prune   # Unused exports
+npm run quality:depcheck   # Unused/missing deps
+npm run quality:smell-audit# Bundle reports -> reports/quality/
+npm run quality:licenses   # License summary
+
+# Security (local optional; CI runs soft scans)
+npm run security:npm-audit  # npm audit (high+)
+npm run security:semgrep    # Semgrep (auto-skips if semgrep not installed)
+npm run lint:sql            # sqlfluff (auto-skips if sqlfluff not installed)
 
 # Testing
 npm test                 # Run smoke tests (CI-safe subset)
@@ -20,6 +42,11 @@ npm run test:db          # Database tests only
 npm run test:performance # Performance tests only
 npm run test:coverage    # Coverage report
 ```
+
+Notes:
+- This repo intentionally uses explicit `npm run ...` scripts (no pre-commit hooks) to keep local iteration unblocked.
+- `npm run security:semgrep` requires Semgrep installed (recommended: `pipx install semgrep`).
+- `npm run lint:sql` requires SQLFluff installed (recommended: `pipx install sqlfluff`).
 
 ## Architecture Overview
 

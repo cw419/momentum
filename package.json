@@ -16,7 +16,7 @@
     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
     "lint:md": "markdownlint-cli2 --config .markdownlint-cli2.jsonc",
     "lint:spell": "cspell --no-progress \"src/**/*.{ts,tsx}\"",
-    "lint:spell:docs": "cspell --no-progress \"docs/**/*.md\" \"README*.md\" \"Momentum 项目代码质量评估与优化方案.md\"",
+    "lint:spell:docs": "cspell --no-progress \"docs/**/*.md\" \"README*.md\" \"*.md\"",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "format": "prettier . --write",

@@ -1,5 +1,5 @@
 param(
-  [string]$OutDir = "tools/quality/reports"
+  [string]$OutDir = "reports/quality"
 )
 
 $ErrorActionPreference = "Stop"
