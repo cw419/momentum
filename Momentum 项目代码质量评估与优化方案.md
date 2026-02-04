@@ -73,10 +73,22 @@
 
 现状：CI 跑 `npm run test:coverage`，它使用 `vitest.ci.config.ts`。所以覆盖率阈值如果只写在 `vitest.config.ts`，**CI 不一定生效**。
 
-建议（两选一，优先 A）：
+本仓库当前落地方式：**B（只在 `vitest.ci.config.ts` 配阈值）**。这样可以保证：
+- `npm run test:all`（本地全量单测）不会被覆盖率阈值打断（更适合日常开发/排查）。
+- `npm run test:coverage`（CI 口径）强制阈值，且阈值跟随“逐周抬阈值”策略迭代。
 
-- **A：统一配置来源**：让 `vitest.ci.config.ts` 复用/继承 `vitest.config.ts` 的 `test.coverage` 配置，避免“本地一套、CI 一套”。
-- **B：只在 `vitest.ci.config.ts` 配阈值**：最小改动、最快落地。
+> 备注：如果后续想进一步避免“配置重复”，可以抽一个 `vitest.base.config.ts`（只放 `test.include/exclude/setupFiles` 等公共项），CI/Integration/DB/Performance 各自再扩展；但这不是 Phase 1 的必需项。
+
+#### 建议的阈值设定方式（Week 0）
+
+- 阈值先用**当前基线的向下取整**（避免覆盖率小幅波动导致 CI 抖动），并在每周“阈值 PR”中小步上调。
+- 当前（Week 0）阈值示例（见 `vitest.ci.config.ts`）：
+
+```ts
+coverage: {
+  thresholds: { statements: 59, branches: 50, functions: 57, lines: 60 }
+}
+```
 
 ### 3.2 先做“硬挡回退”，再做“硬变好”
 
@@ -84,6 +96,22 @@
 
 1) 覆盖率阈值在 CI 生效（但阈值从当前基线附近开始）  
 2) `type-coverage` 加入 CI（因为它当前稳定通过，风险低）
+
+> “硬挡回退”的定义（Phase 1 版本）：**阈值不下降**。  
+> - Week 0：先把阈值落地到 CI（并确保不会长期红）。  
+> - Week N：阈值只能上调或保持，不允许因为“过不去 CI”而把阈值调低（除非明确记录一次回退原因，并在下一周恢复）。
+
+### 3.3 Phase 1 落地清单（本仓库现状对照）
+
+- ✅ 覆盖率阈值已在 `vitest.ci.config.ts` 配置（对应 `npm run test:coverage` / CI 口径）。
+- ✅ CI 已执行 `type-coverage`（见 `.github/workflows/ci.yml` 的 `Type Coverage` step）。
+- ✅ CI 已执行 `npm run test:coverage`（见 `.github/workflows/ci.yml` 的 `Test (Coverage)` step）。
+
+### 3.4 Phase 1 验收标准（建议写进 PR 描述）
+
+- CI 在默认分支与常规 PR 上**保持可持续为绿**（允许偶发测试不稳定，但不应是“门禁设计导致的长期红”）。
+- `vitest.ci.config.ts` 的阈值与 4.2 的“逐周抬阈值表”保持一致，并且阈值变更仅通过“阈值 PR”完成。
+- `quality:type-coverage` 在 CI 持续稳定通过（若失败，优先修类型而不是降低 `--at-least`）。
 
 ---
 
@@ -116,6 +144,22 @@
 ---
 
 ## 5. 非覆盖率类质量项：先做 Soft Gate，再逐步转 Hard Gate
+
+### 5.0 Phase 2（第 1-2 周）：把 madge / SonarJS 接入 CI（Soft Gate 报告）
+
+目标：把“非覆盖率类质量信号”先做成 **CI 可见的报告**，但不阻断 PR（避免规则一上来就把 CI 打红）。
+
+本仓库落地方式（已接入）：
+
+- **Madge（循环依赖）**：`npm run quality:circular:report`  
+  - 输出：`reports/quality/madge-circular.json`（包含 `circularCount` 与循环列表）
+  - CI step：`Quality (Soft) - Circular Deps (madge)`（`continue-on-error: true`）
+- **ESLint + SonarJS（代码异味/复杂度类规则）**：`npm run quality:sonar:report`  
+  - 输出：`reports/quality/eslint-sonarjs.json`（ESLint JSON 报告）
+  - CI step：`Quality (Soft) - SonarJS Smells (eslint)`（`continue-on-error: true`）
+- **报告归档**：CI 会上传 `reports/quality` 作为 artifact：`quality-reports`（方便在 PR/历史构建里回看趋势）
+
+> 说明：本仓库的 SonarJS 配置文件为 `eslint.sonar.config.js`，依赖 repo 内的 `eslint-plugin-sonarjs`（不依赖全局安装），确保 CI 可复现。
 
 ### 5.1 循环依赖（madge）
 

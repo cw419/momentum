@@ -61,7 +61,7 @@ class NotificationManager {
     return this.showNotification({
       title: language === 'zh' ? '任务失败' : 'Task failed',
       body: formatChainWithReason(language, chainName, reason),
-      icon: '/vite.svg',
+      icon: '/icons/icon-192.png',
       tag: randomId('task-failed'),
       requireInteraction: true,
     });
@@ -79,7 +79,7 @@ class NotificationManager {
         language === 'zh'
           ? `"${chainName}"已完成！${messageSuffix}当前记录: #${streak}`
           : `"${chainName}" completed!${messageSuffix}Current streak: #${streak}`,
-      icon: '/vite.svg',
+      icon: '/icons/icon-192.png',
       tag: randomId('task-completed'),
       requireInteraction: false,
     });
@@ -95,7 +95,7 @@ class NotificationManager {
         language === 'zh'
           ? `"${chainName}"还剩${timeRemaining}，请继续保持专注！`
           : `"${chainName}" has ${timeRemaining} left. Stay focused!`,
-      icon: '/vite.svg',
+      icon: '/icons/icon-192.png',
       tag: randomId('task-warning'),
       requireInteraction: false,
     });
@@ -111,7 +111,7 @@ class NotificationManager {
         language === 'zh'
           ? `"${chainName}"预约还剩${timeRemaining}，请准备开始任务！`
           : `"${chainName}" schedule has ${timeRemaining} left. Get ready to start!`,
-      icon: '/vite.svg',
+      icon: '/icons/icon-192.png',
       tag: randomId('schedule-warning'),
       requireInteraction: true,
     });
@@ -127,7 +127,7 @@ class NotificationManager {
         language === 'zh'
           ? `"${chainName}"预约时间已到期，需要进行规则判定。`
           : `"${chainName}" schedule expired. Adjudication required.`,
-      icon: '/vite.svg',
+      icon: '/icons/icon-192.png',
       tag: randomId('schedule-failed'),
       requireInteraction: true,
     });
@@ -202,7 +202,7 @@ class NotificationManager {
     try {
       const notification = new Notification(options.title, {
         body: options.body,
-        icon: options.icon || '/vite.svg',
+        icon: options.icon || '/icons/icon-192.png',
         tag: options.tag,
         requireInteraction: options.requireInteraction || false,
         silent: options.silent || false,

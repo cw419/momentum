@@ -42,6 +42,9 @@ rs.json
 # Coverage outputs
 coverage/
 
+# Quality report outputs
+reports/quality/
+
 # Local editor / AI tool folders
 .obsidian/
 .VSCodeCounter/

@@ -3,14 +3,8 @@ import globals from 'globals';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import sonarjs from 'eslint-plugin-sonarjs';
 import tseslint from 'typescript-eslint';
-import { execSync } from 'node:child_process';
-import { createRequire } from 'node:module';
-import path from 'node:path';
-
-const require = createRequire(import.meta.url);
-const globalNodeModules = execSync('npm root -g', { encoding: 'utf8' }).trim();
-const sonarjs = require(path.join(globalNodeModules, 'eslint-plugin-sonarjs'));
 
 export default tseslint.config(
   {
