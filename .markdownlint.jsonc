@@ -1,0 +1,24 @@
+{
+  // Local-dev friendly defaults: avoid noisy/subjective rules.
+  "default": true,
+  "MD012": false, // multiple consecutive blank lines
+  "MD013": false, // line length
+  "MD009": false, // trailing spaces
+  "MD022": false, // blanks around headings
+  "MD029": false, // ordered list prefix
+  "MD030": false, // list marker space
+  "MD031": false, // blanks around fences
+  "MD032": false, // blanks around lists
+  "MD033": false, // inline HTML
+  "MD034": false, // bare URLs
+  "MD036": false, // emphasis used instead of heading
+  "MD040": false, // fenced code language
+  "MD041": false, // first line heading (many docs use frontmatter/intro text)
+  "MD047": false, // single trailing newline
+  "MD060": false, // table column style
+  "MD007": false, // ul indentation
+  "MD024": false, // duplicate headings
+  "MD026": false, // trailing punctuation in heading
+  "MD045": false, // images should have alt text
+  "MD056": false  // table column count
+}

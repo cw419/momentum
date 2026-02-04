@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+reports
+tools/quality/reports
+stats.html
+lighthouse-report.report.html
+lighthouse-report.report.json
+knip-report.json
+package-lock.json
+

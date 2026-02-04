@@ -1,0 +1,19 @@
+{
+  "config": ".markdownlint.jsonc",
+  "globs": [
+    "README*.md",
+    "docs/**/*.md",
+    "sql/**/*.md",
+    "src/**/*.md"
+  ],
+  "ignores": [
+    ".augment/**",
+    ".claude/**",
+    ".serena/**",
+    "node_modules/**",
+    "dist/**",
+    "coverage/**",
+    "reports/**",
+    "tools/quality/reports/**"
+  ]
+}
