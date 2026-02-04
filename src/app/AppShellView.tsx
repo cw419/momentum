@@ -47,6 +47,7 @@ interface AppShellViewProps {
   storageKind: 'local' | 'supabase';
   state: AppState;
   isInitialized: boolean;
+  isAuthReady: boolean;
   isLoadingData: boolean;
 
   showAuxiliaryJudgment: string | null;
@@ -115,6 +116,7 @@ export function AppShellView({
   storageKind,
   state,
   isInitialized,
+  isAuthReady,
   isLoadingData,
   showAuxiliaryJudgment,
   setShowAuxiliaryJudgment,
@@ -344,21 +346,23 @@ export function AppShellView({
       </main>
 
       {/* Pet Widget - 懒加载 */}
-      <Suspense fallback={null}>
-        <PetWidget
-          pet={petDomain.pet}
-          mood={petDomain.mood}
-          isLoading={petDomain.isLoading}
-          hasPet={petDomain.hasPet}
-          onCreatePet={petDomain.createPet}
-          onFeedPet={petDomain.feedPet}
-          onUpdatePosition={petDomain.updatePosition}
-          onUpdateMinimizedPosition={petDomain.updateMinimizedPosition}
-          onToggleVisibility={petDomain.toggleVisibility}
-          onMinimize={petDomain.minimize}
-          onExpand={petDomain.expand}
-        />
-      </Suspense>
+      {isAuthReady && (
+        <Suspense fallback={null}>
+          <PetWidget
+            pet={petDomain.pet}
+            mood={petDomain.mood}
+            isLoading={petDomain.isLoading}
+            hasPet={petDomain.hasPet}
+            onCreatePet={petDomain.createPet}
+            onFeedPet={petDomain.feedPet}
+            onUpdatePosition={petDomain.updatePosition}
+            onUpdateMinimizedPosition={petDomain.updateMinimizedPosition}
+            onToggleVisibility={petDomain.toggleVisibility}
+            onMinimize={petDomain.minimize}
+            onExpand={petDomain.expand}
+          />
+        </Suspense>
+      )}
 
       {/* Betting Modal - 懒加载 */}
       {showBettingModal && pendingChainId && currentSessionId && (

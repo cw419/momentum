@@ -182,6 +182,7 @@ export default function AppShellContainer() {
       storageKind={storage.kind}
       state={state}
       isInitialized={isInitialized}
+      isAuthReady={isAuthReady}
       isLoadingData={isLoadingData}
       showAuxiliaryJudgment={showAuxiliaryJudgment}
       setShowAuxiliaryJudgment={setShowAuxiliaryJudgment}
