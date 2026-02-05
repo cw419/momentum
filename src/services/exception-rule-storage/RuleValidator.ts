@@ -21,7 +21,7 @@ export type ExceptionRuleCreateInput = Pick<ExceptionRule, 'name' | 'type'> &
 /**
  * 规范化后的规则输入
  */
-export interface NormalizedRuleInput {
+interface NormalizedRuleInput {
   name: string;
   type: ExceptionRuleType;
   description?: string;

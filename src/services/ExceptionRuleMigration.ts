@@ -21,8 +21,6 @@ import {
   type RollbackResult
 } from './migration';
 
-export type { MigrationResult, MigrationProgress };
-
 /**
  * 例外规则迁移服务
  * 组合存储、分析器和执行器，提供完整的迁移功能

@@ -1,4 +1,4 @@
-export type ResizeChangeHandler = (element: HTMLElement) => void;
+type ResizeChangeHandler = (element: HTMLElement) => void;
 
 export class ResizeChangeObserver {
   private observer: ResizeObserver | null = null;
@@ -26,4 +26,3 @@ export class ResizeChangeObserver {
     this.observer = null;
   }
 }
-

@@ -493,6 +493,7 @@ export type ViewState = 'dashboard' | 'editor' | 'focus' | 'detail' | 'group' | 
 
 export interface AppState {
   chains: Chain[];
+  chainsRevision: number;
   scheduledSessions: ScheduledSession[];
   activeSession: ActiveSession | null;
   currentView: ViewState;

@@ -9,7 +9,7 @@ import { enhancedRuleValidationService } from './EnhancedRuleValidationService';
 import { errorClassificationService } from './ErrorClassificationService';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 
-export type HealthStatus = 'healthy' | 'warning' | 'critical';
+type HealthStatus = 'healthy' | 'warning' | 'critical';
 
 function statusFromScore(score: number): HealthStatus {
   if (score >= 80) return 'healthy';
@@ -26,7 +26,7 @@ export interface SystemHealthReport {
   summary: string;
 }
 
-export interface ComponentHealth {
+interface ComponentHealth {
   name: string;
   status: HealthStatus;
   score: number;

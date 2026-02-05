@@ -6,7 +6,7 @@ import type { CanvasState } from '../../../hooks/useCanvasState';
 
 const RSIP_NODE_SPACING_PADDING_Y = 40;
 
-export interface UseRSIPConnectorsParams {
+interface UseRSIPConnectorsParams {
   filteredTree: RSIPTreeNode[];
   nodePositions: Record<string, NodePosition>;
   hoveredChainIds: Set<string>;

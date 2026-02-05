@@ -60,7 +60,7 @@ export function usePeriodicCleanup({
         );
       });
 
-      setState((prev) => ({ ...prev, chains: updatedChains }));
+      setState((prev) => ({ ...prev, chains: updatedChains, chainsRevision: prev.chainsRevision + 1 }));
     };
 
     const interval = setInterval(checkExpiredGroups, 60000);

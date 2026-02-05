@@ -128,6 +128,7 @@ export function createStartChainHandler({
     setState((prev) => ({
       ...prev,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
     }));
 
     notificationManager.notifyTaskFailed(groupName, tr('任务群已超时', 'Group has expired'));
@@ -138,6 +139,7 @@ export function createStartChainHandler({
     setState((prev) => ({
       ...prev,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
     }));
   }
 
@@ -194,7 +196,7 @@ export function createStartChainHandler({
     try {
       await safelySaveChains(updatedChains);
       queryOptimizer.onDataChange('chains');
-      setState((prev) => ({ ...prev, chains: updatedChains }));
+      setState((prev) => ({ ...prev, chains: updatedChains, chainsRevision: prev.chainsRevision + 1 }));
 
       scheduleStartFirstUnitInNextCycle({
         groupId,
@@ -216,7 +218,7 @@ export function createStartChainHandler({
       startGroupTimerIfNeeded(groupChain.id);
     }
 
-    const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains);
+    const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains, state.chainsRevision);
     const groupNode = chainTree.find((node) => node.id === groupChain.id);
     if (!groupNode) {
       logger.error('SESSIONS', '无法找到任务群节点', { chainId: groupChain.id });
@@ -265,6 +267,7 @@ export function createStartChainHandler({
       activeSession,
       scheduledSessions: updatedScheduledSessions,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
       currentView: 'focus',
     }));
   }

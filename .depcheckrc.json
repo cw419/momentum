@@ -1,6 +1,6 @@
 {
-  "ignorePatterns": ["dist", "coverage", "reports"],
-  "ignoreMatches": [
+  "ignore-patterns": ["dist", "coverage", "reports"],
+  "ignores": [
     "@types/*",
     "terser",
     "autoprefixer",
@@ -11,8 +11,17 @@
     "knip",
     "jscpd",
     "madge",
+    "prettier",
+    "prettier-plugin-tailwindcss",
+    "stylelint",
+    "stylelint-config-recommended",
+    "stylelint-config-tailwindcss",
+    "cspell",
+    "markdownlint-cli2",
     "type-coverage",
+    "ts-prune",
     "depcheck",
+    "license-checker",
     "npm-run-all2"
   ],
   "specials": ["eslint", "vite"]

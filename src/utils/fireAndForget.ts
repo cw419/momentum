@@ -1,6 +1,6 @@
 import { logger } from './logger';
 
-export type FireAndForgetOptions = {
+type FireAndForgetOptions = {
   label?: string;
   onError?: (error: unknown) => void;
 };

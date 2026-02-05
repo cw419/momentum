@@ -2,7 +2,7 @@
  * 数据完整性检查类型定义
  */
 
-export type IntegrityIssueType =
+type IntegrityIssueType =
   | 'missing_id'
   | 'duplicate_name'
   | 'invalid_type'
@@ -10,7 +10,7 @@ export type IntegrityIssueType =
   | 'missing_created_at'
   | 'invalid_usage_count';
 
-export type IntegritySeverity = 'critical' | 'warning' | 'info';
+type IntegritySeverity = 'critical' | 'warning' | 'info';
 
 export interface IntegrityIssue {
   type: IntegrityIssueType;

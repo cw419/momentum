@@ -1,4 +1,4 @@
-export type DOMChangeHandler = (element: HTMLElement) => void;
+type DOMChangeHandler = (element: HTMLElement) => void;
 
 export class DOMChangeObserver {
   private observer: MutationObserver | null = null;
@@ -39,4 +39,3 @@ export class DOMChangeObserver {
     this.observer = null;
   }
 }
-

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RSIPNode, RSIPTreeNode } from '../../../types';
 
-export interface UseRSIPReparentParams {
+interface UseRSIPReparentParams {
   nodes: RSIPNode[];
   tree: RSIPTreeNode[];
   nodesById: Map<string, RSIPNode>;
@@ -9,7 +9,7 @@ export interface UseRSIPReparentParams {
   tr: (zh: string, en: string) => string;
 }
 
-export interface UseRSIPReparentResult {
+interface UseRSIPReparentResult {
   reparentingId: string | null;
   reparentingTitle: string | null;
   relationError: string | null;

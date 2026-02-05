@@ -2,33 +2,13 @@
  * Desktop notification utilities.
  */
 
+import type { Language } from '../i18n';
 import { logger } from './logger';
 import { localPreferences } from './localPreferences';
 import { randomId } from './random';
+import { getCurrentLanguage, tr } from './runtimeI18n';
 
-type Language = 'en' | 'zh';
-
-const detectBrowserLanguage = (): Language => {
-  if (typeof navigator === 'undefined') return 'en';
-
-  const candidates =
-    Array.isArray(navigator.languages) && navigator.languages.length > 0
-      ? navigator.languages
-      : [navigator.language];
-
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    if (candidate.toLowerCase().startsWith('zh')) return 'zh';
-  }
-
-  return 'en';
-};
-
-const getCurrentLanguage = (): Language => {
-  const stored = localPreferences.getLanguage();
-  if (stored) return stored;
-  return detectBrowserLanguage();
-};
+const DEFAULT_NOTIFICATION_ICON = '/icons/icon-192.png';
 
 const formatChainWithReason = (language: Language, chainName: string, reason?: string) => {
   const quotedChainName = `"${chainName}"`;
@@ -59,9 +39,9 @@ class NotificationManager {
 
     const language = getCurrentLanguage();
     return this.showNotification({
-      title: language === 'zh' ? '任务失败' : 'Task failed',
+      title: tr('任务失败', 'Task failed', language),
       body: formatChainWithReason(language, chainName, reason),
-      icon: '/icons/icon-192.png',
+      icon: DEFAULT_NOTIFICATION_ICON,
       tag: randomId('task-failed'),
       requireInteraction: true,
     });
@@ -74,12 +54,12 @@ class NotificationManager {
     const messageSuffix = message ? ` ${message}` : '';
 
     return this.showNotification({
-      title: language === 'zh' ? '任务完成' : 'Task completed',
+      title: tr('任务完成', 'Task completed', language),
       body:
         language === 'zh'
           ? `"${chainName}"已完成！${messageSuffix}当前记录: #${streak}`
           : `"${chainName}" completed!${messageSuffix}Current streak: #${streak}`,
-      icon: '/icons/icon-192.png',
+      icon: DEFAULT_NOTIFICATION_ICON,
       tag: randomId('task-completed'),
       requireInteraction: false,
     });
@@ -90,12 +70,12 @@ class NotificationManager {
 
     const language = getCurrentLanguage();
     return this.showNotification({
-      title: language === 'zh' ? '任务即将结束' : 'Task ending soon',
+      title: tr('任务即将结束', 'Task ending soon', language),
       body:
         language === 'zh'
           ? `"${chainName}"还剩${timeRemaining}，请继续保持专注！`
           : `"${chainName}" has ${timeRemaining} left. Stay focused!`,
-      icon: '/icons/icon-192.png',
+      icon: DEFAULT_NOTIFICATION_ICON,
       tag: randomId('task-warning'),
       requireInteraction: false,
     });
@@ -106,12 +86,12 @@ class NotificationManager {
 
     const language = getCurrentLanguage();
     return this.showNotification({
-      title: language === 'zh' ? '预约即将到期' : 'Schedule expiring',
+      title: tr('预约即将到期', 'Schedule expiring', language),
       body:
         language === 'zh'
           ? `"${chainName}"预约还剩${timeRemaining}，请准备开始任务！`
           : `"${chainName}" schedule has ${timeRemaining} left. Get ready to start!`,
-      icon: '/icons/icon-192.png',
+      icon: DEFAULT_NOTIFICATION_ICON,
       tag: randomId('schedule-warning'),
       requireInteraction: true,
     });
@@ -122,12 +102,12 @@ class NotificationManager {
 
     const language = getCurrentLanguage();
     return this.showNotification({
-      title: language === 'zh' ? '预约失败' : 'Schedule failed',
+      title: tr('预约失败', 'Schedule failed', language),
       body:
         language === 'zh'
           ? `"${chainName}"预约时间已到期，需要进行规则判定。`
           : `"${chainName}" schedule expired. Adjudication required.`,
-      icon: '/icons/icon-192.png',
+      icon: DEFAULT_NOTIFICATION_ICON,
       tag: randomId('schedule-failed'),
       requireInteraction: true,
     });
@@ -202,7 +182,7 @@ class NotificationManager {
     try {
       const notification = new Notification(options.title, {
         body: options.body,
-        icon: options.icon || '/icons/icon-192.png',
+        icon: options.icon || DEFAULT_NOTIFICATION_ICON,
         tag: options.tag,
         requireInteraction: options.requireInteraction || false,
         silent: options.silent || false,

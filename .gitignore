@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.local*
 
 # Local Netlify folder
 .netlify
@@ -44,6 +45,10 @@ coverage/
 
 # Quality report outputs
 reports/quality/
+
+# Lighthouse / DevTools traces (baseline & repro artifacts; keep repo clean)
+reports/lighthouse/
+reports/devtools/
 
 # Local editor / AI tool folders
 .obsidian/

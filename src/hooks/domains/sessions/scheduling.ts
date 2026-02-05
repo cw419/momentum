@@ -53,6 +53,7 @@ export function createSchedulingHandlers({
           ...prev,
           scheduledSessions: updatedSessions,
           chains: updatedChains,
+          chainsRevision: prev.chainsRevision + 1,
         }));
       } catch (error) {
         logger.error('SESSIONS', 'Failed to schedule chain', { chainId }, error as Error);
@@ -88,6 +89,7 @@ export function createSchedulingHandlers({
       ...prev,
       scheduledSessions: updatedScheduledSessions,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
     }));
 
     notificationManager.notifyTaskCompleted(chain.name, chain.auxiliaryStreak + 1, tr('预约已完成', 'Schedule completed'));

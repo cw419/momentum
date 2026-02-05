@@ -1,7 +1,7 @@
 import type { Chain, CompletionHistory, DistributiveOmit, RSIPMeta, RSIPNode } from '../../types';
 
 type ChainDateFields = 'createdAt' | 'lastCompletedAt' | 'groupStartedAt' | 'groupExpiresAt' | 'deletedAt';
-export type ExportedChain = DistributiveOmit<Chain, ChainDateFields> & {
+type ExportedChain = DistributiveOmit<Chain, ChainDateFields> & {
   createdAt: string;
   lastCompletedAt?: string;
   groupStartedAt?: string;
@@ -9,10 +9,10 @@ export type ExportedChain = DistributiveOmit<Chain, ChainDateFields> & {
   deletedAt?: string | null;
 };
 
-export type ExportedCompletionHistory = Omit<CompletionHistory, 'completedAt'> & { completedAt: string };
+type ExportedCompletionHistory = Omit<CompletionHistory, 'completedAt'> & { completedAt: string };
 
-export type ExportedRSIPNode = Omit<RSIPNode, 'createdAt'> & { createdAt: string };
-export type ExportedRSIPMeta = Omit<RSIPMeta, 'lastAddedAt'> & { lastAddedAt?: string };
+type ExportedRSIPNode = Omit<RSIPNode, 'createdAt'> & { createdAt: string };
+type ExportedRSIPMeta = Omit<RSIPMeta, 'lastAddedAt'> & { lastAddedAt?: string };
 
 export interface MomentumExportDataV2 {
   version: '2.0';
@@ -61,4 +61,3 @@ export function toExportedRSIPMeta(meta: RSIPMeta): ExportedRSIPMeta {
     lastAddedAt: meta.lastAddedAt?.toISOString(),
   };
 }
-

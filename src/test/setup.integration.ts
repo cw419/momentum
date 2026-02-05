@@ -4,7 +4,7 @@ import { setupServer } from 'msw/node';
 import { supabaseMockHandlers } from './mocks/supabaseMocks';
 
 // Setup test server with MSW for API mocking
-export const server = setupServer(...supabaseMockHandlers);
+const server = setupServer(...supabaseMockHandlers);
 
 // Start server before all tests
 beforeAll(() => {

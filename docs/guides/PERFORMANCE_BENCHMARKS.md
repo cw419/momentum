@@ -372,7 +372,7 @@ Database query optimization with caching, deduplication, and batch operations.
 - **Query Deduplication:** Prevents duplicate concurrent queries
 - **Intelligent Caching:** 30-second TTL with dependency-based invalidation
 - **Batch Loading:** Parallel data loading for optimal performance
-- **Memoized Tree Building:** Two-level caching for chain tree construction
+- **Memoized Tree Building:** Revision-first caching (hash fallback) for chain tree construction
 
 #### Usage
 
@@ -388,8 +388,8 @@ const result = await queryOptimizer.deduplicateQuery('chains:getActive', async (
 const { chains, scheduledSessions, activeSession, completionHistory } =
   await queryOptimizer.batchLoadData(storage);
 
-// Memoized tree building
-const tree = queryOptimizer.memoizedBuildChainTree(chains);
+// Memoized tree building (pass a monotonic revision when available to avoid hashing)
+const tree = queryOptimizer.memoizedBuildChainTree(chains, chainsRevision);
 
 // Invalidate cache on data change
 queryOptimizer.onDataChange('chains');
@@ -610,7 +610,7 @@ describe('MyFeature Performance', () => {
 
 - [ ] **Use memoized tree building**
   ```typescript
-  queryOptimizer.memoizedBuildChainTree(chains);
+  queryOptimizer.memoizedBuildChainTree(chains, chainsRevision);
   ```
 
 - [ ] **Monitor cache hit rate**

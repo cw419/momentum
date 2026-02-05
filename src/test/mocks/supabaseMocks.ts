@@ -155,36 +155,3 @@ export const supabaseMockHandlers = [
   })
 ];
 
-// Test utilities for manipulating mock data
-export const mockDataUtils = {
-  reset() {
-    mockDatabase.chains.clear();
-    mockDatabase.scheduled_sessions.clear();
-    mockDatabase.active_sessions.clear();
-    mockDatabase.completion_history.clear();
-  },
-
-  addChain(chain: any) {
-    mockDatabase.chains.set(chain.id, chain);
-  },
-
-  getChain(id: string) {
-    return mockDatabase.chains.get(id);
-  },
-
-  getAllChains() {
-    return Array.from(mockDatabase.chains.values());
-  },
-
-  addSession(session: any) {
-    mockDatabase.active_sessions.set(session.id, session);
-  },
-
-  getSession(id: string) {
-    return mockDatabase.active_sessions.get(id);
-  },
-
-  getAllSessions() {
-    return Array.from(mockDatabase.active_sessions.values());
-  }
-};

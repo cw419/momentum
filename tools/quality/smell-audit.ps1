@@ -24,7 +24,7 @@ Write-Output (Write-Section "Knip (unused deps/exports/files)")
 knip --config .knip.json | Tee-Object -FilePath (Join-Path $OutDir "knip.txt")
 
 Write-Output (Write-Section "ts-prune (unused exports)")
-ts-prune -p $tsconfigTsPrune | Tee-Object -FilePath (Join-Path $OutDir "ts-prune.txt")
+ts-prune -p $tsconfigTsPrune -i 'index\.tsx?:' | Tee-Object -FilePath (Join-Path $OutDir "ts-prune.txt")
 
 Write-Output (Write-Section "Madge (circular deps)")
 madge --circular --ts-config $tsconfigApp --extensions ts,tsx src/main.tsx | Tee-Object -FilePath (Join-Path $OutDir "madge-circular.txt")

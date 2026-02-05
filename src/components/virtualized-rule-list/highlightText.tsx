@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export type HighlightRange = { start: number; end: number };
+type HighlightRange = { start: number; end: number };
 
 export function highlightText(text: string, ranges: HighlightRange[]): ReactNode {
   const safeText = String(text || '');
@@ -32,4 +32,3 @@ export function highlightText(text: string, ranges: HighlightRange[]): ReactNode
 
   return parts;
 }
-

@@ -3,7 +3,7 @@ import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import type { CanvasState } from '../../../hooks/useCanvasState';
 import type { NodePosition } from './useRSIPLayout';
 
-export interface UseRSIPCameraParams {
+interface UseRSIPCameraParams {
   nodePositions: Record<string, NodePosition>;
   layoutNodeHeight: number;
   savedState: CanvasState | null;
@@ -11,7 +11,7 @@ export interface UseRSIPCameraParams {
   saveCanvasState: (state: CanvasState) => void;
 }
 
-export interface UseRSIPCameraResult {
+interface UseRSIPCameraResult {
   viewportRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   transformRef: React.RefObject<ReactZoomPanPinchContentRef>;

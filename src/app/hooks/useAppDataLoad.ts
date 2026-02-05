@@ -146,6 +146,7 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
           setState((prev) => ({
             ...prev,
             chains: fixedChains,
+            chainsRevision: prev.chainsRevision + 1,
             scheduledSessions: [],
             activeSession: null,
             completionHistory: [],
@@ -179,6 +180,7 @@ export function useAppDataLoad({ storage, isInitialized, setState }: UseAppDataL
         setState((prev) => ({
           ...prev,
           chains,
+          chainsRevision: prev.chainsRevision + 1,
           scheduledSessions,
           activeSession,
           completionHistory: migratedCompletionHistory,

@@ -120,18 +120,6 @@ export default defineConfig({
           if (id.includes('lucide-react')) {
             return 'vendor-icons';
           }
-          // 动画库 - 延迟加载
-          if (id.includes('animejs')) {
-            return 'vendor-animation';
-          }
-          // Services - 业务逻辑单独分块
-          if (id.includes('/services/')) {
-            return 'app-services';
-          }
-          // Utils - 工具函数单独分块
-          if (id.includes('/utils/') && !id.includes('chainTree')) {
-            return 'app-utils';
-          }
         }
       }
     },

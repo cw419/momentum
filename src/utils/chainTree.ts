@@ -1,6 +1,7 @@
 import { Chain, ChainTreeNode } from '../types';
 import { performanceLogger } from './performanceLogger';
 import { IconName } from './iconMap';
+import { isDev } from './env';
 
 /**
  * 验证链数据的完整性
@@ -62,7 +63,10 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
     // 创建ID到节点的映射
     const nodeMap = new Map<string, ChainTreeNode>();
     
-    performanceLogger.debug('buildChainTree - 输入的chains:', chains.length, chains.map(c => ({ id: c.id, name: c.name, parentId: c.parentId, type: c.type })));
+    performanceLogger.debugLazy('buildChainTree - input chains', () => ({
+      chainCount: chains.length,
+      chains: chains.map((c) => ({ id: c.id, name: c.name, parentId: c.parentId, type: c.type })),
+    }));
     
     // 修复循环引用和其他数据问题
     const cleanedChains = chains.map(chain => {
@@ -124,7 +128,12 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
   // 对根节点也进行排序
   rootNodes.sort((a, b) => a.sortOrder - b.sortOrder);
 
-  performanceLogger.debug('buildChainTree - 构建的根节点:', rootNodes.length, rootNodes.map(r => ({ id: r.id, name: r.name, childrenCount: r.children.length })));
+  if (isDev) {
+    performanceLogger.debugLazy('buildChainTree - root nodes built', () => ({
+      rootNodeCount: rootNodes.length,
+      roots: rootNodes.map((r) => ({ id: r.id, name: r.name, childrenCount: r.children.length })),
+    }));
+  }
   
   // Final validation - ensure all input chains are represented in the tree
   const treeNodeIds = new Set<string>();
@@ -271,16 +280,19 @@ const resetGroupTaskProgress = (chains: Chain[], groupId: string): Chain[] => {
   };
   
   const childIds = getAllChildIds(groupNode);
-  performanceLogger.debug(`resetGroupTaskProgress: 群组 ${groupNode.name} 将重置 ${childIds.length} 个子任务的进度`, {
-    groupId,
-    childIds,
-    childDetails: groupNode.children.map(child => ({
-      id: child.id,
-      name: child.name,
-      type: child.type,
-      currentStreak: child.currentStreak
-    }))
-  });
+  performanceLogger.debugLazy(
+    `resetGroupTaskProgress: 群组 ${groupNode.name} 将重置 ${childIds.length} 个子任务的进度`,
+    () => ({
+      groupId,
+      childIds,
+      childDetails: groupNode.children.map(child => ({
+        id: child.id,
+        name: child.name,
+        type: child.type,
+        currentStreak: child.currentStreak,
+      })),
+    })
+  );
   
   // 重置所有子单元的完成进度
   const resetChains = chains.map(chain => {

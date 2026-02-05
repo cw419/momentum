@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export interface UseRSIPTimersResult {
+interface UseRSIPTimersResult {
   now: number;
   activeTimers: Record<string, number>;
   formatRemaining: (ms: number) => string;

@@ -1,6 +1,6 @@
 import type { ActiveSession, Chain, ViewState } from '../types';
 
-export type UrlSyncedViewState = {
+type UrlSyncedViewState = {
   currentView: ViewState;
   viewingChainId: string | null;
   editingChain: Chain | null;

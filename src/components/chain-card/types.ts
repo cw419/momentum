@@ -5,7 +5,7 @@
 import type { Chain, ScheduledSession, ChainTreeNode } from '../../types';
 import type { getChainTypeConfig } from '../../utils/chainTree';
 
-export type ChainTypeConfig = ReturnType<typeof getChainTypeConfig>;
+type ChainTypeConfig = ReturnType<typeof getChainTypeConfig>;
 
 export interface ChainCardProps {
   chain: Chain | ChainTreeNode;

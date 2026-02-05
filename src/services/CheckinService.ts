@@ -4,8 +4,6 @@ import type { Result } from '../domain/result';
 import { ok } from '../domain/result';
 import type { MomentumStorage } from '../storage/MomentumStorage';
 
-export type { CheckinResult, CheckinStats } from '../domain/checkin';
-
 /**
  * Deprecated: prefer calling `storage.*` methods directly.
  * This wrapper keeps the old import path stable while routing operations through MomentumStorage.

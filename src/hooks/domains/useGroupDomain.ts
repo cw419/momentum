@@ -32,6 +32,46 @@ interface UseGroupDomainParams {
 
 export function useGroupDomain({ state, setState, storage, safelySaveChains }: UseGroupDomainParams) {
   const { language, tr } = useI18n();
+
+  const handleChainsOperationError = async (
+    error: unknown,
+    {
+      logMessage,
+      toastPrefixZh,
+      toastPrefixEn,
+      toastFallbackZh,
+      toastFallbackEn,
+    }: {
+      logMessage: string;
+      toastPrefixZh: string;
+      toastPrefixEn: string;
+      toastFallbackZh: string;
+      toastFallbackEn: string;
+    }
+  ) => {
+    logger.error('APP_SHELL', logMessage, undefined, error as Error);
+    const safeDetail = getSafeErrorDetailFromUnknown(error, language);
+    toast.error(
+      safeDetail
+        ? tr(
+            `${toastPrefixZh}: ${safeDetail}\n\n请查看控制台了解详细信息，然后重试`,
+            `${toastPrefixEn}: ${safeDetail}\n\nCheck the console for details, then try again.`
+          )
+        : tr(toastFallbackZh, toastFallbackEn)
+    );
+
+    try {
+      const currentChains = await storage.getChains();
+      setState((prev) => ({
+        ...prev,
+        chains: currentChains,
+        chainsRevision: prev.chainsRevision + 1,
+      }));
+    } catch (reloadError) {
+      logger.error('APP_SHELL', '重新加载数据也失败了', undefined, reloadError as Error);
+    }
+  };
+
   const handleImportUnits = async (unitIds: string[], groupId: string, mode: 'move' | 'copy' = 'copy') => {
     logger.info('APP_SHELL', '开始导入单元到任务群', { unitIds, groupId, mode });
 
@@ -80,29 +120,17 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       setState(prev => ({
         ...prev,
         chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
       }));
       logger.info('APP_SHELL', '导入完成，UI状态更新完成');
     } catch (error) {
-      logger.error('APP_SHELL', 'Failed to import units', undefined, error as Error);
-      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
-      toast.error(
-        safeDetail
-          ? tr(
-              `导入失败: ${safeDetail}\n\n请查看控制台了解详细信息，然后重试`,
-              `Import failed: ${safeDetail}\n\nCheck the console for details, then try again.`
-            )
-          : tr('导入失败，请重试（详情见控制台）', 'Import failed. Check the console for details, then try again.')
-      );
-
-      try {
-        const currentChains = await storage.getChains();
-        setState(prev => ({
-          ...prev,
-          chains: currentChains,
-        }));
-      } catch (reloadError) {
-        logger.error('APP_SHELL', '重新加载数据也失败了', undefined, reloadError as Error);
-      }
+      await handleChainsOperationError(error, {
+        logMessage: 'Failed to import units',
+        toastPrefixZh: '导入失败',
+        toastPrefixEn: 'Import failed',
+        toastFallbackZh: '导入失败，请重试（详情见控制台）',
+        toastFallbackEn: 'Import failed. Check the console for details, then try again.',
+      });
     }
   };
 
@@ -125,34 +153,22 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       setState(prev => ({
         ...prev,
         chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
       }));
       logger.info('APP_SHELL', '重复次数更新完成，UI状态更新完成');
     } catch (error) {
-      logger.error('APP_SHELL', 'Failed to update task repeat count', undefined, error as Error);
-      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
-      toast.error(
-        safeDetail
-          ? tr(
-              `重复次数更新失败: ${safeDetail}\n\n请查看控制台了解详细信息，然后重试`,
-              `Failed to update repeat count: ${safeDetail}\n\nCheck the console for details, then try again.`
-            )
-          : tr('重复次数更新失败，请重试（详情见控制台）', 'Failed to update repeat count. Check the console for details, then try again.')
-      );
-
-      try {
-        const currentChains = await storage.getChains();
-        setState(prev => ({
-          ...prev,
-          chains: currentChains,
-        }));
-      } catch (reloadError) {
-        logger.error('APP_SHELL', '重新加载数据也失败了', undefined, reloadError as Error);
-      }
+      await handleChainsOperationError(error, {
+        logMessage: 'Failed to update task repeat count',
+        toastPrefixZh: '重复次数更新失败',
+        toastPrefixEn: 'Failed to update repeat count',
+        toastFallbackZh: '重复次数更新失败，请重试（详情见控制台）',
+        toastFallbackEn: 'Failed to update repeat count. Check the console for details, then try again.',
+      });
     }
   };
 
   const handleReorderUnit = async (groupId: string, unitId: string, direction: 'up' | 'down') => {
-    const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains);
+    const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains, state.chainsRevision);
     const groupNode = chainTree.find(node => node.id === groupId);
     if (!groupNode) return;
 
@@ -172,7 +188,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
 
     await safelySaveChains(updated);
     queryOptimizer.onDataChange('chains');
-    setState(prev => ({ ...prev, chains: updated }));
+    setState(prev => ({ ...prev, chains: updated, chainsRevision: prev.chainsRevision + 1 }));
   };
 
   return { handleImportUnits, handleUpdateTaskRepeatCount, handleReorderUnit };

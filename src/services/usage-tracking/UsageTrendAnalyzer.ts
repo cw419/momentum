@@ -6,7 +6,7 @@
 
 import { RuleUsageRecord } from '../../types';
 
-export interface RuleUsageTrend {
+interface RuleUsageTrend {
   trend: Array<{ date: string; count: number }>;
   totalUsage: number;
   averageDailyUsage: number;
@@ -56,7 +56,7 @@ export function calculateRuleUsageTrend(
   };
 }
 
-export interface RuleEfficiencyAnalysis {
+interface RuleEfficiencyAnalysis {
   averageTaskProgress: number;
   usagePatterns: {
     earlyUsage: number;
@@ -116,4 +116,3 @@ export function calculateRuleEfficiencyAnalysis(records: RuleUsageRecord[]): Rul
     recommendations
   };
 }
-

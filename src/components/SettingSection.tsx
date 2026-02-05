@@ -27,6 +27,24 @@ export const SettingSection: React.FC<SettingSectionProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
+  const headerContent = (
+    <>
+      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 flex items-center justify-center">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+          {title}
+        </h3>
+        {description && (
+          <p className="text-sm text-gray-600 dark:text-slate-400 mt-1 font-chinese">
+            {description}
+          </p>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <section className={`setting-section space-y-6 ${className}`}>
       <div className="section-header">
@@ -37,19 +55,7 @@ export const SettingSection: React.FC<SettingSectionProps> = ({
             onClick={() => setIsExpanded(!isExpanded)}
             aria-expanded={isExpanded}
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 flex items-center justify-center">
-              {icon}
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-                {title}
-              </h3>
-              {description && (
-                <p className="text-sm text-gray-600 dark:text-slate-400 mt-1 font-chinese">
-                  {description}
-                </p>
-              )}
-            </div>
+            {headerContent}
             <span
               className="p-2 rounded-lg transition-colors group-hover:bg-gray-100 dark:group-hover:bg-slate-700"
               aria-hidden="true"
@@ -63,19 +69,7 @@ export const SettingSection: React.FC<SettingSectionProps> = ({
           </button>
         ) : (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 flex items-center justify-center">
-              {icon}
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
-                {title}
-              </h3>
-              {description && (
-                <p className="text-sm text-gray-600 dark:text-slate-400 mt-1 font-chinese">
-                  {description}
-                </p>
-              )}
-            </div>
+            {headerContent}
           </div>
         )}
       </div>

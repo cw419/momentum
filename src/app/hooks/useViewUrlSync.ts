@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import { parseViewStateFromSearch, serializeViewStateToSearch } from '../viewUrlState';
@@ -9,6 +9,8 @@ interface UseViewUrlSyncParams {
   shouldLoadData: boolean;
   isLoadingData: boolean;
 }
+
+type UrlSyncedViewState = ReturnType<typeof parseViewStateFromSearch>;
 
 export function useViewUrlSync({
   state,
@@ -23,6 +25,23 @@ export function useViewUrlSync({
 
   const isApplyingUrlRef = useRef(false);
   const hasProcessedInitialUrlRef = useRef(false);
+
+  const applyViewStateFromUrl = useCallback(
+    (next: UrlSyncedViewState) => {
+      isApplyingUrlRef.current = true;
+      setState((prev) => ({
+        ...prev,
+        currentView: next.currentView,
+        viewingChainId: next.viewingChainId,
+        editingChain: next.editingChain,
+      }));
+
+      setTimeout(() => {
+        isApplyingUrlRef.current = false;
+      }, 0);
+    },
+    [setState],
+  );
 
   useEffect(() => {
     if (!shouldLoadData) {
@@ -47,18 +66,8 @@ export function useViewUrlSync({
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.hash}`);
     }
 
-    isApplyingUrlRef.current = true;
-    setState(prev => ({
-      ...prev,
-      currentView: next.currentView,
-      viewingChainId: next.viewingChainId,
-      editingChain: next.editingChain,
-    }));
-
-    setTimeout(() => {
-      isApplyingUrlRef.current = false;
-    }, 0);
-  }, [shouldLoadData, isLoadingData, setState]);
+    applyViewStateFromUrl(next);
+  }, [shouldLoadData, isLoadingData, applyViewStateFromUrl]);
 
   // Sync state -> URL on navigation changes.
   useEffect(() => {
@@ -95,20 +104,10 @@ export function useViewUrlSync({
         activeSession: stateRef.current.activeSession,
       });
 
-      isApplyingUrlRef.current = true;
-      setState(prev => ({
-        ...prev,
-        currentView: next.currentView,
-        viewingChainId: next.viewingChainId,
-        editingChain: next.editingChain,
-      }));
-
-      setTimeout(() => {
-        isApplyingUrlRef.current = false;
-      }, 0);
+      applyViewStateFromUrl(next);
     };
 
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [setState]);
+  }, [applyViewStateFromUrl]);
 }

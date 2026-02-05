@@ -164,6 +164,7 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
       setState(prev => ({
         ...prev,
         chains: updatedActiveChains,
+        chainsRevision: prev.chainsRevision + 1,
         currentView: 'dashboard',
         editingChain: null,
       }));
@@ -182,6 +183,7 @@ export function useChainsDomain({ state, setState, storage, safelySaveChains }: 
         setState(prev => ({
           ...prev,
           chains: currentChains,
+          chainsRevision: prev.chainsRevision + 1,
         }));
       } catch (reloadError) {
         logger.error('CHAINS', '重新加载数据也失败了', undefined, reloadError as Error);

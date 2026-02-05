@@ -34,7 +34,7 @@ export function buildUsageRecordInput(
   };
 }
 
-export interface UsageExportData {
+interface UsageExportData {
   exportedAt: string;
   overallStats: OverallUsageStats;
   rules: ExceptionRule[];
@@ -108,4 +108,3 @@ export function countExpiredUsageRecords(
   const validRecords = usageRecords.filter(record => record.usedAt > cutoffDate);
   return usageRecords.length - validRecords.length;
 }
-

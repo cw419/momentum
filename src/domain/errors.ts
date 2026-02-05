@@ -1,4 +1,4 @@
-export type AppErrorCode =
+type AppErrorCode =
   | 'NOT_SUPPORTED'
   | 'NOT_CONFIGURED'
   | 'NOT_AUTHENTICATED'

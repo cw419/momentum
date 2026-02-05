@@ -13,7 +13,7 @@ export interface NodePosition {
   style: React.CSSProperties;
 }
 
-export interface UseRSIPLayoutResult {
+interface UseRSIPLayoutResult {
   nodePositions: Record<string, NodePosition>;
   containerHeight: number;
   layoutNodeHeight: number;

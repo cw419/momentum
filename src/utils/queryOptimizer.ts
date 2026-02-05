@@ -33,6 +33,7 @@ class QueryOptimizer {
   private readonly CACHE_TTL = 30 * 1000; // 30 seconds
   private readonly TREE_CACHE_KEY = 'chainTree';
   private lastChainHash: string = '';
+  private lastChainsRevision: number | null = null;
   
   /**
    * Generate hash for chain data to detect changes
@@ -117,52 +118,74 @@ class QueryOptimizer {
    * Advanced optimized chain tree building with intelligent caching
    * Uses multiple layers of optimization for maximum performance
    */
-  memoizedBuildChainTree(chains: Chain[]): ChainTreeNode[] {
+  private buildChainTreeWithMonitoring(
+    chains: Chain[],
+    onCache: (tree: ChainTreeNode[]) => void
+  ): ChainTreeNode[] {
+    return performanceLogger.time('buildChainTree-full', () => {
+      const startTime = performance.now();
+      const tree = buildChainTree(chains);
+      const buildTime = performance.now() - startTime;
+
+      reactPerformanceMonitor.trackTreeBuild(buildTime);
+      onCache(tree);
+
+      performanceLogger.debug(
+        `[QUERY_OPTIMIZER] Tree built with ${tree.length} root nodes in ${buildTime.toFixed(2)}ms`
+      );
+
+      return tree;
+    });
+  }
+
+  memoizedBuildChainTree(chains: Chain[], revision?: number): ChainTreeNode[] {
+    // Preferred fast path: caller provides a monotonic revision number.
+    if (typeof revision === 'number') {
+      const cached = this.getCachedData<ChainTreeNode[]>(this.TREE_CACHE_KEY);
+      if (cached && this.lastChainsRevision === revision) {
+        reactPerformanceMonitor.trackCacheHit();
+        performanceLogger.debug('[QUERY_OPTIMIZER] Using cached chain tree (revision match)');
+        return cached;
+      }
+
+      performanceLogger.debug('[QUERY_OPTIMIZER] Rebuilding chain tree (revision changed or cache expired)');
+      reactPerformanceMonitor.trackCacheMiss();
+
+      return this.buildChainTreeWithMonitoring(chains, (tree) => {
+        this.setCachedData(this.TREE_CACHE_KEY, tree);
+        this.lastChainsRevision = revision;
+      });
+    }
+
+    // Fallback path: compute hashes (more expensive) when revision is not available.
     const currentHash = this.generateChainHash(chains);
-    
+
     // Level 1: Check if data hasn't changed at all
     if (currentHash === this.lastChainHash) {
       const cached = this.getCachedData<ChainTreeNode[]>(this.TREE_CACHE_KEY);
       if (cached) {
         reactPerformanceMonitor.trackCacheHit();
-        performanceLogger.debug('[QUERY_OPTIMIZER] Using cached chain tree (Level 1: No changes)');
+        performanceLogger.debug('[QUERY_OPTIMIZER] Using cached chain tree (hash match)');
         return cached;
       }
     }
-    
+
     // Level 2: Check for structural changes only (for incremental updates in the future)
     const structuralHash = this.generateStructuralHash(chains);
     const cachedStructuralHash = this.getCachedData<string>(`${this.TREE_CACHE_KEY}_structural`);
-    
+
     if (structuralHash === cachedStructuralHash) {
-      // Only metadata changed, we could potentially update existing tree nodes
-      // For now, we'll rebuild but log this optimization opportunity
       performanceLogger.debug('[QUERY_OPTIMIZER] Structural hash unchanged, could optimize with incremental update');
     }
-    
-    performanceLogger.debug('[QUERY_OPTIMIZER] Rebuilding chain tree');
-    
-    // Track cache miss
+
+    performanceLogger.debug('[QUERY_OPTIMIZER] Rebuilding chain tree (hash path)');
     reactPerformanceMonitor.trackCacheMiss();
-    
-    // Enhanced tree building with performance monitoring
-    return performanceLogger.time('buildChainTree-full', () => {
-      const startTime = performance.now();
-      const tree = buildChainTree(chains);
-      const buildTime = performance.now() - startTime;
-      
-      // Track tree build performance
-      reactPerformanceMonitor.trackTreeBuild(buildTime);
-      
+
+    return this.buildChainTreeWithMonitoring(chains, (tree) => {
       // Cache both the tree and the structural hash
       this.setCachedData(this.TREE_CACHE_KEY, tree);
       this.setCachedData(`${this.TREE_CACHE_KEY}_structural`, structuralHash);
       this.lastChainHash = currentHash;
-      
-      // Performance metrics
-      performanceLogger.debug(`[QUERY_OPTIMIZER] Tree built with ${tree.length} root nodes in ${buildTime.toFixed(2)}ms`);
-      
-      return tree;
     });
   }
   
@@ -218,15 +241,14 @@ class QueryOptimizer {
    * Clear all caches (useful for forced refresh)
    */
   clearCache(): void {
-    const preStats = this.getCacheStats();
-    performanceLogger.debug('[QUERY_OPTIMIZER] Clearing all caches - current state:', preStats);
+    performanceLogger.debugLazy('[QUERY_OPTIMIZER] Clearing all caches - current state', () => this.getCacheStats());
     
     this.cache.clear();
     this.pendingQueries.clear();
     this.lastChainHash = '';
+    this.lastChainsRevision = null;
     
-    const postStats = this.getCacheStats();
-    performanceLogger.debug('[QUERY_OPTIMIZER] All caches cleared successfully:', postStats);
+    performanceLogger.debugLazy('[QUERY_OPTIMIZER] All caches cleared successfully', () => this.getCacheStats());
     performanceLogger.debug('[QUERY_OPTIMIZER] Cache cleared');
   }
   
@@ -285,6 +307,7 @@ class QueryOptimizer {
       this.invalidateCache('chains');
       this.cache.delete(this.TREE_CACHE_KEY);
       this.lastChainHash = '';
+      this.lastChainsRevision = null;
       performanceLogger.debug('[QUERY_OPTIMIZER] Chain caches cleared, lastChainHash reset');
     }
     
@@ -292,8 +315,7 @@ class QueryOptimizer {
     this.invalidateCache('batchedData');
     
     // Log current cache state for debugging
-    const stats = this.getCacheStats();
-    performanceLogger.debug('[QUERY_OPTIMIZER] Post-invalidation cache stats:', stats);
+    performanceLogger.debugLazy('[QUERY_OPTIMIZER] Post-invalidation cache stats', () => this.getCacheStats());
   }
 }
 

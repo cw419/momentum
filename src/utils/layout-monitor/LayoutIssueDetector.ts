@@ -10,7 +10,7 @@ export function describeElement(element: HTMLElement): { tagName: string; id?: s
   };
 }
 
-export interface LayoutIssue {
+interface LayoutIssue {
   type: 'horizontal-overflow' | 'layout-shift' | 'unstable-width';
   element: HTMLElement;
   severity: 'low' | 'medium' | 'high';
@@ -323,4 +323,3 @@ export class LayoutIssueDetector {
     });
   }
 }
-

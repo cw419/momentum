@@ -71,6 +71,26 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
     keyboardInputProps.onChange(clampedValue);
   };
 
+  const keyboardInputFields =
+    showKeyboardInput && keyboardInputProps ? (
+      <>
+        <input
+          type="number"
+          min={keyboardInputProps.min}
+          max={keyboardInputProps.max}
+          value={keyboardInputProps.value || ''}
+          onChange={handleKeyboardInputChange}
+          placeholder={keyboardInputProps.placeholder}
+          className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300"
+        />
+        {keyboardInputProps.unit && (
+          <span className="text-gray-500 dark:text-slate-400 font-chinese text-sm">
+            {keyboardInputProps.unit}
+          </span>
+        )}
+      </>
+    ) : null;
+
   if (orientation === 'horizontal') {
     return (
       <div ref={containerRef} className={`slider-container-horizontal w-full ${className}`}>
@@ -81,23 +101,8 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
           <div className="flex-1 min-w-0">
             {children}
           </div>
-          {showKeyboardInput && keyboardInputProps && (
-            <div className="flex items-center space-x-2 whitespace-nowrap">
-              <input
-                type="number"
-                min={keyboardInputProps.min}
-                max={keyboardInputProps.max}
-                value={keyboardInputProps.value || ''}
-                onChange={handleKeyboardInputChange}
-                placeholder={keyboardInputProps.placeholder}
-                className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300"
-              />
-              {keyboardInputProps.unit && (
-                <span className="text-gray-500 dark:text-slate-400 font-chinese text-sm">
-                  {keyboardInputProps.unit}
-                </span>
-              )}
-            </div>
+          {keyboardInputFields && (
+            <div className="flex items-center space-x-2 whitespace-nowrap">{keyboardInputFields}</div>
           )}
         </div>
         {description && (
@@ -133,29 +138,14 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
           {children}
         </div>
       </div>
-      
-      {showKeyboardInput && keyboardInputProps && (
+        
+      {keyboardInputFields && (
         <div className="keyboard-input-section">
           <div className="flex items-center space-x-4">
             <span className="text-gray-700 dark:text-slate-300 font-chinese">
               {tr('键盘输入', 'Keyboard input')}:
             </span>
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                min={keyboardInputProps.min}
-                max={keyboardInputProps.max}
-                value={keyboardInputProps.value || ''}
-                onChange={handleKeyboardInputChange}
-                placeholder={keyboardInputProps.placeholder}
-                className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300"
-              />
-              {keyboardInputProps.unit && (
-                <span className="text-gray-500 dark:text-slate-400 font-chinese text-sm">
-                  {keyboardInputProps.unit}
-                </span>
-              )}
-            </div>
+            <div className="flex items-center space-x-2">{keyboardInputFields}</div>
           </div>
         </div>
       )}

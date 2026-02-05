@@ -11,7 +11,7 @@
 import { ExceptionRule } from '../../types';
 import { calculateSimilarity, normalizeName } from '../../utils/stringUtils';
 
-export type SimilarRuleWithSimilarity = { rule: ExceptionRule; similarity: number };
+type SimilarRuleWithSimilarity = { rule: ExceptionRule; similarity: number };
 
 export type DuplicationReport = {
   hasExactMatch: boolean;
@@ -122,7 +122,7 @@ export function isCommonRulePattern(name: string): boolean {
   );
 }
 
-export type NameSuggestionOptions = {
+type NameSuggestionOptions = {
   maxSuggestions?: number;
 };
 
@@ -180,4 +180,3 @@ export function generateNameSuggestions(
   const maxSuggestions = options.maxSuggestions ?? defaultMax;
   return suggestions.slice(0, maxSuggestions);
 }
-

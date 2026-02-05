@@ -47,6 +47,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
       setState(prev => ({
         ...prev,
         chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
         scheduledSessions: updatedScheduledSessions,
         activeSession: updatedActiveSession,
         currentView: updatedActiveSession ? prev.currentView : 'dashboard',
@@ -66,6 +67,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         setState(prev => ({
           ...prev,
           chains: currentChains,
+          chainsRevision: prev.chainsRevision + 1,
         }));
       } catch {
         toast.warning(
@@ -85,6 +87,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
       setState(prev => ({
         ...prev,
         chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
       }));
     } catch (error) {
       const safeDetail = getSafeErrorDetailFromUnknown(error, language);
@@ -96,6 +99,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
           setState(prev => ({
             ...prev,
             chains: currentChains,
+            chainsRevision: prev.chainsRevision + 1,
           }));
 
           toast.warning(
@@ -128,6 +132,7 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
       setState(prev => ({
         ...prev,
         chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
       }));
     } catch (error) {
       const safeDetail = getSafeErrorDetailFromUnknown(error, language);

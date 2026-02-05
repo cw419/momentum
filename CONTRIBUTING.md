@@ -35,6 +35,14 @@ Notes:
 - This repo intentionally avoids pre-commit hooks; all checks are explicit `npm run ...` commands.
 - ESLint forbids `console.*` in `src/` (use `logger` from `src/utils/logger.ts`).
 
+## PR Template (Perf + Smell Campaign)
+
+If your PR is driven by performance or static-analysis “smell” reports, include these 3 items in the PR description:
+
+1) Which hotspot you’re addressing (SonarJS / Madge / Knip / JSCPD / Lighthouse / DevTools trace)
+2) Before/after comparison (at least one number)
+3) Risk + rollback plan (how to confirm behavior didn’t change)
+
 ## Deeper Quality Checks (optional)
 
 ```bash
@@ -48,6 +56,29 @@ npm run quality:smell-audit
 ```
 
 Most quality reports write to `reports/quality/`.
+
+## Performance Baseline / Retest (optional; not a CI gate)
+
+Reference runbook: `docs/plans/2026-02-04-perf-smell-campaign.md` (Appendix A/B).
+
+### Lighthouse (Desktop + Mobile)
+
+```bash
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173 --strictPort
+
+# Desktop (run1/run2/run3; take median)
+npx lighthouse http://127.0.0.1:4173/ --preset=desktop --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=reports/lighthouse/YYYY-MM-DD_desktop_run1.json --chrome-flags="--headless=new"
+
+# Mobile
+npx lighthouse http://127.0.0.1:4173/ --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=reports/lighthouse/YYYY-MM-DD_mobile_run1.json --chrome-flags="--headless=new"
+```
+
+Outputs under `reports/lighthouse/` are ignored by git.
+
+### DevTools Trace (Codex DevTools MCP)
+
+Traces are used for diagnosis and before/after comparison (not a gate). Save outputs under `reports/devtools/` (ignored by git).
 
 ## Security Checks (optional locally; CI runs soft scans)
 
@@ -77,4 +108,3 @@ If your change touches the database:
 ## License
 
 By contributing, you agree your contributions are licensed under the repository license (see `LICENSE`).
-

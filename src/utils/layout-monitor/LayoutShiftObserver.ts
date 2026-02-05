@@ -7,7 +7,7 @@ function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShift {
   return typeof candidate.value === 'number' && typeof candidate.hadRecentInput === 'boolean';
 }
 
-export type LayoutShiftHandler = (entry: LayoutShift) => void;
+type LayoutShiftHandler = (entry: LayoutShift) => void;
 
 export class LayoutShiftObserver {
   private observer: PerformanceObserver | null = null;
@@ -43,4 +43,3 @@ export class LayoutShiftObserver {
     this.observer = null;
   }
 }
-

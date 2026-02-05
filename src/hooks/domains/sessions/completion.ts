@@ -48,11 +48,12 @@ function updateChainsForFailure(chains: AppState['chains'], chainId: string): Ap
 function maybeIncrementGroupCycleCompletion(
   chains: AppState['chains'],
   completedChain: Chain,
-  tr: (zh: string, en: string) => string
+  tr: (zh: string, en: string) => string,
+  chainsRevision?: number
 ): AppState['chains'] {
   if (!completedChain.parentId || completedChain.type === 'group') return chains;
 
-  const chainTree = queryOptimizer.memoizedBuildChainTree(chains);
+  const chainTree = queryOptimizer.memoizedBuildChainTree(chains, chainsRevision);
   const groupNode = chainTree.find((node) => node.id === completedChain.parentId);
   if (!groupNode || groupNode.type !== 'group') return chains;
   if (!isGroupFullyCompleted(groupNode)) return chains;
@@ -194,7 +195,7 @@ export function createCompletionHandlers({
     const historyToPersist = storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
 
     let updatedChains = updateChainsForSuccess(state.chains, chain.id, completedAt);
-    updatedChains = maybeIncrementGroupCycleCompletion(updatedChains, chain, tr);
+    updatedChains = maybeIncrementGroupCycleCompletion(updatedChains, chain, tr, state.chainsRevision + 1);
 
     persistChains(updatedChains, '完成任务时保存链条数据失败');
     persistCompletionHistoryAndCleanup(historyToPersist, 'completion');
@@ -217,6 +218,7 @@ export function createCompletionHandlers({
     setState((prev) => ({
       ...prev,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
       activeSession: null,
       completionHistory: updatedHistory,
       currentView: 'dashboard',
@@ -260,6 +262,7 @@ export function createCompletionHandlers({
     setState((prev) => ({
       ...prev,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
       activeSession: null,
       completionHistory: updatedHistory,
       currentView: 'dashboard',

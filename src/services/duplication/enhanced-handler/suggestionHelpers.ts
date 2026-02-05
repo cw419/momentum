@@ -1,8 +1,6 @@
 import type { ExceptionRule } from '../../../types';
 import { getCurrentLanguage, tr } from '../../../utils/runtimeI18n';
-import type { DuplicationSuggestion } from '../../EnhancedDuplicationHandler';
-
-type DuplicationConflictType = 'exact' | 'similar' | 'none';
+import type { DuplicationConflictType, DuplicationSuggestion } from './types';
 
 export function generateNameSuggestions(baseName: string, existingNames: string[]): string[] {
   const suggestions: string[] = [];
@@ -110,4 +108,3 @@ export function getConflictMessage(conflictType: DuplicationConflictType, existi
 
   return tr('没有发现冲突', 'No conflict detected');
 }
-

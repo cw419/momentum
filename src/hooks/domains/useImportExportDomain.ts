@@ -127,6 +127,7 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
     setState((prev) => ({
       ...prev,
       chains: currentChains,
+      chainsRevision: prev.chainsRevision + 1,
       rsipNodes: currentRsipNodes,
       rsipMeta: currentRsipMeta,
     }));
@@ -160,6 +161,7 @@ export function useImportExportDomain({ storage, safelySaveChains, setState }: U
       setState((prev) => ({
         ...prev,
         chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
         completionHistory: appendIfNonEmpty(prev.completionHistory, options?.history),
         rsipNodes: appendIfNonEmpty(prev.rsipNodes, options?.rsipNodes),
         rsipMeta: options?.rsipMeta ? { ...prev.rsipMeta, ...options.rsipMeta } : prev.rsipMeta,

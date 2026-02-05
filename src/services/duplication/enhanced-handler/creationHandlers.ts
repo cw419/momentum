@@ -3,7 +3,7 @@ import { ExceptionRuleError, ExceptionRuleException } from '../../../types';
 import { exceptionRuleStorage } from '../../ExceptionRuleStorage';
 import { tr } from '../../../utils/runtimeI18n';
 import { isCommonRulePattern } from '../duplicationDetection';
-import type { DuplicationCheckResult } from '../../EnhancedDuplicationHandler';
+import type { DuplicationCheckResult } from './types';
 import { generateNameSuggestions } from './suggestionHelpers';
 
 export async function createRuleIfNoConflict(
@@ -149,4 +149,3 @@ export async function handleCreateAnyway(
     warnings
   };
 }
-

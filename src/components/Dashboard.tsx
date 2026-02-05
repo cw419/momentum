@@ -25,6 +25,7 @@ const CheckinPlaceholder = () => (
 
 interface DashboardProps {
   chains: Chain[];
+  chainsRevision: number;
   scheduledSessions: ScheduledSession[];
   isLoading?: boolean;
   onCreateChain: () => void;
@@ -47,6 +48,7 @@ interface DashboardProps {
 // Performance optimized Dashboard component with React.memo and proper memoization
 export const Dashboard: React.FC<DashboardProps> = React.memo(({
   chains,
+  chainsRevision,
   scheduledSessions,
   isLoading = false,
   onCreateChain,
@@ -87,8 +89,8 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(({
     if (isDev) {
       logger.debug('DASHBOARD', 'Rebuilding chainTree', { chainCount: chains.length });
     }
-    return queryOptimizer.memoizedBuildChainTree(chains);
-  }, [chains]);
+    return queryOptimizer.memoizedBuildChainTree(chains, chainsRevision);
+  }, [chains, chainsRevision]);
 
   // Memoize top level chains calculation
   const topLevelChains = useMemo(() => {

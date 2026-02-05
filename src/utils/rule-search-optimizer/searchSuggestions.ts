@@ -1,6 +1,6 @@
 import type { ExceptionRule } from '../../types';
 import { calculateSimilarity } from '../stringUtils';
-import type { SearchSuggestion } from '../ruleSearchOptimizer';
+import type { SearchSuggestion } from './types';
 
 export function getSimilarSuggestions(query: string, rules: ExceptionRule[]): SearchSuggestion[] {
   const suggestions: SearchSuggestion[] = [];
@@ -35,4 +35,3 @@ export function getCompletionSuggestions(query: string, rules: ExceptionRule[]):
 
   return suggestions.slice(0, 2);
 }
-

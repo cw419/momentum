@@ -22,6 +22,7 @@ import { AppShellView } from './AppShellView';
 function createInitialAppState(): AppState {
   return {
     chains: [],
+    chainsRevision: 0,
     scheduledSessions: [],
     activeSession: null,
     currentView: 'dashboard',
@@ -54,13 +55,13 @@ export default function AppShellContainer() {
 
   const { isInitialized } = useServiceLifecycle();
 
-  const { isAuthReady } = useAuthController({
+  useAuthController({
     storage,
     resetAppState,
     setState,
   });
 
-  const shouldLoadData = isInitialized && isAuthReady;
+  const shouldLoadData = isInitialized;
   const { isLoadingData } = useAppDataLoad({
     storage,
     isInitialized: shouldLoadData,
@@ -179,10 +180,8 @@ export default function AppShellContainer() {
 
   return (
     <AppShellView
-      storageKind={storage.kind}
       state={state}
       isInitialized={isInitialized}
-      isAuthReady={isAuthReady}
       isLoadingData={isLoadingData}
       showAuxiliaryJudgment={showAuxiliaryJudgment}
       setShowAuxiliaryJudgment={setShowAuxiliaryJudgment}

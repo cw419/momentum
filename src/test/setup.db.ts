@@ -8,14 +8,14 @@ const TEST_SUPABASE_URL = process.env.VITE_TEST_SUPABASE_URL || 'https://test.su
 const TEST_SUPABASE_ANON_KEY = process.env.VITE_TEST_SUPABASE_ANON_KEY || 'test-key';
 
 // Create test Supabase client
-export const testSupabaseClient = createClient(TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY);
+const testSupabaseClient = createClient(TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY);
 
 // Test user configuration
-export const TEST_USER_ID = 'test-user-123';
-export const TEST_USER_EMAIL = 'test@momentum.app';
+const TEST_USER_ID = 'test-user-123';
+const TEST_USER_EMAIL = 'test@momentum.app';
 
 // Database test utilities
-export const dbTestUtils = {
+const dbTestUtils = {
   async createTestUser() {
     // Mock user creation for database tests
     return {

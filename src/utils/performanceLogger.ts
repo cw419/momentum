@@ -83,13 +83,11 @@ export const performanceLogger = {
    * Group related logs together (development only)
    */
   group: (label: string, fn: () => void) => {
-    if (isDev) {
-      logger.debug('PERFORMANCE', `Group start: ${label}`);
-      fn();
-      logger.debug('PERFORMANCE', `Group end: ${label}`);
-    } else {
-      fn();
-    }
+    if (!isDev) return;
+
+    logger.debug('PERFORMANCE', `Group start: ${label}`);
+    fn();
+    logger.debug('PERFORMANCE', `Group end: ${label}`);
   },
 
   /**
@@ -99,6 +97,42 @@ export const performanceLogger = {
     if (isDev) {
       const { message, context } = parseLogArgs(args);
       logger.debug('PERFORMANCE', message, context);
+    }
+  },
+
+  /**
+   * Lazy debug logging (development only) to avoid expensive argument evaluation.
+   */
+  debugLazy: (message: string, getContext: () => Record<string, unknown>) => {
+    if (isDev) {
+      logger.debug('PERFORMANCE', message, getContext());
+    }
+  },
+
+  /**
+   * Lazy info logging (development only) to avoid expensive argument evaluation.
+   */
+  infoLazy: (message: string, getContext: () => Record<string, unknown>) => {
+    if (isDev) {
+      logger.info('PERFORMANCE', message, getContext());
+    }
+  },
+
+  /**
+   * Lazy log logging (development only) to avoid expensive argument evaluation.
+   */
+  logLazy: (message: string, getContext: () => Record<string, unknown>) => {
+    if (isDev) {
+      logger.debug('PERFORMANCE', message, getContext());
+    }
+  },
+
+  /**
+   * Lazy warning logging (development only) to avoid expensive argument evaluation.
+   */
+  warnLazy: (message: string, getContext: () => Record<string, unknown>, error?: Error) => {
+    if (isDev) {
+      logger.warn('PERFORMANCE', message, getContext(), error);
     }
   },
 

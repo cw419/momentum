@@ -21,6 +21,17 @@ export class RuleRepository {
     private validator: RuleValidator
   ) {}
 
+  private getRuleIndexOrThrow(rules: ExceptionRule[], id: string): number {
+    const ruleIndex = rules.findIndex((rule) => rule.id === id);
+    if (ruleIndex === -1) {
+      throw new ExceptionRuleException(
+        ExceptionRuleError.RULE_NOT_FOUND,
+        `规则 ID ${id} 不存在`
+      );
+    }
+    return ruleIndex;
+  }
+
   /**
    * 获取所有例外规则
    */
@@ -100,14 +111,7 @@ export class RuleRepository {
   async updateRule(id: string, updates: Partial<ExceptionRule>): Promise<ExceptionRule> {
     try {
       const rules = await this.getRules();
-      const ruleIndex = rules.findIndex(rule => rule.id === id);
-
-      if (ruleIndex === -1) {
-        throw new ExceptionRuleException(
-          ExceptionRuleError.RULE_NOT_FOUND,
-          `规则 ID ${id} 不存在`
-        );
-      }
+      const ruleIndex = this.getRuleIndexOrThrow(rules, id);
 
       const updatedName = updates.name;
       if (
@@ -144,14 +148,7 @@ export class RuleRepository {
   async deleteRule(id: string): Promise<void> {
     try {
       const rules = await this.getRules();
-      const ruleIndex = rules.findIndex(rule => rule.id === id);
-
-      if (ruleIndex === -1) {
-        throw new ExceptionRuleException(
-          ExceptionRuleError.RULE_NOT_FOUND,
-          `规则 ID ${id} 不存在`
-        );
-      }
+      const ruleIndex = this.getRuleIndexOrThrow(rules, id);
 
       rules[ruleIndex].isActive = false;
       this.persistence.saveRules(rules);

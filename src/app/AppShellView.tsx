@@ -4,7 +4,6 @@ import type { AppState } from '../types';
 import type { BetPlacementResult } from '../domain/betting';
 import type { PetState, PetMood, FeedResult, TaskCompletionReward } from '../types/pet';
 import { Dashboard } from '../components/Dashboard';
-import { AuthWrapper } from '../components/AuthWrapper';
 import { queryOptimizer } from '../utils/queryOptimizer';
 import { useI18n } from '../i18n';
 
@@ -44,10 +43,8 @@ interface ImportChainsOptions {
 }
 
 interface AppShellViewProps {
-  storageKind: 'local' | 'supabase';
   state: AppState;
   isInitialized: boolean;
-  isAuthReady: boolean;
   isLoadingData: boolean;
 
   showAuxiliaryJudgment: string | null;
@@ -113,10 +110,8 @@ interface AppShellViewProps {
 }
 
 export function AppShellView({
-  storageKind,
   state,
   isInitialized,
-  isAuthReady,
   isLoadingData,
   showAuxiliaryJudgment,
   setShowAuxiliaryJudgment,
@@ -188,17 +183,19 @@ export function AppShellView({
       );
     }
 
+    const editorProps = {
+      chain: state.editingChain || undefined,
+      isEditing: !!state.editingChain,
+      initialParentId: state.viewingChainId || undefined,
+      onSave: handleSaveChain,
+      onCancel: handleBackToDashboard,
+    };
+
     switch (state.currentView) {
       case 'editor':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <ChainEditor
-              chain={state.editingChain || undefined}
-              isEditing={!!state.editingChain}
-              initialParentId={state.viewingChainId || undefined}
-              onSave={handleSaveChain}
-              onCancel={handleBackToDashboard}
-            />
+            <ChainEditor {...editorProps} />
             {renderAuxiliaryJudgment()}
           </Suspense>
         );
@@ -206,13 +203,7 @@ export function AppShellView({
       case 'taskgroup-editor':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <TaskGroupEditor
-              chain={state.editingChain || undefined}
-              isEditing={!!state.editingChain}
-              initialParentId={state.viewingChainId || undefined}
-              onSave={handleSaveChain}
-              onCancel={handleBackToDashboard}
-            />
+            <TaskGroupEditor {...editorProps} />
           </Suspense>
         );
 
@@ -257,7 +248,7 @@ export function AppShellView({
         const viewingGroup = state.chains.find(c => c.id === state.viewingChainId);
         if (!viewingGroup) return null;
 
-        const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains);
+        const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains, state.chainsRevision);
         const groupNode = chainTree.find(node => node.id === state.viewingChainId);
         if (!groupNode) return null;
 
@@ -301,6 +292,7 @@ export function AppShellView({
           <>
             <Dashboard
               chains={state.chains}
+              chainsRevision={state.chainsRevision}
               scheduledSessions={state.scheduledSessions}
               isLoading={isLoadingData}
               onCreateChain={handleCreateChain}
@@ -325,11 +317,7 @@ export function AppShellView({
     }
   };
 
-  const content = storageKind !== 'supabase' ? (
-    renderCurrentView()
-  ) : (
-    <AuthWrapper>{renderCurrentView()}</AuthWrapper>
-  );
+
 
   return (
     <>
@@ -342,12 +330,11 @@ export function AppShellView({
       </a>
 
       <main id="main" tabIndex={-1}>
-        {content}
+        {renderCurrentView()}
       </main>
 
       {/* Pet Widget - 懒加载 */}
-      {isAuthReady && (
-        <Suspense fallback={null}>
+      <Suspense fallback={null}>
           <PetWidget
             pet={petDomain.pet}
             mood={petDomain.mood}
@@ -361,8 +348,7 @@ export function AppShellView({
             onMinimize={petDomain.minimize}
             onExpand={petDomain.expand}
           />
-        </Suspense>
-      )}
+      </Suspense>
 
       {/* Betting Modal - 懒加载 */}
       {showBettingModal && pendingChainId && currentSessionId && (

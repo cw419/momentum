@@ -8,7 +8,7 @@
 import { ExceptionRule, ExceptionRuleType } from '../../types';
 import { RuleActionType, validateRuleTypeForAction } from './RuleTypeValidator';
 
-export interface RuleTypeStats {
+interface RuleTypeStats {
   total: number;
   pauseOnly: number;
   earlyCompletionOnly: number;
@@ -16,7 +16,7 @@ export interface RuleTypeStats {
   leastUsedType: ExceptionRuleType | null;
 }
 
-export interface RuleUsageSuggestions {
+interface RuleUsageSuggestions {
   mostUsed: ExceptionRule[];
   recentlyUsed: ExceptionRule[];
   suggested: ExceptionRule[];

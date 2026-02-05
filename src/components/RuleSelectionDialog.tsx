@@ -177,8 +177,6 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       return;
     }
 
-    searchOptimizer.updateIndex(rules);
-
     if (searchQuery.trim()) {
       searchOptimizer.searchRulesDebounced(rules, searchQuery, setSearchResults);
       return;

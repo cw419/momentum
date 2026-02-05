@@ -71,6 +71,7 @@ export function useRulesDomain({
     setState(prev => ({
       ...prev,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
       scheduledSessions: updatedScheduledSessions,
     }));
     setShowAuxiliaryJudgment(null);
@@ -90,6 +91,7 @@ export function useRulesDomain({
     setState(prev => ({
       ...prev,
       chains: updatedChains,
+      chainsRevision: prev.chainsRevision + 1,
       scheduledSessions: updatedScheduledSessions,
     }));
     setShowAuxiliaryJudgment(null);

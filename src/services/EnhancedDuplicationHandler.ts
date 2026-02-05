@@ -3,12 +3,8 @@
  * 提供实时重复检测、用户友好的处理选项和智能建议
  */
 
-import {
-  ExceptionRule,
-  ExceptionRuleType,
-  ExceptionRuleError,
-  ExceptionRuleException
-} from '../types';
+import { ExceptionRuleType, ExceptionRuleError, ExceptionRuleException } from '../types';
+import type { ExceptionRule } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { tr } from '../utils/runtimeI18n';
 import { exceptionRuleCache } from '../utils/exceptionRuleCache';
@@ -28,28 +24,13 @@ import {
   generateSuggestions,
   getConflictMessage
 } from './duplication/enhanced-handler/suggestionHelpers';
+import type {
+  DuplicationCheckResult,
+  DuplicationConflictType,
+  DuplicationSuggestion,
+} from './duplication/enhanced-handler/types';
 
-type DuplicationConflictType = 'exact' | 'similar' | 'none';
-type DuplicationSuggestionType = 'use_existing' | 'modify_name' | 'create_anyway' | 'merge_rules';
-
-export interface DuplicationCheckResult {
-  hasConflict: boolean;
-  conflictType: DuplicationConflictType;
-  existingRules: ExceptionRule[];
-  suggestions: DuplicationSuggestion[];
-  canProceed: boolean;
-}
-
-export interface DuplicationSuggestion {
-  type: DuplicationSuggestionType;
-  title: string;
-  description: string;
-  rule?: ExceptionRule;
-  suggestedName?: string;
-  handler: () => Promise<ExceptionRule | null>;
-}
-
-export interface RealTimeDuplicationCheck {
+interface RealTimeDuplicationCheck {
   isChecking: boolean;
   hasConflict: boolean;
   conflictMessage?: string;

@@ -165,30 +165,8 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
     }
   };
 
-  if (type === 'checkbox') {
-    return (
-      <div className="space-y-2">
-        {renderField()}
-        {description && (
-          <p id={descriptionId} className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
-            {description}
-          </p>
-        )}
-        {error && (
-          <p id={errorId} className="text-sm text-red-600 dark:text-red-400 font-chinese" role="alert">
-            {error}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <label htmlFor={fieldId} className={labelClasses}>
-        {label}
-      </label>
-      {renderField()}
+  const descriptionAndError = (
+    <>
       {description && (
         <p id={descriptionId} className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
           {description}
@@ -199,6 +177,25 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
           {error}
         </p>
       )}
+    </>
+  );
+
+  if (type === 'checkbox') {
+    return (
+      <div className="space-y-2">
+        {renderField()}
+        {descriptionAndError}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <label htmlFor={fieldId} className={labelClasses}>
+        {label}
+      </label>
+      {renderField()}
+      {descriptionAndError}
     </div>
   );
 };

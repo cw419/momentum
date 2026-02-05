@@ -9,7 +9,8 @@
     "**/__mocks__/**",
     "**/*.test.*",
     "**/*.spec.*",
-    "**/test/**"
+    "**/test/**",
+    "**/database.types.ts"
   ],
   "format": ["typescript", "tsx"],
   "output": "./reports/jscpd",

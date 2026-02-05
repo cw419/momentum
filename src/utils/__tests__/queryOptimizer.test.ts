@@ -160,6 +160,39 @@ describe('QueryOptimizer', () => {
       expect(reactPerformanceMonitor.trackCacheHit).toHaveBeenCalled();
     });
 
+    test('should use cached tree when revision matches (fast path)', () => {
+      const chains1 = [createMockChain('1')];
+      const chains2 = [createMockChain('1'), createMockChain('2')];
+
+      const mockTree: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      buildChainTree.mockReturnValue(mockTree);
+
+      const result1 = queryOptimizer.memoizedBuildChainTree(chains1, 1);
+      const result2 = queryOptimizer.memoizedBuildChainTree(chains2, 1);
+
+      expect(result1).toBe(mockTree);
+      expect(result2).toBe(mockTree);
+      expect(buildChainTree).toHaveBeenCalledTimes(1);
+      expect(reactPerformanceMonitor.trackCacheHit).toHaveBeenCalled();
+    });
+
+    test('should rebuild tree when revision changes (fast path)', () => {
+      const chains = [createMockChain('1')];
+
+      const mockTree1: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree2: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+
+      buildChainTree.mockReturnValueOnce(mockTree1).mockReturnValueOnce(mockTree2);
+
+      const result1 = queryOptimizer.memoizedBuildChainTree(chains, 1);
+      const result2 = queryOptimizer.memoizedBuildChainTree(chains, 2);
+
+      expect(result1).toBe(mockTree1);
+      expect(result2).toBe(mockTree2);
+      expect(buildChainTree).toHaveBeenCalledTimes(2);
+      expect(reactPerformanceMonitor.trackCacheMiss).toHaveBeenCalled();
+    });
+
     test('should rebuild tree when chain data changes', () => {
       const chains1 = [createMockChain('1')];
       const chains2 = [

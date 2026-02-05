@@ -219,11 +219,11 @@ General-purpose query cache for database operations and chain tree building.
    );
    ```
 
-2. **Memoized Chain Tree Building**: Smart caching with hash-based invalidation
+2. **Memoized Chain Tree Building**: Revision-first caching (hash fallback)
 
    ```typescript
-   // Returns cached tree if chains haven't changed
-   const tree = queryOptimizer.memoizedBuildChainTree(chains);
+   // Prefer passing a monotonic `revision` (e.g. `AppState.chainsRevision`) to avoid hashing.
+   const tree = queryOptimizer.memoizedBuildChainTree(chains, chainsRevision);
    ```
 
 3. **Batch Data Loading**: Parallel query execution
@@ -369,7 +369,7 @@ exceptionRuleCache.subscribe((chainId, rules) => {
 1. **TTL-based expiration**: All caches have finite TTL
 2. **Periodic cleanup**: Background intervals remove expired entries
 3. **Write invalidation**: Modifications invalidate affected caches
-4. **Hash-based validation**: Chain tree uses content hashing
+4. **Revision-first + hash fallback**: Chain tree prefers a monotonic revision number (when provided) and falls back to content hashing
 
 ---
 

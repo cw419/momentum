@@ -51,15 +51,15 @@ import {
   type SystemHealthStatus
 } from './rule-manager';
 
-export type DuplicationSuggestions = DuplicationReport & { nameSuggestions: string[] };
+type DuplicationSuggestions = DuplicationReport & { nameSuggestions: string[] };
 
-export interface RuleUsageSuggestions {
+interface RuleUsageSuggestions {
   mostUsed: ExceptionRule[];
   recentlyUsed: ExceptionRule[];
   suggested: ExceptionRule[];
 }
 
-export interface RuleTypeStats {
+interface RuleTypeStats {
   total: number;
   pauseOnly: number;
   earlyCompletionOnly: number;

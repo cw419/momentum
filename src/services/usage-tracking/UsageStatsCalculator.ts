@@ -81,7 +81,7 @@ export function calculateOverallUsageStats(activeRules: ExceptionRule[], allReco
   };
 }
 
-export interface UsageStatsInTimeRange {
+interface UsageStatsInTimeRange {
   totalUsage: number;
   pauseUsage: number;
   earlyCompletionUsage: number;

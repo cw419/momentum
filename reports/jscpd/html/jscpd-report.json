@@ -1,6 +1,6 @@
 {
   "statistics": {
-    "detectionDate": "2026-02-01T15:16:29.160Z",
+    "detectionDate": "2026-02-04T14:20:09.065Z",
     "formats": {
       "typescript": {
         "sources": {
@@ -76,9 +76,21 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
+          "src/services/duplication/enhanced-handler/types.ts": {
+            "lines": 20,
+            "tokens": 171,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
           "src/services/duplication/enhanced-handler/suggestionHelpers.ts": {
-            "lines": 111,
-            "tokens": 1108,
+            "lines": 109,
+            "tokens": 1093,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -126,7 +138,7 @@
           },
           "src/infra/storage/supabase/testHelpers.ts": {
             "lines": 101,
-            "tokens": 1267,
+            "tokens": 1245,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -281,8 +293,8 @@
             "newClones": 0
           },
           "src/hooks/domains/sessions/start.ts": {
-            "lines": 286,
-            "tokens": 2994,
+            "lines": 289,
+            "tokens": 3032,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -293,8 +305,8 @@
             "newClones": 0
           },
           "src/hooks/domains/sessions/scheduling.ts": {
-            "lines": 96,
-            "tokens": 1091,
+            "lines": 98,
+            "tokens": 1106,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -317,8 +329,8 @@
             "newClones": 0
           },
           "src/hooks/domains/sessions/completion.ts": {
-            "lines": 269,
-            "tokens": 2631,
+            "lines": 272,
+            "tokens": 2650,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -330,7 +342,7 @@
           },
           "src/components/rsip/hooks/useRSIPTimers.ts": {
             "lines": 90,
-            "tokens": 1060,
+            "tokens": 1049,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -342,7 +354,7 @@
           },
           "src/components/rsip/hooks/useRSIPReparent.ts": {
             "lines": 165,
-            "tokens": 1871,
+            "tokens": 1843,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -354,7 +366,7 @@
           },
           "src/components/rsip/hooks/useRSIPLayout.ts": {
             "lines": 141,
-            "tokens": 1597,
+            "tokens": 1581,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -366,7 +378,7 @@
           },
           "src/components/rsip/hooks/useRSIPConnectors.ts": {
             "lines": 104,
-            "tokens": 1292,
+            "tokens": 1281,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -378,7 +390,7 @@
           },
           "src/components/rsip/hooks/useRSIPCamera.ts": {
             "lines": 128,
-            "tokens": 1524,
+            "tokens": 1503,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -448,6 +460,18 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
+          "src/utils/rule-search-optimizer/types.ts": {
+            "lines": 13,
+            "tokens": 120,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
           "src/utils/rule-search-optimizer/searchSuggestions.ts": {
             "lines": 36,
             "tokens": 405,
@@ -461,8 +485,8 @@
             "newClones": 0
           },
           "src/utils/rule-search-optimizer/scoring.ts": {
-            "lines": 53,
-            "tokens": 617,
+            "lines": 60,
+            "tokens": 674,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -498,7 +522,7 @@
           },
           "src/utils/layout-monitor/ResizeChangeObserver.ts": {
             "lines": 27,
-            "tokens": 238,
+            "tokens": 236,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -510,7 +534,7 @@
           },
           "src/utils/layout-monitor/LayoutShiftObserver.ts": {
             "lines": 44,
-            "tokens": 444,
+            "tokens": 442,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -522,7 +546,7 @@
           },
           "src/utils/layout-monitor/LayoutIssueDetector.ts": {
             "lines": 324,
-            "tokens": 2851,
+            "tokens": 2849,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -534,7 +558,7 @@
           },
           "src/utils/layout-monitor/DOMChangeObserver.ts": {
             "lines": 40,
-            "tokens": 378,
+            "tokens": 376,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -582,7 +606,7 @@
           },
           "src/services/usage-tracking/UsageTrendAnalyzer.ts": {
             "lines": 117,
-            "tokens": 1099,
+            "tokens": 1095,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -594,7 +618,7 @@
           },
           "src/services/usage-tracking/UsageStatsCalculator.ts": {
             "lines": 135,
-            "tokens": 1511,
+            "tokens": 1509,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -606,7 +630,7 @@
           },
           "src/services/usage-tracking/UsageRecorder.ts": {
             "lines": 109,
-            "tokens": 788,
+            "tokens": 786,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -750,7 +774,7 @@
           },
           "src/services/rule-classification/RuleSuggestionEngine.ts": {
             "lines": 138,
-            "tokens": 1263,
+            "tokens": 1259,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -906,7 +930,7 @@
           },
           "src/services/integrity/IntegrityTypes.ts": {
             "lines": 49,
-            "tokens": 307,
+            "tokens": 294,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -954,7 +978,7 @@
           },
           "src/services/import-export/DataTransformers.ts": {
             "lines": 62,
-            "tokens": 632,
+            "tokens": 624,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1050,7 +1074,7 @@
           },
           "src/services/exception-rule-storage/RuleValidator.ts": {
             "lines": 199,
-            "tokens": 1615,
+            "tokens": 1612,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1061,14 +1085,14 @@
             "newClones": 0
           },
           "src/services/exception-rule-storage/RuleRepository.ts": {
-            "lines": 189,
-            "tokens": 1487,
+            "lines": 186,
+            "tokens": 1457,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 24,
-            "duplicatedTokens": 214,
-            "percentage": 12.7,
-            "percentageTokens": 14.39,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -1146,7 +1170,7 @@
           },
           "src/services/duplication/duplicationDetection.ts": {
             "lines": 181,
-            "tokens": 1678,
+            "tokens": 1674,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1181,8 +1205,8 @@
             "newClones": 0
           },
           "src/hooks/domains/useRulesDomain.ts": {
-            "lines": 98,
-            "tokens": 857,
+            "lines": 100,
+            "tokens": 869,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1205,8 +1229,8 @@
             "newClones": 0
           },
           "src/hooks/domains/useRecycleBinDomain.ts": {
-            "lines": 143,
-            "tokens": 1341,
+            "lines": 148,
+            "tokens": 1369,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1229,8 +1253,8 @@
             "newClones": 0
           },
           "src/hooks/domains/useImportExportDomain.ts": {
-            "lines": 183,
-            "tokens": 1917,
+            "lines": 185,
+            "tokens": 1929,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1241,14 +1265,14 @@
             "newClones": 0
           },
           "src/hooks/domains/useGroupDomain.ts": {
-            "lines": 178,
-            "tokens": 1811,
+            "lines": 194,
+            "tokens": 1841,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 30,
-            "duplicatedTokens": 236,
-            "percentage": 16.85,
-            "percentageTokens": 13.03,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -1265,8 +1289,8 @@
             "newClones": 0
           },
           "src/hooks/domains/useChainsDomain.ts": {
-            "lines": 197,
-            "tokens": 2093,
+            "lines": 199,
+            "tokens": 2113,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1374,7 +1398,7 @@
           },
           "src/components/chain-card/types.ts": {
             "lines": 47,
-            "tokens": 423,
+            "tokens": 421,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1409,14 +1433,14 @@
             "newClones": 0
           },
           "src/app/hooks/useViewUrlSync.ts": {
-            "lines": 113,
-            "tokens": 989,
+            "lines": 112,
+            "tokens": 973,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 22,
-            "duplicatedTokens": 176,
-            "percentage": 19.47,
-            "percentageTokens": 17.8,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -1434,7 +1458,7 @@
           },
           "src/app/hooks/usePeriodicCleanup.ts": {
             "lines": 109,
-            "tokens": 1022,
+            "tokens": 1032,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1457,8 +1481,8 @@
             "newClones": 0
           },
           "src/app/hooks/useAppDataLoad.ts": {
-            "lines": 210,
-            "tokens": 2203,
+            "lines": 212,
+            "tokens": 2213,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1580,17 +1604,17 @@
             "lines": 26,
             "tokens": 317,
             "sources": 1,
-            "clones": 1,
-            "duplicatedLines": 18,
-            "duplicatedTokens": 169,
-            "percentage": 69.23,
-            "percentageTokens": 53.31,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
           "src/utils/ruleSearchOptimizer.ts": {
-            "lines": 293,
-            "tokens": 2713,
+            "lines": 419,
+            "tokens": 4236,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1637,8 +1661,8 @@
             "newClones": 0
           },
           "src/utils/queryOptimizer.ts": {
-            "lines": 300,
-            "tokens": 2448,
+            "lines": 322,
+            "tokens": 2618,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1673,8 +1697,8 @@
             "newClones": 0
           },
           "src/utils/performanceLogger.ts": {
-            "lines": 112,
-            "tokens": 1073,
+            "lines": 146,
+            "tokens": 1322,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1685,14 +1709,14 @@
             "newClones": 0
           },
           "src/utils/notifications.ts": {
-            "lines": 235,
-            "tokens": 2269,
+            "lines": 215,
+            "tokens": 1990,
             "sources": 1,
-            "clones": 1,
-            "duplicatedLines": 18,
-            "duplicatedTokens": 169,
-            "percentage": 7.66,
-            "percentageTokens": 7.45,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -1782,7 +1806,7 @@
           },
           "src/utils/fireAndForget.ts": {
             "lines": 16,
-            "tokens": 211,
+            "tokens": 208,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1853,8 +1877,8 @@
             "newClones": 0
           },
           "src/utils/chainTree.ts": {
-            "lines": 399,
-            "tokens": 3831,
+            "lines": 411,
+            "tokens": 3898,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1889,7 +1913,7 @@
             "newClones": 0
           },
           "src/types/index.ts": {
-            "lines": 510,
+            "lines": 511,
             "tokens": 4005,
             "sources": 1,
             "clones": 0,
@@ -1962,7 +1986,7 @@
           },
           "src/services/SystemHealthService.ts": {
             "lines": 431,
-            "tokens": 3758,
+            "tokens": 3749,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2069,8 +2093,8 @@
             "newClones": 0
           },
           "src/services/ExceptionRuleMigration.ts": {
-            "lines": 90,
-            "tokens": 492,
+            "lines": 88,
+            "tokens": 470,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2082,7 +2106,7 @@
           },
           "src/services/ExceptionRuleManager.ts": {
             "lines": 317,
-            "tokens": 2548,
+            "tokens": 2542,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2117,8 +2141,8 @@
             "newClones": 0
           },
           "src/services/EnhancedDuplicationHandler.ts": {
-            "lines": 240,
-            "tokens": 1762,
+            "lines": 221,
+            "tokens": 1616,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2141,8 +2165,8 @@
             "newClones": 0
           },
           "src/services/CheckinService.ts": {
-            "lines": 38,
-            "tokens": 442,
+            "lines": 36,
+            "tokens": 417,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2161,18 +2185,6 @@
             "duplicatedTokens": 0,
             "percentage": 0,
             "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/lib/database.types.ts": {
-            "lines": 575,
-            "tokens": 4206,
-            "sources": 1,
-            "clones": 4,
-            "duplicatedLines": 56,
-            "duplicatedTokens": 562,
-            "percentage": 9.74,
-            "percentageTokens": 13.36,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -2274,7 +2286,7 @@
           },
           "src/domain/errors.ts": {
             "lines": 23,
-            "tokens": 247,
+            "tokens": 240,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2334,7 +2346,7 @@
           },
           "src/components/useTaskGroupEditor.ts": {
             "lines": 222,
-            "tokens": 2171,
+            "tokens": 2155,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2382,7 +2394,7 @@
           },
           "src/app/viewUrlState.ts": {
             "lines": 126,
-            "tokens": 1253,
+            "tokens": 1249,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2394,14 +2406,14 @@
           }
         },
         "total": {
-          "lines": 27308,
-          "tokens": 252821,
-          "sources": 199,
-          "clones": 8,
-          "duplicatedLines": 104,
-          "duplicatedTokens": 969,
-          "percentage": 0.38,
-          "percentageTokens": 0.38,
+          "lines": 26956,
+          "tokens": 250429,
+          "sources": 200,
+          "clones": 2,
+          "duplicatedLines": 20,
+          "duplicatedTokens": 206,
+          "percentage": 0.07,
+          "percentageTokens": 0.08,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
@@ -3333,8 +3345,8 @@
             "newClones": 0
           },
           "src/components/SliderContainer.tsx": {
-            "lines": 74,
-            "tokens": 615,
+            "lines": 39,
+            "tokens": 303,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3573,8 +3585,8 @@
             "newClones": 0
           },
           "src/components/DailyCheckinDemo.tsx": {
-            "lines": 80,
-            "tokens": 755,
+            "lines": 41,
+            "tokens": 340,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3585,8 +3597,8 @@
             "newClones": 0
           },
           "src/components/DailyCheckin.tsx": {
-            "lines": 186,
-            "tokens": 1744,
+            "lines": 147,
+            "tokens": 1328,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3705,8 +3717,8 @@
             "newClones": 0
           },
           "src/components/AccessibleFormField.tsx": {
-            "lines": 103,
-            "tokens": 751,
+            "lines": 99,
+            "tokens": 673,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3717,20 +3729,20 @@
             "newClones": 0
           },
           "src/app/AppShellView.tsx": {
-            "lines": 213,
-            "tokens": 1691,
+            "lines": 212,
+            "tokens": 1684,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 52,
-            "duplicatedTokens": 422,
-            "percentage": 24.41,
-            "percentageTokens": 24.96,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
           "src/app/AppShellContainer.tsx": {
-            "lines": 37,
-            "tokens": 227,
+            "lines": 38,
+            "tokens": 233,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3742,14 +3754,14 @@
           }
         },
         "total": {
-          "lines": 7707,
-          "tokens": 66712,
+          "lines": 7590,
+          "tokens": 65490,
           "sources": 111,
-          "clones": 1,
-          "duplicatedLines": 26,
-          "duplicatedTokens": 211,
-          "percentage": 0.34,
-          "percentageTokens": 0.32,
+          "clones": 0,
+          "duplicatedLines": 0,
+          "duplicatedTokens": 0,
+          "percentage": 0,
+          "percentageTokens": 0,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
@@ -3830,7 +3842,7 @@
           },
           "src/components/virtualized-rule-list/highlightText.tsx": {
             "lines": 33,
-            "tokens": 298,
+            "tokens": 296,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -4332,6 +4344,18 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
+          "src/components/daily-checkin/DailyCheckinShared.tsx": {
+            "lines": 79,
+            "tokens": 594,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
           "src/components/chain-editor/ChainEditorView.tsx": {
             "lines": 51,
             "tokens": 521,
@@ -4717,26 +4741,26 @@
             "newClones": 0
           },
           "src/components/SliderContainer.tsx": {
-            "lines": 163,
-            "tokens": 1372,
+            "lines": 153,
+            "tokens": 1259,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 32,
-            "duplicatedTokens": 226,
-            "percentage": 19.63,
-            "percentageTokens": 16.47,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
           "src/components/SettingSection.tsx": {
-            "lines": 89,
-            "tokens": 632,
+            "lines": 83,
+            "tokens": 562,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 28,
-            "duplicatedTokens": 188,
-            "percentage": 31.46,
-            "percentageTokens": 29.75,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -4753,8 +4777,8 @@
             "newClones": 0
           },
           "src/components/RuleSelectionDialog.tsx": {
-            "lines": 278,
-            "tokens": 3051,
+            "lines": 276,
+            "tokens": 3029,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -4969,8 +4993,8 @@
             "newClones": 0
           },
           "src/components/Dashboard.tsx": {
-            "lines": 275,
-            "tokens": 2921,
+            "lines": 277,
+            "tokens": 2918,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -4981,26 +5005,26 @@
             "newClones": 0
           },
           "src/components/DailyCheckinDemo.tsx": {
-            "lines": 162,
-            "tokens": 1500,
+            "lines": 127,
+            "tokens": 1076,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 44,
-            "duplicatedTokens": 457,
-            "percentage": 27.16,
-            "percentageTokens": 30.47,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
           "src/components/DailyCheckin.tsx": {
-            "lines": 236,
-            "tokens": 2179,
+            "lines": 201,
+            "tokens": 1775,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 44,
-            "duplicatedTokens": 457,
-            "percentage": 18.64,
-            "percentageTokens": 20.97,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -5161,20 +5185,20 @@
             "newClones": 0
           },
           "src/components/AccessibleFormField.tsx": {
-            "lines": 203,
-            "tokens": 1651,
+            "lines": 200,
+            "tokens": 1562,
             "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 28,
-            "duplicatedTokens": 234,
-            "percentage": 13.79,
-            "percentageTokens": 14.17,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
           "src/app/AppShellView.tsx": {
-            "lines": 377,
-            "tokens": 3656,
+            "lines": 378,
+            "tokens": 3644,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -5185,8 +5209,8 @@
             "newClones": 0
           },
           "src/app/AppShellContainer.tsx": {
-            "lines": 221,
-            "tokens": 1642,
+            "lines": 223,
+            "tokens": 1655,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -5198,7 +5222,7 @@
           },
           "src/main.tsx": {
             "lines": 42,
-            "tokens": 349,
+            "tokens": 342,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -5222,105 +5246,33 @@
           }
         },
         "total": {
-          "lines": 15997,
-          "tokens": 144814,
-          "sources": 122,
-          "clones": 11,
-          "duplicatedLines": 191,
-          "duplicatedTokens": 1685,
-          "percentage": 1.19,
-          "percentageTokens": 1.16,
+          "lines": 15990,
+          "tokens": 144275,
+          "sources": 123,
+          "clones": 6,
+          "duplicatedLines": 103,
+          "duplicatedTokens": 904,
+          "percentage": 0.64,
+          "percentageTokens": 0.63,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
       }
     },
     "total": {
-      "lines": 51012,
-      "tokens": 464347,
-      "sources": 432,
-      "clones": 20,
-      "duplicatedLines": 321,
-      "duplicatedTokens": 2865,
-      "percentage": 0.63,
-      "percentageTokens": 0.62,
+      "lines": 50536,
+      "tokens": 460194,
+      "sources": 434,
+      "clones": 8,
+      "duplicatedLines": 123,
+      "duplicatedTokens": 1110,
+      "percentage": 0.24,
+      "percentageTokens": 0.24,
       "newDuplicatedLines": 0,
       "newClones": 0
     }
   },
   "duplicates": [
-    {
-      "format": "typescript",
-      "lines": 13,
-      "fragment": "> {\r\n    try {\r\n      const rules = await this.getRules();\r\n      const ruleIndex = rules.findIndex(rule => rule.id === id);\r\n\r\n      if (ruleIndex === -1) {\r\n        throw new ExceptionRuleException(\r\n          ExceptionRuleError.RULE_NOT_FOUND,\r\n          `规则 ID ${id} 不存在`\r\n        );\r\n      }\r\n\r\n      rules",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\services\\exception-rule-storage\\RuleRepository.ts",
-        "start": 144,
-        "end": 156,
-        "startLoc": {
-          "line": 144,
-          "column": 5,
-          "position": 1103
-        },
-        "endLoc": {
-          "line": 156,
-          "column": 6,
-          "position": 1210
-        }
-      },
-      "secondFile": {
-        "name": "src\\services\\exception-rule-storage\\RuleRepository.ts",
-        "start": 100,
-        "end": 112,
-        "startLoc": {
-          "line": 100,
-          "column": 14,
-          "position": 742
-        },
-        "endLoc": {
-          "line": 112,
-          "column": 6,
-          "position": 847
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 16,
-      "fragment": ")\r\n      );\r\n\r\n      try {\r\n        const currentChains = await storage.getChains();\r\n        setState(prev => ({\r\n          ...prev,\r\n          chains: currentChains,\r\n        }));\r\n      } catch (reloadError) {\r\n        logger.error('APP_SHELL', '重新加载数据也失败了', undefined, reloadError as Error);\r\n      }\r\n    }\r\n  };\r\n\r\n  const handleReorderUnit",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\hooks\\domains\\useGroupDomain.ts",
-        "start": 139,
-        "end": 154,
-        "startLoc": {
-          "line": 139,
-          "column": 80,
-          "position": 1292
-        },
-        "endLoc": {
-          "line": 154,
-          "column": 18,
-          "position": 1410
-        }
-      },
-      "secondFile": {
-        "name": "src\\hooks\\domains\\useGroupDomain.ts",
-        "start": 94,
-        "end": 109,
-        "startLoc": {
-          "line": 94,
-          "column": 64,
-          "position": 854
-        },
-        "endLoc": {
-          "line": 109,
-          "column": 28,
-          "position": 972
-        }
-      }
-    },
     {
       "format": "tsx",
       "lines": 16,
@@ -5431,42 +5383,6 @@
     },
     {
       "format": "typescript",
-      "lines": 12,
-      "fragment": "isApplyingUrlRef.current = true;\n      setState(prev => ({\n        ...prev,\n        currentView: next.currentView,\n        viewingChainId: next.viewingChainId,\n        editingChain: next.editingChain,\n      }));\n\n      setTimeout(() => {\n        isApplyingUrlRef.current = false;\n      }, 0);\n    };",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\app\\hooks\\useViewUrlSync.ts",
-        "start": 98,
-        "end": 109,
-        "startLoc": {
-          "line": 98,
-          "column": 7,
-          "position": 857
-        },
-        "endLoc": {
-          "line": 109,
-          "column": 2,
-          "position": 945
-        }
-      },
-      "secondFile": {
-        "name": "src\\app\\hooks\\useViewUrlSync.ts",
-        "start": 50,
-        "end": 61,
-        "startLoc": {
-          "line": 50,
-          "column": 5,
-          "position": 439
-        },
-        "endLoc": {
-          "line": 61,
-          "column": 2,
-          "position": 527
-        }
-      }
-    },
-    {
-      "format": "typescript",
       "lines": 11,
       "fragment": "const existing = stats[existingIndex];\r\n      const newTotalTime = existing.totalTime + actualDuration;\r\n      const newTotalCompletions = existing.totalCompletions + 1;\r\n      \r\n      stats[existingIndex] = {\r\n        ...existing,\r\n        lastCompletionTime: actualDuration,\r\n        averageCompletionTime: Math.round(newTotalTime / newTotalCompletions),\r\n        totalCompletions: newTotalCompletions,\r\n        totalTime: newTotalTime\r\n      }",
       "tokens": 0,
@@ -5503,42 +5419,6 @@
     },
     {
       "format": "typescript",
-      "lines": 19,
-      "fragment": ";\r\n\r\nconst detectBrowserLanguage = (): Language => {\r\n  if (typeof navigator === 'undefined') return 'en';\r\n\r\n  const candidates =\r\n    Array.isArray(navigator.languages) && navigator.languages.length > 0\r\n      ? navigator.languages\r\n      : [navigator.language];\r\n\r\n  for (const candidate of candidates) {\r\n    if (typeof candidate !== 'string') continue;\r\n    if (candidate.toLowerCase().startsWith('zh')) return 'zh';\r\n  }\r\n\r\n  return 'en';\r\n};\r\n\r\nconst",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\utils\\notifications.ts",
-        "start": 9,
-        "end": 27,
-        "startLoc": {
-          "line": 9,
-          "column": 5,
-          "position": 60
-        },
-        "endLoc": {
-          "line": 27,
-          "column": 6,
-          "position": 229
-        }
-      },
-      "secondFile": {
-        "name": "src\\utils\\runtimeI18n.ts",
-        "start": 2,
-        "end": 19,
-        "startLoc": {
-          "line": 2,
-          "column": 21,
-          "position": 27
-        },
-        "endLoc": {
-          "line": 19,
-          "column": 7,
-          "position": 194
-        }
-      }
-    },
-    {
-      "format": "typescript",
       "lines": 11,
       "fragment": "),\r\n        actions: [{\r\n          id: 'manual_intervention',\r\n          label: tr('手动处理', 'Manual fix'),\r\n          description: tr('需要手动解决此问题', 'This requires manual intervention'),\r\n          type: 'danger',\r\n          handler: async () => ({\r\n            success: false,\r\n            message: tr('需要手动处理', 'Manual intervention required')\r\n          })\r\n        }]",
       "tokens": 0,
@@ -5570,150 +5450,6 @@
           "line": 168,
           "column": 2,
           "position": 1384
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 14,
-      "fragment": ": string\n          is_durationless?: boolean | null\n          minimum_duration?: number | null\n          is_task_group?: boolean | null\n          task_repeat_count?: number | null\n          group_repeat_count?: number | null\n          time_limit_hours?: number | null\n          time_limit_exceptions?: Json\n          group_started_at?: string | null\n          group_expires_at?: string | null\n          deleted_at?: string | null\n          created_at?: string | null\n          last_completed_at?: string | null\n          user_id?",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\lib\\database.types.ts",
-        "start": 97,
-        "end": 110,
-        "startLoc": {
-          "line": 97,
-          "column": 2,
-          "position": 790
-        },
-        "endLoc": {
-          "line": 110,
-          "column": 2,
-          "position": 924
-        }
-      },
-      "secondFile": {
-        "name": "src\\lib\\database.types.ts",
-        "start": 64,
-        "end": 77,
-        "startLoc": {
-          "line": 64,
-          "column": 29,
-          "position": 501
-        },
-        "endLoc": {
-          "line": 77,
-          "column": 2,
-          "position": 637
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 16,
-      "fragment": ": string\n          sort_order?: number\n          use_timer?: boolean\n          timer_minutes?: number | null\n          created_at?: string\n          emoji?: string | null\n          stability_phase?: 'E0' | 'E1' | 'E2' | null\n          phase_started_at?: string | null\n          last_executed_at?: string | null\n          last_violated_at?: string | null\n          consecutive_executions?: number | null\n          consecutive_violations?: number | null\n          total_executions?: number | null\n          total_violations?: number | null\n        }\n        Relationships",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\lib\\database.types.ts",
-        "start": 268,
-        "end": 283,
-        "startLoc": {
-          "line": 268,
-          "column": 2,
-          "position": 2136
-        },
-        "endLoc": {
-          "line": 283,
-          "column": 14,
-          "position": 2283
-        }
-      },
-      "secondFile": {
-        "name": "src\\lib\\database.types.ts",
-        "start": 248,
-        "end": 263,
-        "startLoc": {
-          "line": 248,
-          "column": 5,
-          "position": 1949
-        },
-        "endLoc": {
-          "line": 263,
-          "column": 7,
-          "position": 2096
-        }
-      }
-    },
-    {
-      "format": "tsx",
-      "lines": 17,
-      "fragment": "\">\r\n              <input\r\n                type=\"number\"\r\n                min={keyboardInputProps.min}\r\n                max={keyboardInputProps.max}\r\n                value={keyboardInputProps.value || ''}\r\n                onChange={handleKeyboardInputChange}\r\n                placeholder={keyboardInputProps.placeholder}\r\n                className=\"bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300\"\r\n              />\r\n              {keyboardInputProps.unit && (\r\n                <span className=\"text-gray-500 dark:text-slate-400 font-chinese text-sm\">\r\n                  {keyboardInputProps.unit}\r\n                </span>\r\n              )}\r\n            </div>\r\n          </",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\components\\SliderContainer.tsx",
-        "start": 143,
-        "end": 159,
-        "startLoc": {
-          "line": 143,
-          "column": 28,
-          "position": 1231
-        },
-        "endLoc": {
-          "line": 159,
-          "column": 3,
-          "position": 1344
-        }
-      },
-      "secondFile": {
-        "name": "src\\components\\SliderContainer.tsx",
-        "start": 85,
-        "end": 101,
-        "startLoc": {
-          "line": 85,
-          "column": 46,
-          "position": 767
-        },
-        "endLoc": {
-          "line": 101,
-          "column": 2,
-          "position": 880
-        }
-      }
-    },
-    {
-      "format": "tsx",
-      "lines": 15,
-      "fragment": ">\n            <div className=\"w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 flex items-center justify-center\">\n              {icon}\n            </div>\n            <div className=\"flex-1\">\n              <h3 className=\"text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100\">\n                {title}\n              </h3>\n              {description && (\n                <p className=\"text-sm text-gray-600 dark:text-slate-400 mt-1 font-chinese\">\n                  {description}\n                </p>\n              )}\n            </div>\n          </",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\components\\SettingSection.tsx",
-        "start": 65,
-        "end": 79,
-        "startLoc": {
-          "line": 65,
-          "column": 2,
-          "position": 469
-        },
-        "endLoc": {
-          "line": 79,
-          "column": 3,
-          "position": 563
-        }
-      },
-      "secondFile": {
-        "name": "src\\components\\SettingSection.tsx",
-        "start": 39,
-        "end": 53,
-        "startLoc": {
-          "line": 39,
-          "column": 11,
-          "position": 289
-        },
-        "endLoc": {
-          "line": 53,
-          "column": 2,
-          "position": 383
         }
       }
     },
@@ -5822,150 +5558,6 @@
           "line": 389,
           "column": 14,
           "position": 3505
-        }
-      }
-    },
-    {
-      "format": "tsx",
-      "lines": 35,
-      "fragment": "<div className=\"grid grid-cols-2 md:grid-cols-3 gap-4 mb-6\">\r\n          {/* 总积分 */}\r\n          <div className=\"bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg p-4\">\r\n            <div className=\"flex items-center justify-between\">\r\n              <div>\r\n                <p className=\"text-sm text-yellow-700 dark:text-yellow-300 font-medium\">{tr('总积分', 'Total points')}</p>\r\n                <p className=\"text-2xl font-bold text-yellow-800 dark:text-yellow-200\">{stats.total_points}</p>\r\n              </div>\r\n              <Star className=\"w-8 h-8 text-yellow-500\" />\r\n            </div>\r\n          </div>\r\n\r\n          {/* 连续签到天数 */}\r\n          <div className=\"bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4\">\r\n            <div className=\"flex items-center justify-between\">\r\n              <div>\r\n                <p className=\"text-sm text-red-700 dark:text-red-300 font-medium\">{tr('连续天数', 'Streak')}</p>\r\n                <p className=\"text-2xl font-bold text-red-800 dark:text-red-200\">{stats.current_streak}</p>\r\n              </div>\r\n              <Flame className=\"w-8 h-8 text-red-500\" />\r\n            </div>\r\n          </div>\r\n\r\n          {/* 总签到次数 */}\r\n          <div className=\"bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4 col-span-2 md:col-span-1\">\r\n            <div className=\"flex items-center justify-between\">\r\n              <div>\r\n                <p className=\"text-sm text-green-700 dark:text-green-300 font-medium\">{tr('总签到', 'Total check-ins')}</p>\r\n                <p className=\"text-2xl font-bold text-green-800 dark:text-green-200\">{stats.total_checkins}</p>\r\n              </div>\r\n              <Gift className=\"w-8 h-8 text-green-500\" />\r\n            </div>\r\n          </div>\r\n        </div>\r\n      )",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\components\\DailyCheckin.tsx",
-        "start": 116,
-        "end": 150,
-        "startLoc": {
-          "line": 116,
-          "column": 11,
-          "position": 1043
-        },
-        "endLoc": {
-          "line": 150,
-          "column": 2,
-          "position": 1398
-        }
-      },
-      "secondFile": {
-        "name": "src\\components\\DailyCheckinDemo.tsx",
-        "start": 63,
-        "end": 98,
-        "startLoc": {
-          "line": 63,
-          "column": 7,
-          "position": 635
-        },
-        "endLoc": {
-          "line": 98,
-          "column": 2,
-          "position": 992
-        }
-      }
-    },
-    {
-      "format": "tsx",
-      "lines": 11,
-      "fragment": "? (\r\n          <div className=\"text-center py-4\">\r\n            <CheckCircle className=\"w-16 h-16 text-green-500 mx-auto mb-3\" />\r\n            <p className=\"text-lg font-semibold text-green-700 dark:text-green-300\">{tr('今天已签到', 'Checked in today')}</p>\r\n            <p className=\"text-sm text-gray-500 dark:text-gray-400 mt-1\">\r\n              {tr('明天再来获取更多积分吧！', 'Come back tomorrow for more points!')}\r\n            </p>\r\n          </div>\r\n        ) : (\r\n          <button\r\n            type",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\components\\DailyCheckin.tsx",
-        "start": 154,
-        "end": 164,
-        "startLoc": {
-          "line": 154,
-          "column": 2,
-          "position": 1429
-        },
-        "endLoc": {
-          "line": 164,
-          "column": 5,
-          "position": 1531
-        }
-      },
-      "secondFile": {
-        "name": "src\\components\\DailyCheckinDemo.tsx",
-        "start": 100,
-        "end": 110,
-        "startLoc": {
-          "line": 100,
-          "column": 2,
-          "position": 1019
-        },
-        "endLoc": {
-          "line": 110,
-          "column": 8,
-          "position": 1121
-        }
-      }
-    },
-    {
-      "format": "tsx",
-      "lines": 15,
-      "fragment": ">\r\n      {renderField()}\r\n      {description && (\r\n        <p id={descriptionId} className=\"text-sm text-gray-600 dark:text-slate-400 font-chinese\">\r\n          {description}\r\n        </p>\r\n      )}\r\n      {error && (\r\n        <p id={errorId} className=\"text-sm text-red-600 dark:text-red-400 font-chinese\" role=\"alert\">\r\n          {error}\r\n        </p>\r\n      )}\r\n    </div>\r\n  );\r\n};",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\components\\AccessibleFormField.tsx",
-        "start": 190,
-        "end": 204,
-        "startLoc": {
-          "line": 190,
-          "column": 6,
-          "position": 1534
-        },
-        "endLoc": {
-          "line": 204,
-          "column": 2,
-          "position": 1651
-        }
-      },
-      "secondFile": {
-        "name": "src\\components\\AccessibleFormField.tsx",
-        "start": 170,
-        "end": 186,
-        "startLoc": {
-          "line": 170,
-          "column": 2,
-          "position": 1367
-        },
-        "endLoc": {
-          "line": 186,
-          "column": 7,
-          "position": 1490
-        }
-      }
-    },
-    {
-      "format": "javascript",
-      "lines": 27,
-      "fragment": "}\r\n            />\r\n            {renderAuxiliaryJudgment()}\r\n          </Suspense>\r\n        );\r\n\r\n      case 'taskgroup-editor':\r\n        return (\r\n          <Suspense fallback={<LoadingFallback />}>\r\n            <TaskGroupEditor\r\n              chain={state.editingChain || undefined}\r\n              isEditing={!!state.editingChain}\r\n              initialParentId={state.viewingChainId || undefined}\r\n              onSave={handleSaveChain}\r\n              onCancel={handleBackToDashboard}\r\n            />\r\n          </Suspense>\r\n        );\r\n\r\n      case 'focus': {\r\n        const activeChain = state.chains.find(c => c.id === state.activeSession?.chainId);\r\n        if (!state.activeSession || !activeChain) return null;\r\n\r\n        return (\r\n          <Suspense fallback={<LoadingFallback />}>\r\n            <FocusMode\r\n              session={state.activeSession",
-      "tokens": 0,
-      "firstFile": {
-        "name": "src\\app\\AppShellView.tsx",
-        "start": 198,
-        "end": 224,
-        "startLoc": {
-          "line": 198,
-          "column": 22,
-          "position": 2290
-        },
-        "endLoc": {
-          "line": 224,
-          "column": 14,
-          "position": 2501
-        }
-      },
-      "secondFile": {
-        "name": "src\\app\\AppShellView.tsx",
-        "start": 164,
-        "end": 208,
-        "startLoc": {
-          "line": 164,
-          "column": 2,
-          "position": 2012
-        },
-        "endLoc": {
-          "line": 208,
-          "column": 14,
-          "position": 2353
         }
       }
     }

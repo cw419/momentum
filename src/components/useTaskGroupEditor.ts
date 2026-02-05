@@ -14,14 +14,14 @@ import {
   CUSTOM_AUXILIARY_SIGNAL_VALUE,
 } from './chain-editor/constants';
 
-export interface TaskGroupEditorFormErrors {
+interface TaskGroupEditorFormErrors {
   name?: string;
   description?: string;
   auxiliarySignal?: string;
   auxiliaryCompletionTrigger?: string;
 }
 
-export interface UseTaskGroupEditorProps {
+interface UseTaskGroupEditorProps {
   chain?: Chain;
   initialParentId?: string;
   onSave: (chain: ChainDraft) => void;

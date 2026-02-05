@@ -13,7 +13,7 @@ const mockUser: User = {
   aud: 'authenticated',
 };
 
-export interface MockQueryBuilder {
+interface MockQueryBuilder {
   select: ReturnType<typeof vi.fn>;
   insert: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
@@ -63,7 +63,7 @@ export function createMockQueryBuilder(
   return builder;
 }
 
-export function createMockSupabaseClient(queryBuilder: MockQueryBuilder = createMockQueryBuilder()) {
+function createMockSupabaseClient(queryBuilder: MockQueryBuilder = createMockQueryBuilder()) {
   return {
     from: vi.fn().mockReturnValue(queryBuilder),
     rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
