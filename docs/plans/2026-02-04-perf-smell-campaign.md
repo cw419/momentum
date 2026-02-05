@@ -108,48 +108,48 @@
 
 **环境**
 
-| 项 | 值 |
-|---|---|
-| Commit | `e1d6f99c7211ab6ad810b04fa754de8ce952bd2c` |
-| Node / npm | `v22.16.0` / `11.5.2` |
-| OS | Windows 11 家庭中文版 10.0.26200 (64 位) |
-| CPU | Intel(R) Core(TM) Ultra 9 285H (cores=16, logical=16) |
-| RAM | 31.4 GB |
+| 项         | 值                                                    |
+| ---------- | ----------------------------------------------------- |
+| Commit     | `e1d6f99c7211ab6ad810b04fa754de8ce952bd2c`            |
+| Node / npm | `v22.16.0` / `11.5.2`                                 |
+| OS         | Windows 11 家庭中文版 10.0.26200 (64 位)              |
+| CPU        | Intel(R) Core(TM) Ultra 9 285H (cores=16, logical=16) |
+| RAM        | 31.4 GB                                               |
 
 **坏味道（工具输出）**
 
-| 工具 | 指标 | Baseline 值 | 产物/备注 |
-|---|---|---:|---|
-| Madge | circular deps | 0 | `reports/quality/madge-circular.json` |
-| Knip | unused deps/exports/files | 0 | `npm run quality:knip`（exit 0） |
-| ts-prune | unused exports | 0 | `npm run quality:ts-prune`（no output） |
-| depcheck | unused/missing deps | 0 | `npm run quality:depcheck`（No depcheck issue） |
-| SonarJS | messages | 0 | `reports/quality/eslint-sonarjs.json`（`files: 347, messages: 0`） |
-| JSCPD | clones / duplicated lines | 8 / 123 (0.24%) | `reports/jscpd/jscpd-report.json` |
+| 工具     | 指标                      |     Baseline 值 | 产物/备注                                                          |
+| -------- | ------------------------- | --------------: | ------------------------------------------------------------------ |
+| Madge    | circular deps             |               0 | `reports/quality/madge-circular.json`                              |
+| Knip     | unused deps/exports/files |               0 | `npm run quality:knip`（exit 0）                                   |
+| ts-prune | unused exports            |               0 | `npm run quality:ts-prune`（no output）                            |
+| depcheck | unused/missing deps       |               0 | `npm run quality:depcheck`（No depcheck issue）                    |
+| SonarJS  | messages                  |               0 | `reports/quality/eslint-sonarjs.json`（`files: 347, messages: 0`） |
+| JSCPD    | clones / duplicated lines | 8 / 123 (0.24%) | `reports/jscpd/jscpd-report.json`                                  |
 
 **包体（Top 10 assets by gzip，来自 `npm run build` + dist 复算 gzip/br；`stats.html` 见仓库根目录）**
 
-| 文件 | Raw KB | gzip KB | br KB |
-|---|---:|---:|---:|
-| `assets/index-DVOhyvo8.js` | 269.20 | 74.90 | 60.84 |
-| `assets/vendor-react-VlY-ZC0_.js` | 138.29 | 44.42 | 38.81 |
-| `assets/vendor-supabase-FPiA6NE9.js` | 163.54 | 42.30 | 36.24 |
-| `assets/RSIPView-BY9J1IyQ.js` | 71.07 | 22.62 | 19.30 |
-| `assets/FocusMode-B_N9AV2F.js` | 73.07 | 21.62 | 18.21 |
-| `assets/index-Db7rMfIg.css` | 132.96 | 20.24 | 15.51 |
-| `assets/supabaseStorage-OgcQUV5f.js` | 34.86 | 9.36 | 8.37 |
-| `assets/ImportExportModal-Bn0OW-f1.js` | 24.09 | 7.60 | 6.44 |
-| `assets/vendor-icons-B-9L-tV-.js` | 20.67 | 7.44 | 6.33 |
-| `assets/ChainEditor-CZDpOSxJ.js` | 25.48 | 6.64 | 5.48 |
+| 文件                                   | Raw KB | gzip KB | br KB |
+| -------------------------------------- | -----: | ------: | ----: |
+| `assets/index-DVOhyvo8.js`             | 269.20 |   74.90 | 60.84 |
+| `assets/vendor-react-VlY-ZC0_.js`      | 138.29 |   44.42 | 38.81 |
+| `assets/vendor-supabase-FPiA6NE9.js`   | 163.54 |   42.30 | 36.24 |
+| `assets/RSIPView-BY9J1IyQ.js`          |  71.07 |   22.62 | 19.30 |
+| `assets/FocusMode-B_N9AV2F.js`         |  73.07 |   21.62 | 18.21 |
+| `assets/index-Db7rMfIg.css`            | 132.96 |   20.24 | 15.51 |
+| `assets/supabaseStorage-OgcQUV5f.js`   |  34.86 |    9.36 |  8.37 |
+| `assets/ImportExportModal-Bn0OW-f1.js` |  24.09 |    7.60 |  6.44 |
+| `assets/vendor-icons-B-9L-tV-.js`      |  20.67 |    7.44 |  6.33 |
+| `assets/ChainEditor-CZDpOSxJ.js`       |  25.48 |    6.64 |  5.48 |
 
 **Lighthouse（基线：各跑 3 次取中位数；报告在 `reports/lighthouse/`）**
 
 - Lighthouse `12.8.2`；UA：HeadlessChrome `144.0.0.0`
 
-| 模式 | Perf/A11y/BP/SEO（中位数） | FCP / LCP / TBT / CLS（中位数） |
-|---|---|---|
-| Desktop | 100 / 94 / 100 / 100 | 449ms / 533ms / 0ms / 0 |
-| Mobile | 95 / 94 / 100 / 100 | 2194ms / 2583ms / 0ms / 0 |
+| 模式    | Perf/A11y/BP/SEO（中位数） | FCP / LCP / TBT / CLS（中位数） |
+| ------- | -------------------------- | ------------------------------- |
+| Desktop | 100 / 94 / 100 / 100       | 449ms / 533ms / 0ms / 0         |
+| Mobile  | 95 / 94 / 100 / 100        | 2194ms / 2583ms / 0ms / 0       |
 
 报告文件：
 - `reports/lighthouse/2026-02-04_desktop_run1.json`
@@ -274,17 +274,17 @@ PR#1 checklist：
 > - Bundle：`dist/assets` 复算 gzip/br（gzip level=9；br q=11）
 > - DevTools trace：local-storage mode + 固定 seed（见下方 trace 文件）
 
-| 项 | Baseline（PR#1） | PR#4 | PR#11 |
-|---|---:|---:|---:|
-| `index-*.js` gzip | 74.90 KB | 43.10 KB | 43.10 KB |
-| `AppShellContainer-*.js` gzip | — | 33.43 KB | 33.43 KB |
-| Lighthouse Desktop（Perf/A11y/BP/SEO） | 100 / 94 / 100 / 100 | 100 / 94 / 100 / 100 | 100 / 94 / 100 / 100 |
-| Lighthouse Desktop（FCP/LCP/TBT/CLS） | 449ms / 533ms / 0ms / 0 | 429ms / 532ms / 0ms / 0 | 429ms / 534ms / 0ms / 0 |
-| Lighthouse Mobile（Perf/A11y/BP/SEO） | 95 / 94 / 100 / 100 | 96 / 94 / 100 / 100 | 96 / 94 / 100 / 100 |
-| Lighthouse Mobile（FCP/LCP/TBT/CLS） | 2194ms / 2583ms / 0ms / 0 | 1969ms / 2427ms / 0ms / 0 | 1969ms / 2433ms / 0ms / 0 |
-| DevTools `cold_start` LCP（local） | 286.9ms | — | 437.0ms |
-| DevTools `tree_build` longest RunTask（local） | 1191.5ms | — | 894.4ms |
-| DevTools `rule_search` longest RunTask（local） | 48.0ms | — | 75.7ms |
+| 项                                              |          Baseline（PR#1） |                      PR#4 |                     PR#11 |
+| ----------------------------------------------- | ------------------------: | ------------------------: | ------------------------: |
+| `index-*.js` gzip                               |                  74.90 KB |                  43.10 KB |                  43.10 KB |
+| `AppShellContainer-*.js` gzip                   |                         — |                  33.43 KB |                  33.43 KB |
+| Lighthouse Desktop（Perf/A11y/BP/SEO）          |      100 / 94 / 100 / 100 |      100 / 94 / 100 / 100 |      100 / 94 / 100 / 100 |
+| Lighthouse Desktop（FCP/LCP/TBT/CLS）           |   449ms / 533ms / 0ms / 0 |   429ms / 532ms / 0ms / 0 |   429ms / 534ms / 0ms / 0 |
+| Lighthouse Mobile（Perf/A11y/BP/SEO）           |       95 / 94 / 100 / 100 |       96 / 94 / 100 / 100 |       96 / 94 / 100 / 100 |
+| Lighthouse Mobile（FCP/LCP/TBT/CLS）            | 2194ms / 2583ms / 0ms / 0 | 1969ms / 2427ms / 0ms / 0 | 1969ms / 2433ms / 0ms / 0 |
+| DevTools `cold_start` LCP（local）              |                   286.9ms |                         — |                   437.0ms |
+| DevTools `tree_build` longest RunTask（local）  |                  1191.5ms |                         — |                   894.4ms |
+| DevTools `rule_search` longest RunTask（local） |                    48.0ms |                         — |                    75.7ms |
 
 PR#11 Lighthouse（2026-02-05；各跑 3 次取中位数）：
 
