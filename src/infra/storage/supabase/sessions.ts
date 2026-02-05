@@ -82,17 +82,51 @@ export async function getActiveSession(ctx: SupabaseStorageContext): Promise<Act
   if (!user) return null;
 
   const client = ctx.getClient();
+  const fullSelect =
+    'id, chain_id, started_at, duration, is_paused, paused_at, total_paused_time, is_forward_timer, forward_elapsed_time';
+  const basicSelect = 'id, chain_id, started_at, duration, is_paused, paused_at, total_paused_time';
+
   const { data, error } = await client
     .from('active_sessions')
-    .select(
-      'id, chain_id, started_at, duration, is_paused, paused_at, total_paused_time, is_forward_timer, forward_elapsed_time'
-    )
+    .select(fullSelect)
     .eq('user_id', user.id)
     .order('started_at', { ascending: false })
     .limit(1);
-  if (error || !data || data.length === 0) return null;
 
-  const sessionData = data[0] as ActiveSessionRow;
+  if (!error && data && data.length > 0) {
+    const sessionData = data[0] as ActiveSessionRow;
+    return {
+      id: sessionData.id,
+      chainId: sessionData.chain_id,
+      startedAt: new Date(sessionData.started_at),
+      duration: sessionData.duration,
+      isPaused: sessionData.is_paused,
+      pausedAt: sessionData.paused_at ? new Date(sessionData.paused_at) : undefined,
+      totalPausedTime: sessionData.total_paused_time,
+      isForwardTimer: sessionData.is_forward_timer ?? false,
+      forwardElapsedTime: sessionData.forward_elapsed_time ?? 0,
+    };
+  }
+
+  const errorMessage = error?.message ?? '';
+  const errorCode = error?.code ?? '';
+  const isMissingForwardFields =
+    errorCode === '42703' ||
+    errorCode === 'PGRST204' ||
+    errorMessage.includes('is_forward_timer') ||
+    errorMessage.includes('forward_elapsed_time');
+
+  if (!isMissingForwardFields) return null;
+
+  const { data: basicData, error: basicError } = await client
+    .from('active_sessions')
+    .select(basicSelect)
+    .eq('user_id', user.id)
+    .order('started_at', { ascending: false })
+    .limit(1);
+  if (basicError || !basicData || basicData.length === 0) return null;
+
+  const sessionData = basicData[0] as ActiveSessionRow;
   return {
     id: sessionData.id,
     chainId: sessionData.chain_id,

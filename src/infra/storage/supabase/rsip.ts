@@ -5,6 +5,43 @@ import type { Database } from '../../../lib/database.types';
 type RSIPNodeRow = Database['public']['Tables']['rsip_nodes']['Row'];
 type RSIPMetaRow = Database['public']['Tables']['rsip_meta']['Row'];
 
+const RSIP_NODES_STRICT_COLUMNS_SUPPORTED = new WeakMap<SupabaseStorageContext, boolean>();
+const RSIP_META_STRICT_COLUMNS_SUPPORTED = new WeakMap<SupabaseStorageContext, boolean>();
+
+function isMissingRSIPNodeStrictColumns(error: { code?: string; message?: string }): boolean {
+  const code = error.code ?? '';
+  const message = error.message ?? '';
+
+  return (
+    code === '42703' ||
+    code === 'PGRST204' ||
+    message.includes('schema cache') ||
+    message.includes('emoji') ||
+    message.includes('stability_phase') ||
+    message.includes('phase_started_at') ||
+    message.includes('last_executed_at') ||
+    message.includes('last_violated_at') ||
+    message.includes('consecutive_executions') ||
+    message.includes('consecutive_violations') ||
+    message.includes('total_executions') ||
+    message.includes('total_violations')
+  );
+}
+
+function isMissingRSIPMetaStrictColumns(error: { code?: string; message?: string }): boolean {
+  const code = error.code ?? '';
+  const message = error.message ?? '';
+
+  return (
+    code === '42703' ||
+    code === 'PGRST204' ||
+    message.includes('schema cache') ||
+    message.includes('last_tree_opened_at') ||
+    message.includes('daily_tree_open_required') ||
+    message.includes('tree_open_streak')
+  );
+}
+
 export async function getRSIPNodes(ctx: SupabaseStorageContext): Promise<RSIPNode[]> {
   const user = await ctx.getCurrentUser();
   if (!user) return [];
@@ -45,6 +82,7 @@ export async function saveRSIPNodes(ctx: SupabaseStorageContext, nodes: RSIPNode
   if (!user) return;
 
   const client = ctx.getClient();
+  const strictColumnsSupported = RSIP_NODES_STRICT_COLUMNS_SUPPORTED.get(ctx);
 
   const rows = nodes.map(n => ({
     id: n.id,
@@ -68,6 +106,18 @@ export async function saveRSIPNodes(ctx: SupabaseStorageContext, nodes: RSIPNode
     total_violations: n.totalViolations ?? 0,
   }));
 
+  const rowsBasic = nodes.map(n => ({
+    id: n.id,
+    parent_id: n.parentId || null,
+    title: n.title,
+    rule: n.rule,
+    sort_order: n.sortOrder,
+    created_at: n.createdAt.toISOString(),
+    use_timer: n.useTimer ?? false,
+    timer_minutes: n.timerMinutes ?? null,
+    user_id: user.id,
+  }));
+
   const { data: existingRows, error: existingErr } = await client.from('rsip_nodes').select('id').eq('user_id', user.id);
   if (existingErr) {
     throw new Error(`Failed to query RSIP nodes: ${existingErr.message}`);
@@ -84,9 +134,28 @@ export async function saveRSIPNodes(ctx: SupabaseStorageContext, nodes: RSIPNode
     }
   }
 
-  const { error } = await client.from('rsip_nodes').upsert(rows, { onConflict: 'id' });
-  if (error) {
+  const primaryRows = strictColumnsSupported === false ? rowsBasic : rows;
+  const { error } = await client.from('rsip_nodes').upsert(primaryRows, { onConflict: 'id' });
+  if (!error) {
+    if (strictColumnsSupported == null && primaryRows === rows) {
+      RSIP_NODES_STRICT_COLUMNS_SUPPORTED.set(ctx, true);
+    }
+    return;
+  }
+
+  if (primaryRows === rowsBasic) {
     throw new Error(`Failed to save RSIP nodes: ${error.message}`);
+  }
+
+  if (!isMissingRSIPNodeStrictColumns(error)) {
+    throw new Error(`Failed to save RSIP nodes: ${error.message}`);
+  }
+
+  RSIP_NODES_STRICT_COLUMNS_SUPPORTED.set(ctx, false);
+
+  const { error: fallbackError } = await client.from('rsip_nodes').upsert(rowsBasic, { onConflict: 'id' });
+  if (fallbackError) {
+    throw new Error(`Failed to save RSIP nodes: ${fallbackError.message}`);
   }
 }
 
@@ -114,6 +183,7 @@ export async function saveRSIPMeta(ctx: SupabaseStorageContext, meta: RSIPMeta):
   if (!user) return;
 
   const client = ctx.getClient();
+  const strictColumnsSupported = RSIP_META_STRICT_COLUMNS_SUPPORTED.get(ctx);
 
   // 基础字段（始终保存）
   const baseData = {
@@ -130,9 +200,25 @@ export async function saveRSIPMeta(ctx: SupabaseStorageContext, meta: RSIPMeta):
     tree_open_streak: meta.treeOpenStreak ?? 0,
   };
 
+  if (strictColumnsSupported === false) {
+    const { error } = await client.from('rsip_meta').upsert(baseData, { onConflict: 'user_id' });
+    if (error) {
+      throw new Error(`Failed to save RSIP meta: ${error.message}`);
+    }
+    return;
+  }
+
   const { error } = await client.from('rsip_meta').upsert(fullData, { onConflict: 'user_id' });
 
+  if (!error) {
+    RSIP_META_STRICT_COLUMNS_SUPPORTED.set(ctx, true);
+    return;
+  }
+
   if (error) {
+    if (isMissingRSIPMetaStrictColumns(error)) {
+      RSIP_META_STRICT_COLUMNS_SUPPORTED.set(ctx, false);
+    }
     // 如果失败（可能是新列不存在），尝试只保存基础字段
     const { error: fallbackError } = await client
       .from('rsip_meta')

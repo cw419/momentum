@@ -306,6 +306,37 @@ describe('sessions.ts', () => {
       expect(result!.isForwardTimer).toBe(true);
       expect(result!.forwardElapsedTime).toBe(600);
     });
+
+    it('should fallback to basic select when forward timer columns are missing', async () => {
+      const ctx = createMockContext();
+
+      const firstQuery = createMockQueryBuilder({
+        data: null,
+        error: createSupabaseError('PGRST204', 'is_forward_timer does not exist'),
+      });
+
+      const basicRow = {
+        id: 'session-1',
+        chain_id: 'chain-1',
+        started_at: '2024-01-15T10:00:00Z',
+        duration: 30,
+        is_paused: false,
+        paused_at: null,
+        total_paused_time: 0,
+        user_id: 'test-user-123',
+      };
+
+      const secondQuery = createMockQueryBuilder({ data: [basicRow], error: null });
+
+      ctx.mockClient.from = vi.fn().mockReturnValueOnce(firstQuery).mockReturnValueOnce(secondQuery);
+
+      const result = await getActiveSession(ctx);
+
+      expect(result).not.toBeNull();
+      expect(result!.isForwardTimer).toBe(false);
+      expect(result!.forwardElapsedTime).toBe(0);
+      expect(ctx.mockClient.from).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('saveActiveSession', () => {

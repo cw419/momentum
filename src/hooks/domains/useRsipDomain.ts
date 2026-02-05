@@ -33,8 +33,12 @@ export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
   };
 
   const saveNodes = async (nodes: RSIPNode[]) => {
-    await storage.saveRSIPNodes(nodes);
     setState(prev => ({ ...prev, rsipNodes: nodes }));
+    try {
+      await storage.saveRSIPNodes(nodes);
+    } catch (error) {
+      logger.error('RSIP', 'Failed to save RSIP nodes', { nodeCount: nodes.length }, toError(error));
+    }
   };
 
   const saveMeta = async (meta: RSIPMeta) => {

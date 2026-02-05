@@ -270,6 +270,105 @@ describe('rsip.ts', () => {
       await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow('Failed to save RSIP nodes');
     });
 
+    it('should fallback to basic payload when strict columns are missing', async () => {
+      const ctx = createMockContext();
+
+      let callCount = 0;
+      const upsert = vi.fn().mockImplementation((_data: unknown[]) => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            error: createSupabaseError(
+              'PGRST204',
+              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache"
+            ),
+          };
+        }
+        return { error: null };
+      });
+
+      ctx.mockClient.from = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            data: [],
+            error: null,
+          }),
+        }),
+        upsert,
+      });
+
+      const nodes: RSIPNode[] = [
+        {
+          id: 'rsip-1',
+          title: 'Test',
+          rule: 'Test rule',
+          sortOrder: 1,
+          createdAt: new Date(),
+        },
+      ];
+
+      await saveRSIPNodes(ctx, nodes);
+
+      expect(upsert).toHaveBeenCalledTimes(2);
+
+      const firstPayload = upsert.mock.calls[0]?.[0] as Record<string, unknown>[];
+      const secondPayload = upsert.mock.calls[1]?.[0] as Record<string, unknown>[];
+
+      expect(firstPayload[0]).toHaveProperty('consecutive_executions');
+      expect(secondPayload[0]).not.toHaveProperty('consecutive_executions');
+    });
+
+    it('should skip strict upsert after detecting legacy schema', async () => {
+      const ctx = createMockContext();
+
+      const upsert = vi.fn().mockImplementation(() => {
+        const currentCall = upsert.mock.calls.length;
+
+        // 1st call: strict payload fails due to missing columns
+        if (currentCall === 1) {
+          return {
+            error: createSupabaseError(
+              'PGRST204',
+              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache"
+            ),
+          };
+        }
+
+        // all subsequent calls succeed
+        return { error: null };
+      });
+
+      ctx.mockClient.from = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            data: [],
+            error: null,
+          }),
+        }),
+        upsert,
+      });
+
+      const nodes: RSIPNode[] = [
+        {
+          id: 'rsip-1',
+          title: 'Test',
+          rule: 'Test rule',
+          sortOrder: 1,
+          createdAt: new Date(),
+        },
+      ];
+
+      await saveRSIPNodes(ctx, nodes);
+      await saveRSIPNodes(ctx, nodes);
+
+      // First save: strict upsert fails then fallback succeeds (2 calls)
+      // Second save: should only use basic payload (1 call)
+      expect(upsert).toHaveBeenCalledTimes(3);
+
+      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<string, unknown>[];
+      expect(payloadThirdCall[0]).not.toHaveProperty('consecutive_executions');
+    });
+
     it('should map all fields correctly for upsert', async () => {
       const ctx = createMockContext();
       let upsertData: unknown[] = [];
@@ -485,6 +584,44 @@ describe('rsip.ts', () => {
       expect(upsertData.user_id).toBe('test-user-123');
       expect(upsertData.last_added_at).toBe('2024-01-15T10:00:00.000Z');
       expect(upsertData.allow_multiple_per_day).toBe(true);
+    });
+
+    it('should skip strict meta upsert after detecting legacy schema', async () => {
+      const ctx = createMockContext();
+
+      const upsert = vi.fn().mockImplementation((data: Record<string, unknown>) => {
+        const currentCall = upsert.mock.calls.length;
+
+        if (currentCall === 1) {
+          // strict payload includes additional fields and fails on legacy schema
+          expect(data).toHaveProperty('last_tree_opened_at');
+          return {
+            error: createSupabaseError('PGRST204', "Could not find the 'last_tree_opened_at' column of 'rsip_meta'"),
+          };
+        }
+
+        return { error: null };
+      });
+
+      ctx.mockClient.from = vi.fn().mockReturnValue({ upsert });
+
+      const meta: RSIPMeta = {
+        lastAddedAt: new Date('2024-01-15T10:00:00Z'),
+        allowMultiplePerDay: true,
+        lastTreeOpenedAt: new Date('2024-01-15T11:00:00Z'),
+        dailyTreeOpenRequired: true,
+        treeOpenStreak: 3,
+      };
+
+      await saveRSIPMeta(ctx, meta);
+      await saveRSIPMeta(ctx, meta);
+
+      // First save: strict upsert fails then fallback succeeds (2 calls)
+      // Second save: should only use basic payload (1 call)
+      expect(upsert).toHaveBeenCalledTimes(3);
+
+      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<string, unknown>;
+      expect(payloadThirdCall).not.toHaveProperty('last_tree_opened_at');
     });
 
     it('should throw error when upsert fails', async () => {
