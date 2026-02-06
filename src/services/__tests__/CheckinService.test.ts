@@ -1,82 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { CheckinService } from '../CheckinService';
 import { err, ok } from '../../domain/result';
 import type { AppError } from '../../domain/errors';
 import type { CheckinResult, CheckinStats } from '../../domain/checkin';
-
-function createStorageMock(overrides?: Partial<MomentumStorage>): MomentumStorage {
-  return {
-    kind: 'supabase',
-
-    // Chains
-    getChains: vi.fn(),
-    saveChains: vi.fn(),
-    getActiveChains: vi.fn(),
-    getDeletedChains: vi.fn(),
-    softDeleteChain: vi.fn(),
-    restoreChain: vi.fn(),
-    permanentlyDeleteChain: vi.fn(),
-    cleanupExpiredDeletedChains: vi.fn(),
-
-    // Scheduled sessions
-    getScheduledSessions: vi.fn(),
-    saveScheduledSessions: vi.fn(),
-
-    // Active session
-    getActiveSession: vi.fn(),
-    saveActiveSession: vi.fn(),
-
-    // Completion history
-    getCompletionHistory: vi.fn(),
-    saveCompletionHistory: vi.fn(),
-
-    // RSIP
-    getRSIPNodes: vi.fn(),
-    saveRSIPNodes: vi.fn(),
-    getRSIPMeta: vi.fn(),
-    saveRSIPMeta: vi.fn(),
-
-    // Task time stats
-    getTaskTimeStats: vi.fn(),
-    saveTaskTimeStats: vi.fn(),
-    getLastCompletionTime: vi.fn(),
-    updateTaskTimeStats: vi.fn(),
-    getTaskAverageTime: vi.fn(),
-
-    // Compatibility / maintenance
-    migrateCompletionHistoryForTiming: vi.fn(),
-    clearCache: vi.fn(),
-
-    // Auth
-    getCurrentUser: vi.fn(),
-    waitForAuthentication: vi.fn(),
-    isUserAuthenticated: vi.fn(),
-    signUp: vi.fn(),
-    signIn: vi.fn(),
-    signOut: vi.fn(),
-    onAuthStateChange: vi.fn(),
-
-    // User settings
-    getGamblingSettings: vi.fn(),
-    toggleGamblingMode: vi.fn(),
-    isGamblingModeEnabled: vi.fn(),
-
-    // Betting
-    createBettingSession: vi.fn(),
-    deleteBettingSession: vi.fn(),
-    completeTaskWithBetting: vi.fn(),
-    placeBet: vi.fn(),
-    getUserAvailablePoints: vi.fn(),
-    getTodayBetAmount: vi.fn(),
-
-    // Daily check-in
-    performDailyCheckin: vi.fn(),
-    getUserCheckinStats: vi.fn(),
-
-    ...overrides,
-  } as unknown as MomentumStorage;
-}
+import { createSupabaseStorageMock } from '../../test/factories';
 
 describe('CheckinService (storage wrapper)', () => {
   beforeEach(() => {
@@ -95,7 +22,7 @@ describe('CheckinService (storage wrapper)', () => {
       checkin_id: 'checkin-1',
     };
 
-    const storage = createStorageMock({
+    const storage = createSupabaseStorageMock({
       performDailyCheckin: vi.fn().mockResolvedValue(ok(checkinResult)),
     });
 
@@ -116,7 +43,7 @@ describe('CheckinService (storage wrapper)', () => {
       has_checked_in_today: true,
     };
 
-    const storage = createStorageMock({
+    const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
     });
 
@@ -137,7 +64,7 @@ describe('CheckinService (storage wrapper)', () => {
       has_checked_in_today: true,
     };
 
-    const storage = createStorageMock({
+    const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
     });
 
@@ -149,7 +76,7 @@ describe('CheckinService (storage wrapper)', () => {
 
   it('hasCheckedInToday propagates stats error', async () => {
     const storageError: AppError = { code: 'STORAGE', message: 'boom' };
-    const storage = createStorageMock({
+    const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn().mockResolvedValue(err(storageError)),
     });
 
@@ -169,7 +96,7 @@ describe('CheckinService (storage wrapper)', () => {
       has_checked_in_today: false,
     };
 
-    const storage = createStorageMock({
+    const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
     });
 
@@ -189,7 +116,7 @@ describe('CheckinService (storage wrapper)', () => {
       has_checked_in_today: false,
     };
 
-    const storage = createStorageMock({
+    const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn().mockResolvedValue(ok(stats)),
     });
 

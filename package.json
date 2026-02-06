@@ -44,7 +44,8 @@
     "test:db": "vitest run --config vitest.db.config.ts",
     "test:db:watch": "vitest --config vitest.db.config.ts",
     "test:performance": "vitest run --config vitest.performance.config.ts",
-    "test:performance:watch": "vitest --config vitest.performance.config.ts"
+    "test:performance:watch": "vitest --config vitest.performance.config.ts",
+    "test:mutation": "stryker run stryker.config.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.91.0",
@@ -56,6 +57,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@stryker-mutator/core": "^9.5.1",
+    "@stryker-mutator/vitest-runner": "^9.5.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.6.1",

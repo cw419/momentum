@@ -16,6 +16,7 @@ import {
   TEST_USER_ID,
 } from '../testHelpers';
 import type { Chain } from '../../../../types';
+import { logger } from '../../../../utils/logger';
 
 vi.mock('../../../../utils/logger', () => ({
   logger: {
@@ -196,6 +197,33 @@ describe('chains.ts', () => {
       const result = await getDeletedChains(ctx);
 
       expect(result).toEqual([]);
+    });
+
+    it('should fallback to getChains when deleted_at column is missing and keep descending order', async () => {
+      const ctx = createMockContext();
+      let callCount = 0;
+      ctx.mockClient.from = vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return createMockQueryBuilder({
+            data: null,
+            error: createSupabaseError('42703', 'deleted_at does not exist'),
+          });
+        }
+
+        return createMockQueryBuilder({
+          data: [
+            createMockChainRow({ id: 'chain-old', deleted_at: '2024-01-01T00:00:00Z' }),
+            createMockChainRow({ id: 'chain-live', deleted_at: null }),
+            createMockChainRow({ id: 'chain-new', deleted_at: '2024-02-01T00:00:00Z' }),
+          ],
+          error: null,
+        });
+      });
+
+      const result = await getDeletedChains(ctx);
+
+      expect(result.map((chain) => chain.id)).toEqual(['chain-new', 'chain-old']);
     });
   });
 
@@ -468,6 +496,82 @@ describe('chains.ts', () => {
       await saveChains(ctx, chains);
 
       expect(ctx.retryWithAuth).toHaveBeenCalled();
+    });
+
+    it('should fallback to base columns for 42703 missing-column errors', async () => {
+      const chains = [createMockChain({ id: 'chain-1' })];
+      const ctx = createMockContext();
+
+      let callCount = 0;
+      ctx.mockClient.from = vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return createMockQueryBuilder({ data: [], error: null });
+        }
+        return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+      });
+
+      let retryCallCount = 0;
+      ctx.retryWithAuth = vi.fn().mockImplementation(async (op) => {
+        retryCallCount++;
+        if (retryCallCount === 1) {
+          throw createSupabaseError('42703', "column 'group_expires_at' does not exist");
+        }
+        return op();
+      });
+
+      await saveChains(ctx, chains);
+
+      expect(ctx.retryWithAuth).toHaveBeenCalledTimes(2);
+    });
+
+    it('should warn when some expected ids are missing from upsert result', async () => {
+      const chains = [createMockChain({ id: 'chain-1' }), createMockChain({ id: 'chain-2' })];
+      const ctx = createMockContext();
+      (logger.warn as unknown as ReturnType<typeof vi.fn>).mockClear();
+
+      let callCount = 0;
+      ctx.mockClient.from = vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return createMockQueryBuilder({ data: [], error: null });
+        }
+        return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+      });
+      ctx.retryWithAuth = vi.fn().mockImplementation((op) => op());
+
+      await saveChains(ctx, chains);
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        'SUPABASE_STORAGE',
+        'Some saved ids missing from result',
+        expect.objectContaining({
+          missingSavedIds: ['chain-2'],
+        })
+      );
+    });
+
+    it('should throw when deleting extra chains fails', async () => {
+      const chains = [createMockChain({ id: 'chain-1' })];
+      const ctx = createMockContext();
+
+      let callCount = 0;
+      ctx.mockClient.from = vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return createMockQueryBuilder({ data: [{ id: 'chain-1' }, { id: 'chain-2' }], error: null });
+        }
+        if (callCount === 2) {
+          return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+        }
+        return createMockQueryBuilder({
+          data: null,
+          error: createSupabaseError('UNKNOWN', 'Delete failed'),
+        });
+      });
+      ctx.retryWithAuth = vi.fn().mockImplementation((op) => op());
+
+      await expect(saveChains(ctx, chains)).rejects.toThrow('Failed to delete extra chains');
     });
   });
 });
