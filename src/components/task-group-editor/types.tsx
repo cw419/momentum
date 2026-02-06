@@ -1,0 +1,46 @@
+import type { FormEvent } from 'react';
+import type { Chain } from '../../types';
+
+export interface FormErrors {
+  name?: string;
+  description?: string;
+  auxiliarySignal?: string;
+  auxiliaryCompletionTrigger?: string;
+}
+
+export interface MobileInfo {
+  isMobile: boolean;
+  touchSupport: boolean;
+}
+
+export interface TaskGroupEditorViewProps {
+  // Data
+  chain?: Chain;
+  isEditing: boolean;
+
+  // Form state
+  name: string;
+  description: string;
+  auxiliarySignal: string;
+  customAuxiliarySignal: string;
+  auxiliaryDuration: number;
+  isCustomAuxiliaryDuration: boolean;
+  auxiliaryCompletionTrigger: string;
+  errors: FormErrors;
+
+  // Mobile state
+  mobileInfo: MobileInfo;
+  isKeyboardVisible: boolean;
+  keyboardHeight: number;
+
+  // Handlers
+  onNameChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onAuxiliarySignalSelect: (value: string) => void;
+  onCustomAuxiliarySignalChange: (value: string) => void;
+  onAuxiliaryDurationChange: (value: number) => void;
+  onAuxiliaryDurationModeChange: (isCustom: boolean, value: number) => void;
+  onAuxiliaryCompletionTriggerChange: (value: string) => void;
+  onSubmit: (e: FormEvent) => void;
+  onCancel: () => void;
+}

@@ -1,0 +1,77 @@
+import {
+  cleanupExpiredDeletedChains,
+  getActiveChains,
+  getChains,
+  getDeletedChains,
+  permanentlyDeleteChain,
+  restoreChain,
+  saveChains,
+  softDeleteChain,
+} from './chains';
+import { getCompletionHistory, saveCompletionHistory } from './history';
+import { getPetState, savePetState } from './pet';
+import { getRSIPMeta, getRSIPNodes, saveRSIPMeta, saveRSIPNodes } from './rsip';
+import { getActiveSession, getScheduledSessions, saveActiveSession, saveScheduledSessions } from './sessions';
+import {
+  getLastCompletionTime,
+  getTaskAverageTime,
+  getTaskTimeStats,
+  migrateCompletionHistoryForTiming,
+  saveTaskTimeStats,
+  updateTaskTimeStats,
+} from './taskTimeStats';
+
+/**
+ * LocalStorage-backed storage utility.
+ *
+ * NOTE: Application data should generally go through MomentumStorage; this module exists
+ * for legacy/offline paths and small utilities.
+ */
+export const storage = {
+  getChains,
+  saveChains,
+
+  getScheduledSessions,
+  saveScheduledSessions,
+
+  getActiveSession,
+  saveActiveSession,
+
+  getCompletionHistory,
+  saveCompletionHistory,
+
+  // RSIP nodes
+  getRSIPNodes,
+  saveRSIPNodes,
+
+  getRSIPMeta,
+  saveRSIPMeta,
+
+  // 回收箱相关方法
+  getActiveChains,
+  getDeletedChains,
+  softDeleteChain,
+  restoreChain,
+  permanentlyDeleteChain,
+  cleanupExpiredDeletedChains,
+
+  // 任务用时统计相关方法
+  getTaskTimeStats,
+  saveTaskTimeStats,
+  getLastCompletionTime,
+  updateTaskTimeStats,
+  getTaskAverageTime,
+  migrateCompletionHistoryForTiming,
+
+  /**
+   * Clear all caches (localStorage doesn't have caches, but provides interface compatibility)
+   */
+  clearCache: (): void => {
+    // localStorage doesn't maintain internal caches like Supabase,
+    // but we provide this method for interface compatibility
+  },
+
+  // Pet state
+  getPetState,
+  savePetState,
+};

@@ -1,0 +1,2 @@
+export { queryOptimizer } from './QueryOptimizer';
+

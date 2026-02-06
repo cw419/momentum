@@ -1,5 +1,4 @@
 import React from 'react';
-import type { Chain, ChainTreeNode, ScheduledSession } from '../../types';
 import {
   AlertTriangle,
   Clock,
@@ -10,69 +9,18 @@ import {
   Plus,
   Target,
   Users,
-  X,
 } from 'lucide-react';
 import { ImportUnitsModal } from '../ImportUnitsModal';
 import { BackButton } from '../BackButton';
-import { Icon, type IconName } from '../../utils/iconMap';
+import { Icon } from '../../utils/iconMap';
 import { UnitCard } from './UnitCard';
-
-interface ProgressInfo {
-  completed: number;
-  total: number;
-}
-
-interface TimeStatus {
-  isExpired: boolean;
-  remainingTime: number;
-  formattedTime: string;
-  progress: number;
-}
+import { RepeatCountModal } from './RepeatCountModal';
+import type { GroupViewViewProps } from './types';
 
 function getProgressBarColor(progress: number) {
   if (progress > 0.8) return 'bg-red-500';
   if (progress > 0.6) return 'bg-orange-500';
   return 'bg-green-500';
-}
-
-interface ChainTypeConfig {
-  icon: IconName;
-  color: string;
-  bgColor: string;
-  name: string;
-}
-
-interface GroupViewViewProps {
-  group: ChainTreeNode;
-  availableUnits: Chain[];
-  onBack: () => void;
-  onStartChain: (chainId: string) => void;
-  onScheduleChain: (chainId: string) => void;
-  onEditChain: (chainId: string) => void;
-  onDeleteChain: (chainId: string) => void;
-  onAddUnit: () => void;
-  onImportUnits: (unitIds: string[], groupId: string, mode?: 'move' | 'copy') => void;
-  onReorderUnit?: (groupId: string, unitId: string, direction: 'up' | 'down') => void;
-  onViewDetail: (chainId: string) => void;
-  getScheduledSession: (chainId: string) => ScheduledSession | undefined;
-
-  language: 'en' | 'zh';
-  tr: (zh: string, en: string) => string;
-  progress: ProgressInfo;
-  unitProgress: ProgressInfo;
-  nextUnit: ChainTreeNode | null;
-  typeConfig: ChainTypeConfig;
-  timeStatus: TimeStatus;
-
-  showImportModal: boolean;
-  setShowImportModal: React.Dispatch<React.SetStateAction<boolean>>;
-
-  showRepeatModal: boolean;
-  setShowRepeatModal: React.Dispatch<React.SetStateAction<boolean>>;
-  repeatCount: number;
-  setRepeatCount: React.Dispatch<React.SetStateAction<number>>;
-  handleOpenRepeatModal: (unit: ChainTreeNode) => void;
-  handleUpdateRepeatCount: () => void;
 }
 
 export const GroupViewView: React.FC<GroupViewViewProps> = ({
@@ -331,75 +279,14 @@ export const GroupViewView: React.FC<GroupViewViewProps> = ({
         />
       )}
 
-      {showRepeatModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md animate-scale-in shadow-2xl border border-gray-200 dark:border-slate-600">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100">{tr('设置重复次数', 'Set repeat count')}</h3>
-              <button
-                onClick={() => setShowRepeatModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3 font-chinese">
-                {tr('重复次数 (1-99)', 'Repeat count (1-99)')}
-              </label>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setRepeatCount(Math.max(1, repeatCount - 1))}
-                  className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 flex items-center justify-center text-gray-600 dark:text-slate-300 font-bold transition-colors"
-                  disabled={repeatCount <= 1}
-                >
-                  -
-                </button>
-
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  value={repeatCount}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value) || 1;
-                    setRepeatCount(Math.min(99, Math.max(1, value)));
-                  }}
-                  className="w-20 h-12 text-center text-2xl font-bold bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-slate-100"
-                />
-
-                <button
-                  onClick={() => setRepeatCount(Math.min(99, repeatCount + 1))}
-                  className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 flex items-center justify-center text-gray-600 dark:text-slate-300 font-bold transition-colors"
-                  disabled={repeatCount >= 99}
-                >
-                  +
-                </button>
-              </div>
-
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-2 font-chinese">
-                {tr('设置该任务单元在任务群中需要重复执行的次数', 'Set how many times this unit must be repeated in the group')}
-              </p>
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowRepeatModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-chinese"
-              >
-                {tr('取消', 'Cancel')}
-              </button>
-              <button
-                onClick={handleUpdateRepeatCount}
-                className="flex-1 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors font-chinese font-medium"
-              >
-                {tr('确认设置', 'Save')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RepeatCountModal
+        isOpen={showRepeatModal}
+        tr={tr}
+        repeatCount={repeatCount}
+        setRepeatCount={setRepeatCount}
+        onClose={() => setShowRepeatModal(false)}
+        onSave={handleUpdateRepeatCount}
+      />
     </div>
   );
 };

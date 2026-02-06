@@ -1,22 +1,11 @@
 import { isDev } from '../env';
 import { logger } from '../logger';
 
-export function describeElement(element: HTMLElement): { tagName: string; id?: string; className?: string } {
-  const className = typeof element.className === 'string' ? element.className : String(element.className);
-  return {
-    tagName: element.tagName,
-    id: element.id || undefined,
-    className: className || undefined,
-  };
-}
+import { groupIssuesBySeverity, groupIssuesByType, getRecommendations } from './reporting';
+import { describeElement } from './describe';
+import type { LayoutIssue } from './types';
 
-interface LayoutIssue {
-  type: 'horizontal-overflow' | 'layout-shift' | 'unstable-width';
-  element: HTMLElement;
-  severity: 'low' | 'medium' | 'high';
-  description: string;
-  suggestedFix?: string;
-}
+export { describeElement } from './describe';
 
 export class LayoutIssueDetector {
   private cumulativeLayoutShift = 0;
@@ -151,9 +140,9 @@ export class LayoutIssueDetector {
     return {
       cumulativeLayoutShift: this.cumulativeLayoutShift,
       totalIssues: this.layoutIssues.length,
-      issuesByType: this.groupIssuesByType(),
-      issuesBySeverity: this.groupIssuesBySeverity(),
-      recommendations: this.getRecommendations()
+      issuesByType: groupIssuesByType(this.layoutIssues),
+      issuesBySeverity: groupIssuesBySeverity(this.layoutIssues),
+      recommendations: getRecommendations(this.cumulativeLayoutShift, this.layoutIssues),
     };
   }
 
@@ -176,40 +165,6 @@ export class LayoutIssueDetector {
       totalIssues: this.layoutIssues.length,
       issues,
     });
-  }
-
-  private groupIssuesByType(): Record<string, number> {
-    return this.layoutIssues.reduce((acc, issue) => {
-      acc[issue.type] = (acc[issue.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-  }
-
-  private groupIssuesBySeverity(): Record<string, number> {
-    return this.layoutIssues.reduce((acc, issue) => {
-      acc[issue.severity] = (acc[issue.severity] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-  }
-
-  private getRecommendations(): string[] {
-    const recommendations: string[] = [];
-
-    if (this.cumulativeLayoutShift > 0.1) {
-      recommendations.push('布局偏移过大，建议优化动态内容加载');
-    }
-
-    const overflowIssues = this.layoutIssues.filter(i => i.type === 'horizontal-overflow');
-    if (overflowIssues.length > 0) {
-      recommendations.push('存在横向溢出问题，建议检查容器宽度设置');
-    }
-
-    const stabilityIssues = this.layoutIssues.filter(i => i.type === 'unstable-width');
-    if (stabilityIssues.length > 0) {
-      recommendations.push('存在宽度不稳定元素，建议设置明确的尺寸');
-    }
-
-    return recommendations;
   }
 
   private attemptAutoFix(issue: LayoutIssue): void {
