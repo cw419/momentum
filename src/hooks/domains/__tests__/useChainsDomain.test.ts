@@ -571,6 +571,66 @@ describe('useChainsDomain', () => {
     expect(stateRef.getState().chainsRevision).toBe(1);
     expect(trMock).toHaveBeenCalledWith(expect.any(String), 'Save failed. Check the console for details, then try again.');
   });
+
+  it('should recover when loading all chains fails before save starts', async () => {
+    const fallback = [createUnitChain({ id: 'fallback-2', name: 'Fallback 2' })];
+    const stateRef = createStateContainer(createAppState({ chains: [] }));
+    const storage = createLocalStorageMock({
+      getChains: vi.fn(async () => {
+        throw new Error('load failed');
+      }),
+      getActiveChains: vi.fn(async () => fallback),
+    });
+
+    const { result } = renderHook(() =>
+      useChainsDomain({
+        state: stateRef.getState(),
+        setState: stateRef.setState,
+        storage,
+        safelySaveChains: vi.fn(async () => undefined),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleSaveChain(createUnitDraft({ name: 'New Name' }), false);
+    });
+
+    expect(storage.getActiveChains).toHaveBeenCalledTimes(1);
+    expect(stateRef.getState().chains).toEqual(fallback);
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it('should preserve state when both save and reload throw non-Error values', async () => {
+    const editing = createUnitChain({ id: 'editing-non-error', name: 'Editing' });
+    const stateRef = createStateContainer(createAppState({ chains: [editing], editingChain: editing }));
+    const storage = createLocalStorageMock({
+      getChains: vi.fn(async () => [editing]),
+      getActiveChains: vi.fn(async () => {
+        throw 'reload-failed';
+      }),
+    });
+    const safelySaveChains = vi.fn(async () => {
+      throw 'save-failed';
+    });
+    vi.mocked(getSafeErrorDetailFromUnknown).mockReturnValue('');
+
+    const { result } = renderHook(() =>
+      useChainsDomain({
+        state: stateRef.getState(),
+        setState: stateRef.setState,
+        storage,
+        safelySaveChains,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleSaveChain(createUnitDraft({ name: 'Edited name' }), false);
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Save failed. Check the console for details, then try again.');
+    expect(stateRef.getState().chains).toEqual([editing]);
+    expect(logger.error).toHaveBeenCalledTimes(2);
+  });
 });
 
 

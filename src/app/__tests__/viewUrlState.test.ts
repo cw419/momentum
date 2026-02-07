@@ -81,4 +81,56 @@ describe('viewUrlState', () => {
     });
     expect(state.currentView).toBe('focus');
   });
+
+  test('parseViewStateFromSearch handles invalid and rsip views', () => {
+    const invalid = parseViewStateFromSearch({
+      search: '?view=invalid-view',
+      chains: [],
+      activeSession: null,
+    });
+    expect(invalid).toEqual({ currentView: 'dashboard', viewingChainId: null, editingChain: null });
+
+    const rsip = parseViewStateFromSearch({
+      search: '?view=rsip',
+      chains: [],
+      activeSession: null,
+    });
+    expect(rsip).toEqual({ currentView: 'rsip', viewingChainId: null, editingChain: null });
+  });
+
+  test('parseViewStateFromSearch reads editor parent and rejects missing edit chain', () => {
+    const parentState = parseViewStateFromSearch({
+      search: '?view=editor&parent=parent-1',
+      chains: [],
+      activeSession: null,
+    });
+    expect(parentState.currentView).toBe('editor');
+    expect(parentState.viewingChainId).toBe('parent-1');
+    expect(parentState.editingChain).toBeNull();
+
+    const missingEdit = parseViewStateFromSearch({
+      search: '?view=taskgroup-editor&edit=missing',
+      chains: [],
+      activeSession: null,
+    });
+    expect(missingEdit.currentView).toBe('dashboard');
+  });
+
+  test('serializeViewStateToSearch handles focus and editor parent modes', () => {
+    const focusSearch = serializeViewStateToSearch({
+      currentView: 'focus',
+      viewingChainId: null,
+      editingChainId: null,
+      activeSessionChainId: 'session-chain',
+    });
+    expect(focusSearch).toBe('?view=focus&chain=session-chain');
+
+    const editorSearch = serializeViewStateToSearch({
+      currentView: 'editor',
+      viewingChainId: 'parent-1',
+      editingChainId: null,
+      activeSessionChainId: null,
+    });
+    expect(editorSearch).toBe('?view=editor&parent=parent-1');
+  });
 });

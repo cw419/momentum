@@ -173,6 +173,43 @@ describe('chains.ts', () => {
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('chain-1');
     });
+
+    it('should fallback to getChains when deleted_at column is missing', async () => {
+      const ctx = createMockContext();
+      let callCount = 0;
+      ctx.mockClient.from = vi.fn().mockImplementation(() => {
+        callCount += 1;
+        if (callCount === 1) {
+          return createMockQueryBuilder({
+            data: null,
+            error: createSupabaseError('42703', 'deleted_at does not exist'),
+          });
+        }
+        return createMockQueryBuilder({
+          data: [
+            createMockChainRow({ id: 'active-1', deleted_at: null }),
+            createMockChainRow({ id: 'deleted-1', deleted_at: '2026-01-01T00:00:00Z' }),
+          ],
+          error: null,
+        });
+      });
+
+      const result = await getActiveChains(ctx);
+
+      expect(result.map((chain) => chain.id)).toEqual(['active-1']);
+    });
+
+    it('should return empty array on relation-missing errors', async () => {
+      const queryBuilder = createMockQueryBuilder({
+        data: null,
+        error: createSupabaseError('PGRST116', 'relation does not exist'),
+      });
+      const ctx = createMockContext({ queryBuilder });
+
+      const result = await getActiveChains(ctx);
+
+      expect(result).toEqual([]);
+    });
   });
 
   describe('getDeletedChains', () => {

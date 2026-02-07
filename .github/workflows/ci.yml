@@ -30,8 +30,20 @@ jobs:
       - name: Type Coverage
         run: npm run quality:type-coverage
 
+      - name: Test Quality Lint
+        run: npm run quality:test:lint
+
+      - name: Test Assertion Guard
+        run: npm run quality:test:assertions
+
       - name: Test (Coverage)
         run: npm run test:coverage
+
+      - name: Test Coverage Hotspots
+        run: npm run quality:test:coverage-hotspots
+
+      - name: Test Runtime Budget
+        run: npm run quality:test:runtime
 
       - name: Quality (Soft) - Circular Deps (madge)
         continue-on-error: true

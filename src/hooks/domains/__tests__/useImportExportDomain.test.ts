@@ -394,6 +394,34 @@ describe('useImportExportDomain', () => {
     expect(storage.waitForAuthentication).toHaveBeenCalledWith(10000);
   });
 
+  it('should continue import when auth check fails but waitForAuthentication succeeds', async () => {
+    const existing = createUnitChain({ id: 'existing-auth' });
+    const imported = createUnitChain({ id: 'imported-auth-success' });
+    const stateRef = createStateContainer(createAppState({ chains: [existing] }));
+    const storage = createSupabaseStorageMock({
+      isUserAuthenticated: vi.fn(async () =>
+        err({ code: 'AUTH_TEMP', message: 'temporary auth error', recoverable: true })
+      ),
+      waitForAuthentication: vi.fn(async () => ok({ user: { id: 'user-1' }, isAuthenticated: true })),
+      getChains: vi.fn(async () => [existing]),
+    });
+
+    const { result } = renderHook(() =>
+      useImportExportDomain({
+        storage,
+        safelySaveChains: vi.fn(async () => undefined),
+        setState: stateRef.setState,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleImportChains([imported]);
+    });
+
+    expect(storage.waitForAuthentication).toHaveBeenCalledWith(10000);
+    expect(stateRef.getState().chains.map((chain) => chain.id)).toEqual(['existing-auth', 'imported-auth-success']);
+  });
+
   it('should reload state and rethrow when chain persistence fails during import', async () => {
     const existing = createUnitChain({ id: 'existing-1' });
     const imported = createUnitChain({ id: 'imported-1' });
@@ -420,5 +448,30 @@ describe('useImportExportDomain', () => {
     expect(stateRef.getState().chains).toEqual([existing]);
     expect(stateRef.getState().rsipMeta).toEqual({ source: 'storage' });
     expect(stateRef.getState().rsipNodes).toHaveLength(1);
+  });
+
+  it('should log reload failure after import failure and rethrow original error', async () => {
+    const imported = createUnitChain({ id: 'imported-reload-fail' });
+    const storage = createLocalStorageMock({
+      getChains: vi
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockRejectedValue(new Error('reload chains failed')),
+      getRSIPNodes: vi.fn(async () => []),
+      getRSIPMeta: vi.fn(async () => ({})),
+    });
+
+    const { result } = renderHook(() =>
+      useImportExportDomain({
+        storage,
+        safelySaveChains: vi.fn(async () => {
+          throw new Error('save failed hard');
+        }),
+        setState: vi.fn(),
+      })
+    );
+
+    await expect(result.current.handleImportChains([imported])).rejects.toThrow('save failed hard');
+    expect(logger.error).toHaveBeenCalledWith('IMPORT', 'Reload after import failure also failed', undefined, expect.any(Error));
   });
 });

@@ -79,6 +79,10 @@ describe('SupabaseStorage', () => {
     }));
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   describe('getChains', () => {
     it('should return empty array when user is not authenticated', async () => {
       (getCurrentUser as any).mockResolvedValueOnce(null);
@@ -215,6 +219,7 @@ describe('SupabaseStorage', () => {
     });
 
     it('should handle network errors with retry logic', async () => {
+      vi.useFakeTimers();
       const chains = [createMockChain({ id: 'chain1', name: 'Test' })];
 
       let attemptCount = 0;
@@ -247,7 +252,9 @@ describe('SupabaseStorage', () => {
           }),
         }));
 
-      await expect(storage.saveChains(chains)).resolves.not.toThrow();
+      const pending = storage.saveChains(chains);
+      await vi.runAllTimersAsync();
+      await expect(pending).resolves.not.toThrow();
       expect(attemptCount).toBe(3);
     });
   });

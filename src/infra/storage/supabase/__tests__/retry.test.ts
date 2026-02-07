@@ -6,6 +6,23 @@ function createError(message: string, code?: string): Error & { code?: string } 
   return err;
 }
 
+async function loadRetryWithEnv(isDev: boolean) {
+  vi.resetModules();
+  const logger = {
+    warn: vi.fn(),
+    error: vi.fn(),
+  };
+
+  vi.doMock('../../../../utils/env', () => ({ isDev }));
+  vi.doMock('../../../../utils/logger', () => ({ logger }));
+
+  const retryModule = await import('../retry');
+  return {
+    ...retryModule,
+    logger,
+  };
+}
+
 describe('supabase/retry', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -57,6 +74,18 @@ describe('supabase/retry', () => {
       .mockRejectedValue(new Error('Converting circular structure to JSON'));
 
     await expect(retryOperation(operation, 3, 100)).rejects.toThrow('Converting circular structure to JSON');
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry for bigint serialization errors', async () => {
+    vi.useFakeTimers();
+    const { retryOperation } = await import('../retry');
+
+    const operation = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValue(new Error('Do not know how to serialize a BigInt'));
+
+    await expect(retryOperation(operation, 3, 100)).rejects.toThrow('Do not know how to serialize a BigInt');
     expect(operation).toHaveBeenCalledTimes(1);
   });
 
@@ -125,6 +154,30 @@ describe('supabase/retry', () => {
     expect(deps.waitForAuthentication).toHaveBeenCalledTimes(1);
   });
 
+  it('retries auth-related failures even when error code is normally non-retryable', async () => {
+    vi.useFakeTimers();
+    const { retryWithAuth } = await import('../retry');
+
+    const deps = {
+      isUserAuthenticated: vi.fn().mockResolvedValue(false),
+      waitForAuthentication: vi.fn().mockResolvedValue({
+        user: { id: 'user-2' },
+        isAuthenticated: true,
+      }),
+    };
+    const operation = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(createError('Auth token violates row-level security policy', '42703'))
+      .mockResolvedValue('ok');
+
+    const promise = retryWithAuth(deps, operation, 2, 100);
+    await vi.runAllTimersAsync();
+
+    await expect(promise).resolves.toBe('ok');
+    expect(operation).toHaveBeenCalledTimes(2);
+    expect(deps.waitForAuthentication).toHaveBeenCalledTimes(1);
+  });
+
   it('wraps non-Error failures and surfaces formatted message when retries are exhausted', async () => {
     vi.useFakeTimers();
     const { retryOperation } = await import('../retry');
@@ -142,5 +195,129 @@ describe('supabase/retry', () => {
 
     await pendingAssertion;
     expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves original Error instances when retries are exhausted', async () => {
+    vi.useFakeTimers();
+    const { retryOperation } = await import('../retry');
+    const original = new Error('boom');
+    const operation = vi.fn<() => Promise<void>>().mockRejectedValue(original);
+
+    let thrown: unknown;
+    try {
+      await retryOperation(operation, 0, 50);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBe(original);
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
+
+  it('wraps unknown failures without code metadata', async () => {
+    vi.useFakeTimers();
+    const { retryOperation } = await import('../retry');
+    const operation = vi.fn<() => Promise<void>>().mockRejectedValue({ message: 'plain object failure' });
+
+    let thrown: unknown;
+    try {
+      await retryOperation(operation, 0, 50);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(Error);
+    expect((thrown as Error & { code?: string }).code).toBeUndefined();
+    expect((thrown as Error).message).toContain('plain object failure');
+  });
+
+  it('logs intermediate retry warnings only in dev mode', async () => {
+    vi.useFakeTimers();
+    const { retryOperation, logger } = await loadRetryWithEnv(true);
+    const operation = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('temporary'))
+      .mockResolvedValue('ok');
+
+    const pending = retryOperation(operation, 1, 100);
+    await vi.runAllTimersAsync();
+    await expect(pending).resolves.toBe('ok');
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      'SUPABASE_STORAGE',
+      'Operation failed; retrying',
+      expect.objectContaining({
+        delay: 100,
+        attempt: 1,
+        maxRetries: 1,
+      })
+    );
+  });
+
+  it('does not log intermediate retry warnings outside dev mode', async () => {
+    vi.useFakeTimers();
+    const { retryOperation, logger } = await loadRetryWithEnv(false);
+    const operation = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('temporary'))
+      .mockResolvedValue('ok');
+
+    const pending = retryOperation(operation, 1, 100);
+    await vi.runAllTimersAsync();
+    await expect(pending).resolves.toBe('ok');
+
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('logs terminal retry failures with metadata', async () => {
+    vi.useFakeTimers();
+    const { retryOperation, logger } = await loadRetryWithEnv(true);
+    const operation = vi.fn<() => Promise<void>>().mockRejectedValue(new Error('always-fails'));
+
+    const pending = expect(retryOperation(operation, 1, 20)).rejects.toThrow('always-fails');
+    await vi.runAllTimersAsync();
+    await pending;
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'SUPABASE_STORAGE',
+      'Database operation failed after retries',
+      expect.objectContaining({
+        maxRetries: 1,
+        error: 'always-fails',
+      })
+    );
+  });
+
+  it('logs auth-aware retry details and terminal auth failure payloads in dev mode', async () => {
+    vi.useFakeTimers();
+    const { retryWithAuth, logger } = await loadRetryWithEnv(true);
+    const deps = {
+      isUserAuthenticated: vi.fn().mockResolvedValue(true),
+      waitForAuthentication: vi.fn().mockResolvedValue({ user: { id: 'dev-user' }, isAuthenticated: true }),
+    };
+    const operation = vi.fn<() => Promise<void>>().mockRejectedValue(new Error('auth rls failure'));
+
+    const pending = expect(retryWithAuth(deps, operation, 1, 25)).rejects.toThrow('auth rls failure');
+    await vi.runAllTimersAsync();
+    await pending;
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      'SUPABASE_STORAGE',
+      'Auth-aware retry',
+      expect.objectContaining({
+        delay: 25,
+        attempt: 1,
+        maxRetries: 1,
+        isAuthError: true,
+      })
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'SUPABASE_STORAGE',
+      'Database operation failed after retries with auth',
+      expect.objectContaining({
+        maxRetries: 1,
+        isAuthError: true,
+      })
+    );
   });
 });

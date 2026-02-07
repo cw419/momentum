@@ -1,0 +1,39 @@
+name: Mutation Nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Mutation Test
+        run: npm run test:mutation
+
+      - name: Mutation Hotspots
+        run: npm run quality:test:mutation-hotspots
+
+      - name: Upload Mutation Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-reports
+          path: |
+            reports/mutation
+            reports/quality/test-mutation-hotspots.json
+          if-no-files-found: ignore

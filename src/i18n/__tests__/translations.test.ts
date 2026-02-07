@@ -15,9 +15,23 @@ describe('translations', () => {
     expect(translations.en['settings.title']).toBe('Personal Settings');
     expect(translations.en['settings.language.title']).toBe('Language');
 
-    expect(translations.zh['language.english']).toBeTruthy();
-    expect(translations.zh['language.chinese']).toBeTruthy();
-    expect(translations.zh['settings.title']).toBeTruthy();
-    expect(translations.zh['settings.language.title']).toBeTruthy();
+    expect(translations.zh['language.english']).toEqual(expect.any(String));
+    expect(translations.zh['language.chinese']).toEqual(expect.any(String));
+    expect(translations.zh['settings.title']).toEqual(expect.any(String));
+    expect(translations.zh['settings.language.title']).toEqual(expect.any(String));
+    expect(translations.zh['language.english'].trim().length).toBeGreaterThan(0);
+    expect(translations.zh['language.chinese'].trim().length).toBeGreaterThan(0);
+    expect(translations.zh['settings.title'].trim().length).toBeGreaterThan(0);
+    expect(translations.zh['settings.language.title'].trim().length).toBeGreaterThan(0);
+  });
+
+  it('should not contain empty translation values', () => {
+    for (const [key, value] of Object.entries(translations.en)) {
+      expect(value.length, `en:${key}`).toBeGreaterThan(0);
+    }
+
+    for (const [key, value] of Object.entries(translations.zh)) {
+      expect(value.length, `zh:${key}`).toBeGreaterThan(0);
+    }
   });
 });

@@ -57,7 +57,7 @@ describe('useAuthController', () => {
     );
 
     expect(result.current.isAuthReady).toBe(false);
-    expect(callback).toBeTruthy();
+    expect(typeof callback).toBe('function');
 
     act(() => {
       callback?.('SIGNED_IN', {

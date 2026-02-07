@@ -24,7 +24,7 @@ export default {
   thresholds: {
     high: 90,
     low: 80,
-    break: 80,
+    break: 84,
   },
   vitest: {
     configFile: 'vitest.ci.config.ts',

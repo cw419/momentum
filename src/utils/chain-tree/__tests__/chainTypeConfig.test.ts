@@ -20,7 +20,8 @@ describe('chain-tree/chainTypeConfig', () => {
   it('returns zh names when zh language is selected', () => {
     const config = getChainTypeConfig('engineering', 'zh');
     expect(config.icon).toBe('dumbbell');
-    expect(config.name).toBeTruthy();
+    expect(config.name).toEqual(expect.any(String));
+    expect(config.name.length).toBeGreaterThan(0);
     expect(config.name).not.toBe('Engineering');
   });
 

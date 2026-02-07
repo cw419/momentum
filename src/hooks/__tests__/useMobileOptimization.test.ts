@@ -93,4 +93,20 @@ describe('useMobileOptimization', () => {
     Object.defineProperty(navigator, 'userAgent', { configurable: true, value: originalUserAgent });
     document.head.removeChild(meta);
   });
+
+  it('marks touch devices and removes body classes on unmount', async () => {
+    Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 2 });
+    setViewport(390, 844);
+
+    const { result, unmount } = renderHook(() => useMobileOptimization());
+
+    await waitFor(() => {
+      expect(result.current.touchSupport).toBe(true);
+      expect(document.body.classList.contains('touch-device')).toBe(true);
+    });
+
+    unmount();
+    expect(document.body.classList.contains('touch-device')).toBe(false);
+    expect(document.body.classList.contains('mobile-device')).toBe(false);
+  });
 });

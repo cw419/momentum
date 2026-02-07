@@ -72,6 +72,7 @@ describe('chain-tree/treeBuilder', () => {
     expect(result[1].children[0].children[0].id).toBe('gc');
     expect(result[1].children[0].children[0].depth).toBe(2);
     expect(performanceLogger.warn).not.toHaveBeenCalled();
+    expect(performanceLogger.error).not.toHaveBeenCalled();
   });
 
   it('keeps root nodes without parent warnings when parentId is absent', async () => {
@@ -109,5 +110,59 @@ describe('chain-tree/treeBuilder', () => {
 
     expect(dev.performanceLogger.debugLazy).toHaveBeenCalledTimes(2);
     expect(prodLike.performanceLogger.debugLazy).toHaveBeenCalledTimes(1);
+  });
+
+  it('converts self-parent references to root nodes', async () => {
+    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const selfParent = createUnitChain({ id: 'self', parentId: 'self', sortOrder: 1 });
+
+    const result = buildChainTree([selfParent]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('self');
+    expect(result[0].parentId).toBeUndefined();
+    expect(performanceLogger.warn).toHaveBeenCalled();
+  });
+
+  it('promotes nodes with missing parents to roots', async () => {
+    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const orphan = createUnitChain({ id: 'orphan', parentId: 'missing', sortOrder: 2 });
+    const root = createUnitChain({ id: 'root', sortOrder: 1 });
+
+    const result = buildChainTree([orphan, root]);
+
+    expect(result.map((node) => node.id)).toEqual(['root', 'orphan']);
+    expect(result[1].parentId).toBeUndefined();
+    expect(performanceLogger.warn).toHaveBeenCalled();
+  });
+
+  it('logs data integrity warnings for duplicate ids and missing names', async () => {
+    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const duplicateA = createUnitChain({ id: 'dup', name: 'first', sortOrder: 1 });
+    const duplicateB = createUnitChain({ id: 'dup', name: '', sortOrder: 2 });
+
+    const result = buildChainTree([duplicateA, duplicateB]);
+
+    expect(result).toHaveLength(2);
+    expect(performanceLogger.warn).toHaveBeenCalledTimes(1);
+    expect(performanceLogger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/.+/),
+      expect.arrayContaining([expect.stringContaining('dup')])
+    );
+  });
+
+  it('skips malformed chains without ids while keeping valid entries', async () => {
+    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const valid = createUnitChain({ id: 'valid-id', sortOrder: 1 });
+    const malformed = { ...createUnitChain({ id: 'placeholder', sortOrder: 2 }), id: '' } as Chain;
+
+    const result = buildChainTree([valid, malformed]);
+
+    expect(result.map((node) => node.id)).toEqual(['valid-id']);
+    expect(performanceLogger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/.+/),
+      expect.arrayContaining([expect.stringMatching(/.+/)])
+    );
+    expect(performanceLogger.error).toHaveBeenCalledWith(expect.stringMatching(/.+/), expect.anything());
   });
 });

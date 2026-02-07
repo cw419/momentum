@@ -300,7 +300,7 @@ describe('RuleUsageTracker', () => {
       expect(trend.totalUsage).toBe(1);
       expect(trend.averageDailyUsage).toBeCloseTo(1/7, 2);
       expect(trend.trend).toHaveLength(8); // 7天 + 今天
-      expect(trend.peakUsageDate).toBeTruthy();
+      expect(trend.peakUsageDate).toEqual(expect.any(String));
     });
 
     test('没有使用记录的规则应该返回空趋势', async () => {
@@ -381,8 +381,8 @@ describe('RuleUsageTracker', () => {
       const exportedData = await tracker.exportUsageData('json');
       const parsedData = JSON.parse(exportedData);
 
-      expect(parsedData.exportedAt).toBeTruthy();
-      expect(parsedData.overallStats).toBeTruthy();
+      expect(parsedData.exportedAt).toEqual(expect.any(String));
+      expect(parsedData.overallStats).toBeDefined();
       expect(parsedData.rules).toHaveLength(1);
       expect(parsedData.usageRecords).toHaveLength(1);
       expect(parsedData.summary.totalRules).toBe(1);

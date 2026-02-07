@@ -381,10 +381,10 @@ describe('ExceptionRuleMigrationService', () => {
       const parsedReport = JSON.parse(report);
 
       expect(parsedReport.title).toBe('例外规则迁移报告');
-      expect(parsedReport.migrationInfo).toBeTruthy();
-      expect(parsedReport.validation).toBeTruthy();
-      expect(parsedReport.suggestions).toBeTruthy();
-      expect(parsedReport.summary).toBeTruthy();
+      expect(parsedReport.migrationInfo).toBeDefined();
+      expect(parsedReport.validation).toBeDefined();
+      expect(parsedReport.suggestions).toBeDefined();
+      expect(parsedReport.summary).toBeDefined();
       expect(parsedReport.summary.migrationCompleted).toBe(true);
     });
 
