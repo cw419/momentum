@@ -142,6 +142,25 @@ describe('usePetDomain', () => {
     expect(logger.error).toHaveBeenCalledWith('PET', 'Failed to load pet state', undefined, expect.any(Error));
   });
 
+  it('should keep neutral mood and skip decay when no saved pet exists', async () => {
+    const storage = createLocalStorageMock({
+      getPetState: vi.fn(async () => null),
+    });
+    vi.mocked(useStorage).mockReturnValue(storage);
+
+    const { result } = renderHook(() => usePetDomain());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.pet).toBeNull();
+    expect(result.current.hasPet).toBe(false);
+    expect(result.current.mood).toBe('neutral');
+    expect(calculateDecay).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
   it('should create pet and handle feed/task/position/visibility actions', async () => {
     const storage = createLocalStorageMock({
       getPetState: vi.fn(async () => null),
@@ -211,11 +230,13 @@ describe('usePetDomain', () => {
       await result.current.minimize();
     });
     expect(result.current.pet?.isMinimized).toBe(true);
+    expect(result.current.pet?.minimizedPosition).toEqual({ x: 10, y: 20 });
 
     await act(async () => {
       await result.current.expand();
     });
     expect(result.current.pet?.isMinimized).toBe(false);
+    expect(result.current.pet?.position).toEqual({ x: 10, y: 20 });
     expect(storage.savePetState).toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledWith('PET', 'Created new pet', { name: 'Nova' });
     expect(logger.info).toHaveBeenCalledWith('PET', 'Fed pet', expect.objectContaining({ hungerReduced: expect.any(Number) }));
@@ -417,6 +438,7 @@ describe('usePetDomain', () => {
       stage: 'adult',
       hunger: 39,
       happiness: 48,
+      experience: 5,
     });
   });
 
@@ -596,6 +618,45 @@ describe('usePetDomain', () => {
     expect(storage.savePetState).toHaveBeenCalledTimes(2);
     expect(logger.warn).toHaveBeenCalledWith('PET', 'Pet health is low!', { health: 20 });
     expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet is starving!', expect.anything());
+  });
+
+  it('should not emit threshold warnings when values stay on boundary without crossing', async () => {
+    vi.useFakeTimers();
+    const savedPet = createPetState({
+      id: 'boundary-pet',
+      hunger: 79,
+      health: 31,
+      happiness: 60,
+    });
+    const storage = createLocalStorageMock({
+      getPetState: vi.fn(async () => savedPet),
+      savePetState: vi.fn(async () => undefined),
+    });
+    vi.mocked(useStorage).mockReturnValue(storage);
+    vi.mocked(calculateDecay)
+      .mockReturnValueOnce({
+        hunger: 79,
+        happiness: 60,
+        health: 31,
+        lastDecayCalculatedAt: new Date('2026-02-01T10:00:00.000Z'),
+      })
+      .mockReturnValueOnce({
+        hunger: 80,
+        happiness: 60,
+        health: 30,
+        lastDecayCalculatedAt: new Date('2026-02-01T10:05:00.000Z'),
+      });
+
+    renderHook(() => usePetDomain());
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+    });
+
+    expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet is starving!', expect.anything());
+    expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet health is low!', expect.anything());
+    vi.useRealTimers();
   });
 
   it('should avoid duplicate warnings when pet was already beyond warning thresholds', async () => {

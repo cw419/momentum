@@ -76,7 +76,7 @@ export class AsyncOperationManager {
       };
 
       this.operationQueue.push(wrappedOperation as AsyncOperation<unknown>);
-      void this.processQueue();
+      this.processQueue().catch(() => undefined);
     });
   }
 
@@ -179,4 +179,3 @@ export class AsyncOperationManager {
 }
 
 export const asyncOperationManager = new AsyncOperationManager();
-

@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+﻿import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppState } from '../../../types';
 import {
@@ -13,10 +13,12 @@ import { queryOptimizer } from '../../../utils/queryOptimizer';
 import { toast } from '../../../utils/toast';
 import { useGroupDomain } from '../useGroupDomain';
 
+const trMock = vi.fn((zh: string, en: string) => en);
+
 vi.mock('../../../i18n', () => ({
   useI18n: vi.fn(() => ({
     language: 'en',
-    tr: (_zh: string, en: string) => en,
+    tr: trMock,
   })),
 }));
 
@@ -56,9 +58,25 @@ function createStateContainer(initial: AppState) {
   };
 }
 
+function expectNonEmptyLogMessages() {
+  const infoCalls = vi.mocked(logger.info).mock.calls;
+  const debugCalls = vi.mocked(logger.debug).mock.calls;
+  if (infoCalls.length > 0) {
+    expect(
+      infoCalls.every(([, message]) => typeof message === 'string' && message.trim().length > 0)
+    ).toBe(true);
+  }
+  if (debugCalls.length > 0) {
+    expect(
+      debugCalls.every(([, message]) => typeof message === 'string' && message.trim().length > 0)
+    ).toBe(true);
+  }
+}
+
 describe('useGroupDomain', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    trMock.mockClear();
   });
 
   it('should import units in copy mode and append copied chains', async () => {
@@ -96,6 +114,20 @@ describe('useGroupDomain', () => {
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
     expect(stateRef.getState().chainsRevision).toBe(1);
     expect(stateRef.getState().chains).toEqual(updated);
+    expectNonEmptyLogMessages();
+    const importStartCall = vi
+      .mocked(logger.info)
+      .mock.calls.find(
+        (call) =>
+          call[0] === 'APP_SHELL'
+          && typeof call[1] === 'string'
+          && call[2] != null
+          && typeof call[2] === 'object'
+          && (call[2] as { groupId?: string }).groupId === group.id
+          && (call[2] as { mode?: string }).mode === 'copy'
+      );
+    expect(importStartCall).toBeDefined();
+    expect((importStartCall?.[1] as string).length).toBeGreaterThan(0);
   });
 
   it('should import units in move mode by updating parentId', async () => {
@@ -122,6 +154,7 @@ describe('useGroupDomain', () => {
     expect(updated?.find((chain) => chain.id === unit.id)?.parentId).toBe(group.id);
     expect(updated?.find((chain) => chain.id === sibling.id)?.parentId).toBeUndefined();
     expect(stateRef.getState().chains.find((chain) => chain.id === unit.id)?.parentId).toBe(group.id);
+    expectNonEmptyLogMessages();
   });
 
   it('should update task repeat count and persist changes', async () => {
@@ -146,6 +179,7 @@ describe('useGroupDomain', () => {
     expect(updated?.find((item) => item.id === chain.id)?.taskRepeatCount).toBe(5);
     expect(stateRef.getState().chains.find((item) => item.id === chain.id)?.taskRepeatCount).toBe(5);
     expect(stateRef.getState().chainsRevision).toBe(1);
+    expectNonEmptyLogMessages();
   });
 
   it('should reorder units in a group by swapping sort order', async () => {
@@ -184,6 +218,7 @@ describe('useGroupDomain', () => {
     expect(stateRef.getState().chains.find((item) => item.id === a.id)?.sortOrder).toBe(1);
     expect(stateRef.getState().chains.find((item) => item.id === b.id)?.sortOrder).toBe(0);
     expect(stateRef.getState().chainsRevision).toBe(11);
+    expectNonEmptyLogMessages();
   });
 
   it('should reorder units upward by swapping with previous unit', async () => {
@@ -221,6 +256,7 @@ describe('useGroupDomain', () => {
     const updated = safelySaveChains.mock.calls[0]?.[0];
     expect(updated?.find((item) => item.id === a.id)?.sortOrder).toBe(20);
     expect(updated?.find((item) => item.id === b.id)?.sortOrder).toBe(10);
+    expectNonEmptyLogMessages();
   });
 
   it('should no-op reorder when group is missing, unit is missing, or target index is out of range', async () => {
@@ -290,6 +326,10 @@ describe('useGroupDomain', () => {
     expect(storage.getChains).toHaveBeenCalledTimes(1);
     expect(stateRef.getState().chains).toEqual(fallback);
     expect(logger.error).toHaveBeenCalledWith('APP_SHELL', 'Failed to update task repeat count', undefined, expect.any(Error));
+    expect(trMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('Failed to update repeat count')
+    );
   });
 
   it('should include safe detail in import failure toast and log reload failure if recovery fails', async () => {
@@ -324,6 +364,11 @@ describe('useGroupDomain', () => {
     );
     expect(logger.error).toHaveBeenCalledWith('APP_SHELL', 'Failed to import units', undefined, expect.any(Error));
     expect(logger.error).toHaveBeenCalledWith('APP_SHELL', expect.any(String), undefined, expect.any(Error));
+    const importFailureTranslation = vi
+      .mocked(trMock)
+      .mock.calls.find((call) => typeof call[1] === 'string' && call[1].includes('Import failed: safe import detail'));
+    expect(importFailureTranslation?.[0]).toEqual(expect.any(String));
+    expect(importFailureTranslation?.[1]).toEqual(expect.stringContaining('Import failed: safe import detail'));
   });
 
   it('should use fallback repeat-count toast when safe detail is unavailable', async () => {
@@ -353,5 +398,13 @@ describe('useGroupDomain', () => {
     expect(toast.error).toHaveBeenCalledWith(
       'Failed to update repeat count. Check the console for details, then try again.'
     );
+    expect(trMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'Failed to update repeat count. Check the console for details, then try again.'
+    );
   });
 });
+
+
+
+

@@ -7,6 +7,8 @@ const parseImportDataMock = vi.hoisted(() => vi.fn());
 const createExportDataMock = vi.hoisted(() => vi.fn());
 const exportRulesMock = vi.hoisted(() => vi.fn());
 const importRulesMock = vi.hoisted(() => vi.fn());
+const getSafeErrorDetailMock = vi.hoisted(() => vi.fn());
+const loggerErrorMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../storage/useStorage', () => ({
   useStorage: useStorageMock,
@@ -21,12 +23,12 @@ vi.mock('../../i18n', () => ({
 
 vi.mock('../../utils/logger', () => ({
   logger: {
-    error: vi.fn(),
+    error: loggerErrorMock,
   },
 }));
 
 vi.mock('../../utils/errorMessage', () => ({
-  getSafeErrorDetail: vi.fn(() => 'safe detail'),
+  getSafeErrorDetail: getSafeErrorDetailMock,
 }));
 
 vi.mock('../../services/ExceptionRuleManager', () => ({
@@ -47,14 +49,57 @@ vi.mock('../ImportExportModalView', () => ({
   ImportExportModalView: (props: {
     activeTab: 'export' | 'import';
     importStatus: string;
+    importError: string;
     onImportDataChange: (value: string) => void;
+    onImportOptionsChange: (value: {
+      preserveStatistics: boolean;
+      preserveTimestamps: boolean;
+      importCompletionHistory: boolean;
+    }) => void;
+    onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onTabChange: (tab: 'export' | 'import') => void;
     onImport: () => Promise<void>;
     onExport: () => Promise<void>;
   }) => (
     <div>
       <div data-testid="active-tab">{props.activeTab}</div>
       <div data-testid="import-status">{props.importStatus}</div>
+      <div data-testid="import-error">{props.importError}</div>
       <button onClick={() => props.onImportDataChange('{"version":2}')}>set-import-json</button>
+      <button onClick={() => props.onTabChange('import')}>switch-to-import</button>
+      <button
+        onClick={() =>
+          props.onImportOptionsChange({
+            preserveStatistics: true,
+            preserveTimestamps: true,
+            importCompletionHistory: false,
+          })
+        }
+      >
+        set-options
+      </button>
+      <button
+        onClick={() =>
+          props.onFileUpload({
+            target: {
+              files: [new File(['from-file'], 'import.json', { type: 'application/json' })],
+            },
+          } as React.ChangeEvent<HTMLInputElement>)
+        }
+      >
+        upload-file
+      </button>
+      <button
+        onClick={() =>
+          props.onFileUpload({
+            target: {
+              files: [],
+            },
+          } as React.ChangeEvent<HTMLInputElement>)
+        }
+      >
+        upload-empty
+      </button>
       <button
         onClick={async () => {
           await props.onImport();
@@ -74,13 +119,28 @@ vi.mock('../ImportExportModalView', () => ({
 }));
 
 describe('ImportExportModalContainer', () => {
+  const originalFileReader = globalThis.FileReader;
+
   afterEach(() => {
     vi.restoreAllMocks();
+    globalThis.FileReader = originalFileReader;
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    getSafeErrorDetailMock.mockReturnValue('safe detail');
+    loggerErrorMock.mockReset();
+
+    class MockFileReader {
+      onload: ((event: ProgressEvent<FileReader>) => void) | null = null;
+      readAsText(file: Blob) {
+        this.onload?.({
+          target: { result: `{"fromFile":"${file.size}"}` },
+        } as unknown as ProgressEvent<FileReader>);
+      }
+    }
+    globalThis.FileReader = MockFileReader as unknown as typeof FileReader;
 
     useStorageMock.mockReturnValue({
       kind: 'supabase',
@@ -195,6 +255,139 @@ describe('ImportExportModalContainer', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('updates tab/options, handles file upload, and imports without auth for local storage', async () => {
+    parseImportDataMock.mockReturnValue({
+      chains: [{ id: 'c-local' }],
+      history: [],
+      rsipNodes: [],
+      rsipMeta: { allowMultiplePerDay: false },
+      exceptionRulesToImport: [],
+    });
+    useStorageMock.mockReturnValue({
+      kind: 'local',
+    });
+    const onImport = vi.fn(async () => undefined);
+
+    render(
+      <ImportExportModalContainer
+        chains={[{ id: 'existing' } as never]}
+        onImport={onImport}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('switch-to-import'));
+    expect(screen.getByTestId('active-tab').textContent).toBe('import');
+
+    fireEvent.click(screen.getByText('set-options'));
+    fireEvent.click(screen.getByText('upload-empty'));
+    fireEvent.click(screen.getByText('upload-file'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('run-import'));
+    });
+
+    expect(parseImportDataMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        json: '{"fromFile":"9"}',
+        options: {
+          preserveStatistics: true,
+          preserveTimestamps: true,
+          importCompletionHistory: false,
+        },
+      })
+    );
+    expect(importRulesMock).not.toHaveBeenCalled();
+    expect(onImport).toHaveBeenCalledWith(
+      [{ id: 'c-local' }],
+      expect.objectContaining({
+        exceptionRules: [],
+      })
+    );
+  });
+
+  it('surfaces authentication failure as import error and skips parsing', async () => {
+    useStorageMock.mockReturnValue({
+      kind: 'supabase',
+      waitForAuthentication: vi.fn(async () => ({
+        ok: false,
+        value: {
+          isAuthenticated: false,
+          user: null,
+        },
+      })),
+    });
+
+    render(
+      <ImportExportModalContainer
+        chains={[{ id: 'existing' } as never]}
+        onImport={vi.fn(async () => undefined)}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('set-import-json'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('run-import'));
+    });
+
+    expect(parseImportDataMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('import-status').textContent).toBe('error');
+    expect(screen.getByTestId('import-error').textContent).toBe(
+      'Authentication failed: please make sure you are signed in and try importing again.'
+    );
+  });
+
+  it('maps syntax, safe-detail, fallback, and unknown import errors', async () => {
+    render(
+      <ImportExportModalContainer
+        chains={[{ id: 'existing' } as never]}
+        onImport={vi.fn(async () => undefined)}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('set-import-json'));
+
+    parseImportDataMock.mockImplementationOnce(() => {
+      throw new SyntaxError('bad json');
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByText('run-import'));
+    });
+    expect(screen.getByTestId('import-error').textContent).toBe(
+      'Invalid import format: please make sure you uploaded a valid JSON file.'
+    );
+
+    parseImportDataMock.mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    getSafeErrorDetailMock.mockReturnValueOnce('sanitized detail');
+    await act(async () => {
+      fireEvent.click(screen.getByText('run-import'));
+    });
+    expect(screen.getByTestId('import-error').textContent).toBe('Import failed: sanitized detail');
+
+    parseImportDataMock.mockImplementationOnce(() => {
+      throw new Error('still bad');
+    });
+    getSafeErrorDetailMock.mockReturnValueOnce(null);
+    await act(async () => {
+      fireEvent.click(screen.getByText('run-import'));
+    });
+    expect(screen.getByTestId('import-error').textContent).toBe(
+      'Import failed. Check the console for details, then try again.'
+    );
+
+    parseImportDataMock.mockImplementationOnce(() => {
+      throw 'plain-string-error';
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByText('run-import'));
+    });
+    expect(screen.getByTestId('import-error').textContent).toBe('Import failed: unknown error');
+  });
+
   it('runs export flow and delegates payload construction', async () => {
     render(
       <ImportExportModalContainer
@@ -222,5 +415,28 @@ describe('ImportExportModalContainer', () => {
       })
     );
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs export failures', async () => {
+    exportRulesMock.mockRejectedValueOnce(new Error('export failed'));
+
+    render(
+      <ImportExportModalContainer
+        chains={[{ id: 'c1' } as never]}
+        onImport={vi.fn(async () => undefined)}
+        onClose={vi.fn()}
+      />
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('run-export'));
+    });
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'IMPORT_EXPORT',
+      'Export failed',
+      undefined,
+      expect.any(Error)
+    );
   });
 });

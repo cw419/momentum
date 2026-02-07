@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+﻿import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppState, ChainDraft } from '../../../types';
 import {
@@ -13,10 +13,12 @@ import { toast } from '../../../utils/toast';
 import { logger } from '../../../utils/logger';
 import { getSafeErrorDetailFromUnknown } from '../../../utils/errorMessage';
 
+const trMock = vi.fn((zh: string, en: string) => en);
+
 vi.mock('../../../i18n', () => ({
   useI18n: vi.fn(() => ({
     language: 'en',
-    tr: (_zh: string, en: string) => en,
+    tr: trMock,
   })),
 }));
 
@@ -102,9 +104,18 @@ function createGroupDraft(overrides: Partial<ChainDraft> = {}): ChainDraft {
   return { ...draft, ...overrides } as ChainDraft;
 }
 
+function expectNonEmptyDebugMessages() {
+  const debugCalls = vi.mocked(logger.debug).mock.calls;
+  expect(debugCalls.length).toBeGreaterThan(0);
+  expect(
+    debugCalls.every(([, message]) => typeof message === 'string' && message.trim().length > 0)
+  ).toBe(true);
+}
+
 describe('useChainsDomain', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    trMock.mockClear();
   });
 
   it('should open chain editor and ignore non-string parent input', () => {
@@ -262,8 +273,23 @@ describe('useChainsDomain', () => {
     expect(stateRef.getState().currentView).toBe('dashboard');
     expect(stateRef.getState().editingChain).toBeNull();
     expect(stateRef.getState().chainsRevision).toBe(1);
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Starting to save chain data',
+      expect.objectContaining({
+        chainName: 'Draft Chain',
+        chainType: 'unit',
+        isCopy: false,
+        chainCount: 1,
+      })
+    );
+    expect(logger.debug).toHaveBeenCalledWith('CHAINS', 'Loaded existing chains (including deleted)', {
+      count: 2,
+    });
+    expect(logger.debug).toHaveBeenCalledWith('CHAINS', 'Chain counts', { active: 1, deleted: 1 });
     expect(logger.debug).toHaveBeenCalledWith('CHAINS', 'Saving chains');
     expect(logger.debug).toHaveBeenCalledWith('CHAINS', 'Save succeeded; updating UI state');
+    expectNonEmptyDebugMessages();
   });
 
   it('should create a new group chain from draft when not editing', async () => {
@@ -296,6 +322,15 @@ describe('useChainsDomain', () => {
       type: 'group',
       name: 'New Group Draft',
     });
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Create chain',
+      expect.objectContaining({
+        newChainId: 'new-group-id',
+        type: 'group',
+      })
+    );
+    expectNonEmptyDebugMessages();
   });
 
   it('should update an existing unit chain in-place and normalize invalid parent id', async () => {
@@ -429,6 +464,14 @@ describe('useChainsDomain', () => {
     expect(updated).toHaveLength(2);
     expect(original?.name).toBe('Source Chain');
     expect(copied).toMatchObject({ name: 'Copied Chain' });
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Copy chain',
+      expect.objectContaining({
+        newChainId: 'copied-chain-id',
+      })
+    );
+    expectNonEmptyDebugMessages();
   });
 
   it('should surface save errors and reload active chains', async () => {
@@ -461,7 +504,9 @@ describe('useChainsDomain', () => {
     expect(toast.error).toHaveBeenCalledWith('Save failed: disk is full');
     expect(storage.getActiveChains).toHaveBeenCalledTimes(1);
     expect(stateRef.getState().chains).toEqual(fallback);
+    expect(stateRef.getState().chainsRevision).toBe(1);
     expect(logger.error).toHaveBeenCalledWith('CHAINS', 'Failed to save chain', undefined, expect.any(Error));
+    expect(trMock).toHaveBeenCalledWith(expect.any(String), 'Save failed: disk is full');
   });
 
   it('should log reload failure when save recovery also fails', async () => {
@@ -493,6 +538,7 @@ describe('useChainsDomain', () => {
 
     expect(logger.error).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenNthCalledWith(1, 'CHAINS', 'Failed to save chain', undefined, expect.any(Error));
+    expect((vi.mocked(logger.error).mock.calls[1]?.[1] as string).trim().length).toBeGreaterThan(0);
   });
 
   it('should use generic toast message when safe detail is unavailable', async () => {
@@ -522,5 +568,9 @@ describe('useChainsDomain', () => {
     });
 
     expect(toast.error).toHaveBeenCalledWith('Save failed. Check the console for details, then try again.');
+    expect(stateRef.getState().chainsRevision).toBe(1);
+    expect(trMock).toHaveBeenCalledWith(expect.any(String), 'Save failed. Check the console for details, then try again.');
   });
 });
+
+

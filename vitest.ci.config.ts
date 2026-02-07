@@ -15,22 +15,24 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
-      '**/*integration.test.*',
-      '**/*db.test.*',
-      '**/*performance.test.*',
+      '**/*.integration.test.*',
+      '**/*.db.test.*',
+      '**/*.performance.test.*',
+      '**/*-performance.test.*',
       '**/__tests__/**/*.integration.*',
       '**/__tests__/**/*.db.*',
       '**/__tests__/**/*.performance.*',
+      '**/__tests__/**/*-performance.*',
       '**/__tests__/**/helpers.ts'
     ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       thresholds: {
-        statements: 59,
-        branches: 50,
-        functions: 57,
-        lines: 60
+        statements: 78,
+        branches: 68,
+        functions: 76,
+        lines: 78
       },
       exclude: [
         'node_modules/',

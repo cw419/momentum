@@ -65,7 +65,7 @@ function createStateContainer(initialState: AppState) {
 }
 
 describe('createCompletionHandlers', () => {
-  const tr = (zh: string, _en: string) => zh;
+  const tr = vi.fn((zh: string, _en: string) => zh);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -129,6 +129,7 @@ describe('createCompletionHandlers', () => {
     const updatedChain = nextState.chains.find((item) => item.id === chain.id);
     expect(updatedChain?.currentStreak).toBe(2);
     expect(updatedChain?.totalCompletions).toBe(4);
+    expect(nextState.chainsRevision).toBe(4);
     expect(nextState.activeSession).toBeNull();
     expect(nextState.currentView).toBe('dashboard');
     expect(nextState.completionHistory).toHaveLength(1);
@@ -145,17 +146,163 @@ describe('createCompletionHandlers', () => {
     expect(storage.saveCompletionHistory).toHaveBeenCalledWith(nextState.completionHistory);
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(storage.updateTaskTimeStats).toHaveBeenCalledWith(chain.id, 25);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalled();
+    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(chain.name, 2);
     expect(setActiveSessionId).toHaveBeenCalledWith(null);
     expect(queryOptimizer.memoizedBuildChainTree).toHaveBeenCalledWith(expect.any(Array), 4);
     expect(isGroupFullyCompleted).toHaveBeenCalledWith(expect.objectContaining({ id: group.id, type: 'group' }));
     expect(incrementGroupCompletionCount).toHaveBeenCalledWith(expect.any(Array), group.id);
+    expect(logger.debug).toHaveBeenCalledWith('SESSIONS', expect.any(String));
+    expect((vi.mocked(logger.debug).mock.calls[0]?.[1] ?? '').length).toBeGreaterThan(0);
     expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
       group.name,
       expect.any(Number),
       '任务群完成一轮'
     );
+    expect(tr).toHaveBeenCalledWith(expect.any(String), 'Group completed a cycle');
     expect(emitPointsChanged).not.toHaveBeenCalled();
+  });
+
+  it('should skip group cycle checks when completed chain has no parent group', async () => {
+    const chain = createUnitChain({
+      id: 'no-parent-chain',
+      parentId: undefined,
+      currentStreak: 1,
+      totalCompletions: 2,
+    });
+
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T10:10:00.000Z'),
+          duration: 20,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      })
+    );
+
+    const storage = createLocalStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+      updateTaskTimeStats: vi.fn(async () => undefined),
+    });
+
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: null,
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    expect(queryOptimizer.memoizedBuildChainTree).not.toHaveBeenCalled();
+    expect(isGroupFullyCompleted).not.toHaveBeenCalled();
+    expect(incrementGroupCompletionCount).not.toHaveBeenCalled();
+    expect(tr).not.toHaveBeenCalled();
+  });
+
+  it('should not increment group cycle when parent group is incomplete', async () => {
+    const group = createGroupChain({ id: 'incomplete-group', name: 'Incomplete Group' });
+    const chain = createUnitChain({ id: 'incomplete-unit', parentId: group.id });
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [group, chain],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T10:20:00.000Z'),
+          duration: 20,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+        chainsRevision: 10,
+      })
+    );
+    const storage = createLocalStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+      updateTaskTimeStats: vi.fn(async () => undefined),
+    });
+
+    vi.mocked(queryOptimizer.memoizedBuildChainTree).mockReturnValue([
+      { id: group.id, type: 'group', name: group.name },
+    ] as unknown as ReturnType<typeof queryOptimizer.memoizedBuildChainTree>);
+    vi.mocked(isGroupFullyCompleted).mockReturnValue(false);
+
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: null,
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    expect(isGroupFullyCompleted).toHaveBeenCalledWith(expect.objectContaining({ id: group.id }));
+    expect(incrementGroupCompletionCount).not.toHaveBeenCalled();
+    expect(tr).not.toHaveBeenCalled();
+  });
+
+  it('should skip parent group completion notification when parent chain is missing after increment', async () => {
+    const group = createGroupChain({ id: 'missing-parent-group', name: 'Missing Parent Group' });
+    const chain = createUnitChain({ id: 'missing-parent-unit', parentId: group.id, currentStreak: 2 });
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [group, chain],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T10:30:00.000Z'),
+          duration: 20,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+        chainsRevision: 8,
+      })
+    );
+    const storage = createLocalStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+      updateTaskTimeStats: vi.fn(async () => undefined),
+    });
+
+    vi.mocked(queryOptimizer.memoizedBuildChainTree).mockReturnValue([
+      { id: group.id, type: 'group', name: group.name },
+    ] as unknown as ReturnType<typeof queryOptimizer.memoizedBuildChainTree>);
+    vi.mocked(isGroupFullyCompleted).mockReturnValue(true);
+    vi.mocked(incrementGroupCompletionCount).mockReturnValue(
+      stateRef
+        .getState()
+        .chains.filter((item) => item.id !== group.id)
+        .map((item) => (item.id === chain.id ? { ...item, currentStreak: item.currentStreak + 1 } : item))
+    );
+
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: null,
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    expect(incrementGroupCompletionCount).toHaveBeenCalledWith(expect.any(Array), group.id);
+    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(chain.name, 3);
+    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledTimes(1);
+    expect(tr).not.toHaveBeenCalled();
   });
 
   it('should only update the completed chain and keep sibling chains untouched', async () => {
@@ -266,6 +413,46 @@ describe('createCompletionHandlers', () => {
     expect(stateRef.getState().completionHistory[0].isForwardTimed).toBe(true);
   });
 
+  it('should not persist task-time stats or pet callback when actual duration is zero', async () => {
+    const chain = createUnitChain({ id: 'zero-duration-chain', currentStreak: 4, duration: 0 });
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T11:30:00.000Z'),
+          duration: 0,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      })
+    );
+    const storage = createLocalStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+      updateTaskTimeStats: vi.fn(async () => undefined),
+    });
+    const onPetTaskCompleted = vi.fn();
+
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: null,
+      setActiveSessionId: vi.fn(),
+      onPetTaskCompleted,
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    expect(storage.updateTaskTimeStats).not.toHaveBeenCalled();
+    expect(onPetTaskCompleted).not.toHaveBeenCalled();
+    expect(stateRef.getState().completionHistory[0]?.actualDuration).toBe(0);
+  });
+
   it('should persist supabase completion and clear active session with points emit', async () => {
     const chain = createUnitChain({ id: 'supa-chain', currentStreak: 10 });
     const initialState = createAppState({
@@ -307,6 +494,151 @@ describe('createCompletionHandlers', () => {
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(setActiveSessionId).toHaveBeenCalledWith(null);
     expect(emitPointsChanged).toHaveBeenCalledTimes(1);
+  });
+
+  it('should avoid supabase cleanup helper when activeSessionId is null', async () => {
+    const chain = createUnitChain({ id: 'supabase-no-active-id', currentStreak: 1 });
+    const existingRecord = {
+      chainId: 'old-record',
+      completedAt: new Date('2026-01-01T10:00:00.000Z'),
+      duration: 10,
+      wasSuccessful: true,
+      actualDuration: 10,
+      isForwardTimed: false,
+    };
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        completionHistory: [existingRecord],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T12:00:00.000Z'),
+          duration: 15,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      })
+    );
+    const storage = createSupabaseStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+    });
+    const setActiveSessionId = vi.fn();
+
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: null,
+      setActiveSessionId,
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    expect(setActiveSessionId).toHaveBeenCalledWith(null);
+    expect(emitPointsChanged).not.toHaveBeenCalled();
+    expect(storage.saveCompletionHistory).toHaveBeenCalledWith([
+      expect.objectContaining({ chainId: chain.id, wasSuccessful: true }),
+    ]);
+  });
+
+  it('should keep local cleanup path when activeSessionId is set', async () => {
+    const chain = createUnitChain({ id: 'local-active-id' });
+    const existingRecord = {
+      chainId: 'old-record',
+      completedAt: new Date('2026-01-01T10:00:00.000Z'),
+      duration: 8,
+      wasSuccessful: true,
+      actualDuration: 8,
+      isForwardTimed: false,
+    };
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        completionHistory: [existingRecord],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T12:30:00.000Z'),
+          duration: 15,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      })
+    );
+    const storage = createLocalStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+      updateTaskTimeStats: vi.fn(async () => undefined),
+    });
+
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: 'local-session-id',
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    expect(persisted).toHaveLength(2);
+    expect(persisted?.[0]).toMatchObject(existingRecord);
+    expect(persisted?.[1]).toMatchObject({ chainId: chain.id, wasSuccessful: true });
+    expect(emitPointsChanged).not.toHaveBeenCalled();
+  });
+
+  it('should keep only one history record for supabase persistence even with prior local history', async () => {
+    const chain = createUnitChain({ id: 'supabase-history-slice' });
+    const existingRecord = {
+      chainId: 'old-record',
+      completedAt: new Date('2026-01-01T10:00:00.000Z'),
+      duration: 9,
+      wasSuccessful: true,
+      actualDuration: 9,
+      isForwardTimed: false,
+    };
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        completionHistory: [existingRecord],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T12:40:00.000Z'),
+          duration: 15,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      })
+    );
+    const storage = createSupabaseStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+    });
+
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: 'supabase-session-id',
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    expect(persisted).toHaveLength(1);
+    expect(persisted?.[0]).toMatchObject({ chainId: chain.id, wasSuccessful: true });
+    expect(stateRef.getState().completionHistory).toHaveLength(2);
   });
 
   it('should emit cleanup side-effects even when supabase persistence fails', async () => {
@@ -413,8 +745,13 @@ describe('createCompletionHandlers', () => {
       totalFailures: 2,
       parentId: 'group-9',
     });
+    const untouched = createUnitChain({
+      id: 'interrupt-untouched',
+      currentStreak: 7,
+      totalFailures: 1,
+    });
     const initialState = createAppState({
-      chains: [chain],
+      chains: [chain, untouched],
       activeSession: {
         chainId: chain.id,
         startedAt: new Date('2026-02-01T13:00:00.000Z'),
@@ -422,6 +759,7 @@ describe('createCompletionHandlers', () => {
         isPaused: false,
         totalPausedTime: 0,
       },
+      chainsRevision: 11,
     });
     const stateRef = createStateContainer(initialState);
     const storage = createLocalStorageMock({
@@ -450,14 +788,21 @@ describe('createCompletionHandlers', () => {
     );
     const nextState = stateRef.getState();
     const updated = nextState.chains.find((item) => item.id === chain.id);
+    const untouchedAfter = nextState.chains.find((item) => item.id === untouched.id);
     expect(updated?.currentStreak).toBe(0);
     expect(updated?.totalFailures).toBe(3);
+    expect(untouchedAfter).toMatchObject({ currentStreak: 7, totalFailures: 1 });
+    expect(nextState.chainsRevision).toBe(12);
     expect(nextState.activeSession).toBeNull();
+    expect(nextState.currentView).toBe('dashboard');
     expect(nextState.completionHistory.at(-1)).toMatchObject({
       chainId: chain.id,
       wasSuccessful: false,
       reasonForFailure: 'manual-stop',
     });
+    expect(resetGroupCompletionCount).toHaveBeenCalledWith(expect.any(Array), 'group-9');
+    expect(logger.debug).toHaveBeenCalledWith('SESSIONS', expect.any(String));
+    expect((vi.mocked(logger.debug).mock.calls.at(-1)?.[1] ?? '').length).toBeGreaterThan(0);
   });
 
   it('should use default interrupt reason when reason is not provided', async () => {
@@ -497,6 +842,9 @@ describe('createCompletionHandlers', () => {
     handleInterruptSession();
     await flushPromises();
 
+    expect(forwardTimerManager.clearTimer).not.toHaveBeenCalled();
+    expect(stateRef.getState().chainsRevision).toBe(1);
+    expect(stateRef.getState().currentView).toBe('dashboard');
     expect(stateRef.getState().completionHistory.at(-1)?.reasonForFailure).toBe('用户主动中断');
   });
 
@@ -538,6 +886,47 @@ describe('createCompletionHandlers', () => {
     await flushPromises();
 
     expect(resetGroupCompletionCount).not.toHaveBeenCalled();
+  });
+
+  it('should log non-empty chain persistence context when interrupt persistence fails', async () => {
+    const chain = createUnitChain({ id: 'interrupt-save-fail', parentId: 'group-z' });
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T13:10:00.000Z'),
+          duration: 20,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      })
+    );
+
+    const { handleInterruptSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage: createLocalStorageMock({
+        saveCompletionHistory: vi.fn(async () => undefined),
+        saveActiveSession: vi.fn(async () => undefined),
+      }),
+      safelySaveChains: vi.fn(async () => {
+        throw new Error('interrupt chain save failed');
+      }),
+      activeSessionId: null,
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleInterruptSession('manual');
+    await flushPromises();
+
+    expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
+    const interruptErrorCall = vi
+      .mocked(logger.error)
+      .mock.calls.find((call) => call[0] === 'SESSIONS' && typeof call[1] === 'string');
+    expect(interruptErrorCall?.[1]).toEqual(expect.any(String));
+    expect((interruptErrorCall?.[1] as string).length).toBeGreaterThan(0);
   });
 
   it('should no-op when completing or interrupting without active session / chain', async () => {
@@ -594,11 +983,69 @@ describe('createCompletionHandlers', () => {
     expect(stateRefMissingChain.getState().completionHistory).toHaveLength(0);
   });
 
-  it('should persist only one interrupt history record for supabase sessions', async () => {
-    const chain = createUnitChain({ id: 'supa-interrupt-chain', currentStreak: 5, totalFailures: 1 });
+  it('should persist full interrupt history for local storage when activeSessionId is present', async () => {
+    const chain = createUnitChain({ id: 'local-interrupt-history', currentStreak: 5, totalFailures: 1 });
+    const existingRecord = {
+      chainId: 'old-failure',
+      completedAt: new Date('2026-01-31T10:00:00.000Z'),
+      duration: 20,
+      wasSuccessful: false,
+      reasonForFailure: 'old',
+      actualDuration: 20,
+      isForwardTimed: false,
+    };
     const stateRef = createStateContainer(
       createAppState({
         chains: [chain],
+        completionHistory: [existingRecord],
+        activeSession: {
+          chainId: chain.id,
+          startedAt: new Date('2026-02-01T15:00:00.000Z'),
+          duration: 30,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      })
+    );
+    const storage = createLocalStorageMock({
+      saveCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+    });
+
+    const { handleInterruptSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: 'local-active-id',
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleInterruptSession('manual-stop');
+    await flushPromises();
+
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    expect(persisted).toHaveLength(2);
+    expect(persisted?.[0]).toMatchObject(existingRecord);
+    expect(persisted?.[1]).toMatchObject({ chainId: chain.id, wasSuccessful: false, reasonForFailure: 'manual-stop' });
+    expect(emitPointsChanged).not.toHaveBeenCalled();
+  });
+
+  it('should persist only one interrupt history record for supabase sessions', async () => {
+    const chain = createUnitChain({ id: 'supa-interrupt-chain', currentStreak: 5, totalFailures: 1 });
+    const existingRecord = {
+      chainId: 'old-record',
+      completedAt: new Date('2026-01-31T10:00:00.000Z'),
+      duration: 10,
+      wasSuccessful: true,
+      actualDuration: 10,
+      isForwardTimed: false,
+    };
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        completionHistory: [existingRecord],
         activeSession: {
           chainId: chain.id,
           startedAt: new Date('2026-02-01T15:00:00.000Z'),
@@ -635,6 +1082,7 @@ describe('createCompletionHandlers', () => {
       wasSuccessful: false,
       reasonForFailure: 'manual-stop',
     });
+    expect(stateRef.getState().completionHistory).toHaveLength(2);
     expect(setActiveSessionId).toHaveBeenCalledWith(null);
     expect(emitPointsChanged).toHaveBeenCalled();
   });

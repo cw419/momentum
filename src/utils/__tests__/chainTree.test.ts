@@ -28,6 +28,11 @@ const createMockChain = (overrides: Partial<Chain> = {}): Chain => ({
 
 describe('chainTree utilities', () => {
   describe('buildChainTree', () => {
+    it('should return empty array when input is not an array', () => {
+      const result = buildChainTree(null as unknown as Chain[]);
+      expect(result).toEqual([]);
+    });
+
     it('should handle empty input', () => {
       const result = buildChainTree([]);
       expect(result).toEqual([]);
@@ -97,6 +102,15 @@ describe('chainTree utilities', () => {
       const result = buildChainTree(chains);
       
       expect(result.map(c => c.id)).toEqual(['first', 'second', 'third']);
+    });
+
+    it('should skip malformed chains without id and keep valid entries', () => {
+      const malformed = { ...createMockChain({ id: 'broken' }), id: '' } as unknown as Chain;
+      const valid = createMockChain({ id: 'valid', name: 'Valid chain' });
+
+      const result = buildChainTree([malformed, valid]);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('valid');
     });
 
     it('should handle deep hierarchies', () => {

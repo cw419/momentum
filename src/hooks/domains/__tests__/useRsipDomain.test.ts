@@ -228,6 +228,73 @@ describe('useRsipDomain', () => {
     expect(updated[0].totalExecutions).toBe(21);
   });
 
+  it('should treat undefined stability phase as E0 when marking execution', async () => {
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({ setState: vi.fn(), storage });
+    const nodes = [
+      createNode({
+        id: 'exec-undefined-phase',
+        stabilityPhase: undefined,
+        consecutiveExecutions: 6,
+        totalExecutions: 12,
+      }),
+    ];
+
+    const updated = await domain.markExecuted('exec-undefined-phase', nodes);
+    expect(updated[0].stabilityPhase).toBe('E1');
+    expect(updated[0].consecutiveExecutions).toBe(7);
+    expect(updated[0].totalExecutions).toBe(13);
+    expect(updated[0].phaseStartedAt).toBeInstanceOf(Date);
+  });
+
+  it('should keep E2 node phase unchanged when marking execution', async () => {
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({ setState: vi.fn(), storage });
+    const originalPhaseStartedAt = new Date('2026-01-15T00:00:00.000Z');
+    const nodes = [
+      createNode({
+        id: 'exec-e2-stable',
+        stabilityPhase: 'E2',
+        consecutiveExecutions: 4,
+        totalExecutions: 9,
+        phaseStartedAt: originalPhaseStartedAt,
+      }),
+    ];
+
+    const updated = await domain.markExecuted('exec-e2-stable', nodes);
+    expect(updated[0].stabilityPhase).toBe('E2');
+    expect(updated[0].phaseStartedAt).toEqual(originalPhaseStartedAt);
+    expect(updated[0].consecutiveExecutions).toBe(5);
+    expect(updated[0].totalExecutions).toBe(10);
+  });
+
+  it('should not reset E2 phase start when high execution count is already reached', async () => {
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({ setState: vi.fn(), storage });
+    const originalPhaseStartedAt = new Date('2026-01-01T00:00:00.000Z');
+    const nodes = [
+      createNode({
+        id: 'exec-e2-high',
+        stabilityPhase: 'E2',
+        consecutiveExecutions: 21,
+        totalExecutions: 30,
+        phaseStartedAt: originalPhaseStartedAt,
+      }),
+    ];
+
+    const updated = await domain.markExecuted('exec-e2-high', nodes);
+    expect(updated[0].stabilityPhase).toBe('E2');
+    expect(updated[0].phaseStartedAt).toEqual(originalPhaseStartedAt);
+    expect(updated[0].consecutiveExecutions).toBe(22);
+    expect(updated[0].totalExecutions).toBe(31);
+  });
+
   it('should delete violated node with all descendants', async () => {
     const storage = createLocalStorageMock({
       saveRSIPNodes: vi.fn(async () => undefined),

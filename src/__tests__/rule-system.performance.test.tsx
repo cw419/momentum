@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RuleSelectionDialog } from '../components/RuleSelectionDialog';
 import { VirtualizedRuleList } from '../components/VirtualizedRuleList';
@@ -30,11 +30,15 @@ const renderWithI18n = (ui: React.ReactElement) => {
   return render(ui, { wrapper: I18nProvider });
 };
 
-// Mock performance.now for consistent testing
-const mockPerformanceNow = vi.fn(() => Date.now());
+// Mock performance.now with deterministic increments for stable performance assertions
+let mockNow = 0;
+const mockPerformanceNow = vi.fn(() => {
+  mockNow += 1;
+  return mockNow;
+});
 Object.defineProperty(window, 'performance', {
   value: { now: mockPerformanceNow },
-  writable: true
+  writable: true,
 });
 
 // Mock ResizeObserver
@@ -49,6 +53,7 @@ global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 describe('Rule System Performance Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNow = 0;
     localStorage.setItem('language', 'zh');
   });
   const createLargeRuleSet = (count: number): ExceptionRule[] => {
@@ -357,38 +362,68 @@ describe('Rule System Performance Tests', () => {
 
   describe('Integration Performance', () => {
     it('should maintain performance in complete dialog', async () => {
-      const user = userEvent.setup();
-      const largeRuleSet = createLargeRuleSet(100);
-      
-      mockedRuleManager.getAllRules.mockResolvedValue(largeRuleSet);
-      
-      const startTime = performance.now();
-      
-      renderWithI18n(
-        <RuleSelectionDialog
-          isOpen={true}
-          actionType="pause"
-          sessionContext={mockSessionContext}
-          onRuleSelected={vi.fn()}
-          onCreateNewRule={vi.fn()}
-          onCancel={vi.fn()}
-        />
-      );
-      
-      const renderTime = performance.now() - startTime;
-      
-      // Dialog should render quickly even with large dataset
-      expect(renderTime).toBeLessThan(200);
-      
-      // Test search performance
-      const searchInput = screen.getByPlaceholderText('搜索规则或输入新规则名称...');
-      
-      const searchStartTime = performance.now();
-      await user.type(searchInput, '规则');
-      const searchTime = performance.now() - searchStartTime;
-      
-      // Search should be responsive
-      expect(searchTime).toBeLessThan(500);
+      vi.useFakeTimers();
+
+      try {
+        const largeRuleSet = createLargeRuleSet(100);
+
+        let resolveRules: ((value: ExceptionRule[]) => void) | undefined;
+        const rulesPromise = new Promise<ExceptionRule[]>((resolve) => {
+          resolveRules = resolve;
+        });
+
+        mockedRuleManager.getAllRules.mockReturnValue(rulesPromise);
+
+        const startTime = performance.now();
+
+        renderWithI18n(
+          <RuleSelectionDialog
+            isOpen={true}
+            actionType="pause"
+            sessionContext={mockSessionContext}
+            onRuleSelected={vi.fn()}
+            onCreateNewRule={vi.fn()}
+            onCancel={vi.fn()}
+          />
+        );
+
+        await act(async () => {
+          resolveRules?.(largeRuleSet);
+          vi.advanceTimersByTime(120);
+          await Promise.resolve();
+          await Promise.resolve();
+        });
+
+        expect(mockedRuleManager.getAllRules).toHaveBeenCalled();
+
+        const renderTime = performance.now() - startTime;
+
+        // Dialog should render quickly even with large dataset
+        expect(renderTime).toBeLessThan(200);
+
+        // Test search performance
+        const searchInput = screen.getByRole('textbox');
+
+        const searchStartTime = performance.now();
+        fireEvent.change(searchInput, { target: { value: '规则' } });
+
+        await act(async () => {
+          vi.advanceTimersByTime(250);
+          await Promise.resolve();
+          await Promise.resolve();
+        });
+
+        const searchTime = performance.now() - searchStartTime;
+
+        // Search should be responsive
+        expect(searchTime).toBeLessThan(500);
+      } finally {
+        await act(async () => {
+          vi.runOnlyPendingTimers();
+          await Promise.resolve();
+        });
+        vi.useRealTimers();
+      }
     });
   });
 

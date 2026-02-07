@@ -17,7 +17,12 @@ export default defineConfig({
       '**/dist/**',
       '**/*.integration.test.*',
       '**/*.db.test.*',
-      '**/*.performance.test.*'
+      '**/*.performance.test.*',
+      '**/*-performance.test.*',
+      '**/__tests__/**/*.integration.*',
+      '**/__tests__/**/*.db.*',
+      '**/__tests__/**/*.performance.*',
+      '**/__tests__/**/*-performance.*'
     ],
     coverage: {
       provider: 'v8',

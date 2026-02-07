@@ -101,7 +101,8 @@ describe('useRulesDomain', () => {
   });
 
   it('should allow auxiliary exception rule and persist updates', () => {
-    const chain = createUnitChain({ id: 'chain-2', auxiliaryExceptions: undefined });
+    const chain = { ...createUnitChain({ id: 'chain-2' }) } as ReturnType<typeof createUnitChain>;
+    delete (chain as { auxiliaryExceptions?: string[] }).auxiliaryExceptions;
     const untouched = createUnitChain({ id: 'chain-8', auxiliaryExceptions: ['untouched'] });
     const stateRef = createStateContainer(
       createAppState({
@@ -144,12 +145,13 @@ describe('useRulesDomain', () => {
     });
 
     const updatedChains = safelySaveChains.mock.calls[0]?.[0];
+    expect(() => result.current.handleAuxiliaryJudgmentAllow(chain.id, 'new-exception-rule-2')).not.toThrow();
     expect(updatedChains?.find((item) => item.id === chain.id)?.auxiliaryExceptions).toEqual(['new-exception-rule']);
     expect(updatedChains?.find((item) => item.id === untouched.id)).toEqual(untouched);
     expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
       expect.objectContaining({ chainId: untouched.id }),
     ]);
-    expect(stateRef.getState().chainsRevision).toBe(13);
+    expect(stateRef.getState().chainsRevision).toBe(14);
     expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(null);
   });
 

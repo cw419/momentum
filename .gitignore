@@ -45,10 +45,14 @@ coverage/
 
 # Quality report outputs
 reports/quality/
+reports/mutation/
 
 # Lighthouse / DevTools traces (baseline & repro artifacts; keep repo clean)
 reports/lighthouse/
 reports/devtools/
+
+# Mutation tool temp workspace
+.stryker-tmp/
 
 # Local editor / AI tool folders
 .obsidian/

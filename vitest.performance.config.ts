@@ -10,7 +10,17 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.performance.ts'],
     include: [
       'src/**/*.performance.test.{js,ts,jsx,tsx}',
-      'src/**/__tests__/**/*.performance.{js,ts,jsx,tsx}'
+      'src/**/__tests__/**/*.performance.{js,ts,jsx,tsx}',
+      'src/**/*-performance.test.{js,ts,jsx,tsx}',
+      'src/**/__tests__/**/*-performance.{js,ts,jsx,tsx}'
+    ],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/*.integration.test.*',
+      '**/*.db.test.*',
+      '**/__tests__/**/*.integration.*',
+      '**/__tests__/**/*.db.*'
     ],
     testTimeout: 120000, // Performance tests may take much longer
     hookTimeout: 120000,

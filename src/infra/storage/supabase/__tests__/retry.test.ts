@@ -124,4 +124,23 @@ describe('supabase/retry', () => {
     expect(operation).toHaveBeenCalledTimes(2);
     expect(deps.waitForAuthentication).toHaveBeenCalledTimes(1);
   });
+
+  it('wraps non-Error failures and surfaces formatted message when retries are exhausted', async () => {
+    vi.useFakeTimers();
+    const { retryOperation } = await import('../retry');
+
+    const operation = vi.fn<() => Promise<void>>().mockRejectedValue({
+      code: '500',
+      message: 'raw failure',
+      details: 'detail payload',
+    });
+
+    const pendingAssertion = expect(retryOperation(operation, 1, 50)).rejects.toThrow(
+      'code=500 | raw failure | details=detail payload'
+    );
+    await vi.runAllTimersAsync();
+
+    await pendingAssertion;
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
 });
