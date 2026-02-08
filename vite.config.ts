@@ -26,7 +26,7 @@ function performanceOptimizations() {
       // 插入到 <meta charset> 之后
       return html.replace(
         '<meta charset="UTF-8" />',
-        `<meta charset="UTF-8" />\n    ${preconnect}${criticalBg}`
+        `<meta charset="UTF-8" />\n    ${preconnect}${criticalBg}`,
       );
     },
   };
@@ -109,19 +109,25 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           // 核心 React 库 - 首屏必需
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/')
+          ) {
             return 'vendor-react';
           }
           // Supabase 客户端 - 延迟加载
-          if (id.includes('@supabase/supabase-js') || id.includes('@supabase/')) {
+          if (
+            id.includes('@supabase/supabase-js') ||
+            id.includes('@supabase/')
+          ) {
             return 'vendor-supabase';
           }
           // 图标库 - 单独分块以便tree-shaking
           if (id.includes('lucide-react')) {
             return 'vendor-icons';
           }
-        }
-      }
+        },
+      },
     },
     // 调整警告阈值
     chunkSizeWarningLimit: 500,

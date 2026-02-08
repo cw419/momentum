@@ -1,20 +1,33 @@
 import type { LayoutIssue } from './types';
 
-export function groupIssuesByType(issues: LayoutIssue[]): Record<string, number> {
-  return issues.reduce((acc, issue) => {
-    acc[issue.type] = (acc[issue.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+export function groupIssuesByType(
+  issues: LayoutIssue[],
+): Record<string, number> {
+  return issues.reduce(
+    (acc, issue) => {
+      acc[issue.type] = (acc[issue.type] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 }
 
-export function groupIssuesBySeverity(issues: LayoutIssue[]): Record<string, number> {
-  return issues.reduce((acc, issue) => {
-    acc[issue.severity] = (acc[issue.severity] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+export function groupIssuesBySeverity(
+  issues: LayoutIssue[],
+): Record<string, number> {
+  return issues.reduce(
+    (acc, issue) => {
+      acc[issue.severity] = (acc[issue.severity] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 }
 
-export function getRecommendations(cumulativeLayoutShift: number, issues: LayoutIssue[]): string[] {
+export function getRecommendations(
+  cumulativeLayoutShift: number,
+  issues: LayoutIssue[],
+): string[] {
   const recommendations: string[] = [];
 
   if (cumulativeLayoutShift > 0.1) {
@@ -33,4 +46,3 @@ export function getRecommendations(cumulativeLayoutShift: number, issues: Layout
 
   return recommendations;
 }
-

@@ -44,11 +44,15 @@ describe('performance-monitor/fps', () => {
       vi.fn((callback: FrameRequestCallback) => {
         rafCallbacks.push(callback);
         return rafCallbacks.length;
-      })
+      }),
     );
 
-    const warnSpy = vi.spyOn(performanceLogger, 'warn').mockImplementation(() => undefined);
-    vi.spyOn(Date, 'now').mockReturnValueOnce(40_000).mockReturnValueOnce(45_000);
+    const warnSpy = vi
+      .spyOn(performanceLogger, 'warn')
+      .mockImplementation(() => undefined);
+    vi.spyOn(Date, 'now')
+      .mockReturnValueOnce(40_000)
+      .mockReturnValueOnce(45_000);
 
     const metrics: PerformanceMetrics = {
       renderTime: 0,
@@ -86,10 +90,12 @@ describe('performance-monitor/fps', () => {
       vi.fn((callback: FrameRequestCallback) => {
         rafCallbacks.push(callback);
         return rafCallbacks.length;
-      })
+      }),
     );
 
-    const warnSpy = vi.spyOn(performanceLogger, 'warn').mockImplementation(() => undefined);
+    const warnSpy = vi
+      .spyOn(performanceLogger, 'warn')
+      .mockImplementation(() => undefined);
 
     const metrics: PerformanceMetrics = {
       renderTime: 0,

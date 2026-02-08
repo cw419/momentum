@@ -11,7 +11,12 @@ import { startFpsMonitoring } from './fps';
 import { measureInteraction, measureRender } from './measures';
 import { createPerformanceObservers } from './observers';
 import { checkPerformance, reportMetrics } from './reporting';
-import type { FpsCounter, PerformanceBufferEntry, PerformanceMetrics, PerformanceObservers } from './types';
+import type {
+  FpsCounter,
+  PerformanceBufferEntry,
+  PerformanceMetrics,
+  PerformanceObservers,
+} from './types';
 
 class PerformanceMonitor {
   private metrics: PerformanceMetrics = {
@@ -150,4 +155,3 @@ class PerformanceMonitor {
 }
 
 export const performanceMonitor = new PerformanceMonitor();
-

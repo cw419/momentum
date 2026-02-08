@@ -39,5 +39,5 @@ createRoot(document.getElementById('root')!).render(
         <App />
       </StorageProvider>
     </I18nProvider>
-  </StrictMode>
+  </StrictMode>,
 );

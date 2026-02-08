@@ -18,4 +18,3 @@ export function randomId(prefix: string): string {
 
   return `${prefix}_${Date.now()}_${randomHex(16)}`;
 }
-

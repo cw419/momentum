@@ -20,32 +20,34 @@ class RestoreFunctionTester {
    */
   async testCacheClearing(): Promise<RestoreTestResult> {
     console.log('[RESTORE_TESTER] Testing cache clearing mechanisms...');
-    
+
     try {
       // Test queryOptimizer cache clearing
       const preOptimizer = queryOptimizer.getCacheStats();
       queryOptimizer.clearCache();
       const postOptimizer = queryOptimizer.getCacheStats();
-      
+
       // Test supabaseStorage cache clearing
       supabaseStorage.clearCache();
-      
-      console.log('[RESTORE_TESTER] Cache clearing test completed successfully');
-      
+
+      console.log(
+        '[RESTORE_TESTER] Cache clearing test completed successfully',
+      );
+
       return {
         success: true,
         message: 'Cache clearing mechanisms working correctly',
         details: {
           optimizerBefore: preOptimizer,
-          optimizerAfter: postOptimizer
-        }
+          optimizerAfter: postOptimizer,
+        },
       };
     } catch (error) {
       console.error('[RESTORE_TESTER] Cache clearing test failed:', error);
       return {
         success: false,
         message: 'Cache clearing test failed',
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
   }
@@ -55,31 +57,38 @@ class RestoreFunctionTester {
    */
   async testRestoreLogging(): Promise<RestoreTestResult> {
     console.log('[RESTORE_TESTER] Testing restore operation logging...');
-    
+
     try {
       // Simulate a restore operation to test logging
       const testChainIds = ['test-chain-1', 'test-chain-2'];
-      
-      console.log('[RESTORE_TESTER] This will test the logging functionality without actual database operations');
+
+      console.log(
+        '[RESTORE_TESTER] This will test the logging functionality without actual database operations',
+      );
       console.log('[RESTORE_TESTER] Test chain IDs:', testChainIds);
-      
+
       // Test real-time sync service logging
-      console.log('[REALTIME_SYNC] Starting restore operation for chains:', testChainIds);
-      console.log('[REALTIME_SYNC] Clearing all caches before fetching fresh data');
+      console.log(
+        '[REALTIME_SYNC] Starting restore operation for chains:',
+        testChainIds,
+      );
+      console.log(
+        '[REALTIME_SYNC] Clearing all caches before fetching fresh data',
+      );
       queryOptimizer.clearCache();
       console.log('[REALTIME_SYNC] Restore operation completed');
-      
+
       return {
         success: true,
         message: 'Restore logging functionality working correctly',
-        details: { testChainIds }
+        details: { testChainIds },
       };
     } catch (error) {
       console.error('[RESTORE_TESTER] Restore logging test failed:', error);
       return {
         success: false,
         message: 'Restore logging test failed',
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
   }
@@ -88,28 +97,32 @@ class RestoreFunctionTester {
    * Run all restore functionality tests
    */
   async runAllTests(): Promise<RestoreTestResult[]> {
-    console.log('[RESTORE_TESTER] Running comprehensive restore functionality tests...');
-    
+    console.log(
+      '[RESTORE_TESTER] Running comprehensive restore functionality tests...',
+    );
+
     const results: RestoreTestResult[] = [];
-    
+
     // Test cache clearing
     results.push(await this.testCacheClearing());
-    
+
     // Test restore logging
     results.push(await this.testRestoreLogging());
-    
+
     // Summary
-    const successful = results.filter(r => r.success).length;
+    const successful = results.filter((r) => r.success).length;
     const total = results.length;
-    
-    console.log(`[RESTORE_TESTER] Test summary: ${successful}/${total} tests passed`);
-    
+
+    console.log(
+      `[RESTORE_TESTER] Test summary: ${successful}/${total} tests passed`,
+    );
+
     if (successful === total) {
       console.log('✅ All restore functionality tests passed!');
     } else {
       console.warn(`⚠️ ${total - successful} test(s) failed`);
     }
-    
+
     return results;
   }
 
@@ -118,9 +131,15 @@ class RestoreFunctionTester {
    */
   logRestoreFunctionStatus(): void {
     console.log('\n=== RESTORE FUNCTIONALITY STATUS ===');
-    console.log('✅ Enhanced cache clearing in RealTimeSyncService.restoreWithSync()');
-    console.log('✅ Improved batch restore error handling in supabaseStorage.restoreChain()');
-    console.log('✅ Enhanced React state update timing in App.tsx handleRestoreChains()');
+    console.log(
+      '✅ Enhanced cache clearing in RealTimeSyncService.restoreWithSync()',
+    );
+    console.log(
+      '✅ Improved batch restore error handling in supabaseStorage.restoreChain()',
+    );
+    console.log(
+      '✅ Enhanced React state update timing in App.tsx handleRestoreChains()',
+    );
     console.log('✅ Better user feedback in RecycleBinModal');
     console.log('✅ Comprehensive logging throughout restore operations');
     console.log('✅ Cache invalidation mechanisms improved');
@@ -142,7 +161,7 @@ export const restoreFunctionTester = new RestoreFunctionTester();
 if (process.env.NODE_ENV === 'development') {
   // Add global access for debugging
   (window as any).__restoreTester = restoreFunctionTester;
-  
+
   // Log status immediately
   setTimeout(() => {
     restoreFunctionTester.logRestoreFunctionStatus();

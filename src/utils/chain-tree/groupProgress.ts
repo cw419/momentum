@@ -4,7 +4,9 @@ import type { ChainTreeNode } from '../../types';
  * 获取任务群的完成进度（基于重复次数）
  * 注意：所有非 group 类型的节点都视为“可执行单元”
  */
-export const getGroupProgress = (group: ChainTreeNode): { completed: number; total: number } => {
+export const getGroupProgress = (
+  group: ChainTreeNode,
+): { completed: number; total: number } => {
   if (group.type !== 'group') {
     const requiredRepeats = group.taskRepeatCount || 1;
     const completedRepeats = Math.min(group.currentStreak, requiredRepeats);
@@ -27,7 +29,9 @@ export const getGroupProgress = (group: ChainTreeNode): { completed: number; tot
  * 获取任务群的单元完成进度（基于单元数量，更直观）
  * 注意：所有非 group 类型都算作一个“单元”
  */
-export const getGroupUnitProgress = (group: ChainTreeNode): { completed: number; total: number } => {
+export const getGroupUnitProgress = (
+  group: ChainTreeNode,
+): { completed: number; total: number } => {
   if (group.type !== 'group') {
     const requiredRepeats = group.taskRepeatCount || 1;
     const isCompleted = group.currentStreak >= requiredRepeats;
@@ -50,7 +54,9 @@ export const getGroupUnitProgress = (group: ChainTreeNode): { completed: number;
  * 获取任务群中下一个待执行的单元
  * 非 group 类型都可执行
  */
-export const getNextUnitInGroup = (group: ChainTreeNode): ChainTreeNode | null => {
+export const getNextUnitInGroup = (
+  group: ChainTreeNode,
+): ChainTreeNode | null => {
   if (group.type !== 'group') {
     const requiredRepeats = group.taskRepeatCount || 1;
     return group.currentStreak < requiredRepeats ? group : null;
@@ -80,4 +86,3 @@ export const isGroupFullyCompleted = (groupNode: ChainTreeNode): boolean => {
   // 对于任务群，检查所有子任务是否都已完成
   return groupNode.children.every((child) => isGroupFullyCompleted(child));
 };
-

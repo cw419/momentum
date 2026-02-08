@@ -24,14 +24,15 @@ export type DuplicationReport = {
 export function findExactDuplicateRules(
   rules: ExceptionRule[],
   name: string,
-  excludeId?: string
+  excludeId?: string,
 ): ExceptionRule[] {
   const normalizedInputName = normalizeName(name);
 
-  return rules.filter(rule =>
-    rule.isActive &&
-    rule.id !== excludeId &&
-    normalizeName(rule.name) === normalizedInputName
+  return rules.filter(
+    (rule) =>
+      rule.isActive &&
+      rule.id !== excludeId &&
+      normalizeName(rule.name) === normalizedInputName,
   );
 }
 
@@ -39,7 +40,7 @@ export function findSimilarRulesWithSimilarity(
   rules: ExceptionRule[],
   name: string,
   threshold: number = 0.8,
-  excludeId?: string
+  excludeId?: string,
 ): SimilarRuleWithSimilarity[] {
   const normalizedInputName = normalizeName(name);
   const similarRules: SimilarRuleWithSimilarity[] = [];
@@ -49,7 +50,10 @@ export function findSimilarRulesWithSimilarity(
     if (excludeId && rule.id === excludeId) continue;
 
     const normalizedRuleName = normalizeName(rule.name);
-    const similarity = calculateSimilarity(normalizedInputName, normalizedRuleName);
+    const similarity = calculateSimilarity(
+      normalizedInputName,
+      normalizedRuleName,
+    );
 
     if (similarity >= threshold && similarity < 1.0) {
       similarRules.push({ rule, similarity });
@@ -62,12 +66,17 @@ export function findSimilarRulesWithSimilarity(
 export function findSimilarRules(
   rules: ExceptionRule[],
   name: string,
-  threshold: number = 0.8
+  threshold: number = 0.8,
 ): ExceptionRule[] {
-  return findSimilarRulesWithSimilarity(rules, name, threshold).map(item => item.rule);
+  return findSimilarRulesWithSimilarity(rules, name, threshold).map(
+    (item) => item.rule,
+  );
 }
 
-export function suggestExistingRule(rules: ExceptionRule[], name: string): ExceptionRule | null {
+export function suggestExistingRule(
+  rules: ExceptionRule[],
+  name: string,
+): ExceptionRule | null {
   const exactMatches = findExactDuplicateRules(rules, name);
   if (exactMatches.length > 0) return exactMatches[0];
 
@@ -80,10 +89,15 @@ export function suggestExistingRule(rules: ExceptionRule[], name: string): Excep
 export function getDuplicationReport(
   rules: ExceptionRule[],
   name: string,
-  excludeId?: string
+  excludeId?: string,
 ): DuplicationReport {
   const exactMatches = findExactDuplicateRules(rules, name, excludeId);
-  const similarRules = findSimilarRulesWithSimilarity(rules, name, 0.7, excludeId);
+  const similarRules = findSimilarRulesWithSimilarity(
+    rules,
+    name,
+    0.7,
+    excludeId,
+  );
   const suggestion = suggestExistingRule(rules, name);
 
   return {
@@ -97,7 +111,7 @@ export function getDuplicationReport(
 
 export function batchCheckDuplication(
   rules: ExceptionRule[],
-  names: string[]
+  names: string[],
 ): Map<string, ExceptionRule[]> {
   const results = new Map<string, ExceptionRule[]>();
 
@@ -112,13 +126,23 @@ export function batchCheckDuplication(
 export function isCommonRulePattern(name: string): boolean {
   const normalizedInputName = normalizeName(name);
   const commonPatterns = [
-    '上厕所', '喝水', '休息', '接电话', '查看消息', '吃东西',
-    '伸懒腰', '眼睛休息', '起身活动', '整理桌面', '记录想法'
+    '上厕所',
+    '喝水',
+    '休息',
+    '接电话',
+    '查看消息',
+    '吃东西',
+    '伸懒腰',
+    '眼睛休息',
+    '起身活动',
+    '整理桌面',
+    '记录想法',
   ];
 
-  return commonPatterns.some(pattern =>
-    normalizeName(pattern) === normalizedInputName ||
-    normalizedInputName.includes(normalizeName(pattern))
+  return commonPatterns.some(
+    (pattern) =>
+      normalizeName(pattern) === normalizedInputName ||
+      normalizedInputName.includes(normalizeName(pattern)),
   );
 }
 
@@ -129,10 +153,10 @@ type NameSuggestionOptions = {
 export function generateNameSuggestions(
   baseName: string,
   existingNames: string[],
-  options: NameSuggestionOptions = {}
+  options: NameSuggestionOptions = {},
 ): string[] {
   const suggestions: string[] = [];
-  const normalizedExisting = existingNames.map(name => normalizeName(name));
+  const normalizedExisting = existingNames.map((name) => normalizeName(name));
   const seen = new Set<string>(normalizedExisting);
 
   const addSuggestion = (suggestion: string) => {

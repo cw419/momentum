@@ -30,12 +30,14 @@ describe('例外规则系统端到端测试', () => {
       const createResult = await manager.createRule(
         '上厕所',
         ExceptionRuleType.PAUSE_ONLY,
-        '生理需求暂停'
+        '生理需求暂停',
       );
 
       expect(createResult.rule.name).toBe('上厕所');
       expect(createResult.rule.type).toBe(ExceptionRuleType.PAUSE_ONLY);
-      expect(createResult.warnings).toContain('这是一个常见的规则模式，建议检查是否已有类似规则');
+      expect(createResult.warnings).toContain(
+        '这是一个常见的规则模式，建议检查是否已有类似规则',
+      );
 
       // 2. 验证规则已正确存储
       const storedRule = await storage.getRuleById(createResult.rule.id);
@@ -43,7 +45,9 @@ describe('例外规则系统端到端测试', () => {
       expect(storedRule!.name).toBe('上厕所');
 
       // 3. 验证规则分类正确
-      const pauseRules = await classificationService.getRulesByType(ExceptionRuleType.PAUSE_ONLY);
+      const pauseRules = await classificationService.getRulesByType(
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       expect(pauseRules).toHaveLength(1);
       expect(pauseRules[0].id).toBe(createResult.rule.id);
 
@@ -55,19 +59,29 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 300, // 5分钟
         remainingTime: 600, // 10分钟
-        isDurationless: false
+        isDurationless: false,
       };
 
       // 5. 验证规则可用于暂停操作
-      const isValidForPause = await manager.validateRuleForAction(createResult.rule.id, 'pause');
+      const isValidForPause = await manager.validateRuleForAction(
+        createResult.rule.id,
+        'pause',
+      );
       expect(isValidForPause).toBe(true);
 
-      const isValidForCompletion = await manager.validateRuleForAction(createResult.rule.id, 'early_completion');
+      const isValidForCompletion = await manager.validateRuleForAction(
+        createResult.rule.id,
+        'early_completion',
+      );
       expect(isValidForCompletion).toBe(false);
 
       // 6. 使用规则执行暂停操作
-      const useResult = await manager.useRule(createResult.rule.id, sessionContext, 'pause');
-      
+      const useResult = await manager.useRule(
+        createResult.rule.id,
+        sessionContext,
+        'pause',
+      );
+
       expect(useResult.record.ruleId).toBe(createResult.rule.id);
       expect(useResult.record.actionType).toBe('pause');
       expect(useResult.record.taskElapsedTime).toBe(300);
@@ -80,7 +94,9 @@ describe('例外规则系统端到端测试', () => {
       expect(updatedRule!.lastUsedAt).toBeInstanceOf(Date);
 
       // 8. 验证使用记录已创建
-      const usageHistory = await manager.getRuleUsageHistory(createResult.rule.id);
+      const usageHistory = await manager.getRuleUsageHistory(
+        createResult.rule.id,
+      );
       expect(usageHistory).toHaveLength(1);
       expect(usageHistory[0].actionType).toBe('pause');
 
@@ -96,7 +112,7 @@ describe('例外规则系统端到端测试', () => {
       const createResult = await manager.createRule(
         '任务完成',
         ExceptionRuleType.EARLY_COMPLETION_ONLY,
-        '任务提前完成'
+        '任务提前完成',
       );
 
       // 2. 尝试用于暂停操作（应该失败）
@@ -107,16 +123,20 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 300,
         remainingTime: 600,
-        isDurationless: false
+        isDurationless: false,
       };
 
       // 3. 验证规则类型不匹配
-      const isValidForPause = await manager.validateRuleForAction(createResult.rule.id, 'pause');
+      const isValidForPause = await manager.validateRuleForAction(
+        createResult.rule.id,
+        'pause',
+      );
       expect(isValidForPause).toBe(false);
 
       // 4. 尝试使用规则应该抛出异常
-      await expect(manager.useRule(createResult.rule.id, sessionContext, 'pause'))
-        .rejects.toThrow('不能用于暂停计时操作');
+      await expect(
+        manager.useRule(createResult.rule.id, sessionContext, 'pause'),
+      ).rejects.toThrow('不能用于暂停计时操作');
 
       // 5. 验证统计数据未更新
       const ruleStats = await manager.getRuleStats(createResult.rule.id);
@@ -130,7 +150,7 @@ describe('例外规则系统端到端测试', () => {
       const createResult = await manager.createRule(
         '任务已完成',
         ExceptionRuleType.EARLY_COMPLETION_ONLY,
-        '任务实际已完成'
+        '任务实际已完成',
       );
 
       // 2. 模拟使用规则
@@ -141,12 +161,16 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 1200, // 20分钟
         remainingTime: 300, // 5分钟
-        isDurationless: false
+        isDurationless: false,
       };
 
       // 3. 使用规则执行提前完成操作
-      const useResult = await manager.useRule(createResult.rule.id, sessionContext, 'early_completion');
-      
+      const useResult = await manager.useRule(
+        createResult.rule.id,
+        sessionContext,
+        'early_completion',
+      );
+
       expect(useResult.record.actionType).toBe('early_completion');
       expect(useResult.record.taskElapsedTime).toBe(1200);
 
@@ -164,12 +188,13 @@ describe('例外规则系统端到端测试', () => {
       await manager.createRule('喝水', ExceptionRuleType.PAUSE_ONLY);
 
       // 2. 尝试创建重复规则
-      await expect(manager.createRule('喝水', ExceptionRuleType.EARLY_COMPLETION_ONLY))
-        .rejects.toThrow('规则名称 "喝水" 已存在');
+      await expect(
+        manager.createRule('喝水', ExceptionRuleType.EARLY_COMPLETION_ONLY),
+      ).rejects.toThrow('规则名称 "喝水" 已存在');
 
       // 3. 获取重复检测建议
       const suggestions = await manager.getDuplicationSuggestions('喝水');
-      
+
       expect(suggestions.hasExactMatch).toBe(true);
       expect(suggestions.exactMatches).toHaveLength(1);
       expect(suggestions.nameSuggestions.length).toBeGreaterThan(0);
@@ -181,14 +206,17 @@ describe('例外规则系统端到端测试', () => {
       await manager.createRule('上厕所', ExceptionRuleType.PAUSE_ONLY);
 
       // 2. 创建相似规则
-      const createResult = await manager.createRule('去厕所', ExceptionRuleType.PAUSE_ONLY);
-      
+      const createResult = await manager.createRule(
+        '去厕所',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+
       expect(createResult.warnings.length).toBeGreaterThan(0);
       expect(createResult.warnings[0]).toContain('相似规则');
 
       // 3. 验证两个规则都存在
       const allRules = await manager.getAllRules();
-      const activeRules = allRules.filter(rule => rule.isActive);
+      const activeRules = allRules.filter((rule) => rule.isActive);
       expect(activeRules).toHaveLength(2);
     });
   });
@@ -196,10 +224,26 @@ describe('例外规则系统端到端测试', () => {
   describe('规则搜索和筛选流程', () => {
     beforeEach(async () => {
       // 创建测试数据
-      await manager.createRule('上厕所', ExceptionRuleType.PAUSE_ONLY, '生理需求');
-      await manager.createRule('喝水', ExceptionRuleType.PAUSE_ONLY, '补充水分');
-      await manager.createRule('完成任务', ExceptionRuleType.EARLY_COMPLETION_ONLY, '任务完成');
-      await manager.createRule('接电话', ExceptionRuleType.PAUSE_ONLY, '重要电话');
+      await manager.createRule(
+        '上厕所',
+        ExceptionRuleType.PAUSE_ONLY,
+        '生理需求',
+      );
+      await manager.createRule(
+        '喝水',
+        ExceptionRuleType.PAUSE_ONLY,
+        '补充水分',
+      );
+      await manager.createRule(
+        '完成任务',
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+        '任务完成',
+      );
+      await manager.createRule(
+        '接电话',
+        ExceptionRuleType.PAUSE_ONLY,
+        '重要电话',
+      );
     });
 
     test('用户搜索规则的完整流程', async () => {
@@ -209,17 +253,29 @@ describe('例外规则系统端到端测试', () => {
       expect(nameResults[0].name).toBe('上厕所');
 
       // 2. 按类型搜索
-      const pauseResults = await manager.searchRules('', ExceptionRuleType.PAUSE_ONLY);
+      const pauseResults = await manager.searchRules(
+        '',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       expect(pauseResults).toHaveLength(3);
-      expect(pauseResults.every(r => r.type === ExceptionRuleType.PAUSE_ONLY)).toBe(true);
+      expect(
+        pauseResults.every((r) => r.type === ExceptionRuleType.PAUSE_ONLY),
+      ).toBe(true);
 
       // 3. 按操作类型搜索
-      const actionResults = await manager.searchRules('', undefined, 'early_completion');
+      const actionResults = await manager.searchRules(
+        '',
+        undefined,
+        'early_completion',
+      );
       expect(actionResults).toHaveLength(1);
       expect(actionResults[0].name).toBe('完成任务');
 
       // 4. 组合搜索
-      const combinedResults = await manager.searchRules('水', ExceptionRuleType.PAUSE_ONLY);
+      const combinedResults = await manager.searchRules(
+        '水',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       expect(combinedResults).toHaveLength(1);
       expect(combinedResults[0].name).toBe('喝水');
     });
@@ -227,8 +283,8 @@ describe('例外规则系统端到端测试', () => {
     test('用户获取使用建议的流程', async () => {
       // 1. 模拟使用一些规则
       const rules = await manager.getAllRules();
-      const waterRule = rules.find(r => r.name === '喝水')!;
-      const toiletRule = rules.find(r => r.name === '上厕所')!;
+      const waterRule = rules.find((r) => r.name === '喝水')!;
+      const toiletRule = rules.find((r) => r.name === '上厕所')!;
 
       const sessionContext: SessionContext = {
         sessionId: 'session_1',
@@ -237,7 +293,7 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 300,
         remainingTime: 600,
-        isDurationless: false
+        isDurationless: false,
       };
 
       // 多次使用喝水规则
@@ -247,10 +303,10 @@ describe('例外规则系统端到端测试', () => {
 
       // 2. 获取使用建议
       const suggestions = await manager.getRuleUsageSuggestions('pause');
-      
+
       expect(suggestions.mostUsed).toHaveLength(3);
       expect(suggestions.mostUsed[0].name).toBe('喝水'); // 使用最多的在前
-      
+
       expect(suggestions.recentlyUsed).toHaveLength(2);
       expect(suggestions.suggested).toHaveLength(3);
     });
@@ -262,7 +318,7 @@ describe('例外规则系统端到端测试', () => {
       const createResult = await manager.createRule(
         '原始规则',
         ExceptionRuleType.PAUSE_ONLY,
-        '原始描述'
+        '原始描述',
       );
 
       const ruleId = createResult.rule.id;
@@ -275,7 +331,7 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 300,
         remainingTime: 600,
-        isDurationless: false
+        isDurationless: false,
       };
 
       await manager.useRule(ruleId, sessionContext, 'pause');
@@ -287,7 +343,7 @@ describe('例外规则系统端到端测试', () => {
       // 3. 更新规则
       const updateResult = await manager.updateRule(ruleId, {
         name: '更新后的规则',
-        description: '更新后的描述'
+        description: '更新后的描述',
       });
 
       expect(updateResult.rule.name).toBe('更新后的规则');
@@ -308,8 +364,10 @@ describe('例外规则系统端到端测试', () => {
       expect(deletedRule?.isActive).toBe(false);
 
       // 验证规则不再出现在活跃规则列表中
-      const activeRules = await manager.getRulesByType(ExceptionRuleType.PAUSE_ONLY);
-      expect(activeRules.find(r => r.id === ruleId)).toBeUndefined();
+      const activeRules = await manager.getRulesByType(
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      expect(activeRules.find((r) => r.id === ruleId)).toBeUndefined();
 
       // 但使用历史应该保留
       const history = await manager.getRuleUsageHistory(ruleId);
@@ -324,52 +382,62 @@ describe('例外规则系统端到端测试', () => {
         {
           name: '导入规则1',
           type: ExceptionRuleType.PAUSE_ONLY,
-          description: '导入的暂停规则'
+          description: '导入的暂停规则',
         },
         {
           name: '导入规则2',
           type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
-          description: '导入的完成规则'
+          description: '导入的完成规则',
         },
         {
           name: '重复规则',
           type: ExceptionRuleType.PAUSE_ONLY,
-          description: '这个规则会重复'
+          description: '这个规则会重复',
         },
         {
           name: '重复规则', // 重复
           type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
-          description: '重复的规则'
-        }
+          description: '重复的规则',
+        },
       ];
 
       // 2. 执行批量导入
       const importResult = await manager.importRules(rulesToImport, {
-        skipDuplicates: true
+        skipDuplicates: true,
       });
 
       // 3. 验证导入结果
       expect(importResult.imported).toHaveLength(3); // 3个成功导入
-      expect(importResult.skipped).toHaveLength(1);  // 1个重复跳过
-      expect(importResult.errors).toHaveLength(0);   // 0个错误
+      expect(importResult.skipped).toHaveLength(1); // 1个重复跳过
+      expect(importResult.errors).toHaveLength(0); // 0个错误
 
       // 4. 验证规则已正确创建
       const allRules = await manager.getAllRules();
-      const activeRules = allRules.filter(rule => rule.isActive);
+      const activeRules = allRules.filter((rule) => rule.isActive);
       expect(activeRules).toHaveLength(3);
 
       // 5. 验证规则类型分布
-      const pauseRules = await manager.getRulesByType(ExceptionRuleType.PAUSE_ONLY);
-      const completionRules = await manager.getRulesByType(ExceptionRuleType.EARLY_COMPLETION_ONLY);
-      
+      const pauseRules = await manager.getRulesByType(
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      const completionRules = await manager.getRulesByType(
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      );
+
       expect(pauseRules).toHaveLength(2);
       expect(completionRules).toHaveLength(1);
     });
 
     test('批量导出规则的完整流程', async () => {
       // 1. 创建测试规则
-      const rule1 = await manager.createRule('规则1', ExceptionRuleType.PAUSE_ONLY);
-      const rule2 = await manager.createRule('规则2', ExceptionRuleType.EARLY_COMPLETION_ONLY);
+      const rule1 = await manager.createRule(
+        '规则1',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      const rule2 = await manager.createRule(
+        '规则2',
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      );
 
       // 2. 使用规则生成统计数据
       const sessionContext: SessionContext = {
@@ -379,7 +447,7 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 300,
         remainingTime: 600,
-        isDurationless: false
+        isDurationless: false,
       };
 
       await manager.useRule(rule1.rule.id, sessionContext, 'pause');
@@ -387,7 +455,7 @@ describe('例外规则系统端到端测试', () => {
 
       // 3. 导出规则（不包含使用数据）
       const exportWithoutUsage = await manager.exportRules(false);
-      
+
       expect(exportWithoutUsage.rules).toHaveLength(2);
       expect(exportWithoutUsage.usageRecords).toBeUndefined();
       expect(exportWithoutUsage.summary.totalRules).toBe(2);
@@ -395,7 +463,7 @@ describe('例外规则系统端到端测试', () => {
 
       // 4. 导出规则（包含使用数据）
       const exportWithUsage = await manager.exportRules(true);
-      
+
       expect(exportWithUsage.rules).toHaveLength(2);
       expect(exportWithUsage.usageRecords).toBeDefined();
       expect(exportWithUsage.usageRecords!.length).toBe(2);
@@ -407,15 +475,18 @@ describe('例外规则系统端到端测试', () => {
     test('系统健康状态检查的完整流程', async () => {
       // 1. 空系统的健康检查
       let health = await manager.getSystemHealth();
-      
+
       expect(health.status).toBe('warning');
       expect(health.totalRules).toBe(0);
       expect(health.activeRules).toBe(0);
       expect(health.issues).toContain('没有活跃的例外规则');
 
       // 2. 添加规则后的健康检查
-      const rule = await manager.createRule('测试规则', ExceptionRuleType.PAUSE_ONLY);
-      
+      const rule = await manager.createRule(
+        '测试规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+
       health = await manager.getSystemHealth();
       expect(health.status).toBe('warning');
       expect(health.totalRules).toBe(1);
@@ -430,7 +501,7 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 300,
         remainingTime: 600,
-        isDurationless: false
+        isDurationless: false,
       };
 
       await manager.useRule(rule.rule.id, sessionContext, 'pause');
@@ -449,7 +520,7 @@ describe('例外规则系统端到端测试', () => {
       const createResult = await manager.createRule(
         '一致性测试规则',
         ExceptionRuleType.PAUSE_ONLY,
-        '测试数据一致性'
+        '测试数据一致性',
       );
 
       const ruleId = createResult.rule.id;
@@ -460,8 +531,10 @@ describe('例外规则系统端到端测试', () => {
       expect(storedRule!.name).toBe('一致性测试规则');
 
       // 3. 验证分类服务中的数据
-      const pauseRules = await classificationService.getRulesByType(ExceptionRuleType.PAUSE_ONLY);
-      expect(pauseRules.find(r => r.id === ruleId)).toBeDefined();
+      const pauseRules = await classificationService.getRulesByType(
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      expect(pauseRules.find((r) => r.id === ruleId)).toBeDefined();
 
       // 4. 使用规则
       const sessionContext: SessionContext = {
@@ -471,7 +544,7 @@ describe('例外规则系统端到端测试', () => {
         startedAt: new Date(),
         elapsedTime: 300,
         remainingTime: 600,
-        isDurationless: false
+        isDurationless: false,
       };
 
       await manager.useRule(ruleId, sessionContext, 'pause');

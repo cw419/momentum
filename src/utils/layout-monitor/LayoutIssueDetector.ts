@@ -1,7 +1,11 @@
 import { isDev } from '../env';
 import { logger } from '../logger';
 
-import { groupIssuesBySeverity, groupIssuesByType, getRecommendations } from './reporting';
+import {
+  groupIssuesBySeverity,
+  groupIssuesByType,
+  getRecommendations,
+} from './reporting';
 import { describeElement } from './describe';
 import type { LayoutIssue } from './types';
 
@@ -27,7 +31,7 @@ export class LayoutIssueDetector {
         element: document.body,
         severity: entry.value > 0.25 ? 'high' : 'medium',
         description: `检测到布局偏移: ${entry.value.toFixed(4)}`,
-        suggestedFix: '检查是否有未设置尺寸的图片或动态内容'
+        suggestedFix: '检查是否有未设置尺寸的图片或动态内容',
       };
 
       this.layoutIssues.push(issue);
@@ -54,7 +58,7 @@ export class LayoutIssueDetector {
     this.checkHorizontalOverflow(container);
 
     const elements = container.querySelectorAll('*');
-    elements.forEach(element => {
+    elements.forEach((element) => {
       this.checkElement(element as HTMLElement);
     });
   }
@@ -66,7 +70,7 @@ export class LayoutIssueDetector {
         element,
         severity: 'medium',
         description: `元素 ${element.tagName} 存在横向溢出`,
-        suggestedFix: '添加 overflow-x: hidden 或调整宽度'
+        suggestedFix: '添加 overflow-x: hidden 或调整宽度',
       };
 
       this.layoutIssues.push(issue);
@@ -83,7 +87,7 @@ export class LayoutIssueDetector {
     const computedStyle = window.getComputedStyle(element);
 
     if (computedStyle.width === 'auto' && element.children.length > 0) {
-      const hasFlexibleContent = Array.from(element.children).some(child => {
+      const hasFlexibleContent = Array.from(element.children).some((child) => {
         const childStyle = window.getComputedStyle(child as HTMLElement);
         return childStyle.width === 'auto' || childStyle.flexGrow !== '0';
       });
@@ -94,7 +98,7 @@ export class LayoutIssueDetector {
           element,
           severity: 'low',
           description: `元素 ${element.tagName} 可能存在宽度不稳定`,
-          suggestedFix: '考虑设置固定宽度或使用 min-width'
+          suggestedFix: '考虑设置固定宽度或使用 min-width',
         };
 
         this.layoutIssues.push(issue);
@@ -109,7 +113,7 @@ export class LayoutIssueDetector {
         element: container,
         severity: 'high',
         description: '容器存在横向溢出',
-        suggestedFix: '添加 overflow-x: hidden'
+        suggestedFix: '添加 overflow-x: hidden',
       };
 
       this.layoutIssues.push(issue);
@@ -142,7 +146,10 @@ export class LayoutIssueDetector {
       totalIssues: this.layoutIssues.length,
       issuesByType: groupIssuesByType(this.layoutIssues),
       issuesBySeverity: groupIssuesBySeverity(this.layoutIssues),
-      recommendations: getRecommendations(this.cumulativeLayoutShift, this.layoutIssues),
+      recommendations: getRecommendations(
+        this.cumulativeLayoutShift,
+        this.layoutIssues,
+      ),
     };
   }
 
@@ -152,7 +159,7 @@ export class LayoutIssueDetector {
       return;
     }
 
-    const issues = this.layoutIssues.map(issue => ({
+    const issues = this.layoutIssues.map((issue) => ({
       type: issue.type,
       severity: issue.severity,
       description: issue.description,
@@ -184,7 +191,9 @@ export class LayoutIssueDetector {
     element.style.boxSizing = 'border-box';
 
     if (isDev) {
-      logger.debug('LAYOUT', '🔧 自动修复横向溢出', { element: describeElement(element) });
+      logger.debug('LAYOUT', '🔧 自动修复横向溢出', {
+        element: describeElement(element),
+      });
     }
   }
 
@@ -196,13 +205,17 @@ export class LayoutIssueDetector {
     }
 
     if (isDev) {
-      logger.debug('LAYOUT', '🔧 自动修复宽度不稳定', { element: describeElement(element) });
+      logger.debug('LAYOUT', '🔧 自动修复宽度不稳定', {
+        element: describeElement(element),
+      });
     }
   }
 
   private precomputeLayout(container: HTMLElement): void {
-    const ruleItems = container.querySelectorAll('.rule-item, [data-rule-item]');
-    ruleItems.forEach(item => {
+    const ruleItems = container.querySelectorAll(
+      '.rule-item, [data-rule-item]',
+    );
+    ruleItems.forEach((item) => {
       const element = item as HTMLElement;
       if (!element.style.minHeight) {
         element.style.minHeight = '60px';
@@ -210,8 +223,10 @@ export class LayoutIssueDetector {
       }
     });
 
-    const listContainers = container.querySelectorAll('.rule-list, [data-rule-list]');
-    listContainers.forEach(list => {
+    const listContainers = container.querySelectorAll(
+      '.rule-list, [data-rule-list]',
+    );
+    listContainers.forEach((list) => {
       const element = list as HTMLElement;
       if (!element.style.height && !element.style.maxHeight) {
         element.style.maxHeight = '400px';
@@ -220,7 +235,7 @@ export class LayoutIssueDetector {
     });
 
     const tooltips = container.querySelectorAll('.tooltip, [data-tooltip]');
-    tooltips.forEach(tooltip => {
+    tooltips.forEach((tooltip) => {
       const element = tooltip as HTMLElement;
       if (window.getComputedStyle(element).position !== 'fixed') {
         element.style.position = 'absolute';
@@ -236,8 +251,10 @@ export class LayoutIssueDetector {
   }
 
   private fixScrollContainers(container: HTMLElement): void {
-    const scrollContainers = container.querySelectorAll('[data-scroll-container]');
-    scrollContainers.forEach(scrollContainer => {
+    const scrollContainers = container.querySelectorAll(
+      '[data-scroll-container]',
+    );
+    scrollContainers.forEach((scrollContainer) => {
       const element = scrollContainer as HTMLElement;
 
       if (!element.style.height && !element.style.maxHeight) {
@@ -252,8 +269,10 @@ export class LayoutIssueDetector {
   }
 
   private fixPopoverLayers(container: HTMLElement): void {
-    const popovers = container.querySelectorAll('[data-popover], .popover, .tooltip');
-    popovers.forEach(popover => {
+    const popovers = container.querySelectorAll(
+      '[data-popover], .popover, .tooltip',
+    );
+    popovers.forEach((popover) => {
       const element = popover as HTMLElement;
 
       element.style.transform = element.style.transform || 'translateZ(0)';
@@ -266,8 +285,10 @@ export class LayoutIssueDetector {
   }
 
   private fixDynamicContent(container: HTMLElement): void {
-    const dynamicContainers = container.querySelectorAll('[data-dynamic-content]');
-    dynamicContainers.forEach(dynamicContainer => {
+    const dynamicContainers = container.querySelectorAll(
+      '[data-dynamic-content]',
+    );
+    dynamicContainers.forEach((dynamicContainer) => {
       const element = dynamicContainer as HTMLElement;
 
       if (!element.style.minHeight) {

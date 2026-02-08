@@ -16,11 +16,11 @@ RSIP 是一种将复杂目标分解为可执行定式的方法论。核心思想
 
 ### 核心概念
 
-| 概念 | 英文 | 说明 |
-|------|------|------|
-| 国策 | Policy | 最高层目标，如"提高工作效率" |
-| 方针 | Guideline | 中层策略，如"建立晨间routine" |
-| 定式 | Routine | 可执行的具体行为，如"每天6:30起床" |
+| 概念 | 英文      | 说明                               |
+| ---- | --------- | ---------------------------------- |
+| 国策 | Policy    | 最高层目标，如"提高工作效率"       |
+| 方针 | Guideline | 中层策略，如"建立晨间routine"      |
+| 定式 | Routine   | 可执行的具体行为，如"每天6:30起床" |
 
 ---
 
@@ -36,15 +36,15 @@ interface RSIPNode {
   title: string;
   description?: string;
   type: 'policy' | 'guideline' | 'routine';
-  parentId?: string;           // 父节点ID，null表示根节点
-  chainId?: string;            // 关联的任务链ID
+  parentId?: string; // 父节点ID，null表示根节点
+  chainId?: string; // 关联的任务链ID
   createdAt: Date;
   status: 'active' | 'paused' | 'completed' | 'failed';
-  order: number;               // 同级节点排序
+  order: number; // 同级节点排序
 }
 
 interface RSIPTreeNode extends RSIPNode {
-  children: RSIPTreeNode[];    // 子节点
+  children: RSIPTreeNode[]; // 子节点
 }
 
 interface RSIPMeta {
@@ -55,11 +55,11 @@ interface RSIPMeta {
 
 ### 节点类型说明
 
-| 类型 | 层级 | 允许子节点 | 关联链条 |
-|------|------|:----------:|:--------:|
-| policy | 1 | ✓ | ✗ |
-| guideline | 2 | ✓ | ✗ |
-| routine | 3 | ✗ | ✓ |
+| 类型      | 层级 | 允许子节点 | 关联链条 |
+| --------- | ---- | :--------: | :------: |
+| policy    | 1    |     ✓      |    ✗     |
+| guideline | 2    |     ✓      |    ✗     |
+| routine   | 3    |     ✗      |    ✓     |
 
 ---
 
@@ -67,15 +67,15 @@ interface RSIPMeta {
 
 ### 关键文件
 
-| 文件 | 职责 |
-|------|------|
-| `src/types/index.ts` | RSIPNode, RSIPTreeNode, RSIPMeta 类型定义 |
-| `src/hooks/domains/useRsipDomain.ts` | RSIP 领域 Hook |
-| `src/utils/rsipTree.ts` | 树形结构工具函数 |
-| `src/components/rsip/RSIPCanvas.tsx` | 画布渲染组件 |
-| `src/components/rsip/RSIPTree.tsx` | 树形视图组件 |
-| `src/components/rsip/RSIPFilters.tsx` | 过滤器组件 |
-| `src/infra/storage/supabase/rsip.ts` | Supabase 存储实现 |
+| 文件                                  | 职责                                      |
+| ------------------------------------- | ----------------------------------------- |
+| `src/types/index.ts`                  | RSIPNode, RSIPTreeNode, RSIPMeta 类型定义 |
+| `src/hooks/domains/useRsipDomain.ts`  | RSIP 领域 Hook                            |
+| `src/utils/rsipTree.ts`               | 树形结构工具函数                          |
+| `src/components/rsip/RSIPCanvas.tsx`  | 画布渲染组件                              |
+| `src/components/rsip/RSIPTree.tsx`    | 树形视图组件                              |
+| `src/components/rsip/RSIPFilters.tsx` | 过滤器组件                                |
+| `src/infra/storage/supabase/rsip.ts`  | Supabase 存储实现                         |
 
 ### 组件结构
 
@@ -104,7 +104,10 @@ function buildRSIPTree(nodes: RSIPNode[]): RSIPTreeNode[];
 function countDescendants(node: RSIPTreeNode): number;
 
 // 删除节点及其后代
-function deleteNodeAndDescendants(nodes: RSIPNode[], nodeId: string): RSIPNode[];
+function deleteNodeAndDescendants(
+  nodes: RSIPNode[],
+  nodeId: string,
+): RSIPNode[];
 
 // 查找节点
 function findNodeInTree(tree: RSIPTreeNode[], id: string): RSIPTreeNode | null;
@@ -126,7 +129,10 @@ interface UseRsipDomainReturn {
   updateNode: (id: string, updates: Partial<RSIPNode>) => Promise<void>;
   deleteNode: (id: string) => Promise<void>;
   moveNode: (nodeId: string, newParentId: string | null) => Promise<void>;
-  reorderNodes: (parentId: string | null, orderedIds: string[]) => Promise<void>;
+  reorderNodes: (
+    parentId: string | null,
+    orderedIds: string[],
+  ) => Promise<void>;
 
   // 状态
   isLoading: boolean;
@@ -140,13 +146,13 @@ interface UseRsipDomainReturn {
 
 ### 节点操作
 
-| 操作 | 触发方式 | 效果 |
-|------|----------|------|
-| 选中节点 | 点击 | 高亮节点及其祖先/后代 |
-| 固定节点 | 双击 | 保持高亮直到再次双击 |
-| 移动节点 | 拖拽图标 | 进入重新关联模式 |
-| 取消关联 | 点击"解除" | 节点变为根节点 |
-| 删除节点 | 点击删除 | 确认后删除节点及后代 |
+| 操作     | 触发方式   | 效果                  |
+| -------- | ---------- | --------------------- |
+| 选中节点 | 点击       | 高亮节点及其祖先/后代 |
+| 固定节点 | 双击       | 保持高亮直到再次双击  |
+| 移动节点 | 拖拽图标   | 进入重新关联模式      |
+| 取消关联 | 点击"解除" | 节点变为根节点        |
+| 删除节点 | 点击删除   | 确认后删除节点及后代  |
 
 ### 定时器功能
 
@@ -160,7 +166,7 @@ const [activeTimers, setActiveTimers] = useState<Record<string, number>>({});
 // 启动计时
 function handleStartTimer(nodeId: string, minutes: number) {
   const endsAt = Date.now() + minutes * 60 * 1000;
-  setActiveTimers(prev => ({ ...prev, [nodeId]: endsAt }));
+  setActiveTimers((prev) => ({ ...prev, [nodeId]: endsAt }));
 }
 
 // 计时完成时发送通知
@@ -178,8 +184,8 @@ if (now >= endsAt) {
 ```typescript
 // RSIPCanvas 中的布局算法
 
-const LEVEL_WIDTH = 320;   // 每层水平间距
-const NODE_HEIGHT = 220;   // 节点垂直间距
+const LEVEL_WIDTH = 320; // 每层水平间距
+const NODE_HEIGHT = 220; // 节点垂直间距
 
 function layout(node: RSIPTreeNode, depth: number): number {
   // 叶子节点：直接分配当前 Y 坐标
@@ -190,7 +196,7 @@ function layout(node: RSIPTreeNode, depth: number): number {
   }
 
   // 非叶子节点：先布局子节点，然后居中
-  const childYs = node.children.map(child => layout(child, depth + 1));
+  const childYs = node.children.map((child) => layout(child, depth + 1));
   const y = (Math.min(...childYs) + Math.max(...childYs)) / 2;
   positions[node.id] = { left: depth * LEVEL_WIDTH, top: y };
   return y;
@@ -231,11 +237,11 @@ const filteredTree = useMemo(() => {
   if (!filterType) return tree;
 
   // 找到匹配类型的节点
-  const matchedNodes = nodes.filter(n => n.type === filterType);
+  const matchedNodes = nodes.filter((n) => n.type === filterType);
 
   // 向上找到所有祖先，保持树结构
   const visibleNodes = new Set<string>();
-  matchedNodes.forEach(node => {
+  matchedNodes.forEach((node) => {
     let current = node;
     while (current) {
       visibleNodes.add(current.id);
@@ -243,7 +249,7 @@ const filteredTree = useMemo(() => {
     }
   });
 
-  return buildRSIPTree(nodes.filter(n => visibleNodes.has(n.id)));
+  return buildRSIPTree(nodes.filter((n) => visibleNodes.has(n.id)));
 }, [tree, filterType, nodes]);
 ```
 
@@ -307,7 +313,7 @@ const routine: RSIPNode = {
   id: 'routine-1',
   title: '晨间冥想',
   type: 'routine',
-  chainId: 'chain-meditation-123',  // 关联的链条
+  chainId: 'chain-meditation-123', // 关联的链条
   // ...
 };
 

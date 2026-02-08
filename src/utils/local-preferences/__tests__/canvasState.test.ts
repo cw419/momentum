@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { LOCAL_STORAGE_KEYS } from '../keys';
-import { clearCanvasState, getCanvasState, setCanvasState } from '../canvasState';
+import {
+  clearCanvasState,
+  getCanvasState,
+  setCanvasState,
+} from '../canvasState';
 
 describe('local-preferences/canvasState', () => {
   beforeEach(() => {
@@ -12,7 +16,10 @@ describe('local-preferences/canvasState', () => {
   });
 
   it('returns null when state shape is invalid or JSON is malformed', () => {
-    localStorage.setItem(LOCAL_STORAGE_KEYS.RSIP_CANVAS_STATE, JSON.stringify({ scale: 1 }));
+    localStorage.setItem(
+      LOCAL_STORAGE_KEYS.RSIP_CANVAS_STATE,
+      JSON.stringify({ scale: 1 }),
+    );
     expect(getCanvasState()).toBeNull();
 
     localStorage.setItem(LOCAL_STORAGE_KEYS.RSIP_CANVAS_STATE, '{bad-json');
@@ -28,6 +35,8 @@ describe('local-preferences/canvasState', () => {
   it('clears persisted canvas state', () => {
     setCanvasState({ scale: 1, positionX: 0, positionY: 0 });
     clearCanvasState();
-    expect(localStorage.getItem(LOCAL_STORAGE_KEYS.RSIP_CANVAS_STATE)).toBeNull();
+    expect(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.RSIP_CANVAS_STATE),
+    ).toBeNull();
   });
 });

@@ -1,13 +1,29 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
+const require = createRequire(import.meta.url);
 const repoRoot = process.cwd();
 const coveragePath = path.join(repoRoot, 'coverage', 'coverage-final.json');
 const reportsDir = path.join(repoRoot, 'reports', 'quality');
 const outPath = path.join(reportsDir, 'test-coverage-hotspots.json');
 
 await fs.mkdir(reportsDir, { recursive: true });
+
+function resolvePackageBin(packageName, binName) {
+  const packageJsonPath = require.resolve(`${packageName}/package.json`);
+  const packageJson = require(packageJsonPath);
+  const binField = packageJson.bin;
+  const relativeBin =
+    typeof binField === 'string' ? binField : binField?.[binName];
+  if (!relativeBin) {
+    throw new Error(
+      `Unable to resolve bin "${binName}" from package "${packageName}"`,
+    );
+  }
+  return path.resolve(path.dirname(packageJsonPath), relativeBin);
+}
 
 async function ensureCoverage() {
   try {
@@ -17,14 +33,26 @@ async function ensureCoverage() {
     // continue
   }
 
-  const run = spawnSync('npm', ['run', 'test:coverage'], {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    shell: true,
-  });
+  const vitestBin = resolvePackageBin('vitest', 'vitest');
+  const run = spawnSync(
+    process.execPath,
+    [vitestBin, 'run', '--coverage', '--config', 'vitest.ci.config.ts'],
+    {
+      cwd: repoRoot,
+      stdio: 'inherit',
+    },
+  );
+
+  if (run.error) {
+    throw new Error(
+      `Failed to generate coverage report (${run.error.message})`,
+    );
+  }
 
   if ((run.status ?? 1) !== 0) {
-    throw new Error(`Failed to generate coverage report (exit ${run.status ?? 'unknown'})`);
+    throw new Error(
+      `Failed to generate coverage report (exit ${run.status ?? 'unknown'})`,
+    );
   }
 }
 
@@ -33,7 +61,10 @@ function pct(covered, total) {
 }
 
 function isTestFile(relPath) {
-  return /\.(test|spec)\.[cm]?[jt]sx?$/.test(relPath) || relPath.includes('/__tests__/');
+  return (
+    /\.(test|spec)\.[cm]?[jt]sx?$/.test(relPath) ||
+    relPath.includes('/__tests__/')
+  );
 }
 
 await ensureCoverage();
@@ -48,10 +79,16 @@ for (const [filePath, coverage] of Object.entries(raw)) {
 
   const statementCounts = Object.values(coverage.s ?? {});
   const functionCounts = Object.values(coverage.f ?? {});
-  const branchCounts = Object.values(coverage.b ?? {}).flatMap((hits) => Array.isArray(hits) ? hits : []);
+  const branchCounts = Object.values(coverage.b ?? {}).flatMap((hits) =>
+    Array.isArray(hits) ? hits : [],
+  );
 
-  const coveredStatements = statementCounts.filter((hits) => (hits ?? 0) > 0).length;
-  const coveredFunctions = functionCounts.filter((hits) => (hits ?? 0) > 0).length;
+  const coveredStatements = statementCounts.filter(
+    (hits) => (hits ?? 0) > 0,
+  ).length;
+  const coveredFunctions = functionCounts.filter(
+    (hits) => (hits ?? 0) > 0,
+  ).length;
   const coveredBranches = branchCounts.filter((hits) => (hits ?? 0) > 0).length;
 
   const uncoveredLines = [];
@@ -63,7 +100,9 @@ for (const [filePath, coverage] of Object.entries(raw)) {
     }
   }
 
-  const uniqueUncoveredLines = [...new Set(uncoveredLines)].sort((a, b) => a - b);
+  const uniqueUncoveredLines = [...new Set(uncoveredLines)].sort(
+    (a, b) => a - b,
+  );
 
   files.push({
     file: relPath,
@@ -81,8 +120,10 @@ for (const [filePath, coverage] of Object.entries(raw)) {
 const hotspots = [...files].sort((a, b) => {
   if (a.branches !== b.branches) return a.branches - b.branches;
   if (a.statements !== b.statements) return a.statements - b.statements;
-  if (a.uncoveredBranchCount !== b.uncoveredBranchCount) return b.uncoveredBranchCount - a.uncoveredBranchCount;
-  if (a.uncoveredStatementCount !== b.uncoveredStatementCount) return b.uncoveredStatementCount - a.uncoveredStatementCount;
+  if (a.uncoveredBranchCount !== b.uncoveredBranchCount)
+    return b.uncoveredBranchCount - a.uncoveredBranchCount;
+  if (a.uncoveredStatementCount !== b.uncoveredStatementCount)
+    return b.uncoveredStatementCount - a.uncoveredStatementCount;
   return a.file.localeCompare(b.file);
 });
 
@@ -96,4 +137,6 @@ const payload = {
 await fs.writeFile(outPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
 
 console.log(`[coverage-hotspots] analyzed ${files.length} files.`);
-console.log(`[coverage-hotspots] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`);
+console.log(
+  `[coverage-hotspots] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`,
+);

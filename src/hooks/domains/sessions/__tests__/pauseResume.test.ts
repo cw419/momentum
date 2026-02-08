@@ -1,6 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { AppState } from '../../../../types';
-import { createAppState, createLocalStorageMock, createUnitChain } from '../../../../test/factories';
+import {
+  createAppState,
+  createLocalStorageMock,
+  createUnitChain,
+} from '../../../../test/factories';
 import { createPauseResumeHandlers } from '../pauseResume';
 
 vi.mock('../../../../utils/logger', () => ({
@@ -11,9 +15,14 @@ vi.mock('../../../../utils/logger', () => ({
 
 function createStateContainer(initialState: AppState) {
   let state = initialState;
-  const setState = vi.fn((update: AppState | ((prev: AppState) => AppState)) => {
-    state = typeof update === 'function' ? (update as (prev: AppState) => AppState)(state) : update;
-  });
+  const setState = vi.fn(
+    (update: AppState | ((prev: AppState) => AppState)) => {
+      state =
+        typeof update === 'function'
+          ? (update as (prev: AppState) => AppState)(state)
+          : update;
+    },
+  );
   return {
     getState: () => state,
     setState,
@@ -96,7 +105,7 @@ describe('createPauseResumeHandlers', () => {
       expect.objectContaining({
         isPaused: false,
         totalPausedTime: 22000,
-      })
+      }),
     );
   });
 
@@ -104,7 +113,9 @@ describe('createPauseResumeHandlers', () => {
     const storage = createLocalStorageMock({
       saveActiveSession: vi.fn(async () => undefined),
     });
-    const noSession = createStateContainer(createAppState({ activeSession: null }));
+    const noSession = createStateContainer(
+      createAppState({ activeSession: null }),
+    );
     const noPausedAt = createStateContainer(
       createAppState({
         activeSession: {
@@ -114,7 +125,7 @@ describe('createPauseResumeHandlers', () => {
           isPaused: true,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
 
     createPauseResumeHandlers({

@@ -3,7 +3,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const repoRoot = process.cwd();
-const mutationHtmlPath = path.join(repoRoot, 'reports', 'mutation', 'mutation.html');
+const mutationHtmlPath = path.join(
+  repoRoot,
+  'reports',
+  'mutation',
+  'mutation.html',
+);
 const reportsDir = path.join(repoRoot, 'reports', 'quality');
 const outPath = path.join(reportsDir, 'test-mutation-hotspots.json');
 
@@ -129,7 +134,8 @@ for (const [file, data] of Object.entries(report.files ?? {})) {
 
 fileSummaries.sort((a, b) => {
   if (a.undetected !== b.undetected) return b.undetected - a.undetected;
-  if (a.undetectedRate !== b.undetectedRate) return b.undetectedRate - a.undetectedRate;
+  if (a.undetectedRate !== b.undetectedRate)
+    return b.undetectedRate - a.undetectedRate;
   if (a.total !== b.total) return b.total - a.total;
   return a.file.localeCompare(b.file);
 });
@@ -144,7 +150,7 @@ const totals = fileSummaries.reduce(
     acc.other += item.other;
     return acc;
   },
-  { total: 0, killed: 0, survived: 0, noCoverage: 0, timeout: 0, other: 0 }
+  { total: 0, killed: 0, survived: 0, noCoverage: 0, timeout: 0, other: 0 },
 );
 
 const payload = {
@@ -162,4 +168,6 @@ const payload = {
 await fs.writeFile(outPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
 
 console.log(`[mutation-hotspots] analyzed ${fileSummaries.length} files.`);
-console.log(`[mutation-hotspots] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`);
+console.log(
+  `[mutation-hotspots] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`,
+);

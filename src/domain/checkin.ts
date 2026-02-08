@@ -18,4 +18,3 @@ export interface CheckinResult {
   total_points?: number;
   checkin_id?: string;
 }
-

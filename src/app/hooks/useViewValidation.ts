@@ -30,7 +30,7 @@ export function useViewValidation({
     if (!isInitialized) return;
     if (currentView === 'focus') {
       const activeChain = stateRef.current.chains.find(
-        (c) => c.id === activeSessionChainId
+        (c) => c.id === activeSessionChainId,
       );
       if (!activeSessionChainId || !activeChain) {
         setState((prev) => ({
@@ -47,7 +47,7 @@ export function useViewValidation({
     if (!isInitialized) return;
     if (currentView === 'detail' || currentView === 'group') {
       const viewingChain = stateRef.current.chains.find(
-        (c) => c.id === viewingChainId
+        (c) => c.id === viewingChainId,
       );
       if (!viewingChain) {
         setState((prev) => ({

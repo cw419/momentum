@@ -1,4 +1,9 @@
-import type { Chain, ScheduledSession, ActiveSession, CompletionHistory } from '../../types';
+import type {
+  Chain,
+  ScheduledSession,
+  ActiveSession,
+  CompletionHistory,
+} from '../../types';
 
 export interface CacheEntry<T> {
   data: T;
@@ -12,4 +17,3 @@ export interface BatchedData {
   activeSession: ActiveSession | null;
   completionHistory: CompletionHistory[];
 }
-

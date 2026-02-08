@@ -1,5 +1,20 @@
-import type { ActiveSession, Chain, ExceptionRule, ExceptionRuleType, PauseOptions, SessionContext } from '../../types';
-import { AlertTriangle, CheckCircle, Clock, Flame, Hourglass, Maximize, X } from 'lucide-react';
+import type {
+  ActiveSession,
+  Chain,
+  ExceptionRule,
+  ExceptionRuleType,
+  PauseOptions,
+  SessionContext,
+} from '../../types';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Flame,
+  Hourglass,
+  Maximize,
+  X,
+} from 'lucide-react';
 import {
   formatDuration,
   formatElapsedTime,
@@ -91,17 +106,19 @@ export function FocusModeView({
 }: FocusModeViewProps) {
   const { language, tr } = useI18n();
   const elapsedMinutes = Math.ceil(elapsedSeconds / 60);
-  const elapsedWholeMinutes = Math.floor((session.duration * 60 - timeRemaining) / 60);
+  const elapsedWholeMinutes = Math.floor(
+    (session.duration * 60 - timeRemaining) / 60,
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-[#161615] dark:via-black dark:to-[#161615] flex items-center justify-center relative overflow-hidden">
-      <div className="absolute top-4 right-4 z-20 flex items-center space-x-2">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-[#161615] dark:via-black dark:to-[#161615]">
+      <div className="absolute right-4 top-4 z-20 flex items-center space-x-2">
         {!isFullscreen ? (
           <button
             type="button"
             onClick={onEnterFullscreen}
             aria-label={tr('进入全屏', 'Enter fullscreen')}
-            className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-gray-600 dark:text-gray-300 transition duration-300 border border-white/20"
+            className="rounded-2xl border border-white/20 bg-white/10 p-3 text-gray-600 backdrop-blur-sm transition duration-300 hover:bg-white/20 dark:text-gray-300"
             title={tr('进入全屏 (F11)', 'Enter fullscreen (F11)')}
           >
             <Maximize size={20} aria-hidden="true" />
@@ -111,7 +128,7 @@ export function FocusModeView({
             type="button"
             onClick={onExitFullscreen}
             aria-label={tr('退出全屏', 'Exit fullscreen')}
-            className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-gray-600 dark:text-gray-300 transition duration-300 border border-white/20"
+            className="rounded-2xl border border-white/20 bg-white/10 p-3 text-gray-600 backdrop-blur-sm transition duration-300 hover:bg-white/20 dark:text-gray-300"
             title={tr('退出全屏 (ESC)', 'Exit fullscreen (ESC)')}
           >
             <X size={20} aria-hidden="true" />
@@ -120,23 +137,23 @@ export function FocusModeView({
       </div>
 
       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-500/5 dark:from-primary-500/5 dark:via-transparent dark:to-primary-500/5"></div>
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 dark:bg-primary-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute left-1/4 top-1/4 h-96 w-96 animate-pulse-slow rounded-full bg-primary-500/10 blur-3xl dark:bg-primary-500/10"></div>
       <div
-        className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-500/5 dark:bg-primary-500/5 rounded-full blur-3xl animate-pulse-slow"
+        className="absolute bottom-1/4 right-1/4 h-96 w-96 animate-pulse-slow rounded-full bg-primary-500/5 blur-3xl dark:bg-primary-500/5"
         style={{ animationDelay: '1s' }}
       ></div>
 
-      <div className="relative z-10 text-center animate-fade-in">
+      <div className="relative z-10 animate-fade-in text-center">
         <div className="mb-12">
-          <div className="flex items-center justify-center space-x-4 mb-6">
-            <div className="w-16 h-16 rounded-3xl bg-primary-500/20 backdrop-blur-sm flex items-center justify-center border border-primary-500/30 dark:bg-primary-500/20 dark:border-primary-500/30">
+          <div className="mb-6 flex items-center justify-center space-x-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-primary-500/30 bg-primary-500/20 backdrop-blur-sm dark:border-primary-500/30 dark:bg-primary-500/20">
               <Flame className="text-primary-500" size={32} />
             </div>
             <div className="text-left">
-              <h1 className="text-5xl md:text-6xl font-light font-chinese text-gray-900 dark:text-white mb-2">
+              <h1 className="mb-2 font-chinese text-5xl font-light text-gray-900 dark:text-white md:text-6xl">
                 {chain.name}
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-lg font-mono tracking-wider">
+              <p className="font-mono text-lg tracking-wider text-gray-600 dark:text-gray-400">
                 {getTriggerLabel(chain.trigger, language)}
               </p>
             </div>
@@ -144,13 +161,15 @@ export function FocusModeView({
         </div>
 
         <div className="mb-16">
-          <div className="text-8xl md:text-9xl font-mono font-light text-gray-900 dark:text-white mb-8 tracking-wider">
-            {isDurationless ? formatElapsedTime(elapsedSeconds) : formatDuration(timeRemaining)}
+          <div className="mb-8 font-mono text-8xl font-light tracking-wider text-gray-900 dark:text-white md:text-9xl">
+            {isDurationless
+              ? formatElapsedTime(elapsedSeconds)
+              : formatDuration(timeRemaining)}
           </div>
 
-          <div className="w-96 max-w-full h-3 bg-gray-200 dark:bg-white/10 backdrop-blur-sm rounded-full mx-auto mb-6 border border-gray-300 dark:border-white/20">
+          <div className="mx-auto mb-6 h-3 w-96 max-w-full rounded-full border border-gray-300 bg-gray-200 backdrop-blur-sm dark:border-white/20 dark:bg-white/10">
             <div
-              className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-[width] duration-1000 ease-out shadow-lg"
+              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg transition-[width] duration-1000 ease-out"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
@@ -162,9 +181,9 @@ export function FocusModeView({
                 {isDurationless
                   ? `${tr('已用时 ', 'Elapsed: ')}${formatTimeDescriptionByLanguage(elapsedMinutes, language)}`
                   : tr(
-                    `${elapsedWholeMinutes}分钟 / ${session.duration}分钟`,
-                    `${elapsedWholeMinutes} min / ${session.duration} min`
-                  )}
+                      `${elapsedWholeMinutes}分钟 / ${session.duration}分钟`,
+                      `${elapsedWholeMinutes} min / ${session.duration} min`,
+                    )}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -174,38 +193,44 @@ export function FocusModeView({
           </div>
 
           {isDurationless && lastCompletionTime !== null && (
-            <div className="mt-4 text-gray-500 dark:text-gray-400 text-sm font-chinese">
+            <div className="mt-4 font-chinese text-sm text-gray-500 dark:text-gray-400">
               {formatLastCompletionReference(lastCompletionTime, language)}
             </div>
           )}
 
-          {isDurationless && chain.minimumDuration && chain.minimumDuration > 0 && !hasReachedMinimum && (
-            <div className="mt-4 text-indigo-600 dark:text-indigo-400 text-lg font-chinese">
-              <div className="flex items-center justify-center space-x-2">
-                <Hourglass className="text-indigo-500" size={16} />
-                <span>
-                  {tr(
-                    `还需 ${Math.floor(minimumCountdown / 60)}分${minimumCountdown % 60}秒 达到最小时长`,
-                    `Need ${Math.floor(minimumCountdown / 60)}m ${minimumCountdown % 60}s to reach the minimum duration`
-                  )}
-                </span>
+          {isDurationless &&
+            chain.minimumDuration &&
+            chain.minimumDuration > 0 &&
+            !hasReachedMinimum && (
+              <div className="mt-4 font-chinese text-lg text-indigo-600 dark:text-indigo-400">
+                <div className="flex items-center justify-center space-x-2">
+                  <Hourglass className="text-indigo-500" size={16} />
+                  <span>
+                    {tr(
+                      `还需 ${Math.floor(minimumCountdown / 60)}分${minimumCountdown % 60}秒 达到最小时长`,
+                      `Need ${Math.floor(minimumCountdown / 60)}m ${minimumCountdown % 60}s to reach the minimum duration`,
+                    )}
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {isDurationless && chain.minimumDuration && chain.minimumDuration > 0 && hasReachedMinimum && (
-            <div className="mt-4 text-green-600 dark:text-green-400 text-lg font-chinese">
-              <div className="flex items-center justify-center space-x-2">
-                <CheckCircle className="text-green-500" size={16} />
-                <span>
-                  {tr(
-                    `已达到最小时长 ${chain.minimumDuration} 分钟，可以完成任务`,
-                    `Minimum duration reached (${chain.minimumDuration} min). You can complete the task.`
-                  )}
-                </span>
+          {isDurationless &&
+            chain.minimumDuration &&
+            chain.minimumDuration > 0 &&
+            hasReachedMinimum && (
+              <div className="mt-4 font-chinese text-lg text-green-600 dark:text-green-400">
+                <div className="flex items-center justify-center space-x-2">
+                  <CheckCircle className="text-green-500" size={16} />
+                  <span>
+                    {tr(
+                      `已达到最小时长 ${chain.minimumDuration} 分钟，可以完成任务`,
+                      `Minimum duration reached (${chain.minimumDuration} min). You can complete the task.`,
+                    )}
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         <FocusModeControls
@@ -229,7 +254,7 @@ export function FocusModeView({
             type="button"
             onClick={onInterruptClick}
             aria-label={tr('中断任务', 'Interrupt')}
-            className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105 flex items-center justify-center border-2 border-red-400"
+            className="flex h-16 w-16 transform items-center justify-center rounded-full border-2 border-red-400 bg-red-500 text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-red-600 hover:shadow-xl"
             title={tr('中断任务', 'Interrupt')}
           >
             <AlertTriangle size={24} aria-hidden="true" />
@@ -259,7 +284,11 @@ export function FocusModeView({
         />
       )}
 
-      <InterruptConfirmDialog isOpen={showInterruptDialog} onCancel={onCancelInterrupt} onConfirm={onConfirmInterrupt} />
+      <InterruptConfirmDialog
+        isOpen={showInterruptDialog}
+        onCancel={onCancelInterrupt}
+        onConfirm={onConfirmInterrupt}
+      />
 
       <UserFeedbackDisplay />
     </div>

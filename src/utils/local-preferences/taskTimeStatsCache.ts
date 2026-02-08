@@ -15,4 +15,3 @@ export function setTaskTimeStats(data: string): void {
     // ignore quota errors
   }
 }
-

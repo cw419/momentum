@@ -7,7 +7,13 @@ export function debounceOperation<T>(args: {
   operation: () => Promise<T>;
   delay?: number;
 }): Promise<T> {
-  const { debounceTimers, pendingOperations, key, operation, delay = 300 } = args;
+  const {
+    debounceTimers,
+    pendingOperations,
+    key,
+    operation,
+    delay = 300,
+  } = args;
 
   return new Promise((resolve, reject) => {
     const existingTimer = debounceTimers.get(key);
@@ -29,4 +35,3 @@ export function debounceOperation<T>(args: {
     debounceTimers.set(key, timer);
   });
 }
-

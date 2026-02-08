@@ -33,8 +33,8 @@ interface SystemHealthReport {
 interface HealthCheckConfig {
   enabled: boolean;
   interval: number; // 检查间隔（毫秒）
-  timeout: number;  // 超时时间（毫秒）
-  retries: number;  // 重试次数
+  timeout: number; // 超时时间（毫秒）
+  retries: number; // 重试次数
 }
 
 export class SystemHealthChecker {
@@ -42,14 +42,14 @@ export class SystemHealthChecker {
   private isRunning = false;
   private checkInterval: number | null = null;
   private lastReport: SystemHealthReport | null = null;
-  
+
   private config: Record<string, HealthCheckConfig> = {
     storage: { enabled: true, interval: 60000, timeout: 5000, retries: 2 },
     cache: { enabled: true, interval: 30000, timeout: 2000, retries: 1 },
     performance: { enabled: true, interval: 120000, timeout: 3000, retries: 1 },
     memory: { enabled: true, interval: 45000, timeout: 1000, retries: 0 },
     errors: { enabled: true, interval: 90000, timeout: 2000, retries: 1 },
-    rules: { enabled: true, interval: 180000, timeout: 10000, retries: 2 }
+    rules: { enabled: true, interval: 180000, timeout: 10000, retries: 2 },
   };
 
   constructor() {
@@ -104,29 +104,36 @@ export class SystemHealthChecker {
       this.checkPerformanceHealth(),
       this.checkMemoryHealth(),
       this.checkErrorHealth(),
-      this.checkRulesHealth()
+      this.checkRulesHealth(),
     ];
 
     const results = await Promise.allSettled(checkPromises);
-    
+
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         checks.push(result.value);
       } else {
-        const componentNames = ['storage', 'cache', 'performance', 'memory', 'errors', 'rules'];
+        const componentNames = [
+          'storage',
+          'cache',
+          'performance',
+          'memory',
+          'errors',
+          'rules',
+        ];
         checks.push({
           component: componentNames[index],
           status: 'critical',
           message: `健康检查失败: ${result.reason}`,
-          timestamp
+          timestamp,
         });
       }
     });
 
     // 计算总体状态
-    const criticalCount = checks.filter(c => c.status === 'critical').length;
-    const warningCount = checks.filter(c => c.status === 'warning').length;
-    const healthyCount = checks.filter(c => c.status === 'healthy').length;
+    const criticalCount = checks.filter((c) => c.status === 'critical').length;
+    const warningCount = checks.filter((c) => c.status === 'warning').length;
+    const healthyCount = checks.filter((c) => c.status === 'healthy').length;
 
     let overallStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
     if (criticalCount > 0) {
@@ -146,10 +153,10 @@ export class SystemHealthChecker {
         totalChecks: checks.length,
         healthyChecks: healthyCount,
         warningChecks: warningCount,
-        criticalChecks: criticalCount
+        criticalChecks: criticalCount,
       },
       recommendations,
-      nextCheckTime: timestamp + 60000 // 下次检查时间
+      nextCheckTime: timestamp + 60000, // 下次检查时间
     };
 
     this.lastReport = report;
@@ -187,7 +194,7 @@ export class SystemHealthChecker {
           component,
           status: 'critical',
           message: '未知组件',
-          timestamp
+          timestamp,
         };
     }
   }
@@ -206,22 +213,22 @@ export class SystemHealthChecker {
    */
   private async checkStorageHealth(): Promise<HealthCheckResult> {
     const timestamp = Date.now();
-    
+
     try {
       // 测试存储读写
       const testKey = 'health_check_test';
       const testValue = { timestamp, test: true };
-      
+
       localStorage.setItem(testKey, JSON.stringify(testValue));
       const retrieved = localStorage.getItem(testKey);
       localStorage.removeItem(testKey);
-      
+
       if (!retrieved || JSON.parse(retrieved).timestamp !== timestamp) {
         return {
           component: 'storage',
           status: 'critical',
           message: '存储读写测试失败',
-          timestamp
+          timestamp,
         };
       }
 
@@ -233,7 +240,7 @@ export class SystemHealthChecker {
           status: 'critical',
           message: `存储空间不足 (${storageUsage.percentage}% 已使用)`,
           details: storageUsage,
-          timestamp
+          timestamp,
         };
       } else if (storageUsage.percentage > 75) {
         return {
@@ -241,7 +248,7 @@ export class SystemHealthChecker {
           status: 'warning',
           message: `存储空间使用较高 (${storageUsage.percentage}% 已使用)`,
           details: storageUsage,
-          timestamp
+          timestamp,
         };
       }
 
@@ -250,14 +257,14 @@ export class SystemHealthChecker {
         status: 'healthy',
         message: `存储正常 (${storageUsage.percentage}% 已使用)`,
         details: storageUsage,
-        timestamp
+        timestamp,
       };
     } catch (error) {
       return {
         component: 'storage',
         status: 'critical',
         message: `存储检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        timestamp
+        timestamp,
       };
     }
   }
@@ -267,17 +274,17 @@ export class SystemHealthChecker {
    */
   private async checkCacheHealth(): Promise<HealthCheckResult> {
     const timestamp = Date.now();
-    
+
     try {
       const cacheStats = exceptionRuleCache.getCacheStats();
-      
+
       if (cacheStats.hitRate < 50 && cacheStats.hits + cacheStats.misses > 10) {
         return {
           component: 'cache',
           status: 'warning',
           message: `缓存命中率较低 (${cacheStats.hitRate}%)`,
           details: cacheStats,
-          timestamp
+          timestamp,
         };
       }
 
@@ -287,7 +294,7 @@ export class SystemHealthChecker {
           status: 'warning',
           message: `缓存大小较大 (${cacheStats.size} 项)`,
           details: cacheStats,
-          timestamp
+          timestamp,
         };
       }
 
@@ -296,14 +303,14 @@ export class SystemHealthChecker {
         status: 'healthy',
         message: `缓存正常 (命中率: ${cacheStats.hitRate}%, 大小: ${cacheStats.size})`,
         details: cacheStats,
-        timestamp
+        timestamp,
       };
     } catch (error) {
       return {
         component: 'cache',
         status: 'critical',
         message: `缓存检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        timestamp
+        timestamp,
       };
     }
   }
@@ -313,10 +320,11 @@ export class SystemHealthChecker {
    */
   private async checkPerformanceHealth(): Promise<HealthCheckResult> {
     const timestamp = Date.now();
-    
+
     try {
       const performanceReport = performanceMonitor.getPerformanceReport();
-      const { averageResponseTime, userSatisfactionScore } = performanceReport.summary;
+      const { averageResponseTime, userSatisfactionScore } =
+        performanceReport.summary;
 
       if (averageResponseTime > 1000) {
         return {
@@ -324,7 +332,7 @@ export class SystemHealthChecker {
           status: 'critical',
           message: `响应时间过慢 (${averageResponseTime.toFixed(0)}ms)`,
           details: performanceReport.summary,
-          timestamp
+          timestamp,
         };
       } else if (averageResponseTime > 500) {
         return {
@@ -332,7 +340,7 @@ export class SystemHealthChecker {
           status: 'warning',
           message: `响应时间较慢 (${averageResponseTime.toFixed(0)}ms)`,
           details: performanceReport.summary,
-          timestamp
+          timestamp,
         };
       }
 
@@ -342,7 +350,7 @@ export class SystemHealthChecker {
           status: 'warning',
           message: `用户满意度较低 (${userSatisfactionScore}分)`,
           details: performanceReport.summary,
-          timestamp
+          timestamp,
         };
       }
 
@@ -351,14 +359,14 @@ export class SystemHealthChecker {
         status: 'healthy',
         message: `性能正常 (响应时间: ${averageResponseTime.toFixed(0)}ms, 满意度: ${userSatisfactionScore}分)`,
         details: performanceReport.summary,
-        timestamp
+        timestamp,
       };
     } catch (error) {
       return {
         component: 'performance',
         status: 'critical',
         message: `性能检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        timestamp
+        timestamp,
       };
     }
   }
@@ -368,21 +376,22 @@ export class SystemHealthChecker {
    */
   private async checkMemoryHealth(): Promise<HealthCheckResult> {
     const timestamp = Date.now();
-    
+
     try {
       if (typeof (performance as any).memory === 'undefined') {
         return {
           component: 'memory',
           status: 'warning',
           message: '内存信息不可用',
-          timestamp
+          timestamp,
         };
       }
 
       const memory = (performance as any).memory;
       const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
       const limitMB = Math.round(memory.jsHeapSizeLimit / 1024 / 1024);
-      const usagePercentage = (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100;
+      const usagePercentage =
+        (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100;
 
       if (usagePercentage > 90) {
         return {
@@ -390,7 +399,7 @@ export class SystemHealthChecker {
           status: 'critical',
           message: `内存使用过高 (${usedMB}MB / ${limitMB}MB, ${usagePercentage.toFixed(1)}%)`,
           details: { usedMB, limitMB, usagePercentage },
-          timestamp
+          timestamp,
         };
       } else if (usagePercentage > 75) {
         return {
@@ -398,7 +407,7 @@ export class SystemHealthChecker {
           status: 'warning',
           message: `内存使用较高 (${usedMB}MB / ${limitMB}MB, ${usagePercentage.toFixed(1)}%)`,
           details: { usedMB, limitMB, usagePercentage },
-          timestamp
+          timestamp,
         };
       }
 
@@ -407,14 +416,14 @@ export class SystemHealthChecker {
         status: 'healthy',
         message: `内存使用正常 (${usedMB}MB / ${limitMB}MB, ${usagePercentage.toFixed(1)}%)`,
         details: { usedMB, limitMB, usagePercentage },
-        timestamp
+        timestamp,
       };
     } catch (error) {
       return {
         component: 'memory',
         status: 'critical',
         message: `内存检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        timestamp
+        timestamp,
       };
     }
   }
@@ -424,11 +433,11 @@ export class SystemHealthChecker {
    */
   private async checkErrorHealth(): Promise<HealthCheckResult> {
     const timestamp = Date.now();
-    
+
     try {
       const errorHistory = errorRecoveryManager.getErrorHistory();
-      const recentErrors = errorHistory.filter(e => 
-        timestamp - e.timestamp < 300000 // 最近5分钟
+      const recentErrors = errorHistory.filter(
+        (e) => timestamp - e.timestamp < 300000, // 最近5分钟
       );
 
       if (recentErrors.length > 10) {
@@ -436,16 +445,22 @@ export class SystemHealthChecker {
           component: 'errors',
           status: 'critical',
           message: `最近5分钟内发生了${recentErrors.length}个错误`,
-          details: { recentErrorCount: recentErrors.length, totalErrors: errorHistory.length },
-          timestamp
+          details: {
+            recentErrorCount: recentErrors.length,
+            totalErrors: errorHistory.length,
+          },
+          timestamp,
         };
       } else if (recentErrors.length > 3) {
         return {
           component: 'errors',
           status: 'warning',
           message: `最近5分钟内发生了${recentErrors.length}个错误`,
-          details: { recentErrorCount: recentErrors.length, totalErrors: errorHistory.length },
-          timestamp
+          details: {
+            recentErrorCount: recentErrors.length,
+            totalErrors: errorHistory.length,
+          },
+          timestamp,
         };
       }
 
@@ -453,15 +468,18 @@ export class SystemHealthChecker {
         component: 'errors',
         status: 'healthy',
         message: `错误状态正常 (最近5分钟: ${recentErrors.length}个错误)`,
-        details: { recentErrorCount: recentErrors.length, totalErrors: errorHistory.length },
-        timestamp
+        details: {
+          recentErrorCount: recentErrors.length,
+          totalErrors: errorHistory.length,
+        },
+        timestamp,
       };
     } catch (error) {
       return {
         component: 'errors',
         status: 'critical',
         message: `错误检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        timestamp
+        timestamp,
       };
     }
   }
@@ -471,17 +489,17 @@ export class SystemHealthChecker {
    */
   private async checkRulesHealth(): Promise<HealthCheckResult> {
     const timestamp = Date.now();
-    
+
     try {
       const systemHealth = await exceptionRuleManager.getSystemHealth();
-      
+
       if (systemHealth.status === 'error') {
         return {
           component: 'rules',
           status: 'critical',
           message: '规则系统状态异常',
           details: systemHealth,
-          timestamp
+          timestamp,
         };
       } else if (systemHealth.status === 'warning') {
         return {
@@ -489,7 +507,7 @@ export class SystemHealthChecker {
           status: 'warning',
           message: `规则系统有警告: ${systemHealth.issues.join(', ')}`,
           details: systemHealth,
-          timestamp
+          timestamp,
         };
       }
 
@@ -498,14 +516,14 @@ export class SystemHealthChecker {
         status: 'healthy',
         message: `规则系统正常 (${systemHealth.activeRules}个活跃规则, ${systemHealth.totalUsageRecords}条使用记录)`,
         details: systemHealth,
-        timestamp
+        timestamp,
       };
     } catch (error) {
       return {
         component: 'rules',
         status: 'critical',
         message: `规则系统检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        timestamp
+        timestamp,
       };
     }
   }
@@ -513,7 +531,11 @@ export class SystemHealthChecker {
   /**
    * 获取存储使用情况
    */
-  private getStorageUsage(): { used: number; available: number; percentage: number } {
+  private getStorageUsage(): {
+    used: number;
+    available: number;
+    percentage: number;
+  } {
     try {
       let used = 0;
       for (const key in localStorage) {
@@ -529,7 +551,7 @@ export class SystemHealthChecker {
       return {
         used,
         available: estimated - used,
-        percentage: Math.min(percentage, 100)
+        percentage: Math.min(percentage, 100),
       };
     } catch (error) {
       return { used: 0, available: 0, percentage: 0 };
@@ -542,7 +564,7 @@ export class SystemHealthChecker {
   private generateRecommendations(checks: HealthCheckResult[]): string[] {
     const recommendations: string[] = [];
 
-    checks.forEach(check => {
+    checks.forEach((check) => {
       switch (check.component) {
         case 'storage':
           if (check.status === 'critical' || check.status === 'warning') {
@@ -609,7 +631,8 @@ export class SystemHealthChecker {
  * React Hook for system health monitoring
  */
 export function useSystemHealth() {
-  const [healthReport, setHealthReport] = React.useState<SystemHealthReport | null>(null);
+  const [healthReport, setHealthReport] =
+    React.useState<SystemHealthReport | null>(null);
   const [isChecking, setIsChecking] = React.useState(false);
 
   const checker = SystemHealthChecker.getInstance();
@@ -639,7 +662,7 @@ export function useSystemHealth() {
     healthReport,
     isChecking,
     runHealthCheck,
-    getLastReport: () => checker.getLastReport()
+    getLastReport: () => checker.getLastReport(),
   };
 }
 

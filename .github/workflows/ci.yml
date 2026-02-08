@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: ['**']
   pull_request:
 
 jobs:
@@ -21,14 +21,70 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Security Tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --user semgrep sqlfluff
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Format Check
+        run: npm run format:check
+
       - name: Lint
         run: npm run lint
+
+      - name: CSS Lint
+        run: npm run lint:css
+
+      - name: Markdown Lint
+        run: npm run lint:md
+
+      - name: Spell Check (Code)
+        run: npm run lint:spell
+
+      - name: Spell Check (Docs)
+        run: npm run lint:spell:docs
 
       - name: Typecheck
         run: npm run typecheck
 
       - name: Type Coverage
         run: npm run quality:type-coverage
+
+      - name: Unused Files / Exports (Knip)
+        run: npm run quality:knip
+
+      - name: Unused Exports Gate (ts-prune)
+        run: npm run quality:ts-prune:strict
+
+      - name: Dependency Hygiene (depcheck)
+        run: npm run quality:depcheck
+
+      - name: Circular Dependency Check
+        run: npm run quality:circular
+
+      - name: SonarJS Smell Report
+        run: npm run quality:sonar:report
+
+      - name: Duplicate Code Check (jscpd)
+        run: npm run quality:jscpd
+
+      - name: Debt Gate
+        run: npm run quality:debt-gate
+
+      - name: Security Audit (npm)
+        run: npm run security:npm-audit
+
+      - name: Security Scan (semgrep)
+        run: npm run security:semgrep
+
+      - name: SQL Lint
+        run: npm run lint:sql
 
       - name: Test Quality Lint
         run: npm run quality:test:lint
@@ -45,20 +101,14 @@ jobs:
       - name: Test Runtime Budget
         run: npm run quality:test:runtime
 
-      - name: Quality (Soft) - Circular Deps (madge)
-        continue-on-error: true
-        run: npm run quality:circular:report
-
-      - name: Quality (Soft) - SonarJS Smells (eslint)
-        continue-on-error: true
-        run: npm run quality:sonar:report
-
       - name: Upload Quality Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: quality-reports
-          path: reports/quality
+          path: |
+            reports/quality
+            reports/jscpd
           if-no-files-found: ignore
 
       - name: Build

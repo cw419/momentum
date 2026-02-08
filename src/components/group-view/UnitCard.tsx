@@ -1,6 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { ChainTreeNode, ScheduledSession } from '../../types';
-import { ArrowDown, ArrowUp, CalendarCheck, Check, Clock, Edit, Flame, Trash2, X } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  CalendarCheck,
+  Check,
+  Clock,
+  Edit,
+  Flame,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { getChainTypeConfig } from '../../utils/chainTree';
 import { formatTime, getTimeRemaining } from '../../utils/time';
 import { soundManager } from '../../utils/soundManager';
@@ -17,7 +27,11 @@ interface UnitCardProps {
   onScheduleChain: (id: string) => void;
   onEditChain: (id: string) => void;
   onDeleteChain: (id: string) => void;
-  onReorderUnit?: (groupId: string, unitId: string, direction: 'up' | 'down') => void;
+  onReorderUnit?: (
+    groupId: string,
+    unitId: string,
+    direction: 'up' | 'down',
+  ) => void;
   onOpenRepeatModal: (unit: ChainTreeNode) => void;
   onViewDetail: (id: string) => void;
 }
@@ -45,7 +59,8 @@ export const UnitCard: React.FC<UnitCardProps> = ({
   const isCompleted = unit.currentStreak >= requiredRepeats;
   const isNext = nextUnit?.id === unit.id;
   const currentRepeatCount = unit.taskRepeatCount || 1;
-  let badgeClassName = 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400';
+  let badgeClassName =
+    'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400';
   if (isCompleted) {
     badgeClassName = 'bg-green-500 text-white';
   } else if (isNext) {
@@ -62,7 +77,10 @@ export const UnitCard: React.FC<UnitCardProps> = ({
       const remaining = getTimeRemaining(scheduledSession.expiresAt);
       setTimeRemaining(remaining);
 
-      if (remaining <= 0 && lastPlayedExpiresAtRef.current !== scheduledSession.expiresAt.getTime()) {
+      if (
+        remaining <= 0 &&
+        lastPlayedExpiresAtRef.current !== scheduledSession.expiresAt.getTime()
+      ) {
         soundManager.playTimerFinished();
         lastPlayedExpiresAtRef.current = scheduledSession.expiresAt.getTime();
       }
@@ -81,7 +99,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
 
   return (
     <div
-      className={`bento-card transition duration-300 relative cursor-pointer hover:shadow-md ${
+      className={`bento-card relative cursor-pointer transition duration-300 hover:shadow-md ${
         isNext ? 'ring-2 ring-primary-500 ring-opacity-50' : ''
       } ${isCompleted ? 'bg-green-50 dark:bg-green-900/10' : ''}`}
       onClick={() => onViewDetail(unit.id)}
@@ -97,9 +115,9 @@ export const UnitCard: React.FC<UnitCardProps> = ({
       }}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4 flex-1">
+        <div className="flex flex-1 items-center space-x-4">
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+            className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
               badgeClassName
             }`}
           >
@@ -107,28 +125,42 @@ export const UnitCard: React.FC<UnitCardProps> = ({
           </div>
 
           <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-1">
-              <div className={`w-6 h-6 rounded-lg ${unitTypeConfig.bgColor} flex items-center justify-center`}>
-                <i className={`${unitTypeConfig.icon} ${unitTypeConfig.color} text-xs`}></i>
+            <div className="mb-1 flex items-center space-x-2">
+              <div
+                className={`h-6 w-6 rounded-lg ${unitTypeConfig.bgColor} flex items-center justify-center`}
+              >
+                <i
+                  className={`${unitTypeConfig.icon} ${unitTypeConfig.color} text-xs`}
+                ></i>
               </div>
-              <h4 className="font-bold font-chinese text-gray-900 dark:text-slate-100">{unit.name}</h4>
+              <h4 className="font-chinese font-bold text-gray-900 dark:text-slate-100">
+                {unit.name}
+              </h4>
               {isNext && (
-                <span className="px-2 py-0.5 bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs rounded-full font-chinese">
+                <span className="rounded-full bg-primary-500/10 px-2 py-0.5 font-chinese text-xs text-primary-600 dark:text-primary-400">
                   {tr('下一个', 'Next')}
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 dark:text-slate-400 font-chinese">{unit.description}</p>
-            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-slate-400">
+            <p className="font-chinese text-sm text-gray-600 dark:text-slate-400">
+              {unit.description}
+            </p>
+            <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500 dark:text-slate-400">
               <span className="flex items-center space-x-1">
                 <Clock size={12} />
                 <span>{formatTime(unit.duration, language)}</span>
               </span>
-              <span className="flex items-center space-x-1" title={tr('完成次数', 'Completions')}>
+              <span
+                className="flex items-center space-x-1"
+                title={tr('完成次数', 'Completions')}
+              >
                 <Flame size={12} />
                 <span>#{unit.currentStreak}</span>
               </span>
-              <span className="flex items-center space-x-1" title={tr('预约次数', 'Bookings')}>
+              <span
+                className="flex items-center space-x-1"
+                title={tr('预约次数', 'Bookings')}
+              >
                 <CalendarCheck size={12} />
                 <span>{unit.auxiliaryStreak || 0}</span>
               </span>
@@ -138,7 +170,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
 
           <div className="flex items-center space-x-2">
             {scheduledSession && timeRemaining > 0 && (
-              <span className="px-2 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs rounded-full font-chinese font-mono animate-pulse">
+              <span className="animate-pulse rounded-full bg-blue-500/10 px-2 py-1 font-chinese font-mono text-xs text-blue-600 dark:text-blue-400">
                 {formatCountdown(timeRemaining)}
               </span>
             )}
@@ -150,7 +182,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
                   e.stopPropagation();
                   onReorderUnit?.(group.id, unit.id, 'up');
                 }}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
                 title={tr('上移', 'Move up')}
                 disabled={index === 0}
               >
@@ -162,7 +194,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
                   e.stopPropagation();
                   onReorderUnit?.(group.id, unit.id, 'down');
                 }}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
                 title={tr('下移', 'Move down')}
                 disabled={index === group.children.length - 1}
               >
@@ -176,7 +208,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
                 e.stopPropagation();
                 onEditChain(unit.id);
               }}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
               title={tr('编辑单元', 'Edit unit')}
             >
               <Edit size={14} />
@@ -187,7 +219,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
                 e.stopPropagation();
                 onDeleteChain(unit.id);
               }}
-              className="p-2 text-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+              className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               title={tr('删除单元', 'Delete unit')}
             >
               <Trash2 size={14} />
@@ -201,7 +233,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
                     e.stopPropagation();
                     onScheduleChain(unit.id);
                   }}
-                  className="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm transition-colors font-chinese"
+                  className="rounded-lg bg-blue-500/10 px-3 py-1 font-chinese text-sm text-blue-600 transition-colors hover:bg-blue-500/20 dark:text-blue-400"
                   disabled={!!scheduledSession}
                 >
                   {tr('预约', 'Schedule')}
@@ -212,7 +244,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
                     e.stopPropagation();
                     onStartChain(unit.id);
                   }}
-                  className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors font-chinese"
+                  className="rounded-lg bg-primary-500 px-3 py-1 font-chinese text-sm text-white transition-colors hover:bg-primary-600"
                 >
                   {tr('开始', 'Start')}
                 </button>
@@ -227,13 +259,11 @@ export const UnitCard: React.FC<UnitCardProps> = ({
           e.stopPropagation();
           onOpenRepeatModal(unit);
         }}
-        className="absolute bottom-3 right-3 flex items-center space-x-1 px-2 py-1 
-                   bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 
-                   hover:bg-slate-700 dark:hover:bg-slate-300 
-                   rounded-md text-xs font-bold transition duration-200 
-                   shadow-md hover:shadow-lg border border-slate-600 dark:border-slate-400
-                   hover:scale-105"
-        title={tr(`设置重复次数 (当前: ${currentRepeatCount})`, `Set repeat count (current: ${currentRepeatCount})`)}
+        className="absolute bottom-3 right-3 flex items-center space-x-1 rounded-md border border-slate-600 bg-slate-800 px-2 py-1 text-xs font-bold text-white shadow-md transition duration-200 hover:scale-105 hover:bg-slate-700 hover:shadow-lg dark:border-slate-400 dark:bg-slate-200 dark:text-slate-800 dark:hover:bg-slate-300"
+        title={tr(
+          `设置重复次数 (当前: ${currentRepeatCount})`,
+          `Set repeat count (current: ${currentRepeatCount})`,
+        )}
       >
         <X size={12} className="opacity-90" />
         <span>{currentRepeatCount}</span>

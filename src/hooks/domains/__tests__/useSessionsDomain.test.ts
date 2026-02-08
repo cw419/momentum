@@ -1,5 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { createAppState, createLocalStorageMock } from '../../../test/factories';
+import {
+  createAppState,
+  createLocalStorageMock,
+} from '../../../test/factories';
 import { useSessionsDomain } from '../useSessionsDomain';
 import { createSchedulingHandlers } from '../sessions/scheduling';
 import { createStartChainHandler } from '../sessions/start';
@@ -79,7 +82,7 @@ describe('useSessionsDomain', () => {
         storage,
         safelySaveChains,
         setShowAuxiliaryJudgment,
-      })
+      }),
     );
 
     expect(createStartChainHandler).toHaveBeenCalledWith(
@@ -91,7 +94,7 @@ describe('useSessionsDomain', () => {
         setPendingChainId,
         setCurrentSessionId,
         setShowBettingModal,
-      })
+      }),
     );
 
     expect(createCompletionHandlers).toHaveBeenCalledWith(
@@ -102,7 +105,7 @@ describe('useSessionsDomain', () => {
         safelySaveChains,
         setActiveSessionId,
         onPetTaskCompleted,
-      })
+      }),
     );
 
     expect(createPauseResumeHandlers).toHaveBeenCalledWith({
@@ -121,7 +124,7 @@ describe('useSessionsDomain', () => {
         handleResumeSession: expect.any(Function),
         handleCancelScheduledSession: expect.any(Function),
         handleCompleteBooking: expect.any(Function),
-      })
+      }),
     );
   });
 });

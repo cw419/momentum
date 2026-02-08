@@ -12,7 +12,7 @@ export const NotificationToggle: React.FC = () => {
   useEffect(() => {
     const supported = notificationManager.isSupported();
     setIsSupported(supported);
-    
+
     if (supported) {
       setIsEnabled(notificationManager.isNotificationsEnabled());
     }
@@ -37,16 +37,18 @@ export const NotificationToggle: React.FC = () => {
   }
 
   return (
-      <div className="flex items-center space-x-3">
+    <div className="flex items-center space-x-3">
       <div className="flex items-center space-x-2 text-gray-700 dark:text-slate-300">
         {isEnabled ? (
           <Bell size={16} className="text-blue-500" />
         ) : (
           <BellOff size={16} className="text-gray-400" />
         )}
-        <span className="text-sm font-chinese">{tr('桌面通知', 'Desktop notifications')}</span>
+        <span className="font-chinese text-sm">
+          {tr('桌面通知', 'Desktop notifications')}
+        </span>
       </div>
-      
+
       <Switch
         checked={isEnabled}
         onCheckedChange={handleToggle}

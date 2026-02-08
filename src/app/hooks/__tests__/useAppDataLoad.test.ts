@@ -50,10 +50,12 @@ vi.mock('../../../utils/time', () => ({
 describe('useAppDataLoad', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(migrateCompletionHistoryForTiming).mockImplementation((history) => ({
-      updatedHistory: history,
-      hasChanges: false,
-    }));
+    vi.mocked(migrateCompletionHistoryForTiming).mockImplementation(
+      (history) => ({
+        updatedHistory: history,
+        hasChanges: false,
+      }),
+    );
     vi.mocked(isSessionExpired).mockReturnValue(false);
   });
 
@@ -66,7 +68,7 @@ describe('useAppDataLoad', () => {
         storage,
         isInitialized: false,
         setState,
-      })
+      }),
     );
 
     await waitFor(() => {
@@ -113,7 +115,7 @@ describe('useAppDataLoad', () => {
     ];
 
     vi.mocked(isSessionExpired).mockImplementation(
-      (expiresAt) => expiresAt.getTime() === expiredSession.expiresAt.getTime()
+      (expiresAt) => expiresAt.getTime() === expiredSession.expiresAt.getTime(),
     );
     vi.mocked(migrateCompletionHistoryForTiming).mockReturnValue({
       updatedHistory: migratedHistory,
@@ -123,7 +125,10 @@ describe('useAppDataLoad', () => {
     const storage = createLocalStorageMock({
       cleanupExpiredDeletedChains: vi.fn(async () => 1),
       getActiveChains: vi.fn(async () => [chain]),
-      getScheduledSessions: vi.fn(async () => [expiredSession, activeSessionBooking]),
+      getScheduledSessions: vi.fn(async () => [
+        expiredSession,
+        activeSessionBooking,
+      ]),
       getActiveSession: vi.fn(async () => activeSession),
       getCompletionHistory: vi.fn(async () => completionHistory),
       getRSIPNodes: vi.fn(async () => []),
@@ -140,7 +145,7 @@ describe('useAppDataLoad', () => {
         storage,
         isInitialized: true,
         setState,
-      })
+      }),
     );
 
     await waitFor(() => {
@@ -150,10 +155,14 @@ describe('useAppDataLoad', () => {
     expect(runWhenIdle).toHaveBeenCalled();
     expect(fireAndForget).toHaveBeenCalled();
     expect(storage.cleanupExpiredDeletedChains).toHaveBeenCalledWith(30);
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([activeSessionBooking]);
+    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
+      activeSessionBooking,
+    ]);
     expect(storage.saveCompletionHistory).toHaveBeenCalledWith(migratedHistory);
 
-    const stateUpdater = setState.mock.calls.at(-1)?.[0] as (prev: ReturnType<typeof createAppState>) => ReturnType<typeof createAppState>;
+    const stateUpdater = setState.mock.calls.at(-1)?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
     const next = stateUpdater(createAppState());
     expect(next.chains).toEqual([chain]);
     expect(next.scheduledSessions).toEqual([activeSessionBooking]);
@@ -164,7 +173,9 @@ describe('useAppDataLoad', () => {
 
   it('should skip data load when supabase user is not authenticated', async () => {
     const storage = createSupabaseStorageMock({
-      waitForAuthentication: vi.fn(async () => ok({ user: null, isAuthenticated: false })),
+      waitForAuthentication: vi.fn(async () =>
+        ok({ user: null, isAuthenticated: false }),
+      ),
     });
     const setState = vi.fn();
 
@@ -173,7 +184,7 @@ describe('useAppDataLoad', () => {
         storage,
         isInitialized: true,
         setState,
-      })
+      }),
     );
 
     await waitFor(() => {
@@ -186,7 +197,10 @@ describe('useAppDataLoad', () => {
   });
 
   it('should fix circular parent references and persist repaired chains', async () => {
-    const circular = createUnitChain({ id: 'circular-1', parentId: 'circular-1' });
+    const circular = createUnitChain({
+      id: 'circular-1',
+      parentId: 'circular-1',
+    });
     const storage = createLocalStorageMock({
       getActiveChains: vi.fn(async () => [circular]),
       getScheduledSessions: vi.fn(async () => []),
@@ -205,7 +219,7 @@ describe('useAppDataLoad', () => {
         storage,
         isInitialized: true,
         setState,
-      })
+      }),
     );
 
     await waitFor(() => {
@@ -219,7 +233,9 @@ describe('useAppDataLoad', () => {
       }),
     ]);
 
-    const stateUpdater = setState.mock.calls.at(-1)?.[0] as (prev: ReturnType<typeof createAppState>) => ReturnType<typeof createAppState>;
+    const stateUpdater = setState.mock.calls.at(-1)?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
     const next = stateUpdater(createAppState({ currentView: 'focus' }));
     expect(next.currentView).toBe('dashboard');
     expect(next.scheduledSessions).toEqual([]);
@@ -258,14 +274,16 @@ describe('useAppDataLoad', () => {
         storage,
         isInitialized: true,
         setState,
-      })
+      }),
     );
 
     await waitFor(() => {
       expect(result.current.isLoadingData).toBe(false);
     });
 
-    const stateUpdater = setState.mock.calls.at(-1)?.[0] as (prev: ReturnType<typeof createAppState>) => ReturnType<typeof createAppState>;
+    const stateUpdater = setState.mock.calls.at(-1)?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
     const next = stateUpdater(createAppState());
     expect(next.chains).toEqual([]);
     expect(next.scheduledSessions).toEqual([]);

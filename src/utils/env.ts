@@ -4,4 +4,3 @@ const mode = import.meta.env.MODE;
 // - `isDev` is only true for Vite's default dev mode ("development"), not for "test".
 export const isDev = mode === 'development';
 export const isProd = mode === 'production';
-

@@ -35,9 +35,14 @@ vi.mock('../../../utils/queryOptimizer', () => ({
 
 function createStateContainer(initial: AppState) {
   let state = initial;
-  const setState = vi.fn((update: AppState | ((prev: AppState) => AppState)) => {
-    state = typeof update === 'function' ? (update as (prev: AppState) => AppState)(state) : update;
-  });
+  const setState = vi.fn(
+    (update: AppState | ((prev: AppState) => AppState)) => {
+      state =
+        typeof update === 'function'
+          ? (update as (prev: AppState) => AppState)(state)
+          : update;
+    },
+  );
   return {
     getState: () => state,
     setState,
@@ -58,7 +63,7 @@ describe('useImportExportDomain', () => {
         completionHistory: [],
         rsipNodes: [],
         rsipMeta: {},
-      })
+      }),
     );
 
     const storage = createLocalStorageMock({
@@ -77,7 +82,7 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains,
         setState: stateRef.setState,
-      })
+      }),
     );
 
     const history = [
@@ -109,7 +114,10 @@ describe('useImportExportDomain', () => {
     expect(safelySaveChains).toHaveBeenCalledWith([existing, imported]);
     expect(storage.saveCompletionHistory).toHaveBeenCalledWith(history);
     expect(storage.saveRSIPNodes).toHaveBeenCalledWith(rsipNodes);
-    expect(storage.saveRSIPMeta).toHaveBeenCalledWith({ origin: 'local', imported: true });
+    expect(storage.saveRSIPMeta).toHaveBeenCalledWith({
+      origin: 'local',
+      imported: true,
+    });
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
     expect(stateRef.getState().chains).toEqual([existing, imported]);
     expect(stateRef.getState().completionHistory).toEqual(history);
@@ -120,13 +128,30 @@ describe('useImportExportDomain', () => {
     expect(logger.info).toHaveBeenCalledWith(
       'APP_SHELL',
       '开始导入数据',
-      expect.objectContaining({ chainCount: 1, options: expect.any(Object) })
+      expect.objectContaining({ chainCount: 1, options: expect.any(Object) }),
     );
-    expect(logger.debug).toHaveBeenCalledWith('APP_SHELL', '准备保存导入的数据到存储');
-    expect(logger.debug).toHaveBeenCalledWith('APP_SHELL', '当前数据库中的链条数量', { count: 1 });
-    expect(logger.debug).toHaveBeenCalledWith('APP_SHELL', '准备导入的链条数量', { count: 1 });
-    expect(logger.info).toHaveBeenCalledWith('APP_SHELL', '导入数据保存成功，更新 UI 状态');
-    expect(logger.info).toHaveBeenCalledWith('APP_SHELL', '导入完成，UI 状态更新完成');
+    expect(logger.debug).toHaveBeenCalledWith(
+      'APP_SHELL',
+      '准备保存导入的数据到存储',
+    );
+    expect(logger.debug).toHaveBeenCalledWith(
+      'APP_SHELL',
+      '当前数据库中的链条数量',
+      { count: 1 },
+    );
+    expect(logger.debug).toHaveBeenCalledWith(
+      'APP_SHELL',
+      '准备导入的链条数量',
+      { count: 1 },
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      'APP_SHELL',
+      '导入数据保存成功，更新 UI 状态',
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      'APP_SHELL',
+      '导入完成，UI 状态更新完成',
+    );
   });
 
   it('should append imported history and rsip nodes onto existing local persisted data', async () => {
@@ -135,7 +160,14 @@ describe('useImportExportDomain', () => {
     const stateRef = createStateContainer(
       createAppState({
         chains: [existing],
-        completionHistory: [{ chainId: 'old', completedAt: new Date('2026-01-01T00:00:00.000Z'), duration: 10, wasSuccessful: true }],
+        completionHistory: [
+          {
+            chainId: 'old',
+            completedAt: new Date('2026-01-01T00:00:00.000Z'),
+            duration: 10,
+            wasSuccessful: true,
+          },
+        ],
         rsipNodes: [
           {
             id: 'old-node',
@@ -146,11 +178,16 @@ describe('useImportExportDomain', () => {
           },
         ],
         rsipMeta: { old: true },
-      })
+      }),
     );
 
     const existingHistory = [
-      { chainId: 'persisted-old', completedAt: new Date('2026-01-03T00:00:00.000Z'), duration: 3, wasSuccessful: true },
+      {
+        chainId: 'persisted-old',
+        completedAt: new Date('2026-01-03T00:00:00.000Z'),
+        duration: 3,
+        wasSuccessful: true,
+      },
     ];
     const existingNodes = [
       {
@@ -162,7 +199,12 @@ describe('useImportExportDomain', () => {
       },
     ];
     const importedHistory = [
-      { chainId: imported.id, completedAt: new Date('2026-02-01T00:00:00.000Z'), duration: 20, wasSuccessful: true },
+      {
+        chainId: imported.id,
+        completedAt: new Date('2026-02-01T00:00:00.000Z'),
+        duration: 20,
+        wasSuccessful: true,
+      },
     ];
     const importedNodes = [
       {
@@ -189,7 +231,7 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains: vi.fn(async () => undefined),
         setState: stateRef.setState,
-      })
+      }),
     );
 
     await act(async () => {
@@ -200,8 +242,14 @@ describe('useImportExportDomain', () => {
       });
     });
 
-    expect(storage.saveCompletionHistory).toHaveBeenCalledWith([...existingHistory, ...importedHistory]);
-    expect(storage.saveRSIPNodes).toHaveBeenCalledWith([...existingNodes, ...importedNodes]);
+    expect(storage.saveCompletionHistory).toHaveBeenCalledWith([
+      ...existingHistory,
+      ...importedHistory,
+    ]);
+    expect(storage.saveRSIPNodes).toHaveBeenCalledWith([
+      ...existingNodes,
+      ...importedNodes,
+    ]);
     expect(stateRef.getState().completionHistory).toHaveLength(2);
     expect(stateRef.getState().rsipNodes).toHaveLength(2);
     expect(stateRef.getState().rsipMeta).toEqual({ old: true, imported: true });
@@ -212,7 +260,12 @@ describe('useImportExportDomain', () => {
     const existing = createUnitChain({ id: 'existing-1' });
     const imported = createUnitChain({ id: 'imported-1' });
     const initialHistory = [
-      { chainId: 'history-1', completedAt: new Date('2026-01-01T00:00:00.000Z'), duration: 5, wasSuccessful: true },
+      {
+        chainId: 'history-1',
+        completedAt: new Date('2026-01-01T00:00:00.000Z'),
+        duration: 5,
+        wasSuccessful: true,
+      },
     ];
     const initialNodes = [
       {
@@ -229,7 +282,7 @@ describe('useImportExportDomain', () => {
         completionHistory: initialHistory,
         rsipNodes: initialNodes,
         rsipMeta: { local: true },
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [existing]),
@@ -244,7 +297,7 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains,
         setState: stateRef.setState,
-      })
+      }),
     );
 
     await act(async () => {
@@ -273,10 +326,12 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains: vi.fn(async () => undefined),
         setState: vi.fn(),
-      })
+      }),
     );
 
-    await expect(result.current.handleImportChains([])).rejects.toThrow('No valid chains found to import');
+    await expect(result.current.handleImportChains([])).rejects.toThrow(
+      'No valid chains found to import',
+    );
   });
 
   it('should reject ID conflicts and reload state after import failure', async () => {
@@ -293,14 +348,14 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains: vi.fn(async () => undefined),
         setState: stateRef.setState,
-      })
+      }),
     );
 
     await expect(
       result.current.handleImportChains([
         createUnitChain({ id: 'conflict-id', name: 'conflict-a' }),
         createUnitChain({ id: 'conflict-id', name: 'conflict-b' }),
-      ])
+      ]),
     ).rejects.toThrow('found 2 chains with conflicting IDs');
 
     expect(storage.getChains).toHaveBeenCalledTimes(2);
@@ -310,14 +365,16 @@ describe('useImportExportDomain', () => {
       'IMPORT',
       'Failed to import data',
       { errorMessage: 'Import failed: found 2 chains with conflicting IDs' },
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
   it('should enforce auth checks for supabase imports', async () => {
     const storage = createSupabaseStorageMock({
       isUserAuthenticated: vi.fn(async () => ok(false)),
-      waitForAuthentication: vi.fn(async () => ok({ user: null, isAuthenticated: false })),
+      waitForAuthentication: vi.fn(async () =>
+        ok({ user: null, isAuthenticated: false }),
+      ),
     });
 
     const { result } = renderHook(() =>
@@ -325,11 +382,13 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains: vi.fn(async () => undefined),
         setState: vi.fn(),
-      })
+      }),
     );
 
     await expect(
-      result.current.handleImportChains([createUnitChain({ id: 'imported-auth' })])
+      result.current.handleImportChains([
+        createUnitChain({ id: 'imported-auth' }),
+      ]),
     ).rejects.toThrow('Authentication failed during import');
   });
 
@@ -338,7 +397,9 @@ describe('useImportExportDomain', () => {
     const imported = createUnitChain({ id: 'imported-1' });
     const storage = createSupabaseStorageMock({
       isUserAuthenticated: vi.fn(async () => ok(true)),
-      waitForAuthentication: vi.fn(async () => ok({ user: null, isAuthenticated: false })),
+      waitForAuthentication: vi.fn(async () =>
+        ok({ user: null, isAuthenticated: false }),
+      ),
       getChains: vi.fn(async () => [existing]),
       saveCompletionHistory: vi.fn(async () => undefined),
     });
@@ -348,18 +409,30 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains: vi.fn(async () => undefined),
         setState: vi.fn(),
-      })
+      }),
     );
 
     await act(async () => {
       await result.current.handleImportChains([imported], {
-        history: [{ chainId: imported.id, completedAt: new Date('2026-02-01T00:00:00.000Z'), duration: 10, wasSuccessful: true }],
+        history: [
+          {
+            chainId: imported.id,
+            completedAt: new Date('2026-02-01T00:00:00.000Z'),
+            duration: 10,
+            wasSuccessful: true,
+          },
+        ],
       });
     });
 
     expect(storage.waitForAuthentication).not.toHaveBeenCalled();
     expect(storage.saveCompletionHistory).toHaveBeenCalledWith([
-      { chainId: imported.id, completedAt: new Date('2026-02-01T00:00:00.000Z'), duration: 10, wasSuccessful: true },
+      {
+        chainId: imported.id,
+        completedAt: new Date('2026-02-01T00:00:00.000Z'),
+        duration: 10,
+        wasSuccessful: true,
+      },
     ]);
   });
 
@@ -370,9 +443,11 @@ describe('useImportExportDomain', () => {
           code: 'AUTH_TEMP',
           message: 'temporary auth error',
           recoverable: true,
-        })
+        }),
       ),
-      waitForAuthentication: vi.fn(async () => ok({ user: null, isAuthenticated: false })),
+      waitForAuthentication: vi.fn(async () =>
+        ok({ user: null, isAuthenticated: false }),
+      ),
     });
 
     const { result } = renderHook(() =>
@@ -380,29 +455,43 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains: vi.fn(async () => undefined),
         setState: vi.fn(),
-      })
+      }),
     );
 
-    await expect(result.current.handleImportChains([createUnitChain({ id: 'imported-auth' })])).rejects.toThrow(
-      'Authentication failed during import'
-    );
+    await expect(
+      result.current.handleImportChains([
+        createUnitChain({ id: 'imported-auth' }),
+      ]),
+    ).rejects.toThrow('Authentication failed during import');
 
-    expect(logger.warn).toHaveBeenCalledWith('IMPORT', 'isUserAuthenticated failed', {
-      code: 'AUTH_TEMP',
-      message: 'temporary auth error',
-    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      'IMPORT',
+      'isUserAuthenticated failed',
+      {
+        code: 'AUTH_TEMP',
+        message: 'temporary auth error',
+      },
+    );
     expect(storage.waitForAuthentication).toHaveBeenCalledWith(10000);
   });
 
   it('should continue import when auth check fails but waitForAuthentication succeeds', async () => {
     const existing = createUnitChain({ id: 'existing-auth' });
     const imported = createUnitChain({ id: 'imported-auth-success' });
-    const stateRef = createStateContainer(createAppState({ chains: [existing] }));
+    const stateRef = createStateContainer(
+      createAppState({ chains: [existing] }),
+    );
     const storage = createSupabaseStorageMock({
       isUserAuthenticated: vi.fn(async () =>
-        err({ code: 'AUTH_TEMP', message: 'temporary auth error', recoverable: true })
+        err({
+          code: 'AUTH_TEMP',
+          message: 'temporary auth error',
+          recoverable: true,
+        }),
       ),
-      waitForAuthentication: vi.fn(async () => ok({ user: { id: 'user-1' }, isAuthenticated: true })),
+      waitForAuthentication: vi.fn(async () =>
+        ok({ user: { id: 'user-1' }, isAuthenticated: true }),
+      ),
       getChains: vi.fn(async () => [existing]),
     });
 
@@ -411,7 +500,7 @@ describe('useImportExportDomain', () => {
         storage,
         safelySaveChains: vi.fn(async () => undefined),
         setState: stateRef.setState,
-      })
+      }),
     );
 
     await act(async () => {
@@ -419,16 +508,29 @@ describe('useImportExportDomain', () => {
     });
 
     expect(storage.waitForAuthentication).toHaveBeenCalledWith(10000);
-    expect(stateRef.getState().chains.map((chain) => chain.id)).toEqual(['existing-auth', 'imported-auth-success']);
+    expect(stateRef.getState().chains.map((chain) => chain.id)).toEqual([
+      'existing-auth',
+      'imported-auth-success',
+    ]);
   });
 
   it('should reload state and rethrow when chain persistence fails during import', async () => {
     const existing = createUnitChain({ id: 'existing-1' });
     const imported = createUnitChain({ id: 'imported-1' });
-    const stateRef = createStateContainer(createAppState({ chains: [existing], rsipNodes: [], rsipMeta: {} }));
+    const stateRef = createStateContainer(
+      createAppState({ chains: [existing], rsipNodes: [], rsipMeta: {} }),
+    );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [existing]),
-      getRSIPNodes: vi.fn(async () => [{ id: 'rsip-1', title: 'n', rule: 'r', sortOrder: 1, createdAt: new Date('2026-01-01T00:00:00.000Z') }]),
+      getRSIPNodes: vi.fn(async () => [
+        {
+          id: 'rsip-1',
+          title: 'n',
+          rule: 'r',
+          sortOrder: 1,
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        },
+      ]),
       getRSIPMeta: vi.fn(async () => ({ source: 'storage' })),
     });
 
@@ -439,10 +541,12 @@ describe('useImportExportDomain', () => {
           throw new Error('save chains failed');
         }),
         setState: stateRef.setState,
-      })
+      }),
     );
 
-    await expect(result.current.handleImportChains([imported])).rejects.toThrow('save chains failed');
+    await expect(result.current.handleImportChains([imported])).rejects.toThrow(
+      'save chains failed',
+    );
 
     expect(storage.getChains).toHaveBeenCalledTimes(2);
     expect(stateRef.getState().chains).toEqual([existing]);
@@ -468,10 +572,17 @@ describe('useImportExportDomain', () => {
           throw new Error('save failed hard');
         }),
         setState: vi.fn(),
-      })
+      }),
     );
 
-    await expect(result.current.handleImportChains([imported])).rejects.toThrow('save failed hard');
-    expect(logger.error).toHaveBeenCalledWith('IMPORT', 'Reload after import failure also failed', undefined, expect.any(Error));
+    await expect(result.current.handleImportChains([imported])).rejects.toThrow(
+      'save failed hard',
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'IMPORT',
+      'Reload after import failure also failed',
+      undefined,
+      expect.any(Error),
+    );
   });
 });

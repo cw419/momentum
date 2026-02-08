@@ -44,6 +44,7 @@ npm run test:coverage    # Coverage report
 ```
 
 Notes:
+
 - This repo intentionally uses explicit `npm run ...` scripts (no pre-commit hooks) to keep local iteration unblocked.
 - `npm run security:semgrep` requires Semgrep installed (recommended: `pipx install semgrep`).
 - `npm run lint:sql` requires SQLFluff installed (recommended: `pipx install sqlfluff`).
@@ -72,6 +73,7 @@ The codebase follows a clear three-layer separation:
 ### Container + View Pattern
 
 Large components follow a Container/View split:
+
 - `AppShellContainer.tsx` + `AppShellView.tsx`
 - `FocusModeContainer.tsx` + `FocusModeView.tsx`
 - `ChainEditorContainer.tsx` + `ChainEditorView.tsx`
@@ -81,6 +83,7 @@ Container handles state/logic; View is pure presentation. Target: <300 lines per
 ### Type System
 
 Key types in `src/types/index.ts`:
+
 - **Chain**: Discriminated union with `UnitChain | GroupChain`
 - **ChainType**: `'unit' | 'group' | 'assault' | 'recon' | 'command' | 'special_ops' | 'engineering' | 'quartermaster'`
 - **ChainDraft**: For form handling (uses `DistributiveOmit` to preserve discriminated union)
@@ -90,6 +93,7 @@ When modifying chains, always handle by `type` branch to avoid spreading discrim
 ### Global Services & Lifecycle
 
 Services with explicit `start()`/`stop()` lifecycle (managed in `AppShellContainer.tsx`):
+
 - `forwardTimerManager` - Forward timer functionality
 - `exceptionRuleCache` - Rule caching
 - `ruleStateManager` - Rule state management
@@ -111,19 +115,20 @@ Services with explicit `start()`/`stop()` lifecycle (managed in `AppShellContain
 ## Key Domain Concepts
 
 **CTDP (Chained Time-Delay Protocol)**: Productivity methodology based on:
+
 - **Sacred Seat Principle**: Specific triggers (e.g., "put on noise-canceling headphones") that start tasks
 - **Precedent Principle**: Failed actions either break the chain or become permanent exceptions
 - **Linear Time-Delay Principle**: Scheduling system with auxiliary chains for task preparation
 
 ## AI Team Assignments
 
-| Task | Agent | Notes |
-|------|-------|-------|
-| React component development | `react-component-architect` | Primary for React work |
-| Tailwind styling | `tailwind-frontend-expert` | Utility-first CSS |
-| API integration | `api-architect` | Supabase integration |
-| Code reviews | `code-reviewer` | MANDATORY for PRs |
-| Performance | `performance-optimizer` | MANDATORY before releases |
+| Task                        | Agent                       | Notes                     |
+| --------------------------- | --------------------------- | ------------------------- |
+| React component development | `react-component-architect` | Primary for React work    |
+| Tailwind styling            | `tailwind-frontend-expert`  | Utility-first CSS         |
+| API integration             | `api-architect`             | Supabase integration      |
+| Code reviews                | `code-reviewer`             | MANDATORY for PRs         |
+| Performance                 | `performance-optimizer`     | MANDATORY before releases |
 
 ## Code Principles (Enforced)
 
@@ -140,17 +145,17 @@ Services with explicit `start()`/`stop()` lifecycle (managed in `AppShellContain
 
 Use consistent suffixes based on the class's primary responsibility:
 
-| Suffix | Purpose | Examples |
-|--------|---------|----------|
-| `*Service` | Business logic, external API interactions | `BettingService`, `CheckinService`, `SessionService` |
-| `*Manager` | State management, lifecycle coordination | `RuleStateManager`, `ErrorRecoveryManager`, `AsyncOperationManager` |
-| `*Cache` | Caching logic, data memoization | `ExceptionRuleCache`, `CacheCore` |
-| `*Monitor` | Performance metrics, observability | `PerformanceMonitor`, `LayoutStabilityMonitor` |
-| `*Storage` | Data persistence, storage abstraction | `ExceptionRuleStorage`, `SupabaseStorage` |
-| `*Handler` | Event/action processing, user interactions | `EnhancedDuplicationHandler`, `UserFeedbackHandler` |
-| `*Tracker` | Usage tracking, analytics | `RuleUsageTracker` |
-| `*Detector` | Pattern detection, validation | `RuleDuplicationDetector` |
-| `*Checker` | Data integrity, validation checks | `DataIntegrityChecker` |
+| Suffix      | Purpose                                    | Examples                                                            |
+| ----------- | ------------------------------------------ | ------------------------------------------------------------------- |
+| `*Service`  | Business logic, external API interactions  | `BettingService`, `CheckinService`, `SessionService`                |
+| `*Manager`  | State management, lifecycle coordination   | `RuleStateManager`, `ErrorRecoveryManager`, `AsyncOperationManager` |
+| `*Cache`    | Caching logic, data memoization            | `ExceptionRuleCache`, `CacheCore`                                   |
+| `*Monitor`  | Performance metrics, observability         | `PerformanceMonitor`, `LayoutStabilityMonitor`                      |
+| `*Storage`  | Data persistence, storage abstraction      | `ExceptionRuleStorage`, `SupabaseStorage`                           |
+| `*Handler`  | Event/action processing, user interactions | `EnhancedDuplicationHandler`, `UserFeedbackHandler`                 |
+| `*Tracker`  | Usage tracking, analytics                  | `RuleUsageTracker`                                                  |
+| `*Detector` | Pattern detection, validation              | `RuleDuplicationDetector`                                           |
+| `*Checker`  | Data integrity, validation checks          | `DataIntegrityChecker`                                              |
 
 ### File Naming
 

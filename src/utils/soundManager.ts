@@ -8,10 +8,11 @@ class SoundManager {
   private audioContext: AudioContext | null = null;
 
   constructor() {
-    // Initialize AudioContext on user interaction if possible, 
+    // Initialize AudioContext on user interaction if possible,
     // but we can try to create it here.
     try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
         this.audioContext = new AudioContextClass();
       }
@@ -27,7 +28,11 @@ class SoundManager {
    * @param duration Duration in seconds (default: 0.5)
    * @param type Oscillator type (default: 'sine')
    */
-  public playBeep(frequency: number = 880, duration: number = 0.5, type: OscillatorType = 'sine') {
+  public playBeep(
+    frequency: number = 880,
+    duration: number = 0.5,
+    type: OscillatorType = 'sine',
+  ) {
     if (!this.audioContext) return;
 
     // Resume context if suspended (browser policy)
@@ -39,12 +44,21 @@ class SoundManager {
     const gainNode = this.audioContext.createGain();
 
     oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-    
+    oscillator.frequency.setValueAtTime(
+      frequency,
+      this.audioContext.currentTime,
+    );
+
     // Envelope to avoid clicking
     gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.5, this.audioContext.currentTime + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+    gainNode.gain.linearRampToValueAtTime(
+      0.5,
+      this.audioContext.currentTime + 0.05,
+    );
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      this.audioContext.currentTime + duration,
+    );
 
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);

@@ -55,4 +55,3 @@ export function clearExceptionRulesMigration(): void {
     // ignore errors
   }
 }
-

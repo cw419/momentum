@@ -59,10 +59,11 @@ interface ResponsiveContainerProps {
 // 使用示例
 <ResponsiveContainer maxWidth="4xl" className="py-6">
   {children}
-</ResponsiveContainer>
+</ResponsiveContainer>;
 ```
 
 **特性**:
+
 - 自动居中对齐
 - 响应式内边距
 - 防止横向滚动
@@ -90,10 +91,11 @@ interface SettingSectionProps {
   description="配置主要任务的执行参数"
 >
   {settingItems}
-</SettingSection>
+</SettingSection>;
 ```
 
 **特性**:
+
 - 统一的标题和图标样式
 - 可选的折叠功能
 - 描述文本支持
@@ -131,7 +133,7 @@ interface SliderContainerProps {
     onChange: setDuration,
     min: 1,
     max: 300,
-    unit: '分钟'
+    unit: '分钟',
   }}
 >
   <PureDOMSlider
@@ -141,10 +143,11 @@ interface SliderContainerProps {
     onValueChange={setDuration}
     valueFormatter={(v) => `${v}分钟`}
   />
-</SliderContainer>
+</SliderContainer>;
 ```
 
 **特性**:
+
 - 垂直和水平布局支持
 - 集成键盘输入
 - 容器宽度监控
@@ -180,10 +183,11 @@ interface PureDOMSliderProps {
   valueFormatter={(v) => `${v}分钟`}
   debounceMs={50}
   showValue={true}
-/>
+/>;
 ```
 
 **特性**:
+
 - 零React重渲染
 - 防抖机制
 - 原生DOM操作
@@ -217,7 +221,7 @@ button {
 const { keyboardHeight, isKeyboardVisible } = useVirtualKeyboardAdaptation();
 
 return (
-  <div 
+  <div
     className={isKeyboardVisible ? 'keyboard-active' : ''}
     style={{ paddingBottom: isKeyboardVisible ? `${keyboardHeight}px` : '0' }}
   >
@@ -385,10 +389,7 @@ const MyComponent = () => {
 
 ```tsx
 // 使用自定义CSS类
-<ChainEditor
-  {...props}
-  className="custom-chain-editor"
-/>
+<ChainEditor {...props} className="custom-chain-editor" />
 ```
 
 ```css
@@ -412,6 +413,7 @@ const MyComponent = () => {
 **症状**: 页面出现水平滚动条
 **原因**: 某个元素宽度超出容器
 **解决方案**:
+
 ```css
 /* 检查并修复超宽元素 */
 .problematic-element {
@@ -425,6 +427,7 @@ const MyComponent = () => {
 **症状**: 拖动滑动块时出现卡顿或跳跃
 **原因**: 父组件重渲染或容器宽度不稳定
 **解决方案**:
+
 ```tsx
 // 确保使用SliderContainer包装
 <SliderContainer label="时长">
@@ -437,6 +440,7 @@ const MyComponent = () => {
 **症状**: 移动设备上难以操作
 **原因**: 触摸区域太小或缺少触摸优化
 **解决方案**:
+
 ```css
 /* 确保足够的触摸区域 */
 .touch-element {
@@ -451,6 +455,7 @@ const MyComponent = () => {
 **症状**: 虚拟键盘弹出时遮挡输入框
 **原因**: 缺少虚拟键盘适配
 **解决方案**:
+
 ```tsx
 // 使用虚拟键盘适配Hook
 const { isKeyboardVisible, keyboardHeight } = useVirtualKeyboardAdaptation();
@@ -478,7 +483,7 @@ import { usePerformanceMonitoring } from '../utils/performanceMonitor';
 
 const MyComponent = () => {
   const perf = usePerformanceMonitoring('MyComponent');
-  
+
   useEffect(() => {
     perf.startMonitoring();
     return () => {

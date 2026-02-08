@@ -1,5 +1,9 @@
 import type { ExceptionRule } from '../../types';
-import { ExceptionRuleError, ExceptionRuleType, EnhancedExceptionRuleException } from '../../types';
+import {
+  ExceptionRuleError,
+  ExceptionRuleType,
+  EnhancedExceptionRuleException,
+} from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
 import { logger } from '../../utils/logger';
 import { isDev } from '../../utils/env';
@@ -11,9 +15,15 @@ type FixRuleTypeIssues = (ruleId: string) => Promise<{
   actions: string[];
 }>;
 
-type ValidateRuleTypeForAction = (rule: ExceptionRule, actionType: RuleActionType) => boolean;
+type ValidateRuleTypeForAction = (
+  rule: ExceptionRule,
+  actionType: RuleActionType,
+) => boolean;
 
-async function getActiveRuleOrThrow(ruleId: string, actionType: RuleActionType): Promise<ExceptionRule> {
+async function getActiveRuleOrThrow(
+  ruleId: string,
+  actionType: RuleActionType,
+): Promise<ExceptionRule> {
   const rule = await exceptionRuleStorage.getRuleById(ruleId);
 
   if (!rule) {
@@ -21,7 +31,7 @@ async function getActiveRuleOrThrow(ruleId: string, actionType: RuleActionType):
       ExceptionRuleError.RULE_NOT_FOUND,
       '找不到指定的规则，可能已被删除',
       `规则 ID ${ruleId} 不存在`,
-      { ruleId, actionType }
+      { ruleId, actionType },
     )
       .addSuggestedAction('创建新规则')
       .addSuggestedAction('选择其他规则');
@@ -32,7 +42,7 @@ async function getActiveRuleOrThrow(ruleId: string, actionType: RuleActionType):
       ExceptionRuleError.RULE_NOT_FOUND,
       '规则已被删除或停用',
       `规则 "${rule.name}" 已被删除`,
-      { rule, actionType }
+      { rule, actionType },
     )
       .addSuggestedAction('选择其他规则')
       .addSuggestedAction('恢复规则');
@@ -45,7 +55,7 @@ async function ensureRuleTypeOrThrow(
   rule: ExceptionRule,
   ruleId: string,
   actionType: RuleActionType,
-  fixRuleTypeIssues: FixRuleTypeIssues
+  fixRuleTypeIssues: FixRuleTypeIssues,
 ): Promise<void> {
   if (rule.type) return;
 
@@ -55,7 +65,7 @@ async function ensureRuleTypeOrThrow(
       ExceptionRuleError.INVALID_RULE_TYPE,
       '规则类型缺失，无法使用',
       `规则 "${rule.name}" 缺少类型定义`,
-      { rule, actionType }
+      { rule, actionType },
     )
       .addSuggestedAction('修复规则类型')
       .addSuggestedAction('选择其他规则');
@@ -72,7 +82,7 @@ async function ensureRuleTypeOrThrow(
       ExceptionRuleError.INVALID_RULE_TYPE,
       '规则类型缺失，无法使用',
       `规则 "${rule.name}" 缺少类型定义`,
-      { rule, actionType }
+      { rule, actionType },
     )
       .addSuggestedAction('修复规则类型')
       .addSuggestedAction('选择其他规则');
@@ -84,20 +94,21 @@ async function ensureRuleTypeOrThrow(
 function ensureRuleTypeMatchesActionOrThrow(
   rule: ExceptionRule,
   actionType: RuleActionType,
-  validateRuleTypeForAction: ValidateRuleTypeForAction
+  validateRuleTypeForAction: ValidateRuleTypeForAction,
 ): void {
   const isValidForAction = validateRuleTypeForAction(rule, actionType);
   if (isValidForAction) return;
 
   const actionName = actionType === 'pause' ? '暂停' : '提前完成';
   const messageActionName = actionType === 'pause' ? '暂停计时' : actionName;
-  const typeName = rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
+  const typeName =
+    rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
 
   throw EnhancedExceptionRuleException.createUserFriendly(
     ExceptionRuleError.RULE_TYPE_MISMATCH,
     `规则类型与操作不匹配`,
     `规则 "${rule.name}" 是${typeName}类型，不能用于${messageActionName}操作`,
-    { rule, actionType, expectedType: actionName, actualType: typeName }
+    { rule, actionType, expectedType: actionName, actualType: typeName },
   )
     .addSuggestedAction(`创建${actionName}类型的规则`)
     .addSuggestedAction(`选择${actionName}类型的规则`);
@@ -109,15 +120,23 @@ export async function validateRuleForAction(args: {
   validateRuleTypeForAction: ValidateRuleTypeForAction;
   fixRuleTypeIssues: FixRuleTypeIssues;
 }): Promise<void> {
-  const { ruleId, actionType, validateRuleTypeForAction, fixRuleTypeIssues } = args;
+  const { ruleId, actionType, validateRuleTypeForAction, fixRuleTypeIssues } =
+    args;
 
   try {
     const rule = await getActiveRuleOrThrow(ruleId, actionType);
     await ensureRuleTypeOrThrow(rule, ruleId, actionType, fixRuleTypeIssues);
-    ensureRuleTypeMatchesActionOrThrow(rule, actionType, validateRuleTypeForAction);
+    ensureRuleTypeMatchesActionOrThrow(
+      rule,
+      actionType,
+      validateRuleTypeForAction,
+    );
 
     if (isDev) {
-      logger.debug('RULE_CLASSIFICATION', 'Rule validation passed', { ruleId, actionType });
+      logger.debug('RULE_CLASSIFICATION', 'Rule validation passed', {
+        ruleId,
+        actionType,
+      });
     }
   } catch (error) {
     if (error instanceof EnhancedExceptionRuleException) {
@@ -128,10 +147,9 @@ export async function validateRuleForAction(args: {
       ExceptionRuleError.VALIDATION_ERROR,
       '规则验证过程中发生错误',
       error instanceof Error ? error.message : '未知错误',
-      { ruleId, actionType, error }
+      { ruleId, actionType, error },
     )
       .addSuggestedAction('重试操作')
       .addSuggestedAction('选择其他规则');
   }
 }
-

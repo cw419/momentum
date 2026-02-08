@@ -2,16 +2,22 @@ import type { ExceptionRule } from '../../types';
 import { calculateSimilarity } from '../stringUtils';
 import type { SearchSuggestion } from './types';
 
-export function getSimilarSuggestions(query: string, rules: ExceptionRule[]): SearchSuggestion[] {
+export function getSimilarSuggestions(
+  query: string,
+  rules: ExceptionRule[],
+): SearchSuggestion[] {
   const suggestions: SearchSuggestion[] = [];
 
   for (const rule of rules) {
-    const similarity = calculateSimilarity(String(rule.name || '').toLowerCase(), query);
+    const similarity = calculateSimilarity(
+      String(rule.name || '').toLowerCase(),
+      query,
+    );
     if (similarity > 0.5 && similarity < 0.9) {
       suggestions.push({
         text: String(rule.name || ''),
         type: 'similar',
-        score: Math.floor(similarity * 100)
+        score: Math.floor(similarity * 100),
       });
     }
   }
@@ -19,7 +25,10 @@ export function getSimilarSuggestions(query: string, rules: ExceptionRule[]): Se
   return suggestions.slice(0, 2);
 }
 
-export function getCompletionSuggestions(query: string, rules: ExceptionRule[]): SearchSuggestion[] {
+export function getCompletionSuggestions(
+  query: string,
+  rules: ExceptionRule[],
+): SearchSuggestion[] {
   const suggestions: SearchSuggestion[] = [];
 
   for (const rule of rules) {
@@ -28,7 +37,7 @@ export function getCompletionSuggestions(query: string, rules: ExceptionRule[]):
       suggestions.push({
         text: String(rule.name || ''),
         type: 'similar',
-        score: 80 + (rule.usageCount || 0)
+        score: 80 + (rule.usageCount || 0),
       });
     }
   }

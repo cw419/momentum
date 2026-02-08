@@ -1,6 +1,10 @@
 import { performanceLogger } from '../performanceLogger';
 import { isLayoutShiftEntry } from './layoutShift';
-import type { PerformanceBufferEntry, PerformanceMetrics, PerformanceObservers } from './types';
+import type {
+  PerformanceBufferEntry,
+  PerformanceMetrics,
+  PerformanceObservers,
+} from './types';
 
 export function createPerformanceObservers(args: {
   isMonitoring: boolean;
@@ -9,7 +13,8 @@ export function createPerformanceObservers(args: {
   addToBuffer: (entry: PerformanceBufferEntry) => void;
   runWhenIdle: (callback: () => void, timeout?: number) => void;
 }): PerformanceObservers {
-  const { isMonitoring, backgroundMode, metrics, addToBuffer, runWhenIdle } = args;
+  const { isMonitoring, backgroundMode, metrics, addToBuffer, runWhenIdle } =
+    args;
 
   if (typeof window === 'undefined') return {};
   if (!isMonitoring) return {};
@@ -85,7 +90,11 @@ export function createPerformanceObservers(args: {
             });
 
             if (!backgroundMode) {
-              performanceLogger.debug('性能测量:', entry.name, entry.duration + 'ms');
+              performanceLogger.debug(
+                '性能测量:',
+                entry.name,
+                entry.duration + 'ms',
+              );
             }
           }
         }
@@ -101,4 +110,3 @@ export function createPerformanceObservers(args: {
 
   return observers;
 }
-

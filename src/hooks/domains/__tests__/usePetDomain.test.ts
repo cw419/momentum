@@ -77,7 +77,9 @@ describe('usePetDomain', () => {
       leveledUp: false,
       evolved: false,
     } as TaskCompletionReward);
-    vi.mocked(createNewPet).mockImplementation((name: string) => createPetState({ id: 'new-pet', name }));
+    vi.mocked(createNewPet).mockImplementation((name: string) =>
+      createPetState({ id: 'new-pet', name }),
+    );
   });
 
   it('should load saved pet, apply decay, and persist the updated pet', async () => {
@@ -119,7 +121,7 @@ describe('usePetDomain', () => {
         hunger: 44,
         happiness: 71,
         health: 88,
-      })
+      }),
     );
     expect(calculateMood).toHaveBeenCalled();
   });
@@ -139,7 +141,12 @@ describe('usePetDomain', () => {
     });
 
     expect(result.current.pet).toBeNull();
-    expect(logger.error).toHaveBeenCalledWith('PET', 'Failed to load pet state', undefined, expect.any(Error));
+    expect(logger.error).toHaveBeenCalledWith(
+      'PET',
+      'Failed to load pet state',
+      undefined,
+      expect.any(Error),
+    );
   });
 
   it('should keep neutral mood and skip decay when no saved pet exists', async () => {
@@ -238,12 +245,18 @@ describe('usePetDomain', () => {
     expect(result.current.pet?.isMinimized).toBe(false);
     expect(result.current.pet?.position).toEqual({ x: 10, y: 20 });
     expect(storage.savePetState).toHaveBeenCalled();
-    expect(logger.info).toHaveBeenCalledWith('PET', 'Created new pet', { name: 'Nova' });
-    expect(logger.info).toHaveBeenCalledWith('PET', 'Fed pet', expect.objectContaining({ hungerReduced: expect.any(Number) }));
+    expect(logger.info).toHaveBeenCalledWith('PET', 'Created new pet', {
+      name: 'Nova',
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      'PET',
+      'Fed pet',
+      expect.objectContaining({ hungerReduced: expect.any(Number) }),
+    );
     expect(logger.info).toHaveBeenCalledWith(
       'PET',
       'Task completed reward',
-      expect.objectContaining({ xpGained: 20, leveledUp: true })
+      expect.objectContaining({ xpGained: 20, leveledUp: true }),
     );
     expect(logger.info).toHaveBeenCalledWith('PET', 'Pet minimized');
     expect(logger.info).toHaveBeenCalledWith('PET', 'Pet expanded');
@@ -262,9 +275,15 @@ describe('usePetDomain', () => {
 
     await act(async () => {
       await expect(result.current.feedPet()).resolves.toBeNull();
-      await expect(result.current.onTaskCompleted(20, true)).resolves.toBeNull();
-      await expect(result.current.updatePosition(1, 2)).resolves.toBeUndefined();
-      await expect(result.current.updateMinimizedPosition(3, 4)).resolves.toBeUndefined();
+      await expect(
+        result.current.onTaskCompleted(20, true),
+      ).resolves.toBeNull();
+      await expect(
+        result.current.updatePosition(1, 2),
+      ).resolves.toBeUndefined();
+      await expect(
+        result.current.updateMinimizedPosition(3, 4),
+      ).resolves.toBeUndefined();
       await expect(result.current.toggleVisibility()).resolves.toBeUndefined();
       await expect(result.current.showPet()).resolves.toBeUndefined();
       await expect(result.current.minimize()).resolves.toBeUndefined();
@@ -285,7 +304,7 @@ describe('usePetDomain', () => {
         id: 'feed-decimal',
         hunger: 45.67,
         happiness: 66.66,
-      })
+      }),
     );
 
     const { result } = renderHook(() => usePetDomain());
@@ -323,7 +342,7 @@ describe('usePetDomain', () => {
         id: 'feed-low',
         hunger: 12.3,
         happiness: 30,
-      })
+      }),
     );
 
     const { result } = renderHook(() => usePetDomain());
@@ -364,7 +383,7 @@ describe('usePetDomain', () => {
         level: 1,
         experience: 120,
         stage: 'egg',
-      })
+      }),
     );
     vi.mocked(getXpForLevel).mockReturnValue(100);
     vi.mocked(calculateTaskReward).mockReturnValue({
@@ -411,7 +430,7 @@ describe('usePetDomain', () => {
         happiness: 50,
         level: 3,
         stage: 'adult',
-      })
+      }),
     );
     vi.mocked(calculateTaskReward).mockReturnValue({
       xpGained: 5,
@@ -453,7 +472,7 @@ describe('usePetDomain', () => {
         id: 'guards',
         isVisible: true,
         isMinimized: false,
-      })
+      }),
     );
 
     const { result } = renderHook(() => usePetDomain());
@@ -464,23 +483,30 @@ describe('usePetDomain', () => {
       await result.current.createPet('Guarded');
     });
 
-    const saveCallsAfterCreate = vi.mocked(storage.savePetState).mock.calls.length;
+    const saveCallsAfterCreate = vi.mocked(storage.savePetState).mock.calls
+      .length;
     await act(async () => {
       await result.current.showPet();
       await result.current.expand();
     });
-    expect(vi.mocked(storage.savePetState).mock.calls.length).toBe(saveCallsAfterCreate);
+    expect(vi.mocked(storage.savePetState).mock.calls.length).toBe(
+      saveCallsAfterCreate,
+    );
 
     await act(async () => {
       await result.current.minimize();
     });
     expect(result.current.pet?.isMinimized).toBe(true);
-    expect(vi.mocked(storage.savePetState).mock.calls.length).toBe(saveCallsAfterCreate + 1);
+    expect(vi.mocked(storage.savePetState).mock.calls.length).toBe(
+      saveCallsAfterCreate + 1,
+    );
 
     await act(async () => {
       await result.current.minimize();
     });
-    expect(vi.mocked(storage.savePetState).mock.calls.length).toBe(saveCallsAfterCreate + 1);
+    expect(vi.mocked(storage.savePetState).mock.calls.length).toBe(
+      saveCallsAfterCreate + 1,
+    );
   });
 
   it('should run periodic decay and emit starvation/health warnings', async () => {
@@ -522,8 +548,12 @@ describe('usePetDomain', () => {
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
     });
 
-    expect(logger.warn).toHaveBeenCalledWith('PET', 'Pet is starving!', { hunger: 85 });
-    expect(logger.warn).toHaveBeenCalledWith('PET', 'Pet health is low!', { health: 20 });
+    expect(logger.warn).toHaveBeenCalledWith('PET', 'Pet is starving!', {
+      hunger: 85,
+    });
+    expect(logger.warn).toHaveBeenCalledWith('PET', 'Pet health is low!', {
+      health: 20,
+    });
 
     unmount();
     vi.useRealTimers();
@@ -616,8 +646,14 @@ describe('usePetDomain', () => {
 
     expect(result.current.pet?.health).toBe(20);
     expect(storage.savePetState).toHaveBeenCalledTimes(2);
-    expect(logger.warn).toHaveBeenCalledWith('PET', 'Pet health is low!', { health: 20 });
-    expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet is starving!', expect.anything());
+    expect(logger.warn).toHaveBeenCalledWith('PET', 'Pet health is low!', {
+      health: 20,
+    });
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      'PET',
+      'Pet is starving!',
+      expect.anything(),
+    );
   });
 
   it('should not emit threshold warnings when values stay on boundary without crossing', async () => {
@@ -654,8 +690,16 @@ describe('usePetDomain', () => {
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
     });
 
-    expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet is starving!', expect.anything());
-    expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet health is low!', expect.anything());
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      'PET',
+      'Pet is starving!',
+      expect.anything(),
+    );
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      'PET',
+      'Pet health is low!',
+      expect.anything(),
+    );
     vi.useRealTimers();
   });
 
@@ -693,7 +737,15 @@ describe('usePetDomain', () => {
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
     });
 
-    expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet is starving!', expect.anything());
-    expect(logger.warn).not.toHaveBeenCalledWith('PET', 'Pet health is low!', expect.anything());
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      'PET',
+      'Pet is starving!',
+      expect.anything(),
+    );
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      'PET',
+      'Pet health is low!',
+      expect.anything(),
+    );
   });
 });

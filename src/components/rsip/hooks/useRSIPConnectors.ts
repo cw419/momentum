@@ -47,14 +47,18 @@ export function useRSIPConnectors({
             side === 'left'
               ? (elRect.left - containerRect.left) / scale
               : (elRect.right - containerRect.left) / scale;
-          const y = ((elRect.top - containerRect.top) + elRect.height / 2) / scale;
+          const y =
+            (elRect.top - containerRect.top + elRect.height / 2) / scale;
           return { x, y };
         }
 
         const styleLeft = Number(pos.style.left);
         const styleTop = Number(pos.style.top);
         const width = 256;
-        const height = Math.max(120, layoutNodeHeight - RSIP_NODE_SPACING_PADDING_Y);
+        const height = Math.max(
+          120,
+          layoutNodeHeight - RSIP_NODE_SPACING_PADDING_Y,
+        );
 
         const x = side === 'left' ? styleLeft : styleLeft + width;
         const y = styleTop + height / 2;
@@ -76,7 +80,8 @@ export function useRSIPConnectors({
 
             const d = `M ${p1.x} ${p1.y} C ${cx1} ${cy1} ${cx2} ${cy2} ${p2.x} ${p2.y}`;
             const id = `${node.id}_${child.id}`;
-            const isHovered = hoveredChainIds.has(node.id) && hoveredChainIds.has(child.id);
+            const isHovered =
+              hoveredChainIds.has(node.id) && hoveredChainIds.has(child.id);
             newConnectors.push({ id, d, isHovered });
           }
         }
@@ -99,7 +104,15 @@ export function useRSIPConnectors({
       clearTimeout(t);
       window.removeEventListener('resize', compute);
     };
-  }, [filteredTree, hoveredChainIds, nodePositions, layoutNodeHeight, containerRef, nodeRefs, latestTransformRef]);
+  }, [
+    filteredTree,
+    hoveredChainIds,
+    nodePositions,
+    layoutNodeHeight,
+    containerRef,
+    nodeRefs,
+    latestTransformRef,
+  ]);
 
   return connectors;
 }

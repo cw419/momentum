@@ -8,21 +8,26 @@ interface RSIPFiltersProps {
   tr: (zh: string, en: string) => string;
 }
 
-export const RSIPFilters: React.FC<RSIPFiltersProps> = ({ filterType, onFilterTypeChange, language, tr }) => {
+export const RSIPFilters: React.FC<RSIPFiltersProps> = ({
+  filterType,
+  onFilterTypeChange,
+  language,
+  tr,
+}) => {
   return (
     <div className="bento-card mb-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <label className="text-sm font-chinese text-gray-700 dark:text-slate-300">
+          <label className="font-chinese text-sm text-gray-700 dark:text-slate-300">
             {tr('按类型筛选：', 'Filter by type:')}
           </label>
           <select
             value={filterType || ''}
             onChange={(e) => onFilterTypeChange(e.target.value || null)}
-            className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-3 py-2 text-gray-900 dark:text-slate-100"
+            className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-gray-900 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
           >
             <option value="">{tr('全部', 'All')}</option>
-            {Object.keys(rsipTypeEmojiMap).map(t => (
+            {Object.keys(rsipTypeEmojiMap).map((t) => (
               <option key={t} value={t}>
                 {getRsipTypeLabel(language, t)}
               </option>
@@ -31,16 +36,19 @@ export const RSIPFilters: React.FC<RSIPFiltersProps> = ({ filterType, onFilterTy
           <button
             type="button"
             onClick={() => onFilterTypeChange(null)}
-            className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-slate-700 text-xs"
+            className="rounded-lg bg-gray-100 px-2 py-1 text-xs dark:bg-slate-700"
           >
             {tr('清除', 'Clear')}
           </button>
         </div>
         <div className="flex items-center space-x-2">
-          {Object.keys(rsipTypeColorMap).map(t => {
+          {Object.keys(rsipTypeColorMap).map((t) => {
             const col = rsipTypeColorMap[t];
             return (
-              <div key={t} className={`px-2 py-1 rounded-lg ${col.badge} text-xs font-chinese`}>
+              <div
+                key={t}
+                className={`rounded-lg px-2 py-1 ${col.badge} font-chinese text-xs`}
+              >
                 {getRsipTypeLabel(language, t)}
               </div>
             );
@@ -50,4 +58,3 @@ export const RSIPFilters: React.FC<RSIPFiltersProps> = ({ filterType, onFilterTy
     </div>
   );
 };
-

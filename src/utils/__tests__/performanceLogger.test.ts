@@ -36,7 +36,8 @@ describe('performanceLogger', () => {
 
   it('logs development diagnostics and timings', async () => {
     const { performanceLogger, logger } = await loadPerformanceLogger(true);
-    const nowSpy = vi.spyOn(performance, 'now')
+    const nowSpy = vi
+      .spyOn(performance, 'now')
       .mockReturnValueOnce(10)
       .mockReturnValueOnce(25)
       .mockReturnValueOnce(30)
@@ -59,7 +60,11 @@ describe('performanceLogger', () => {
     performanceLogger.debugLazy('lazy-debug', () => ({ a: 1 }));
     performanceLogger.infoLazy('lazy-info', () => ({ b: 2 }));
     performanceLogger.logLazy('lazy-log', () => ({ c: 3 }));
-    performanceLogger.warnLazy('lazy-warn', () => ({ d: 4 }), new Error('boom'));
+    performanceLogger.warnLazy(
+      'lazy-warn',
+      () => ({ d: 4 }),
+      new Error('boom'),
+    );
 
     expect(timeResult).toBe('done');
     expect(sideEffect).toBe(1);
@@ -70,8 +75,17 @@ describe('performanceLogger', () => {
     expect(logger.performance).toHaveBeenNthCalledWith(1, 'timed-op', 15);
     expect(logger.performance).toHaveBeenNthCalledWith(2, 'perf-op', 16);
 
-    performanceLogger.error('critical', { code: 'E' }, new Error('critical-error'));
-    expect(logger.error).toHaveBeenCalledWith('PERFORMANCE', 'critical', { args: [{ code: 'E' }] }, expect.any(Error));
+    performanceLogger.error(
+      'critical',
+      { code: 'E' },
+      new Error('critical-error'),
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'PERFORMANCE',
+      'critical',
+      { args: [{ code: 'E' }] },
+      expect.any(Error),
+    );
 
     nowSpy.mockRestore();
   });

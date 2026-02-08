@@ -2,11 +2,17 @@ import { act, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CheckinStats } from '../../../domain/checkin';
 import { err, ok } from '../../../domain/result';
-import { createLocalStorageMock, createSupabaseStorageMock } from '../../../test/factories';
+import {
+  createLocalStorageMock,
+  createSupabaseStorageMock,
+} from '../../../test/factories';
 import { renderHookWithProviders } from '../../../test/helpers/renderHookWithProviders';
 import { POINTS_CHANGED_EVENT } from '../../../utils/pointsEvents';
 import { logger } from '../../../utils/logger';
-import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../../../utils/errorMessage';
+import {
+  getSafeErrorDetail,
+  getSafeErrorDetailFromUnknown,
+} from '../../../utils/errorMessage';
 import { useCheckinDomain } from '../useCheckinDomain';
 
 vi.mock('../../../utils/logger', () => ({
@@ -21,7 +27,9 @@ vi.mock('../../../utils/logger', () => ({
 vi.mock('../../../utils/errorMessage', () => ({
   getSafeErrorDetail: vi.fn(() => null),
   getSafeErrorDetailFromUnknown: vi.fn(() => null),
-  toError: vi.fn((value: unknown) => (value instanceof Error ? value : new Error(String(value)))),
+  toError: vi.fn((value: unknown) =>
+    value instanceof Error ? value : new Error(String(value)),
+  ),
 }));
 
 const baseStats: CheckinStats = {
@@ -50,7 +58,9 @@ describe('useCheckinDomain', () => {
     const getUserCheckinStats = vi.fn(async () => ok(baseStats));
     const storage = createSupabaseStorageMock({ getUserCheckinStats });
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -64,7 +74,9 @@ describe('useCheckinDomain', () => {
   it('should set login-required error when storage kind is local', async () => {
     const storage = createLocalStorageMock();
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -76,7 +88,9 @@ describe('useCheckinDomain', () => {
 
   it('should toggle collapsed state and clear error', async () => {
     const storage = createLocalStorageMock();
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -99,11 +113,15 @@ describe('useCheckinDomain', () => {
   });
 
   it('should set safe-detail loading error when stats query returns domain error', async () => {
-    const getUserCheckinStats = vi.fn(async () => err({ code: 'DB_FAIL', message: 'db down' }));
+    const getUserCheckinStats = vi.fn(async () =>
+      err({ code: 'DB_FAIL', message: 'db down' }),
+    );
     const storage = createSupabaseStorageMock({ getUserCheckinStats });
     vi.mocked(getSafeErrorDetail).mockReturnValue('safe: db down');
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -120,7 +138,9 @@ describe('useCheckinDomain', () => {
     const storage = createSupabaseStorageMock({ getUserCheckinStats });
     vi.mocked(getSafeErrorDetailFromUnknown).mockReturnValue(null);
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -131,7 +151,7 @@ describe('useCheckinDomain', () => {
       'CHECKIN',
       expect.any(String),
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
@@ -145,7 +165,7 @@ describe('useCheckinDomain', () => {
         points_earned: 7,
         consecutive_days: 4,
         total_points: 31,
-      })
+      }),
     );
 
     const storage = createSupabaseStorageMock({
@@ -153,7 +173,9 @@ describe('useCheckinDomain', () => {
       performDailyCheckin,
     });
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -192,13 +214,15 @@ describe('useCheckinDomain', () => {
         points_earned: 7,
         consecutive_days: 4,
         total_points: 999,
-      })
+      }),
     );
     const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn(async () => ok(baseStats)),
       performDailyCheckin,
     });
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -217,13 +241,15 @@ describe('useCheckinDomain', () => {
       () =>
         new Promise((resolve) => {
           resolveCheckin = resolve as (value: ReturnType<typeof ok>) => void;
-        })
+        }),
     );
     const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn(async () => ok(baseStats)),
       performDailyCheckin,
     });
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -251,7 +277,7 @@ describe('useCheckinDomain', () => {
           checkin_date: '2026-02-06',
           points_earned: 7,
           consecutive_days: 4,
-        })
+        }),
       );
     });
 
@@ -263,14 +289,18 @@ describe('useCheckinDomain', () => {
   });
 
   it('should surface operation error when performDailyCheckin returns domain error', async () => {
-    const performDailyCheckin = vi.fn(async () => err({ code: 'CHECKIN_FAIL', message: 'quota hit' }));
+    const performDailyCheckin = vi.fn(async () =>
+      err({ code: 'CHECKIN_FAIL', message: 'quota hit' }),
+    );
     const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn(async () => ok(baseStats)),
       performDailyCheckin,
     });
     vi.mocked(getSafeErrorDetail).mockReturnValue('safe: quota hit');
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -294,14 +324,16 @@ describe('useCheckinDomain', () => {
         checkin_date: '2026-02-06',
         points_earned: 0,
         consecutive_days: 0,
-      })
+      }),
     );
     const storage = createSupabaseStorageMock({
       getUserCheckinStats: vi.fn(async () => ok(baseStats)),
       performDailyCheckin,
     });
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -322,9 +354,13 @@ describe('useCheckinDomain', () => {
       getUserCheckinStats: vi.fn(async () => ok(baseStats)),
       performDailyCheckin,
     });
-    vi.mocked(getSafeErrorDetailFromUnknown).mockReturnValue('safe: unhandled failure');
+    vi.mocked(getSafeErrorDetailFromUnknown).mockReturnValue(
+      'safe: unhandled failure',
+    );
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -340,7 +376,7 @@ describe('useCheckinDomain', () => {
       'CHECKIN',
       expect.any(String),
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
@@ -361,7 +397,9 @@ describe('useCheckinDomain', () => {
       .mockResolvedValueOnce(ok(refreshedStats));
 
     const storage = createSupabaseStorageMock({ getUserCheckinStats });
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(getUserCheckinStats).toHaveBeenCalledTimes(1);
@@ -385,18 +423,24 @@ describe('useCheckinDomain', () => {
       getUserCheckinStats: vi.fn(async () => ok(baseStats)),
     });
 
-    const { unmount } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { unmount } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(storage.getUserCheckinStats).toHaveBeenCalledTimes(1);
     });
 
-    const addCall = addSpy.mock.calls.find(([eventName]) => eventName === POINTS_CHANGED_EVENT);
+    const addCall = addSpy.mock.calls.find(
+      ([eventName]) => eventName === POINTS_CHANGED_EVENT,
+    );
     expect(addCall).toBeDefined();
 
     unmount();
 
-    const removeCall = removeSpy.mock.calls.find(([eventName]) => eventName === POINTS_CHANGED_EVENT);
+    const removeCall = removeSpy.mock.calls.find(
+      ([eventName]) => eventName === POINTS_CHANGED_EVENT,
+    );
     expect(removeCall).toBeDefined();
     expect(removeCall?.[1]).toBe(addCall?.[1]);
   });
@@ -405,13 +449,17 @@ describe('useCheckinDomain', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const storage = createLocalStorageMock();
 
-    const { result } = renderHookWithProviders(() => useCheckinDomain(), { storage });
+    const { result } = renderHookWithProviders(() => useCheckinDomain(), {
+      storage,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    const eventCalls = addSpy.mock.calls.filter(([eventName]) => eventName === POINTS_CHANGED_EVENT);
+    const eventCalls = addSpy.mock.calls.filter(
+      ([eventName]) => eventName === POINTS_CHANGED_EVENT,
+    );
     expect(eventCalls).toHaveLength(0);
   });
 });

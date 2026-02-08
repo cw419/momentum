@@ -14,7 +14,11 @@ import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { ruleIntegrityChecker } from './integrity/RuleIntegrityChecker';
 import { usageRecordIntegrityChecker } from './integrity/UsageRecordIntegrityChecker';
 import { integrityReportGenerator } from './integrity/IntegrityReportGenerator';
-import type { IntegrityIssue, IntegrityReport, FixResult } from './integrity/IntegrityTypes';
+import type {
+  IntegrityIssue,
+  IntegrityReport,
+  FixResult,
+} from './integrity/IntegrityTypes';
 
 class DataIntegrityChecker {
   private fixHistory: FixResult[] = [];
@@ -28,22 +32,32 @@ class DataIntegrityChecker {
       issues.push(...ruleIntegrityChecker.validateRuleIds(rules));
       issues.push(...ruleIntegrityChecker.checkDuplicateNames(rules));
       issues.push(...ruleIntegrityChecker.checkRuleFields(rules));
-      issues.push(...usageRecordIntegrityChecker.checkUsageRecordsIntegrity(usageRecords, rules));
-      issues.push(...usageRecordIntegrityChecker.checkDataConsistency(rules, usageRecords));
+      issues.push(
+        ...usageRecordIntegrityChecker.checkUsageRecordsIntegrity(
+          usageRecords,
+          rules,
+        ),
+      );
+      issues.push(
+        ...usageRecordIntegrityChecker.checkDataConsistency(
+          rules,
+          usageRecords,
+        ),
+      );
 
       return integrityReportGenerator.generateReport(issues);
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         `数据完整性检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-        error
+        error,
       );
     }
   }
 
   async autoFixIssues(issues: IntegrityIssue[]): Promise<FixResult[]> {
     const results: FixResult[] = [];
-    const autoFixableIssues = issues.filter(issue => issue.autoFixable);
+    const autoFixableIssues = issues.filter((issue) => issue.autoFixable);
 
     for (const issue of autoFixableIssues) {
       try {
@@ -53,7 +67,7 @@ class DataIntegrityChecker {
             issueType: issue.type,
             success: true,
             message: `已修复: ${issue.description}`,
-            details: issue.details
+            details: issue.details,
           };
           results.push(result);
           this.fixHistory.push(result);
@@ -63,7 +77,7 @@ class DataIntegrityChecker {
           issueType: issue.type,
           success: false,
           message: `修复失败: ${error instanceof Error ? error.message : '未知错误'}`,
-          details: { issue, error }
+          details: { issue, error },
         };
         results.push(result);
         this.fixHistory.push(result);
@@ -73,8 +87,10 @@ class DataIntegrityChecker {
     return results;
   }
 
-  validateRuleIds = ruleIntegrityChecker.validateRuleIds.bind(ruleIntegrityChecker);
-  checkDuplicateNames = ruleIntegrityChecker.checkDuplicateNames.bind(ruleIntegrityChecker);
+  validateRuleIds =
+    ruleIntegrityChecker.validateRuleIds.bind(ruleIntegrityChecker);
+  checkDuplicateNames =
+    ruleIntegrityChecker.checkDuplicateNames.bind(ruleIntegrityChecker);
 
   getFixHistory(): FixResult[] {
     return [...this.fixHistory];

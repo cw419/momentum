@@ -1,4 +1,9 @@
-import { buildChainTree, getNextUnitInGroup, getGroupProgress, getGroupUnitProgress } from '../chainTree';
+import {
+  buildChainTree,
+  getNextUnitInGroup,
+  getGroupProgress,
+  getGroupUnitProgress,
+} from '../chainTree';
 import { Chain, ChainTreeNode } from '../../types';
 
 // Mock chain data for testing
@@ -41,7 +46,7 @@ describe('chainTree utilities', () => {
     it('should handle single chain', () => {
       const chains = [createMockChain({ id: 'chain1', name: 'Chain 1' })];
       const result = buildChainTree(chains);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('chain1');
       expect(result[0].children).toEqual([]);
@@ -53,42 +58,50 @@ describe('chainTree utilities', () => {
         createMockChain({ id: 'child1', name: 'Child 1', parentId: 'parent' }),
         createMockChain({ id: 'child2', name: 'Child 2', parentId: 'parent' }),
       ];
-      
+
       const result = buildChainTree(chains);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('parent');
       expect(result[0].children).toHaveLength(2);
-      expect(result[0].children.map(c => c.id)).toEqual(['child1', 'child2']);
+      expect(result[0].children.map((c) => c.id)).toEqual(['child1', 'child2']);
     });
 
     it('should treat orphaned chains as root nodes', () => {
       const chains = [
-        createMockChain({ id: 'orphan', name: 'Orphan', parentId: 'nonexistent' }),
+        createMockChain({
+          id: 'orphan',
+          name: 'Orphan',
+          parentId: 'nonexistent',
+        }),
         createMockChain({ id: 'root', name: 'Root' }),
       ];
-      
+
       const result = buildChainTree(chains);
-      
+
       expect(result).toHaveLength(2);
-      expect(result.map(c => c.id)).toContain('orphan');
-      expect(result.map(c => c.id)).toContain('root');
-      
+      expect(result.map((c) => c.id)).toContain('orphan');
+      expect(result.map((c) => c.id)).toContain('root');
+
       // Orphan should have parentId reset to undefined
-      const orphanNode = result.find(c => c.id === 'orphan');
+      const orphanNode = result.find((c) => c.id === 'orphan');
       expect(orphanNode?.parentId).toBeUndefined();
     });
 
     it('should handle circular references', () => {
       const chains = [
-        createMockChain({ id: 'circular', name: 'Circular', parentId: 'circular' }),
+        createMockChain({
+          id: 'circular',
+          name: 'Circular',
+          parentId: 'circular',
+        }),
         createMockChain({ id: 'normal', name: 'Normal' }),
       ];
-      
+
       const result = buildChainTree(chains);
-      
+
       expect(result).toHaveLength(2);
-      const circularNode = result.find(c => c.id === 'circular');
+      const circularNode = result.find((c) => c.id === 'circular');
       expect(circularNode?.parentId).toBeUndefined();
     });
 
@@ -98,14 +111,17 @@ describe('chainTree utilities', () => {
         createMockChain({ id: 'first', name: 'First', sortOrder: 1 }),
         createMockChain({ id: 'second', name: 'Second', sortOrder: 2 }),
       ];
-      
+
       const result = buildChainTree(chains);
-      
-      expect(result.map(c => c.id)).toEqual(['first', 'second', 'third']);
+
+      expect(result.map((c) => c.id)).toEqual(['first', 'second', 'third']);
     });
 
     it('should skip malformed chains without id and keep valid entries', () => {
-      const malformed = { ...createMockChain({ id: 'broken' }), id: '' } as unknown as Chain;
+      const malformed = {
+        ...createMockChain({ id: 'broken' }),
+        id: '',
+      } as unknown as Chain;
       const valid = createMockChain({ id: 'valid', name: 'Valid chain' });
 
       const result = buildChainTree([malformed, valid]);
@@ -116,12 +132,17 @@ describe('chainTree utilities', () => {
     it('should handle deep hierarchies', () => {
       const chains = [
         createMockChain({ id: 'root', name: 'Root', type: 'group' }),
-        createMockChain({ id: 'level1', name: 'Level 1', parentId: 'root', type: 'group' }),
+        createMockChain({
+          id: 'level1',
+          name: 'Level 1',
+          parentId: 'root',
+          type: 'group',
+        }),
         createMockChain({ id: 'level2', name: 'Level 2', parentId: 'level1' }),
       ];
-      
+
       const result = buildChainTree(chains);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].children).toHaveLength(1);
       expect(result[0].children[0].children).toHaveLength(1);
@@ -136,7 +157,7 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(unit);
       expect(result?.id).toBe('unit1');
     });
@@ -147,37 +168,37 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(unit);
       expect(result).toBeNull();
     });
 
     it('should handle task with repeat count', () => {
       const unit: ChainTreeNode = {
-        ...createMockChain({ 
-          id: 'unit1', 
-          currentStreak: 1, 
-          taskRepeatCount: 3 
+        ...createMockChain({
+          id: 'unit1',
+          currentStreak: 1,
+          taskRepeatCount: 3,
         }),
         children: [],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(unit);
       expect(result?.id).toBe('unit1'); // Still available since 1 < 3
     });
 
     it('should return null for unit that completed all repeats', () => {
       const unit: ChainTreeNode = {
-        ...createMockChain({ 
-          id: 'unit1', 
-          currentStreak: 3, 
-          taskRepeatCount: 3 
+        ...createMockChain({
+          id: 'unit1',
+          currentStreak: 3,
+          taskRepeatCount: 3,
         }),
         children: [],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(unit);
       expect(result).toBeNull(); // Completed all repeats
     });
@@ -204,7 +225,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(group);
       expect(result?.id).toBe('unit2');
     });
@@ -215,40 +236,40 @@ describe('chainTree utilities', () => {
         children: [
           {
             // Unit 1: completed all repeats (2/2)
-            ...createMockChain({ 
-              id: 'unit1', 
-              currentStreak: 2, 
-              taskRepeatCount: 2 
+            ...createMockChain({
+              id: 'unit1',
+              currentStreak: 2,
+              taskRepeatCount: 2,
             }),
             children: [],
             depth: 1,
           },
           {
             // Unit 2: completed all repeats (1/1)
-            ...createMockChain({ 
-              id: 'unit2', 
-              currentStreak: 1, 
-              taskRepeatCount: 1 
+            ...createMockChain({
+              id: 'unit2',
+              currentStreak: 1,
+              taskRepeatCount: 1,
             }),
             children: [],
             depth: 1,
           },
           {
             // Unit 3: not completed (0/3) - should be next
-            ...createMockChain({ 
-              id: 'unit3', 
-              currentStreak: 0, 
-              taskRepeatCount: 3 
+            ...createMockChain({
+              id: 'unit3',
+              currentStreak: 0,
+              taskRepeatCount: 3,
             }),
             children: [],
             depth: 1,
           },
           {
             // Unit 4: not completed (0/1)
-            ...createMockChain({ 
-              id: 'unit4', 
-              currentStreak: 0, 
-              taskRepeatCount: 1 
+            ...createMockChain({
+              id: 'unit4',
+              currentStreak: 0,
+              taskRepeatCount: 1,
             }),
             children: [],
             depth: 1,
@@ -256,7 +277,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(group);
       expect(result?.id).toBe('unit3'); // First incomplete task
     });
@@ -278,7 +299,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(group);
       expect(result).toBeNull();
     });
@@ -289,7 +310,7 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(group);
       expect(result).toBeNull();
     });
@@ -317,7 +338,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getNextUnitInGroup(group);
       expect(result?.id).toBe('unit2');
     });
@@ -330,7 +351,7 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupProgress(unit);
       expect(result).toEqual({ completed: 0, total: 1 });
     });
@@ -341,37 +362,37 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupProgress(unit);
       expect(result).toEqual({ completed: 1, total: 1 });
     });
 
     it('should handle task with repeat count', () => {
       const unit: ChainTreeNode = {
-        ...createMockChain({ 
-          id: 'unit1', 
-          currentStreak: 1, 
-          taskRepeatCount: 3 
+        ...createMockChain({
+          id: 'unit1',
+          currentStreak: 1,
+          taskRepeatCount: 3,
         }),
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupProgress(unit);
       expect(result).toEqual({ completed: 1, total: 3 });
     });
 
     it('should handle completed task with repeat count', () => {
       const unit: ChainTreeNode = {
-        ...createMockChain({ 
-          id: 'unit1', 
-          currentStreak: 3, 
-          taskRepeatCount: 3 
+        ...createMockChain({
+          id: 'unit1',
+          currentStreak: 3,
+          taskRepeatCount: 3,
         }),
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupProgress(unit);
       expect(result).toEqual({ completed: 3, total: 3 });
     });
@@ -383,40 +404,40 @@ describe('chainTree utilities', () => {
         children: [
           {
             // Task 1: completed its repeat count (2/2)
-            ...createMockChain({ 
-              id: 'unit1', 
-              currentStreak: 2, 
-              taskRepeatCount: 2 
+            ...createMockChain({
+              id: 'unit1',
+              currentStreak: 2,
+              taskRepeatCount: 2,
             }),
             children: [],
             depth: 1,
           },
           {
             // Task 2: completed its repeat count (1/1)
-            ...createMockChain({ 
-              id: 'unit2', 
-              currentStreak: 1, 
-              taskRepeatCount: 1 
+            ...createMockChain({
+              id: 'unit2',
+              currentStreak: 1,
+              taskRepeatCount: 1,
             }),
             children: [],
             depth: 1,
           },
           {
             // Task 3: not completed (0/3)
-            ...createMockChain({ 
-              id: 'unit3', 
-              currentStreak: 0, 
-              taskRepeatCount: 3 
+            ...createMockChain({
+              id: 'unit3',
+              currentStreak: 0,
+              taskRepeatCount: 3,
             }),
             children: [],
             depth: 1,
           },
           {
             // Task 4: not completed (0/1)
-            ...createMockChain({ 
-              id: 'unit4', 
-              currentStreak: 0, 
-              taskRepeatCount: 1 
+            ...createMockChain({
+              id: 'unit4',
+              currentStreak: 0,
+              taskRepeatCount: 1,
             }),
             children: [],
             depth: 1,
@@ -424,7 +445,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getGroupProgress(group);
       expect(result).toEqual({ completed: 3, total: 7 });
     });
@@ -451,7 +472,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getGroupProgress(group);
       expect(result).toEqual({ completed: 2, total: 3 });
     });
@@ -462,7 +483,7 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupProgress(group);
       expect(result).toEqual({ completed: 0, total: 0 });
     });
@@ -475,7 +496,7 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupUnitProgress(unit);
       expect(result).toEqual({ completed: 0, total: 1 });
     });
@@ -486,37 +507,37 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupUnitProgress(unit);
       expect(result).toEqual({ completed: 1, total: 1 });
     });
 
     it('should handle task with repeat count - incomplete', () => {
       const unit: ChainTreeNode = {
-        ...createMockChain({ 
-          id: 'unit1', 
-          currentStreak: 1, 
-          taskRepeatCount: 3 
+        ...createMockChain({
+          id: 'unit1',
+          currentStreak: 1,
+          taskRepeatCount: 3,
         }),
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupUnitProgress(unit);
       expect(result).toEqual({ completed: 0, total: 1 }); // Unit not complete until currentStreak >= taskRepeatCount
     });
 
     it('should handle completed task with repeat count', () => {
       const unit: ChainTreeNode = {
-        ...createMockChain({ 
-          id: 'unit1', 
-          currentStreak: 3, 
-          taskRepeatCount: 3 
+        ...createMockChain({
+          id: 'unit1',
+          currentStreak: 3,
+          taskRepeatCount: 3,
         }),
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupUnitProgress(unit);
       expect(result).toEqual({ completed: 1, total: 1 });
     });
@@ -528,30 +549,30 @@ describe('chainTree utilities', () => {
         children: [
           {
             // Task 1: completed its repeat count (2/2) - COMPLETED UNIT
-            ...createMockChain({ 
-              id: 'unit1', 
-              currentStreak: 2, 
-              taskRepeatCount: 2 
+            ...createMockChain({
+              id: 'unit1',
+              currentStreak: 2,
+              taskRepeatCount: 2,
             }),
             children: [],
             depth: 1,
           },
           {
-            // Task 2: completed its repeat count (1/1) - COMPLETED UNIT  
-            ...createMockChain({ 
-              id: 'unit2', 
-              currentStreak: 1, 
-              taskRepeatCount: 1 
+            // Task 2: completed its repeat count (1/1) - COMPLETED UNIT
+            ...createMockChain({
+              id: 'unit2',
+              currentStreak: 1,
+              taskRepeatCount: 1,
             }),
             children: [],
             depth: 1,
           },
           {
             // Task 3: not completed (0/3) - INCOMPLETE UNIT
-            ...createMockChain({ 
-              id: 'unit3', 
-              currentStreak: 0, 
-              taskRepeatCount: 3 
+            ...createMockChain({
+              id: 'unit3',
+              currentStreak: 0,
+              taskRepeatCount: 3,
             }),
             children: [],
             depth: 1,
@@ -559,10 +580,10 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const unitResult = getGroupUnitProgress(group);
       expect(unitResult).toEqual({ completed: 2, total: 3 }); // 2 out of 3 units completed
-      
+
       // Compare with old repeat-based progress
       const repeatResult = getGroupProgress(group);
       expect(repeatResult).toEqual({ completed: 3, total: 6 }); // 3 out of 6 total repeats (2+1+3)
@@ -590,7 +611,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getGroupUnitProgress(group);
       expect(result).toEqual({ completed: 2, total: 3 });
     });
@@ -601,7 +622,7 @@ describe('chainTree utilities', () => {
         children: [],
         depth: 0,
       };
-      
+
       const result = getGroupUnitProgress(group);
       expect(result).toEqual({ completed: 0, total: 0 });
     });
@@ -634,7 +655,7 @@ describe('chainTree utilities', () => {
         ],
         depth: 0,
       };
-      
+
       const result = getGroupUnitProgress(group);
       expect(result).toEqual({ completed: 2, total: 3 }); // 2 units completed out of 3 total
     });

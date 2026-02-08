@@ -24,9 +24,15 @@ describe('Rule System Fixes', () => {
     ];
 
     expect(() => optimizer.updateIndex(problematicRules)).not.toThrow();
-    expect(() => optimizer.searchRules(problematicRules, 'break')).not.toThrow();
-    expect(() => optimizer.detectDuplicates('break', problematicRules)).not.toThrow();
-    expect(() => optimizer.getSearchSuggestions('br', problematicRules)).not.toThrow();
+    expect(() =>
+      optimizer.searchRules(problematicRules, 'break'),
+    ).not.toThrow();
+    expect(() =>
+      optimizer.detectDuplicates('break', problematicRules),
+    ).not.toThrow();
+    expect(() =>
+      optimizer.getSearchSuggestions('br', problematicRules),
+    ).not.toThrow();
   });
 
   it('handles empty or whitespace names', () => {
@@ -39,7 +45,9 @@ describe('Rule System Fixes', () => {
 
     expect(() => optimizer.updateIndex(edgeCaseRules)).not.toThrow();
     expect(() => optimizer.searchRules(edgeCaseRules, 'actual')).not.toThrow();
-    expect(() => optimizer.detectDuplicates('actual', edgeCaseRules)).not.toThrow();
+    expect(() =>
+      optimizer.detectDuplicates('actual', edgeCaseRules),
+    ).not.toThrow();
   });
 
   it('detects duplicates with normalized input', () => {
@@ -49,7 +57,10 @@ describe('Rule System Fixes', () => {
       createRule({ id: 'rule-2', name: 'Drink water' }),
     ];
 
-    const duplicateCheck = optimizer.detectDuplicates('  take a break  ', rules);
+    const duplicateCheck = optimizer.detectDuplicates(
+      '  take a break  ',
+      rules,
+    );
     expect(duplicateCheck.hasExactMatch).toBe(true);
     expect(duplicateCheck.exactMatches).toHaveLength(1);
 

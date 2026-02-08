@@ -7,7 +7,12 @@ import { GroupCard } from '../GroupCard';
 const chainTreeMock = vi.hoisted(() => ({
   getGroupProgress: vi.fn(() => ({ completed: 1, total: 3 })),
   getNextUnitInGroup: vi.fn(() => ({ id: 'next-unit', name: 'Next unit' })),
-  getChainTypeConfig: vi.fn(() => ({ icon: 'link', bgColor: 'bg-blue-50', color: 'text-blue-500', name: 'Group' })),
+  getChainTypeConfig: vi.fn(() => ({
+    icon: 'link',
+    bgColor: 'bg-blue-50',
+    color: 'text-blue-500',
+    name: 'Group',
+  })),
 }));
 
 const countdownMock = vi.hoisted(() => ({
@@ -16,7 +21,9 @@ const countdownMock = vi.hoisted(() => ({
 
 vi.mock('../../../utils/chainTree', () => chainTreeMock);
 vi.mock('../hooks/useGroupCardScheduleCountdown', () => countdownMock);
-vi.mock('../hooks/useDialogFocusRestore', () => ({ useDialogFocusRestore: vi.fn() }));
+vi.mock('../hooks/useDialogFocusRestore', () => ({
+  useDialogFocusRestore: vi.fn(),
+}));
 vi.mock('../../../i18n', () => ({
   useI18n: () => ({
     language: 'en',
@@ -24,12 +31,24 @@ vi.mock('../../../i18n', () => ({
   }),
 }));
 vi.mock('../components/GroupDeleteConfirmDialog', () => ({
-  GroupDeleteConfirmDialog: ({ isOpen, onConfirm, onCancel }: { isOpen: boolean; onConfirm: () => void; onCancel: () => void }) => {
+  GroupDeleteConfirmDialog: ({
+    isOpen,
+    onConfirm,
+    onCancel,
+  }: {
+    isOpen: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }) => {
     if (!isOpen) return null;
     return (
       <div>
-        <button type="button" onClick={onConfirm}>Confirm delete</button>
-        <button type="button" onClick={onCancel}>Cancel delete</button>
+        <button type="button" onClick={onConfirm}>
+          Confirm delete
+        </button>
+        <button type="button" onClick={onCancel}>
+          Cancel delete
+        </button>
       </div>
     );
   },
@@ -76,7 +95,9 @@ describe('GroupCard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    countdownMock.useGroupCardScheduleCountdown.mockReturnValue({ timeRemaining: 0 });
+    countdownMock.useGroupCardScheduleCountdown.mockReturnValue({
+      timeRemaining: 0,
+    });
   });
 
   it('opens detail view and triggers start/schedule actions', async () => {
@@ -90,10 +111,12 @@ describe('GroupCard', () => {
         onCancelScheduledSession={handlers.onCancelScheduledSession}
         onCompleteBooking={handlers.onCompleteBooking}
         onDelete={handlers.onDelete}
-      />
+      />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'View details: Focus Group' }));
+    await user.click(
+      screen.getByRole('button', { name: 'View details: Focus Group' }),
+    );
     await user.click(screen.getByRole('button', { name: 'Start next' }));
     await user.click(screen.getByRole('button', { name: 'Schedule' }));
 
@@ -111,7 +134,9 @@ describe('GroupCard', () => {
       auxiliarySignal: 'alarm',
     };
 
-    countdownMock.useGroupCardScheduleCountdown.mockReturnValue({ timeRemaining: 60 });
+    countdownMock.useGroupCardScheduleCountdown.mockReturnValue({
+      timeRemaining: 60,
+    });
 
     render(
       <GroupCard
@@ -123,13 +148,17 @@ describe('GroupCard', () => {
         onCancelScheduledSession={handlers.onCancelScheduledSession}
         onCompleteBooking={handlers.onCompleteBooking}
         onDelete={handlers.onDelete}
-      />
+      />,
     );
 
-    expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Schedule' }),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Complete booking' }));
-    await user.click(screen.getByRole('button', { name: 'Interrupt / Adjudicate' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Interrupt / Adjudicate' }),
+    );
 
     expect(handlers.onCompleteBooking).toHaveBeenCalledWith('group-1');
     expect(handlers.onCancelScheduledSession).toHaveBeenCalledWith('group-1');
@@ -147,7 +176,7 @@ describe('GroupCard', () => {
         onCancelScheduledSession={handlers.onCancelScheduledSession}
         onCompleteBooking={handlers.onCompleteBooking}
         onDelete={handlers.onDelete}
-      />
+      />,
     );
 
     await user.click(screen.getByRole('button', { name: 'More options' }));

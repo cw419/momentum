@@ -32,7 +32,7 @@ interface ErrorInfo {
 export class ErrorRecoveryManager {
   private static readonly MAX_ERROR_HISTORY = 50;
   private static readonly ERROR_HISTORY_KEY = 'momentum_error_history';
-  
+
   private errorHistory: ErrorInfo[] = [];
 
   constructor() {
@@ -44,7 +44,7 @@ export class ErrorRecoveryManager {
    */
   async withRetry<T>(
     operation: () => Promise<T>,
-    options: RetryOptions = {}
+    options: RetryOptions = {},
   ): Promise<T> {
     const {
       maxAttempts = 3,
@@ -52,7 +52,7 @@ export class ErrorRecoveryManager {
       backoffMultiplier = 2,
       maxDelay = 10000,
       shouldRetry = this.defaultShouldRetry,
-      onRetry
+      onRetry,
     } = options;
 
     let lastError: any;
@@ -84,7 +84,10 @@ export class ErrorRecoveryManager {
   /**
    * 处理和记录错误
    */
-  handleError(error: any, context: string): {
+  handleError(
+    error: any,
+    context: string,
+  ): {
     userMessage: string;
     technicalMessage: string;
     recoveryActions: ErrorRecoveryAction[];
@@ -131,7 +134,10 @@ export class ErrorRecoveryManager {
       }
     }
 
-    if (error.message?.includes('fetch') || error.message?.includes('network')) {
+    if (
+      error.message?.includes('fetch') ||
+      error.message?.includes('network')
+    ) {
       return '网络连接失败，请检查网络设置';
     }
 
@@ -156,7 +162,7 @@ export class ErrorRecoveryManager {
             action: () => {
               // 这里应该触发使用建议名称的逻辑
             },
-            primary: true
+            primary: true,
           });
           break;
 
@@ -167,7 +173,7 @@ export class ErrorRecoveryManager {
               // 刷新规则列表
               window.location.reload();
             },
-            primary: true
+            primary: true,
           });
           break;
 
@@ -176,7 +182,7 @@ export class ErrorRecoveryManager {
             label: '清理存储空间',
             action: async () => {
               await this.clearStorageSpace();
-            }
+            },
           });
           break;
       }
@@ -188,14 +194,14 @@ export class ErrorRecoveryManager {
       action: () => {
         // 这里应该重新执行失败的操作
       },
-      primary: actions.length === 0
+      primary: actions.length === 0,
     });
 
     actions.push({
       label: '刷新页面',
       action: () => {
         window.location.reload();
-      }
+      },
     });
 
     return actions;
@@ -262,11 +268,11 @@ export class ErrorRecoveryManager {
       errors: this.errorHistory,
       summary: {
         totalErrors: this.errorHistory.length,
-        recentErrors: this.errorHistory.filter(e => 
-          Date.now() - e.timestamp < 24 * 60 * 60 * 1000
+        recentErrors: this.errorHistory.filter(
+          (e) => Date.now() - e.timestamp < 24 * 60 * 60 * 1000,
         ).length,
-        commonErrors: this.getCommonErrors()
-      }
+        commonErrors: this.getCommonErrors(),
+      },
     };
 
     return JSON.stringify(report, null, 2);
@@ -289,7 +295,10 @@ export class ErrorRecoveryManager {
     }
 
     // 网络错误可以重试
-    if (error.message?.includes('fetch') || error.message?.includes('network')) {
+    if (
+      error.message?.includes('fetch') ||
+      error.message?.includes('network')
+    ) {
       return true;
     }
 
@@ -310,7 +319,7 @@ export class ErrorRecoveryManager {
       userMessage: this.getUserFriendlyMessage(error),
       technicalMessage: `${error.type}: ${error.message}`,
       recoveryActions: this.getRecoveryActions(error, 'exception_rule'),
-      shouldReport: error.type === ExceptionRuleError.STORAGE_ERROR
+      shouldReport: error.type === ExceptionRuleError.STORAGE_ERROR,
     };
   }
 
@@ -325,16 +334,16 @@ export class ErrorRecoveryManager {
         {
           label: '重试连接',
           action: () => window.location.reload(),
-          primary: true
+          primary: true,
         },
         {
           label: '检查网络设置',
           action: () => {
             // 打开网络设置指导
-          }
-        }
+          },
+        },
       ],
-      shouldReport: false
+      shouldReport: false,
     };
   }
 
@@ -351,16 +360,16 @@ export class ErrorRecoveryManager {
           action: async () => {
             await this.clearStorageSpace();
           },
-          primary: true
+          primary: true,
         },
         {
           label: '查看存储使用情况',
           action: () => {
             // 显示存储使用情况
-          }
-        }
+          },
+        },
       ],
-      shouldReport: true
+      shouldReport: true,
     };
   }
 
@@ -375,16 +384,16 @@ export class ErrorRecoveryManager {
         {
           label: '重试操作',
           action: () => window.location.reload(),
-          primary: true
+          primary: true,
         },
         {
           label: '报告问题',
           action: () => {
             // 打开问题报告界面
-          }
-        }
+          },
+        },
       ],
-      shouldReport: true
+      shouldReport: true,
     };
   }
 
@@ -397,12 +406,12 @@ export class ErrorRecoveryManager {
         name: error.name,
         message: error.message,
         stack: error.stack,
-        type: error.type || 'unknown'
+        type: error.type || 'unknown',
       },
       context,
       timestamp: Date.now(),
       userAgent: navigator.userAgent,
-      url: window.location.href
+      url: window.location.href,
     };
 
     this.errorHistory.push(errorInfo);
@@ -422,12 +431,15 @@ export class ErrorRecoveryManager {
     try {
       // 清理过期的缓存数据
       const keys = Object.keys(localStorage);
-      const expiredKeys = keys.filter(key => {
+      const expiredKeys = keys.filter((key) => {
         try {
           const data = localStorage.getItem(key);
           if (data) {
             const parsed = JSON.parse(data);
-            if (parsed.timestamp && Date.now() - parsed.timestamp > 30 * 24 * 60 * 60 * 1000) {
+            if (
+              parsed.timestamp &&
+              Date.now() - parsed.timestamp > 30 * 24 * 60 * 60 * 1000
+            ) {
               return true; // 30天前的数据
             }
           }
@@ -445,7 +457,7 @@ export class ErrorRecoveryManager {
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(
-          cacheNames.map(cacheName => caches.delete(cacheName))
+          cacheNames.map((cacheName) => caches.delete(cacheName)),
         );
       }
     } catch (error) {
@@ -460,7 +472,8 @@ export class ErrorRecoveryManager {
     const errorCounts = new Map<string, number>();
 
     for (const errorInfo of this.errorHistory) {
-      const errorType = errorInfo.error.type || errorInfo.error.name || 'unknown';
+      const errorType =
+        errorInfo.error.type || errorInfo.error.name || 'unknown';
       errorCounts.set(errorType, (errorCounts.get(errorType) || 0) + 1);
     }
 
@@ -474,7 +487,7 @@ export class ErrorRecoveryManager {
    * 延迟函数
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -499,7 +512,7 @@ export class ErrorRecoveryManager {
     try {
       localStorage.setItem(
         ErrorRecoveryManager.ERROR_HISTORY_KEY,
-        JSON.stringify(this.errorHistory)
+        JSON.stringify(this.errorHistory),
       );
     } catch (error) {
       console.warn('保存错误历史失败:', error);

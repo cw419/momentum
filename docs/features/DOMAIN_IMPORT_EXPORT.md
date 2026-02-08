@@ -9,6 +9,7 @@
 导入导出功能允许用户备份和迁移 Momentum 的所有数据，包括链条、完成历史、RSIP 节点和例外规则。
 
 ### 核心特性
+
 - **完整备份**：导出所有用户数据
 - **增量合并**：导入时与现有数据合并
 - **ID 冲突检测**：防止数据覆盖
@@ -18,10 +19,10 @@
 
 ## 关键文件
 
-| 文件 | 职责 |
-|------|------|
+| 文件                                         | 职责                  |
+| -------------------------------------------- | --------------------- |
 | `src/hooks/domains/useImportExportDomain.ts` | 导入导出业务逻辑 Hook |
-| `src/components/ImportExportModal.tsx` | 导入导出模态框组件 |
+| `src/components/ImportExportModal.tsx`       | 导入导出模态框组件    |
 
 ---
 
@@ -31,13 +32,13 @@
 
 ```typescript
 interface ExportData {
-  version: string;           // 数据版本
-  exportedAt: Date;          // 导出时间
-  chains: Chain[];           // 链条数据
-  completionHistory: CompletionHistory[];  // 完成历史
-  rsipNodes: RSIPNode[];     // RSIP 节点
-  rsipMeta: RSIPMeta;        // RSIP 元数据
-  exceptionRules?: ExceptionRule[];  // 例外规则
+  version: string; // 数据版本
+  exportedAt: Date; // 导出时间
+  chains: Chain[]; // 链条数据
+  completionHistory: CompletionHistory[]; // 完成历史
+  rsipNodes: RSIPNode[]; // RSIP 节点
+  rsipMeta: RSIPMeta; // RSIP 元数据
+  exceptionRules?: ExceptionRule[]; // 例外规则
 }
 ```
 
@@ -45,10 +46,10 @@ interface ExportData {
 
 ```typescript
 interface ImportChainsOptions {
-  history?: CompletionHistory[];    // 完成历史
-  rsipNodes?: RSIPNode[];           // RSIP 节点
-  rsipMeta?: RSIPMeta;              // RSIP 元数据
-  exceptionRules?: unknown[];       // 例外规则
+  history?: CompletionHistory[]; // 完成历史
+  rsipNodes?: RSIPNode[]; // RSIP 节点
+  rsipMeta?: RSIPMeta; // RSIP 元数据
+  exceptionRules?: unknown[]; // 例外规则
 }
 ```
 
@@ -116,8 +117,8 @@ sequenceDiagram
 
 ### useImportExportDomain Hook
 
-| 方法 | 参数 | 说明 |
-|------|------|------|
+| 方法                 | 参数                 | 说明               |
+| -------------------- | -------------------- | ------------------ |
 | `handleImportChains` | `(chains, options?)` | 导入链条和其他数据 |
 
 ---
@@ -131,8 +132,8 @@ sequenceDiagram
 const currentChains = await storage.getChains();
 
 // 检查 ID 冲突
-const existingIds = new Set(currentChains.map(c => c.id));
-const conflictingChains = importedChains.filter(c => existingIds.has(c.id));
+const existingIds = new Set(currentChains.map((c) => c.id));
+const conflictingChains = importedChains.filter((c) => existingIds.has(c.id));
 
 if (conflictingChains.length > 0) {
   throw new Error(`发现 ${conflictingChains.length} 个 ID 冲突的链条`);
@@ -204,7 +205,7 @@ try {
   const currentRsipNodes = await storage.getRSIPNodes();
   const currentRsipMeta = await storage.getRSIPMeta();
 
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
     chains: currentChains,
     rsipNodes: currentRsipNodes,

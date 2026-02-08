@@ -12,7 +12,7 @@ export class RuleCreationController {
   startOptimisticCreation(
     name: string,
     type: ExceptionRuleType,
-    description?: string
+    description?: string,
   ): { temporaryRule: ExceptionRule; temporaryId: string } {
     const temporaryId = this.store.generateTemporaryId();
     const now = new Date();
@@ -28,7 +28,7 @@ export class RuleCreationController {
       lastUsedAt: undefined,
       usageCount: 0,
       isActive: true,
-      isArchived: false
+      isArchived: false,
     };
 
     this.store.trackRuleState(temporaryId, 'creating');
@@ -41,16 +41,16 @@ export class RuleCreationController {
       type,
       description,
       createdAt: now,
-      promise: creationPromise
+      promise: creationPromise,
     };
 
     this.store.setPendingCreation(temporaryId, pendingCreation);
 
     creationPromise
-      .then(realRule => {
+      .then((realRule) => {
         this.handleCreationSuccess(temporaryId, realRule);
       })
-      .catch(error => {
+      .catch((error) => {
         this.handleCreationError(temporaryId, error);
       });
 
@@ -62,7 +62,7 @@ export class RuleCreationController {
     if (!pending) {
       throw new ExceptionRuleException(
         ExceptionRuleError.RULE_NOT_FOUND,
-        `临时规则 ${temporaryId} 不存在`
+        `临时规则 ${temporaryId} 不存在`,
       );
     }
 
@@ -73,12 +73,14 @@ export class RuleCreationController {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         `规则创建失败: ${getErrorMessage(error)}`,
-        error
+        error,
       );
     }
   }
 
-  private async performActualCreation(temporaryRule: ExceptionRule): Promise<ExceptionRule> {
+  private async performActualCreation(
+    temporaryRule: ExceptionRule,
+  ): Promise<ExceptionRule> {
     try {
       const realId = this.store.generateRealId();
 
@@ -88,7 +90,7 @@ export class RuleCreationController {
         description: temporaryRule.description,
         scope: temporaryRule.scope,
         chainId: temporaryRule.chainId,
-        isArchived: temporaryRule.isArchived || false
+        isArchived: temporaryRule.isArchived || false,
       });
 
       if (realRule.id !== realId) {
@@ -100,13 +102,19 @@ export class RuleCreationController {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         `创建规则失败: ${getErrorMessage(error)}`,
-        error
+        error,
       );
     }
   }
 
-  private handleCreationSuccess(temporaryId: string, realRule: ExceptionRule): void {
-    logger.info('RULE_STATE', '规则创建成功', { temporaryId, realId: realRule.id });
+  private handleCreationSuccess(
+    temporaryId: string,
+    realRule: ExceptionRule,
+  ): void {
+    logger.info('RULE_STATE', '规则创建成功', {
+      temporaryId,
+      realId: realRule.id,
+    });
 
     this.store.applyCreationSuccess(temporaryId, realRule.id);
     this.store.deletePendingCreation(temporaryId);
@@ -120,4 +128,3 @@ export class RuleCreationController {
     this.store.deletePendingCreation(temporaryId);
   }
 }
-

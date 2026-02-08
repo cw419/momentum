@@ -6,7 +6,10 @@
 
 import { ExceptionRule, ExceptionRuleType } from '../../types';
 
-function compareRulesByUsageAndRecency(a: ExceptionRule, b: ExceptionRule): number {
+function compareRulesByUsageAndRecency(
+  a: ExceptionRule,
+  b: ExceptionRule,
+): number {
   // 首先按使用次数排序
   if (a.usageCount !== b.usageCount) {
     return b.usageCount - a.usageCount;
@@ -24,12 +27,14 @@ function compareRulesByUsageAndRecency(a: ExceptionRule, b: ExceptionRule): numb
   return b.createdAt.getTime() - a.createdAt.getTime();
 }
 
-export function groupActiveRulesByType(allRules: ExceptionRule[]): Record<ExceptionRuleType, ExceptionRule[]> {
-  const activeRules = allRules.filter(rule => rule.isActive);
+export function groupActiveRulesByType(
+  allRules: ExceptionRule[],
+): Record<ExceptionRuleType, ExceptionRule[]> {
+  const activeRules = allRules.filter((rule) => rule.isActive);
 
   const grouped: Record<ExceptionRuleType, ExceptionRule[]> = {
     [ExceptionRuleType.PAUSE_ONLY]: [],
-    [ExceptionRuleType.EARLY_COMPLETION_ONLY]: []
+    [ExceptionRuleType.EARLY_COMPLETION_ONLY]: [],
   };
 
   for (const rule of activeRules) {
@@ -43,7 +48,10 @@ export function groupActiveRulesByType(allRules: ExceptionRule[]): Record<Except
   return grouped;
 }
 
-export function searchRulesInList(rules: ExceptionRule[], query: string): ExceptionRule[] {
+export function searchRulesInList(
+  rules: ExceptionRule[],
+  query: string,
+): ExceptionRule[] {
   if (!query.trim()) {
     return rules;
   }
@@ -51,9 +59,10 @@ export function searchRulesInList(rules: ExceptionRule[], query: string): Except
   const normalizedQuery = query.toLowerCase().trim();
 
   return rules
-    .filter(rule => {
+    .filter((rule) => {
       const nameMatch = rule.name.toLowerCase().includes(normalizedQuery);
-      const descriptionMatch = rule.description?.toLowerCase().includes(normalizedQuery) || false;
+      const descriptionMatch =
+        rule.description?.toLowerCase().includes(normalizedQuery) || false;
 
       return nameMatch || descriptionMatch;
     })
@@ -69,4 +78,3 @@ export function searchRulesInList(rules: ExceptionRule[], query: string): Except
       return b.usageCount - a.usageCount;
     });
 }
-

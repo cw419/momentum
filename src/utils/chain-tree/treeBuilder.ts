@@ -5,7 +5,9 @@ import { performanceLogger } from '../performanceLogger';
 /**
  * 验证链数据的完整性
  */
-const validateChainData = (chains: Chain[]): { isValid: boolean; errors: string[] } => {
+const validateChainData = (
+  chains: Chain[],
+): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
   const ids = new Set<string>();
 
@@ -55,7 +57,10 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
       // Validate chain data integrity
       const validation = validateChainData(chains);
       if (!validation.isValid) {
-        performanceLogger.warn('buildChainTree: 数据完整性检查发现问题:', validation.errors);
+        performanceLogger.warn(
+          'buildChainTree: 数据完整性检查发现问题:',
+          validation.errors,
+        );
         // Continue processing but log warnings
       }
 
@@ -64,7 +69,12 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
 
       performanceLogger.debugLazy('buildChainTree - input chains', () => ({
         chainCount: chains.length,
-        chains: chains.map((c) => ({ id: c.id, name: c.name, parentId: c.parentId, type: c.type })),
+        chains: chains.map((c) => ({
+          id: c.id,
+          name: c.name,
+          parentId: c.parentId,
+          type: c.type,
+        })),
       }));
 
       // 修复循环引用和其他数据问题
@@ -76,7 +86,9 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
           }
 
           if (chain.parentId === chain.id) {
-            performanceLogger.warn(`修复循环引用: 链条 ${chain.name} (${chain.id}) 的父节点是自己，重置为根节点`);
+            performanceLogger.warn(
+              `修复循环引用: 链条 ${chain.name} (${chain.id}) 的父节点是自己，重置为根节点`,
+            );
             return { ...chain, parentId: undefined };
           }
 
@@ -104,11 +116,13 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
           if (parent) {
             parent.children.push(node);
             node.depth = parent.depth + 1;
-            performanceLogger.debug(`节点 ${chain.name} 作为 ${parent.name} 的子节点`);
+            performanceLogger.debug(
+              `节点 ${chain.name} 作为 ${parent.name} 的子节点`,
+            );
           } else {
             // 父节点不存在，作为根节点处理
             performanceLogger.warn(
-              `父节点 ${chain.parentId} 不存在，节点 ${chain.name} (${chain.id}) 将作为根节点处理`
+              `父节点 ${chain.parentId} 不存在，节点 ${chain.name} (${chain.id}) 将作为根节点处理`,
             );
             // Reset parentId to undefined and add to rootNodes
             node.parentId = undefined;
@@ -132,10 +146,17 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
       rootNodes.sort((a, b) => a.sortOrder - b.sortOrder);
 
       if (isDev) {
-        performanceLogger.debugLazy('buildChainTree - root nodes built', () => ({
-          rootNodeCount: rootNodes.length,
-          roots: rootNodes.map((r) => ({ id: r.id, name: r.name, childrenCount: r.children.length })),
-        }));
+        performanceLogger.debugLazy(
+          'buildChainTree - root nodes built',
+          () => ({
+            rootNodeCount: rootNodes.length,
+            roots: rootNodes.map((r) => ({
+              id: r.id,
+              name: r.name,
+              childrenCount: r.children.length,
+            })),
+          }),
+        );
       }
 
       // Final validation - ensure all input chains are represented in the tree
@@ -152,7 +173,10 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
       const missingIds = [...inputIds].filter((id) => !treeNodeIds.has(id));
 
       if (missingIds.length > 0) {
-        performanceLogger.error('buildChainTree: 以下链条在树中丢失:', missingIds);
+        performanceLogger.error(
+          'buildChainTree: 以下链条在树中丢失:',
+          missingIds,
+        );
       }
 
       return rootNodes;
@@ -163,4 +187,3 @@ export const buildChainTree = (chains: Chain[]): ChainTreeNode[] => {
     }
   }); // End performanceLogger.time
 };
-

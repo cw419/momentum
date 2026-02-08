@@ -18,4 +18,3 @@ export function setTheme(theme: Theme): void {
     // ignore quota errors
   }
 }
-

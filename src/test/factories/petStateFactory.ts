@@ -25,4 +25,3 @@ export function createPetState(overrides: Partial<PetState> = {}): PetState {
     minimizedPosition: overrides.minimizedPosition ?? { x: 92, y: 2 },
   };
 }
-

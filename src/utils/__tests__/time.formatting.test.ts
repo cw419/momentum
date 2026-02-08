@@ -7,7 +7,7 @@ import {
   formatTimeDescription,
   formatTimeDescriptionByLanguage,
   formatActualDuration,
-  formatLastCompletionReference
+  formatLastCompletionReference,
 } from '../time';
 
 describe('Time Formatting Functions', () => {
@@ -99,9 +99,13 @@ describe('Time Formatting Functions', () => {
     });
 
     test('应该处理边界情况', () => {
-      expect(formatActualDuration(0, true)).toBe('Time spent: less than 1 minute');
+      expect(formatActualDuration(0, true)).toBe(
+        'Time spent: less than 1 minute',
+      );
       expect(formatActualDuration(0, false)).toBe('0m');
-      expect(formatActualDuration(0.5, true)).toBe('Time spent: less than 1 minute');
+      expect(formatActualDuration(0.5, true)).toBe(
+        'Time spent: less than 1 minute',
+      );
     });
 
     test('应该支持中文输出', () => {
@@ -122,8 +126,12 @@ describe('Time Formatting Functions', () => {
     });
 
     test('应该处理小于1分钟的用时', () => {
-      expect(formatLastCompletionReference(0)).toBe('Last time: less than 1 minute');
-      expect(formatLastCompletionReference(0.5)).toBe('Last time: less than 1 minute');
+      expect(formatLastCompletionReference(0)).toBe(
+        'Last time: less than 1 minute',
+      );
+      expect(formatLastCompletionReference(0.5)).toBe(
+        'Last time: less than 1 minute',
+      );
     });
 
     test('应该处理大数值', () => {
@@ -140,11 +148,11 @@ describe('Time Formatting Functions', () => {
   describe('集成测试', () => {
     test('所有格式化函数应该保持一致的英文输出（默认）', () => {
       const minutes = 90;
-      
+
       const description = formatTimeDescription(minutes);
       const reference = formatLastCompletionReference(minutes);
       const actualDuration = formatActualDuration(minutes, true);
-      
+
       expect(description).toContain('h');
       expect(description).toContain('m');
       expect(reference).toContain('Last time');
@@ -154,13 +162,17 @@ describe('Time Formatting Functions', () => {
     test('应该正确处理零值', () => {
       expect(formatElapsedTime(0)).toBe('00:00');
       expect(formatTimeDescription(0)).toBe('less than 1 minute');
-      expect(formatActualDuration(0, true)).toBe('Time spent: less than 1 minute');
-      expect(formatLastCompletionReference(0)).toBe('Last time: less than 1 minute');
+      expect(formatActualDuration(0, true)).toBe(
+        'Time spent: less than 1 minute',
+      );
+      expect(formatLastCompletionReference(0)).toBe(
+        'Last time: less than 1 minute',
+      );
     });
 
     test('应该正确处理典型用时值', () => {
       const typicalTime = 25; // 25分钟
-      
+
       expect(formatElapsedTime(typicalTime * 60)).toBe('25:00');
       expect(formatTimeDescription(typicalTime)).toBe('25m');
       expect(formatActualDuration(typicalTime, true)).toBe('Time spent: 25m');

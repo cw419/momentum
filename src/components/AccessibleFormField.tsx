@@ -4,7 +4,15 @@ interface AccessibleFormFieldProps {
   id: string;
   name?: string;
   label: string;
-  type?: 'text' | 'number' | 'email' | 'password' | 'textarea' | 'select' | 'checkbox' | 'range';
+  type?:
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'password'
+    | 'textarea'
+    | 'select'
+    | 'checkbox'
+    | 'range';
   value?: string | number | boolean;
   placeholder?: string;
   required?: boolean;
@@ -46,7 +54,7 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
   const fieldId = id;
   const descriptionId = description ? `${fieldId}-description` : undefined;
   const errorId = error ? `${fieldId}-error` : undefined;
-  
+
   const baseInputClasses = `
     w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 
     rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 
@@ -63,9 +71,13 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
     ${labelClassName}
   `.trim();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
     if (!onChange) return;
-    
+
     if (type === 'checkbox') {
       onChange((e.target as HTMLInputElement).checked);
     } else if (type === 'number' || type === 'range') {
@@ -83,7 +95,8 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
       required,
       onChange: handleChange,
       onBlur,
-      'aria-describedby': [descriptionId, errorId].filter(Boolean).join(' ') || undefined,
+      'aria-describedby':
+        [descriptionId, errorId].filter(Boolean).join(' ') || undefined,
       'aria-invalid': error ? true : undefined,
     };
 
@@ -92,7 +105,7 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
         return (
           <textarea
             {...commonProps}
-            value={value as string || ''}
+            value={(value as string) || ''}
             placeholder={placeholder}
             className={baseInputClasses}
             rows={4}
@@ -103,7 +116,7 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
         return (
           <select
             {...commonProps}
-            value={value as string || ''}
+            value={(value as string) || ''}
             className={baseInputClasses}
           >
             {placeholder && (
@@ -122,15 +135,15 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
 
       case 'checkbox':
         return (
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex cursor-pointer items-center">
             <input
               {...commonProps}
               type="checkbox"
-              checked={value as boolean || false}
+              checked={(value as boolean) || false}
               className="sr-only"
             />
-            <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition dark:border-slate-600 peer-checked:bg-primary-600"></div>
-            <span className="ml-3 text-sm font-medium text-gray-700 dark:text-slate-300 font-chinese">
+            <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition after:content-[''] peer-checked:bg-primary-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:border-slate-600 dark:bg-slate-600 dark:bg-slate-700 dark:peer-focus:ring-primary-800"></div>
+            <span className="ml-3 font-chinese text-sm font-medium text-gray-700 dark:text-slate-300">
               {label}
             </span>
           </label>
@@ -141,11 +154,11 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
           <input
             {...commonProps}
             type="range"
-            value={value as number || 0}
+            value={(value as number) || 0}
             min={min}
             max={max}
             step={step}
-            className={`w-full h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer slider ${className}`}
+            className={`slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-slate-700 ${className}`}
           />
         );
 
@@ -154,7 +167,7 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
           <input
             {...commonProps}
             type={type}
-            value={value as string || ''}
+            value={(value as string) || ''}
             placeholder={placeholder}
             min={min}
             max={max}
@@ -168,12 +181,19 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
   const descriptionAndError = (
     <>
       {description && (
-        <p id={descriptionId} className="text-sm text-gray-600 dark:text-slate-400 font-chinese">
+        <p
+          id={descriptionId}
+          className="font-chinese text-sm text-gray-600 dark:text-slate-400"
+        >
           {description}
         </p>
       )}
       {error && (
-        <p id={errorId} className="text-sm text-red-600 dark:text-red-400 font-chinese" role="alert">
+        <p
+          id={errorId}
+          className="font-chinese text-sm text-red-600 dark:text-red-400"
+          role="alert"
+        >
           {error}
         </p>
       )}

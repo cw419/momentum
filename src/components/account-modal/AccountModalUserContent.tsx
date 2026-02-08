@@ -18,7 +18,10 @@ interface AccountModalUserContentProps {
   onSignOut: () => void;
 }
 
-const formatLocaleDateOrDash = (dateString: string | null | undefined, locale: Intl.LocalesArgument) => {
+const formatLocaleDateOrDash = (
+  dateString: string | null | undefined,
+  locale: Intl.LocalesArgument,
+) => {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString(locale);
 };
@@ -35,57 +38,68 @@ export function AccountModalUserContent({
   signingOut,
   onToggleGambling,
   onDismissGamblingError,
-  onSignOut
+  onSignOut,
 }: AccountModalUserContentProps) {
   return (
     <div className="space-y-6">
       {/* User Info */}
-      <div className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl">
-        <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
+      <div className="flex items-center space-x-4 rounded-2xl bg-gray-50 p-4 dark:bg-slate-700">
+        <div className="gradient-primary flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg">
           <User className="text-white" size={20} />
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-medium font-chinese text-gray-900 dark:text-slate-100 mb-1">
+        <div className="min-w-0 flex-1">
+          <h3 className="mb-1 font-chinese text-lg font-medium text-gray-900 dark:text-slate-100">
             {tr('当前账号', 'Account')}
           </h3>
-          <p className="text-gray-600 dark:text-slate-400 text-sm truncate">{user.email}</p>
-          {userFullName && <p className="text-gray-500 dark:text-slate-500 text-xs">{userFullName}</p>}
+          <p className="truncate text-sm text-gray-600 dark:text-slate-400">
+            {user.email}
+          </p>
+          {userFullName && (
+            <p className="text-xs text-gray-500 dark:text-slate-500">
+              {userFullName}
+            </p>
+          )}
         </div>
       </div>
 
       {/* Account Details */}
       <div className="space-y-3">
-        <div className="flex justify-between items-center py-2">
-          <span className="text-sm font-chinese text-gray-600 dark:text-slate-400">
+        <div className="flex items-center justify-between py-2">
+          <span className="font-chinese text-sm text-gray-600 dark:text-slate-400">
             {tr('注册时间', 'Created')}
           </span>
           <span className="text-sm text-gray-900 dark:text-slate-100">
             {formatLocaleDateOrDash(user.createdAt, locale)}
           </span>
         </div>
-        <div className="flex justify-between items-center py-2">
-          <span className="text-sm font-chinese text-gray-600 dark:text-slate-400">
+        <div className="flex items-center justify-between py-2">
+          <span className="font-chinese text-sm text-gray-600 dark:text-slate-400">
             {tr('最后登录', 'Last sign in')}
           </span>
           <span className="text-sm text-gray-900 dark:text-slate-100">
-            {user.lastSignInAt ? new Date(user.lastSignInAt).toLocaleDateString(locale) : tr('首次登录', 'First sign in')}
+            {user.lastSignInAt
+              ? new Date(user.lastSignInAt).toLocaleDateString(locale)
+              : tr('首次登录', 'First sign in')}
           </span>
         </div>
       </div>
 
       {/* 狂赌模式设置 */}
-      <div className="space-y-4 p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl border border-gray-200 dark:border-slate-600">
+      <div className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-600 dark:bg-slate-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-orange-500 shadow-lg">
               <Dices className="text-white" size={16} />
             </div>
             <div>
-              <h4 className="text-base font-medium font-chinese text-gray-900 dark:text-slate-100">
+              <h4 className="font-chinese text-base font-medium text-gray-900 dark:text-slate-100">
                 {tr('狂赌模式', 'Gambling mode')}
               </h4>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                {tr('在任务上押注积分以获得额外奖励', 'Bet points on tasks for extra rewards')}
+                {tr(
+                  '在任务上押注积分以获得额外奖励',
+                  'Bet points on tasks for extra rewards',
+                )}
               </p>
             </div>
           </div>
@@ -104,29 +118,43 @@ export function AccountModalUserContent({
         <div className="text-xs text-gray-600 dark:text-slate-400">
           {gamblingSettings.gambling_mode_enabled ? (
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>{tr('已启用 - 可在任务开始时进行押注', 'Enabled — you can bet when starting a task')}</span>
+              <div className="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
+              <span>
+                {tr(
+                  '已启用 - 可在任务开始时进行押注',
+                  'Enabled — you can bet when starting a task',
+                )}
+              </span>
             </div>
           ) : (
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-              <span>{tr('已禁用 - 无法进行任务押注', 'Disabled — betting is unavailable')}</span>
+              <div className="h-2 w-2 rounded-full bg-gray-400"></div>
+              <span>
+                {tr(
+                  '已禁用 - 无法进行任务押注',
+                  'Disabled — betting is unavailable',
+                )}
+              </span>
             </div>
           )}
         </div>
 
         {/* 成功消息 */}
         {gamblingSuccess && (
-          <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-            <p className="text-sm text-green-700 dark:text-green-300 font-medium">{gamblingSuccess}</p>
+          <div className="rounded-xl border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
+            <p className="text-sm font-medium text-green-700 dark:text-green-300">
+              {gamblingSuccess}
+            </p>
           </div>
         )}
 
         {/* 错误消息 */}
         {gamblingError && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-red-700 dark:text-red-300">{gamblingError}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                {gamblingError}
+              </p>
               <button
                 type="button"
                 onClick={onDismissGamblingError}
@@ -146,11 +174,11 @@ export function AccountModalUserContent({
         onClick={onSignOut}
         disabled={signingOut}
         aria-label={tr('退出登录', 'Sign out')}
-        className="w-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 px-6 py-4 rounded-2xl font-medium transition duration-300 flex items-center justify-center space-x-3 hover:scale-105 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-chinese border border-red-200 dark:border-red-800"
+        className="flex w-full items-center justify-center space-x-3 rounded-2xl border border-red-200 bg-red-50 px-6 py-4 font-chinese font-medium text-red-600 shadow-sm transition duration-300 hover:scale-105 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
       >
         {signingOut ? (
           <>
-            <div className="w-5 h-5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-400/30 border-t-red-400"></div>
             <span>{tr('正在退出...', 'Signing out...')}</span>
           </>
         ) : (

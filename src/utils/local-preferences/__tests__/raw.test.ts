@@ -22,22 +22,28 @@ describe('local-preferences/raw', () => {
       length: number;
     };
 
-    storage.key = vi.fn((index: number) => (['k1', 'k2'][index] ?? null));
+    storage.key = vi.fn((index: number) => ['k1', 'k2'][index] ?? null);
     Object.defineProperty(storage, 'length', { configurable: true, value: 2 });
 
     expect(getAllKeys()).toEqual(['k1', 'k2']);
   });
 
   it('returns safe fallbacks when localStorage throws', () => {
-    const getItemSpy = vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-    const setItemSpy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-    const removeItemSpy = vi.spyOn(window.localStorage, 'removeItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
+    const getItemSpy = vi
+      .spyOn(window.localStorage, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('blocked');
+      });
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('blocked');
+      });
+    const removeItemSpy = vi
+      .spyOn(window.localStorage, 'removeItem')
+      .mockImplementation(() => {
+        throw new Error('blocked');
+      });
 
     const storage = window.localStorage as unknown as {
       key: (index: number) => string | null;

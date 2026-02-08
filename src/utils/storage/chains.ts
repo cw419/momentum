@@ -15,15 +15,19 @@ export function getChains(): Chain[] {
   const data = localStorage.getItem(STORAGE_KEYS.CHAINS);
   if (!data) return [];
 
-  return JSON.parse(data).map((chain: RawChainData & Record<string, unknown>) => ({
-    ...chain,
-    auxiliaryStreak: chain.auxiliaryStreak || 0,
-    auxiliaryFailures: chain.auxiliaryFailures || 0,
-    auxiliaryExceptions: chain.auxiliaryExceptions || [],
-    deletedAt: chain.deletedAt ? new Date(chain.deletedAt) : null,
-    createdAt: new Date(chain.createdAt),
-    lastCompletedAt: chain.lastCompletedAt ? new Date(chain.lastCompletedAt) : undefined,
-  }));
+  return JSON.parse(data).map(
+    (chain: RawChainData & Record<string, unknown>) => ({
+      ...chain,
+      auxiliaryStreak: chain.auxiliaryStreak || 0,
+      auxiliaryFailures: chain.auxiliaryFailures || 0,
+      auxiliaryExceptions: chain.auxiliaryExceptions || [],
+      deletedAt: chain.deletedAt ? new Date(chain.deletedAt) : null,
+      createdAt: new Date(chain.createdAt),
+      lastCompletedAt: chain.lastCompletedAt
+        ? new Date(chain.lastCompletedAt)
+        : undefined,
+    }),
+  );
 }
 
 export function saveChains(chains: Chain[]): void {
@@ -80,15 +84,20 @@ export function permanentlyDeleteChain(chainId: string): void {
   saveChains(updatedChains);
 }
 
-export function cleanupExpiredDeletedChains(olderThanDays: number = 30): number {
+export function cleanupExpiredDeletedChains(
+  olderThanDays: number = 30,
+): number {
   const chains = getChains();
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
-  const chainsToDelete = chains.filter((chain) => chain.deletedAt && chain.deletedAt < cutoffDate);
-  const remainingChains = chains.filter((chain) => !chain.deletedAt || chain.deletedAt >= cutoffDate);
+  const chainsToDelete = chains.filter(
+    (chain) => chain.deletedAt && chain.deletedAt < cutoffDate,
+  );
+  const remainingChains = chains.filter(
+    (chain) => !chain.deletedAt || chain.deletedAt >= cutoffDate,
+  );
 
   saveChains(remainingChains);
   return chainsToDelete.length;
 }
-

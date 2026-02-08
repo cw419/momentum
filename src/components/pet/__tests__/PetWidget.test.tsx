@@ -21,7 +21,13 @@ vi.mock('../PetAvatar', () => ({
 }));
 
 vi.mock('../PetCreationDialog', () => ({
-  PetCreationDialog: ({ onSubmit, onCancel }: { onSubmit: (name: string) => void; onCancel: () => void }) => (
+  PetCreationDialog: ({
+    onSubmit,
+    onCancel,
+  }: {
+    onSubmit: (name: string) => void;
+    onCancel: () => void;
+  }) => (
     <div>
       <button type="button" onClick={() => onSubmit('Nova')}>
         create-pet
@@ -59,7 +65,9 @@ function createPetState(overrides: Partial<PetState> = {}): PetState {
   };
 }
 
-function createControllerMock(overrides: Partial<ReturnType<typeof usePetWidgetController>> = {}) {
+function createControllerMock(
+  overrides: Partial<ReturnType<typeof usePetWidgetController>> = {},
+) {
   return {
     mood: 'happy' as PetMood,
     isDragging: false,
@@ -81,7 +89,9 @@ function createControllerMock(overrides: Partial<ReturnType<typeof usePetWidgetC
   };
 }
 
-function renderWidget(overrides: Partial<ComponentProps<typeof PetWidget>> = {}) {
+function renderWidget(
+  overrides: Partial<ComponentProps<typeof PetWidget>> = {},
+) {
   const defaultProps: ComponentProps<typeof PetWidget> = {
     pet: null,
     mood: 'happy' as PetMood,
@@ -100,7 +110,7 @@ function renderWidget(overrides: Partial<ComponentProps<typeof PetWidget>> = {})
   return render(
     <I18nProvider>
       <PetWidget {...defaultProps} />
-    </I18nProvider>
+    </I18nProvider>,
   );
 }
 
@@ -126,7 +136,7 @@ describe('PetWidget', () => {
         dismissedCreationDialog: true,
         showCreationDialog: false,
         setShowCreationDialog,
-      })
+      }),
     );
 
     renderWidget({ pet: null, hasPet: false });
@@ -149,7 +159,7 @@ describe('PetWidget', () => {
         handleFeed,
         handleMinimize,
         hasDraggedRef: { current: false },
-      })
+      }),
     );
 
     const { rerender } = render(
@@ -167,7 +177,7 @@ describe('PetWidget', () => {
           onMinimize={vi.fn(async () => undefined)}
           onExpand={vi.fn(async () => undefined)}
         />
-      </I18nProvider>
+      </I18nProvider>,
     );
 
     await user.click(screen.getByRole('button', { name: /Expand pet/i }));
@@ -180,7 +190,7 @@ describe('PetWidget', () => {
         handleFeed,
         handleMinimize,
         hasDraggedRef: { current: false },
-      })
+      }),
     );
 
     rerender(
@@ -198,7 +208,7 @@ describe('PetWidget', () => {
           onMinimize={vi.fn(async () => undefined)}
           onExpand={vi.fn(async () => undefined)}
         />
-      </I18nProvider>
+      </I18nProvider>,
     );
 
     await user.click(screen.getByRole('button', { name: /^Feed$/i }));

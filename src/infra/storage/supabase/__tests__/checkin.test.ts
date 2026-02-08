@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { performDailyCheckin, getUserCheckinStats } from '../checkin';
-import {
-  createMockContext,
-  createSupabaseError,
-} from '../testHelpers';
+import { createMockContext, createSupabaseError } from '../testHelpers';
 
 vi.mock('../../../../utils/logger', () => ({
   logger: {

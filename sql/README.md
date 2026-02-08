@@ -26,4 +26,3 @@
 - `create-test-deleted-chain.sql`：为指定用户创建测试链条（含软删除字段）。
 - `simple-test-chain.sql`：最小化创建测试链条脚本（需替换用户 ID）。
 - `quick-test-for-current-user.sql`：为脚本内硬编码的用户创建测试链条（请先替换为当前用户）。
-

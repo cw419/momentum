@@ -13,11 +13,13 @@ Dashboard 的"新建链"按钮的 `onClick` 处理函数设计为接收可选的
 ## 2. 影响范围
 
 ### 用户可见症状
+
 - 点击"新建链"按钮后控制台报错：`Converting circular structure to JSON`
 - 链条创建失败
 - 用户误以为是 Supabase "只读"问题
 
 ### 影响面
+
 - 所有尝试创建新链条的用户
 - 新用户首次使用体验极差
 
@@ -27,14 +29,14 @@ Dashboard 的"新建链"按钮的 `onClick` 处理函数设计为接收可选的
 
 ```tsx
 // Dashboard.tsx
-<Button onClick={handleCreateChain}>新建链</Button>
+<Button onClick={handleCreateChain}>新建链</Button>;
 
 // useChainsDomain.ts - 修复前
 const handleCreateChain = (parentId?: string | null) => {
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
     currentView: 'editor',
-    viewingChainId: parentId ?? null,  // ❌ parentId 实际是 React.MouseEvent
+    viewingChainId: parentId ?? null, // ❌ parentId 实际是 React.MouseEvent
   }));
 };
 ```
@@ -62,11 +64,11 @@ onClick={(event) => handleCreateChain(event)}
 // 在写入 Supabase 时
 const chainData = {
   id: 'xxx',
-  parentId: event,  // ← 这里是事件对象
+  parentId: event, // ← 这里是事件对象
   // ...
 };
 
-JSON.stringify(chainData);  // 💥 TypeError: Converting circular structure to JSON
+JSON.stringify(chainData); // 💥 TypeError: Converting circular structure to JSON
 ```
 
 ### 3.4 为什么是"循环引用"
@@ -89,7 +91,7 @@ const handleCreateChain = (parentId?: unknown) => {
   // ✅ 只接受字符串，其他类型（包括事件对象）一律当作 null
   const normalizedParentId = typeof parentId === 'string' ? parentId : null;
 
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
     currentView: 'editor',
     viewingChainId: normalizedParentId,
@@ -121,7 +123,7 @@ const safelySaveChains = async (chains: Chain[]) => {
     // ✅ 检测序列化错误，不重试（重试也会失败）
     if (isSerializationError(error)) {
       logger.error('CHAINS', 'Serialization error - not retrying', { error });
-      return;  // 直接放弃，不刷屏
+      return; // 直接放弃，不刷屏
     }
     // 其他错误正常重试...
   }
@@ -130,8 +132,10 @@ const safelySaveChains = async (chains: Chain[]) => {
 // errorMessage.ts
 function isSerializationError(error: unknown): boolean {
   const message = getErrorMessage(error);
-  return message.includes('circular structure') ||
-         message.includes('Converting circular');
+  return (
+    message.includes('circular structure') ||
+    message.includes('Converting circular')
+  );
 }
 ```
 
@@ -191,14 +195,15 @@ interface CreateChainHandler {
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
+| Commit    | 描述                                         |
+| --------- | -------------------------------------------- |
 | `983b796` | 主要修复：三层防护避免 event/window 进入写入 |
 | `154340b` | 早期相关：正确初始化 ChainEditor 的 parentId |
 
 ## 7. 经验教训
 
 > **核心教训**: React 事件处理函数的第一个参数永远是事件对象。如果你的函数设计为接收其他类型的参数，必须：
+>
 > 1. 使用箭头函数包装调用
 > 2. 或在函数内部做类型校验
 >
@@ -226,5 +231,5 @@ function processUserInput(input: unknown): SafeType {
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

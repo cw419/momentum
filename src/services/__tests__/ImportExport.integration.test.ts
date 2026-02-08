@@ -79,7 +79,9 @@ describe('ImportExportService integration', () => {
     expect(imported.history).toHaveLength(1);
     expect(imported.exceptionRulesToImport).toHaveLength(1);
 
-    const importedParent = imported.chains.find((c) => c.name === 'Parent chain');
+    const importedParent = imported.chains.find(
+      (c) => c.name === 'Parent chain',
+    );
     const importedChild = imported.chains.find((c) => c.name === 'Child chain');
     expect(importedParent).toBeDefined();
     expect(importedChild).toBeDefined();
@@ -87,12 +89,15 @@ describe('ImportExportService integration', () => {
     expect(importedChild!.parentId).toBe(importedParent!.id);
     expect(importedChild!.currentStreak).toBe(5);
     expect(importedChild!.totalCompletions).toBe(20);
-    expect(importedChild!.createdAt.toISOString()).toBe(childChain.createdAt.toISOString());
+    expect(importedChild!.createdAt.toISOString()).toBe(
+      childChain.createdAt.toISOString(),
+    );
 
     expect(imported.history[0]!.chainId).toBe(importedChild!.id);
-    expect(imported.history[0]!.completedAt.toISOString()).toBe(historyEntry.completedAt.toISOString());
+    expect(imported.history[0]!.completedAt.toISOString()).toBe(
+      historyEntry.completedAt.toISOString(),
+    );
     expect(imported.history[0]!.duration).toBe(30);
     expect(imported.history[0]!.wasSuccessful).toBe(true);
   });
 });
-

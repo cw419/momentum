@@ -22,4 +22,3 @@ export interface BetPlacementResult {
   existing_bet_id?: string;
   existing_bet_amount?: number;
 }
-

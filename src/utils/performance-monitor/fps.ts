@@ -15,7 +15,9 @@ export function startFpsMonitoring(args: {
     fpsCounter.frames++;
 
     if (timestamp - fpsCounter.lastTime >= 1000) {
-      metrics.fps = Math.round((fpsCounter.frames * 1000) / (timestamp - fpsCounter.lastTime));
+      metrics.fps = Math.round(
+        (fpsCounter.frames * 1000) / (timestamp - fpsCounter.lastTime),
+      );
 
       fpsCounter.frames = 0;
       fpsCounter.lastTime = timestamp;
@@ -34,4 +36,3 @@ export function startFpsMonitoring(args: {
 
   requestAnimationFrame(measureFPS);
 }
-

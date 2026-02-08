@@ -28,4 +28,3 @@ export function savePetState(pet: PetState): void {
   };
   localStorage.setItem(STORAGE_KEYS.PET_STATE, JSON.stringify(serialized));
 }
-

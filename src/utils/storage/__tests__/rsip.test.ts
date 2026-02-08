@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { STORAGE_KEYS } from '../keys';
-import { getRSIPMeta, getRSIPNodes, saveRSIPMeta, saveRSIPNodes } from '../rsip';
+import {
+  getRSIPMeta,
+  getRSIPNodes,
+  saveRSIPMeta,
+  saveRSIPNodes,
+} from '../rsip';
 
 describe('storage/rsip', () => {
   beforeEach(() => {
@@ -22,7 +27,7 @@ describe('storage/rsip', () => {
           sortOrder: 0,
           createdAt: '2026-02-01T00:00:00.000Z',
         },
-      ])
+      ]),
     );
 
     const [node] = getRSIPNodes();
@@ -54,7 +59,7 @@ describe('storage/rsip', () => {
       JSON.stringify({
         lastAddedAt: '2026-02-02T00:00:00.000Z',
         allowMultiplePerDay: true,
-      })
+      }),
     );
 
     const meta = getRSIPMeta();

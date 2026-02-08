@@ -13,4 +13,3 @@ export interface RuleManagerFormData {
   type: ExceptionRuleType;
   description: string;
 }
-

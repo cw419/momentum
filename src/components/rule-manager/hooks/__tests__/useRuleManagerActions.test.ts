@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+﻿import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ExceptionRuleError,
@@ -23,6 +23,9 @@ const asyncOperationManagerMock = vi.hoisted(() => ({
 const errorMessageMock = vi.hoisted(() => ({
   getSafeErrorDetail: vi.fn(),
   getSafeErrorDetailFromUnknown: vi.fn(),
+  toError: vi.fn((value: unknown) =>
+    value instanceof Error ? value : new Error(String(value)),
+  ),
 }));
 
 vi.mock('../../../../services/ExceptionRuleManager', () => ({
@@ -72,7 +75,9 @@ function createArgs(overrides?: {
   const formWarningsState = createState<string[]>([]);
   const duplicateSuggestionsState = createState<string[]>([]);
   const errorState = createState<string | null>(null);
-  const editingRuleState = createState<ExceptionRule | null>(overrides?.editingRule ?? null);
+  const editingRuleState = createState<ExceptionRule | null>(
+    overrides?.editingRule ?? null,
+  );
   const showCreateFormState = createState(true);
 
   const loadRules = vi.fn(async () => undefined);
@@ -117,17 +122,24 @@ describe('useRuleManagerActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     errorMessageMock.getSafeErrorDetail.mockReturnValue('friendly error');
-    errorMessageMock.getSafeErrorDetailFromUnknown.mockReturnValue('friendly unknown error');
+    errorMessageMock.getSafeErrorDetailFromUnknown.mockReturnValue(
+      'friendly unknown error',
+    );
   });
 
   it('creates rule successfully with optimistic update replacement', async () => {
     const createdRule = createRule({ id: 'server-rule', name: 'Server Rule' });
-    asyncOperationManagerMock.executeOperation.mockImplementation(async ({ operation, onSuccess }) => {
-      await operation();
-      onSuccess?.({ rule: createdRule, warnings: [] });
-      return undefined;
+    asyncOperationManagerMock.executeOperation.mockImplementation(
+      async ({ operation, onSuccess }) => {
+        await operation();
+        onSuccess?.({ rule: createdRule, warnings: [] });
+        return undefined;
+      },
+    );
+    exceptionRuleManagerMock.createRule.mockResolvedValue({
+      rule: createdRule,
+      warnings: [],
     });
-    exceptionRuleManagerMock.createRule.mockResolvedValue({ rule: createdRule, warnings: [] });
 
     const context = createArgs();
     const { result } = renderHook(() => useRuleManagerActions(context.args));
@@ -139,7 +151,7 @@ describe('useRuleManagerActions', () => {
     expect(exceptionRuleManagerMock.createRule).toHaveBeenCalledWith(
       'New Rule',
       ExceptionRuleType.PAUSE_ONLY,
-      'test description'
+      'test description',
     );
     expect(context.rulesState.get()).toEqual([createdRule]);
     expect(context.showCreateFormState.set).toHaveBeenCalledWith(false);
@@ -149,12 +161,17 @@ describe('useRuleManagerActions', () => {
   });
 
   it('keeps create form open and shows warnings when creation returns warnings', async () => {
-    const createdRule = createRule({ id: 'server-rule-with-warning', name: 'Server Rule Warning' });
-    asyncOperationManagerMock.executeOperation.mockImplementation(async ({ operation, onSuccess }) => {
-      await operation();
-      onSuccess?.({ rule: createdRule, warnings: ['warning-1'] });
-      return undefined;
+    const createdRule = createRule({
+      id: 'server-rule-with-warning',
+      name: 'Server Rule Warning',
     });
+    asyncOperationManagerMock.executeOperation.mockImplementation(
+      async ({ operation, onSuccess }) => {
+        await operation();
+        onSuccess?.({ rule: createdRule, warnings: ['warning-1'] });
+        return undefined;
+      },
+    );
     exceptionRuleManagerMock.createRule.mockResolvedValue({
       rule: createdRule,
       warnings: ['warning-1'],
@@ -173,12 +190,17 @@ describe('useRuleManagerActions', () => {
   });
 
   it('handles duplicate name creation errors and loads name suggestions', async () => {
-    asyncOperationManagerMock.executeOperation.mockImplementation(async ({ onError }) => {
-      onError?.(
-        new ExceptionRuleException(ExceptionRuleError.DUPLICATE_RULE_NAME, 'duplicate rule name')
-      );
-      return undefined;
-    });
+    asyncOperationManagerMock.executeOperation.mockImplementation(
+      async ({ onError }) => {
+        onError?.(
+          new ExceptionRuleException(
+            ExceptionRuleError.DUPLICATE_RULE_NAME,
+            'duplicate rule name',
+          ),
+        );
+        return undefined;
+      },
+    );
     exceptionRuleManagerMock.getDuplicationSuggestions.mockResolvedValue({
       hasExactMatch: true,
       hasSimilarRules: false,
@@ -200,18 +222,33 @@ describe('useRuleManagerActions', () => {
 
     expect(context.rulesState.get()).toHaveLength(0);
     expect(context.formErrorsState.get()).toEqual(['friendly error']);
-    expect(exceptionRuleManagerMock.getDuplicationSuggestions).toHaveBeenCalledWith('New Rule');
-    expect(context.duplicateSuggestionsState.get()).toEqual(['New Rule (1)', 'New Rule (2)']);
+    expect(
+      exceptionRuleManagerMock.getDuplicationSuggestions,
+    ).toHaveBeenCalledWith('New Rule');
+    expect(context.duplicateSuggestionsState.get()).toEqual([
+      'New Rule (1)',
+      'New Rule (2)',
+    ]);
   });
 
   it('rolls back updated rule when async update fails', async () => {
     const originalRule = createRule({ id: 'rule-123', name: 'Original name' });
-    asyncOperationManagerMock.executeOperation.mockImplementation(async ({ onError }) => {
-      onError?.(new ExceptionRuleException(ExceptionRuleError.VALIDATION_ERROR, 'bad input'));
-      return undefined;
-    });
+    asyncOperationManagerMock.executeOperation.mockImplementation(
+      async ({ onError }) => {
+        onError?.(
+          new ExceptionRuleException(
+            ExceptionRuleError.VALIDATION_ERROR,
+            'bad input',
+          ),
+        );
+        return undefined;
+      },
+    );
 
-    const context = createArgs({ editingRule: originalRule, rules: [originalRule] });
+    const context = createArgs({
+      editingRule: originalRule,
+      rules: [originalRule],
+    });
     context.args.formData = {
       ...context.args.formData,
       name: 'Updated name',
@@ -230,18 +267,26 @@ describe('useRuleManagerActions', () => {
   });
 
   it('handles update success warnings without closing edit mode', async () => {
-    const originalRule = createRule({ id: 'rule-update-warning', name: 'Original name' });
-    asyncOperationManagerMock.executeOperation.mockImplementation(async ({ operation, onSuccess }) => {
-      await operation();
-      onSuccess?.({ rule: originalRule, warnings: ['update-warning'] });
-      return undefined;
+    const originalRule = createRule({
+      id: 'rule-update-warning',
+      name: 'Original name',
     });
+    asyncOperationManagerMock.executeOperation.mockImplementation(
+      async ({ operation, onSuccess }) => {
+        await operation();
+        onSuccess?.({ rule: originalRule, warnings: ['update-warning'] });
+        return undefined;
+      },
+    );
     exceptionRuleManagerMock.updateRule.mockResolvedValue({
       rule: originalRule,
       warnings: ['update-warning'],
     });
 
-    const context = createArgs({ editingRule: originalRule, rules: [originalRule] });
+    const context = createArgs({
+      editingRule: originalRule,
+      rules: [originalRule],
+    });
     const { result } = renderHook(() => useRuleManagerActions(context.args));
 
     await act(async () => {
@@ -265,24 +310,38 @@ describe('useRuleManagerActions', () => {
   });
 
   it('handles non-exception update errors and executeOperation throws', async () => {
-    const originalRule = createRule({ id: 'rule-unknown-error', name: 'Original name' });
-    const context = createArgs({ editingRule: originalRule, rules: [originalRule] });
-    const { result, rerender } = renderHook(() => useRuleManagerActions(context.args));
-
-    asyncOperationManagerMock.executeOperation.mockImplementationOnce(async ({ onError }) => {
-      onError?.(new Error('unknown update error'));
-      return undefined;
+    const originalRule = createRule({
+      id: 'rule-unknown-error',
+      name: 'Original name',
     });
+    const context = createArgs({
+      editingRule: originalRule,
+      rules: [originalRule],
+    });
+    const { result, rerender } = renderHook(() =>
+      useRuleManagerActions(context.args),
+    );
+
+    asyncOperationManagerMock.executeOperation.mockImplementationOnce(
+      async ({ onError }) => {
+        onError?.(new Error('unknown update error'));
+        return undefined;
+      },
+    );
 
     await act(async () => {
       await result.current.handleUpdateRule();
     });
 
-    expect(context.formErrorsState.get()).toEqual(['Failed to update rule. Please try again.']);
+    expect(context.formErrorsState.get()).toEqual([
+      'Failed to update rule. Please try again.',
+    ]);
 
-    asyncOperationManagerMock.executeOperation.mockImplementationOnce(async () => {
-      throw new Error('execute failed before handlers');
-    });
+    asyncOperationManagerMock.executeOperation.mockImplementationOnce(
+      async () => {
+        throw new Error('execute failed before handlers');
+      },
+    );
 
     rerender();
     await act(async () => {
@@ -319,13 +378,17 @@ describe('useRuleManagerActions', () => {
       await result.current.confirmDeleteRule();
     });
 
-    expect(exceptionRuleManagerMock.deleteRule).toHaveBeenCalledWith('delete-me');
+    expect(exceptionRuleManagerMock.deleteRule).toHaveBeenCalledWith(
+      'delete-me',
+    );
     expect(context.loadRules).toHaveBeenCalledTimes(1);
   });
 
   it('surfaces delete errors via translated safe detail', async () => {
     const rule = createRule({ id: 'delete-fail' });
-    exceptionRuleManagerMock.deleteRule.mockRejectedValue(new Error('delete failed'));
+    exceptionRuleManagerMock.deleteRule.mockRejectedValue(
+      new Error('delete failed'),
+    );
 
     const context = createArgs();
     const { result } = renderHook(() => useRuleManagerActions(context.args));
@@ -363,9 +426,14 @@ describe('useRuleManagerActions', () => {
 
     const appendSpy = vi.spyOn(document.body, 'appendChild');
     const removeSpy = vi.spyOn(document.body, 'removeChild');
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
 
-    exceptionRuleManagerMock.exportRules.mockResolvedValue({ rules: [], usageRecords: [] });
+    exceptionRuleManagerMock.exportRules.mockResolvedValue({
+      rules: [],
+      usageRecords: [],
+    });
 
     await act(async () => {
       await result.current.handleExportRules();
@@ -377,7 +445,9 @@ describe('useRuleManagerActions', () => {
     expect(removeSpy).toHaveBeenCalledTimes(1);
     expect(clickSpy).toHaveBeenCalledTimes(1);
 
-    exceptionRuleManagerMock.exportRules.mockRejectedValue(new Error('cannot export'));
+    exceptionRuleManagerMock.exportRules.mockRejectedValue(
+      new Error('cannot export'),
+    );
     await act(async () => {
       await result.current.handleExportRules();
     });

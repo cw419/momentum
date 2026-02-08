@@ -4,7 +4,10 @@ import { performanceLogger } from '../performanceLogger';
 type ChainById = Map<string, Chain>;
 type ChildrenByParentId = Map<string, Chain[]>;
 
-function buildChainLookups(chains: Chain[]): { chainById: ChainById; childrenByParentId: ChildrenByParentId } {
+function buildChainLookups(chains: Chain[]): {
+  chainById: ChainById;
+  childrenByParentId: ChildrenByParentId;
+} {
   const chainById: ChainById = new Map(chains.map((c) => [c.id, c]));
   const childrenByParentId: ChildrenByParentId = new Map();
 
@@ -28,11 +31,14 @@ function resetGroupTaskProgress(chains: Chain[], groupId: string): Chain[] {
   const groupNode = chainById.get(groupId);
 
   if (!groupNode || groupNode.type !== 'group') {
-    performanceLogger.warn(`resetGroupTaskProgress: 群组节点未找到或类型不正确`, {
-      groupId,
-      nodeFound: !!groupNode,
-      nodeType: groupNode?.type,
-    });
+    performanceLogger.warn(
+      `resetGroupTaskProgress: 群组节点未找到或类型不正确`,
+      {
+        groupId,
+        nodeFound: !!groupNode,
+        nodeType: groupNode?.type,
+      },
+    );
     return chains;
   }
 
@@ -56,16 +62,21 @@ function resetGroupTaskProgress(chains: Chain[], groupId: string): Chain[] {
     }
   }
 
-  performanceLogger.debugLazy(`resetGroupTaskProgress: 群组 ${groupNode.name} 将重置 ${childUnitIds.size} 个子任务的进度`, () => ({
-    groupId,
-    childIds: [...childUnitIds],
-  }));
+  performanceLogger.debugLazy(
+    `resetGroupTaskProgress: 群组 ${groupNode.name} 将重置 ${childUnitIds.size} 个子任务的进度`,
+    () => ({
+      groupId,
+      childIds: [...childUnitIds],
+    }),
+  );
 
   if (childUnitIds.size === 0) return chains;
 
   return chains.map((chain) => {
     if (childUnitIds.has(chain.id)) {
-      performanceLogger.debug(`重置任务进度: ${chain.name} (${chain.id}) currentStreak: ${chain.currentStreak} -> 0`);
+      performanceLogger.debug(
+        `重置任务进度: ${chain.name} (${chain.id}) currentStreak: ${chain.currentStreak} -> 0`,
+      );
       return { ...chain, currentStreak: 0 };
     }
     return chain;
@@ -75,7 +86,10 @@ function resetGroupTaskProgress(chains: Chain[], groupId: string): Chain[] {
 /**
  * 增加任务群的完成计数并重置子任务进度
  */
-export const incrementGroupCompletionCount = (chains: Chain[], groupId: string): Chain[] => {
+export const incrementGroupCompletionCount = (
+  chains: Chain[],
+  groupId: string,
+): Chain[] => {
   // 首先增加任务群的完成计数
   const updatedChains = chains.map((chain) => {
     if (chain.id === groupId && chain.type === 'group') {
@@ -96,7 +110,10 @@ export const incrementGroupCompletionCount = (chains: Chain[], groupId: string):
 /**
  * 重置任务群完成计数（当任务群失败或被中断时）
  */
-export const resetGroupCompletionCount = (chains: Chain[], groupId: string): Chain[] => {
+export const resetGroupCompletionCount = (
+  chains: Chain[],
+  groupId: string,
+): Chain[] => {
   return chains.map((chain) => {
     if (chain.id === groupId && chain.type === 'group') {
       return {
@@ -108,4 +125,3 @@ export const resetGroupCompletionCount = (chains: Chain[], groupId: string): Cha
     return chain;
   });
 };
-

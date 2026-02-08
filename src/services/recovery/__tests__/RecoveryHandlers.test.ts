@@ -31,7 +31,7 @@ import { extractRuleIdFromError, recoveryHandlers } from '../RecoveryHandlers';
 function createError(
   message: string,
   details?: unknown,
-  type: ExceptionRuleError = ExceptionRuleError.STORAGE_ERROR
+  type: ExceptionRuleError = ExceptionRuleError.STORAGE_ERROR,
 ): ExceptionRuleException {
   return new ExceptionRuleException(type, message, details);
 }
@@ -63,39 +63,42 @@ describe('recovery/RecoveryHandlers', () => {
   it('uses existing rules from error details when available', async () => {
     const existingRule = { id: 'rule-1', name: 'Existing' };
     const success = await recoveryHandlers.handleUseExistingRule(
-      createError('duplicate', { existingRules: [existingRule] })
+      createError('duplicate', { existingRules: [existingRule] }),
     );
     expect(success).toEqual(
       expect.objectContaining({
         success: true,
         recoveredData: existingRule,
-      })
+      }),
     );
 
-    const failure = await recoveryHandlers.handleUseExistingRule(createError('duplicate', {}));
+    const failure = await recoveryHandlers.handleUseExistingRule(
+      createError('duplicate', {}),
+    );
     expect(failure.success).toBe(false);
   });
 
   it('generates rename suggestions when rule name can be parsed', async () => {
-    enhancedDuplicationHandlerMock.generateNameSuggestions.mockReturnValue(['Focus Rule (1)']);
+    enhancedDuplicationHandlerMock.generateNameSuggestions.mockReturnValue([
+      'Focus Rule (1)',
+    ]);
 
     const success = await recoveryHandlers.handleRenameRule(
-      createError('Rule name "Focus Rule" already exists')
+      createError('Rule name "Focus Rule" already exists'),
     );
-    expect(enhancedDuplicationHandlerMock.generateNameSuggestions).toHaveBeenCalledWith(
-      'Focus Rule',
-      []
-    );
+    expect(
+      enhancedDuplicationHandlerMock.generateNameSuggestions,
+    ).toHaveBeenCalledWith('Focus Rule', []);
     expect(success).toEqual(
       expect.objectContaining({
         success: true,
         recoveredData: { suggestedName: 'Focus Rule (1)' },
-      })
+      }),
     );
 
     enhancedDuplicationHandlerMock.generateNameSuggestions.mockReturnValue([]);
     const failure = await recoveryHandlers.handleRenameRule(
-      createError('Rule name "Focus Rule" already exists')
+      createError('Rule name "Focus Rule" already exists'),
     );
     expect(failure.success).toBe(false);
   });
@@ -105,11 +108,13 @@ describe('recovery/RecoveryHandlers', () => {
       issues: [],
     });
 
-    const noIssueResult = await recoveryHandlers.handleDataIntegrityCheck(createError('storage'));
+    const noIssueResult = await recoveryHandlers.handleDataIntegrityCheck(
+      createError('storage'),
+    );
     expect(noIssueResult).toEqual(
       expect.objectContaining({
         success: true,
-      })
+      }),
     );
 
     dataIntegrityCheckerMock.checkRuleDataIntegrity.mockResolvedValueOnce({
@@ -123,7 +128,9 @@ describe('recovery/RecoveryHandlers', () => {
       { success: false },
     ]);
 
-    const issueResult = await recoveryHandlers.handleDataIntegrityCheck(createError('storage'));
+    const issueResult = await recoveryHandlers.handleDataIntegrityCheck(
+      createError('storage'),
+    );
     expect(issueResult.success).toBe(false);
     expect(issueResult.actions).toHaveLength(1);
 
@@ -132,28 +139,38 @@ describe('recovery/RecoveryHandlers', () => {
     expect(autoFixResult).toEqual(
       expect.objectContaining({
         success: true,
-      })
+      }),
     );
   });
 
   it('returns graceful failures when data integrity and generic recovery throw', async () => {
-    dataIntegrityCheckerMock.checkRuleDataIntegrity.mockRejectedValueOnce(new Error('check failed'));
-    const integrityFailure = await recoveryHandlers.handleDataIntegrityCheck(createError('storage'));
+    dataIntegrityCheckerMock.checkRuleDataIntegrity.mockRejectedValueOnce(
+      new Error('check failed'),
+    );
+    const integrityFailure = await recoveryHandlers.handleDataIntegrityCheck(
+      createError('storage'),
+    );
     expect(integrityFailure.success).toBe(false);
 
-    ruleStateManagerMock.syncRuleStates.mockRejectedValueOnce(new Error('sync failed'));
-    const genericFailure = await recoveryHandlers.handleGenericRecovery(createError('generic'));
+    ruleStateManagerMock.syncRuleStates.mockRejectedValueOnce(
+      new Error('sync failed'),
+    );
+    const genericFailure = await recoveryHandlers.handleGenericRecovery(
+      createError('generic'),
+    );
     expect(genericFailure.success).toBe(false);
   });
 
   it('returns success when generic recovery can sync rule states', async () => {
     ruleStateManagerMock.syncRuleStates.mockResolvedValueOnce(undefined);
 
-    const result = await recoveryHandlers.handleGenericRecovery(createError('generic'));
+    const result = await recoveryHandlers.handleGenericRecovery(
+      createError('generic'),
+    );
     expect(result).toEqual(
       expect.objectContaining({
         success: true,
-      })
+      }),
     );
     expect(ruleStateManagerMock.syncRuleStates).toHaveBeenCalledTimes(1);
   });

@@ -5,7 +5,10 @@ interface RSIPConstraintIndicatorProps {
   failureCost: number;
 }
 
-export function RSIPConstraintIndicator({ descendantCount, failureCost }: RSIPConstraintIndicatorProps) {
+export function RSIPConstraintIndicator({
+  descendantCount,
+  failureCost,
+}: RSIPConstraintIndicatorProps) {
   let costColorClass = 'text-slate-600 dark:text-white/60';
   if (failureCost > 5) {
     costColorClass = 'text-rose-700 dark:text-red-300';

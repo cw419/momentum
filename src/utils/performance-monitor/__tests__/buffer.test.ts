@@ -29,7 +29,9 @@ describe('performance-monitor/buffer', () => {
   });
 
   it('processes batch data and logs only when reporting is enabled in foreground', async () => {
-    const debugSpy = vi.spyOn(performanceLogger, 'debug').mockImplementation(() => undefined);
+    const debugSpy = vi
+      .spyOn(performanceLogger, 'debug')
+      .mockImplementation(() => undefined);
     let idleCallback: IdleRequestCallback | undefined;
 
     vi.stubGlobal(
@@ -37,7 +39,7 @@ describe('performance-monitor/buffer', () => {
       vi.fn((callback: IdleRequestCallback) => {
         idleCallback = callback;
         return 1;
-      })
+      }),
     );
 
     const buffer: PerformanceBufferEntry[] = [
@@ -52,21 +54,26 @@ describe('performance-monitor/buffer', () => {
     });
 
     expect(idleCallback).toBeTypeOf('function');
-    idleCallback?.({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline);
+    idleCallback?.({
+      didTimeout: false,
+      timeRemaining: () => 50,
+    } as IdleDeadline);
     await promise;
 
     expect(buffer).toHaveLength(0);
     expect(debugSpy).toHaveBeenCalledTimes(1);
 
     debugSpy.mockClear();
-    const anotherBuffer: PerformanceBufferEntry[] = [{ type: 'measure', name: 'layout', timestamp: 3 }];
+    const anotherBuffer: PerformanceBufferEntry[] = [
+      { type: 'measure', name: 'layout', timestamp: 3 },
+    ];
     let idleCallback2: IdleRequestCallback | undefined;
     vi.stubGlobal(
       'requestIdleCallback',
       vi.fn((callback: IdleRequestCallback) => {
         idleCallback2 = callback;
         return 1;
-      })
+      }),
     );
 
     const promise2 = processBatchData({
@@ -74,7 +81,10 @@ describe('performance-monitor/buffer', () => {
       reportingEnabled: true,
       backgroundMode: true,
     });
-    idleCallback2?.({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline);
+    idleCallback2?.({
+      didTimeout: false,
+      timeRemaining: () => 50,
+    } as IdleDeadline);
     await promise2;
 
     expect(debugSpy).not.toHaveBeenCalled();

@@ -31,13 +31,21 @@ describe('useFocusTrap', () => {
 
     (last as HTMLButtonElement).focus();
     act(() => {
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }),
+      );
     });
     expect(first).toHaveFocus();
 
     (first as HTMLButtonElement).focus();
     act(() => {
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Tab',
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
     });
     expect(last).toHaveFocus();
   });

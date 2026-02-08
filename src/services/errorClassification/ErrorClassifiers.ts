@@ -28,7 +28,9 @@ export class DefaultErrorClassifier implements ErrorClassifier {
     return this.errorPatterns.get(type);
   }
 
-  private getDefaultClassification(type: ExceptionRuleError): ErrorClassification {
+  private getDefaultClassification(
+    type: ExceptionRuleError,
+  ): ErrorClassification {
     switch (type) {
       case ExceptionRuleError.RULE_NOT_FOUND:
       case ExceptionRuleError.DATA_INTEGRITY_ERROR:
@@ -39,7 +41,7 @@ export class DefaultErrorClassifier implements ErrorClassifier {
           priority: 60,
           recoverable: true,
           userFriendly: true,
-          requiresImmedateAction: false
+          requiresImmedateAction: false,
         };
 
       case ExceptionRuleError.DUPLICATE_RULE_NAME:
@@ -51,7 +53,7 @@ export class DefaultErrorClassifier implements ErrorClassifier {
           priority: 30,
           recoverable: true,
           userFriendly: true,
-          requiresImmedateAction: false
+          requiresImmedateAction: false,
         };
 
       case ExceptionRuleError.STORAGE_ERROR:
@@ -63,7 +65,7 @@ export class DefaultErrorClassifier implements ErrorClassifier {
           priority: 80,
           recoverable: true,
           userFriendly: false,
-          requiresImmedateAction: true
+          requiresImmedateAction: true,
         };
 
       case ExceptionRuleError.NETWORK_ERROR:
@@ -73,7 +75,7 @@ export class DefaultErrorClassifier implements ErrorClassifier {
           priority: 50,
           recoverable: true,
           userFriendly: true,
-          requiresImmedateAction: false
+          requiresImmedateAction: false,
         };
 
       default:
@@ -83,7 +85,7 @@ export class DefaultErrorClassifier implements ErrorClassifier {
           priority: 50,
           recoverable: true,
           userFriendly: false,
-          requiresImmedateAction: false
+          requiresImmedateAction: false,
         };
     }
   }
@@ -91,15 +93,15 @@ export class DefaultErrorClassifier implements ErrorClassifier {
 
 export function calculateConfidence(
   error: ExceptionRuleException,
-  pattern?: ErrorPattern
+  pattern?: ErrorPattern,
 ): number {
   if (!pattern) return 0.5;
 
   let confidence = 0.7;
 
   const message = error.message.toLowerCase();
-  const matchedKeywords = pattern.keywords.filter(keyword =>
-    message.includes(keyword.toLowerCase())
+  const matchedKeywords = pattern.keywords.filter((keyword) =>
+    message.includes(keyword.toLowerCase()),
   );
 
   confidence += (matchedKeywords.length / pattern.keywords.length) * 0.3;
@@ -110,7 +112,7 @@ export function calculateConfidence(
 export function generateRecommendations(
   _error: ExceptionRuleException,
   classification: ErrorClassification,
-  pattern?: ErrorPattern
+  pattern?: ErrorPattern,
 ): string[] {
   const recommendations: string[] = [];
 
@@ -132,7 +134,7 @@ export function generateRecommendations(
 export function generateUserFriendlyMessage(
   type: ExceptionRuleError,
   message: string,
-  pattern?: ErrorPattern
+  pattern?: ErrorPattern,
 ): string {
   if (pattern && pattern.classification.userFriendly) {
     switch (type) {

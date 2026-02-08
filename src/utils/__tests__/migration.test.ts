@@ -26,7 +26,9 @@ describe('runMigration', () => {
   });
 
   it('deletes old default rules when matched', async () => {
-    const includesSpy = vi.spyOn(Array.prototype, 'includes').mockReturnValue(true);
+    const includesSpy = vi
+      .spyOn(Array.prototype, 'includes')
+      .mockReturnValue(true);
     exceptionRuleManagerMock.getAllRules.mockResolvedValueOnce([
       { id: 'old-1', name: 'legacy-default-rule' },
     ]);
@@ -52,7 +54,9 @@ describe('runMigration', () => {
   });
 
   it('logs an error when migration throws', async () => {
-    exceptionRuleManagerMock.getAllRules.mockRejectedValueOnce(new Error('migration-boom'));
+    exceptionRuleManagerMock.getAllRules.mockRejectedValueOnce(
+      new Error('migration-boom'),
+    );
     await runMigration();
     expect(loggerMock.error).toHaveBeenCalled();
   });

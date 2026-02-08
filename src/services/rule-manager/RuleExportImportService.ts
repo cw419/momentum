@@ -7,7 +7,7 @@ import {
   ExceptionRule,
   RuleUsageRecord,
   ExceptionRuleError,
-  ExceptionRuleException
+  ExceptionRuleException,
 } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
 import { findExactDuplicateRules } from '../duplication/duplicationDetection';
@@ -45,11 +45,18 @@ interface RuleImportData {
  */
 class RuleExportImportService {
   private ruleUpdater: {
-    updateRule: (id: string, updates: Partial<Pick<ExceptionRule, 'name' | 'type' | 'description'>>) => Promise<{ rule: ExceptionRule; warnings: string[] }>;
+    updateRule: (
+      id: string,
+      updates: Partial<Pick<ExceptionRule, 'name' | 'type' | 'description'>>,
+    ) => Promise<{ rule: ExceptionRule; warnings: string[] }>;
   } | null = null;
 
   private ruleCreator: {
-    createRule: (name: string, type: ExceptionRule['type'], description?: string) => Promise<{ rule: ExceptionRule; warnings: string[] }>;
+    createRule: (
+      name: string,
+      type: ExceptionRule['type'],
+      description?: string,
+    ) => Promise<{ rule: ExceptionRule; warnings: string[] }>;
   } | null = null;
 
   /**
@@ -66,9 +73,15 @@ class RuleExportImportService {
     this.ruleCreator = creator;
   }
 
-  private async createRuleForImport(ruleData: RuleImportData): Promise<ExceptionRule> {
+  private async createRuleForImport(
+    ruleData: RuleImportData,
+  ): Promise<ExceptionRule> {
     if (this.ruleCreator) {
-      const result = await this.ruleCreator.createRule(ruleData.name, ruleData.type, ruleData.description);
+      const result = await this.ruleCreator.createRule(
+        ruleData.name,
+        ruleData.type,
+        ruleData.description,
+      );
       return result.rule;
     }
 
@@ -114,7 +127,7 @@ class RuleExportImportService {
    */
   async importRules(
     rules: RuleImportData[],
-    options: ImportOptions = {}
+    options: ImportOptions = {},
   ): Promise<ImportResult> {
     const imported: ExceptionRule[] = [];
     const skipped: Array<{ name: string; reason: string }> = [];
@@ -123,7 +136,10 @@ class RuleExportImportService {
     for (const ruleData of rules) {
       try {
         const existingRules = await exceptionRuleStorage.getRules();
-        const duplicates = findExactDuplicateRules(existingRules, ruleData.name);
+        const duplicates = findExactDuplicateRules(
+          existingRules,
+          ruleData.name,
+        );
 
         const wasDuplicateHandled = await this.handleDuplicateImport({
           ruleData,
@@ -140,7 +156,7 @@ class RuleExportImportService {
       } catch (error) {
         errors.push({
           name: ruleData.name,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
@@ -154,7 +170,7 @@ class RuleExportImportService {
   async exportRules(includeUsageData: boolean = false): Promise<ExportResult> {
     try {
       const rules = await exceptionRuleStorage.getRules();
-      const activeRules = rules.filter(r => r.isActive);
+      const activeRules = rules.filter((r) => r.isActive);
 
       let usageRecords: RuleUsageRecord[] | undefined;
       if (includeUsageData) {
@@ -167,14 +183,14 @@ class RuleExportImportService {
         exportedAt: new Date(),
         summary: {
           totalRules: activeRules.length,
-          totalUsageRecords: usageRecords?.length || 0
-        }
+          totalUsageRecords: usageRecords?.length || 0,
+        },
       };
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         'Failed to export rule data',
-        error
+        error,
       );
     }
   }

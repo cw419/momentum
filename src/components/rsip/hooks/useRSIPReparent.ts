@@ -37,7 +37,9 @@ export function useRSIPReparent({
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [reparentingId, setReparentingId] = useState<string | null>(null);
   const [relationError, setRelationError] = useState<string | null>(null);
-  const [hoveredChainIds, setHoveredChainIds] = useState<Set<string>>(new Set());
+  const [hoveredChainIds, setHoveredChainIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const reparentingTitle = useMemo(() => {
     if (!reparentingId) return null;
@@ -45,16 +47,19 @@ export function useRSIPReparent({
   }, [nodesById, reparentingId]);
 
   const togglePinned = useCallback((nodeId: string) => {
-    setPinnedId(prev => (prev === nodeId ? null : nodeId));
+    setPinnedId((prev) => (prev === nodeId ? null : nodeId));
   }, []);
 
-  const handleHoverStart = useCallback((nodeId: string) => setHoveredId(nodeId), []);
+  const handleHoverStart = useCallback(
+    (nodeId: string) => setHoveredId(nodeId),
+    [],
+  );
   const handleHoverEnd = useCallback(() => setHoveredId(null), []);
 
   const toggleReparenting = useCallback((nodeId: string) => {
     setPinnedId(nodeId);
     setRelationError(null);
-    setReparentingId(prev => (prev === nodeId ? null : nodeId));
+    setReparentingId((prev) => (prev === nodeId ? null : nodeId));
   }, []);
 
   const getAncestors = useMemo(
@@ -68,14 +73,17 @@ export function useRSIPReparent({
         }
         return res;
       },
-    [nodesById]
+    [nodesById],
   );
 
   const getDescendantsFromTree = useMemo(
     () =>
       (id: string): string[] => {
         const res: string[] = [];
-        const findInTree = (arr: RSIPTreeNode[], targetId: string): RSIPTreeNode | null => {
+        const findInTree = (
+          arr: RSIPTreeNode[],
+          targetId: string,
+        ): RSIPTreeNode | null => {
           for (const n of arr) {
             if (n.id === targetId) return n;
             const r = findInTree(n.children, targetId);
@@ -94,7 +102,7 @@ export function useRSIPReparent({
         walk(node);
         return res;
       },
-    [tree]
+    [tree],
   );
 
   const invalidParentIds = useMemo(() => {
@@ -105,28 +113,36 @@ export function useRSIPReparent({
   const commitReparent = useCallback(
     (childId: string, parentId?: string) => {
       if (childId === parentId) {
-        setRelationError(tr('不能选择自身作为父节点。', 'Cannot select the node itself as parent.'));
+        setRelationError(
+          tr(
+            '不能选择自身作为父节点。',
+            'Cannot select the node itself as parent.',
+          ),
+        );
         return;
       }
       if (parentId) {
         const descendants = getDescendantsFromTree(childId);
         if (descendants.includes(parentId)) {
           setRelationError(
-            tr('不能把节点移动到自己的后代下面。', 'Cannot move a node under its descendant.')
+            tr(
+              '不能把节点移动到自己的后代下面。',
+              'Cannot move a node under its descendant.',
+            ),
           );
           return;
         }
       }
 
-      const updated = nodes.map(n =>
-        n.id === childId ? { ...n, parentId: parentId || undefined } : n
+      const updated = nodes.map((n) =>
+        n.id === childId ? { ...n, parentId: parentId || undefined } : n,
       );
       onSaveNodes(updated);
       setPinnedId(childId);
       setReparentingId(null);
       setRelationError(null);
     },
-    [getDescendantsFromTree, nodes, onSaveNodes, tr]
+    [getDescendantsFromTree, nodes, onSaveNodes, tr],
   );
 
   const cancelReparent = useCallback(() => {
@@ -142,10 +158,16 @@ export function useRSIPReparent({
     }
     const ids = new Set<string>();
     ids.add(activeId);
-    getAncestors(activeId).forEach(id => ids.add(id));
-    getDescendantsFromTree(activeId).forEach(id => ids.add(id));
+    getAncestors(activeId).forEach((id) => ids.add(id));
+    getDescendantsFromTree(activeId).forEach((id) => ids.add(id));
     setHoveredChainIds(ids);
-  }, [hoveredId, pinnedId, reparentingId, getAncestors, getDescendantsFromTree]);
+  }, [
+    hoveredId,
+    pinnedId,
+    reparentingId,
+    getAncestors,
+    getDescendantsFromTree,
+  ]);
 
   return {
     reparentingId,

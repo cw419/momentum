@@ -1,6 +1,6 @@
 /**
  * Query Optimizer Tests - Performance & Functionality
- * 
+ *
  * Tests the database query optimization layer including:
  * - Query deduplication
  * - Intelligent caching
@@ -24,17 +24,19 @@ describe('QueryOptimizer', () => {
   beforeEach(() => {
     queryOptimizer.clearCache();
     vi.clearAllMocks();
-    
+
     // Setup default mocks
     performanceLogger.debug = vi.fn();
     performanceLogger.time = vi.fn((label, fn) => fn());
     performanceLogger.log = vi.fn();
     performanceLogger.group = vi.fn((label, fn) => fn());
-    
+
     reactPerformanceMonitor.trackCacheHit = vi.fn();
     reactPerformanceMonitor.trackCacheMiss = vi.fn();
     reactPerformanceMonitor.trackTreeBuild = vi.fn();
-    reactPerformanceMonitor.generateReport = vi.fn(() => ({ cacheHitRatio: 0.8 }));
+    reactPerformanceMonitor.generateReport = vi.fn(() => ({
+      cacheHitRatio: 0.8,
+    }));
   });
 
   const createMockChain = (id: string, parentId?: string): Chain => ({
@@ -65,7 +67,7 @@ describe('QueryOptimizer', () => {
       let callCount = 0;
       const mockQuery = vi.fn(async () => {
         callCount++;
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return `result-${callCount}`;
       });
 
@@ -73,7 +75,7 @@ describe('QueryOptimizer', () => {
       const promises = [
         queryOptimizer.deduplicateQuery('test:query', mockQuery),
         queryOptimizer.deduplicateQuery('test:query', mockQuery),
-        queryOptimizer.deduplicateQuery('test:query', mockQuery)
+        queryOptimizer.deduplicateQuery('test:query', mockQuery),
       ];
 
       const results = await Promise.all(promises);
@@ -88,33 +90,45 @@ describe('QueryOptimizer', () => {
       const mockQuery = vi.fn(async () => 'cached-result');
 
       // First call
-      const result1 = await queryOptimizer.deduplicateQuery('cache:test', mockQuery);
+      const result1 = await queryOptimizer.deduplicateQuery(
+        'cache:test',
+        mockQuery,
+      );
       expect(result1).toBe('cached-result');
       expect(mockQuery).toHaveBeenCalledTimes(1);
 
       // Second call should use cache
-      const result2 = await queryOptimizer.deduplicateQuery('cache:test', mockQuery);
+      const result2 = await queryOptimizer.deduplicateQuery(
+        'cache:test',
+        mockQuery,
+      );
       expect(result2).toBe('cached-result');
       expect(mockQuery).toHaveBeenCalledTimes(1);
     });
 
     test('should not cache error results', async () => {
-      const mockQuery = vi.fn()
+      const mockQuery = vi
+        .fn()
         .mockRejectedValueOnce(new Error('First attempt failed'))
         .mockResolvedValueOnce('Success on retry');
 
       // First call fails
-      await expect(queryOptimizer.deduplicateQuery('error:test', mockQuery))
-        .rejects.toThrow('First attempt failed');
+      await expect(
+        queryOptimizer.deduplicateQuery('error:test', mockQuery),
+      ).rejects.toThrow('First attempt failed');
 
       // Second call should retry and succeed
-      const result = await queryOptimizer.deduplicateQuery('error:test', mockQuery);
+      const result = await queryOptimizer.deduplicateQuery(
+        'error:test',
+        mockQuery,
+      );
       expect(result).toBe('Success on retry');
       expect(mockQuery).toHaveBeenCalledTimes(2);
     });
 
     test('should handle cache TTL expiration', async () => {
-      const mockQuery = vi.fn()
+      const mockQuery = vi
+        .fn()
         .mockResolvedValueOnce('initial')
         .mockResolvedValueOnce('refreshed');
 
@@ -122,13 +136,19 @@ describe('QueryOptimizer', () => {
       const originalTTL = (queryOptimizer as any).CACHE_TTL;
       (queryOptimizer as any).CACHE_TTL = 1; // 1ms TTL
 
-      const result1 = await queryOptimizer.deduplicateQuery('ttl:test', mockQuery);
+      const result1 = await queryOptimizer.deduplicateQuery(
+        'ttl:test',
+        mockQuery,
+      );
       expect(result1).toBe('initial');
 
       // Wait for TTL to expire
-      await new Promise(resolve => setTimeout(resolve, 5));
+      await new Promise((resolve) => setTimeout(resolve, 5));
 
-      const result2 = await queryOptimizer.deduplicateQuery('ttl:test', mockQuery);
+      const result2 = await queryOptimizer.deduplicateQuery(
+        'ttl:test',
+        mockQuery,
+      );
       expect(result2).toBe('refreshed');
       expect(mockQuery).toHaveBeenCalledTimes(2);
 
@@ -142,10 +162,12 @@ describe('QueryOptimizer', () => {
       const chains = [
         createMockChain('1'),
         createMockChain('2', '1'),
-        createMockChain('3', '1')
+        createMockChain('3', '1'),
       ];
 
-      const mockTree: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
       buildChainTree.mockReturnValue(mockTree);
 
       // First call
@@ -164,7 +186,9 @@ describe('QueryOptimizer', () => {
       const chains1 = [createMockChain('1')];
       const chains2 = [createMockChain('1'), createMockChain('2')];
 
-      const mockTree: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
       buildChainTree.mockReturnValue(mockTree);
 
       const result1 = queryOptimizer.memoizedBuildChainTree(chains1, 1);
@@ -179,10 +203,16 @@ describe('QueryOptimizer', () => {
     test('should rebuild tree when revision changes (fast path)', () => {
       const chains = [createMockChain('1')];
 
-      const mockTree1: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
-      const mockTree2: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree1: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
+      const mockTree2: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
 
-      buildChainTree.mockReturnValueOnce(mockTree1).mockReturnValueOnce(mockTree2);
+      buildChainTree
+        .mockReturnValueOnce(mockTree1)
+        .mockReturnValueOnce(mockTree2);
 
       const result1 = queryOptimizer.memoizedBuildChainTree(chains, 1);
       const result2 = queryOptimizer.memoizedBuildChainTree(chains, 2);
@@ -197,16 +227,20 @@ describe('QueryOptimizer', () => {
       const chains1 = [createMockChain('1')];
       const chains2 = [
         createMockChain('1'),
-        createMockChain('2') // Added new chain
+        createMockChain('2'), // Added new chain
       ];
 
-      const mockTree1: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree1: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
       const mockTree2: ChainTreeNode[] = [
         { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
-        { id: '2', name: 'Chain 2', children: [] } as ChainTreeNode
+        { id: '2', name: 'Chain 2', children: [] } as ChainTreeNode,
       ];
 
-      buildChainTree.mockReturnValueOnce(mockTree1).mockReturnValueOnce(mockTree2);
+      buildChainTree
+        .mockReturnValueOnce(mockTree1)
+        .mockReturnValueOnce(mockTree2);
 
       // First call
       const result1 = queryOptimizer.memoizedBuildChainTree(chains1);
@@ -221,13 +255,15 @@ describe('QueryOptimizer', () => {
 
     test('should detect metadata changes vs structural changes', () => {
       const chains1 = [
-        { ...createMockChain('1'), currentStreak: 0, totalCompletions: 0 }
+        { ...createMockChain('1'), currentStreak: 0, totalCompletions: 0 },
       ];
       const chains2 = [
-        { ...createMockChain('1'), currentStreak: 5, totalCompletions: 10 } // Only metadata changed
+        { ...createMockChain('1'), currentStreak: 5, totalCompletions: 10 }, // Only metadata changed
       ];
 
-      const mockTree: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
       buildChainTree.mockReturnValue(mockTree);
 
       // First call
@@ -235,19 +271,21 @@ describe('QueryOptimizer', () => {
 
       // Second call with metadata changes (should still rebuild for now, but log optimization opportunity)
       queryOptimizer.memoizedBuildChainTree(chains2);
-      
+
       expect(buildChainTree).toHaveBeenCalledTimes(2);
       expect(performanceLogger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('Structural hash unchanged')
+        expect.stringContaining('Structural hash unchanged'),
       );
     });
 
     test('should track performance metrics for tree building', () => {
       const chains = [createMockChain('1')];
-      const mockTree: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
-      
+      const mockTree: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
+
       buildChainTree.mockReturnValue(mockTree);
-      
+
       // Mock performance.now to control timing
       const mockNow = vi.spyOn(performance, 'now');
       mockNow.mockReturnValueOnce(0).mockReturnValueOnce(50); // 50ms build time
@@ -256,7 +294,7 @@ describe('QueryOptimizer', () => {
 
       expect(reactPerformanceMonitor.trackTreeBuild).toHaveBeenCalledWith(50);
       expect(performanceLogger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('Tree built with 1 root nodes in 50.00ms')
+        expect.stringContaining('Tree built with 1 root nodes in 50.00ms'),
       );
 
       mockNow.mockRestore();
@@ -269,7 +307,7 @@ describe('QueryOptimizer', () => {
         getActiveChains: vi.fn().mockResolvedValue([createMockChain('1')]),
         getScheduledSessions: vi.fn().mockResolvedValue([]),
         getActiveSession: vi.fn().mockResolvedValue(null),
-        getCompletionHistory: vi.fn().mockResolvedValue([])
+        getCompletionHistory: vi.fn().mockResolvedValue([]),
       };
 
       const result = await queryOptimizer.batchLoadData(mockStorage);
@@ -278,7 +316,7 @@ describe('QueryOptimizer', () => {
         chains: [expect.objectContaining({ id: '1' })],
         scheduledSessions: [],
         activeSession: null,
-        completionHistory: []
+        completionHistory: [],
       });
 
       // All storage methods should be called
@@ -293,14 +331,14 @@ describe('QueryOptimizer', () => {
         getActiveChains: vi.fn().mockResolvedValue([]),
         getScheduledSessions: vi.fn().mockResolvedValue([]),
         getActiveSession: vi.fn().mockResolvedValue(null),
-        getCompletionHistory: vi.fn().mockResolvedValue([])
+        getCompletionHistory: vi.fn().mockResolvedValue([]),
       };
 
       // Concurrent batch loads
       const promises = [
         queryOptimizer.batchLoadData(mockStorage),
         queryOptimizer.batchLoadData(mockStorage),
-        queryOptimizer.batchLoadData(mockStorage)
+        queryOptimizer.batchLoadData(mockStorage),
       ];
 
       const results = await Promise.all(promises);
@@ -317,13 +355,16 @@ describe('QueryOptimizer', () => {
     test('should handle partial failures in batch operations', async () => {
       const mockStorage = {
         getActiveChains: vi.fn().mockResolvedValue([createMockChain('1')]),
-        getScheduledSessions: vi.fn().mockRejectedValue(new Error('Sessions failed')),
+        getScheduledSessions: vi
+          .fn()
+          .mockRejectedValue(new Error('Sessions failed')),
         getActiveSession: vi.fn().mockResolvedValue(null),
-        getCompletionHistory: vi.fn().mockResolvedValue([])
+        getCompletionHistory: vi.fn().mockResolvedValue([]),
       };
 
-      await expect(queryOptimizer.batchLoadData(mockStorage))
-        .rejects.toThrow('Sessions failed');
+      await expect(queryOptimizer.batchLoadData(mockStorage)).rejects.toThrow(
+        'Sessions failed',
+      );
     });
   });
 
@@ -345,7 +386,9 @@ describe('QueryOptimizer', () => {
 
     test('should clear chain tree cache when chains change', () => {
       const chains = [createMockChain('1')];
-      const mockTree: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
       buildChainTree.mockReturnValue(mockTree);
 
       // Build tree
@@ -365,7 +408,7 @@ describe('QueryOptimizer', () => {
         getActiveChains: vi.fn().mockResolvedValue([]),
         getScheduledSessions: vi.fn().mockResolvedValue([]),
         getActiveSession: vi.fn().mockResolvedValue(null),
-        getCompletionHistory: vi.fn().mockResolvedValue([])
+        getCompletionHistory: vi.fn().mockResolvedValue([]),
       };
 
       // First batch load
@@ -392,26 +435,26 @@ describe('QueryOptimizer', () => {
 
     test('should generate comprehensive performance report', () => {
       const report = queryOptimizer.generatePerformanceReport();
-      
+
       expect(report).toHaveProperty('cache');
       expect(report).toHaveProperty('react');
       expect(report.cache).toHaveProperty('cacheSize');
       expect(report.cache).toHaveProperty('pendingQueries');
-      
+
       expect(performanceLogger.group).toHaveBeenCalledWith(
         '🔧 Query Optimizer Stats',
-        expect.any(Function)
+        expect.any(Function),
       );
       expect(reactPerformanceMonitor.generateReport).toHaveBeenCalled();
     });
 
     test('should track performance for optimized queries', async () => {
       const mockQuery = vi.fn().mockResolvedValue('data');
-      
+
       await queryOptimizer.getOptimizedChains({ getActiveChains: mockQuery });
-      
+
       expect(performanceLogger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('[QUERY_OPTIMIZER]')
+        expect.stringContaining('[QUERY_OPTIMIZER]'),
       );
     });
   });
@@ -428,11 +471,13 @@ describe('QueryOptimizer', () => {
 
     test('should handle circular dependencies in chains', () => {
       const chains = [
-        createMockChain('1', '2'),  // Parent is 2
-        createMockChain('2', '1')   // Parent is 1 (circular)
+        createMockChain('1', '2'), // Parent is 2
+        createMockChain('2', '1'), // Parent is 1 (circular)
       ];
 
-      const mockTree: ChainTreeNode[] = [{ id: '1', name: 'Chain 1', children: [] } as ChainTreeNode];
+      const mockTree: ChainTreeNode[] = [
+        { id: '1', name: 'Chain 1', children: [] } as ChainTreeNode,
+      ];
       buildChainTree.mockReturnValue(mockTree);
 
       // Should not crash
@@ -442,13 +487,16 @@ describe('QueryOptimizer', () => {
 
     test('should handle concurrent cache clears gracefully', async () => {
       const mockQuery = vi.fn().mockResolvedValue('data');
-      
+
       // Start query
-      const queryPromise = queryOptimizer.deduplicateQuery('test:clear', mockQuery);
-      
+      const queryPromise = queryOptimizer.deduplicateQuery(
+        'test:clear',
+        mockQuery,
+      );
+
       // Clear cache while query is in progress
       queryOptimizer.clearCache();
-      
+
       // Query should still complete
       const result = await queryPromise;
       expect(result).toBe('data');
@@ -456,18 +504,20 @@ describe('QueryOptimizer', () => {
 
     test('should maintain performance under high load', async () => {
       const mockQuery = vi.fn().mockResolvedValue('data');
-      
+
       // Simulate high load with many concurrent queries
-      const promises = Array.from({ length: 100 }, (_, i) =>
-        queryOptimizer.deduplicateQuery(`load:test:${i % 5}`, mockQuery) // 5 unique keys
+      const promises = Array.from(
+        { length: 100 },
+        (_, i) =>
+          queryOptimizer.deduplicateQuery(`load:test:${i % 5}`, mockQuery), // 5 unique keys
       );
-      
+
       const results = await Promise.all(promises);
-      
+
       // All queries should complete successfully
       expect(results).toHaveLength(100);
-      expect(results.every(r => r === 'data')).toBe(true);
-      
+      expect(results.every((r) => r === 'data')).toBe(true);
+
       // Should only make 5 actual queries due to deduplication
       expect(mockQuery).toHaveBeenCalledTimes(5);
     });
@@ -476,41 +526,47 @@ describe('QueryOptimizer', () => {
   describe('Memory Management', () => {
     test('should properly cleanup expired cache entries', async () => {
       const mockQuery = vi.fn().mockResolvedValue('data');
-      
+
       // Mock short TTL
       const originalTTL = (queryOptimizer as any).CACHE_TTL;
       (queryOptimizer as any).CACHE_TTL = 1;
-      
+
       // Add cache entry
       await queryOptimizer.deduplicateQuery('memory:test', mockQuery);
       expect(queryOptimizer.getCacheStats().cacheSize).toBe(1);
-      
+
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 5));
-      
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
       // Accessing expired entry should remove it from cache
       await queryOptimizer.deduplicateQuery('memory:test', mockQuery);
-      
+
       // Restore original TTL
       (queryOptimizer as any).CACHE_TTL = originalTTL;
     });
 
     test('should handle cache clear during active operations', async () => {
       let resolveQuery: (value: string) => void;
-      const mockQuery = vi.fn(() => new Promise<string>(resolve => {
-        resolveQuery = resolve;
-      }));
-      
+      const mockQuery = vi.fn(
+        () =>
+          new Promise<string>((resolve) => {
+            resolveQuery = resolve;
+          }),
+      );
+
       // Start long-running query
-      const queryPromise = queryOptimizer.deduplicateQuery('slow:query', mockQuery);
-      
+      const queryPromise = queryOptimizer.deduplicateQuery(
+        'slow:query',
+        mockQuery,
+      );
+
       // Clear cache while query is pending
       queryOptimizer.clearCache();
-      
+
       // Complete the query
       resolveQuery!('completed');
       const result = await queryPromise;
-      
+
       expect(result).toBe('completed');
       expect(queryOptimizer.getCacheStats().pendingQueries).toBe(0);
     });

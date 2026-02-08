@@ -16,7 +16,10 @@ export async function migrateCompletionHistory(): Promise<{
 
     const updatedHistory = history.map((record, index) => {
       try {
-        if (record.actualDuration !== undefined && record.isForwardTimed !== undefined) {
+        if (
+          record.actualDuration !== undefined &&
+          record.isForwardTimed !== undefined
+        ) {
           return record;
         }
 
@@ -46,4 +49,3 @@ export async function migrateCompletionHistory(): Promise<{
 
   return { migratedCount, errors };
 }
-

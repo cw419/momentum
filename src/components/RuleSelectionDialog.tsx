@@ -1,9 +1,15 @@
-/**
- * 规则选择对话框组件（Container）
- * 用于在暂停或提前完成任务时选择适用的例外规则。
+﻿/**
+ * 瑙勫垯閫夋嫨瀵硅瘽妗嗙粍浠讹紙Container锛?
+ * 鐢ㄤ簬鍦ㄦ殏鍋滄垨鎻愬墠瀹屾垚浠诲姟鏃堕€夋嫨閫傜敤鐨勪緥澶栬鍒欍€?
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { ExceptionRule, PauseOptions, SessionContext } from '../types';
 import { ExceptionRuleType } from '../types';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
@@ -13,20 +19,28 @@ import { ExceptionRuleCache } from '../utils/exceptionRuleCache';
 import { getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
 import { useLayoutStability } from '../utils/LayoutStabilityMonitor';
 import { logger } from '../utils/logger';
-import { RuleSearchOptimizer, SearchResult } from '../utils/ruleSearchOptimizer';
+import { normalizeUnknownError } from '../utils/errors/normalizeError';
+import {
+  RuleSearchOptimizer,
+  SearchResult,
+} from '../utils/ruleSearchOptimizer';
 import { RuleSelectionDialogView } from './RuleSelectionDialogView';
 
 type ActionType = 'pause' | 'early_completion';
 
-function getDefaultRuleNames(action: ActionType, language: string) {
+function getDefaultRuleNames(action: ActionType, _language: string) {
   if (action === 'pause') {
-    return language === 'zh' ? ['上厕所', '接电话'] : ['Bathroom break', 'Phone call'];
+    return ['Bathroom break', 'Phone call'];
   }
 
-  return language === 'zh' ? ['提前达成目标'] : ['Reached goal early'];
+  return ['Reached goal early'];
 }
 
-function getPauseOptions(actionType: ActionType, isIndefinite: boolean, durationMinutes: number | undefined): PauseOptions | undefined {
+function getPauseOptions(
+  actionType: ActionType,
+  isIndefinite: boolean,
+  durationMinutes: number | undefined,
+): PauseOptions | undefined {
   if (actionType !== 'pause') return undefined;
   if (isIndefinite) return { autoResume: false };
   return { duration: (durationMinutes ?? 15) * 60, autoResume: true };
@@ -70,30 +84,46 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
     async (chainId: string, action: ActionType): Promise<ExceptionRule[]> => {
       const defaultRuleNames = getDefaultRuleNames(action, language);
 
-      const ruleType = action === 'pause' ? ExceptionRuleType.PAUSE_ONLY : ExceptionRuleType.EARLY_COMPLETION_ONLY;
+      const ruleType =
+        action === 'pause'
+          ? ExceptionRuleType.PAUSE_ONLY
+          : ExceptionRuleType.EARLY_COMPLETION_ONLY;
 
       const createdRules: ExceptionRule[] = [];
       const allRules = await exceptionRuleManager.getAllRules();
-      const chainRules = allRules.filter((rule) => rule.chainId === chainId && rule.scope === 'chain');
+      const chainRules = allRules.filter(
+        (rule) => rule.chainId === chainId && rule.scope === 'chain',
+      );
 
       for (const name of defaultRuleNames) {
         try {
-          const existingRule = chainRules.find((rule) => rule.isActive && rule.name === name);
+          const existingRule = chainRules.find(
+            (rule) => rule.isActive && rule.name === name,
+          );
           if (existingRule) {
             createdRules.push(existingRule);
             continue;
           }
 
-          const result = await exceptionRuleManager.createChainRule(chainId, name, ruleType);
+          const result = await exceptionRuleManager.createChainRule(
+            chainId,
+            name,
+            ruleType,
+          );
           createdRules.push(result.rule);
         } catch (err) {
-          logger.warn('RULE_SELECTION', `Failed to create default rule "${name}"`, { chainId, actionType: action }, err as Error);
+          logger.warn(
+            'RULE_SELECTION',
+            `Failed to create default rule "${name}"`,
+            { chainId, actionType: action },
+            normalizeUnknownError(err),
+          );
         }
       }
 
       return createdRules;
     },
-    [language]
+    [language],
   );
 
   const fetchChainRulesFromAPI = useCallback(
@@ -102,10 +132,12 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         const allRules = await exceptionRuleManager.getAllRules();
 
         const applicableRules = allRules.filter((rule) => {
-          const isChainRule = rule.chainId === chainId && rule.scope === 'chain';
+          const isChainRule =
+            rule.chainId === chainId && rule.scope === 'chain';
           if (!isChainRule) return false;
 
-          if (action === 'pause') return rule.type === ExceptionRuleType.PAUSE_ONLY;
+          if (action === 'pause')
+            return rule.type === ExceptionRuleType.PAUSE_ONLY;
           return rule.type === ExceptionRuleType.EARLY_COMPLETION_ONLY;
         });
 
@@ -115,11 +147,16 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
         return applicableRules;
       } catch (err) {
-        logger.error('RULE_SELECTION', '获取规则失败', { chainId, actionType: action }, err as Error);
+        logger.error(
+          'RULE_SELECTION',
+          '鑾峰彇瑙勫垯澶辫触',
+          { chainId, actionType: action },
+          normalizeUnknownError(err),
+        );
         return createDefaultPresetRules(chainId, action);
       }
     },
-    [createDefaultPresetRules]
+    [createDefaultPresetRules],
   );
 
   const loadChainRules = useCallback(async () => {
@@ -129,18 +166,28 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
 
       let chainRules = ruleCache.getChainRules(sessionContext.chainId);
       if (!chainRules) {
-        chainRules = await fetchChainRulesFromAPI(sessionContext.chainId, actionType);
+        chainRules = await fetchChainRulesFromAPI(
+          sessionContext.chainId,
+          actionType,
+        );
         ruleCache.setChainRules(sessionContext.chainId, chainRules);
       }
 
       setRules(chainRules);
     } catch (err) {
       const safe = getSafeErrorDetailFromUnknown(err, language);
-      setError(safe ?? tr('加载规则失败', 'Failed to load rules'));
+      setError(safe ?? tr('鍔犺浇瑙勫垯澶辫触', 'Failed to load rules'));
     } finally {
       setLoading(false);
     }
-  }, [actionType, fetchChainRulesFromAPI, language, ruleCache, sessionContext.chainId, tr]);
+  }, [
+    actionType,
+    fetchChainRulesFromAPI,
+    language,
+    ruleCache,
+    sessionContext.chainId,
+    tr,
+  ]);
 
   useEffect(() => {
     let focusTimer: ReturnType<typeof setTimeout> | undefined;
@@ -154,7 +201,10 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         if (!input) return;
 
         const active = document.activeElement;
-        const shouldFocus = !active || active === document.body || active === document.documentElement;
+        const shouldFocus =
+          !active ||
+          active === document.body ||
+          active === document.documentElement;
         if (shouldFocus) {
           input.focus();
         }
@@ -178,7 +228,11 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
     }
 
     if (searchQuery.trim()) {
-      searchOptimizer.searchRulesDebounced(rules, searchQuery, setSearchResults);
+      searchOptimizer.searchRulesDebounced(
+        rules,
+        searchQuery,
+        setSearchResults,
+      );
       return;
     }
 
@@ -197,18 +251,25 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
     async (rule: ExceptionRule) => {
       try {
         if (isDev) {
-          logger.debug('RULE_SELECTION', '选择规则', { ruleId: rule.id, actionType });
+          logger.debug('RULE_SELECTION', '閫夋嫨瑙勫垯', {
+            ruleId: rule.id,
+            actionType,
+          });
         }
 
-        const pauseOptions = getPauseOptions(actionType, isIndefinite, duration);
+        const pauseOptions = getPauseOptions(
+          actionType,
+          isIndefinite,
+          duration,
+        );
 
         onRuleSelected(rule, pauseOptions);
       } catch (err) {
         const safe = getSafeErrorDetailFromUnknown(err, language);
-        setError(safe ?? tr('选择规则失败', 'Failed to select rule'));
+        setError(safe ?? tr('閫夋嫨瑙勫垯澶辫触', 'Failed to select rule'));
       }
     },
-    [actionType, duration, isIndefinite, language, onRuleSelected, tr]
+    [actionType, duration, isIndefinite, language, onRuleSelected, tr],
   );
 
   const handleCreateNewRule = useCallback(
@@ -217,16 +278,27 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       if (!cleanName) return;
 
       try {
-        const ruleType = actionType === 'pause' ? ExceptionRuleType.PAUSE_ONLY : ExceptionRuleType.EARLY_COMPLETION_ONLY;
+        const ruleType =
+          actionType === 'pause'
+            ? ExceptionRuleType.PAUSE_ONLY
+            : ExceptionRuleType.EARLY_COMPLETION_ONLY;
 
-        const duplicateCheck = searchOptimizer.detectDuplicates(cleanName, rules);
+        const duplicateCheck = searchOptimizer.detectDuplicates(
+          cleanName,
+          rules,
+        );
         if (duplicateCheck.hasExactMatch) {
-          setError(language === 'zh' ? `规则名称 "${cleanName}" 已存在` : `Rule name "${cleanName}" already exists`);
+          setError(
+            tr(
+              `Rule name "${cleanName}" already exists`,
+              `Rule name "${cleanName}" already exists`,
+            ),
+          );
           return;
         }
 
         if (isDev) {
-          logger.debug('RULE_SELECTION', '创建链专属规则', {
+          logger.debug('RULE_SELECTION', 'Creating chain-specific rule', {
             cleanName,
             ruleType,
             actionType,
@@ -234,7 +306,11 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
           });
         }
 
-        const result = await exceptionRuleManager.createChainRule(sessionContext.chainId, cleanName, ruleType);
+        const result = await exceptionRuleManager.createChainRule(
+          sessionContext.chainId,
+          cleanName,
+          ruleType,
+        );
 
         ruleCache.addRuleToChain(sessionContext.chainId, result.rule);
         setRules(ruleCache.getChainRules(sessionContext.chainId) ?? []);
@@ -243,10 +319,19 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         onCreateNewRule(cleanName, ruleType);
       } catch (err) {
         const safe = getSafeErrorDetailFromUnknown(err, language);
-        setError(safe ?? tr('创建规则失败', 'Failed to create rule'));
+        setError(safe ?? tr('鍒涘缓瑙勫垯澶辫触', 'Failed to create rule'));
       }
     },
-    [actionType, language, onCreateNewRule, ruleCache, rules, searchOptimizer, sessionContext.chainId, tr]
+    [
+      actionType,
+      language,
+      onCreateNewRule,
+      ruleCache,
+      rules,
+      searchOptimizer,
+      sessionContext.chainId,
+      tr,
+    ],
   );
 
   if (!isOpen) return null;

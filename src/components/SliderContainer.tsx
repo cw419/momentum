@@ -30,7 +30,7 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
   showKeyboardInput = true,
   keyboardInputProps,
   className = '',
-  description
+  description,
 }) => {
   const { tr } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,21 +40,23 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const resizeObserver = new ResizeObserver(entries => {
+    const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setContainerWidth(entry.contentRect.width);
       }
     });
 
     resizeObserver.observe(containerRef.current);
-    
+
     // 初始宽度
     setContainerWidth(containerRef.current.offsetWidth);
 
     return () => resizeObserver.disconnect();
   }, []);
 
-  const handleKeyboardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeyboardInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (!keyboardInputProps) return;
 
     const value = e.target.value;
@@ -81,10 +83,10 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
           value={keyboardInputProps.value || ''}
           onChange={handleKeyboardInputChange}
           placeholder={keyboardInputProps.placeholder}
-          className="bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-gray-900 dark:text-slate-100 w-20 text-center font-mono focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300"
+          className="w-20 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-center font-mono text-gray-900 transition duration-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
         />
         {keyboardInputProps.unit && (
-          <span className="text-gray-500 dark:text-slate-400 font-chinese text-sm">
+          <span className="font-chinese text-sm text-gray-500 dark:text-slate-400">
             {keyboardInputProps.unit}
           </span>
         )}
@@ -93,20 +95,23 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
 
   if (orientation === 'horizontal') {
     return (
-      <div ref={containerRef} className={`slider-container-horizontal w-full ${className}`}>
+      <div
+        ref={containerRef}
+        className={`slider-container-horizontal w-full ${className}`}
+      >
         <div className="flex items-center space-x-4">
-          <span className="text-gray-700 dark:text-slate-300 font-chinese whitespace-nowrap">
+          <span className="whitespace-nowrap font-chinese text-gray-700 dark:text-slate-300">
             {label}
           </span>
-          <div className="flex-1 min-w-0">
-            {children}
-          </div>
+          <div className="min-w-0 flex-1">{children}</div>
           {keyboardInputFields && (
-            <div className="flex items-center space-x-2 whitespace-nowrap">{keyboardInputFields}</div>
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              {keyboardInputFields}
+            </div>
           )}
         </div>
         {description && (
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2 font-chinese">
+          <p className="mt-2 font-chinese text-sm text-gray-500 dark:text-slate-400">
             {description}
           </p>
         )}
@@ -115,37 +120,40 @@ export const SliderContainer: React.FC<SliderContainerProps> = ({
   }
 
   return (
-    <div ref={containerRef} className={`slider-container-vertical w-full space-y-4 ${className}`}>
+    <div
+      ref={containerRef}
+      className={`slider-container-vertical w-full space-y-4 ${className}`}
+    >
       <div className="slider-main space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-gray-700 dark:text-slate-300 font-chinese font-medium">
+          <span className="font-chinese font-medium text-gray-700 dark:text-slate-300">
             {label}
           </span>
           {containerWidth > 0 && (
-            <span className="text-xs text-gray-400 font-mono">
+            <span className="font-mono text-xs text-gray-400">
               {tr('容器宽度', 'Container width')}: {containerWidth}px
             </span>
           )}
         </div>
-        
+
         {description && (
-          <p className="text-sm text-gray-500 dark:text-slate-400 font-chinese">
+          <p className="font-chinese text-sm text-gray-500 dark:text-slate-400">
             {description}
           </p>
         )}
-        
-        <div className="slider-wrapper w-full">
-          {children}
-        </div>
+
+        <div className="slider-wrapper w-full">{children}</div>
       </div>
-        
+
       {keyboardInputFields && (
         <div className="keyboard-input-section">
           <div className="flex items-center space-x-4">
-            <span className="text-gray-700 dark:text-slate-300 font-chinese">
+            <span className="font-chinese text-gray-700 dark:text-slate-300">
               {tr('键盘输入', 'Keyboard input')}:
             </span>
-            <div className="flex items-center space-x-2">{keyboardInputFields}</div>
+            <div className="flex items-center space-x-2">
+              {keyboardInputFields}
+            </div>
           </div>
         </div>
       )}

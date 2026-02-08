@@ -1,6 +1,9 @@
 export type TimeLanguage = 'en' | 'zh';
 
-export const formatTime = (minutes: number, language: TimeLanguage = 'en'): string => {
+export const formatTime = (
+  minutes: number,
+  language: TimeLanguage = 'en',
+): string => {
   const totalMinutes = Math.floor(minutes);
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
@@ -41,11 +44,11 @@ export const formatElapsedTime = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   if (hours > 0) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
-  
+
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
@@ -58,7 +61,10 @@ export const formatTimeDescription = (minutes: number): string => {
   return formatTimeDescriptionByLanguage(minutes);
 };
 
-export const formatTimeDescriptionByLanguage = (minutes: number, language: TimeLanguage = 'en'): string => {
+export const formatTimeDescriptionByLanguage = (
+  minutes: number,
+  language: TimeLanguage = 'en',
+): string => {
   if (minutes < 1) {
     return language === 'zh' ? '不到1分钟' : 'less than 1 minute';
   }
@@ -97,7 +103,7 @@ export const formatTimeDescriptionByLanguage = (minutes: number, language: TimeL
 export const formatActualDuration = (
   minutes: number,
   isForwardTimed?: boolean,
-  language: TimeLanguage = 'en'
+  language: TimeLanguage = 'en',
 ): string => {
   if (isForwardTimed) {
     const prefix = language === 'zh' ? '完成用时：' : 'Time spent: ';
@@ -112,7 +118,10 @@ export const formatActualDuration = (
  * @param language 语言（en/zh）
  * @returns 格式化的参考信息
  */
-export const formatLastCompletionReference = (minutes: number | null, language: TimeLanguage = 'en'): string => {
+export const formatLastCompletionReference = (
+  minutes: number | null,
+  language: TimeLanguage = 'en',
+): string => {
   if (minutes === null) {
     return language === 'zh' ? '首次执行' : 'First time';
   }

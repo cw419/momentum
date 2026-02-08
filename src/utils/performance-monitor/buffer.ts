@@ -1,7 +1,11 @@
 import { performanceLogger } from '../performanceLogger';
 import type { PerformanceBufferEntry } from './types';
 
-export function addToBuffer(buffer: PerformanceBufferEntry[], maxBufferSize: number, entry: PerformanceBufferEntry) {
+export function addToBuffer(
+  buffer: PerformanceBufferEntry[],
+  maxBufferSize: number,
+  entry: PerformanceBufferEntry,
+) {
   if (buffer.length >= maxBufferSize) {
     buffer.shift();
   }
@@ -22,11 +26,14 @@ export async function processBatchData(args: {
       const batchData = buffer.splice(0, buffer.length);
 
       if (reportingEnabled && !backgroundMode) {
-        performanceLogger.debug('批量处理性能数据:', batchData.length, '条记录');
+        performanceLogger.debug(
+          '批量处理性能数据:',
+          batchData.length,
+          '条记录',
+        );
       }
 
       resolve();
     });
   });
 }
-

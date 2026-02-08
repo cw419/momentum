@@ -24,11 +24,27 @@
 
   /* light paper tint + subtle dot/grid */
   background-image:
-    radial-gradient(900px 420px at 18% 6%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 62%),
-    radial-gradient(900px 520px at 82% 14%, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0) 65%),
+    radial-gradient(
+      900px 420px at 18% 6%,
+      rgba(255, 255, 255, 0.75),
+      rgba(255, 255, 255, 0) 62%
+    ),
+    radial-gradient(
+      900px 520px at 82% 14%,
+      rgba(59, 130, 246, 0.08),
+      rgba(255, 255, 255, 0) 65%
+    ),
     radial-gradient(rgba(17, 24, 39, 0.06) 1px, transparent 1px),
-    repeating-linear-gradient(0deg, rgba(17, 24, 39, 0.03) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(90deg, rgba(17, 24, 39, 0.03) 0 1px, transparent 1px 48px);
+    repeating-linear-gradient(
+      0deg,
+      rgba(17, 24, 39, 0.03) 0 1px,
+      transparent 1px 48px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(17, 24, 39, 0.03) 0 1px,
+      transparent 1px 48px
+    );
   background-size:
     auto,
     auto,
@@ -63,10 +79,26 @@
 
 .dark .rsip-canvas-wrapper::before {
   background-image:
-    radial-gradient(900px 420px at 18% 6%, rgba(148, 163, 184, 0.12), rgba(15, 23, 42, 0) 62%),
-    radial-gradient(900px 520px at 82% 14%, rgba(56, 189, 248, 0.08), rgba(15, 23, 42, 0) 65%),
+    radial-gradient(
+      900px 420px at 18% 6%,
+      rgba(148, 163, 184, 0.12),
+      rgba(15, 23, 42, 0) 62%
+    ),
+    radial-gradient(
+      900px 520px at 82% 14%,
+      rgba(56, 189, 248, 0.08),
+      rgba(15, 23, 42, 0) 65%
+    ),
     radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.06) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.06) 0 1px, transparent 1px 48px);
+    repeating-linear-gradient(
+      0deg,
+      rgba(148, 163, 184, 0.06) 0 1px,
+      transparent 1px 48px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(148, 163, 184, 0.06) 0 1px,
+      transparent 1px 48px
+    );
   opacity: 0.55;
 }

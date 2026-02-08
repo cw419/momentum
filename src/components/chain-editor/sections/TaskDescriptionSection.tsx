@@ -14,7 +14,10 @@ export function TaskDescriptionSection({ form }: TaskDescriptionSectionProps) {
     <SettingSection
       title={tr('任务描述', 'Task description')}
       icon={<AlignLeft className="text-gray-500" size={20} />}
-      description={tr('详细描述任务内容和目标', 'Describe what you will do and what success looks like')}
+      description={tr(
+        '详细描述任务内容和目标',
+        'Describe what you will do and what success looks like',
+      )}
     >
       <div className="bento-card animate-scale-in">
         <textarea
@@ -22,13 +25,15 @@ export function TaskDescriptionSection({ form }: TaskDescriptionSectionProps) {
           name="taskDescription"
           value={form.description}
           onChange={(e) => form.setDescription(e.target.value)}
-          placeholder={tr('具体要做什么？例如：完成 CS61A 项目的第一部分', 'What exactly will you do? e.g. Finish Part 1 of CS61A')}
+          placeholder={tr(
+            '具体要做什么？例如：完成 CS61A 项目的第一部分',
+            'What exactly will you do? e.g. Finish Part 1 of CS61A',
+          )}
           rows={4}
-          className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition duration-300 resize-none font-chinese leading-relaxed"
+          className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-6 py-4 font-chinese leading-relaxed text-gray-900 placeholder-gray-400 transition duration-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
           required
         />
       </div>
     </SettingSection>
   );
 }
-

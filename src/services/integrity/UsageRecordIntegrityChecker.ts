@@ -9,10 +9,10 @@ import type { IntegrityIssue } from './IntegrityTypes';
 class UsageRecordIntegrityChecker {
   checkUsageRecordsIntegrity(
     records: RuleUsageRecord[],
-    rules: ExceptionRule[]
+    rules: ExceptionRule[],
   ): IntegrityIssue[] {
     const issues: IntegrityIssue[] = [];
-    const ruleIds = new Set(rules.map(r => r.id));
+    const ruleIds = new Set(rules.map((r) => r.id));
 
     for (const record of records) {
       if (!ruleIds.has(record.ruleId)) {
@@ -25,7 +25,7 @@ class UsageRecordIntegrityChecker {
           fixAction: async () => {
             await exceptionRuleStorage.deleteUsageRecord(record.id);
           },
-          details: { record }
+          details: { record },
         });
       }
 
@@ -40,7 +40,7 @@ class UsageRecordIntegrityChecker {
             record.usedAt = new Date();
             await exceptionRuleStorage.updateUsageRecord(record);
           },
-          details: { record }
+          details: { record },
         });
       }
     }
@@ -50,7 +50,7 @@ class UsageRecordIntegrityChecker {
 
   checkDataConsistency(
     rules: ExceptionRule[],
-    records: RuleUsageRecord[]
+    records: RuleUsageRecord[],
   ): IntegrityIssue[] {
     const issues: IntegrityIssue[] = [];
 
@@ -71,9 +71,11 @@ class UsageRecordIntegrityChecker {
           autoFixable: true,
           fixAction: async () => {
             rule.usageCount = actualCount;
-            await exceptionRuleStorage.updateRule(rule.id, { usageCount: actualCount });
+            await exceptionRuleStorage.updateRule(rule.id, {
+              usageCount: actualCount,
+            });
           },
-          details: { rule, actualCount, recordedCount: rule.usageCount }
+          details: { rule, actualCount, recordedCount: rule.usageCount },
         });
       }
     }

@@ -24,12 +24,20 @@ describe('useRuleManagerFilters', () => {
     const rules = [
       createRule({ id: 'r1', name: 'Low', usageCount: 1 }),
       createRule({ id: 'r2', name: 'High', usageCount: 9 }),
-      createRule({ id: 'r3', name: 'Inactive', usageCount: 100, isActive: false }),
+      createRule({
+        id: 'r3',
+        name: 'Inactive',
+        usageCount: 100,
+        isActive: false,
+      }),
     ];
 
     const { result } = renderHook(() => useRuleManagerFilters({ rules }));
 
-    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual(['r2', 'r1']);
+    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual([
+      'r2',
+      'r1',
+    ]);
   });
 
   it('applies type and search filters', () => {
@@ -71,7 +79,11 @@ describe('useRuleManagerFilters', () => {
         createdAt: new Date('2026-02-01T00:00:00.000Z'),
         lastUsedAt: new Date('2026-02-10T00:00:00.000Z'),
       }),
-      createRule({ id: 'never-used', createdAt: new Date('2026-01-15T00:00:00.000Z'), lastUsedAt: undefined }),
+      createRule({
+        id: 'never-used',
+        createdAt: new Date('2026-01-15T00:00:00.000Z'),
+        lastUsedAt: undefined,
+      }),
     ];
 
     const { result } = renderHook(() => useRuleManagerFilters({ rules }));
@@ -79,25 +91,43 @@ describe('useRuleManagerFilters', () => {
     act(() => {
       result.current.setSortBy('created');
     });
-    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual(['newer', 'never-used', 'older']);
+    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual([
+      'newer',
+      'never-used',
+      'older',
+    ]);
 
     act(() => {
       result.current.setSortBy('lastUsed');
     });
-    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual(['newer', 'older', 'never-used']);
+    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual([
+      'newer',
+      'older',
+      'never-used',
+    ]);
   });
 
   it('uses initialFilter when provided', () => {
     const rules = [
       createRule({ id: 'pause', type: ExceptionRuleType.PAUSE_ONLY }),
-      createRule({ id: 'early', type: ExceptionRuleType.EARLY_COMPLETION_ONLY }),
+      createRule({
+        id: 'early',
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      }),
     ];
 
     const { result } = renderHook(() =>
-      useRuleManagerFilters({ rules, initialFilter: ExceptionRuleType.EARLY_COMPLETION_ONLY })
+      useRuleManagerFilters({
+        rules,
+        initialFilter: ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      }),
     );
 
-    expect(result.current.typeFilter).toBe(ExceptionRuleType.EARLY_COMPLETION_ONLY);
-    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual(['early']);
+    expect(result.current.typeFilter).toBe(
+      ExceptionRuleType.EARLY_COMPLETION_ONLY,
+    );
+    expect(result.current.filteredRules.map((rule) => rule.id)).toEqual([
+      'early',
+    ]);
   });
 });

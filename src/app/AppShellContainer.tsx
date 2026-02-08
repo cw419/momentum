@@ -42,7 +42,9 @@ export default function AppShellContainer() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const [showAuxiliaryJudgment, setShowAuxiliaryJudgment] = useState<string | null>(null);
+  const [showAuxiliaryJudgment, setShowAuxiliaryJudgment] = useState<
+    string | null
+  >(null);
   const [showBettingModal, setShowBettingModal] = useState(false);
   const [pendingChainId, setPendingChainId] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -79,15 +81,23 @@ export default function AppShellContainer() {
     setShowAuxiliaryJudgment,
   });
 
-  const { handleCreateChain, handleCreateTaskGroup, handleEditChain, handleSaveChain } =
-    useChainsDomain({
-      state,
-      setState,
-      storage,
-      safelySaveChains,
-    });
+  const {
+    handleCreateChain,
+    handleCreateTaskGroup,
+    handleEditChain,
+    handleSaveChain,
+  } = useChainsDomain({
+    state,
+    setState,
+    storage,
+    safelySaveChains,
+  });
 
-  const { openRSIP, saveNodes: saveRSIPNodes, saveMeta: saveRSIPMeta } = useRsipDomain({
+  const {
+    openRSIP,
+    saveNodes: saveRSIPNodes,
+    saveMeta: saveRSIPMeta,
+  } = useRsipDomain({
     setState,
     storage,
   });
@@ -129,20 +139,24 @@ export default function AppShellContainer() {
     handleStartChain,
   });
 
-  const { handleAuxiliaryJudgmentFailure, handleAuxiliaryJudgmentAllow } = useRulesDomain({
-    state,
-    setState,
-    storage,
-    safelySaveChains,
-    setShowAuxiliaryJudgment,
-  });
-
-  const { handleDeleteChain, handleRestoreChains, handlePermanentDeleteChains } =
-    useRecycleBinDomain({
+  const { handleAuxiliaryJudgmentFailure, handleAuxiliaryJudgmentAllow } =
+    useRulesDomain({
       state,
       setState,
       storage,
+      safelySaveChains,
+      setShowAuxiliaryJudgment,
     });
+
+  const {
+    handleDeleteChain,
+    handleRestoreChains,
+    handlePermanentDeleteChains,
+  } = useRecycleBinDomain({
+    state,
+    setState,
+    storage,
+  });
 
   const { handleImportChains } = useImportExportDomain({
     storage,
@@ -150,12 +164,13 @@ export default function AppShellContainer() {
     setState,
   });
 
-  const { handleImportUnits, handleUpdateTaskRepeatCount, handleReorderUnit } = useGroupDomain({
-    state,
-    setState,
-    storage,
-    safelySaveChains,
-  });
+  const { handleImportUnits, handleUpdateTaskRepeatCount, handleReorderUnit } =
+    useGroupDomain({
+      state,
+      setState,
+      storage,
+      safelySaveChains,
+    });
 
   const handleViewChainDetail = (chainId: string) => {
     const chain = state.chains.find((c) => c.id === chainId);

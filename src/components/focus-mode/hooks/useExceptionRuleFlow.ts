@@ -1,6 +1,14 @@
 import { useState } from 'react';
-import { ExceptionRuleError, ExceptionRuleType, EnhancedExceptionRuleException } from '../../../types';
-import type { ExceptionRule, PauseOptions, SessionContext } from '../../../types';
+import {
+  ExceptionRuleError,
+  ExceptionRuleType,
+  EnhancedExceptionRuleException,
+} from '../../../types';
+import type {
+  ExceptionRule,
+  PauseOptions,
+  SessionContext,
+} from '../../../types';
 import { exceptionRuleManager } from '../../../services/ExceptionRuleManager';
 import { userFeedbackHandler } from '../../../services/UserFeedbackHandler';
 import { errorRecoveryManager } from '../../../services/ErrorRecoveryManager';
@@ -17,10 +25,16 @@ interface UseExceptionRuleFlowParams {
   onRequestCompletionDialog: () => void;
   scheduleAutoResume: (minutes: number) => void;
   clearAutoResumeSchedule: () => void;
-  onRuleUsed?: (rule: ExceptionRule, actionType: PendingActionType, pauseOptions?: PauseOptions) => void;
+  onRuleUsed?: (
+    rule: ExceptionRule,
+    actionType: PendingActionType,
+    pauseOptions?: PauseOptions,
+  ) => void;
 }
 
-type ErrorRecoveryResult = Awaited<ReturnType<typeof errorRecoveryManager.attemptRecovery>>;
+type ErrorRecoveryResult = Awaited<
+  ReturnType<typeof errorRecoveryManager.attemptRecovery>
+>;
 
 function isExceptionRule(value: unknown): value is ExceptionRule {
   if (!value || typeof value !== 'object') return false;
@@ -33,7 +47,7 @@ async function maybeApplyRecoveredRule(
   recoveryResult: ErrorRecoveryResult,
   operation: string,
   context: unknown,
-  applyRule: (rule: ExceptionRule) => Promise<void>
+  applyRule: (rule: ExceptionRule) => Promise<void>,
 ) {
   if (!recoveryResult.recoveredData || operation !== 'create_rule') return;
 
@@ -59,7 +73,8 @@ export function useExceptionRuleFlow({
 }: UseExceptionRuleFlowParams) {
   const { tr } = useI18n();
   const [showRuleSelection, setShowRuleSelection] = useState(false);
-  const [pendingActionType, setPendingActionType] = useState<PendingActionType | null>(null);
+  const [pendingActionType, setPendingActionType] =
+    useState<PendingActionType | null>(null);
 
   const openPauseSelection = () => {
     setPendingActionType('pause');
@@ -77,32 +92,55 @@ export function useExceptionRuleFlow({
     setPendingActionType(null);
     userFeedbackHandler.showInfo(
       tr('操作已取消', 'Cancelled'),
-      tr('您可以继续任务或重新选择操作', 'You can continue the task or choose another action.')
+      tr(
+        '您可以继续任务或重新选择操作',
+        'You can continue the task or choose another action.',
+      ),
     );
   };
 
   const handleEnhancedExceptionRuleError = async (
     error: EnhancedExceptionRuleException,
     operation: string,
-    context: unknown
+    context: unknown,
   ) => {
     const messageId = userFeedbackHandler.showErrorMessage(error, context);
-    const recoveryResult = await errorRecoveryManager.attemptRecovery(error, context, operation);
+    const recoveryResult = await errorRecoveryManager.attemptRecovery(
+      error,
+      context,
+      operation,
+    );
 
     if (!recoveryResult.success) {
       if (recoveryResult.requiresUserAction && recoveryResult.actions) {
-        logger.error('FOCUS_MODE', '需要用户操作的恢复失败', { recoveryResult, operation, context });
+        logger.error('FOCUS_MODE', '需要用户操作的恢复失败', {
+          recoveryResult,
+          operation,
+          context,
+        });
       }
       return;
     }
 
     userFeedbackHandler.removeMessage(messageId);
-    userFeedbackHandler.showSuccess(tr('问题已解决', 'Issue resolved'), recoveryResult.message);
+    userFeedbackHandler.showSuccess(
+      tr('问题已解决', 'Issue resolved'),
+      recoveryResult.message,
+    );
 
-    await maybeApplyRecoveredRule(recoveryResult, operation, context, handleRuleSelected);
+    await maybeApplyRecoveredRule(
+      recoveryResult,
+      operation,
+      context,
+      handleRuleSelected,
+    );
   };
 
-  const handleRuleError = async (error: unknown, operation: string, context: unknown) => {
+  const handleRuleError = async (
+    error: unknown,
+    operation: string,
+    context: unknown,
+  ) => {
     try {
       if (error instanceof EnhancedExceptionRuleException) {
         await handleEnhancedExceptionRuleError(error, operation, context);
@@ -111,12 +149,14 @@ export function useExceptionRuleFlow({
 
       const enhancedError = new EnhancedExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
-        error instanceof Error ? error.message : tr('未知错误', 'Unknown error'),
+        error instanceof Error
+          ? error.message
+          : tr('未知错误', 'Unknown error'),
         context,
         true,
         [tr('重试操作', 'Retry'), tr('刷新页面', 'Refresh')],
         'medium',
-        tr('操作失败，请重试', 'Operation failed. Please try again.')
+        tr('操作失败，请重试', 'Operation failed. Please try again.'),
       );
 
       userFeedbackHandler.showErrorMessage(enhancedError, context);
@@ -125,12 +165,18 @@ export function useExceptionRuleFlow({
       logger.error('FOCUS_MODE', '错误处理失败', { operation, context }, err);
       userFeedbackHandler.showWarning(
         tr('系统错误', 'System error'),
-        tr('处理错误时发生问题，请刷新页面重试', 'Something went wrong while handling the error. Refresh the page and try again.')
+        tr(
+          '处理错误时发生问题，请刷新页面重试',
+          'Something went wrong while handling the error. Refresh the page and try again.',
+        ),
       );
     }
   };
 
-  const handleRuleSelected = async (rule: ExceptionRule, pauseOptions?: PauseOptions) => {
+  const handleRuleSelected = async (
+    rule: ExceptionRule,
+    pauseOptions?: PauseOptions,
+  ) => {
     if (isDev) {
       logger.debug('FOCUS_MODE', 'handleRuleSelected called', {
         pendingActionType,
@@ -144,15 +190,24 @@ export function useExceptionRuleFlow({
 
     try {
       if (!rule || !rule.id) {
-        logger.error('FOCUS_MODE', 'Invalid rule object', { rule, pendingActionType });
+        logger.error('FOCUS_MODE', 'Invalid rule object', {
+          rule,
+          pendingActionType,
+        });
         userFeedbackHandler.showErrorMessage(
-          new EnhancedExceptionRuleException(ExceptionRuleError.RULE_NOT_FOUND, tr('规则对象无效', 'Invalid rule'), { rule, pendingActionType })
+          new EnhancedExceptionRuleException(
+            ExceptionRuleError.RULE_NOT_FOUND,
+            tr('规则对象无效', 'Invalid rule'),
+            { rule, pendingActionType },
+          ),
         );
         return;
       }
 
       userFeedbackHandler.showProgress(
-        pendingActionType === 'pause' ? tr('正在暂停任务...', 'Pausing task...') : tr('正在完成任务...', 'Completing task...')
+        pendingActionType === 'pause'
+          ? tr('正在暂停任务...', 'Pausing task...')
+          : tr('正在完成任务...', 'Completing task...'),
       );
 
       if (isDev) {
@@ -164,14 +219,29 @@ export function useExceptionRuleFlow({
         });
       }
 
-      await exceptionRuleManager.useRule(rule.id, sessionContext, pendingActionType, pauseOptions);
+      await exceptionRuleManager.useRule(
+        rule.id,
+        sessionContext,
+        pendingActionType,
+        pauseOptions,
+      );
 
       userFeedbackHandler.hideProgress();
 
-      const successMessage = pendingActionType === 'pause'
-        ? tr(`已使用规则 "${rule.name}" 暂停任务`, `Applied rule "${rule.name}" to pause the task`)
-        : tr(`已使用规则 "${rule.name}" 提前完成任务`, `Applied rule "${rule.name}" to complete the task early`);
-      userFeedbackHandler.showSuccess(tr('操作成功', 'Success'), successMessage);
+      const successMessage =
+        pendingActionType === 'pause'
+          ? tr(
+              `已使用规则 "${rule.name}" 暂停任务`,
+              `Applied rule "${rule.name}" to pause the task`,
+            )
+          : tr(
+              `已使用规则 "${rule.name}" 提前完成任务`,
+              `Applied rule "${rule.name}" to complete the task early`,
+            );
+      userFeedbackHandler.showSuccess(
+        tr('操作成功', 'Success'),
+        successMessage,
+      );
 
       onRuleUsed?.(rule, pendingActionType, pauseOptions);
 
@@ -194,57 +264,107 @@ export function useExceptionRuleFlow({
       userFeedbackHandler.hideProgress();
 
       const err = toError(error);
-      logger.error('FOCUS_MODE', 'Failed to use rule', { ruleId: rule.id, actionType: pendingActionType }, err);
+      logger.error(
+        'FOCUS_MODE',
+        'Failed to use rule',
+        { ruleId: rule.id, actionType: pendingActionType },
+        err,
+      );
 
-      await handleRuleError(error, 'use_rule', { rule, actionType: pendingActionType });
+      await handleRuleError(error, 'use_rule', {
+        rule,
+        actionType: pendingActionType,
+      });
     }
   };
 
   const handleCreateNewRule = async (name: string, type: ExceptionRuleType) => {
     if (isDev) {
-      logger.debug('FOCUS_MODE', 'handleCreateNewRule called', { name, type, typeOf: typeof type });
+      logger.debug('FOCUS_MODE', 'handleCreateNewRule called', {
+        name,
+        type,
+        typeOf: typeof type,
+      });
     }
 
     try {
       if (!name || !name.trim()) {
         userFeedbackHandler.showErrorMessage(
-          new EnhancedExceptionRuleException(ExceptionRuleError.VALIDATION_ERROR, tr('规则名称不能为空', 'Rule name cannot be empty'), { name, type })
+          new EnhancedExceptionRuleException(
+            ExceptionRuleError.VALIDATION_ERROR,
+            tr('规则名称不能为空', 'Rule name cannot be empty'),
+            { name, type },
+          ),
         );
         return;
       }
 
       let validType = type;
       if (!validType || !Object.values(ExceptionRuleType).includes(validType)) {
-        logger.warn('FOCUS_MODE', 'Invalid rule type, using default type', { type: validType });
-        validType = pendingActionType === 'pause' ? ExceptionRuleType.PAUSE_ONLY : ExceptionRuleType.EARLY_COMPLETION_ONLY;
+        logger.warn('FOCUS_MODE', 'Invalid rule type, using default type', {
+          type: validType,
+        });
+        validType =
+          pendingActionType === 'pause'
+            ? ExceptionRuleType.PAUSE_ONLY
+            : ExceptionRuleType.EARLY_COMPLETION_ONLY;
       }
 
-      userFeedbackHandler.showProgress(tr('正在创建规则...', 'Creating rule...'), 0);
-      userFeedbackHandler.updateProgress(30, tr('验证规则信息...', 'Validating...'));
+      userFeedbackHandler.showProgress(
+        tr('正在创建规则...', 'Creating rule...'),
+        0,
+      );
+      userFeedbackHandler.updateProgress(
+        30,
+        tr('验证规则信息...', 'Validating...'),
+      );
 
-      const duplicateCheck = await exceptionRuleManager.checkRuleNameRealTime(name);
-      let userChoice: 'use_existing' | 'modify_name' | 'create_anyway' | undefined;
+      const duplicateCheck =
+        await exceptionRuleManager.checkRuleNameRealTime(name);
+      let userChoice:
+        | 'use_existing'
+        | 'modify_name'
+        | 'create_anyway'
+        | undefined;
 
       if (duplicateCheck.hasConflict) {
         userFeedbackHandler.hideProgress();
         const suggestedType = duplicateCheck.suggestions?.[0]?.type;
-        if (suggestedType === 'use_existing' || suggestedType === 'modify_name' || suggestedType === 'create_anyway') {
+        if (
+          suggestedType === 'use_existing' ||
+          suggestedType === 'modify_name' ||
+          suggestedType === 'create_anyway'
+        ) {
           userChoice = suggestedType;
         }
-        userFeedbackHandler.showProgress(tr('正在创建规则...', 'Creating rule...'), 50);
+        userFeedbackHandler.showProgress(
+          tr('正在创建规则...', 'Creating rule...'),
+          50,
+        );
       }
 
       userFeedbackHandler.updateProgress(70, tr('保存规则...', 'Saving...'));
-      const result = await exceptionRuleManager.createRule(name, validType, undefined, userChoice);
+      const result = await exceptionRuleManager.createRule(
+        name,
+        validType,
+        undefined,
+        userChoice,
+      );
 
       userFeedbackHandler.hideProgress();
       userFeedbackHandler.showSuccess(
         tr('规则创建成功', 'Rule created'),
-        tr(`规则 "${result.rule.name}" 已创建并应用`, `Rule "${result.rule.name}" has been created and applied`)
+        tr(
+          `规则 "${result.rule.name}" 已创建并应用`,
+          `Rule "${result.rule.name}" has been created and applied`,
+        ),
       );
 
       if (result.warnings && result.warnings.length > 0) {
-        userFeedbackHandler.showWarning(tr('注意事项', 'Notes'), result.warnings.join('\n'));
+        userFeedbackHandler.showWarning(
+          tr('注意事项', 'Notes'),
+          result.warnings.join('\n'),
+        );
       }
 
       await handleRuleSelected(result.rule);

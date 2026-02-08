@@ -24,7 +24,10 @@ body {
 }
 
 /* 交互元素的精确touch-action控制 */
-button, .btn, [role="button"], [role="switch"] {
+button,
+.btn,
+[role='button'],
+[role='switch'] {
   /* 按钮只允许点击，禁止滚动 */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -39,18 +42,21 @@ button, .btn, [role="button"], [role="switch"] {
 }
 
 /* 输入框：允许所有操作 */
-input, textarea, select {
+input,
+textarea,
+select {
   touch-action: manipulation;
   font-size: 16px; /* 防止iOS缩放 */
 }
 
 /* 文本和静态元素：允许滚动，禁止选择 */
-.bento-card, .setting-section {
+.bento-card,
+.setting-section {
   touch-action: pan-y pinch-zoom;
 }
 
 /* 滚动容器明确标识 */
-[data-scrollable="true"],
+[data-scrollable='true'],
 .overflow-y-auto,
 .overflow-auto {
   touch-action: pan-y pinch-zoom;
@@ -79,7 +85,8 @@ input, textarea, select {
 }
 
 /* 按钮触摸优化（不影响开关控件本身尺寸） */
-button:not(.mobile-optimized-slider):not([role="switch"]), .btn:not([role="switch"]) {
+button:not(.mobile-optimized-slider):not([role='switch']),
+.btn:not([role='switch']) {
   min-height: 44px;
   padding: 12px 16px;
 }
@@ -103,7 +110,9 @@ button:not(.mobile-optimized-slider):not([role="switch"]), .btn:not([role="switc
 }
 
 /* 输入框触摸优化 */
-input:not([type="range"]), textarea, select {
+input:not([type='range']),
+textarea,
+select {
   min-height: 44px;
   padding: 12px 16px;
 }
@@ -112,29 +121,29 @@ input:not([type="range"]), textarea, select {
   .mobile-spacing {
     padding: 16px;
   }
-  
+
   .mobile-spacing-sm {
     padding: 12px;
   }
-  
+
   .mobile-spacing-lg {
     padding: 24px;
   }
-  
+
   /* 增加移动端的行间距 */
   .mobile-line-height {
     line-height: 1.6;
   }
-  
+
   /* 移动端字体大小优化 */
   .mobile-text-base {
     font-size: 16px;
   }
-  
+
   .mobile-text-sm {
     font-size: 14px;
   }
-  
+
   .mobile-text-lg {
     font-size: 18px;
   }
@@ -146,7 +155,7 @@ input:not([type="range"]), textarea, select {
     max-height: 80vh;
     overflow-y: auto;
   }
-  
+
   .keyboard-adaptive .modal-content {
     max-height: 70vh;
   }
@@ -157,7 +166,7 @@ input:not([type="range"]), textarea, select {
   .orientation-adaptive {
     flex-direction: column;
   }
-  
+
   .orientation-adaptive .sidebar {
     width: 100%;
     height: auto;
@@ -168,7 +177,7 @@ input:not([type="range"]), textarea, select {
   .orientation-adaptive {
     flex-direction: row;
   }
-  
+
   .orientation-adaptive .sidebar {
     width: 300px;
     height: 100vh;
@@ -188,7 +197,9 @@ input:not([type="range"]), textarea, select {
 
 /* 触摸反馈优化 */
 .touch-feedback {
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .touch-feedback:active {
@@ -242,7 +253,11 @@ input:not([type="range"]), textarea, select {
   border-radius: 50%;
   cursor: grab;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
   position: relative;
   z-index: 10;
 }
@@ -285,7 +300,11 @@ input:not([type="range"]), textarea, select {
   border-radius: 50%;
   cursor: grab;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
   -moz-appearance: none;
 }
 
@@ -456,18 +475,18 @@ input:not([type="range"]), textarea, select {
     max-height: calc(100vh - 16px);
     border-radius: 16px;
   }
-  
+
   .mobile-modal .modal-header {
     padding: 16px;
     border-radius: 16px 16px 0 0;
   }
-  
+
   .mobile-modal .modal-body {
     padding: 16px;
     max-height: calc(100vh - 120px);
     overflow-y: auto;
   }
-  
+
   .mobile-modal .modal-footer {
     padding: 16px;
     border-radius: 0 0 16px 16px;
@@ -482,7 +501,7 @@ input:not([type="range"]), textarea, select {
     padding-top: max(16px, env(safe-area-inset-top));
     padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
-  
+
   .safe-area-bottom {
     padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
@@ -493,7 +512,7 @@ input:not([type="range"]), textarea, select {
   .high-dpi-border {
     border-width: 0.5px;
   }
-  
+
   .high-dpi-icon {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
@@ -512,7 +531,7 @@ input:not([type="range"]), textarea, select {
   .touch-feedback {
     transition: none;
   }
-  
+
   .touch-feedback:active {
     transform: none;
   }

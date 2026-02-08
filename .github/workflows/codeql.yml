@@ -2,10 +2,10 @@ name: CodeQL (Soft)
 
 on:
   push:
-    branches: ["**"]
+    branches: ['**']
   pull_request:
   schedule:
-    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+    - cron: '0 9 * * 1' # Mondays 09:00 UTC
 
 permissions:
   contents: read
@@ -30,4 +30,3 @@ jobs:
 
       - name: Analyze
         uses: github/codeql-action/analyze@v3
-

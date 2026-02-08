@@ -7,7 +7,11 @@ import type { ExceptionRule, ExceptionRuleType } from '../types';
 import { RuleCreationController } from './rule-state/RuleCreationController';
 import { RuleStateQueries } from './rule-state/RuleStateQueries';
 import { RuleStateStore } from './rule-state/RuleStateStore';
-import type { IdMapping, PendingRuleCreation, RuleState } from './rule-state/types';
+import type {
+  IdMapping,
+  PendingRuleCreation,
+  RuleState,
+} from './rule-state/types';
 
 class RuleStateManager {
   private readonly store = new RuleStateStore();
@@ -23,7 +27,11 @@ class RuleStateManager {
     return this.store.generateRealId();
   }
 
-  trackRuleState(ruleId: string, status: RuleState['status'], temporaryId?: string): void {
+  trackRuleState(
+    ruleId: string,
+    status: RuleState['status'],
+    temporaryId?: string,
+  ): void {
     this.store.trackRuleState(ruleId, status, temporaryId);
   }
 
@@ -34,7 +42,7 @@ class RuleStateManager {
   startOptimisticCreation(
     name: string,
     type: ExceptionRuleType,
-    description?: string
+    description?: string,
   ): { temporaryRule: ExceptionRule; temporaryId: string } {
     return this.creation.startOptimisticCreation(name, type, description);
   }
@@ -87,9 +95,12 @@ class RuleStateManager {
   start(): void {
     if (this.cleanupInterval) return;
 
-    this.cleanupInterval = setInterval(() => {
-      this.cleanupExpiredStates();
-    }, 5 * 60 * 1000); // 每5分钟清理一次
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanupExpiredStates();
+      },
+      5 * 60 * 1000,
+    ); // 每5分钟清理一次
   }
 
   stop(): void {
@@ -101,4 +112,3 @@ class RuleStateManager {
 
 // 创建全局实例
 export const ruleStateManager = new RuleStateManager();
-

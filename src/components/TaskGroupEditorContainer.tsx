@@ -15,13 +15,9 @@ interface TaskGroupEditorContainerProps {
   onCancel: () => void;
 }
 
-export const TaskGroupEditorContainer: React.FC<TaskGroupEditorContainerProps> = ({
-  chain,
-  isEditing,
-  initialParentId,
-  onSave,
-  onCancel,
-}) => {
+export const TaskGroupEditorContainer: React.FC<
+  TaskGroupEditorContainerProps
+> = ({ chain, isEditing, initialParentId, onSave, onCancel }) => {
   const {
     name,
     description,
@@ -69,9 +65,11 @@ export const TaskGroupEditorContainer: React.FC<TaskGroupEditorContainerProps> =
       onCustomAuxiliarySignalChange={handleCustomAuxiliarySignalChange}
       onAuxiliaryDurationChange={setAuxiliaryDuration}
       onAuxiliaryDurationModeChange={(isCustom, value) => {
-        handleDurationSelect(isCustom ? "custom" : String(value));
+        handleDurationSelect(isCustom ? 'custom' : String(value));
       }}
-      onAuxiliaryCompletionTriggerChange={handleAuxiliaryCompletionTriggerChange}
+      onAuxiliaryCompletionTriggerChange={
+        handleAuxiliaryCompletionTriggerChange
+      }
       onSubmit={handleSubmit}
       onCancel={onCancel}
     />

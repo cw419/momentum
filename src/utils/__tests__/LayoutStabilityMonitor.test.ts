@@ -1,7 +1,11 @@
 import { LayoutStabilityMonitor } from '../LayoutStabilityMonitor';
 
 const ensureWindowProp = (key: string, value: unknown) => {
-  Object.defineProperty(window, key, { configurable: true, writable: true, value });
+  Object.defineProperty(window, key, {
+    configurable: true,
+    writable: true,
+    value,
+  });
 };
 
 const restoreWindowProp = (key: string, original: unknown) => {
@@ -23,7 +27,11 @@ const ensureGlobalProp = (key: string, value: unknown) => {
   }
 
   try {
-    Object.defineProperty(global, key, { configurable: true, writable: true, value });
+    Object.defineProperty(global, key, {
+      configurable: true,
+      writable: true,
+      value,
+    });
   } catch {
     // If the environment defines a non-configurable global (common in jsdom),
     // rely on the window override instead.
@@ -156,7 +164,10 @@ describe('LayoutStabilityMonitor', () => {
     restoreGlobalProp('ResizeObserver', originalGlobalResizeObserver);
     restoreGlobalProp('MutationObserver', originalGlobalMutationObserver);
     restoreGlobalProp('PerformanceObserver', originalGlobalPerformanceObserver);
-    restoreGlobalProp('requestAnimationFrame', originalGlobalRequestAnimationFrame);
+    restoreGlobalProp(
+      'requestAnimationFrame',
+      originalGlobalRequestAnimationFrame,
+    );
   });
 
   describe('initialization', () => {
@@ -174,7 +185,7 @@ describe('LayoutStabilityMonitor', () => {
   describe('monitoring', () => {
     it('should start monitoring', () => {
       monitor.startMonitoring(container);
-      
+
       // Should call observe methods
       expect(mockMutationObserver).toHaveBeenCalledTimes(1);
       expect(mockResizeObserver).toHaveBeenCalledTimes(1);
@@ -187,13 +198,15 @@ describe('LayoutStabilityMonitor', () => {
         attributeFilter: ['style', 'class'],
       });
       expect(resizeObserverObserve).toHaveBeenCalledWith(container);
-      expect(performanceObserverObserve).toHaveBeenCalledWith({ entryTypes: ['layout-shift'] });
+      expect(performanceObserverObserve).toHaveBeenCalledWith({
+        entryTypes: ['layout-shift'],
+      });
     });
 
     it('should stop monitoring', () => {
       monitor.startMonitoring(container);
       monitor.stopMonitoring();
-      
+
       // Should call disconnect methods
       expect(mutationObserverDisconnect).toHaveBeenCalledTimes(1);
       expect(resizeObserverDisconnect).toHaveBeenCalledTimes(1);
@@ -203,7 +216,7 @@ describe('LayoutStabilityMonitor', () => {
     it('should not start monitoring twice', () => {
       monitor.startMonitoring(container);
       monitor.startMonitoring(container);
-      
+
       // Should only call observe once
       expect(mutationObserverObserve).toHaveBeenCalledTimes(1);
       expect(resizeObserverObserve).toHaveBeenCalledTimes(1);
@@ -300,7 +313,7 @@ describe('LayoutStabilityMonitor', () => {
       expect(errorCallback).toHaveBeenCalledTimes(1);
       expect(normalCallback).toHaveBeenCalledTimes(1);
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Stabilization callback error')
+        expect.stringContaining('Stabilization callback error'),
       );
     });
   });
@@ -308,7 +321,7 @@ describe('LayoutStabilityMonitor', () => {
   describe('stability report', () => {
     it('should generate stability report', () => {
       const report = monitor.getStabilityReport();
-      
+
       expect(report).toHaveProperty('cumulativeLayoutShift');
       expect(report).toHaveProperty('totalIssues');
       expect(report).toHaveProperty('issuesByType');
@@ -319,7 +332,7 @@ describe('LayoutStabilityMonitor', () => {
     it('should clear issues', () => {
       monitor.clearIssues();
       const report = monitor.getStabilityReport();
-      
+
       expect(report.totalIssues).toBe(0);
       expect(report.cumulativeLayoutShift).toBe(0);
     });
@@ -329,14 +342,14 @@ describe('LayoutStabilityMonitor', () => {
     it('should perform manual check', () => {
       const spy = vi.spyOn(monitor as any, 'performInitialCheck');
       monitor.checkNow(container);
-      
+
       expect(spy).toHaveBeenCalledWith(container);
     });
 
     it('should use document.body as default container', () => {
       const spy = vi.spyOn(monitor as any, 'performInitialCheck');
       monitor.checkNow();
-      
+
       expect(spy).toHaveBeenCalledWith(document.body);
     });
   });
@@ -344,10 +357,10 @@ describe('LayoutStabilityMonitor', () => {
   describe('state tracking', () => {
     it('should track stabilization state', () => {
       expect(monitor.isStabilizingLayout()).toBe(false);
-      
+
       monitor.stabilizeLayout(container);
       expect(monitor.isStabilizingLayout()).toBe(true);
-      
+
       flushRaf();
       expect(monitor.isStabilizingLayout()).toBe(false);
     });
@@ -359,22 +372,22 @@ describe('LayoutStabilityMonitor', () => {
       const overflowElement = document.createElement('div');
       overflowElement.style.width = '100px';
       overflowElement.style.overflow = 'visible';
-      
+
       // Mock scrollWidth to be larger than clientWidth
       Object.defineProperty(overflowElement, 'scrollWidth', {
         value: 200,
-        configurable: true
+        configurable: true,
       });
       Object.defineProperty(overflowElement, 'clientWidth', {
         value: 100,
-        configurable: true
+        configurable: true,
       });
-      
+
       container.appendChild(overflowElement);
-      
+
       monitor.checkNow(container);
       const report = monitor.getStabilityReport();
-      
+
       expect(report.totalIssues).toBeGreaterThan(0);
     });
   });

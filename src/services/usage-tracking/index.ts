@@ -3,16 +3,16 @@ export {
   buildUsageRecordInput,
   buildUsageExportData,
   formatUsageRecordsAsCsv,
-  countExpiredUsageRecords
+  countExpiredUsageRecords,
 } from './UsageRecorder';
 
 export {
   calculateRuleUsageStats,
   calculateOverallUsageStats,
-  calculateUsageStatsInTimeRange
+  calculateUsageStatsInTimeRange,
 } from './UsageStatsCalculator';
 
 export {
   calculateRuleUsageTrend,
-  calculateRuleEfficiencyAnalysis
+  calculateRuleEfficiencyAnalysis,
 } from './UsageTrendAnalyzer';

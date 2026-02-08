@@ -1,6 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { Chain, ChainTreeNode, ScheduledSession } from '../../types';
-import { getChainTypeConfig, getGroupProgress, getGroupUnitProgress, getNextUnitInGroup } from '../../utils/chainTree';
+import {
+  getChainTypeConfig,
+  getGroupProgress,
+  getGroupUnitProgress,
+  getNextUnitInGroup,
+} from '../../utils/chainTree';
 import { getGroupTimeStatus } from '../../utils/timeLimit';
 import { useI18n } from '../../i18n';
 import { GroupViewView } from './GroupViewView';
@@ -15,9 +20,17 @@ interface GroupViewProps {
   onEditChain: (chainId: string) => void;
   onDeleteChain: (chainId: string) => void;
   onAddUnit: () => void;
-  onImportUnits: (unitIds: string[], groupId: string, mode?: 'move' | 'copy') => void;
+  onImportUnits: (
+    unitIds: string[],
+    groupId: string,
+    mode?: 'move' | 'copy',
+  ) => void;
   onUpdateTaskRepeatCount?: (chainId: string, repeatCount: number) => void;
-  onReorderUnit?: (groupId: string, unitId: string, direction: 'up' | 'down') => void;
+  onReorderUnit?: (
+    groupId: string,
+    unitId: string,
+    direction: 'up' | 'down',
+  ) => void;
   onViewDetail: (chainId: string) => void;
 }
 
@@ -60,7 +73,7 @@ export function GroupView({
     (chainId: string) => {
       return scheduledSessionByChainId.get(chainId);
     },
-    [scheduledSessionByChainId]
+    [scheduledSessionByChainId],
   );
 
   const handleOpenRepeatModal = useCallback((unit: ChainTreeNode) => {

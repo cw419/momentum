@@ -1,4 +1,9 @@
-import { ExceptionRule, ExceptionRuleError, ExceptionRuleException, ExceptionRuleType } from '../../../types';
+import {
+  ExceptionRule,
+  ExceptionRuleError,
+  ExceptionRuleException,
+  ExceptionRuleType,
+} from '../../../types';
 import { exceptionRuleStorage } from '../../ExceptionRuleStorage';
 import { getErrorMessage } from '../../../utils/errorMessage';
 import type { ValidationIssue, ValidationReport } from '../types';
@@ -71,7 +76,9 @@ function validateSingleRuleIntegrity(rule: ExceptionRule): ValidationIssue[] {
   return issues;
 }
 
-export async function validateRulesIntegrity(rules?: ExceptionRule[]): Promise<ValidationReport> {
+export async function validateRulesIntegrity(
+  rules?: ExceptionRule[],
+): Promise<ValidationReport> {
   try {
     const rulesToValidate = rules || (await exceptionRuleStorage.getRules());
     const issues: ValidationIssue[] = [];
@@ -98,8 +105,7 @@ export async function validateRulesIntegrity(rules?: ExceptionRule[]): Promise<V
     throw new ExceptionRuleException(
       ExceptionRuleError.VALIDATION_ERROR,
       `批量验证失败: ${getErrorMessage(error)}`,
-      error
+      error,
     );
   }
 }
-

@@ -1,6 +1,9 @@
 import type { Chain } from '../../types';
 
-export function collectDescendantIds(rootId: string, allChains: Chain[]): Set<string> {
+export function collectDescendantIds(
+  rootId: string,
+  allChains: Chain[],
+): Set<string> {
   const childrenByParentId = new Map<string, string[]>();
 
   for (const chain of allChains) {
@@ -27,4 +30,3 @@ export function collectDescendantIds(rootId: string, allChains: Chain[]): Set<st
 
   return descendants;
 }
-

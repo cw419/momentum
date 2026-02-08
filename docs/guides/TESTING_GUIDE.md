@@ -5,12 +5,14 @@
 ## 测试前准备
 
 ### 环境要求
+
 - Node.js 20+
 - 现代浏览器（Chrome/Firefox/Edge）
 - 可选：Supabase 账户（测试云同步）
 
 ### 启动应用
-****## P0–P3 Regression Checks (Manual)
+
+\*\*\*\*## P0–P3 Regression Checks (Manual)
 
 - Skip link: press `Tab` right after load, then `Enter` on “Skip to main content” → focus lands in main content (`main`).
 - URL reflects state: navigate between Dashboard / RSIP / Detail / Group / Editor, then use browser Back/Forward → view follows URL.
@@ -25,6 +27,7 @@
 npm install
 npm run dev
 ```
+
 访问 `http://localhost:5173`
 
 ---

@@ -20,7 +20,7 @@ import {
   type FeedbackAction,
   type ProgressInfo,
   type MessageListener,
-  type ProgressListener
+  type ProgressListener,
 } from './feedback';
 
 export type { FeedbackMessage, FeedbackAction, ProgressInfo };
@@ -42,7 +42,11 @@ class UserFeedbackHandler {
     return this.presenter.showErrorMessage(error, context);
   }
 
-  showWarning(title: string, message: string, actions?: FeedbackAction[]): string {
+  showWarning(
+    title: string,
+    message: string,
+    actions?: FeedbackAction[],
+  ): string {
     return this.presenter.showWarning(title, message, actions);
   }
 
@@ -50,11 +54,17 @@ class UserFeedbackHandler {
     return this.presenter.showInfo(title, message, autoHide);
   }
 
-  showSuccess(title: string, message: string, autoHide: boolean = true): string {
+  showSuccess(
+    title: string,
+    message: string,
+    autoHide: boolean = true,
+  ): string {
     return this.presenter.showSuccess(title, message, autoHide);
   }
 
-  async showRecoveryOptions(options: RecoveryAction[]): Promise<RecoveryAction | null> {
+  async showRecoveryOptions(
+    options: RecoveryAction[],
+  ): Promise<RecoveryAction | null> {
     return this.interactive.showRecoveryOptions(options);
   }
 
@@ -98,9 +108,14 @@ class UserFeedbackHandler {
     title: string,
     message: string,
     confirmLabel?: string,
-    cancelLabel?: string
+    cancelLabel?: string,
   ): Promise<boolean> {
-    return this.interactive.showConfirmation(title, message, confirmLabel, cancelLabel);
+    return this.interactive.showConfirmation(
+      title,
+      message,
+      confirmLabel,
+      cancelLabel,
+    );
   }
 
   showBatchOperationFeedback(
@@ -108,9 +123,15 @@ class UserFeedbackHandler {
     total: number,
     success: number,
     failed: number,
-    errors?: string[]
+    errors?: string[],
   ): string {
-    return this.interactive.showBatchOperationFeedback(operation, total, success, failed, errors);
+    return this.interactive.showBatchOperationFeedback(
+      operation,
+      total,
+      success,
+      failed,
+      errors,
+    );
   }
 }
 

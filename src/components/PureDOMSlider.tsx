@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface PureDOMSliderProps {
@@ -59,7 +58,7 @@ export const PureDOMSlider: React.FC<PureDOMSliderProps> = ({
         onValueChange(newValue);
       }
     },
-    [onValueChange, debounceMs]
+    [onValueChange, debounceMs],
   );
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,31 +67,33 @@ export const PureDOMSlider: React.FC<PureDOMSliderProps> = ({
     debouncedOnValueChange(newValue);
   };
 
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    if (disabled) return;
-    
-    // 智能触摸检测：只在真正的滑块交互时阻止默认行为
-    const touch = event.touches[0];
-    if (!touch) return;
-    const slider = event.currentTarget;
-    const rect = slider.getBoundingClientRect();
-    
-    // 检查触摸点是否在滑块的有效交互区域内
-    const isInSliderArea = (
-      touch.clientY >= rect.top - 10 && 
-      touch.clientY <= rect.bottom + 10 &&
-      touch.clientX >= rect.left && 
-      touch.clientX <= rect.right
-    );
-    
-    if (isInSliderArea) {
-      setIsDragging(true);
-      // 只阻止水平滚动，允许垂直滚动
-      if (Math.abs(touch.clientX - rect.left) > 10) {
-        event.preventDefault();
+  const handleTouchStart = useCallback(
+    (event: React.TouchEvent) => {
+      if (disabled) return;
+
+      // 智能触摸检测：只在真正的滑块交互时阻止默认行为
+      const touch = event.touches[0];
+      if (!touch) return;
+      const slider = event.currentTarget;
+      const rect = slider.getBoundingClientRect();
+
+      // 检查触摸点是否在滑块的有效交互区域内
+      const isInSliderArea =
+        touch.clientY >= rect.top - 10 &&
+        touch.clientY <= rect.bottom + 10 &&
+        touch.clientX >= rect.left &&
+        touch.clientX <= rect.right;
+
+      if (isInSliderArea) {
+        setIsDragging(true);
+        // 只阻止水平滚动，允许垂直滚动
+        if (Math.abs(touch.clientX - rect.left) > 10) {
+          event.preventDefault();
+        }
       }
-    }
-  }, [disabled]);
+    },
+    [disabled],
+  );
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
@@ -130,11 +131,13 @@ export const PureDOMSlider: React.FC<PureDOMSliderProps> = ({
     transition duration-150 ease-out
     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
     ${isTouchDevice ? 'active:scale-[0.98]' : 'hover:bg-gray-300 dark:hover:bg-gray-500'}
-  `.trim().replace(/\s+/g, ' ');
+  `
+    .trim()
+    .replace(/\s+/g, ' ');
 
   return (
     <div className={`relative flex items-center space-x-3 ${className}`}>
-      <div className="relative flex-1 flex items-center">
+      <div className="relative flex flex-1 items-center">
         <input
           ref={sliderRef}
           type="range"
@@ -171,11 +174,11 @@ export const PureDOMSlider: React.FC<PureDOMSliderProps> = ({
           aria-valuemax={max}
           aria-valuenow={value}
         />
-        
+
         {/* 触摸设备的额外触摸区域 */}
         {isTouchDevice && (
-          <div 
-            className="absolute inset-0 -m-2 touch-target"
+          <div
+            className="touch-target absolute inset-0 -m-2"
             style={{
               minHeight: '44px',
               minWidth: '100%',
@@ -184,15 +187,11 @@ export const PureDOMSlider: React.FC<PureDOMSliderProps> = ({
           />
         )}
       </div>
-      
+
       {showValue && (
-        <div className="min-w-[60px] text-right flex-shrink-0">
-          <span 
-            className={`
-              slider-value font-mono font-semibold transition-colors duration-150
-              ${disabled ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400'}
-              ${isDragging ? 'text-blue-700 dark:text-blue-300 font-bold' : ''}
-            `}
+        <div className="min-w-[60px] flex-shrink-0 text-right">
+          <span
+            className={`slider-value font-mono font-semibold transition-colors duration-150 ${disabled ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400'} ${isDragging ? 'font-bold text-blue-700 dark:text-blue-300' : ''} `}
           >
             {valueFormatter(value)}
           </span>

@@ -69,7 +69,7 @@ describe('BettingModalContainer', () => {
         sessionId="session-1"
         chainName="Deep Work"
         taskDuration={45}
-      />
+      />,
     );
 
     expect(screen.getByTestId('chain-name').textContent).toBe('Deep Work');

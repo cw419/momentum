@@ -42,7 +42,9 @@ describe('performance-monitor idle', () => {
 
 describe('isLayoutShiftEntry', () => {
   it('returns false when entry type is not layout-shift', () => {
-    const result = isLayoutShiftEntry({ entryType: 'mark' } as PerformanceEntry);
+    const result = isLayoutShiftEntry({
+      entryType: 'mark',
+    } as PerformanceEntry);
     expect(result).toBe(false);
   });
 

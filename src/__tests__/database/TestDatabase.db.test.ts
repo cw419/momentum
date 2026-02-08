@@ -34,7 +34,9 @@ describe('Test database harness (in-memory)', () => {
     const afterInsert = await testDbUtils.query('chains');
     expect(afterInsert).toHaveLength(1);
 
-    await testDbUtils.update('chains', 'chain-smoke-1', { name: 'Updated Smoke Chain' });
+    await testDbUtils.update('chains', 'chain-smoke-1', {
+      name: 'Updated Smoke Chain',
+    });
     const afterUpdate = await testDbUtils.query('chains');
     expect(afterUpdate[0].name).toBe('Updated Smoke Chain');
 
@@ -43,4 +45,3 @@ describe('Test database harness (in-memory)', () => {
     expect(afterDelete).toHaveLength(0);
   });
 });
-

@@ -32,6 +32,7 @@ npm run lint:spell:docs
 ```
 
 Notes:
+
 - This repo intentionally avoids pre-commit hooks; all checks are explicit `npm run ...` commands.
 - ESLint forbids `console.*` in `src/` (use `logger` from `src/utils/logger.ts`).
 
@@ -39,9 +40,9 @@ Notes:
 
 If your PR is driven by performance or static-analysis “smell” reports, include these 3 items in the PR description:
 
-1) Which hotspot you’re addressing (SonarJS / Madge / Knip / JSCPD / Lighthouse / DevTools trace)
-2) Before/after comparison (at least one number)
-3) Risk + rollback plan (how to confirm behavior didn’t change)
+1. Which hotspot you’re addressing (SonarJS / Madge / Knip / JSCPD / Lighthouse / DevTools trace)
+2. Before/after comparison (at least one number)
+3. Risk + rollback plan (how to confirm behavior didn’t change)
 
 ## Deeper Quality Checks (optional)
 

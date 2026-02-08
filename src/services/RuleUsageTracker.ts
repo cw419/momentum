@@ -3,14 +3,14 @@
  * 记录和分析例外规则的使用情况
  */
 
-import { 
-  RuleUsageRecord, 
-  SessionContext, 
-  RuleUsageStats, 
+import {
+  RuleUsageRecord,
+  SessionContext,
+  RuleUsageStats,
   OverallUsageStats,
   PauseOptions,
   ExceptionRuleError,
-  ExceptionRuleException
+  ExceptionRuleException,
 } from '../types';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 import { logger } from '../utils/logger';
@@ -25,7 +25,7 @@ import {
   calculateRuleUsageTrend,
   calculateUsageStatsInTimeRange,
   countExpiredUsageRecords,
-  formatUsageRecordsAsCsv
+  formatUsageRecordsAsCsv,
 } from './usage-tracking';
 
 export class RuleUsageTracker {
@@ -33,10 +33,10 @@ export class RuleUsageTracker {
    * 记录规则使用
    */
   async recordUsage(
-    ruleId: string, 
-    sessionContext: SessionContext, 
+    ruleId: string,
+    sessionContext: SessionContext,
     actionType: RuleUsageActionType,
-    pauseOptions?: PauseOptions
+    pauseOptions?: PauseOptions,
   ): Promise<RuleUsageRecord> {
     try {
       // 验证规则是否存在
@@ -44,13 +44,13 @@ export class RuleUsageTracker {
       if (!rule || !rule.isActive) {
         throw new ExceptionRuleException(
           ExceptionRuleError.RULE_NOT_FOUND,
-          `规则 ID ${ruleId} 不存在或已被删除`
+          `规则 ID ${ruleId} 不存在或已被删除`,
         );
       }
 
       // 创建使用记录
       const record = await exceptionRuleStorage.createUsageRecord(
-        buildUsageRecordInput(rule, sessionContext, actionType, pauseOptions)
+        buildUsageRecordInput(rule, sessionContext, actionType, pauseOptions),
       );
 
       return record;
@@ -61,7 +61,7 @@ export class RuleUsageTracker {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '记录规则使用失败',
-        error
+        error,
       );
     }
   }
@@ -75,11 +75,12 @@ export class RuleUsageTracker {
       if (!rule) {
         throw new ExceptionRuleException(
           ExceptionRuleError.RULE_NOT_FOUND,
-          `规则 ID ${ruleId} 不存在`
+          `规则 ID ${ruleId} 不存在`,
         );
       }
 
-      const records = await exceptionRuleStorage.getUsageRecordsByRuleId(ruleId);
+      const records =
+        await exceptionRuleStorage.getUsageRecordsByRuleId(ruleId);
 
       return calculateRuleUsageStats(rule, records);
     } catch (error) {
@@ -89,7 +90,7 @@ export class RuleUsageTracker {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取规则使用统计失败',
-        error
+        error,
       );
     }
   }
@@ -100,7 +101,7 @@ export class RuleUsageTracker {
   async getOverallUsageStats(): Promise<OverallUsageStats> {
     try {
       const allRules = await exceptionRuleStorage.getRules();
-      const activeRules = allRules.filter(rule => rule.isActive);
+      const activeRules = allRules.filter((rule) => rule.isActive);
       const allRecords = await exceptionRuleStorage.getUsageRecords();
 
       return calculateOverallUsageStats(activeRules, allRecords);
@@ -108,7 +109,7 @@ export class RuleUsageTracker {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取整体使用统计失败',
-        error
+        error,
       );
     }
   }
@@ -116,14 +117,17 @@ export class RuleUsageTracker {
   /**
    * 获取规则使用历史
    */
-  async getRuleUsageHistory(ruleId: string, limit?: number): Promise<RuleUsageRecord[]> {
+  async getRuleUsageHistory(
+    ruleId: string,
+    limit?: number,
+  ): Promise<RuleUsageRecord[]> {
     try {
       return await exceptionRuleStorage.getUsageRecordsByRuleId(ruleId, limit);
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取规则使用历史失败',
-        error
+        error,
       );
     }
   }
@@ -138,7 +142,7 @@ export class RuleUsageTracker {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取会话使用历史失败',
-        error
+        error,
       );
     }
   }
@@ -147,8 +151,8 @@ export class RuleUsageTracker {
    * 获取时间范围内的使用统计
    */
   async getUsageStatsInTimeRange(
-    startDate: Date, 
-    endDate: Date
+    startDate: Date,
+    endDate: Date,
   ): Promise<{
     totalUsage: number;
     pauseUsage: number;
@@ -159,12 +163,17 @@ export class RuleUsageTracker {
     try {
       const allRecords = await exceptionRuleStorage.getUsageRecords();
       const allRules = await exceptionRuleStorage.getRules();
-      return calculateUsageStatsInTimeRange(allRecords, allRules, startDate, endDate);
+      return calculateUsageStatsInTimeRange(
+        allRecords,
+        allRules,
+        startDate,
+        endDate,
+      );
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取时间范围使用统计失败',
-        error
+        error,
       );
     }
   }
@@ -172,7 +181,10 @@ export class RuleUsageTracker {
   /**
    * 获取规则使用趋势
    */
-  async getRuleUsageTrend(ruleId: string, days: number = 30): Promise<{
+  async getRuleUsageTrend(
+    ruleId: string,
+    days: number = 30,
+  ): Promise<{
     trend: Array<{ date: string; count: number }>;
     totalUsage: number;
     averageDailyUsage: number;
@@ -183,13 +195,14 @@ export class RuleUsageTracker {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      const records = await exceptionRuleStorage.getUsageRecordsByRuleId(ruleId);
+      const records =
+        await exceptionRuleStorage.getUsageRecordsByRuleId(ruleId);
       return calculateRuleUsageTrend(records, startDate, endDate, days);
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取规则使用趋势失败',
-        error
+        error,
       );
     }
   }
@@ -201,20 +214,21 @@ export class RuleUsageTracker {
     averageTaskProgress: number; // 平均任务进度（已用时间/总时间）
     usagePatterns: {
       earlyUsage: number; // 任务早期使用次数（<25%进度）
-      midUsage: number;   // 任务中期使用次数（25%-75%进度）
-      lateUsage: number;  // 任务后期使用次数（>75%进度）
+      midUsage: number; // 任务中期使用次数（25%-75%进度）
+      lateUsage: number; // 任务后期使用次数（>75%进度）
     };
     recommendations: string[];
   }> {
     try {
-      const records = await exceptionRuleStorage.getUsageRecordsByRuleId(ruleId);
+      const records =
+        await exceptionRuleStorage.getUsageRecordsByRuleId(ruleId);
 
       return calculateRuleEfficiencyAnalysis(records);
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取规则效率分析失败',
-        error
+        error,
       );
     }
   }
@@ -233,7 +247,10 @@ export class RuleUsageTracker {
       }
 
       if (removedCount > 0 && isDev) {
-        logger.debug('RULE_USAGE', '将清理过期记录', { removedCount, retentionDays });
+        logger.debug('RULE_USAGE', '将清理过期记录', {
+          removedCount,
+          retentionDays,
+        });
       }
 
       return removedCount;
@@ -241,7 +258,7 @@ export class RuleUsageTracker {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '清理过期记录失败',
-        error
+        error,
       );
     }
   }
@@ -256,7 +273,11 @@ export class RuleUsageTracker {
       const allRecords = await exceptionRuleStorage.getUsageRecords();
 
       const exportData = {
-        ...buildUsageExportData(overallStats, allRules.filter(r => r.isActive), allRecords)
+        ...buildUsageExportData(
+          overallStats,
+          allRules.filter((r) => r.isActive),
+          allRecords,
+        ),
       };
 
       if (format === 'json') {
@@ -268,7 +289,7 @@ export class RuleUsageTracker {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '导出使用数据失败',
-        error
+        error,
       );
     }
   }

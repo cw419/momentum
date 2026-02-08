@@ -1,5 +1,6 @@
 import type { AsyncOperation, OperationState } from './types';
 import { executeWithTimeout } from './timeout';
+import { normalizeUnknownError } from '../errors/normalizeError';
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,7 +17,7 @@ export async function executeWithRetry<T>(args: {
   const maxRetries = operation.retryCount ?? defaultRetryCount;
   const timeout = operation.timeout ?? defaultTimeout;
 
-  let lastError: Error;
+  let lastError: Error = new Error('Operation failed');
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -27,7 +28,7 @@ export async function executeWithRetry<T>(args: {
 
       return await executeWithTimeout(operation.operation, timeout);
     } catch (error) {
-      lastError = error as Error;
+      lastError = normalizeUnknownError(error);
 
       if (attempt < maxRetries) {
         operation.onRetry?.(attempt + 1);
@@ -38,6 +39,5 @@ export async function executeWithRetry<T>(args: {
     }
   }
 
-  throw lastError!;
+  throw lastError;
 }
-

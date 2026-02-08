@@ -21,8 +21,11 @@ export const NotesSection: React.FC<{
   if (isVisible) {
     return (
       <div className="animate-slide-down">
-        <div className="flex items-center space-x-2 mb-3">
-          <MessageSquare className="text-gray-500 dark:text-gray-400" size={16} />
+        <div className="mb-3 flex items-center space-x-2">
+          <MessageSquare
+            className="text-gray-500 dark:text-gray-400"
+            size={16}
+          />
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {tr('备注（可选）', 'Notes (optional)')}
           </label>
@@ -33,13 +36,19 @@ export const NotesSection: React.FC<{
           value={notes}
           onChange={(event) => onNotesChange(event.target.value)}
           onKeyDown={onNotesKeyDown}
-          placeholder={tr('添加更多详细信息或感想…', 'Add more details or thoughts…')}
+          placeholder={tr(
+            '添加更多详细信息或感想…',
+            'Add more details or thoughts…',
+          )}
           rows={3}
           aria-label={tr('备注', 'Notes')}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition resize-none"
+          className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {tr('按 Ctrl+Enter 完成，按 Esc 取消', 'Ctrl+Enter to complete, Esc to cancel')}
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {tr(
+            '按 Ctrl+Enter 完成，按 Esc 取消',
+            'Ctrl+Enter to complete, Esc to cancel',
+          )}
         </p>
       </div>
     );
@@ -50,10 +59,9 @@ export const NotesSection: React.FC<{
       type="button"
       onClick={onShowNotes}
       aria-label={tr('添加备注', 'Add notes')}
-      className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+      className="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
     >
       {tr('+ 添加备注', '+ Add notes')}
     </button>
   );
 };
-

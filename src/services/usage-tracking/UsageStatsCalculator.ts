@@ -5,16 +5,27 @@
  * - 时间范围统计
  */
 
-import { ExceptionRule, OverallUsageStats, RuleUsageRecord, RuleUsageStats } from '../../types';
+import {
+  ExceptionRule,
+  OverallUsageStats,
+  RuleUsageRecord,
+  RuleUsageStats,
+} from '../../types';
 
-export function calculateRuleUsageStats(rule: ExceptionRule, records: RuleUsageRecord[]): RuleUsageStats {
-  const pauseUsage = records.filter(r => r.actionType === 'pause').length;
-  const earlyCompletionUsage = records.filter(r => r.actionType === 'early_completion').length;
+export function calculateRuleUsageStats(
+  rule: ExceptionRule,
+  records: RuleUsageRecord[],
+): RuleUsageStats {
+  const pauseUsage = records.filter((r) => r.actionType === 'pause').length;
+  const earlyCompletionUsage = records.filter(
+    (r) => r.actionType === 'early_completion',
+  ).length;
   const totalUsage = records.length;
 
-  const averageTaskElapsedTime = totalUsage > 0
-    ? records.reduce((sum, r) => sum + r.taskElapsedTime, 0) / totalUsage
-    : 0;
+  const averageTaskElapsedTime =
+    totalUsage > 0
+      ? records.reduce((sum, r) => sum + r.taskElapsedTime, 0) / totalUsage
+      : 0;
 
   const chainUsage = new Map<string, { chainName: string; count: number }>();
   for (const record of records) {
@@ -24,13 +35,17 @@ export function calculateRuleUsageStats(rule: ExceptionRule, records: RuleUsageR
     } else {
       chainUsage.set(record.chainId, {
         chainName: record.chainId,
-        count: 1
+        count: 1,
       });
     }
   }
 
   const mostUsedWithChains = Array.from(chainUsage.entries())
-    .map(([chainId, data]) => ({ chainId, chainName: data.chainName, count: data.count }))
+    .map(([chainId, data]) => ({
+      chainId,
+      chainName: data.chainName,
+      count: data.count,
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
@@ -41,17 +56,22 @@ export function calculateRuleUsageStats(rule: ExceptionRule, records: RuleUsageR
     earlyCompletionUsage,
     lastUsedAt: rule.lastUsedAt,
     averageTaskElapsedTime,
-    mostUsedWithChains
+    mostUsedWithChains,
   };
 }
 
-export function calculateOverallUsageStats(activeRules: ExceptionRule[], allRecords: RuleUsageRecord[]): OverallUsageStats {
+export function calculateOverallUsageStats(
+  activeRules: ExceptionRule[],
+  allRecords: RuleUsageRecord[],
+): OverallUsageStats {
   const totalRules = activeRules.length;
   const totalUsage = allRecords.length;
-  const pauseUsage = allRecords.filter(r => r.actionType === 'pause').length;
-  const earlyCompletionUsage = allRecords.filter(r => r.actionType === 'early_completion').length;
+  const pauseUsage = allRecords.filter((r) => r.actionType === 'pause').length;
+  const earlyCompletionUsage = allRecords.filter(
+    (r) => r.actionType === 'early_completion',
+  ).length;
 
-  const activeRuleById = new Map(activeRules.map(rule => [rule.id, rule]));
+  const activeRuleById = new Map(activeRules.map((rule) => [rule.id, rule]));
   const ruleUsageCount = new Map<string, { ruleName: string; count: number }>();
 
   for (const record of allRecords) {
@@ -67,7 +87,11 @@ export function calculateOverallUsageStats(activeRules: ExceptionRule[], allReco
   }
 
   const mostUsedRules = Array.from(ruleUsageCount.entries())
-    .map(([ruleId, data]) => ({ ruleId, ruleName: data.ruleName, count: data.count }))
+    .map(([ruleId, data]) => ({
+      ruleId,
+      ruleName: data.ruleName,
+      count: data.count,
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
@@ -77,7 +101,7 @@ export function calculateOverallUsageStats(activeRules: ExceptionRule[], allReco
     totalUsage,
     pauseUsage,
     earlyCompletionUsage,
-    mostUsedRules
+    mostUsedRules,
   };
 }
 
@@ -97,13 +121,19 @@ export function calculateUsageStatsInTimeRange(
   allRecords: RuleUsageRecord[],
   allRules: ExceptionRule[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ): UsageStatsInTimeRange {
-  const filteredRecords = allRecords.filter(record => record.usedAt >= startDate && record.usedAt <= endDate);
+  const filteredRecords = allRecords.filter(
+    (record) => record.usedAt >= startDate && record.usedAt <= endDate,
+  );
 
   const totalUsage = filteredRecords.length;
-  const pauseUsage = filteredRecords.filter(r => r.actionType === 'pause').length;
-  const earlyCompletionUsage = filteredRecords.filter(r => r.actionType === 'early_completion').length;
+  const pauseUsage = filteredRecords.filter(
+    (r) => r.actionType === 'pause',
+  ).length;
+  const earlyCompletionUsage = filteredRecords.filter(
+    (r) => r.actionType === 'early_completion',
+  ).length;
 
   const dailyUsageMap = new Map<string, number>();
   for (const record of filteredRecords) {
@@ -120,9 +150,13 @@ export function calculateUsageStatsInTimeRange(
     ruleUsageMap.set(record.ruleId, (ruleUsageMap.get(record.ruleId) || 0) + 1);
   }
 
-  const ruleNameById = new Map(allRules.map(r => [r.id, r.name]));
+  const ruleNameById = new Map(allRules.map((r) => [r.id, r.name]));
   const topRules = Array.from(ruleUsageMap.entries())
-    .map(([ruleId, count]) => ({ ruleId, ruleName: ruleNameById.get(ruleId) || '未知规则', count }))
+    .map(([ruleId, count]) => ({
+      ruleId,
+      ruleName: ruleNameById.get(ruleId) || '未知规则',
+      count,
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
@@ -131,6 +165,6 @@ export function calculateUsageStatsInTimeRange(
     pauseUsage,
     earlyCompletionUsage,
     dailyUsage,
-    topRules
+    topRules,
   };
 }

@@ -7,4 +7,3 @@ describe('AppShell', () => {
     expect(AppShell).not.toBe(AppShellContainer);
   });
 });
-

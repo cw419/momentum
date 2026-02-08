@@ -1,6 +1,6 @@
 /**
  * 高性能批量操作管理器
- * 
+ *
  * 实现智能批量操作调度，包括：
  * - 操作队列管理和优先级调度
  * - 智能批处理合并和优化
@@ -84,7 +84,7 @@ class BatchOperationsManager {
       retryAttempts: 3,
       retryDelay: 1000, // ms
       adaptiveSizing: true,
-      performanceThreshold: 500 // ms
+      performanceThreshold: 500, // ms
     };
 
     this.executionStats = {
@@ -94,7 +94,7 @@ class BatchOperationsManager {
       averageExecutionTime: 0,
       throughput: 0,
       errorRate: 0,
-      retryRate: 0
+      retryRate: 0,
     };
 
     this.initializeBatchProcessing();
@@ -141,7 +141,7 @@ class BatchOperationsManager {
       priority?: 'low' | 'normal' | 'high' | 'critical';
       timeout?: number;
       retryCount?: number;
-    } = {}
+    } = {},
   ): Promise<T> {
     return new Promise((resolve, reject) => {
       // 检查队列大小限制
@@ -161,11 +161,11 @@ class BatchOperationsManager {
         retryCount: options.retryCount || 0,
         createdAt: new Date(),
         resolve,
-        reject
+        reject,
       };
 
       this.operationQueue.push(operation);
-      
+
       // 按优先级排序队列
       this.prioritizeQueue();
 
@@ -176,10 +176,13 @@ class BatchOperationsManager {
         }, this.config.batchTimeout);
       }
 
-      logger.debug(`[BatchOperationsManager] 添加操作到队列: ${type} ${resource}`, {
-        operationId: operation.id,
-        queueSize: this.operationQueue.length
-      });
+      logger.debug(
+        `[BatchOperationsManager] 添加操作到队列: ${type} ${resource}`,
+        {
+          operationId: operation.id,
+          queueSize: this.operationQueue.length,
+        },
+      );
     });
   }
 
@@ -189,9 +192,10 @@ class BatchOperationsManager {
   private prioritizeQueue(): void {
     const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
     this.operationQueue.sort((a, b) => {
-      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+      const priorityDiff =
+        priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
-      
+
       // 同优先级按创建时间排序
       return a.createdAt.getTime() - b.createdAt.getTime();
     });
@@ -214,14 +218,14 @@ class BatchOperationsManager {
 
     // 将操作分组
     const groups = this.groupOperations();
-    
+
     // 执行分组的批次
-    const executionPromises = Array.from(groups.values()).map(group => 
-      this.executeBatchGroup(group)
+    const executionPromises = Array.from(groups.values()).map((group) =>
+      this.executeBatchGroup(group),
     );
 
     // 跟踪活跃执行
-    executionPromises.forEach(promise => {
+    executionPromises.forEach((promise) => {
       this.activeExecutions.add(promise);
       promise.finally(() => {
         this.activeExecutions.delete(promise);
@@ -250,7 +254,7 @@ class BatchOperationsManager {
 
     for (const operation of this.operationQueue) {
       const groupKey = `${operation.resource}:${operation.type}`;
-      
+
       if (!groups.has(groupKey)) {
         groups.set(groupKey, {
           resource: operation.resource,
@@ -258,7 +262,7 @@ class BatchOperationsManager {
           operations: [],
           estimatedSize: 0,
           priority: this.getPriorityNumber(operation.priority),
-          createdAt: operation.createdAt
+          createdAt: operation.createdAt,
         });
       }
 
@@ -289,28 +293,31 @@ class BatchOperationsManager {
     const results: BatchResult[] = [];
 
     try {
-      logger.info(`[BatchOperationsManager] 执行批组: ${group.resource}:${group.type}`, {
-        operationCount: group.operations.length,
-        priority: group.priority,
-        estimatedSize: group.estimatedSize
-      });
+      logger.info(
+        `[BatchOperationsManager] 执行批组: ${group.resource}:${group.type}`,
+        {
+          operationCount: group.operations.length,
+          priority: group.priority,
+          estimatedSize: group.estimatedSize,
+        },
+      );
 
       // 根据资源和操作类型选择执行策略
       const batchResults = await this.executeBatchByResource(group);
-      
+
       // 处理结果
       for (let i = 0; i < group.operations.length; i++) {
         const operation = group.operations[i];
         const result = batchResults[i];
-        
+
         const batchResult: BatchResult = {
           operationId: operation.id,
           success: result.success,
           result: result.data,
           error: result.error,
-          executionTime: performance.now() - startTime
+          executionTime: performance.now() - startTime,
         };
-        
+
         results.push(batchResult);
 
         // 返回结果给操作发起者
@@ -319,7 +326,10 @@ class BatchOperationsManager {
           this.executionStats.successfulOperations++;
         } else {
           // 检查是否需要重试
-          if (operation.retryCount && operation.retryCount < this.config.retryAttempts) {
+          if (
+            operation.retryCount &&
+            operation.retryCount < this.config.retryAttempts
+          ) {
             await this.retryOperation(operation);
           } else {
             operation.reject(new Error(result.error || '批量操作失败'));
@@ -330,12 +340,14 @@ class BatchOperationsManager {
 
       const executionTime = performance.now() - startTime;
       this.updateExecutionStats(executionTime, results);
-
     } catch (error) {
       // 处理整个批次的错误
-      logger.error(`[BatchOperationsManager] 批组执行失败: ${group.resource}:${group.type}`, error);
-      
-      group.operations.forEach(operation => {
+      logger.error(
+        `[BatchOperationsManager] 批组执行失败: ${group.resource}:${group.type}`,
+        error,
+      );
+
+      group.operations.forEach((operation) => {
         operation.reject(error);
         this.executionStats.failedOperations++;
       });
@@ -345,23 +357,25 @@ class BatchOperationsManager {
   /**
    * 根据资源类型执行批量操作
    */
-  private async executeBatchByResource(group: BatchGroup): Promise<Array<{success: boolean; data?: any; error?: string}>> {
+  private async executeBatchByResource(
+    group: BatchGroup,
+  ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     const { resource, type, operations } = group;
 
     try {
       switch (resource) {
         case 'chains':
           return await this.executeChainsOperations(type, operations);
-        
+
         case 'sessions':
           return await this.executeSessionsOperations(type, operations);
-        
+
         case 'completions':
           return await this.executeCompletionsOperations(type, operations);
-        
+
         case 'cache':
           return await this.executeCacheOperations(type, operations);
-        
+
         default:
           throw new Error(`Unsupported resource type: ${resource}`);
       }
@@ -369,7 +383,7 @@ class BatchOperationsManager {
       // 返回所有操作失败的结果
       return operations.map(() => ({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       }));
     }
   }
@@ -379,65 +393,67 @@ class BatchOperationsManager {
    */
   private async executeChainsOperations(
     type: string,
-    operations: BatchOperation[]
-  ): Promise<Array<{success: boolean; data?: any; error?: string}>> {
+    operations: BatchOperation[],
+  ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     try {
       switch (type) {
         case 'read':
           // 批量读取链条
           const readResults = await Promise.all(
-            operations.map(async op => {
+            operations.map(async (op) => {
               try {
                 const chains = await highPerformanceDataAccess.getChains(
-                  op.conditions?.userId, 
-                  op.conditions?.options
+                  op.conditions?.userId,
+                  op.conditions?.options,
                 );
                 return { success: true, data: chains };
               } catch (error) {
-                return { 
-                  success: false, 
-                  error: error instanceof Error ? error.message : 'Read failed' 
+                return {
+                  success: false,
+                  error: error instanceof Error ? error.message : 'Read failed',
                 };
               }
-            })
+            }),
           );
           return readResults;
 
         case 'create':
           // 批量创建链条
-          const createOps = operations.map(op => ({
+          const createOps = operations.map((op) => ({
             operation: 'create' as const,
             chainId: undefined,
-            data: op.data
+            data: op.data,
           }));
-          
-          const createResult = await highPerformanceDataAccess.batchChainOperations(createOps);
+
+          const createResult =
+            await highPerformanceDataAccess.batchChainOperations(createOps);
           return operations.map((_, index) => ({
             success: true,
-            data: createResult[index]
+            data: createResult[index],
           }));
 
         case 'update':
           // 批量更新链条
-          const updateOps = operations.map(op => ({
+          const updateOps = operations.map((op) => ({
             operation: 'update' as const,
             chainId: op.conditions?.chainId,
-            data: op.data
+            data: op.data,
           }));
-          
-          const updateResult = await highPerformanceDataAccess.batchChainOperations(updateOps);
+
+          const updateResult =
+            await highPerformanceDataAccess.batchChainOperations(updateOps);
           return operations.map((_, index) => ({
             success: true,
-            data: updateResult[index]
+            data: updateResult[index],
           }));
 
         case 'delete':
           // 批量删除链条
-          const deleteOps = operations.map(op => ({
+          const deleteOps = operations.map((op) => ({
             operation: 'delete' as const,
-            chainId: op.conditions?.chainId
+            chainId: op.conditions?.chainId,
           }));
-          
+
           await highPerformanceDataAccess.batchChainOperations(deleteOps);
           return operations.map(() => ({ success: true, data: null }));
 
@@ -447,7 +463,8 @@ class BatchOperationsManager {
     } catch (error) {
       return operations.map(() => ({
         success: false,
-        error: error instanceof Error ? error.message : 'Chains operation failed'
+        error:
+          error instanceof Error ? error.message : 'Chains operation failed',
       }));
     }
   }
@@ -457,25 +474,29 @@ class BatchOperationsManager {
    */
   private async executeSessionsOperations(
     type: string,
-    operations: BatchOperation[]
-  ): Promise<Array<{success: boolean; data?: any; error?: string}>> {
+    operations: BatchOperation[],
+  ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     try {
       switch (type) {
         case 'read':
           const sessionResults = await Promise.all(
-            operations.map(async op => {
+            operations.map(async (op) => {
               try {
-                const sessions = await highPerformanceDataAccess.getActiveSessions(
-                  op.conditions?.userId
-                );
+                const sessions =
+                  await highPerformanceDataAccess.getActiveSessions(
+                    op.conditions?.userId,
+                  );
                 return { success: true, data: sessions };
               } catch (error) {
-                return { 
-                  success: false, 
-                  error: error instanceof Error ? error.message : 'Session read failed' 
+                return {
+                  success: false,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : 'Session read failed',
                 };
               }
-            })
+            }),
           );
           return sessionResults;
 
@@ -485,7 +506,8 @@ class BatchOperationsManager {
     } catch (error) {
       return operations.map(() => ({
         success: false,
-        error: error instanceof Error ? error.message : 'Sessions operation failed'
+        error:
+          error instanceof Error ? error.message : 'Sessions operation failed',
       }));
     }
   }
@@ -495,8 +517,8 @@ class BatchOperationsManager {
    */
   private async executeCompletionsOperations(
     type: string,
-    operations: BatchOperation[]
-  ): Promise<Array<{success: boolean; data?: any; error?: string}>> {
+    operations: BatchOperation[],
+  ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     // 简化实现，返回成功结果
     return operations.map(() => ({ success: true, data: null }));
   }
@@ -506,10 +528,11 @@ class BatchOperationsManager {
    */
   private async executeCacheOperations(
     type: string,
-    operations: BatchOperation[]
-  ): Promise<Array<{success: boolean; data?: any; error?: string}>> {
+    operations: BatchOperation[],
+  ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     try {
-      const results: Array<{success: boolean; data?: any; error?: string}> = [];
+      const results: Array<{ success: boolean; data?: any; error?: string }> =
+        [];
 
       for (const operation of operations) {
         try {
@@ -524,7 +547,7 @@ class BatchOperationsManager {
               await smartCache.set(
                 operation.conditions?.key,
                 operation.data.value,
-                operation.data.options
+                operation.data.options,
               );
               results.push({ success: true, data: null });
               break;
@@ -535,12 +558,16 @@ class BatchOperationsManager {
               break;
 
             default:
-              results.push({ success: false, error: `Unsupported cache operation: ${type}` });
+              results.push({
+                success: false,
+                error: `Unsupported cache operation: ${type}`,
+              });
           }
         } catch (error) {
-          results.push({ 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Cache operation failed' 
+          results.push({
+            success: false,
+            error:
+              error instanceof Error ? error.message : 'Cache operation failed',
           });
         }
       }
@@ -549,7 +576,8 @@ class BatchOperationsManager {
     } catch (error) {
       return operations.map(() => ({
         success: false,
-        error: error instanceof Error ? error.message : 'Cache operations failed'
+        error:
+          error instanceof Error ? error.message : 'Cache operations failed',
       }));
     }
   }
@@ -563,19 +591,18 @@ class BatchOperationsManager {
         operation.retryCount = (operation.retryCount || 0) + 1;
         this.operationQueue.unshift(operation); // 重新添加到队列前端
         this.executionStats.totalOperations++; // 重试也算作操作
-        
+
         logger.debug(`[BatchOperationsManager] 重试操作: ${operation.id}`, {
           retryCount: operation.retryCount,
-          maxRetries: this.config.retryAttempts
+          maxRetries: this.config.retryAttempts,
         });
-        
+
         // 触发批处理
         if (!this.batchTimer) {
           this.batchTimer = setTimeout(() => {
             this.processBatches();
           }, this.config.batchTimeout);
         }
-        
       } catch (error) {
         operation.reject(error);
         this.executionStats.failedOperations++;
@@ -588,7 +615,7 @@ class BatchOperationsManager {
    */
   private estimateOperationSize(operation: BatchOperation): number {
     let size = 100; // 基础大小
-    
+
     if (operation.data) {
       try {
         size += JSON.stringify(operation.data).length;
@@ -596,7 +623,7 @@ class BatchOperationsManager {
         size += 1000; // 默认大小
       }
     }
-    
+
     if (operation.conditions) {
       try {
         size += JSON.stringify(operation.conditions).length;
@@ -604,20 +631,27 @@ class BatchOperationsManager {
         size += 500;
       }
     }
-    
+
     return size;
   }
 
   /**
    * 获取优先级数值
    */
-  private getPriorityNumber(priority: 'low' | 'normal' | 'high' | 'critical'): number {
+  private getPriorityNumber(
+    priority: 'low' | 'normal' | 'high' | 'critical',
+  ): number {
     switch (priority) {
-      case 'critical': return 0;
-      case 'high': return 1;
-      case 'normal': return 2;
-      case 'low': return 3;
-      default: return 2;
+      case 'critical':
+        return 0;
+      case 'high':
+        return 1;
+      case 'normal':
+        return 2;
+      case 'low':
+        return 3;
+      default:
+        return 2;
     }
   }
 
@@ -631,19 +665,24 @@ class BatchOperationsManager {
   /**
    * 更新执行统计
    */
-  private updateExecutionStats(executionTime: number, results: BatchResult[]): void {
+  private updateExecutionStats(
+    executionTime: number,
+    results: BatchResult[],
+  ): void {
     const totalOps = results.length;
     this.executionStats.totalOperations += totalOps;
 
     // 更新平均执行时间
     const currentAvg = this.executionStats.averageExecutionTime;
     const totalOperations = this.executionStats.totalOperations;
-    this.executionStats.averageExecutionTime = 
-      (currentAvg * (totalOperations - totalOps) + executionTime) / totalOperations;
+    this.executionStats.averageExecutionTime =
+      (currentAvg * (totalOperations - totalOps) + executionTime) /
+      totalOperations;
 
     // 计算错误率
-    this.executionStats.errorRate = 
-      this.executionStats.failedOperations / this.executionStats.totalOperations;
+    this.executionStats.errorRate =
+      this.executionStats.failedOperations /
+      this.executionStats.totalOperations;
 
     // 记录性能历史
     this.performanceHistory.push(executionTime);
@@ -658,7 +697,7 @@ class BatchOperationsManager {
   private updateThroughputStats(): void {
     const now = Date.now();
     const oneSecondAgo = now - 1000;
-    
+
     // 简化吞吐量计算（实际项目中应该更精确）
     this.executionStats.throughput = this.executionStats.successfulOperations;
   }
@@ -667,30 +706,38 @@ class BatchOperationsManager {
    * 自适应性能参数调整
    */
   private adjustPerformanceParameters(): void {
-    if (!this.config.adaptiveSizing || this.performanceHistory.length < 10) return;
+    if (!this.config.adaptiveSizing || this.performanceHistory.length < 10)
+      return;
 
-    const averageTime = this.performanceHistory.reduce((sum, time) => sum + time, 0) / 
-                       this.performanceHistory.length;
+    const averageTime =
+      this.performanceHistory.reduce((sum, time) => sum + time, 0) /
+      this.performanceHistory.length;
 
     if (averageTime > this.config.performanceThreshold) {
       // 性能下降，减少批次大小
       this.config.maxBatchSize = Math.max(10, this.config.maxBatchSize - 5);
-      this.config.maxConcurrentBatches = Math.max(1, this.config.maxConcurrentBatches - 1);
-      
+      this.config.maxConcurrentBatches = Math.max(
+        1,
+        this.config.maxConcurrentBatches - 1,
+      );
+
       logger.info('[BatchOperationsManager] 性能调整: 减少批次大小', {
         newBatchSize: this.config.maxBatchSize,
         newConcurrentBatches: this.config.maxConcurrentBatches,
-        averageTime
+        averageTime,
       });
     } else if (averageTime < this.config.performanceThreshold * 0.5) {
       // 性能良好，可以增加批次大小
       this.config.maxBatchSize = Math.min(100, this.config.maxBatchSize + 5);
-      this.config.maxConcurrentBatches = Math.min(10, this.config.maxConcurrentBatches + 1);
-      
+      this.config.maxConcurrentBatches = Math.min(
+        10,
+        this.config.maxConcurrentBatches + 1,
+      );
+
       logger.info('[BatchOperationsManager] 性能调整: 增加批次大小', {
         newBatchSize: this.config.maxBatchSize,
         newConcurrentBatches: this.config.maxConcurrentBatches,
-        averageTime
+        averageTime,
       });
     }
   }
@@ -717,7 +764,7 @@ class BatchOperationsManager {
       maxQueueSize: this.config.maxQueueSize,
       activeBatches: this.activeExecutions.size,
       maxConcurrentBatches: this.config.maxConcurrentBatches,
-      isProcessing: this.batchTimer !== null || this.activeExecutions.size > 0
+      isProcessing: this.batchTimer !== null || this.activeExecutions.size > 0,
     };
   }
 
@@ -740,11 +787,11 @@ class BatchOperationsManager {
    * 清空队列（慎用）
    */
   clearQueue(): void {
-    this.operationQueue.forEach(op => {
+    this.operationQueue.forEach((op) => {
       op.reject(new Error('Queue cleared'));
     });
     this.operationQueue = [];
-    
+
     logger.warn('[BatchOperationsManager] 队列已清空');
   }
 
@@ -788,7 +835,7 @@ class BatchOperationsManager {
       failedOperations: this.stats.failedOperations,
       averageExecutionTime: this.stats.averageExecutionTime,
       queueSize: this.operationQueue.length,
-      processingBatches: this.processingBatches.size
+      processingBatches: this.processingBatches.size,
     };
   }
 
@@ -799,11 +846,11 @@ class BatchOperationsManager {
     // 清理完成的批处理记录（这里是示例实现）
     this.stats.successfulOperations = 0;
     this.stats.failedOperations = 0;
-    
+
     // 重置执行时间统计
     this.executionTimes = [];
     this.stats.averageExecutionTime = 0;
-    
+
     logger.debug('[BatchOperationsManager] 已清理已完成的操作记录');
   }
 
@@ -822,7 +869,7 @@ class BatchOperationsManager {
     this.clearQueue();
     this.batchGroups.clear();
     this.performanceHistory = [];
-    
+
     logger.info('[BatchOperationsManager] 实例已销毁');
   }
 }

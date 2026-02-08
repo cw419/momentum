@@ -6,13 +6,25 @@ import { useRuleManagerFilters } from './hooks/useRuleManagerFilters';
 import { useRuleManagerForm } from './hooks/useRuleManagerForm';
 import type { RuleManagerViewProps } from './types';
 
-export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: RuleManagerViewProps) {
+export function RuleManagerView({
+  onClose,
+  initialFilter,
+  onRuleSelected,
+}: RuleManagerViewProps) {
   const { language, tr } = useI18n();
 
-  const { rules, setRules, loading, error, setError, loadRules } = useRuleManagerData({ language, tr });
+  const { rules, setRules, loading, error, setError, loadRules } =
+    useRuleManagerData({ language, tr });
 
-  const { searchQuery, setSearchQuery, typeFilter, setTypeFilter, sortBy, setSortBy, filteredRules } =
-    useRuleManagerFilters({ rules, initialFilter });
+  const {
+    searchQuery,
+    setSearchQuery,
+    typeFilter,
+    setTypeFilter,
+    sortBy,
+    setSortBy,
+    filteredRules,
+  } = useRuleManagerFilters({ rules, initialFilter });
 
   const form = useRuleManagerForm();
 
@@ -71,4 +83,3 @@ export function RuleManagerView({ onClose, initialFilter, onRuleSelected }: Rule
     />
   );
 }
-

@@ -12,26 +12,31 @@
 ### 方法2：手动部署
 
 1. **安装依赖**
+
    ```bash
    npm install
    ```
 
 2. **构建项目**
+
    ```bash
    npm run build
    ```
 
 3. **安装 Netlify CLI**
+
    ```bash
    npm install -g netlify-cli
    ```
 
 4. **登录 Netlify**
+
    ```bash
    netlify login
    ```
 
 5. **链接到项目**
+
    ```bash
    netlify link --id 93d9da45-3df8-4a14-b24b-e4462436c75e
    ```
@@ -59,6 +64,7 @@
 ## 🔧 配置文件
 
 ### netlify.toml
+
 ```toml
 [build]
   command = "npm run build"
@@ -86,16 +92,19 @@
 ## 🐛 常见问题
 
 ### 构建失败
+
 - 检查 Node.js 版本是否为 18+
 - 确保所有依赖已正确安装
 - 检查 TypeScript 编译错误
 
 ### 部署失败
+
 - 确认已正确登录 Netlify
 - 检查项目链接是否正确
 - 验证环境变量配置
 
 ### 网站无法访问
+
 - 检查 Netlify 部署日志
 - 确认域名配置正确
 - 验证重定向规则

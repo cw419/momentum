@@ -45,7 +45,9 @@ function createSession(overrides: Partial<ActiveSession> = {}): ActiveSession {
   };
 }
 
-function createProps(overrides: Partial<ComponentProps<typeof FocusModeView>> = {}) {
+function createProps(
+  overrides: Partial<ComponentProps<typeof FocusModeView>> = {},
+) {
   const chain = createUnitChain({
     id: 'chain-1',
     name: 'Deep Work',
@@ -95,7 +97,7 @@ function renderView(props: ComponentProps<typeof FocusModeView>) {
   return render(
     <I18nProvider>
       <FocusModeView {...props} />
-    </I18nProvider>
+    </I18nProvider>,
   );
 }
 

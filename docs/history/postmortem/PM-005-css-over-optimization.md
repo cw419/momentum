@@ -13,11 +13,13 @@
 ## 2. 影响范围
 
 ### 用户可见症状
+
 - iPhone 13 Pro 等 iOS 设备上页面完全无法垂直滚动
 - 用户只能看到首屏内容
 - 核心功能不可用
 
 ### 影响面
+
 - 所有 iOS 移动端用户
 - 移动端是目标用户群的重要部分
 
@@ -28,13 +30,13 @@
 ```css
 /* mobile-visual-fix.css - 过度优化 */
 .app-container {
-  position: fixed;     /* ❌ 阻止了滚动 */
-  overflow: hidden;    /* ❌ 隐藏了溢出内容 */
-  contain: strict;     /* ❌ 过度的容器限制 */
+  position: fixed; /* ❌ 阻止了滚动 */
+  overflow: hidden; /* ❌ 隐藏了溢出内容 */
+  contain: strict; /* ❌ 过度的容器限制 */
 }
 
 body {
-  overflow: hidden;    /* ❌ 禁止了 body 滚动 */
+  overflow: hidden; /* ❌ 禁止了 body 滚动 */
 }
 ```
 
@@ -69,6 +71,7 @@ contain: strict
 ### 3.4 iOS Safari 的特殊行为
 
 iOS Safari 对 `position: fixed` 和 `overflow: hidden` 的处理与其他浏览器不同：
+
 - 软键盘弹出时会改变视口
 - `fixed` 元素可能被"推出"视口
 - `overflow: hidden` 在 `body` 上会完全禁止滚动
@@ -80,14 +83,14 @@ iOS Safari 对 `position: fixed` 和 `overflow: hidden` 的处理与其他浏览
 ```css
 /* mobile-visual-fix.css - 修复后 */
 .app-container {
-  /* position: fixed; */      /* ✅ 移除 */
-  /* overflow: hidden; */     /* ✅ 移除 */
-  contain: content;           /* ✅ 降级为更宽松的值 */
+  /* position: fixed; */ /* ✅ 移除 */
+  /* overflow: hidden; */ /* ✅ 移除 */
+  contain: content; /* ✅ 降级为更宽松的值 */
 }
 
 body {
-  overflow-y: auto;           /* ✅ 恢复滚动 */
-  -webkit-overflow-scrolling: touch;  /* ✅ iOS 平滑滚动 */
+  overflow-y: auto; /* ✅ 恢复滚动 */
+  -webkit-overflow-scrolling: touch; /* ✅ iOS 平滑滚动 */
 }
 ```
 
@@ -145,26 +148,26 @@ body {
 
 /* 1. 触摸响应优化 */
 .interactive-element {
-  touch-action: manipulation;  /* 禁用双击缩放，保留滚动 */
+  touch-action: manipulation; /* 禁用双击缩放，保留滚动 */
   -webkit-tap-highlight-color: transparent;
 }
 
 /* 2. 滚动性能优化 */
 .scroll-container {
-  -webkit-overflow-scrolling: touch;  /* iOS 惯性滚动 */
+  -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
   overflow-y: auto;
-  overscroll-behavior: contain;  /* 防止滚动穿透 */
+  overscroll-behavior: contain; /* 防止滚动穿透 */
 }
 
 /* 3. 渲染性能优化 */
 .animated-element {
   will-change: transform;
-  transform: translateZ(0);  /* 开启 GPU 加速 */
+  transform: translateZ(0); /* 开启 GPU 加速 */
 }
 
 /* 4. 安全的 contain 使用 */
 .card {
-  contain: content;  /* 比 strict 更安全 */
+  contain: content; /* 比 strict 更安全 */
 }
 ```
 
@@ -177,15 +180,16 @@ body {
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
-| `79c5847` | 紧急修复 iPhone 13 Pro 滚动失效 |
+| Commit    | 描述                             |
+| --------- | -------------------------------- |
+| `79c5847` | 紧急修复 iPhone 13 Pro 滚动失效  |
 | `56026e3` | 优化移动端体验（引入问题的提交） |
-| `0e94bdc` | 移动端性能优化总结 |
+| `0e94bdc` | 移动端性能优化总结               |
 
 ## 7. 经验教训
 
 > **核心教训**: CSS "优化"可能带来功能回退。在应用任何 CSS 优化之前：
+>
 > 1. 理解属性的完整行为和副作用
 > 2. 在目标设备上测试
 > 3. 优先使用最小侵入性的方案
@@ -212,5 +216,5 @@ body {
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

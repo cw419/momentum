@@ -6,7 +6,9 @@ import { StorageProvider } from '../../storage/StorageContext';
 import { AuthForm } from '../AuthForm';
 import { err, ok } from '../../domain/result';
 
-function renderAuthForm(storageOverrides: Partial<Record<'signIn' | 'signUp', any>> = {}) {
+function renderAuthForm(
+  storageOverrides: Partial<Record<'signIn' | 'signUp', any>> = {},
+) {
   localStorage.setItem('language', 'en');
 
   const storage = {
@@ -21,7 +23,7 @@ function renderAuthForm(storageOverrides: Partial<Record<'signIn' | 'signUp', an
       <StorageProvider storage={storage as any}>
         <AuthForm onBack={vi.fn()} />
       </StorageProvider>
-    </I18nProvider>
+    </I18nProvider>,
   );
 
   return storage;
@@ -31,49 +33,87 @@ describe('AuthForm', () => {
   it('submits sign-in successfully', async () => {
     const storage = renderAuthForm();
 
-    await userEvent.type(screen.getByPlaceholderText('Enter your email'), 'test@example.com');
-    await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'secret123');
+    await userEvent.type(
+      screen.getByPlaceholderText('Enter your email'),
+      'test@example.com',
+    );
+    await userEvent.type(
+      screen.getByPlaceholderText('Enter your password'),
+      'secret123',
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Sign In' }));
 
     await waitFor(() => {
-      expect(storage.signIn).toHaveBeenCalledWith('test@example.com', 'secret123');
+      expect(storage.signIn).toHaveBeenCalledWith(
+        'test@example.com',
+        'secret123',
+      );
     });
   });
 
   it('toggles password visibility and sign-up flow', async () => {
     const storage = renderAuthForm();
 
-    const passwordInput = screen.getByPlaceholderText('Enter your password') as HTMLInputElement;
+    const passwordInput = screen.getByPlaceholderText(
+      'Enter your password',
+    ) as HTMLInputElement;
     expect(passwordInput.type).toBe('password');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Show password' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Show password' }),
+    );
     expect(passwordInput.type).toBe('text');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Switch to sign up' }));
-    expect(screen.getByRole('heading', { name: 'Create Account' })).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Switch to sign up' }),
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Create Account' }),
+    ).toBeInTheDocument();
 
-    await userEvent.type(screen.getByPlaceholderText('Enter your email'), 'new@example.com');
-    await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'newpass123');
+    await userEvent.type(
+      screen.getByPlaceholderText('Enter your email'),
+      'new@example.com',
+    );
+    await userEvent.type(
+      screen.getByPlaceholderText('Enter your password'),
+      'newpass123',
+    );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Create Account' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create Account' }),
+    );
 
     await waitFor(() => {
-      expect(storage.signUp).toHaveBeenCalledWith('new@example.com', 'newpass123');
+      expect(storage.signUp).toHaveBeenCalledWith(
+        'new@example.com',
+        'newpass123',
+      );
     });
-    expect(screen.getByText('Account created! Please check your email to confirm.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Account created! Please check your email to confirm.'),
+    ).toBeInTheDocument();
   });
 
   it('shows safe error detail for failed sign-in and unexpected errors', async () => {
     const storage = renderAuthForm({
       signIn: vi
         .fn()
-        .mockResolvedValueOnce(err({ code: 'AUTH_FAILED', message: 'Invalid credentials' }))
+        .mockResolvedValueOnce(
+          err({ code: 'AUTH_FAILED', message: 'Invalid credentials' }),
+        )
         .mockRejectedValueOnce(new Error('Unexpected crash')),
     });
 
-    await userEvent.type(screen.getByPlaceholderText('Enter your email'), 'bad@example.com');
-    await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'wrong');
+    await userEvent.type(
+      screen.getByPlaceholderText('Enter your email'),
+      'bad@example.com',
+    );
+    await userEvent.type(
+      screen.getByPlaceholderText('Enter your password'),
+      'wrong',
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Sign In' }));
     expect(await screen.findByText('Invalid credentials')).toBeInTheDocument();
@@ -91,15 +131,17 @@ describe('AuthForm', () => {
     render(
       <I18nProvider>
         <StorageProvider
-          storage={{
-            kind: 'supabase',
-            signIn: vi.fn().mockResolvedValue(ok({ user: { id: 'u1' } })),
-            signUp: vi.fn().mockResolvedValue(ok({ user: null })),
-          } as any}
+          storage={
+            {
+              kind: 'supabase',
+              signIn: vi.fn().mockResolvedValue(ok({ user: { id: 'u1' } })),
+              signUp: vi.fn().mockResolvedValue(ok({ user: null })),
+            } as any
+          }
         >
           <AuthForm onBack={onBack} />
         </StorageProvider>
-      </I18nProvider>
+      </I18nProvider>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Go back' }));

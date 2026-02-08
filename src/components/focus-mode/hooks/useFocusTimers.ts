@@ -14,11 +14,19 @@ interface UseFocusTimersParams {
   onTimeUp: () => void;
 }
 
-export function useFocusTimers({ session, chain, isDurationless, storage, onTimeUp }: UseFocusTimersParams) {
+export function useFocusTimers({
+  session,
+  chain,
+  isDurationless,
+  storage,
+  onTimeUp,
+}: UseFocusTimersParams) {
   const { tr } = useI18n();
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [forwardElapsedSeconds, setForwardElapsedSeconds] = useState(0);
-  const [lastCompletionTime, setLastCompletionTime] = useState<number | null>(null);
+  const [lastCompletionTime, setLastCompletionTime] = useState<number | null>(
+    null,
+  );
   const [hasReachedMinimum, setHasReachedMinimum] = useState(false);
   const [minimumCountdown, setMinimumCountdown] = useState(0);
 
@@ -92,7 +100,9 @@ export function useFocusTimers({ session, chain, isDurationless, storage, onTime
       return Math.min(thresholdMinutes, 1) * 60;
     };
 
-    const notificationThresholdSeconds = getNotificationThresholdSeconds(session.duration);
+    const notificationThresholdSeconds = getNotificationThresholdSeconds(
+      session.duration,
+    );
 
     const calculateTimeRemainingSeconds = () => {
       const now = Date.now();
@@ -119,7 +129,10 @@ export function useFocusTimers({ session, chain, isDurationless, storage, onTime
       ) {
         hasShownWarningRef.current = true;
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        notificationManager.notifyTaskWarning(chain.name, tr(`${minutes}分钟`, `${minutes} min`));
+        notificationManager.notifyTaskWarning(
+          chain.name,
+          tr(`${minutes}分钟`, `${minutes} min`),
+        );
       }
 
       if (remaining <= 0) {

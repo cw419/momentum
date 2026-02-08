@@ -19,8 +19,11 @@ export const ChainsList: React.FC<ChainsListProps> = ({
   onRestore,
   onPermanentDelete,
 }) => (
-  <div className="flex-1 overflow-y-auto p-8" style={{ overscrollBehavior: 'contain' }}>
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+  <div
+    className="flex-1 overflow-y-auto p-8"
+    style={{ overscrollBehavior: 'contain' }}
+  >
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {deletedChains.map((chain) => (
         <DeletedChainCard
           key={chain.id}
@@ -35,4 +38,3 @@ export const ChainsList: React.FC<ChainsListProps> = ({
     </div>
   </div>
 );
-

@@ -1,6 +1,6 @@
 /**
  * 内存优化器
- * 
+ *
  * 提供以下功能：
  * - 内存使用监控
  * - 自动内存清理
@@ -17,17 +17,17 @@ interface MemoryStats {
 }
 
 interface MemoryThresholds {
-  warning: number;  // 警告阈值（MB）
+  warning: number; // 警告阈值（MB）
   critical: number; // 危险阈值（MB）
-  cleanup: number;  // 清理阈值（MB）
+  cleanup: number; // 清理阈值（MB）
 }
 
 interface MemoryOptimizationConfig {
-  monitoringInterval: number;     // 监控间隔（ms）
-  enableAutoCleanup: boolean;     // 启用自动清理
-  enableGCOptimization: boolean;  // 启用GC优化
+  monitoringInterval: number; // 监控间隔（ms）
+  enableAutoCleanup: boolean; // 启用自动清理
+  enableGCOptimization: boolean; // 启用GC优化
   thresholds: MemoryThresholds;
-  maxHistorySize: number;         // 最大历史记录数
+  maxHistorySize: number; // 最大历史记录数
 }
 
 interface CleanupTask {
@@ -52,11 +52,11 @@ class MemoryOptimizer {
       enableAutoCleanup: true,
       enableGCOptimization: true,
       thresholds: {
-        warning: 100,   // 100MB
-        critical: 200,  // 200MB
-        cleanup: 150    // 150MB
+        warning: 100, // 100MB
+        critical: 200, // 200MB
+        cleanup: 150, // 150MB
       },
-      maxHistorySize: 288 // 24小时的5分钟间隔记录
+      maxHistorySize: 288, // 24小时的5分钟间隔记录
     };
 
     this.initializeMemoryMonitoring();
@@ -129,14 +129,16 @@ class MemoryOptimizer {
       usedJSHeapSize: memoryInfo.usedJSHeapSize,
       totalJSHeapSize: memoryInfo.totalJSHeapSize,
       jsHeapSizeLimit: memoryInfo.jsHeapSizeLimit,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     this.memoryHistory.push(stats);
 
     // 保持历史记录在限制范围内
     if (this.memoryHistory.length > this.config.maxHistorySize) {
-      this.memoryHistory = this.memoryHistory.slice(-this.config.maxHistorySize);
+      this.memoryHistory = this.memoryHistory.slice(
+        -this.config.maxHistorySize,
+      );
     }
   }
 
@@ -163,7 +165,10 @@ class MemoryOptimizer {
     this.checkForMemoryLeaks();
 
     // 触发GC优化
-    if (this.config.enableGCOptimization && usedMB >= this.config.thresholds.warning) {
+    if (
+      this.config.enableGCOptimization &&
+      usedMB >= this.config.thresholds.warning
+    ) {
       this.optimizeGarbageCollection();
     }
   }
@@ -185,7 +190,7 @@ class MemoryOptimizer {
         } catch (error) {
           console.warn('[MemoryOptimizer] Failed to clear smart cache:', error);
         }
-      }
+      },
     });
 
     // 清理懒加载缓存
@@ -199,9 +204,12 @@ class MemoryOptimizer {
           const lazyLoader = LazyLoadingManager.getInstance();
           lazyLoader.clearCache();
         } catch (error) {
-          console.warn('[MemoryOptimizer] Failed to clear lazy loading cache:', error);
+          console.warn(
+            '[MemoryOptimizer] Failed to clear lazy loading cache:',
+            error,
+          );
         }
-      }
+      },
     });
 
     // 清理批处理队列
@@ -211,13 +219,14 @@ class MemoryOptimizer {
       estimatedMemoryFreed: 10,
       cleanup: async () => {
         try {
-          const { BatchOperationsManager } = await import('./BatchOperationsManager');
+          const { BatchOperationsManager } =
+            await import('./BatchOperationsManager');
           const batchManager = BatchOperationsManager.getInstance();
           batchManager.clearCompletedOperations();
         } catch (error) {
           console.warn('[MemoryOptimizer] Failed to clear batch queue:', error);
         }
-      }
+      },
     });
 
     // 清理DOM缓存
@@ -230,13 +239,15 @@ class MemoryOptimizer {
         if (typeof document !== 'undefined') {
           // 清理事件监听器缓存
           const events = ['click', 'scroll', 'resize', 'mouseover'];
-          events.forEach(eventType => {
-            document.querySelectorAll(`[data-cached-${eventType}]`).forEach(el => {
-              el.removeAttribute(`data-cached-${eventType}`);
-            });
+          events.forEach((eventType) => {
+            document
+              .querySelectorAll(`[data-cached-${eventType}]`)
+              .forEach((el) => {
+                el.removeAttribute(`data-cached-${eventType}`);
+              });
           });
         }
-      }
+      },
     });
   }
 
@@ -265,19 +276,24 @@ class MemoryOptimizer {
     this.lastCleanupTime = now;
 
     try {
-      const tasks = this.cleanupTasks.filter(task => 
-        task.priority === 'low' || task.priority === 'normal'
+      const tasks = this.cleanupTasks.filter(
+        (task) => task.priority === 'low' || task.priority === 'normal',
       );
 
-      for (const task of tasks.slice(0, 3)) { // 最多执行3个任务
+      for (const task of tasks.slice(0, 3)) {
+        // 最多执行3个任务
         try {
           await task.cleanup();
-          console.debug(`[MemoryOptimizer] Executed cleanup task: ${task.name}`);
+          console.debug(
+            `[MemoryOptimizer] Executed cleanup task: ${task.name}`,
+          );
         } catch (error) {
-          console.warn(`[MemoryOptimizer] Cleanup task failed: ${task.name}`, error);
+          console.warn(
+            `[MemoryOptimizer] Cleanup task failed: ${task.name}`,
+            error,
+          );
         }
       }
-
     } finally {
       this.isCleaningUp = false;
     }
@@ -298,15 +314,19 @@ class MemoryOptimizer {
       for (const task of this.cleanupTasks) {
         try {
           await task.cleanup();
-          console.debug(`[MemoryOptimizer] Critical cleanup task executed: ${task.name}`);
+          console.debug(
+            `[MemoryOptimizer] Critical cleanup task executed: ${task.name}`,
+          );
         } catch (error) {
-          console.error(`[MemoryOptimizer] Critical cleanup task failed: ${task.name}`, error);
+          console.error(
+            `[MemoryOptimizer] Critical cleanup task failed: ${task.name}`,
+            error,
+          );
         }
       }
 
       // 强制垃圾回收
       this.forceGarbageCollection();
-
     } finally {
       this.isCleaningUp = false;
       this.lastCleanupTime = Date.now();
@@ -318,15 +338,19 @@ class MemoryOptimizer {
    */
   performEmergencyCleanup(): void {
     console.warn('[MemoryOptimizer] Performing emergency cleanup');
-    
+
     // 同步执行关键清理任务
     this.cleanupTasks
-      .filter(task => task.priority === 'critical' || task.priority === 'high')
-      .forEach(task => {
+      .filter(
+        (task) => task.priority === 'critical' || task.priority === 'high',
+      )
+      .forEach((task) => {
         try {
           const result = task.cleanup();
           if (result instanceof Promise) {
-            result.catch(error => console.error(`Emergency cleanup failed: ${task.name}`, error));
+            result.catch((error) =>
+              console.error(`Emergency cleanup failed: ${task.name}`, error),
+            );
           }
         } catch (error) {
           console.error(`Emergency cleanup failed: ${task.name}`, error);
@@ -353,9 +377,12 @@ class MemoryOptimizer {
 
     // 在空闲时间触发垃圾回收
     if (typeof requestIdleCallback !== 'undefined') {
-      requestIdleCallback(() => {
-        this.forceGarbageCollection();
-      }, { timeout: 5000 });
+      requestIdleCallback(
+        () => {
+          this.forceGarbageCollection();
+        },
+        { timeout: 5000 },
+      );
     } else {
       // 降级到setTimeout
       setTimeout(() => {
@@ -388,10 +415,14 @@ class MemoryOptimizer {
     const trend = this.calculateMemoryTrend(recent);
 
     // 如果内存持续增长且增长率超过阈值
-    if (trend.isIncreasing && trend.growthRate > 5) { // 5MB/监控周期
+    if (trend.isIncreasing && trend.growthRate > 5) {
+      // 5MB/监控周期
       console.warn('[MemoryOptimizer] Potential memory leak detected', {
         growthRate: trend.growthRate.toFixed(2) + 'MB/period',
-        currentUsage: (recent[recent.length - 1].usedJSHeapSize / (1024 * 1024)).toFixed(2) + 'MB'
+        currentUsage:
+          (recent[recent.length - 1].usedJSHeapSize / (1024 * 1024)).toFixed(
+            2,
+          ) + 'MB',
       });
 
       // 触发详细分析
@@ -416,7 +447,7 @@ class MemoryOptimizer {
 
     return {
       isIncreasing: growthRate > 1, // 1MB增长被认为是增长
-      growthRate: Math.abs(growthRate)
+      growthRate: Math.abs(growthRate),
     };
   }
 
@@ -427,21 +458,24 @@ class MemoryOptimizer {
     // 在开发环境中提供更详细的分析
     if (process.env.NODE_ENV === 'development') {
       console.group('[MemoryOptimizer] Memory Leak Analysis');
-      
+
       const currentStats = this.getCurrentMemoryStats();
       if (currentStats) {
         console.log('Current Memory Usage:', {
           used: (currentStats.usedJSHeapSize / (1024 * 1024)).toFixed(2) + 'MB',
-          total: (currentStats.totalJSHeapSize / (1024 * 1024)).toFixed(2) + 'MB',
-          limit: (currentStats.jsHeapSizeLimit / (1024 * 1024)).toFixed(2) + 'MB'
+          total:
+            (currentStats.totalJSHeapSize / (1024 * 1024)).toFixed(2) + 'MB',
+          limit:
+            (currentStats.jsHeapSizeLimit / (1024 * 1024)).toFixed(2) + 'MB',
         });
       }
 
-      console.log('Memory History (last 10 records):', 
-        this.memoryHistory.slice(-10).map(stat => ({
+      console.log(
+        'Memory History (last 10 records):',
+        this.memoryHistory.slice(-10).map((stat) => ({
           used: (stat.usedJSHeapSize / (1024 * 1024)).toFixed(2) + 'MB',
-          timestamp: new Date(stat.timestamp).toISOString()
-        }))
+          timestamp: new Date(stat.timestamp).toISOString(),
+        })),
       );
 
       console.groupEnd();
@@ -469,15 +503,16 @@ class MemoryOptimizer {
     };
   } {
     const current = this.getCurrentMemoryStats();
-    const trend = this.memoryHistory.length >= 5 
-      ? this.calculateMemoryTrend(this.memoryHistory.slice(-5))
-      : { isIncreasing: false, growthRate: 0 };
+    const trend =
+      this.memoryHistory.length >= 5
+        ? this.calculateMemoryTrend(this.memoryHistory.slice(-5))
+        : { isIncreasing: false, growthRate: 0 };
 
     const recommendations: string[] = [];
 
     if (current) {
       const usedMB = current.usedJSHeapSize / (1024 * 1024);
-      
+
       if (usedMB >= this.config.thresholds.critical) {
         recommendations.push('内存使用严重超标，建议立即清理缓存和未使用资源');
       } else if (usedMB >= this.config.thresholds.warning) {
@@ -498,7 +533,7 @@ class MemoryOptimizer {
       history: this.memoryHistory.slice(-50), // 最近50条记录
       thresholds: this.config.thresholds,
       recommendations,
-      trend
+      trend,
     };
   }
 
@@ -507,7 +542,7 @@ class MemoryOptimizer {
    */
   updateConfig(newConfig: Partial<MemoryOptimizationConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    
+
     // 重启监控以应用新配置
     this.stopMonitoring();
     this.startMonitoring();
@@ -527,7 +562,7 @@ class MemoryOptimizer {
     this.stopMonitoring();
     this.cleanupTasks = [];
     this.memoryHistory = [];
-    
+
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', this.performEmergencyCleanup);
     }

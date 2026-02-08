@@ -9,8 +9,14 @@ describe('localStorageAdapter integration', () => {
 
   it('persists and hydrates chain data round-trip', async () => {
     const chains = [
-      createUnitChain({ id: 'chain-a', createdAt: new Date('2026-01-01T00:00:00.000Z') }),
-      createUnitChain({ id: 'chain-b', createdAt: new Date('2026-01-02T00:00:00.000Z') }),
+      createUnitChain({
+        id: 'chain-a',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      }),
+      createUnitChain({
+        id: 'chain-b',
+        createdAt: new Date('2026-01-02T00:00:00.000Z'),
+      }),
     ];
 
     await localStorageAdapter.saveChains(chains);

@@ -16,7 +16,7 @@ interface UseChainDetailOptions {
 export function useChainDetail({
   chain,
   history,
-  onDelete
+  onDelete,
 }: UseChainDetailOptions) {
   const { language, locale, tr } = useI18n();
 
@@ -25,28 +25,35 @@ export function useChainDetail({
 
   // 计算值
   const chainHistory = useMemo(
-    () => history.filter(h => h.chainId === chain.id),
-    [history, chain.id]
+    () => history.filter((h) => h.chainId === chain.id),
+    [history, chain.id],
   );
 
   const recentHistory = useMemo(
     () => chainHistory.slice(-10).reverse(),
-    [chainHistory]
+    [chainHistory],
   );
 
   const successRate = useMemo(() => {
     if (chain.totalCompletions <= 0) return 0;
     return Math.round(
-      (chain.totalCompletions / (chain.totalCompletions + chain.totalFailures)) * 100
+      (chain.totalCompletions /
+        (chain.totalCompletions + chain.totalFailures)) *
+        100,
     );
   }, [chain.totalCompletions, chain.totalFailures]);
 
   // 格式化失败原因
-  const formatFailureReason = useCallback((reason: string): string => {
-    if (reason === '用户主动中断') return tr('用户主动中断', 'Interrupted by user');
-    if (reason === 'Interrupted by user') return tr('用户主动中断', 'Interrupted by user');
-    return reason;
-  }, [tr]);
+  const formatFailureReason = useCallback(
+    (reason: string): string => {
+      if (reason === '用户主动中断')
+        return tr('用户主动中断', 'Interrupted by user');
+      if (reason === 'Interrupted by user')
+        return tr('用户主动中断', 'Interrupted by user');
+      return reason;
+    },
+    [tr],
+  );
 
   // 事件处理器
   const handleDeleteClick = useCallback(() => {
@@ -83,6 +90,6 @@ export function useChainDetail({
     // 事件处理器
     handleDeleteClick,
     handleDeleteConfirm,
-    handleDeleteCancel
+    handleDeleteCancel,
   };
 }

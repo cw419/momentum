@@ -1,6 +1,6 @@
 /**
  * 智能多层缓存系统
- * 
+ *
  * 实现L1内存缓存 + L2本地存储缓存 + L3持久化缓存
  * 智能缓存策略：LRU、TTL、预加载、缓存预热、智能失效
  */
@@ -51,17 +51,20 @@ interface CacheStrategy {
 class SmartCacheSystem {
   // L1 内存缓存
   private l1Cache = new Map<string, CacheItem<any>>();
-  
+
   // L2 本地存储缓存
   private l2CachePrefix = 'momentum_l2_';
-  
+
   // 缓存访问模式分析
-  private accessPatterns = new Map<string, {
-    frequency: number;
-    lastAccess: number;
-    avgTimeSpan: number;
-    predictedNextAccess: number;
-  }>();
+  private accessPatterns = new Map<
+    string,
+    {
+      frequency: number;
+      lastAccess: number;
+      avgTimeSpan: number;
+      predictedNextAccess: number;
+    }
+  >();
 
   // 性能指标
   private metrics: CacheMetrics = {
@@ -70,7 +73,7 @@ class SmartCacheSystem {
     sets: 0,
     evictions: 0,
     memoryUsage: 0,
-    averageResponseTime: 0
+    averageResponseTime: 0,
   };
 
   // 缓存策略配置
@@ -80,7 +83,7 @@ class SmartCacheSystem {
     defaultTTL: 5 * 60 * 1000, // 5分钟
     cleanupInterval: 60 * 1000, // 1分钟清理一次
     compressionThreshold: 1024, // 1KB开始压缩
-    preloadEnabled: true
+    preloadEnabled: true,
   };
 
   // 清理定时器
@@ -99,19 +102,21 @@ class SmartCacheSystem {
    * 多层级查找：L1 -> L2 -> 数据源
    */
   async get<T>(
-    key: string, 
-    dataLoader?: () => Promise<T>, 
-    options: CacheOptions = {}
+    key: string,
+    dataLoader?: () => Promise<T>,
+    options: CacheOptions = {},
   ): Promise<T | null> {
     const startTime = performance.now();
-    
+
     try {
       // L1 缓存查找
       const l1Result = this.getFromL1<T>(key);
       if (l1Result !== null) {
         this.updateAccessPattern(key);
         this.metrics.hits++;
-        this.metrics.averageResponseTime = this.updateAverageTime(performance.now() - startTime);
+        this.metrics.averageResponseTime = this.updateAverageTime(
+          performance.now() - startTime,
+        );
         return l1Result;
       }
 
@@ -122,7 +127,9 @@ class SmartCacheSystem {
         this.setL1(key, l2Result, options);
         this.updateAccessPattern(key);
         this.metrics.hits++;
-        this.metrics.averageResponseTime = this.updateAverageTime(performance.now() - startTime);
+        this.metrics.averageResponseTime = this.updateAverageTime(
+          performance.now() - startTime,
+        );
         return l2Result;
       }
 
@@ -133,14 +140,17 @@ class SmartCacheSystem {
           await this.set(key, data, options);
         }
         this.metrics.misses++;
-        this.metrics.averageResponseTime = this.updateAverageTime(performance.now() - startTime);
+        this.metrics.averageResponseTime = this.updateAverageTime(
+          performance.now() - startTime,
+        );
         return data;
       }
 
       this.metrics.misses++;
       return null;
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const errorObj =
+        error instanceof Error ? error : new Error(String(error));
       logger.error('SMART_CACHE', 'Cache get error', { key }, errorObj);
       this.metrics.misses++;
       return null;
@@ -151,7 +161,11 @@ class SmartCacheSystem {
    * 智能设置缓存
    * 根据数据特征和访问模式选择最优存储策略
    */
-  async set<T>(key: string, data: T, options: CacheOptions = {}): Promise<void> {
+  async set<T>(
+    key: string,
+    data: T,
+    options: CacheOptions = {},
+  ): Promise<void> {
     try {
       const ttl = options.ttl || this.strategy.defaultTTL;
       const priority = options.priority || 'normal';
@@ -159,9 +173,12 @@ class SmartCacheSystem {
 
       // 计算数据大小
       const size = this.calculateDataSize(data);
-      
+
       // 根据大小和重要性选择缓存层级
-      if (size > this.strategy.compressionThreshold || priority === 'critical') {
+      if (
+        size > this.strategy.compressionThreshold ||
+        priority === 'critical'
+      ) {
         // 大数据或高优先级数据同时存储到L1和L2
         await this.setL1(key, data, options);
         await this.setL2(key, data, ttl);
@@ -177,9 +194,9 @@ class SmartCacheSystem {
       if (options.preload && this.strategy.preloadEnabled) {
         this.schedulePreload(key, tags);
       }
-
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const errorObj =
+        error instanceof Error ? error : new Error(String(error));
       logger.error('SMART_CACHE', 'Cache set error', { key }, errorObj);
     }
   }
@@ -200,13 +217,13 @@ class SmartCacheSystem {
     // 更新访问信息
     item.accessCount++;
     item.lastAccessed = Date.now();
-    
+
     return item.data;
   }
 
   private setL1<T>(key: string, data: T, options: CacheOptions = {}): void {
     const size = this.calculateDataSize(data);
-    
+
     // 检查内存限制，必要时执行LRU驱逐
     this.ensureMemoryLimit(size);
 
@@ -219,7 +236,7 @@ class SmartCacheSystem {
       size,
       priority: options.priority || 'normal',
       tags: options.tags || [],
-      version: 1
+      version: 1,
     };
 
     this.l1Cache.set(key, item);
@@ -233,11 +250,11 @@ class SmartCacheSystem {
     try {
       const storageKey = this.l2CachePrefix + key;
       const cached = localStorage.getItem(storageKey);
-      
+
       if (!cached) return null;
 
       const { data, timestamp, ttl } = JSON.parse(cached);
-      
+
       // 检查TTL过期
       if (Date.now() > timestamp + ttl) {
         localStorage.removeItem(storageKey);
@@ -246,7 +263,8 @@ class SmartCacheSystem {
 
       return data;
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const errorObj =
+        error instanceof Error ? error : new Error(String(error));
       logger.error('SMART_CACHE', 'L2 cache get error', { key }, errorObj);
       return null;
     }
@@ -258,12 +276,12 @@ class SmartCacheSystem {
       const cacheData = {
         data,
         timestamp: Date.now(),
-        ttl
+        ttl,
       };
 
       // 检查LocalStorage容量
       const serialized = JSON.stringify(cacheData);
-      
+
       try {
         localStorage.setItem(storageKey, serialized);
       } catch (quotaError) {
@@ -272,7 +290,8 @@ class SmartCacheSystem {
         localStorage.setItem(storageKey, serialized);
       }
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const errorObj =
+        error instanceof Error ? error : new Error(String(error));
       logger.error('SMART_CACHE', 'L2 cache set error', { key }, errorObj);
     }
   }
@@ -296,7 +315,7 @@ class SmartCacheSystem {
 
     // 从L2缓存批量获取剩余的键
     if (uncachedKeys.length > 0) {
-      const l2Promises = uncachedKeys.map(async key => {
+      const l2Promises = uncachedKeys.map(async (key) => {
         const l2Result = await this.getFromL2<T>(key);
         if (l2Result !== null) {
           // 提升到L1
@@ -320,20 +339,26 @@ class SmartCacheSystem {
     return results;
   }
 
-  async batchSet<T>(entries: Array<{key: string; data: T; options?: CacheOptions}>): Promise<void> {
+  async batchSet<T>(
+    entries: Array<{ key: string; data: T; options?: CacheOptions }>,
+  ): Promise<void> {
     const l1Operations: Promise<void>[] = [];
     const l2Operations: Promise<void>[] = [];
 
     for (const entry of entries) {
-      l1Operations.push(Promise.resolve(this.setL1(entry.key, entry.data, entry.options)));
-      
+      l1Operations.push(
+        Promise.resolve(this.setL1(entry.key, entry.data, entry.options)),
+      );
+
       const size = this.calculateDataSize(entry.data);
       if (size > this.strategy.compressionThreshold) {
-        l2Operations.push(this.setL2(
-          entry.key, 
-          entry.data, 
-          entry.options?.ttl || this.strategy.defaultTTL
-        ));
+        l2Operations.push(
+          this.setL2(
+            entry.key,
+            entry.data,
+            entry.options?.ttl || this.strategy.defaultTTL,
+          ),
+        );
       }
     }
 
@@ -349,7 +374,10 @@ class SmartCacheSystem {
     for (const tag of tags) {
       const relatedKeys = this.findKeysByTag(tag);
       for (const relatedKey of relatedKeys) {
-        if (!this.l1Cache.has(relatedKey) && !this.preloadQueue.has(relatedKey)) {
+        if (
+          !this.l1Cache.has(relatedKey) &&
+          !this.preloadQueue.has(relatedKey)
+        ) {
           this.preloadQueue.add(relatedKey);
         }
       }
@@ -383,26 +411,26 @@ class SmartCacheSystem {
    */
   private generateRelatedKeys(baseKey: string): string[] {
     const relatedKeys: string[] = [];
-    
+
     // 基于模式生成相关键
     if (baseKey.includes('chains:')) {
       const userId = baseKey.split(':')[1];
       relatedKeys.push(
         `sessions:active:${userId}`,
         `completions:recent:${userId}`,
-        `stats:${userId}`
+        `stats:${userId}`,
       );
     }
-    
+
     if (baseKey.includes('user:')) {
       const userId = baseKey.split(':')[1];
       relatedKeys.push(
         `chains:${userId}:active`,
         `preferences:${userId}`,
-        `settings:${userId}`
+        `settings:${userId}`,
       );
     }
-    
+
     return relatedKeys;
   }
 
@@ -415,7 +443,7 @@ class SmartCacheSystem {
     const batch = Array.from(this.preloadQueue).slice(0, 10); // 限制批量大小
     this.preloadQueue.clear();
 
-    const preloadPromises = batch.map(async key => {
+    const preloadPromises = batch.map(async (key) => {
       try {
         // 这里需要根据键名确定数据加载器
         const dataLoader = this.getDataLoaderForKey(key);
@@ -426,7 +454,8 @@ class SmartCacheSystem {
           }
         }
       } catch (error) {
-        const errorObj = error instanceof Error ? error : new Error(String(error));
+        const errorObj =
+          error instanceof Error ? error : new Error(String(error));
         logger.error('SMART_CACHE', 'Preload error', { key }, errorObj);
       }
     });
@@ -444,12 +473,12 @@ class SmartCacheSystem {
       // 返回链条数据加载器
       return null; // 实际项目中需要实现
     }
-    
+
     if (key.startsWith('sessions:')) {
       // 返回会话数据加载器
       return null; // 实际项目中需要实现
     }
-    
+
     return null;
   }
 
@@ -488,9 +517,10 @@ class SmartCacheSystem {
       // 计算驱逐分数 (越小越容易被驱逐)
       const age = Date.now() - item.lastAccessed;
       const priorityWeight = this.getPriorityWeight(item.priority);
-      const accessFrequencyWeight = item.accessCount > 0 ? 1 / item.accessCount : 1;
-      
-      const evictionScore = age * accessFrequencyWeight / priorityWeight;
+      const accessFrequencyWeight =
+        item.accessCount > 0 ? 1 / item.accessCount : 1;
+
+      const evictionScore = (age * accessFrequencyWeight) / priorityWeight;
 
       if (!victim || evictionScore > victim.score) {
         victim = { key, score: evictionScore };
@@ -505,11 +535,16 @@ class SmartCacheSystem {
    */
   private getPriorityWeight(priority: CachePriority): number {
     switch (priority) {
-      case 'critical': return 1000;
-      case 'high': return 10;
-      case 'normal': return 1;
-      case 'low': return 0.1;
-      default: return 1;
+      case 'critical':
+        return 1000;
+      case 'high':
+        return 10;
+      case 'normal':
+        return 1;
+      case 'low':
+        return 0.1;
+      default:
+        return 1;
     }
   }
 
@@ -518,7 +553,7 @@ class SmartCacheSystem {
    */
   invalidateByTag(tag: string): void {
     const keysToInvalidate: string[] = [];
-    
+
     for (const [key, item] of this.l1Cache.entries()) {
       if (item.tags.includes(tag)) {
         keysToInvalidate.push(key);
@@ -532,7 +567,7 @@ class SmartCacheSystem {
 
   private findKeysByTag(tag: string): string[] {
     const keys: string[] = [];
-    
+
     for (const [key, item] of this.l1Cache.entries()) {
       if (item.tags.includes(tag)) {
         keys.push(key);
@@ -550,14 +585,15 @@ class SmartCacheSystem {
     if (l1Item) {
       this.metrics.memoryUsage -= l1Item.size;
     }
-    
+
     const l1Deleted = this.l1Cache.delete(key);
-    
+
     // 删除L2缓存
     try {
       localStorage.removeItem(this.l2CachePrefix + key);
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const errorObj =
+        error instanceof Error ? error : new Error(String(error));
       logger.error('SMART_CACHE', 'L2 cache delete error', { key }, errorObj);
     }
 
@@ -620,7 +656,8 @@ class SmartCacheSystem {
         localStorage.removeItem(key);
       }
     } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const errorObj =
+        error instanceof Error ? error : new Error(String(error));
       logger.error('SMART_CACHE', 'L2 cache cleanup error', {}, errorObj);
     }
   }
@@ -630,11 +667,7 @@ class SmartCacheSystem {
    */
   private async warmUpCache(): Promise<void> {
     // 预热关键数据
-    const warmUpKeys = [
-      'app:config',
-      'user:preferences',
-      'app:settings'
-    ];
+    const warmUpKeys = ['app:config', 'user:preferences', 'app:settings'];
 
     for (const key of warmUpKeys) {
       const dataLoader = this.getDataLoaderForKey(key);
@@ -642,13 +675,14 @@ class SmartCacheSystem {
         try {
           const data = await dataLoader();
           if (data) {
-            await this.set(key, data, { 
+            await this.set(key, data, {
               priority: 'high',
-              ttl: this.strategy.defaultTTL * 4 // 预热数据TTL更长
+              ttl: this.strategy.defaultTTL * 4, // 预热数据TTL更长
             });
           }
         } catch (error) {
-          const errorObj = error instanceof Error ? error : new Error(String(error));
+          const errorObj =
+            error instanceof Error ? error : new Error(String(error));
           logger.error('SMART_CACHE', 'Cache warm-up error', { key }, errorObj);
         }
       }
@@ -673,7 +707,7 @@ class SmartCacheSystem {
         frequency: 1,
         lastAccess: now,
         avgTimeSpan: 0,
-        predictedNextAccess: now + this.strategy.defaultTTL
+        predictedNextAccess: now + this.strategy.defaultTTL,
       });
     }
   }
@@ -692,8 +726,11 @@ class SmartCacheSystem {
   private updateAverageTime(responseTime: number): number {
     const totalRequests = this.metrics.hits + this.metrics.misses;
     if (totalRequests <= 1) return responseTime;
-    
-    return (this.metrics.averageResponseTime * (totalRequests - 1) + responseTime) / totalRequests;
+
+    return (
+      (this.metrics.averageResponseTime * (totalRequests - 1) + responseTime) /
+      totalRequests
+    );
   }
 
   /**
@@ -701,14 +738,19 @@ class SmartCacheSystem {
    */
   getMetrics(): CacheMetrics & { hitRate: string; efficiency: string } {
     const totalRequests = this.metrics.hits + this.metrics.misses;
-    const hitRate = totalRequests > 0 ? (this.metrics.hits / totalRequests * 100).toFixed(2) + '%' : '0%';
-    const efficiency = this.metrics.evictions > 0 ? 
-      (this.metrics.sets / this.metrics.evictions).toFixed(2) : 'Excellent';
+    const hitRate =
+      totalRequests > 0
+        ? ((this.metrics.hits / totalRequests) * 100).toFixed(2) + '%'
+        : '0%';
+    const efficiency =
+      this.metrics.evictions > 0
+        ? (this.metrics.sets / this.metrics.evictions).toFixed(2)
+        : 'Excellent';
 
     return {
       ...this.metrics,
       hitRate,
-      efficiency
+      efficiency,
     };
   }
 
@@ -727,11 +769,11 @@ class SmartCacheSystem {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
     }
-    
+
     this.l1Cache.clear();
     this.accessPatterns.clear();
     this.preloadQueue.clear();
-    
+
     // 清理L2缓存
     this.cleanupL2Cache();
   }
@@ -746,7 +788,7 @@ class SmartCacheSystem {
       preloadQueueSize: this.preloadQueue.size,
       metrics: this.getMetrics(),
       memoryUsage: `${(this.metrics.memoryUsage / 1024 / 1024).toFixed(2)}MB`,
-      strategy: this.strategy
+      strategy: this.strategy,
     };
   }
 }

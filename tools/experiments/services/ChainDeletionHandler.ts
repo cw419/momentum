@@ -3,7 +3,11 @@
  * 处理链删除时的规则清理逻辑，确保数据一致性
  */
 
-import { ExceptionRule, ExceptionRuleError, ExceptionRuleException } from '../types';
+import {
+  ExceptionRule,
+  ExceptionRuleError,
+  ExceptionRuleException,
+} from '../types';
 import { exceptionRuleManager } from './ExceptionRuleManager';
 import { exceptionRuleStorage } from './ExceptionRuleStorage';
 
@@ -19,10 +23,9 @@ export class ChainDeletionHandler {
     try {
       // 获取该链的所有专属规则
       const allRules = await exceptionRuleManager.getAllRules();
-      const chainRules = allRules.filter((rule: ExceptionRule) => 
-        rule.scope === 'chain' && 
-        rule.chainId === chainId && 
-        rule.isActive
+      const chainRules = allRules.filter(
+        (rule: ExceptionRule) =>
+          rule.scope === 'chain' && rule.chainId === chainId && rule.isActive,
       );
 
       const affectedRules: ExceptionRule[] = [];
@@ -31,7 +34,7 @@ export class ChainDeletionHandler {
       for (const rule of chainRules) {
         const updatedResult = await exceptionRuleStorage.updateRule(rule.id, {
           isArchived: true,
-          isActive: false // 暂时设为不活跃，但保留数据
+          isActive: false, // 暂时设为不活跃，但保留数据
         });
         affectedRules.push(updatedResult);
       }
@@ -41,14 +44,14 @@ export class ChainDeletionHandler {
 
       return {
         affectedRules,
-        archivedCount: affectedRules.length
+        archivedCount: affectedRules.length,
       };
     } catch (error) {
       console.error('移动链到回收站时处理规则失败:', error);
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '处理链删除失败',
-        error
+        error,
       );
     }
   }
@@ -64,10 +67,11 @@ export class ChainDeletionHandler {
     try {
       // 获取该链的所有归档规则
       const allRules = await exceptionRuleManager.getAllRules();
-      const archivedChainRules = allRules.filter((rule: ExceptionRule) => 
-        rule.scope === 'chain' && 
-        rule.chainId === chainId && 
-        rule.isArchived === true
+      const archivedChainRules = allRules.filter(
+        (rule: ExceptionRule) =>
+          rule.scope === 'chain' &&
+          rule.chainId === chainId &&
+          rule.isArchived === true,
       );
 
       const restoredRules: ExceptionRule[] = [];
@@ -76,7 +80,7 @@ export class ChainDeletionHandler {
       for (const rule of archivedChainRules) {
         const updatedRule = await exceptionRuleStorage.updateRule(rule.id, {
           isArchived: false,
-          isActive: true
+          isActive: true,
         });
         restoredRules.push(updatedRule);
       }
@@ -86,14 +90,14 @@ export class ChainDeletionHandler {
 
       return {
         restoredRules,
-        restoredCount: restoredRules.length
+        restoredCount: restoredRules.length,
       };
     } catch (error) {
       console.error('从回收站恢复链时处理规则失败:', error);
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '恢复链规则失败',
-        error
+        error,
       );
     }
   }
@@ -109,9 +113,9 @@ export class ChainDeletionHandler {
     try {
       // 获取该链的所有规则（包括归档的）
       const allRules = await exceptionRuleManager.getAllRules();
-      const chainRules = allRules.filter((rule: ExceptionRule) => 
-        rule.scope === 'chain' && 
-        rule.chainId === chainId
+      const chainRules = allRules.filter(
+        (rule: ExceptionRule) =>
+          rule.scope === 'chain' && rule.chainId === chainId,
       );
 
       const deletedRuleIds: string[] = [];
@@ -130,14 +134,14 @@ export class ChainDeletionHandler {
 
       return {
         deletedRules: deletedRuleIds,
-        deletedUsageRecords
+        deletedUsageRecords,
       };
     } catch (error) {
       console.error('永久删除链时处理规则失败:', error);
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '永久删除链规则失败',
-        error
+        error,
       );
     }
   }
@@ -156,8 +160,8 @@ export class ChainDeletionHandler {
 
       const deletionRecords = await this.getChainDeletionRecords();
       const expiredChainIds = deletionRecords
-        .filter(record => record.deletedAt < cutoffDate)
-        .map(record => record.chainId);
+        .filter((record) => record.deletedAt < cutoffDate)
+        .map((record) => record.chainId);
 
       const cleanedRuleIds: string[] = [];
 
@@ -169,14 +173,14 @@ export class ChainDeletionHandler {
 
       return {
         cleanedRules: cleanedRuleIds,
-        cleanedCount: cleanedRuleIds.length
+        cleanedCount: cleanedRuleIds.length,
       };
     } catch (error) {
       console.error('清理过期归档规则失败:', error);
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '清理过期规则失败',
-        error
+        error,
       );
     }
   }
@@ -191,13 +195,14 @@ export class ChainDeletionHandler {
   }> {
     try {
       const allRules = await exceptionRuleManager.getAllRules();
-      const chainRules = allRules.filter((rule: ExceptionRule) => 
-        rule.scope === 'chain' && 
-        rule.chainId === chainId
+      const chainRules = allRules.filter(
+        (rule: ExceptionRule) =>
+          rule.scope === 'chain' && rule.chainId === chainId,
       );
 
-      const usageRecords = await exceptionRuleStorage.getUsageRecordsByChain(chainId);
-      
+      const usageRecords =
+        await exceptionRuleStorage.getUsageRecordsByChain(chainId);
+
       const lastUsedDate = chainRules
         .map((rule: ExceptionRule) => rule.lastUsedAt)
         .filter((date: Date | undefined) => date)
@@ -206,13 +211,13 @@ export class ChainDeletionHandler {
       return {
         chainRuleCount: chainRules.length,
         usageRecordCount: usageRecords.length,
-        lastUsedDate
+        lastUsedDate,
       };
     } catch (error) {
       console.error('获取链删除影响统计失败:', error);
       return {
         chainRuleCount: 0,
-        usageRecordCount: 0
+        usageRecordCount: 0,
       };
     }
   }
@@ -225,15 +230,18 @@ export class ChainDeletionHandler {
       const deletionRecords = await this.getChainDeletionRecords();
       const newRecord = {
         chainId,
-        deletedAt: new Date()
+        deletedAt: new Date(),
       };
-      
+
       const updatedRecords = [
-        ...deletionRecords.filter(r => r.chainId !== chainId),
-        newRecord
+        ...deletionRecords.filter((r) => r.chainId !== chainId),
+        newRecord,
       ];
-      
-      localStorage.setItem('chain_deletion_records', JSON.stringify(updatedRecords));
+
+      localStorage.setItem(
+        'chain_deletion_records',
+        JSON.stringify(updatedRecords),
+      );
     } catch (error) {
       console.error('记录链删除时间失败:', error);
     }
@@ -245,8 +253,13 @@ export class ChainDeletionHandler {
   private async clearChainDeletionTime(chainId: string): Promise<void> {
     try {
       const deletionRecords = await this.getChainDeletionRecords();
-      const updatedRecords = deletionRecords.filter(r => r.chainId !== chainId);
-      localStorage.setItem('chain_deletion_records', JSON.stringify(updatedRecords));
+      const updatedRecords = deletionRecords.filter(
+        (r) => r.chainId !== chainId,
+      );
+      localStorage.setItem(
+        'chain_deletion_records',
+        JSON.stringify(updatedRecords),
+      );
     } catch (error) {
       console.error('清除链删除时间记录失败:', error);
     }
@@ -255,15 +268,17 @@ export class ChainDeletionHandler {
   /**
    * 获取链删除记录
    */
-  private async getChainDeletionRecords(): Promise<Array<{ chainId: string; deletedAt: Date }>> {
+  private async getChainDeletionRecords(): Promise<
+    Array<{ chainId: string; deletedAt: Date }>
+  > {
     try {
       const recordsStr = localStorage.getItem('chain_deletion_records');
       if (!recordsStr) return [];
-      
+
       const records = JSON.parse(recordsStr);
       return records.map((r: any) => ({
         chainId: r.chainId,
-        deletedAt: new Date(r.deletedAt)
+        deletedAt: new Date(r.deletedAt),
       }));
     } catch (error) {
       console.error('获取链删除记录失败:', error);
@@ -277,13 +292,15 @@ export class ChainDeletionHandler {
   private async deleteChainUsageRecords(chainId: string): Promise<number> {
     try {
       const allRecords = await exceptionRuleStorage.getAllUsageRecords();
-      const chainRecords = allRecords.filter(record => record.chainId === chainId);
-      
+      const chainRecords = allRecords.filter(
+        (record) => record.chainId === chainId,
+      );
+
       // 删除使用记录
       for (const record of chainRecords) {
         await exceptionRuleStorage.deleteUsageRecord(record.id);
       }
-      
+
       return chainRecords.length;
     } catch (error) {
       console.error('删除链使用记录失败:', error);

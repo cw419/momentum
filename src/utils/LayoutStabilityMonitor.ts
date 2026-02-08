@@ -53,7 +53,9 @@ export class LayoutStabilityMonitor {
     this.performInitialCheck(target);
 
     if (isDev) {
-      logger.debug('LAYOUT', '📳 布局稳定性监控已启动', { target: describeElement(target) });
+      logger.debug('LAYOUT', '📳 布局稳定性监控已启动', {
+        target: describeElement(target),
+      });
     }
   }
 
@@ -105,7 +107,12 @@ export class LayoutStabilityMonitor {
         try {
           callback();
         } catch (error) {
-          logger.error('LAYOUT', 'Stabilization callback error', undefined, toError(error));
+          logger.error(
+            'LAYOUT',
+            'Stabilization callback error',
+            undefined,
+            toError(error),
+          );
         }
       });
 
@@ -129,7 +136,9 @@ export class LayoutStabilityMonitor {
 export const layoutStabilityMonitor = new LayoutStabilityMonitor();
 
 // React Hook
-export const useLayoutStability = (containerRef?: React.RefObject<HTMLElement>) => {
+export const useLayoutStability = (
+  containerRef?: React.RefObject<HTMLElement>,
+) => {
   const startMonitoring = () => {
     const container = containerRef?.current || undefined;
     layoutStabilityMonitor.startMonitoring(container);

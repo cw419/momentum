@@ -2,13 +2,16 @@ import type { Chain, CompletionHistory } from '../types';
 
 export function migrateCompletionHistoryForTiming(
   history: CompletionHistory[],
-  chains: Chain[]
+  chains: Chain[],
 ): { updatedHistory: CompletionHistory[]; hasChanges: boolean } {
-  const chainById = new Map(chains.map(chain => [chain.id, chain]));
+  const chainById = new Map(chains.map((chain) => [chain.id, chain]));
   let hasChanges = false;
 
-  const updatedHistory = history.map(record => {
-    if (record.actualDuration !== undefined && record.isForwardTimed !== undefined) {
+  const updatedHistory = history.map((record) => {
+    if (
+      record.actualDuration !== undefined &&
+      record.isForwardTimed !== undefined
+    ) {
       return record;
     }
 
@@ -23,4 +26,3 @@ export function migrateCompletionHistoryForTiming(
 
   return { updatedHistory, hasChanges };
 }
-

@@ -31,7 +31,9 @@ async function loadService() {
   vi.doMock('../scoring', () => ({ statusFromScore }));
   vi.doMock('../../ExceptionRuleStorage', () => ({ exceptionRuleStorage }));
   vi.doMock('../../RuleStateManager', () => ({ ruleStateManager }));
-  vi.doMock('../../ErrorClassificationService', () => ({ errorClassificationService }));
+  vi.doMock('../../ErrorClassificationService', () => ({
+    errorClassificationService,
+  }));
 
   const module = await import('../SystemHealthService');
 
@@ -86,8 +88,14 @@ describe('SystemHealthService', () => {
     expect(report.recommendations).toEqual(['reduce critical errors']);
     expect(report.summary).toBe('system summary');
 
-    expect(mocks.generateRecommendations).toHaveBeenCalledWith(report.components);
-    expect(mocks.generateSummary).toHaveBeenCalledWith('warning', 70, report.components);
+    expect(mocks.generateRecommendations).toHaveBeenCalledWith(
+      report.components,
+    );
+    expect(mocks.generateSummary).toHaveBeenCalledWith(
+      'warning',
+      70,
+      report.components,
+    );
     expect(report.timestamp).toBeInstanceOf(Date);
   });
 
@@ -115,7 +123,9 @@ describe('SystemHealthService', () => {
   it('quickHealthCheck falls back to score=0 when checks throw', async () => {
     const { service, mocks } = await loadService();
 
-    mocks.exceptionRuleStorage.getRules.mockRejectedValue(new Error('storage down'));
+    mocks.exceptionRuleStorage.getRules.mockRejectedValue(
+      new Error('storage down'),
+    );
 
     const result = await service.quickHealthCheck();
 

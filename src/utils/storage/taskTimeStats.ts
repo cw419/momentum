@@ -19,7 +19,10 @@ export function getLastCompletionTime(chainId: string): number | null {
   return chainStats?.lastCompletionTime || null;
 }
 
-export function updateTaskTimeStats(chainId: string, actualDuration: number): void {
+export function updateTaskTimeStats(
+  chainId: string,
+  actualDuration: number,
+): void {
   const stats = getTaskTimeStats();
   const existingIndex = stats.findIndex((s) => s.chainId === chainId);
 
@@ -64,7 +67,10 @@ export function migrateCompletionHistoryForTiming(): void {
 
   const updatedHistory = history.map((record) => {
     // 如果记录还没有用时相关字段，添加它们
-    if (record.actualDuration === undefined || record.isForwardTimed === undefined) {
+    if (
+      record.actualDuration === undefined ||
+      record.isForwardTimed === undefined
+    ) {
       const chain = chains.find((c: Chain) => c.id === record.chainId);
       hasChanges = true;
 
@@ -81,4 +87,3 @@ export function migrateCompletionHistoryForTiming(): void {
     saveCompletionHistory(updatedHistory);
   }
 }
-

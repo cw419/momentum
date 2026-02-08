@@ -18,4 +18,3 @@ export function setLanguage(language: Language): void {
     // ignore quota errors
   }
 }
-

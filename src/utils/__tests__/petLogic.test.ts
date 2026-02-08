@@ -47,7 +47,9 @@ describe('petLogic', () => {
 
       expect(result.hunger).toBe(100);
       expect(result.happiness).toBe(0);
-      expect(result.lastDecayCalculatedAt).toEqual(new Date('2026-02-06T15:00:00.000Z'));
+      expect(result.lastDecayCalculatedAt).toEqual(
+        new Date('2026-02-06T15:00:00.000Z'),
+      );
     });
 
     it('should reduce health when pet is starving', () => {
@@ -128,22 +130,46 @@ describe('petLogic', () => {
 
   describe('calculateMood', () => {
     it('should map score ranges to mood levels', () => {
-      expect(calculateMood(createPetState({ happiness: 100, hunger: 0, health: 100 }))).toBe('ecstatic');
-      expect(calculateMood(createPetState({ happiness: 70, hunger: 30, health: 70 }))).toBe('happy');
-      expect(calculateMood(createPetState({ happiness: 60, hunger: 80, health: 60 }))).toBe('neutral');
-      expect(calculateMood(createPetState({ happiness: 30, hunger: 80, health: 30 }))).toBe('sad');
-      expect(calculateMood(createPetState({ happiness: 10, hunger: 90, health: 10 }))).toBe('depressed');
+      expect(
+        calculateMood(
+          createPetState({ happiness: 100, hunger: 0, health: 100 }),
+        ),
+      ).toBe('ecstatic');
+      expect(
+        calculateMood(
+          createPetState({ happiness: 70, hunger: 30, health: 70 }),
+        ),
+      ).toBe('happy');
+      expect(
+        calculateMood(
+          createPetState({ happiness: 60, hunger: 80, health: 60 }),
+        ),
+      ).toBe('neutral');
+      expect(
+        calculateMood(
+          createPetState({ happiness: 30, hunger: 80, health: 30 }),
+        ),
+      ).toBe('sad');
+      expect(
+        calculateMood(
+          createPetState({ happiness: 10, hunger: 90, health: 10 }),
+        ),
+      ).toBe('depressed');
     });
   });
 
   describe('mappings and display helpers', () => {
     it('should return non-empty emoji for each stage and mood', () => {
-      expect(['egg', 'baby', 'child', 'teen', 'adult', 'elder'].map((stage) => getStageEmoji(stage as never))).toEqual(
-        expect.arrayContaining([expect.any(String)])
-      );
-      expect(['ecstatic', 'happy', 'neutral', 'sad', 'depressed'].map((mood) => getMoodEmoji(mood as never))).toEqual(
-        expect.arrayContaining([expect.any(String)])
-      );
+      expect(
+        ['egg', 'baby', 'child', 'teen', 'adult', 'elder'].map((stage) =>
+          getStageEmoji(stage as never),
+        ),
+      ).toEqual(expect.arrayContaining([expect.any(String)]));
+      expect(
+        ['ecstatic', 'happy', 'neutral', 'sad', 'depressed'].map((mood) =>
+          getMoodEmoji(mood as never),
+        ),
+      ).toEqual(expect.arrayContaining([expect.any(String)]));
     });
 
     it('should provide stage names in both languages', () => {

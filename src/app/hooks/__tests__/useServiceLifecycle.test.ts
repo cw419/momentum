@@ -91,7 +91,7 @@ describe('useServiceLifecycle', () => {
 
     expect(logger.error).toHaveBeenCalledWith(
       'SERVICE_LIFECYCLE',
-      'Rule system initialization failed: init failed'
+      'Rule system initialization failed: init failed',
     );
   });
 });

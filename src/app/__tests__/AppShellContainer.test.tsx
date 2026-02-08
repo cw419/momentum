@@ -132,7 +132,9 @@ vi.mock('../AppShellView', () => ({
       <div data-testid="loading">{String(props.isLoadingData)}</div>
       <div data-testid="view">{props.state.currentView}</div>
       <button onClick={props.handleCreateChain}>create-chain</button>
-      <button onClick={() => props.handleDeleteChain('chain-1')}>delete-chain</button>
+      <button onClick={() => props.handleDeleteChain('chain-1')}>
+        delete-chain
+      </button>
       <button onClick={props.openRSIP}>open-rsip</button>
     </div>
   ),

@@ -32,12 +32,17 @@ export class RuleClassificationService {
     return await exceptionRuleStorage.getRulesByType(type);
   }
 
-  async getRulesGroupedByType(): Promise<Record<ExceptionRuleType, ExceptionRule[]>> {
+  async getRulesGroupedByType(): Promise<
+    Record<ExceptionRuleType, ExceptionRule[]>
+  > {
     const allRules = await exceptionRuleStorage.getRules();
     return groupActiveRulesByType(allRules);
   }
 
-  validateRuleTypeForAction(rule: ExceptionRule, actionType: RuleActionType): boolean {
+  validateRuleTypeForAction(
+    rule: ExceptionRule,
+    actionType: RuleActionType,
+  ): boolean {
     if (isDev) {
       logger.debug('RULE_CLASSIFICATION', 'Validating rule type match', {
         ruleId: rule.id,
@@ -59,26 +64,38 @@ export class RuleClassificationService {
 
     if (isDev) {
       if (actionType === 'pause') {
-        logger.debug('RULE_CLASSIFICATION', 'Pause action match result', { pauseMatch: matches });
-      } else {
-        logger.debug('RULE_CLASSIFICATION', 'Early completion action match result', {
-          completionMatch: matches,
+        logger.debug('RULE_CLASSIFICATION', 'Pause action match result', {
+          pauseMatch: matches,
         });
+      } else {
+        logger.debug(
+          'RULE_CLASSIFICATION',
+          'Early completion action match result',
+          {
+            completionMatch: matches,
+          },
+        );
       }
     }
 
     return matches;
   }
 
-  async getRulesForAction(actionType: RuleActionType): Promise<ExceptionRule[]> {
+  async getRulesForAction(
+    actionType: RuleActionType,
+  ): Promise<ExceptionRule[]> {
     return await this.getRulesByType(getRuleTypeForAction(actionType));
   }
 
-  async validateRuleForAction(ruleId: string, actionType: RuleActionType): Promise<void> {
+  async validateRuleForAction(
+    ruleId: string,
+    actionType: RuleActionType,
+  ): Promise<void> {
     return validateRuleForAction({
       ruleId,
       actionType,
-      validateRuleTypeForAction: (rule, type) => this.validateRuleTypeForAction(rule, type),
+      validateRuleTypeForAction: (rule, type) =>
+        this.validateRuleTypeForAction(rule, type),
       fixRuleTypeIssues: (id) => this.fixRuleTypeIssues(id),
     });
   }
@@ -91,7 +108,10 @@ export class RuleClassificationService {
     return fixRuleTypeIssues(ruleId);
   }
 
-  async suggestRuleTypeChange(ruleId: string, desiredAction: RuleActionType): Promise<string> {
+  async suggestRuleTypeChange(
+    ruleId: string,
+    desiredAction: RuleActionType,
+  ): Promise<string> {
     const rule = await exceptionRuleStorage.getRuleById(ruleId);
 
     if (!rule) {
@@ -112,7 +132,9 @@ export class RuleClassificationService {
     return getRuleTypeStatsFromGrouped(grouped);
   }
 
-  async getRecommendedRuleType(basedOnUsage: boolean = true): Promise<ExceptionRuleType> {
+  async getRecommendedRuleType(
+    basedOnUsage: boolean = true,
+  ): Promise<ExceptionRuleType> {
     if (!basedOnUsage) {
       return ExceptionRuleType.PAUSE_ONLY;
     }
@@ -121,7 +143,10 @@ export class RuleClassificationService {
     return getRecommendedRuleTypeFromStats(stats, true);
   }
 
-  async searchRules(query: string, type?: ExceptionRuleType): Promise<ExceptionRule[]> {
+  async searchRules(
+    query: string,
+    type?: ExceptionRuleType,
+  ): Promise<ExceptionRule[]> {
     let rules: ExceptionRule[];
 
     if (type) {

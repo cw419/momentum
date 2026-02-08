@@ -14,7 +14,9 @@ export function useRuleManagerForm() {
   });
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [formWarnings, setFormWarnings] = useState<string[]>([]);
-  const [duplicateSuggestions, setDuplicateSuggestions] = useState<string[]>([]);
+  const [duplicateSuggestions, setDuplicateSuggestions] = useState<string[]>(
+    [],
+  );
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -56,4 +58,3 @@ export function useRuleManagerForm() {
     beginEditRule,
   };
 }
-

@@ -16,8 +16,17 @@ interface UseRSIPCameraResult {
   containerRef: React.RefObject<HTMLDivElement>;
   transformRef: React.RefObject<ReactZoomPanPinchContentRef>;
   latestTransformRef: React.MutableRefObject<CanvasState>;
-  contentBounds: { minX: number; minY: number; width: number; height: number } | null;
-  handleTransformed: (state: { scale: number; positionX: number; positionY: number }) => void;
+  contentBounds: {
+    minX: number;
+    minY: number;
+    width: number;
+    height: number;
+  } | null;
+  handleTransformed: (state: {
+    scale: number;
+    positionX: number;
+    positionY: number;
+  }) => void;
   fitToContent: () => void;
 }
 
@@ -31,7 +40,11 @@ export function useRSIPCamera({
   const viewportRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<ReactZoomPanPinchContentRef>(null);
-  const latestTransformRef = useRef<CanvasState>({ scale: 1, positionX: 0, positionY: 0 });
+  const latestTransformRef = useRef<CanvasState>({
+    scale: 1,
+    positionX: 0,
+    positionY: 0,
+  });
   const didInitCameraRef = useRef(false);
 
   const contentBounds = useMemo(() => {
@@ -73,7 +86,7 @@ export function useRSIPCamera({
       latestTransformRef.current = next;
       saveCanvasState(next);
     },
-    [saveCanvasState]
+    [saveCanvasState],
   );
 
   const fitToContent = useCallback(() => {
@@ -91,10 +104,16 @@ export function useRSIPCamera({
     const scaleY = (viewportHeight - padding * 2) / bounds.height;
     const scale = Math.min(scaleX, scaleY, 1);
 
-    const translateX = (viewportWidth - bounds.width * scale) / 2 - bounds.minX * scale;
-    const translateY = (viewportHeight - bounds.height * scale) / 2 - bounds.minY * scale;
+    const translateX =
+      (viewportWidth - bounds.width * scale) / 2 - bounds.minX * scale;
+    const translateY =
+      (viewportHeight - bounds.height * scale) / 2 - bounds.minY * scale;
 
-    const next: CanvasState = { scale, positionX: translateX, positionY: translateY };
+    const next: CanvasState = {
+      scale,
+      positionX: translateX,
+      positionY: translateY,
+    };
     latestTransformRef.current = next;
     saveCanvasState(next);
     api.setTransform(translateX, translateY, scale, 250, 'easeOut');
@@ -106,7 +125,12 @@ export function useRSIPCamera({
 
     if (savedState && transformRef.current) {
       latestTransformRef.current = savedState;
-      transformRef.current.setTransform(savedState.positionX, savedState.positionY, savedState.scale, 0);
+      transformRef.current.setTransform(
+        savedState.positionX,
+        savedState.positionY,
+        savedState.scale,
+        0,
+      );
       didInitCameraRef.current = true;
       return;
     }

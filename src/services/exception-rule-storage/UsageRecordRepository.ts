@@ -6,7 +6,7 @@
 import {
   RuleUsageRecord,
   ExceptionRuleError,
-  ExceptionRuleException
+  ExceptionRuleException,
 } from '../../types';
 import { RulePersistence } from './RulePersistence';
 
@@ -26,7 +26,7 @@ export class UsageRecordRepository {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取使用记录失败',
-        error
+        error,
       );
     }
   }
@@ -37,12 +37,12 @@ export class UsageRecordRepository {
   async getUsageRecordsByChain(chainId: string): Promise<RuleUsageRecord[]> {
     try {
       const allRecords = await this.getUsageRecords();
-      return allRecords.filter(record => record.chainId === chainId);
+      return allRecords.filter((record) => record.chainId === chainId);
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取链使用记录失败',
-        error
+        error,
       );
     }
   }
@@ -50,12 +50,17 @@ export class UsageRecordRepository {
   /**
    * 根据规则ID获取使用记录
    */
-  async getUsageRecordsByRuleId(ruleId: string, limit?: number): Promise<RuleUsageRecord[]> {
+  async getUsageRecordsByRuleId(
+    ruleId: string,
+    limit?: number,
+  ): Promise<RuleUsageRecord[]> {
     const records = await this.getUsageRecords();
-    const recordOrder = new Map(records.map((record, index) => [record.id, index]));
+    const recordOrder = new Map(
+      records.map((record, index) => [record.id, index]),
+    );
 
     const filtered = records
-      .filter(record => record.ruleId === ruleId)
+      .filter((record) => record.ruleId === ruleId)
       .sort((a, b) => {
         const timeDiff = b.usedAt.getTime() - a.usedAt.getTime();
         if (timeDiff !== 0) return timeDiff;
@@ -68,22 +73,24 @@ export class UsageRecordRepository {
   /**
    * 根据会话ID获取使用记录
    */
-  async getUsageRecordsBySessionId(sessionId: string): Promise<RuleUsageRecord[]> {
+  async getUsageRecordsBySessionId(
+    sessionId: string,
+  ): Promise<RuleUsageRecord[]> {
     const records = await this.getUsageRecords();
-    return records.filter(record => record.sessionId === sessionId);
+    return records.filter((record) => record.sessionId === sessionId);
   }
 
   /**
    * 创建使用记录
    */
   async createUsageRecord(
-    record: Omit<RuleUsageRecord, 'id' | 'usedAt'>
+    record: Omit<RuleUsageRecord, 'id' | 'usedAt'>,
   ): Promise<RuleUsageRecord> {
     try {
       const newRecord: RuleUsageRecord = {
         ...record,
         id: this.persistence.generateId(),
-        usedAt: new Date()
+        usedAt: new Date(),
       };
 
       const records = await this.getUsageRecords();
@@ -95,7 +102,7 @@ export class UsageRecordRepository {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '创建使用记录失败',
-        error
+        error,
       );
     }
   }
@@ -106,7 +113,9 @@ export class UsageRecordRepository {
   async updateUsageRecord(updatedRecord: RuleUsageRecord): Promise<void> {
     try {
       const records = await this.getUsageRecords();
-      const recordIndex = records.findIndex(record => record.id === updatedRecord.id);
+      const recordIndex = records.findIndex(
+        (record) => record.id === updatedRecord.id,
+      );
 
       if (recordIndex === -1) {
         return;
@@ -118,7 +127,7 @@ export class UsageRecordRepository {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '更新使用记录失败',
-        error
+        error,
       );
     }
   }
@@ -129,13 +138,15 @@ export class UsageRecordRepository {
   async deleteUsageRecord(recordId: string): Promise<void> {
     try {
       const records = await this.getUsageRecords();
-      const filteredRecords = records.filter(record => record.id !== recordId);
+      const filteredRecords = records.filter(
+        (record) => record.id !== recordId,
+      );
       this.persistence.saveUsageRecords(filteredRecords);
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '删除使用记录失败',
-        error
+        error,
       );
     }
   }

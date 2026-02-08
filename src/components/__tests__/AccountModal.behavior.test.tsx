@@ -1,5 +1,11 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthUser } from '../../domain/auth';
@@ -54,19 +60,24 @@ function createSupabaseStorage(overrides: Record<string, unknown> = {}) {
     kind: 'supabase' as const,
     getCurrentUser: vi.fn().mockResolvedValue(ok(createUser())),
     getGamblingSettings: vi.fn().mockResolvedValue(ok(defaultGamblingSettings)),
-    toggleGamblingMode: vi.fn().mockResolvedValue(ok({ success: true, message: 'ok' })),
+    toggleGamblingMode: vi
+      .fn()
+      .mockResolvedValue(ok({ success: true, message: 'ok' })),
     signOut: vi.fn().mockResolvedValue(ok(undefined)),
     ...overrides,
   };
 }
 
-function renderAccountModal(storage: ReturnType<typeof createSupabaseStorage>, onClose = vi.fn()) {
+function renderAccountModal(
+  storage: ReturnType<typeof createSupabaseStorage>,
+  onClose = vi.fn(),
+) {
   render(
     <I18nProvider>
       <StorageProvider storage={storage as any}>
         <AccountModal isOpen={true} onClose={onClose} />
       </StorageProvider>
-    </I18nProvider>
+    </I18nProvider>,
   );
   return { onClose };
 }
@@ -105,7 +116,9 @@ describe('AccountModal behavior', () => {
     renderAccountModal(storage);
     expect(await screen.findByText('user fetch failed')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Retry loading user info' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Retry loading user info' }),
+    );
 
     await waitFor(() => {
       expect(storage.getCurrentUser).toHaveBeenCalledTimes(2);
@@ -126,18 +139,26 @@ describe('AccountModal behavior', () => {
   it('toggles gambling mode successfully and schedules success message clear', async () => {
     const storage = createSupabaseStorage({
       getCurrentUser: vi.fn().mockResolvedValue(ok(createUser())),
-      getGamblingSettings: vi.fn().mockResolvedValue(ok(defaultGamblingSettings)),
-      toggleGamblingMode: vi.fn().mockResolvedValue(ok({ success: true, message: 'updated' })),
+      getGamblingSettings: vi
+        .fn()
+        .mockResolvedValue(ok(defaultGamblingSettings)),
+      toggleGamblingMode: vi
+        .fn()
+        .mockResolvedValue(ok({ success: true, message: 'updated' })),
     });
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
 
     renderAccountModal(storage);
 
-    const toggle = await screen.findByRole('switch', { name: 'Toggle gambling mode' });
+    const toggle = await screen.findByRole('switch', {
+      name: 'Toggle gambling mode',
+    });
     fireEvent.click(toggle);
 
     expect(storage.toggleGamblingMode).toHaveBeenCalledTimes(1);
-    expect(await screen.findByText('Gambling mode enabled')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Gambling mode enabled'),
+    ).toBeInTheDocument();
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
     setTimeoutSpy.mockRestore();
   });
@@ -145,12 +166,16 @@ describe('AccountModal behavior', () => {
   it('shows and dismisses gambling toggle errors for unsuccessful updates', async () => {
     const user = userEvent.setup();
     const storage = createSupabaseStorage({
-      toggleGamblingMode: vi.fn().mockResolvedValue(ok({ success: false, message: 'toggle rejected' })),
+      toggleGamblingMode: vi
+        .fn()
+        .mockResolvedValue(ok({ success: false, message: 'toggle rejected' })),
     });
 
     renderAccountModal(storage);
 
-    await user.click(await screen.findByRole('switch', { name: 'Toggle gambling mode' }));
+    await user.click(
+      await screen.findByRole('switch', { name: 'Toggle gambling mode' }),
+    );
 
     expect(await screen.findByText('toggle rejected')).toBeInTheDocument();
 
@@ -163,33 +188,45 @@ describe('AccountModal behavior', () => {
 
   it('shows gambling settings load errors from storage', async () => {
     const storage = createSupabaseStorage({
-      getGamblingSettings: vi.fn().mockResolvedValue(err(appError('settings fetch failed'))),
+      getGamblingSettings: vi
+        .fn()
+        .mockResolvedValue(err(appError('settings fetch failed'))),
     });
 
     renderAccountModal(storage);
 
-    expect(await screen.findByText('settings fetch failed')).toBeInTheDocument();
+    expect(
+      await screen.findByText('settings fetch failed'),
+    ).toBeInTheDocument();
   });
 
   it('shows generic fallback when user loading throws', async () => {
     const storage = createSupabaseStorage({
-      getCurrentUser: vi.fn().mockRejectedValue(new Error('unexpected user crash')),
+      getCurrentUser: vi
+        .fn()
+        .mockRejectedValue(new Error('unexpected user crash')),
     });
 
     renderAccountModal(storage);
 
-    expect(await screen.findByText('Failed to load user info')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Failed to load user info'),
+    ).toBeInTheDocument();
   });
 
   it('shows generic fallback when loading gambling settings throws', async () => {
     const storage = createSupabaseStorage({
       getCurrentUser: vi.fn().mockResolvedValue(ok(createUser())),
-      getGamblingSettings: vi.fn().mockRejectedValue(new Error('settings crash')),
+      getGamblingSettings: vi
+        .fn()
+        .mockRejectedValue(new Error('settings crash')),
     });
 
     renderAccountModal(storage);
 
-    expect(await screen.findByText('Failed to load settings')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Failed to load settings'),
+    ).toBeInTheDocument();
   });
 
   it('shows gambling errors for failed result payloads and thrown exceptions', async () => {
@@ -204,23 +241,31 @@ describe('AccountModal behavior', () => {
 
     renderAccountModal(storage);
 
-    await user.click(await screen.findByRole('switch', { name: 'Toggle gambling mode' }));
+    await user.click(
+      await screen.findByRole('switch', { name: 'Toggle gambling mode' }),
+    );
     expect(await screen.findByText('toggle failed')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Dismiss error' }));
-    await user.click(screen.getByRole('switch', { name: 'Toggle gambling mode' }));
+    await user.click(
+      screen.getByRole('switch', { name: 'Toggle gambling mode' }),
+    );
     expect(await screen.findByText('toggle crashed')).toBeInTheDocument();
   });
 
   it('keeps modal open and shows error on sign out failure', async () => {
     const user = userEvent.setup();
-    const signOutMock = vi.fn().mockResolvedValue(err(appError('cannot sign out')));
+    const signOutMock = vi
+      .fn()
+      .mockResolvedValue(err(appError('cannot sign out')));
     const storage = createSupabaseStorage({
       signOut: signOutMock,
     });
     const { onClose } = renderAccountModal(storage);
 
-    const signOutButton = await screen.findByRole('button', { name: 'Sign out' });
+    const signOutButton = await screen.findByRole('button', {
+      name: 'Sign out',
+    });
 
     await user.click(signOutButton);
     expect(await screen.findByText('cannot sign out')).toBeInTheDocument();
@@ -250,7 +295,9 @@ describe('AccountModal behavior', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Sign out' }));
 
-    expect(await screen.findByText('Sign out failed. Please try again.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Sign out failed. Please try again.'),
+    ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 });

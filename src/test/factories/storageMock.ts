@@ -54,7 +54,9 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
 
     // Auth
     getCurrentUser: vi.fn(async () => ok(null)),
-    waitForAuthentication: vi.fn(async () => ok({ user: null, isAuthenticated: false })),
+    waitForAuthentication: vi.fn(async () =>
+      ok({ user: null, isAuthenticated: false }),
+    ),
     isUserAuthenticated: vi.fn(async () => ok(false)),
     signUp: vi.fn(async () => ok(undefined)),
     signIn: vi.fn(async () => ok(undefined)),
@@ -62,7 +64,9 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
     onAuthStateChange: vi.fn(() => ok(() => undefined)),
 
     // User settings
-    getGamblingSettings: vi.fn(async () => ok({ gambling_mode_enabled: false })),
+    getGamblingSettings: vi.fn(async () =>
+      ok({ gambling_mode_enabled: false }),
+    ),
     toggleGamblingMode: vi.fn(async () => ok({ success: true, message: 'ok' })),
     isGamblingModeEnabled: vi.fn(async () => ok(false)),
 
@@ -77,7 +81,7 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
         points_wagered: 0,
         potential_points: 0,
         current_total: 0,
-      })
+      }),
     ),
     getUserAvailablePoints: vi.fn(async () => ok(0)),
     getTodayBetAmount: vi.fn(async () => ok(0)),
@@ -93,7 +97,7 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
         consecutive_days: 1,
         total_points: 0,
         checkin_id: 'checkin-id',
-      })
+      }),
     ),
     getUserCheckinStats: vi.fn(async () =>
       ok({
@@ -104,7 +108,7 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
         longest_streak: 0,
         last_checkin_date: null,
         has_checked_in_today: false,
-      })
+      }),
     ),
 
     // Pet
@@ -113,7 +117,9 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
   };
 }
 
-export function createStorageMock(options: CreateStorageMockOptions = {}): MomentumStorage {
+export function createStorageMock(
+  options: CreateStorageMockOptions = {},
+): MomentumStorage {
   const { kind = 'local', overrides = {} } = options;
   return {
     ...createBaseStorageMock(kind),
@@ -121,10 +127,14 @@ export function createStorageMock(options: CreateStorageMockOptions = {}): Momen
   };
 }
 
-export function createLocalStorageMock(overrides: Partial<MomentumStorage> = {}): MomentumStorage {
+export function createLocalStorageMock(
+  overrides: Partial<MomentumStorage> = {},
+): MomentumStorage {
   return createStorageMock({ kind: 'local', overrides });
 }
 
-export function createSupabaseStorageMock(overrides: Partial<MomentumStorage> = {}): MomentumStorage {
+export function createSupabaseStorageMock(
+  overrides: Partial<MomentumStorage> = {},
+): MomentumStorage {
   return createStorageMock({ kind: 'supabase', overrides });
 }

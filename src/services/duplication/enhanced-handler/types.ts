@@ -1,7 +1,11 @@
 import type { ExceptionRule } from '../../../types';
 
 export type DuplicationConflictType = 'exact' | 'similar' | 'none';
-type DuplicationSuggestionType = 'use_existing' | 'modify_name' | 'create_anyway' | 'merge_rules';
+type DuplicationSuggestionType =
+  | 'use_existing'
+  | 'modify_name'
+  | 'create_anyway'
+  | 'merge_rules';
 
 export interface DuplicationCheckResult {
   hasConflict: boolean;

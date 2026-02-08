@@ -11,4 +11,3 @@ export interface ConfirmDialogState {
   chainIds: string[];
   chainNames: string[];
 }
-

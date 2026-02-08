@@ -2,7 +2,10 @@ import type { ReactNode } from 'react';
 
 type HighlightRange = { start: number; end: number };
 
-export function highlightText(text: string, ranges: HighlightRange[]): ReactNode {
+export function highlightText(
+  text: string,
+  ranges: HighlightRange[],
+): ReactNode {
   const safeText = String(text || '');
   if (ranges.length === 0) return safeText;
 
@@ -17,10 +20,10 @@ export function highlightText(text: string, ranges: HighlightRange[]): ReactNode
     parts.push(
       <mark
         key={`${range.start}-${range.end}`}
-        className="bg-yellow-200 dark:bg-yellow-600 px-1 rounded"
+        className="rounded bg-yellow-200 px-1 dark:bg-yellow-600"
       >
         {safeText.slice(range.start, range.end)}
-      </mark>
+      </mark>,
     );
 
     lastIndex = range.end;

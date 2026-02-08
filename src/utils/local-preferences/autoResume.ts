@@ -26,4 +26,3 @@ export function clearAutoResume(): void {
     // ignore errors
   }
 }
-

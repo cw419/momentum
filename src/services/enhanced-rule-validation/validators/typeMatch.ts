@@ -6,9 +6,16 @@ import {
 } from '../../../types';
 import { getErrorMessage } from '../../../utils/errorMessage';
 import { ignoreUnused } from '../../../utils/ignoreUnused';
-import type { ActionType, RuleValidationResult, ValidationAction } from '../types';
+import type {
+  ActionType,
+  RuleValidationResult,
+  ValidationAction,
+} from '../types';
 
-function checkTypeActionMatch(ruleType: ExceptionRuleType, actionType: ActionType): boolean {
+function checkTypeActionMatch(
+  ruleType: ExceptionRuleType,
+  actionType: ActionType,
+): boolean {
   switch (actionType) {
     case 'pause':
       return ruleType === ExceptionRuleType.PAUSE_ONLY;
@@ -49,9 +56,14 @@ function getActionTypeDisplayName(actionType: ActionType): string {
   }
 }
 
-function getSuggestedActionsForMismatch(rule: ExceptionRule, actionType: ActionType): ValidationAction[] {
+function getSuggestedActionsForMismatch(
+  rule: ExceptionRule,
+  actionType: ActionType,
+): ValidationAction[] {
   const correctType =
-    actionType === 'pause' ? ExceptionRuleType.PAUSE_ONLY : ExceptionRuleType.EARLY_COMPLETION_ONLY;
+    actionType === 'pause'
+      ? ExceptionRuleType.PAUSE_ONLY
+      : ExceptionRuleType.EARLY_COMPLETION_ONLY;
 
   const actionName = getActionTypeDisplayName(actionType);
   ignoreUnused(rule, correctType);
@@ -72,7 +84,10 @@ function getSuggestedActionsForMismatch(rule: ExceptionRule, actionType: ActionT
   ];
 }
 
-export function validateRuleTypeForAction(rule: ExceptionRule, actionType: ActionType): RuleValidationResult {
+export function validateRuleTypeForAction(
+  rule: ExceptionRule,
+  actionType: ActionType,
+): RuleValidationResult {
   try {
     if (!rule) {
       return {
@@ -106,7 +121,11 @@ export function validateRuleTypeForAction(rule: ExceptionRule, actionType: Actio
         isValid: false,
         errorType: ExceptionRuleError.INVALID_RULE_TYPE,
         errorMessage: `规则 "${rule.name}" 的类型 "${rule.type}" 无效`,
-        debugInfo: { rule, actionType, validTypes: Object.values(ExceptionRuleType) },
+        debugInfo: {
+          rule,
+          actionType,
+          validTypes: Object.values(ExceptionRuleType),
+        },
       };
     }
 
@@ -116,7 +135,11 @@ export function validateRuleTypeForAction(rule: ExceptionRule, actionType: Actio
         isValid: false,
         errorType: ExceptionRuleError.VALIDATION_ERROR,
         errorMessage: `操作类型 "${actionType}" 无效`,
-        debugInfo: { rule, actionType, validActions: ['pause', 'early_completion'] },
+        debugInfo: {
+          rule,
+          actionType,
+          validActions: ['pause', 'early_completion'],
+        },
       };
     }
 
@@ -150,4 +173,3 @@ export function validateRuleTypeForAction(rule: ExceptionRule, actionType: Actio
     };
   }
 }
-

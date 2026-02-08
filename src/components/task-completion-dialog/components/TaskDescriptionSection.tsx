@@ -26,7 +26,7 @@ export const TaskDescriptionSection: React.FC<{
 }) => {
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <FileText className="text-gray-500 dark:text-gray-400" size={16} />
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -41,7 +41,7 @@ export const TaskDescriptionSection: React.FC<{
             onClick={onToggleQuickFill}
             aria-label={tr('显示历史描述', 'Show history')}
             aria-expanded={showQuickFill}
-            className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+            className="flex items-center space-x-1 text-xs text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             <History size={14} />
             <span>{tr('历史', 'History')}</span>
@@ -69,13 +69,13 @@ export const TaskDescriptionSection: React.FC<{
         }
         aria-label={tr('任务描述', 'Task description')}
         aria-required={isDurationless}
-        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
         required={isDurationless}
       />
 
       {showQuickFill && recentDescriptions.length > 0 && (
-        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-xl animate-slide-down">
-          <div className="flex items-center space-x-2 mb-2">
+        <div className="animate-slide-down mt-2 rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-700/50 dark:bg-blue-900/20">
+          <div className="mb-2 flex items-center space-x-2">
             <RotateCcw className="text-blue-600 dark:text-blue-400" size={14} />
             <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
               {tr('最近的任务描述', 'Recent descriptions')}
@@ -87,7 +87,7 @@ export const TaskDescriptionSection: React.FC<{
                 key={index}
                 type="button"
                 onClick={() => onQuickFill(desc)}
-                className="w-full text-left px-3 py-2 text-sm text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800/30 rounded-lg transition-colors truncate"
+                className="w-full truncate rounded-lg px-3 py-2 text-left text-sm text-blue-800 transition-colors hover:bg-blue-100 dark:text-blue-200 dark:hover:bg-blue-800/30"
                 title={desc}
               >
                 {desc}
@@ -97,7 +97,7 @@ export const TaskDescriptionSection: React.FC<{
         </div>
       )}
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
         {isDurationless
           ? tr(
               '按 Tab 添加备注或自动填充，按 Shift+Tab 显示历史，按 Enter 完成',
@@ -111,4 +111,3 @@ export const TaskDescriptionSection: React.FC<{
     </div>
   );
 };
-

@@ -6,8 +6,12 @@ import { getCommonPatterns, getCompletionPatterns } from './patterns';
 export class RuleDuplicateDetector {
   detectDuplicates(
     name: string,
-    existingRules: ExceptionRule[]
-  ): { hasExactMatch: boolean; exactMatches: ExceptionRule[]; similarRules: ExceptionRule[] } {
+    existingRules: ExceptionRule[],
+  ): {
+    hasExactMatch: boolean;
+    exactMatches: ExceptionRule[];
+    similarRules: ExceptionRule[];
+  } {
     const normalizedName = name.toLowerCase().trim();
     const exactMatches: ExceptionRule[] = [];
     const similarRules: ExceptionRule[] = [];
@@ -19,9 +23,14 @@ export class RuleDuplicateDetector {
         exactMatches.push(rule);
       } else {
         const hasSubstringMatch =
-          normalizedName.length >= 2 && (ruleName.includes(normalizedName) || normalizedName.includes(ruleName));
+          normalizedName.length >= 2 &&
+          (ruleName.includes(normalizedName) ||
+            normalizedName.includes(ruleName));
 
-        if (hasSubstringMatch || calculateSimilarity(ruleName, normalizedName) > 0.7) {
+        if (
+          hasSubstringMatch ||
+          calculateSimilarity(ruleName, normalizedName) > 0.7
+        ) {
           similarRules.push(rule);
         }
       }
@@ -34,14 +43,20 @@ export class RuleDuplicateDetector {
     };
   }
 
-  generateNameSuggestions(partialName: string, actionType: ExceptionRuleType): string[] {
+  generateNameSuggestions(
+    partialName: string,
+    actionType: ExceptionRuleType,
+  ): string[] {
     const suggestions: string[] = [];
     const normalized = partialName.toLowerCase().trim();
 
     const patterns = getCommonPatterns(actionType);
 
     for (const pattern of patterns) {
-      if (pattern.toLowerCase().includes(normalized) || normalized.includes(pattern.toLowerCase())) {
+      if (
+        pattern.toLowerCase().includes(normalized) ||
+        normalized.includes(pattern.toLowerCase())
+      ) {
         suggestions.push(pattern);
       }
     }
@@ -52,4 +67,3 @@ export class RuleDuplicateDetector {
     return [...new Set(suggestions)].slice(0, 3);
   }
 }
-

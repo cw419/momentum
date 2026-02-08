@@ -9,9 +9,10 @@ describe('Performance test harness', () => {
   });
 
   it('measures async operations', async () => {
-    const measurement = await performanceUtils.measureAsyncOperation(async () => 'ok');
+    const measurement = await performanceUtils.measureAsyncOperation(
+      async () => 'ok',
+    );
     expect(measurement.result).toBe('ok');
     expect(measurement.duration).toBeGreaterThan(0);
   });
 });
-

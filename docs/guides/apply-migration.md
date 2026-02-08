@@ -17,7 +17,7 @@ supabase migration up
 ## 方法2: 手动在 Supabase Dashboard 中执行
 
 1. 打开你的 Supabase 项目 Dashboard
-2. 进入 "SQL Editor" 
+2. 进入 "SQL Editor"
 3. 复制并执行以下 SQL 代码：
 
 ```sql
@@ -45,7 +45,7 @@ DO $
 BEGIN
   -- 允许用户查看自己已删除的链条（用于回收箱功能）
   IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
+    SELECT 1 FROM pg_policies
     WHERE tablename = 'chains' AND policyname = 'Users can view their deleted chains'
   ) THEN
     CREATE POLICY "Users can view their deleted chains" ON chains
@@ -54,7 +54,7 @@ BEGIN
 
   -- 允许用户更新自己链条的 deleted_at 字段
   IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
+    SELECT 1 FROM pg_policies
     WHERE tablename = 'chains' AND policyname = 'Users can soft delete their chains'
   ) THEN
     CREATE POLICY "Users can soft delete their chains" ON chains
@@ -68,8 +68,8 @@ END $;
 执行以下查询来验证 `deleted_at` 字段是否已添加：
 
 ```sql
-SELECT column_name, data_type, is_nullable 
-FROM information_schema.columns 
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
 WHERE table_name = 'chains' AND column_name = 'deleted_at';
 ```
 
@@ -85,6 +85,7 @@ WHERE table_name = 'chains' AND column_name = 'deleted_at';
 ## 如果遇到问题
 
 如果在应用迁移时遇到权限问题，请确保：
+
 1. 你有数据库的管理员权限
 2. 在 Supabase Dashboard 的 SQL Editor 中执行，而不是通过应用程序
 

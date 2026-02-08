@@ -37,17 +37,31 @@ function isReadOnlyModeError(lower: string): boolean {
 
 function isNetworkError(lower: string): boolean {
   return (
-    includesAny(lower, ['failed to fetch', 'fetch failed', 'network error', 'timeout']) ||
-    includesAll(lower, ['connection', 'supabase'])
+    includesAny(lower, [
+      'failed to fetch',
+      'fetch failed',
+      'network error',
+      'timeout',
+    ]) || includesAll(lower, ['connection', 'supabase'])
   );
 }
 
 function isAuthError(lower: string): boolean {
-  return includesAny(lower, ['jwt expired', 'invalid jwt', 'not authenticated', 'authentication', 'auth']);
+  return includesAny(lower, [
+    'jwt expired',
+    'invalid jwt',
+    'not authenticated',
+    'authentication',
+    'auth',
+  ]);
 }
 
 function isRlsError(lower: string): boolean {
-  return includesAny(lower, ['row-level security', 'rls', 'violates row-level security policy']);
+  return includesAny(lower, [
+    'row-level security',
+    'rls',
+    'violates row-level security policy',
+  ]);
 }
 
 function isRateLimitedError(lower: string): boolean {
@@ -55,7 +69,10 @@ function isRateLimitedError(lower: string): boolean {
 }
 
 function isProjectPausedError(lower: string): boolean {
-  return lower.includes('project is paused') || includesAll(lower, ['paused', 'project']);
+  return (
+    lower.includes('project is paused') ||
+    includesAll(lower, ['paused', 'project'])
+  );
 }
 
 function translateKnownErrorsZh(lower: string): string | null {
@@ -94,7 +111,10 @@ function translateKnownErrorsZh(lower: string): string | null {
   return null;
 }
 
-function translateKnownErrors(errorMessage: string, language: Language): string | null {
+function translateKnownErrors(
+  errorMessage: string,
+  language: Language,
+): string | null {
   const message = (errorMessage || '').trim();
   if (!message) return null;
   if (language !== 'zh') return null;
@@ -105,7 +125,10 @@ function translateKnownErrors(errorMessage: string, language: Language): string 
  * Returns an error detail string only when it's likely written in the current UI language,
  * to avoid mixed-language UI. Otherwise returns null.
  */
-export function getSafeErrorDetail(errorMessage: string, language: Language): string | null {
+export function getSafeErrorDetail(
+  errorMessage: string,
+  language: Language,
+): string | null {
   const message = (errorMessage || '').trim();
   if (!message) return null;
 
@@ -126,7 +149,10 @@ export function getSafeErrorDetail(errorMessage: string, language: Language): st
   return code ? `Error code: ${code}` : null;
 }
 
-export function getSafeErrorDetailFromUnknown(error: unknown, language: Language): string | null {
+export function getSafeErrorDetailFromUnknown(
+  error: unknown,
+  language: Language,
+): string | null {
   if (error instanceof Error) {
     return getSafeErrorDetail(error.message, language);
   }

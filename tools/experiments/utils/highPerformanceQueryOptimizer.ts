@@ -1,6 +1,6 @@
 /**
  * 高性能查询优化器
- * 
+ *
  * 实现智能查询优化、批量操作、查询去重、结果缓存等功能
  * 显著提升数据库操作性能和响应速度
  */
@@ -32,7 +32,10 @@ interface BatchOperation<T> {
 }
 
 class HighPerformanceQueryOptimizer {
-  private queryCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private queryCache = new Map<
+    string,
+    { data: any; timestamp: number; ttl: number }
+  >();
   private queryDeduplicator = new Map<string, Promise<any>>();
   private batchQueue: BatchOperation<any>[] = [];
   private batchTimer: NodeJS.Timeout | null = null;
@@ -41,7 +44,7 @@ class HighPerformanceQueryOptimizer {
     totalQueries: 0,
     cacheHits: 0,
     batchOperations: 0,
-    avgExecutionTime: 0
+    avgExecutionTime: 0,
   };
 
   // 默认配置
@@ -51,16 +54,19 @@ class HighPerformanceQueryOptimizer {
     maxBatchSize: 100, // 最大批量大小
     connectionPoolSize: 10, // 连接池大小
     queryTimeout: 30000, // 30秒查询超时
-    enableQueryHints: true // 启用查询提示
+    enableQueryHints: true, // 启用查询提示
   };
 
   /**
    * 优化用户链条查询 - 最常用的查询
    */
-  async getOptimizedChains(userId: string, options: QueryOptions = {}): Promise<QueryResult<Chain[]>> {
+  async getOptimizedChains(
+    userId: string,
+    options: QueryOptions = {},
+  ): Promise<QueryResult<Chain[]>> {
     const startTime = performance.now();
     const cacheKey = `chains:${userId}:active`;
-    
+
     // 检查缓存
     if (options.useCache !== false) {
       const cached = this.getFromCache<Chain[]>(cacheKey);
@@ -68,7 +74,7 @@ class HighPerformanceQueryOptimizer {
         return {
           data: cached,
           cached: true,
-          executionTime: performance.now() - startTime
+          executionTime: performance.now() - startTime,
         };
       }
     }
@@ -79,7 +85,7 @@ class HighPerformanceQueryOptimizer {
       return {
         data,
         cached: false,
-        executionTime: performance.now() - startTime
+        executionTime: performance.now() - startTime,
       };
     }
 
@@ -89,18 +95,18 @@ class HighPerformanceQueryOptimizer {
 
     try {
       const data = await queryPromise;
-      
+
       // 缓存结果
       this.setCache(cacheKey, data, this.config.cacheDefaultTTL);
-      
+
       // 更新统计
       this.updateQueryStats(performance.now() - startTime);
-      
+
       return {
         data,
         cached: false,
         executionTime: performance.now() - startTime,
-        fromIndex: true
+        fromIndex: true,
       };
     } finally {
       this.queryDeduplicator.delete(cacheKey);
@@ -116,7 +122,8 @@ class HighPerformanceQueryOptimizer {
     // 使用优化的查询和索引提示
     const { data, error } = await supabase
       .from('chains')
-      .select(`
+      .select(
+        `
         id,
         name,
         parent_id,
@@ -142,7 +149,8 @@ class HighPerformanceQueryOptimizer {
         group_expires_at,
         created_at,
         last_completed_at
-      `)
+      `,
+      )
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
@@ -156,40 +164,47 @@ class HighPerformanceQueryOptimizer {
   /**
    * 批量优化操作
    */
-  async batchOptimizedOperations<T>(operations: BatchOperation<T>[]): Promise<QueryResult<T[]>> {
+  async batchOptimizedOperations<T>(
+    operations: BatchOperation<T>[],
+  ): Promise<QueryResult<T[]>> {
     const startTime = performance.now();
     const results: T[] = [];
 
     // 按表和操作类型分组
     const groupedOps = this.groupOperationsByTable(operations);
-    
+
     for (const [table, tableOps] of groupedOps.entries()) {
-      const tableResults = await this.executeBatchOperationsForTable(table, tableOps);
+      const tableResults = await this.executeBatchOperationsForTable(
+        table,
+        tableOps,
+      );
       results.push(...tableResults);
     }
 
     this.queryStats.batchOperations++;
-    
+
     return {
       data: results,
       cached: false,
-      executionTime: performance.now() - startTime
+      executionTime: performance.now() - startTime,
     };
   }
 
   /**
    * 按表分组批量操作
    */
-  private groupOperationsByTable<T>(operations: BatchOperation<T>[]): Map<string, BatchOperation<T>[]> {
+  private groupOperationsByTable<T>(
+    operations: BatchOperation<T>[],
+  ): Map<string, BatchOperation<T>[]> {
     const grouped = new Map<string, BatchOperation<T>[]>();
-    
+
     for (const op of operations) {
       if (!grouped.has(op.table)) {
         grouped.set(op.table, []);
       }
       grouped.get(op.table)!.push(op);
     }
-    
+
     return grouped;
   }
 
@@ -197,27 +212,27 @@ class HighPerformanceQueryOptimizer {
    * 执行单表的批量操作
    */
   private async executeBatchOperationsForTable<T>(
-    table: string, 
-    operations: BatchOperation<T>[]
+    table: string,
+    operations: BatchOperation<T>[],
   ): Promise<T[]> {
     if (!supabase) throw new Error('Supabase not configured');
 
     const results: T[] = [];
-    
+
     // 分离不同类型的操作
-    const inserts = operations.filter(op => op.operation === 'insert');
-    const updates = operations.filter(op => op.operation === 'update');
-    const deletes = operations.filter(op => op.operation === 'delete');
-    const selects = operations.filter(op => op.operation === 'select');
+    const inserts = operations.filter((op) => op.operation === 'insert');
+    const updates = operations.filter((op) => op.operation === 'update');
+    const deletes = operations.filter((op) => op.operation === 'delete');
+    const selects = operations.filter((op) => op.operation === 'select');
 
     // 批量插入
     if (inserts.length > 0) {
-      const insertData = inserts.map(op => op.data);
+      const insertData = inserts.map((op) => op.data);
       const { data, error } = await supabase
         .from(table)
         .insert(insertData)
         .select();
-      
+
       if (error) throw error;
       if (data) results.push(...data);
     }
@@ -231,13 +246,13 @@ class HighPerformanceQueryOptimizer {
             .update(op.data)
             .match(op.conditions)
             .select();
-          
+
           if (error) throw error;
           return data;
         });
-        
+
         const chunkResults = await Promise.all(updatePromises);
-        chunkResults.forEach(result => {
+        chunkResults.forEach((result) => {
           if (result) results.push(...result);
         });
       }
@@ -251,7 +266,7 @@ class HighPerformanceQueryOptimizer {
           .delete()
           .match(deleteOp.conditions)
           .select();
-        
+
         if (error) throw error;
         if (data) results.push(...data);
       }
@@ -270,14 +285,14 @@ class HighPerformanceQueryOptimizer {
    * 优化批量查询操作
    */
   private async optimizeBatchSelects<T>(
-    table: string, 
-    selects: BatchOperation<T>[]
+    table: string,
+    selects: BatchOperation<T>[],
   ): Promise<T[]> {
     if (!supabase) throw new Error('Supabase not configured');
 
     // 合并相似的查询条件
     const mergedConditions = this.mergeSelectConditions(selects);
-    
+
     const { data, error } = await supabase
       .from(table)
       .select('*')
@@ -292,7 +307,7 @@ class HighPerformanceQueryOptimizer {
    * 合并查询条件以减少数据库调用
    */
   private mergeSelectConditions<T>(selects: BatchOperation<T>[]): string {
-    const conditions = selects.map(select => {
+    const conditions = selects.map((select) => {
       if (select.conditions.id) {
         return `id.eq.${select.conditions.id}`;
       }
@@ -301,7 +316,7 @@ class HighPerformanceQueryOptimizer {
       }
       return 'id.not.is.null'; // 默认条件
     });
-    
+
     return conditions.join(',');
   }
 
@@ -314,20 +329,24 @@ class HighPerformanceQueryOptimizer {
     pageSize: number = 50,
     conditions: any = {},
     orderBy: string = 'created_at',
-    ascending: boolean = false
+    ascending: boolean = false,
   ): Promise<QueryResult<{ data: T[]; total: number; hasMore: boolean }>> {
     const startTime = performance.now();
     const offset = (page - 1) * pageSize;
-    
-    const cacheKey = `paginated:${table}:${JSON.stringify({page, pageSize, conditions, orderBy, ascending})}`;
-    
+
+    const cacheKey = `paginated:${table}:${JSON.stringify({ page, pageSize, conditions, orderBy, ascending })}`;
+
     // 检查缓存
-    const cached = this.getFromCache<{ data: T[]; total: number; hasMore: boolean }>(cacheKey);
+    const cached = this.getFromCache<{
+      data: T[];
+      total: number;
+      hasMore: boolean;
+    }>(cacheKey);
     if (cached) {
       return {
         data: cached,
         cached: true,
-        executionTime: performance.now() - startTime
+        executionTime: performance.now() - startTime,
       };
     }
 
@@ -341,11 +360,11 @@ class HighPerformanceQueryOptimizer {
         .match(conditions)
         .order(orderBy, { ascending })
         .range(offset, offset + pageSize - 1),
-      
+
       supabase
         .from(table)
         .select('*', { count: 'exact', head: true })
-        .match(conditions)
+        .match(conditions),
     ]);
 
     if (dataResult.error) throw dataResult.error;
@@ -356,14 +375,14 @@ class HighPerformanceQueryOptimizer {
     const hasMore = offset + pageSize < total;
 
     const result = { data, total, hasMore };
-    
+
     // 缓存结果
     this.setCache(cacheKey, result, this.config.cacheDefaultTTL / 2); // 分页数据缓存时间更短
-    
+
     return {
       data: result,
       cached: false,
-      executionTime: performance.now() - startTime
+      executionTime: performance.now() - startTime,
     };
   }
 
@@ -374,12 +393,12 @@ class HighPerformanceQueryOptimizer {
     const preloadPromises = [
       // 预加载链条数据
       this.getOptimizedChains(userId, { useCache: false }),
-      
+
       // 预加载活跃会话
       this.getActiveSessionsOptimized(userId),
-      
+
       // 预加载最近完成记录
-      this.getRecentCompletions(userId, 10)
+      this.getRecentCompletions(userId, 10),
     ];
 
     // 并行预加载
@@ -389,16 +408,18 @@ class HighPerformanceQueryOptimizer {
   /**
    * 优化活跃会话查询
    */
-  async getActiveSessionsOptimized(userId: string): Promise<QueryResult<ActiveSession[]>> {
+  async getActiveSessionsOptimized(
+    userId: string,
+  ): Promise<QueryResult<ActiveSession[]>> {
     const startTime = performance.now();
     const cacheKey = `sessions:active:${userId}`;
-    
+
     const cached = this.getFromCache<ActiveSession[]>(cacheKey);
     if (cached) {
       return {
         data: cached,
         cached: true,
-        executionTime: performance.now() - startTime
+        executionTime: performance.now() - startTime,
       };
     }
 
@@ -412,30 +433,33 @@ class HighPerformanceQueryOptimizer {
       .limit(50);
 
     if (error) throw error;
-    
+
     const sessions = data || [];
     this.setCache(cacheKey, sessions, 30000); // 30秒缓存活跃会话
-    
+
     return {
       data: sessions,
       cached: false,
-      executionTime: performance.now() - startTime
+      executionTime: performance.now() - startTime,
     };
   }
 
   /**
    * 获取最近完成记录（优化）
    */
-  async getRecentCompletions(userId: string, limit: number = 20): Promise<QueryResult<CompletionHistory[]>> {
+  async getRecentCompletions(
+    userId: string,
+    limit: number = 20,
+  ): Promise<QueryResult<CompletionHistory[]>> {
     const startTime = performance.now();
     const cacheKey = `completions:recent:${userId}:${limit}`;
-    
+
     const cached = this.getFromCache<CompletionHistory[]>(cacheKey);
     if (cached) {
       return {
         data: cached,
         cached: true,
-        executionTime: performance.now() - startTime
+        executionTime: performance.now() - startTime,
       };
     }
 
@@ -444,23 +468,25 @@ class HighPerformanceQueryOptimizer {
     // 使用优化索引查询
     const { data, error } = await supabase
       .from('completion_history')
-      .select(`
+      .select(
+        `
         *,
         chains!completion_history_chain_id_fkey(name, trigger)
-      `)
+      `,
+      )
       .eq('user_id', userId)
       .order('completed_at', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
-    
+
     const completions = data || [];
     this.setCache(cacheKey, completions, 60000); // 1分钟缓存完成记录
-    
+
     return {
       data: completions,
       cached: false,
-      executionTime: performance.now() - startTime
+      executionTime: performance.now() - startTime,
     };
   }
 
@@ -470,12 +496,12 @@ class HighPerformanceQueryOptimizer {
   private getFromCache<T>(key: string): T | null {
     const item = this.queryCache.get(key);
     if (!item) return null;
-    
+
     if (Date.now() > item.timestamp + item.ttl) {
       this.queryCache.delete(key);
       return null;
     }
-    
+
     this.queryStats.cacheHits++;
     return item.data;
   }
@@ -484,9 +510,9 @@ class HighPerformanceQueryOptimizer {
     this.queryCache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
-    
+
     // 限制缓存大小
     if (this.queryCache.size > 1000) {
       const oldestKey = this.queryCache.keys().next().value;
@@ -502,7 +528,7 @@ class HighPerformanceQueryOptimizer {
       this.queryCache.clear();
       return;
     }
-    
+
     for (const key of this.queryCache.keys()) {
       if (key.includes(pattern)) {
         this.queryCache.delete(key);
@@ -517,9 +543,13 @@ class HighPerformanceQueryOptimizer {
     return {
       ...this.queryStats,
       cacheSize: this.queryCache.size,
-      cacheHitRate: this.queryStats.totalQueries > 0 
-        ? (this.queryStats.cacheHits / this.queryStats.totalQueries * 100).toFixed(2) + '%'
-        : '0%'
+      cacheHitRate:
+        this.queryStats.totalQueries > 0
+          ? (
+              (this.queryStats.cacheHits / this.queryStats.totalQueries) *
+              100
+            ).toFixed(2) + '%'
+          : '0%',
     };
   }
 
@@ -528,10 +558,10 @@ class HighPerformanceQueryOptimizer {
    */
   private updateQueryStats(executionTime: number): void {
     this.queryStats.totalQueries++;
-    this.queryStats.avgExecutionTime = (
-      (this.queryStats.avgExecutionTime * (this.queryStats.totalQueries - 1) + executionTime) / 
-      this.queryStats.totalQueries
-    );
+    this.queryStats.avgExecutionTime =
+      (this.queryStats.avgExecutionTime * (this.queryStats.totalQueries - 1) +
+        executionTime) /
+      this.queryStats.totalQueries;
   }
 
   /**
@@ -552,7 +582,7 @@ class HighPerformanceQueryOptimizer {
     this.queryCache.clear();
     this.queryDeduplicator.clear();
     this.batchQueue.length = 0;
-    
+
     if (this.batchTimer) {
       clearTimeout(this.batchTimer);
       this.batchTimer = null;

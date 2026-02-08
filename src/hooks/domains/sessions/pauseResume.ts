@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { logger } from '../../../utils/logger';
+import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 
 interface CreatePauseResumeHandlersParams {
   state: AppState;
@@ -9,7 +10,11 @@ interface CreatePauseResumeHandlersParams {
   storage: MomentumStorage;
 }
 
-export function createPauseResumeHandlers({ state, setState, storage }: CreatePauseResumeHandlersParams) {
+export function createPauseResumeHandlers({
+  state,
+  setState,
+  storage,
+}: CreatePauseResumeHandlersParams) {
   const handlePauseSession = () => {
     const activeSession = state.activeSession;
     if (!activeSession) return;
@@ -20,11 +25,16 @@ export function createPauseResumeHandlers({ state, setState, storage }: CreatePa
       pausedAt: new Date(),
     };
 
-    storage.saveActiveSession(updatedSession).catch(error => {
-      logger.error('SESSIONS', 'Failed to persist paused session', undefined, error as Error);
+    storage.saveActiveSession(updatedSession).catch((error) => {
+      logger.error(
+        'SESSIONS',
+        'Failed to persist paused session',
+        undefined,
+        normalizeUnknownError(error),
+      );
     });
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       activeSession: updatedSession,
     }));
@@ -42,11 +52,16 @@ export function createPauseResumeHandlers({ state, setState, storage }: CreatePa
       totalPausedTime: activeSession.totalPausedTime + pauseDuration,
     };
 
-    storage.saveActiveSession(updatedSession).catch(error => {
-      logger.error('SESSIONS', 'Failed to persist resumed session', undefined, error as Error);
+    storage.saveActiveSession(updatedSession).catch((error) => {
+      logger.error(
+        'SESSIONS',
+        'Failed to persist resumed session',
+        undefined,
+        normalizeUnknownError(error),
+      );
     });
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       activeSession: updatedSession,
     }));

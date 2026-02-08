@@ -9,12 +9,10 @@ export type {
   RecoveryAction,
   RecoveryContext,
   RecoveryStrategy,
-  RecoveryHistoryEntry
+  RecoveryHistoryEntry,
 } from './RecoveryStrategy';
 
-export {
-  RecoveryStrategyRegistry,
-} from './RecoveryStrategy';
+export { RecoveryStrategyRegistry } from './RecoveryStrategy';
 
 // 恢复选项提供器
 export { recoveryOptionsProvider } from './RecoveryOptionsProvider';
@@ -25,5 +23,5 @@ export { recoveryOptionsProvider } from './RecoveryOptionsProvider';
 export {
   initializeDefaultStrategies,
   createUnknownErrorResult,
-  createRecoveryFailureResult
+  createRecoveryFailureResult,
 } from './DefaultStrategies';

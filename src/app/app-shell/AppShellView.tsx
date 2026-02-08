@@ -5,25 +5,45 @@ import { queryOptimizer } from '../../utils/queryOptimizer';
 import { LoadingFallback } from './LoadingFallback';
 import type { AppShellViewProps } from './types';
 
-const RSIPView = lazy(() => import('../../components/RSIPView').then((m) => ({ default: m.RSIPView })));
+const RSIPView = lazy(() =>
+  import('../../components/RSIPView').then((m) => ({ default: m.RSIPView })),
+);
 const ChainEditor = lazy(() =>
-  import('../../components/ChainEditor').then((m) => ({ default: m.ChainEditor })),
+  import('../../components/ChainEditor').then((m) => ({
+    default: m.ChainEditor,
+  })),
 );
-const FocusMode = lazy(() => import('../../components/FocusMode').then((m) => ({ default: m.FocusMode })));
+const FocusMode = lazy(() =>
+  import('../../components/FocusMode').then((m) => ({ default: m.FocusMode })),
+);
 const ChainDetail = lazy(() =>
-  import('../../components/ChainDetail').then((m) => ({ default: m.ChainDetail })),
+  import('../../components/ChainDetail').then((m) => ({
+    default: m.ChainDetail,
+  })),
 );
-const GroupView = lazy(() => import('../../components/GroupView').then((m) => ({ default: m.GroupView })));
+const GroupView = lazy(() =>
+  import('../../components/GroupView').then((m) => ({ default: m.GroupView })),
+);
 const TaskGroupEditor = lazy(() =>
-  import('../../components/TaskGroupEditor').then((m) => ({ default: m.TaskGroupEditor })),
+  import('../../components/TaskGroupEditor').then((m) => ({
+    default: m.TaskGroupEditor,
+  })),
 );
 const AuxiliaryJudgment = lazy(() =>
-  import('../../components/AuxiliaryJudgment').then((m) => ({ default: m.AuxiliaryJudgment })),
+  import('../../components/AuxiliaryJudgment').then((m) => ({
+    default: m.AuxiliaryJudgment,
+  })),
 );
 const BettingModal = lazy(() =>
-  import('../../components/BettingModal').then((m) => ({ default: m.BettingModal })),
+  import('../../components/BettingModal').then((m) => ({
+    default: m.BettingModal,
+  })),
 );
-const PetWidget = lazy(() => import('../../components/pet/PetWidget').then((m) => ({ default: m.PetWidget })));
+const PetWidget = lazy(() =>
+  import('../../components/pet/PetWidget').then((m) => ({
+    default: m.PetWidget,
+  })),
+);
 
 export function AppShellView({
   state,
@@ -73,8 +93,12 @@ export function AppShellView({
       <Suspense fallback={null}>
         <AuxiliaryJudgment
           chain={state.chains.find((c) => c.id === showAuxiliaryJudgment)!}
-          onJudgmentFailure={() => handleAuxiliaryJudgmentFailure(showAuxiliaryJudgment)}
-          onJudgmentAllow={(exceptionRule) => handleAuxiliaryJudgmentAllow(showAuxiliaryJudgment, exceptionRule)}
+          onJudgmentFailure={() =>
+            handleAuxiliaryJudgmentFailure(showAuxiliaryJudgment)
+          }
+          onJudgmentAllow={(exceptionRule) =>
+            handleAuxiliaryJudgmentAllow(showAuxiliaryJudgment, exceptionRule)
+          }
           onCancel={() => setShowAuxiliaryJudgment(null)}
         />
       </Suspense>
@@ -84,15 +108,15 @@ export function AppShellView({
   const renderCurrentView = () => {
     if (!isInitialized) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="bg-background flex min-h-screen items-center justify-center">
           <div className="text-center">
-            <div className="w-16 h-16 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-xl">
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <div className="gradient-primary mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-3xl shadow-xl">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
             </div>
-            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
+            <h2 className="mb-2 font-chinese text-2xl font-bold text-gray-900 dark:text-slate-100">
               {tr('正在初始化…', 'Initializing…')}
             </h2>
-            <p className="text-gray-600 dark:text-slate-400 font-mono text-sm">
+            <p className="font-mono text-sm text-gray-600 dark:text-slate-400">
               {tr('正在初始化应用', 'INITIALIZING APPLICATION')}
             </p>
           </div>
@@ -125,7 +149,9 @@ export function AppShellView({
         );
 
       case 'focus': {
-        const activeChain = state.chains.find((c) => c.id === state.activeSession?.chainId);
+        const activeChain = state.chains.find(
+          (c) => c.id === state.activeSession?.chainId,
+        );
         if (!state.activeSession || !activeChain) return null;
 
         return (
@@ -144,7 +170,9 @@ export function AppShellView({
       }
 
       case 'detail': {
-        const viewingChain = state.chains.find((c) => c.id === state.viewingChainId);
+        const viewingChain = state.chains.find(
+          (c) => c.id === state.viewingChainId,
+        );
         if (!viewingChain) return null;
 
         return (
@@ -162,11 +190,18 @@ export function AppShellView({
       }
 
       case 'group': {
-        const viewingGroup = state.chains.find((c) => c.id === state.viewingChainId);
+        const viewingGroup = state.chains.find(
+          (c) => c.id === state.viewingChainId,
+        );
         if (!viewingGroup) return null;
 
-        const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains, state.chainsRevision);
-        const groupNode = chainTree.find((node) => node.id === state.viewingChainId);
+        const chainTree = queryOptimizer.memoizedBuildChainTree(
+          state.chains,
+          state.chainsRevision,
+        );
+        const groupNode = chainTree.find(
+          (node) => node.id === state.viewingChainId,
+        );
         if (!groupNode) return null;
 
         return (
@@ -239,7 +274,7 @@ export function AppShellView({
       <a
         href="#main"
         onClick={() => document.getElementById('main')?.focus()}
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-[200] focus-ring rounded-xl bg-white/95 dark:bg-slate-900/90 px-4 py-2 text-sm font-medium text-gray-900 dark:text-slate-100 shadow-lg"
+        className="focus-ring sr-only z-[200] rounded-xl bg-white/95 px-4 py-2 text-sm font-medium text-gray-900 shadow-lg focus:not-sr-only focus:fixed focus:left-4 focus:top-4 dark:bg-slate-900/90 dark:text-slate-100"
       >
         {tr('跳转到主要内容', 'Skip to main content')}
       </a>
@@ -271,12 +306,16 @@ export function AppShellView({
             onClose={handleBetCancelled}
             onBetPlaced={handleBetPlaced}
             sessionId={currentSessionId}
-            chainName={state.chains.find((c) => c.id === pendingChainId)?.name || tr('未知任务', 'Unknown Task')}
-            taskDuration={state.chains.find((c) => c.id === pendingChainId)?.duration || 0}
+            chainName={
+              state.chains.find((c) => c.id === pendingChainId)?.name ||
+              tr('未知任务', 'Unknown Task')
+            }
+            taskDuration={
+              state.chains.find((c) => c.id === pendingChainId)?.duration || 0
+            }
           />
         </Suspense>
       )}
     </>
   );
 }
-

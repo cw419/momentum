@@ -7,13 +7,13 @@ export const buildRSIPTree = (nodes: RSIPNode[]): RSIPTreeNode[] => {
   const nodeMap = new Map<string, RSIPTreeNode>();
 
   // 初始化节点
-  nodes.forEach(n => {
+  nodes.forEach((n) => {
     nodeMap.set(n.id, { ...n, children: [], depth: 0 });
   });
 
   const roots: RSIPTreeNode[] = [];
 
-  nodes.forEach(n => {
+  nodes.forEach((n) => {
     const node = nodeMap.get(n.id)!;
     if (n.parentId) {
       const parent = nodeMap.get(n.parentId);
@@ -44,18 +44,23 @@ export const buildRSIPTree = (nodes: RSIPNode[]): RSIPTreeNode[] => {
  */
 export const countDescendants = (node: RSIPTreeNode): number => {
   let count = node.children.length;
-  node.children.forEach(c => { count += countDescendants(c); });
+  node.children.forEach((c) => {
+    count += countDescendants(c);
+  });
   return count;
 };
 
 /**
  * 删除节点及其所有子节点，返回新数组
  */
-export const deleteNodeAndDescendants = (nodes: RSIPNode[], nodeId: string): RSIPNode[] => {
+export const deleteNodeAndDescendants = (
+  nodes: RSIPNode[],
+  nodeId: string,
+): RSIPNode[] => {
   const idsToDelete = new Set<string>();
 
   const index = new Map<string, RSIPNode[]>();
-  nodes.forEach(n => {
+  nodes.forEach((n) => {
     const list = index.get(n.parentId || '') || [];
     list.push(n);
     index.set(n.parentId || '', list);
@@ -64,19 +69,22 @@ export const deleteNodeAndDescendants = (nodes: RSIPNode[], nodeId: string): RSI
   const collect = (id: string) => {
     idsToDelete.add(id);
     const children = index.get(id) || [];
-    children.forEach(ch => collect(ch.id));
+    children.forEach((ch) => collect(ch.id));
   };
   collect(nodeId);
 
-  return nodes.filter(n => !idsToDelete.has(n.id));
+  return nodes.filter((n) => !idsToDelete.has(n.id));
 };
 
 /**
  * 获取某节点的所有子孙节点ID（用于堆栈删除）
  */
-export const getDescendantIds = (nodes: RSIPNode[], nodeId: string): string[] => {
+export const getDescendantIds = (
+  nodes: RSIPNode[],
+  nodeId: string,
+): string[] => {
   const index = new Map<string, RSIPNode[]>();
-  nodes.forEach(n => {
+  nodes.forEach((n) => {
     const list = index.get(n.parentId || '') || [];
     list.push(n);
     index.set(n.parentId || '', list);
@@ -85,7 +93,7 @@ export const getDescendantIds = (nodes: RSIPNode[], nodeId: string): string[] =>
   const ids: string[] = [];
   const collect = (id: string) => {
     const children = index.get(id) || [];
-    children.forEach(ch => {
+    children.forEach((ch) => {
       ids.push(ch.id);
       collect(ch.id);
     });
@@ -98,7 +106,9 @@ export const getDescendantIds = (nodes: RSIPNode[], nodeId: string): string[] =>
 /**
  * 计算某节点的子孙数量（基于扁平数组）
  */
-export const getDescendantCount = (nodes: RSIPNode[], nodeId: string): number => {
+export const getDescendantCount = (
+  nodes: RSIPNode[],
+  nodeId: string,
+): number => {
   return getDescendantIds(nodes, nodeId).length;
 };
-

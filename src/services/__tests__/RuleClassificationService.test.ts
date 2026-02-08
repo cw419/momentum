@@ -4,7 +4,11 @@
 
 import { RuleClassificationService } from '../RuleClassificationService';
 import { ExceptionRuleStorageService } from '../ExceptionRuleStorage';
-import { ExceptionRuleType, ExceptionRuleError, ExceptionRuleException } from '../../types';
+import {
+  ExceptionRuleType,
+  ExceptionRuleError,
+  ExceptionRuleException,
+} from '../../types';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -20,12 +24,12 @@ const localStorageMock = (() => {
     },
     clear: () => {
       store = {};
-    }
+    },
   };
 })();
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
 describe('RuleClassificationService', () => {
@@ -42,15 +46,19 @@ describe('RuleClassificationService', () => {
     test('应该能够按类型获取规则', async () => {
       await storage.createRule({
         name: '暂停规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '完成规则',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
-      const pauseRules = await service.getRulesByType(ExceptionRuleType.PAUSE_ONLY);
-      const completionRules = await service.getRulesByType(ExceptionRuleType.EARLY_COMPLETION_ONLY);
+      const pauseRules = await service.getRulesByType(
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      const completionRules = await service.getRulesByType(
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      );
 
       expect(pauseRules).toHaveLength(1);
       expect(pauseRules[0].name).toBe('暂停规则');
@@ -61,15 +69,15 @@ describe('RuleClassificationService', () => {
     test('应该按类型分组返回所有规则', async () => {
       await storage.createRule({
         name: '暂停规则1',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '暂停规则2',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '完成规则1',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
       const grouped = await service.getRulesGroupedByType();
@@ -81,11 +89,11 @@ describe('RuleClassificationService', () => {
     test('分组结果应该按使用频率排序', async () => {
       const rule1 = await storage.createRule({
         name: '低频规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       const rule2 = await storage.createRule({
         name: '高频规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       // 模拟使用频率
@@ -104,35 +112,40 @@ describe('RuleClassificationService', () => {
     test('应该正确验证暂停规则类型', async () => {
       const rule = await storage.createRule({
         name: '暂停规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       expect(service.validateRuleTypeForAction(rule, 'pause')).toBe(true);
-      expect(service.validateRuleTypeForAction(rule, 'early_completion')).toBe(false);
+      expect(service.validateRuleTypeForAction(rule, 'early_completion')).toBe(
+        false,
+      );
     });
 
     test('应该正确验证提前完成规则类型', async () => {
       const rule = await storage.createRule({
         name: '完成规则',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
-      expect(service.validateRuleTypeForAction(rule, 'early_completion')).toBe(true);
+      expect(service.validateRuleTypeForAction(rule, 'early_completion')).toBe(
+        true,
+      );
       expect(service.validateRuleTypeForAction(rule, 'pause')).toBe(false);
     });
 
     test('应该为指定操作获取适用的规则', async () => {
       await storage.createRule({
         name: '暂停规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '完成规则',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
       const pauseRules = await service.getRulesForAction('pause');
-      const completionRules = await service.getRulesForAction('early_completion');
+      const completionRules =
+        await service.getRulesForAction('early_completion');
 
       expect(pauseRules).toHaveLength(1);
       expect(pauseRules[0].name).toBe('暂停规则');
@@ -143,28 +156,31 @@ describe('RuleClassificationService', () => {
     test('规则类型不匹配时应该抛出异常', async () => {
       const rule = await storage.createRule({
         name: '暂停规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
-      await expect(service.validateRuleForAction(rule.id, 'early_completion'))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        service.validateRuleForAction(rule.id, 'early_completion'),
+      ).rejects.toThrow(ExceptionRuleException);
     });
 
     test('规则不存在时应该抛出异常', async () => {
-      await expect(service.validateRuleForAction('non_existent_id', 'pause'))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        service.validateRuleForAction('non_existent_id', 'pause'),
+      ).rejects.toThrow(ExceptionRuleException);
     });
 
     test('已删除规则应该抛出异常', async () => {
       const rule = await storage.createRule({
         name: '待删除规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       await storage.deleteRule(rule.id);
 
-      await expect(service.validateRuleForAction(rule.id, 'pause'))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        service.validateRuleForAction(rule.id, 'pause'),
+      ).rejects.toThrow(ExceptionRuleException);
     });
   });
 
@@ -172,10 +188,13 @@ describe('RuleClassificationService', () => {
     test('应该为类型不匹配的规则提供建议', async () => {
       const rule = await storage.createRule({
         name: '暂停规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
-      const suggestion = await service.suggestRuleTypeChange(rule.id, 'early_completion');
+      const suggestion = await service.suggestRuleTypeChange(
+        rule.id,
+        'early_completion',
+      );
       expect(suggestion).toContain('暂停操作');
       expect(suggestion).toContain('提前完成操作');
     });
@@ -183,7 +202,7 @@ describe('RuleClassificationService', () => {
     test('类型匹配时应该返回无需更改的建议', async () => {
       const rule = await storage.createRule({
         name: '暂停规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const suggestion = await service.suggestRuleTypeChange(rule.id, 'pause');
@@ -191,7 +210,10 @@ describe('RuleClassificationService', () => {
     });
 
     test('规则不存在时应该返回相应提示', async () => {
-      const suggestion = await service.suggestRuleTypeChange('non_existent_id', 'pause');
+      const suggestion = await service.suggestRuleTypeChange(
+        'non_existent_id',
+        'pause',
+      );
       expect(suggestion).toContain('规则不存在');
     });
   });
@@ -200,15 +222,15 @@ describe('RuleClassificationService', () => {
     test('应该正确统计规则类型信息', async () => {
       await storage.createRule({
         name: '暂停规则1',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '暂停规则2',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '完成规则1',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
       const stats = await service.getRuleTypeStats();
@@ -236,15 +258,15 @@ describe('RuleClassificationService', () => {
       // 创建更多暂停规则
       await storage.createRule({
         name: '暂停规则1',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '暂停规则2',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       await storage.createRule({
         name: '完成规则1',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
       const recommended = await service.getRecommendedRuleType(true);
@@ -262,17 +284,17 @@ describe('RuleClassificationService', () => {
       await storage.createRule({
         name: '上厕所',
         type: ExceptionRuleType.PAUSE_ONLY,
-        description: '生理需求'
+        description: '生理需求',
       });
       await storage.createRule({
         name: '喝水',
         type: ExceptionRuleType.PAUSE_ONLY,
-        description: '补充水分'
+        description: '补充水分',
       });
       await storage.createRule({
         name: '完成任务',
         type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
-        description: '提前完成'
+        description: '提前完成',
       });
     });
 
@@ -289,9 +311,14 @@ describe('RuleClassificationService', () => {
     });
 
     test('应该能够按类型筛选搜索结果', async () => {
-      const results = await service.searchRules('', ExceptionRuleType.PAUSE_ONLY);
+      const results = await service.searchRules(
+        '',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       expect(results).toHaveLength(2);
-      expect(results.every(r => r.type === ExceptionRuleType.PAUSE_ONLY)).toBe(true);
+      expect(
+        results.every((r) => r.type === ExceptionRuleType.PAUSE_ONLY),
+      ).toBe(true);
     });
 
     test('空查询应该返回所有规则', async () => {
@@ -302,7 +329,7 @@ describe('RuleClassificationService', () => {
     test('搜索结果应该按相关性排序', async () => {
       // 更新使用频率
       const rules = await storage.getRules();
-      const waterRule = rules.find(r => r.name === '喝水')!;
+      const waterRule = rules.find((r) => r.name === '喝水')!;
       await storage.updateRule(waterRule.id, { usageCount: 10 });
 
       const results = await service.searchRules('水');
@@ -312,13 +339,19 @@ describe('RuleClassificationService', () => {
 
   describe('显示名称', () => {
     test('应该返回正确的规则类型显示名称', () => {
-      expect(service.getRuleTypeDisplayName(ExceptionRuleType.PAUSE_ONLY)).toBe('仅暂停');
-      expect(service.getRuleTypeDisplayName(ExceptionRuleType.EARLY_COMPLETION_ONLY)).toBe('仅提前完成');
+      expect(service.getRuleTypeDisplayName(ExceptionRuleType.PAUSE_ONLY)).toBe(
+        '仅暂停',
+      );
+      expect(
+        service.getRuleTypeDisplayName(ExceptionRuleType.EARLY_COMPLETION_ONLY),
+      ).toBe('仅提前完成');
     });
 
     test('应该返回正确的操作类型显示名称', () => {
       expect(service.getActionTypeDisplayName('pause')).toBe('暂停计时');
-      expect(service.getActionTypeDisplayName('early_completion')).toBe('提前完成');
+      expect(service.getActionTypeDisplayName('early_completion')).toBe(
+        '提前完成',
+      );
     });
   });
 
@@ -340,21 +373,21 @@ describe('RuleClassificationService', () => {
     test('应该提供规则使用建议', async () => {
       const rule1 = await storage.createRule({
         name: '高频规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       const rule2 = await storage.createRule({
         name: '最近使用规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       // 设置使用统计
       await storage.updateRule(rule1.id, {
         usageCount: 10,
-        lastUsedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7天前
+        lastUsedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前
       });
       await storage.updateRule(rule2.id, {
         usageCount: 3,
-        lastUsedAt: new Date() // 刚刚使用
+        lastUsedAt: new Date(), // 刚刚使用
       });
 
       const suggestions = await service.getRuleUsageSuggestions('pause');

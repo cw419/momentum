@@ -1,6 +1,10 @@
 import React from 'react';
 import { CornerUpLeft, X } from 'lucide-react';
-import { TransformComponent, TransformWrapper, type ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import {
+  TransformComponent,
+  TransformWrapper,
+  type ReactZoomPanPinchContentRef,
+} from 'react-zoom-pan-pinch';
 import type { RSIPTreeNode } from '../../types';
 import { RSIPNodeCard } from './RSIPNodeCard';
 import { RSIPControls } from './RSIPControls';
@@ -9,14 +13,26 @@ export type RSIPConnector = { id: string; d: string; isHovered: boolean };
 
 interface RSIPTreeProps {
   tree: RSIPTreeNode[];
-  nodePositions: Record<string, { node: RSIPTreeNode; style: React.CSSProperties }>;
+  nodePositions: Record<
+    string,
+    { node: RSIPTreeNode; style: React.CSSProperties }
+  >;
   connectors: RSIPConnector[];
   containerHeight: number;
-  contentBounds: { minX: number; minY: number; width: number; height: number } | null;
+  contentBounds: {
+    minX: number;
+    minY: number;
+    width: number;
+    height: number;
+  } | null;
   viewportRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   transformRef: React.RefObject<ReactZoomPanPinchContentRef>;
-  onTransformed: (state: { scale: number; positionX: number; positionY: number }) => void;
+  onTransformed: (state: {
+    scale: number;
+    positionX: number;
+    positionY: number;
+  }) => void;
   onFitToContent: () => void;
   now: number;
   activeTimers: Record<string, number>;
@@ -77,10 +93,13 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
   tr,
 }) => {
   return (
-    <div ref={viewportRef} className="relative w-full h-[60vh] min-h-[400px]">
+    <div ref={viewportRef} className="relative h-[60vh] min-h-[400px] w-full">
       {tree.length === 0 ? (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-600 dark:text-slate-400 font-chinese">
-          {tr('尚无国策，先从上方表单添加一个吧。', 'No policies yet. Add one from the form above.')}
+        <div className="absolute inset-0 flex items-center justify-center font-chinese text-gray-600 dark:text-slate-400">
+          {tr(
+            '尚无国策，先从上方表单添加一个吧。',
+            'No policies yet. Add one from the form above.',
+          )}
         </div>
       ) : (
         <TransformWrapper
@@ -104,11 +123,21 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                   ref={containerRef}
                   className="relative"
                   style={{
-                    width: contentBounds ? Math.ceil(contentBounds.width + 120) : '100%',
-                    height: Math.ceil(Math.max(containerHeight, (contentBounds?.height ?? 0) + 120)),
+                    width: contentBounds
+                      ? Math.ceil(contentBounds.width + 120)
+                      : '100%',
+                    height: Math.ceil(
+                      Math.max(
+                        containerHeight,
+                        (contentBounds?.height ?? 0) + 120,
+                      ),
+                    ),
                   }}
                 >
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    className="pointer-events-none absolute inset-0 h-full w-full"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <defs>
                       <marker
                         id="rsip-arrow"
@@ -140,7 +169,9 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                     const isRunning = Boolean(endsAt && endsAt > now);
                     const remaining = isRunning && endsAt ? endsAt - now : 0;
                     const timerMinutes = node.timerMinutes || 15;
-                    const isInvalidParentTarget = Boolean(reparentingId && invalidParentIds.has(node.id));
+                    const isInvalidParentTarget = Boolean(
+                      reparentingId && invalidParentIds.has(node.id),
+                    );
                     const isReparentingSelected = reparentingId === node.id;
 
                     return (
@@ -157,7 +188,10 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                           if (reparentingId) {
                             if (isInvalidParentTarget) {
                               onSetRelationError(
-                                tr('不能选择该节点作为父节点（会形成循环）。', 'Cannot choose this node as parent (would create a cycle).')
+                                tr(
+                                  '不能选择该节点作为父节点（会形成循环）。',
+                                  'Cannot choose this node as parent (would create a cycle).',
+                                ),
                               );
                               return;
                             }
@@ -187,42 +221,62 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
               </TransformComponent>
 
               {reparentingId && (
-                <div className="absolute top-4 left-4 right-4 z-30 pointer-events-none">
-                  <div className="pointer-events-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-white/50 dark:border-white/10 bg-white/70 dark:bg-slate-900/50 backdrop-blur-xl px-4 py-3 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.5)]">
+                <div className="pointer-events-none absolute left-4 right-4 top-4 z-30">
+                  <div className="pointer-events-auto flex flex-col gap-3 rounded-2xl border border-white/50 bg-white/70 px-4 py-3 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.5)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <div className="text-sm font-chinese text-gray-900 dark:text-slate-100">
+                      <div className="font-chinese text-sm text-gray-900 dark:text-slate-100">
                         {tr('选择新的父节点', 'Select a new parent')}
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-slate-300 font-chinese">
+                      <div className="font-chinese text-xs text-gray-600 dark:text-slate-300">
                         {tr('正在移动：', 'Moving: ')}
-                        <span className="font-semibold">{reparentingTitle ?? reparentingId}</span>
-                        {tr('。点击目标节点作为父节点，或设为根。', '. Tap a node to set as parent, or make it a root.')}
+                        <span className="font-semibold">
+                          {reparentingTitle ?? reparentingId}
+                        </span>
+                        {tr(
+                          '。点击目标节点作为父节点，或设为根。',
+                          '. Tap a node to set as parent, or make it a root.',
+                        )}
                       </div>
-                      {relationError && <div className="mt-1 text-xs text-red-600 dark:text-red-300 font-chinese">{relationError}</div>}
+                      {relationError && (
+                        <div className="mt-1 font-chinese text-xs text-red-600 dark:text-red-300">
+                          {relationError}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 self-end sm:self-auto">
                       <button
                         type="button"
-                        onClick={() => onCommitReparent(reparentingId, undefined)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition"
+                        onClick={() =>
+                          onCommitReparent(reparentingId, undefined)
+                        }
+                        className="inline-flex items-center gap-2 rounded-2xl border border-gray-200/60 bg-white/80 px-3 py-2 shadow-sm transition hover:shadow-md dark:border-slate-600/60 dark:bg-slate-800/70"
                       >
                         <CornerUpLeft size={16} />
-                        <span className="text-sm font-chinese">{tr('设为根', 'Make root')}</span>
+                        <span className="font-chinese text-sm">
+                          {tr('设为根', 'Make root')}
+                        </span>
                       </button>
                       <button
                         type="button"
                         onClick={onCancelReparent}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-gray-200/60 dark:border-slate-600/60 shadow-sm hover:shadow-md transition"
+                        className="inline-flex items-center gap-2 rounded-2xl border border-gray-200/60 bg-white/80 px-3 py-2 shadow-sm transition hover:shadow-md dark:border-slate-600/60 dark:bg-slate-800/70"
                       >
                         <X size={16} />
-                        <span className="text-sm font-chinese">{tr('取消', 'Cancel')}</span>
+                        <span className="font-chinese text-sm">
+                          {tr('取消', 'Cancel')}
+                        </span>
                       </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              <RSIPControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFitToContent={onFitToContent} tr={tr} />
+              <RSIPControls
+                onZoomIn={zoomIn}
+                onZoomOut={zoomOut}
+                onFitToContent={onFitToContent}
+                tr={tr}
+              />
             </>
           )}
         </TransformWrapper>

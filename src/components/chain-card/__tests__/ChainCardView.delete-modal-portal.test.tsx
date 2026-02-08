@@ -43,7 +43,12 @@ describe('ChainCardView delete modal', () => {
       <div data-testid="transformed" style={{ transform: 'translateY(12px)' }}>
         <ChainCardView
           chain={makeChain()}
-          typeConfig={{ icon: 'bolt', bgColor: 'bg-slate-200', color: 'text-slate-700', name: 'Unit' }}
+          typeConfig={{
+            icon: 'bolt',
+            bgColor: 'bg-slate-200',
+            color: 'text-slate-700',
+            name: 'Unit',
+          }}
           language="en"
           tr={(_zh, en) => en}
           timeRemaining={0}
@@ -63,7 +68,7 @@ describe('ChainCardView delete modal', () => {
           onCancelDelete={onCancelDelete}
           deleteDialogRef={deleteDialogRef}
         />
-      </div>
+      </div>,
     );
 
     const dialog = screen.getByRole('alertdialog');

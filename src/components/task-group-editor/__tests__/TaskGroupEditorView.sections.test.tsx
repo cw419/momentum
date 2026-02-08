@@ -4,7 +4,8 @@ import { render, screen } from '@testing-library/react';
 import { I18nProvider } from '../../../i18n';
 import { TaskGroupEditorView } from '../../TaskGroupEditorView';
 
-const renderWithI18n = (ui: React.ReactElement) => render(ui, { wrapper: I18nProvider });
+const renderWithI18n = (ui: React.ReactElement) =>
+  render(ui, { wrapper: I18nProvider });
 
 describe('TaskGroupEditorView sections', () => {
   beforeEach(() => {
@@ -35,12 +36,17 @@ describe('TaskGroupEditorView sections', () => {
         onAuxiliaryCompletionTriggerChange={vi.fn()}
         onSubmit={vi.fn()}
         onCancel={vi.fn()}
-      />
+      />,
     );
 
-    expect(screen.getByTestId('task-group-editor-basic-info')).toBeInTheDocument();
-    expect(screen.getByTestId('task-group-editor-auxiliary-signal')).toBeInTheDocument();
-    expect(screen.getByTestId('task-group-editor-duration')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('task-group-editor-basic-info'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('task-group-editor-auxiliary-signal'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('task-group-editor-duration'),
+    ).toBeInTheDocument();
   });
 });
-

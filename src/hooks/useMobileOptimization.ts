@@ -25,21 +25,22 @@ export const useMobileOptimization = () => {
     screenWidth: 0,
     screenHeight: 0,
     isKeyboardVisible: false,
-    touchSupport: false
+    touchSupport: false,
   });
 
   const updateMobileInfo = useCallback(() => {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    
+
     const isMobile = width <= 768;
     const isTablet = width > 768 && width <= 1024;
     const isDesktop = width > 1024;
     const orientation = width > height ? 'landscape' : 'portrait';
-    
+
     // 检测触摸支持
-    const touchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
+    const touchSupport =
+      'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
     // 检测虚拟键盘（简单方法：检测高度变化）
     const isKeyboardVisible = height < window.screen.height * 0.75;
 
@@ -51,7 +52,7 @@ export const useMobileOptimization = () => {
       screenWidth: width,
       screenHeight: height,
       isKeyboardVisible,
-      touchSupport
+      touchSupport,
     });
   }, []);
 
@@ -63,7 +64,10 @@ export const useMobileOptimization = () => {
     // 修复 iOS Safari 的 viewport 问题：不要禁用缩放（可访问性）。
     const viewport = document.querySelector('meta[name="viewport"]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
+      viewport.setAttribute(
+        'content',
+        'width=device-width, initial-scale=1, viewport-fit=cover',
+      );
     }
 
     // 修复 iOS Safari 的 100vh 问题
@@ -93,7 +97,7 @@ export const useMobileOptimization = () => {
 
     // 监听窗口大小变化
     window.addEventListener('resize', updateMobileInfo);
-    
+
     // 监听屏幕方向变化
     const handleOrientationChange = () => {
       setTimeout(updateMobileInfo, 100);
@@ -103,23 +107,30 @@ export const useMobileOptimization = () => {
     // 监听虚拟键盘
     const handleVisualViewportChange = () => {
       if (window.visualViewport) {
-        const isKeyboardVisible = window.visualViewport.height < window.innerHeight * 0.75;
-        setMobileInfo(prev => ({
+        const isKeyboardVisible =
+          window.visualViewport.height < window.innerHeight * 0.75;
+        setMobileInfo((prev) => ({
           ...prev,
-          isKeyboardVisible
+          isKeyboardVisible,
         }));
       }
     };
 
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewportChange);
+      window.visualViewport.addEventListener(
+        'resize',
+        handleVisualViewportChange,
+      );
     }
 
     return () => {
       window.removeEventListener('resize', updateMobileInfo);
       window.removeEventListener('orientationchange', handleOrientationChange);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewportChange);
+        window.visualViewport.removeEventListener(
+          'resize',
+          handleVisualViewportChange,
+        );
       }
     };
   }, [updateMobileInfo]);
@@ -127,21 +138,39 @@ export const useMobileOptimization = () => {
   // 添加移动端优化的CSS类
   useEffect(() => {
     const body = document.body;
-    
+
     // 移除所有相关类
-    body.classList.remove('mobile-device', 'tablet-device', 'desktop-device', 'portrait-mode', 'landscape-mode', 'keyboard-active', 'touch-device');
-    
+    body.classList.remove(
+      'mobile-device',
+      'tablet-device',
+      'desktop-device',
+      'portrait-mode',
+      'landscape-mode',
+      'keyboard-active',
+      'touch-device',
+    );
+
     // 添加当前状态的类
     if (mobileInfo.isMobile) body.classList.add('mobile-device');
     if (mobileInfo.isTablet) body.classList.add('tablet-device');
     if (mobileInfo.isDesktop) body.classList.add('desktop-device');
-    if (mobileInfo.orientation === 'portrait') body.classList.add('portrait-mode');
-    if (mobileInfo.orientation === 'landscape') body.classList.add('landscape-mode');
+    if (mobileInfo.orientation === 'portrait')
+      body.classList.add('portrait-mode');
+    if (mobileInfo.orientation === 'landscape')
+      body.classList.add('landscape-mode');
     if (mobileInfo.isKeyboardVisible) body.classList.add('keyboard-active');
     if (mobileInfo.touchSupport) body.classList.add('touch-device');
-    
+
     return () => {
-      body.classList.remove('mobile-device', 'tablet-device', 'desktop-device', 'portrait-mode', 'landscape-mode', 'keyboard-active', 'touch-device');
+      body.classList.remove(
+        'mobile-device',
+        'tablet-device',
+        'desktop-device',
+        'portrait-mode',
+        'landscape-mode',
+        'keyboard-active',
+        'touch-device',
+      );
     };
   }, [mobileInfo]);
 
@@ -174,13 +203,13 @@ export const useTouchOptimization = () => {
       if (e.target instanceof HTMLElement) {
         // 检查是否为交互元素或滚动容器
         const isInteractive = e.target.matches(
-          'input, textarea, select, button, [role="button"], [tabindex], a, .mobile-optimized-slider'
+          'input, textarea, select, button, [role="button"], [tabindex], a, .mobile-optimized-slider',
         );
-        
+
         const isScrollable = e.target.closest(
-          '.overflow-y-auto, .overflow-auto, .chain-editor-scroll-container, [data-scrollable="true"]'
+          '.overflow-y-auto, .overflow-auto, .chain-editor-scroll-container, [data-scrollable="true"]',
         );
-        
+
         // 只在非交互且非滚动元素上阻止长按
         if (!isInteractive && !isScrollable) {
           // 检查是否为垂直滑动手势
@@ -191,9 +220,9 @@ export const useTouchOptimization = () => {
             target._initialTouch = {
               x: touch.clientX,
               y: touch.clientY,
-              time: Date.now()
+              time: Date.now(),
             };
-            
+
             // 延迟阻止，给滚动手势一个机会
             setTimeout(() => {
               const initialTouch = target._initialTouch;
@@ -212,7 +241,9 @@ export const useTouchOptimization = () => {
       }
     };
 
-    document.addEventListener('touchstart', preventSelectiveLongPress, { passive: false });
+    document.addEventListener('touchstart', preventSelectiveLongPress, {
+      passive: false,
+    });
 
     return () => {
       document.removeEventListener('touchend', preventZoom);
@@ -231,7 +262,8 @@ export const useVirtualKeyboardAdaptation = () => {
   useEffect(() => {
     const handleResize = () => {
       if (window.visualViewport) {
-        const keyboardHeight = window.innerHeight - window.visualViewport.height;
+        const keyboardHeight =
+          window.innerHeight - window.visualViewport.height;
         setKeyboardHeight(Math.max(0, keyboardHeight));
       }
     };

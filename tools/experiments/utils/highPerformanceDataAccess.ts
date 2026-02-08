@@ -1,6 +1,6 @@
 /**
  * 高性能数据访问层
- * 
+ *
  * 集成智能缓存、查询优化、批量操作和懒加载
  * 显著提升数据访问性能，降低数据库负载
  */
@@ -8,7 +8,13 @@
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { queryOptimizer } from './highPerformanceQueryOptimizer';
 import { smartCache } from './smartCacheSystem';
-import { Chain, DeletedChain, ScheduledSession, ActiveSession, CompletionHistory } from '../types';
+import {
+  Chain,
+  DeletedChain,
+  ScheduledSession,
+  ActiveSession,
+  CompletionHistory,
+} from '../types';
 import { logger } from './logger';
 
 interface PerformanceMetrics {
@@ -35,7 +41,7 @@ class HighPerformanceDataAccess {
     cacheHitRate: 0,
     averageResponseTime: 0,
     totalDataTransferred: 0,
-    batchOperationsCount: 0
+    batchOperationsCount: 0,
   };
 
   private batchQueue = new Map<string, any[]>();
@@ -45,9 +51,12 @@ class HighPerformanceDataAccess {
   /**
    * 高性能获取用户链条 - 带智能缓存和查询优化
    */
-  async getChains(userId?: string, options: OptimizedChainQuery = {}): Promise<Chain[]> {
+  async getChains(
+    userId?: string,
+    options: OptimizedChainQuery = {},
+  ): Promise<Chain[]> {
     const startTime = performance.now();
-    
+
     try {
       const currentUser = userId || (await getCurrentUser())?.id;
       if (!currentUser) {
@@ -55,7 +64,7 @@ class HighPerformanceDataAccess {
       }
 
       const cacheKey = this.buildCacheKey('chains', currentUser, options);
-      
+
       // 从智能缓存获取数据
       const cachedResult = await smartCache.get<Chain[]>(
         cacheKey,
@@ -67,18 +76,21 @@ class HighPerformanceDataAccess {
           ttl: 3 * 60 * 1000, // 3分钟缓存
           priority: 'high',
           tags: [`user:${currentUser}`, 'chains'],
-          preload: true
-        }
+          preload: true,
+        },
       );
 
       const chains = cachedResult || [];
-      
+
       // 异步预加载相关数据
       this.preloadRelatedData(currentUser, chains);
-      
-      this.updatePerformanceMetrics(performance.now() - startTime, chains.length, true);
+
+      this.updatePerformanceMetrics(
+        performance.now() - startTime,
+        chains.length,
+        true,
+      );
       return chains;
-      
     } catch (error) {
       logger.error('Failed to get chains', { userId, error });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
@@ -89,25 +101,29 @@ class HighPerformanceDataAccess {
   /**
    * 从数据库加载链条数据（优化版本）
    */
-  private async loadChainsFromDatabase(userId: string, options: OptimizedChainQuery): Promise<Chain[]> {
+  private async loadChainsFromDatabase(
+    userId: string,
+    options: OptimizedChainQuery,
+  ): Promise<Chain[]> {
     const result = await queryOptimizer.getOptimizedChains(userId, {
       useCache: false, // 这里不使用查询优化器的缓存，因为我们使用智能缓存
-      priority: 'high'
+      priority: 'high',
     });
 
     let chains = result.data;
 
     // 应用过滤和排序选项
     if (!options.includeDeleted) {
-      chains = chains.filter(chain => !chain.deleted_at);
+      chains = chains.filter((chain) => !chain.deleted_at);
     }
 
     if (options.searchTerm) {
       const searchLower = options.searchTerm.toLowerCase();
-      chains = chains.filter(chain => 
-        chain.name.toLowerCase().includes(searchLower) ||
-        chain.trigger.toLowerCase().includes(searchLower) ||
-        chain.description.toLowerCase().includes(searchLower)
+      chains = chains.filter(
+        (chain) =>
+          chain.name.toLowerCase().includes(searchLower) ||
+          chain.trigger.toLowerCase().includes(searchLower) ||
+          chain.description.toLowerCase().includes(searchLower),
       );
     }
 
@@ -118,7 +134,10 @@ class HighPerformanceDataAccess {
         let bVal = b[options.sortBy!];
 
         // 处理日期字段
-        if (options.sortBy === 'created_at' || options.sortBy === 'last_completed_at') {
+        if (
+          options.sortBy === 'created_at' ||
+          options.sortBy === 'last_completed_at'
+        ) {
           aVal = aVal ? new Date(aVal).getTime() : 0;
           bVal = bVal ? new Date(bVal).getTime() : 0;
         }
@@ -150,7 +169,7 @@ class HighPerformanceDataAccess {
    */
   async createChain(chainData: Partial<Chain>): Promise<Chain> {
     const startTime = performance.now();
-    
+
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
@@ -179,8 +198,8 @@ class HighPerformanceDataAccess {
         {
           operation: 'insert',
           table: 'chains',
-          data: newChain
-        }
+          data: newChain,
+        },
       ]);
 
       const createdChain = result.data[0] as Chain;
@@ -193,7 +212,6 @@ class HighPerformanceDataAccess {
 
       this.updatePerformanceMetrics(performance.now() - startTime, 1, true);
       return createdChain;
-      
     } catch (error) {
       logger.error('Failed to create chain', { chainData, error });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
@@ -206,7 +224,7 @@ class HighPerformanceDataAccess {
    */
   async updateChain(chainId: string, updates: Partial<Chain>): Promise<Chain> {
     const startTime = performance.now();
-    
+
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
@@ -237,11 +255,11 @@ class HighPerformanceDataAccess {
           operation: 'update',
           table: 'chains',
           data: updateData,
-          conditions: { 
-            id: chainId, 
-            user_id: currentUser.id 
-          }
-        }
+          conditions: {
+            id: chainId,
+            user_id: currentUser.id,
+          },
+        },
       ]);
 
       const updatedChain = result.data[0] as Chain;
@@ -251,7 +269,6 @@ class HighPerformanceDataAccess {
 
       this.updatePerformanceMetrics(performance.now() - startTime, 1, true);
       return updatedChain;
-      
     } catch (error) {
       logger.error('Failed to update chain', { chainId, updates, error });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
@@ -262,20 +279,22 @@ class HighPerformanceDataAccess {
   /**
    * 高性能批量操作链条
    */
-  async batchChainOperations(operations: Array<{
-    operation: 'create' | 'update' | 'delete';
-    chainId?: string;
-    data?: Partial<Chain>;
-  }>): Promise<Chain[]> {
+  async batchChainOperations(
+    operations: Array<{
+      operation: 'create' | 'update' | 'delete';
+      chainId?: string;
+      data?: Partial<Chain>;
+    }>,
+  ): Promise<Chain[]> {
     const startTime = performance.now();
-    
+
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
         throw new Error('User not authenticated');
       }
 
-      const batchOps = operations.map(op => {
+      const batchOps = operations.map((op) => {
         switch (op.operation) {
           case 'create':
             return {
@@ -285,27 +304,27 @@ class HighPerformanceDataAccess {
                 ...op.data,
                 user_id: currentUser.id,
                 created_at: new Date().toISOString(),
-              }
+              },
             };
           case 'update':
             return {
               operation: 'update' as const,
               table: 'chains',
               data: op.data,
-              conditions: { 
-                id: op.chainId, 
-                user_id: currentUser.id 
-              }
+              conditions: {
+                id: op.chainId,
+                user_id: currentUser.id,
+              },
             };
           case 'delete':
             return {
               operation: 'update' as const, // 软删除
               table: 'chains',
               data: { deleted_at: new Date().toISOString() },
-              conditions: { 
-                id: op.chainId, 
-                user_id: currentUser.id 
-              }
+              conditions: {
+                id: op.chainId,
+                user_id: currentUser.id,
+              },
             };
           default:
             throw new Error('Invalid operation');
@@ -318,10 +337,13 @@ class HighPerformanceDataAccess {
       await this.invalidateAndRefreshChainCache(currentUser.id);
 
       this.performanceMetrics.batchOperationsCount++;
-      this.updatePerformanceMetrics(performance.now() - startTime, result.data.length, true);
-      
+      this.updatePerformanceMetrics(
+        performance.now() - startTime,
+        result.data.length,
+        true,
+      );
+
       return result.data as Chain[];
-      
     } catch (error) {
       logger.error('Failed batch chain operations', { operations, error });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
@@ -334,15 +356,15 @@ class HighPerformanceDataAccess {
    */
   async getChainById(chainId: string): Promise<Chain | null> {
     const startTime = performance.now();
-    
+
     try {
       const cacheKey = `chain:${chainId}`;
-      
+
       const cachedChain = await smartCache.get<Chain>(
         cacheKey,
         async () => {
           if (!supabase) return null;
-          
+
           const { data, error } = await supabase
             .from('chains')
             .select('*')
@@ -355,13 +377,12 @@ class HighPerformanceDataAccess {
         {
           ttl: 5 * 60 * 1000, // 5分钟缓存
           priority: 'normal',
-          tags: [`chain:${chainId}`]
-        }
+          tags: [`chain:${chainId}`],
+        },
       );
 
       this.updatePerformanceMetrics(performance.now() - startTime, 1, true);
       return cachedChain;
-      
     } catch (error) {
       logger.error('Failed to get chain by ID', { chainId, error });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
@@ -374,7 +395,7 @@ class HighPerformanceDataAccess {
    */
   async getDeletedChains(userId?: string): Promise<DeletedChain[]> {
     const startTime = performance.now();
-    
+
     try {
       const currentUser = userId || (await getCurrentUser())?.id;
       if (!currentUser) {
@@ -382,12 +403,12 @@ class HighPerformanceDataAccess {
       }
 
       const cacheKey = `deleted_chains:${currentUser}`;
-      
+
       const cachedDeleted = await smartCache.get<DeletedChain[]>(
         cacheKey,
         async () => {
           if (!supabase) return [];
-          
+
           const { data, error } = await supabase
             .from('chains')
             .select('*')
@@ -396,23 +417,26 @@ class HighPerformanceDataAccess {
             .order('deleted_at', { ascending: false });
 
           if (error) throw error;
-          
-          return (data || []).map(chain => ({
+
+          return (data || []).map((chain) => ({
             ...chain,
             deletedAt: chain.deleted_at!,
-            isDeleted: true
+            isDeleted: true,
           }));
         },
         {
           ttl: 2 * 60 * 1000, // 2分钟缓存（删除数据变化较频繁）
           priority: 'normal',
-          tags: [`user:${currentUser}`, 'deleted_chains']
-        }
+          tags: [`user:${currentUser}`, 'deleted_chains'],
+        },
       );
 
-      this.updatePerformanceMetrics(performance.now() - startTime, cachedDeleted?.length || 0, true);
+      this.updatePerformanceMetrics(
+        performance.now() - startTime,
+        cachedDeleted?.length || 0,
+        true,
+      );
       return cachedDeleted || [];
-      
     } catch (error) {
       logger.error('Failed to get deleted chains', { userId, error });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
@@ -425,18 +449,22 @@ class HighPerformanceDataAccess {
    */
   async getActiveSessions(userId?: string): Promise<ActiveSession[]> {
     const startTime = performance.now();
-    
+
     try {
       const currentUser = userId || (await getCurrentUser())?.id;
       if (!currentUser) {
         throw new Error('User not authenticated');
       }
 
-      const result = await queryOptimizer.getActiveSessionsOptimized(currentUser);
-      
-      this.updatePerformanceMetrics(performance.now() - startTime, result.data.length, result.cached);
+      const result =
+        await queryOptimizer.getActiveSessionsOptimized(currentUser);
+
+      this.updatePerformanceMetrics(
+        performance.now() - startTime,
+        result.data.length,
+        result.cached,
+      );
       return result.data;
-      
     } catch (error) {
       logger.error('Failed to get active sessions', { userId, error });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
@@ -448,12 +476,12 @@ class HighPerformanceDataAccess {
    * 智能分页查询
    */
   async getPaginatedChains(
-    page: number = 1, 
-    pageSize: number = 20, 
-    filters: OptimizedChainQuery = {}
+    page: number = 1,
+    pageSize: number = 20,
+    filters: OptimizedChainQuery = {},
   ): Promise<{ chains: Chain[]; total: number; hasMore: boolean }> {
     const startTime = performance.now();
-    
+
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
@@ -462,7 +490,7 @@ class HighPerformanceDataAccess {
 
       const conditions = {
         user_id: currentUser.id,
-        ...(filters.includeDeleted ? {} : { deleted_at: null })
+        ...(filters.includeDeleted ? {} : { deleted_at: null }),
       };
 
       const result = await queryOptimizer.getPaginatedResults<Chain>(
@@ -471,19 +499,27 @@ class HighPerformanceDataAccess {
         pageSize,
         conditions,
         filters.sortBy || 'created_at',
-        filters.sortOrder === 'asc'
+        filters.sortOrder === 'asc',
       );
 
-      this.updatePerformanceMetrics(performance.now() - startTime, result.data.data.length, result.cached);
-      
+      this.updatePerformanceMetrics(
+        performance.now() - startTime,
+        result.data.data.length,
+        result.cached,
+      );
+
       return {
         chains: result.data.data,
         total: result.data.total,
-        hasMore: result.data.hasMore
+        hasMore: result.data.hasMore,
       };
-      
     } catch (error) {
-      logger.error('Failed to get paginated chains', { page, pageSize, filters, error });
+      logger.error('Failed to get paginated chains', {
+        page,
+        pageSize,
+        filters,
+        error,
+      });
       this.updatePerformanceMetrics(performance.now() - startTime, 0, false);
       return { chains: [], total: 0, hasMore: false };
     }
@@ -495,19 +531,22 @@ class HighPerformanceDataAccess {
   private async invalidateAndRefreshChainCache(userId: string): Promise<void> {
     // 清除相关缓存标签
     smartCache.invalidateByTag(`user:${userId}`);
-    
+
     // 异步预加载刷新的数据
     setTimeout(() => {
       this.getChains(userId, { includeStats: true });
     }, 0);
   }
 
-  private async updateChainInCache(chainId: string, updatedChain: Chain): Promise<void> {
+  private async updateChainInCache(
+    chainId: string,
+    updatedChain: Chain,
+  ): Promise<void> {
     // 更新单个链条缓存
     await smartCache.set(`chain:${chainId}`, updatedChain, {
       ttl: 5 * 60 * 1000,
       priority: 'normal',
-      tags: [`chain:${chainId}`, `user:${updatedChain.user_id}`]
+      tags: [`chain:${chainId}`, `user:${updatedChain.user_id}`],
     });
 
     // 清除用户链条列表缓存以强制重新加载
@@ -517,10 +556,13 @@ class HighPerformanceDataAccess {
   /**
    * 预加载相关数据
    */
-  private async preloadRelatedData(userId: string, chains: Chain[]): Promise<void> {
+  private async preloadRelatedData(
+    userId: string,
+    chains: Chain[],
+  ): Promise<void> {
     // 预加载用户统计
     setTimeout(() => this.preloadUserStats(userId), 0);
-    
+
     // 预加载最近完成记录
     if (chains.length > 0) {
       setTimeout(() => queryOptimizer.getRecentCompletions(userId, 10), 0);
@@ -533,16 +575,20 @@ class HighPerformanceDataAccess {
   private async preloadUserStats(userId: string): Promise<void> {
     try {
       const cacheKey = `user_stats:${userId}`;
-      
-      await smartCache.set(cacheKey, {
-        // 这里可以实现用户统计数据的计算和缓存
-        userId,
-        preloadedAt: Date.now()
-      }, {
-        ttl: 10 * 60 * 1000, // 10分钟缓存
-        priority: 'low',
-        tags: [`user:${userId}`, 'stats']
-      });
+
+      await smartCache.set(
+        cacheKey,
+        {
+          // 这里可以实现用户统计数据的计算和缓存
+          userId,
+          preloadedAt: Date.now(),
+        },
+        {
+          ttl: 10 * 60 * 1000, // 10分钟缓存
+          priority: 'low',
+          tags: [`user:${userId}`, 'stats'],
+        },
+      );
     } catch (error) {
       logger.error('Failed to preload user stats', { userId, error });
     }
@@ -559,10 +605,16 @@ class HighPerformanceDataAccess {
   /**
    * 性能指标更新
    */
-  private updatePerformanceMetrics(responseTime: number, dataSize: number, success: boolean): void {
+  private updatePerformanceMetrics(
+    responseTime: number,
+    dataSize: number,
+    success: boolean,
+  ): void {
     this.performanceMetrics.queryCount++;
-    this.performanceMetrics.averageResponseTime = 
-      (this.performanceMetrics.averageResponseTime * (this.performanceMetrics.queryCount - 1) + responseTime) / 
+    this.performanceMetrics.averageResponseTime =
+      (this.performanceMetrics.averageResponseTime *
+        (this.performanceMetrics.queryCount - 1) +
+        responseTime) /
       this.performanceMetrics.queryCount;
 
     if (success) {
@@ -571,17 +623,22 @@ class HighPerformanceDataAccess {
 
     // 更新缓存命中率
     const cacheMetrics = smartCache.getMetrics();
-    this.performanceMetrics.cacheHitRate = parseFloat(cacheMetrics.hitRate.replace('%', ''));
+    this.performanceMetrics.cacheHitRate = parseFloat(
+      cacheMetrics.hitRate.replace('%', ''),
+    );
   }
 
   /**
    * 获取性能指标
    */
-  getPerformanceMetrics(): PerformanceMetrics & { cacheMetrics: any; queryOptimizerStats: any } {
+  getPerformanceMetrics(): PerformanceMetrics & {
+    cacheMetrics: any;
+    queryOptimizerStats: any;
+  } {
     return {
       ...this.performanceMetrics,
       cacheMetrics: smartCache.getMetrics(),
-      queryOptimizerStats: queryOptimizer.getPerformanceStats()
+      queryOptimizerStats: queryOptimizer.getPerformanceStats(),
     };
   }
 
@@ -594,14 +651,14 @@ class HighPerformanceDataAccess {
       this.batchTimer = null;
     }
     this.batchQueue.clear();
-    
+
     // 重置性能指标
     this.performanceMetrics = {
       queryCount: 0,
       cacheHitRate: 0,
       averageResponseTime: 0,
       totalDataTransferred: 0,
-      batchOperationsCount: 0
+      batchOperationsCount: 0,
     };
   }
 }

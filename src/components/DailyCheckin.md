@@ -24,7 +24,7 @@ import { DailyCheckin } from './components/DailyCheckin';
 function App() {
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">每日签到系统</h1>
+      <h1 className="mb-6 text-2xl font-bold">每日签到系统</h1>
       <DailyCheckin />
     </div>
   );
@@ -52,10 +52,13 @@ function Dashboard() {
 ## 组件状态
 
 ### 1. 加载状态
+
 组件首次渲染时会显示加载动画，从服务器获取用户签到数据。
 
 ### 2. 未签到状态
+
 显示：
+
 - 当前积分统计
 - 连续签到天数
 - 总签到次数
@@ -63,12 +66,15 @@ function Dashboard() {
 - 历史最佳记录（如果存在）
 
 ### 3. 已签到状态
+
 显示：
+
 - 已完成签到的确认图标
 - "今天已签到" 消息
 - 统计信息更新
 
 ### 4. 错误状态
+
 当出现网络错误或其他问题时，会显示错误信息和重试按钮。
 
 ## 依赖服务
@@ -81,6 +87,7 @@ function Dashboard() {
 ## 数据结构
 
 ### CheckinStats 接口
+
 ```typescript
 interface CheckinStats {
   user_id: string;
@@ -94,6 +101,7 @@ interface CheckinStats {
 ```
 
 ### CheckinResult 接口
+
 ```typescript
 interface CheckinResult {
   success: boolean;
@@ -110,6 +118,7 @@ interface CheckinResult {
 ## 样式约定
 
 组件使用 Tailwind CSS 进行样式设计，支持：
+
 - 响应式布局（移动端适配）
 - 暗黑模式切换
 - 渐变色彩方案

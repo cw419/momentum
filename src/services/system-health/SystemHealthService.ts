@@ -9,7 +9,11 @@ import { checkValidationService } from './checks/validation';
 import { generateRecommendations } from './recommendations';
 import { statusFromScore } from './scoring';
 import { generateSummary } from './summary';
-import type { ComponentHealth, QuickHealthCheckResult, SystemHealthReport } from './types';
+import type {
+  ComponentHealth,
+  QuickHealthCheckResult,
+  SystemHealthReport,
+} from './types';
 
 class SystemHealthService {
   async performHealthCheck(): Promise<SystemHealthReport> {
@@ -50,7 +54,9 @@ class SystemHealthService {
       }
 
       const states = ruleStateManager.getAllStates();
-      const errorStates = Array.from(states.states.values()).filter((s) => s.status === 'error');
+      const errorStates = Array.from(states.states.values()).filter(
+        (s) => s.status === 'error',
+      );
       if (errorStates.length > 0) {
         issues.push(`${errorStates.length} 个规则处于错误状态`);
         score -= 20;
@@ -75,4 +81,3 @@ class SystemHealthService {
 }
 
 export const systemHealthService = new SystemHealthService();
-

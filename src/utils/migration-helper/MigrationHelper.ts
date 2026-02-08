@@ -4,7 +4,13 @@ import { logger } from '../logger';
 import { schemaChecker } from '../schemaChecker';
 
 import { KNOWN_MIGRATIONS } from './knownMigrations';
-import { getBasicTableSQL, getDurationlessSQL, getHierarchySQL, getRSIPSQL, getTimeLimitSQL } from './sqlTemplates';
+import {
+  getBasicTableSQL,
+  getDurationlessSQL,
+  getHierarchySQL,
+  getRSIPSQL,
+  getTimeLimitSQL,
+} from './sqlTemplates';
 
 export class MigrationHelper {
   /**
@@ -31,7 +37,9 @@ export class MigrationHelper {
             return false;
           }
 
-          const columnNames = new Set(chainsTable.columns.map((col) => col.column_name));
+          const columnNames = new Set(
+            chainsTable.columns.map((col) => col.column_name),
+          );
           return columnNames.has('parent_id') && columnNames.has('type');
         }
 
@@ -42,7 +50,9 @@ export class MigrationHelper {
             return false;
           }
 
-          const columnNames = new Set(chainsTable.columns.map((col) => col.column_name));
+          const columnNames = new Set(
+            chainsTable.columns.map((col) => col.column_name),
+          );
           return (
             columnNames.has('time_limit_hours') &&
             columnNames.has('group_started_at') &&
@@ -57,7 +67,9 @@ export class MigrationHelper {
             return false;
           }
 
-          const columnNames = new Set(chainsTable.columns.map((col) => col.column_name));
+          const columnNames = new Set(
+            chainsTable.columns.map((col) => col.column_name),
+          );
           return columnNames.has('is_durationless');
         }
 
@@ -181,4 +193,3 @@ export class MigrationHelper {
     return report;
   }
 }
-

@@ -2,7 +2,10 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FormEvent } from 'react';
 import type { Chain } from '../../../../types';
-import { CUSTOM_AUXILIARY_SIGNAL_VALUE, CUSTOM_TRIGGER_VALUE } from '../../constants';
+import {
+  CUSTOM_AUXILIARY_SIGNAL_VALUE,
+  CUSTOM_TRIGGER_VALUE,
+} from '../../constants';
 import { useChainEditorForm } from '../useChainEditorForm';
 
 function createChain(overrides: Partial<Chain> = {}): Chain {
@@ -56,7 +59,7 @@ describe('useChainEditorForm', () => {
         chain,
         isEditing: true,
         onSave: vi.fn(),
-      })
+      }),
     );
 
     expect(result.current.trigger).toBe(CUSTOM_TRIGGER_VALUE);
@@ -69,13 +72,15 @@ describe('useChainEditorForm', () => {
   });
 
   it('updates trigger and auxiliary completion trigger for preset trigger selection', () => {
-    const chain = createChain({ auxiliaryCompletionTrigger: 'Old completion trigger' });
+    const chain = createChain({
+      auxiliaryCompletionTrigger: 'Old completion trigger',
+    });
     const { result } = renderHook(() =>
       useChainEditorForm({
         chain,
         isEditing: true,
         onSave: vi.fn(),
-      })
+      }),
     );
 
     act(() => {
@@ -101,7 +106,7 @@ describe('useChainEditorForm', () => {
         chain: createChain(),
         isEditing: true,
         onSave: vi.fn(),
-      })
+      }),
     );
 
     act(() => {
@@ -128,7 +133,7 @@ describe('useChainEditorForm', () => {
         chain: createChain(),
         isEditing: true,
         onSave,
-      })
+      }),
     );
 
     act(() => {
@@ -148,7 +153,7 @@ describe('useChainEditorForm', () => {
         chain: createChain(),
         isEditing: false,
         onSave,
-      })
+      }),
     );
 
     act(() => {
@@ -182,7 +187,7 @@ describe('useChainEditorForm', () => {
         auxiliaryExceptions: ['aux-exception'],
         timeLimitExceptions: [],
       }),
-      true
+      true,
     );
   });
 
@@ -194,7 +199,7 @@ describe('useChainEditorForm', () => {
         chain,
         isEditing: true,
         onSave,
-      })
+      }),
     );
 
     act(() => {
@@ -214,7 +219,7 @@ describe('useChainEditorForm', () => {
         isDurationless: true,
         minimumDuration: 25,
       }),
-      false
+      false,
     );
   });
 
@@ -228,7 +233,7 @@ describe('useChainEditorForm', () => {
         isEditing: false,
         initialParentId: 'parent-initial',
         onSave,
-      })
+      }),
     );
 
     act(() => {
@@ -252,7 +257,7 @@ describe('useChainEditorForm', () => {
         auxiliaryExceptions: [],
         timeLimitExceptions: [],
       }),
-      false
+      false,
     );
 
     nowSpy.mockRestore();

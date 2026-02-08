@@ -12,9 +12,30 @@ const madgeConfigPath = path.join(repoRoot, '.madgerc');
 const madgeConfigRaw = await fs.readFile(madgeConfigPath, 'utf8');
 const madgeConfig = JSON.parse(madgeConfigRaw);
 
-const excludeRegExp = Array.isArray(madgeConfig.excludeRegExp)
-  ? madgeConfig.excludeRegExp.map((pattern) => new RegExp(pattern))
-  : undefined;
+const REGEX_PRESETS = Object.freeze({
+  '.*\\.test\\..*': /.*\.test\..*/,
+  '.*\\.spec\\..*': /.*\.spec\..*/,
+  __tests__: /__tests__/,
+  __mocks__: /__mocks__/,
+  node_modules: /node_modules/,
+});
+
+const configuredExcludePatterns = Array.isArray(madgeConfig.excludeRegExp)
+  ? madgeConfig.excludeRegExp
+  : [];
+const unknownExcludePatterns = configuredExcludePatterns.filter(
+  (pattern) => !REGEX_PRESETS[pattern],
+);
+if (unknownExcludePatterns.length > 0) {
+  throw new Error(
+    `[madge-circular-report] Unknown excludeRegExp pattern(s): ${unknownExcludePatterns.join(', ')}`,
+  );
+}
+
+const excludeRegExp =
+  configuredExcludePatterns.length > 0
+    ? configuredExcludePatterns.map((pattern) => REGEX_PRESETS[pattern])
+    : undefined;
 
 const entry = 'src/main.tsx';
 
@@ -34,9 +55,15 @@ const payload = {
 };
 
 const outJsonPath = path.join(reportsDir, 'madge-circular.json');
-await fs.writeFile(outJsonPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
+await fs.writeFile(
+  outJsonPath,
+  JSON.stringify(payload, null, 2) + '\n',
+  'utf8',
+);
 
 console.log(`[soft-gate][madge] circular deps: ${payload.circularCount}`);
-console.log(`[soft-gate][madge] report: ${path.relative(repoRoot, outJsonPath)}`);
+console.log(
+  `[soft-gate][madge] report: ${path.relative(repoRoot, outJsonPath)}`,
+);
 
 process.exitCode = 0;

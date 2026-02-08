@@ -9,6 +9,7 @@
 会话系统管理任务的完整生命周期，从预约到完成，支持暂停、恢复、中断等操作，并与赌注和宠物系统集成。
 
 ### 核心特性
+
 - **预约会话**：支持预约信号触发
 - **活动会话**：管理正在执行的任务
 - **暂停/恢复**：支持任务中途暂停
@@ -19,15 +20,15 @@
 
 ## 关键文件
 
-| 文件 | 职责 |
-|------|------|
-| `src/types/index.ts` | ScheduledSession, ActiveSession 类型定义 |
-| `src/hooks/domains/useSessionsDomain.ts` | 会话业务逻辑 Hook |
-| `src/services/SessionService.ts` | 会话服务 |
-| `src/utils/timeLimit.ts` | 时间限制工具 |
-| `src/utils/forwardTimer.ts` | 正向计时器 |
-| `src/utils/chainTree.ts` | 任务组导航 |
-| `src/components/focus-mode/` | 专注模式组件 |
+| 文件                                     | 职责                                     |
+| ---------------------------------------- | ---------------------------------------- |
+| `src/types/index.ts`                     | ScheduledSession, ActiveSession 类型定义 |
+| `src/hooks/domains/useSessionsDomain.ts` | 会话业务逻辑 Hook                        |
+| `src/services/SessionService.ts`         | 会话服务                                 |
+| `src/utils/timeLimit.ts`                 | 时间限制工具                             |
+| `src/utils/forwardTimer.ts`              | 正向计时器                               |
+| `src/utils/chainTree.ts`                 | 任务组导航                               |
+| `src/components/focus-mode/`             | 专注模式组件                             |
 
 ---
 
@@ -37,10 +38,10 @@
 
 ```typescript
 interface ScheduledSession {
-  chainId: string;          // 关联链条 ID
-  scheduledAt: Date;        // 预约时间
-  expiresAt: Date;          // 过期时间
-  auxiliarySignal: string;  // 预约信号
+  chainId: string; // 关联链条 ID
+  scheduledAt: Date; // 预约时间
+  expiresAt: Date; // 过期时间
+  auxiliarySignal: string; // 预约信号
 }
 ```
 
@@ -49,13 +50,13 @@ interface ScheduledSession {
 ```typescript
 interface ActiveSession {
   id: string;
-  chainId: string;           // 关联链条 ID
-  startedAt: Date;           // 开始时间
-  duration: number;          // 任务时长（分钟）
-  isPaused: boolean;         // 是否暂停
-  pausedAt?: Date;           // 暂停时间
-  totalPausedTime: number;   // 总暂停时长（毫秒）
-  isForwardTimer?: boolean;  // 是否正向计时
+  chainId: string; // 关联链条 ID
+  startedAt: Date; // 开始时间
+  duration: number; // 任务时长（分钟）
+  isPaused: boolean; // 是否暂停
+  pausedAt?: Date; // 暂停时间
+  totalPausedTime: number; // 总暂停时长（毫秒）
+  isForwardTimer?: boolean; // 是否正向计时
   forwardElapsedTime?: number; // 正向计时已用时间（秒）
 }
 ```
@@ -63,6 +64,7 @@ interface ActiveSession {
 ### 数据库表
 
 #### scheduled_sessions
+
 ```sql
 id: uuid PRIMARY KEY
 user_id: uuid NOT NULL
@@ -73,6 +75,7 @@ auxiliary_signal: text NOT NULL
 ```
 
 #### active_sessions
+
 ```sql
 id: uuid PRIMARY KEY
 user_id: uuid NOT NULL
@@ -174,15 +177,15 @@ sequenceDiagram
 
 ### useSessionsDomain Hook
 
-| 方法 | 说明 |
-|------|------|
-| `handleScheduleChain(chainId)` | 预约任务 |
-| `handleStartChain(chainId)` | 开始任务 |
+| 方法                                        | 说明     |
+| ------------------------------------------- | -------- |
+| `handleScheduleChain(chainId)`              | 预约任务 |
+| `handleStartChain(chainId)`                 | 开始任务 |
 | `handleCompleteSession(isSuccess, reason?)` | 完成任务 |
-| `handleInterruptSession(reason)` | 中断任务 |
-| `handlePauseSession(rule, options)` | 暂停任务 |
-| `handleResumeSession()` | 恢复任务 |
-| `handleCancelSchedule(chainId)` | 取消预约 |
+| `handleInterruptSession(reason)`            | 中断任务 |
+| `handlePauseSession(rule, options)`         | 暂停任务 |
+| `handleResumeSession()`                     | 恢复任务 |
+| `handleCancelSchedule(chainId)`             | 取消预约 |
 
 ---
 
@@ -191,11 +194,14 @@ sequenceDiagram
 ### 获取下一个单元
 
 ```typescript
-import { getNextUnitInGroup, isGroupFullyCompleted } from '../../utils/chainTree';
+import {
+  getNextUnitInGroup,
+  isGroupFullyCompleted,
+} from '../../utils/chainTree';
 
 // 完成当前单元后
 if (chain.parentId) {
-  const parentGroup = chains.find(c => c.id === chain.parentId);
+  const parentGroup = chains.find((c) => c.id === chain.parentId);
 
   if (parentGroup && parentGroup.type === 'group') {
     // 增加完成计数
@@ -220,14 +226,18 @@ if (chain.parentId) {
 ### 时间限制检查
 
 ```typescript
-import { isGroupExpired, resetGroupProgress, startGroupTimer } from '../../utils/timeLimit';
+import {
+  isGroupExpired,
+  resetGroupProgress,
+  startGroupTimer,
+} from '../../utils/timeLimit';
 
 // 开始任务组前检查
 if (chain.type === 'group') {
   if (isGroupExpired(chain)) {
     // 重置进度
     const reset = resetGroupProgress(chain);
-    await saveChains(chains.map(c => c.id === chain.id ? reset : c));
+    await saveChains(chains.map((c) => (c.id === chain.id ? reset : c)));
     toast.warning('任务组已超时，进度已重置');
     return;
   }
@@ -235,7 +245,7 @@ if (chain.type === 'group') {
   // 首次开始时启动计时
   if (!chain.groupStartedAt) {
     const started = startGroupTimer(chain);
-    await saveChains(chains.map(c => c.id === chain.id ? started : c));
+    await saveChains(chains.map((c) => (c.id === chain.id ? started : c)));
   }
 }
 ```
@@ -252,13 +262,16 @@ if (storage.kind === 'supabase') {
 
   if (isGamblingEnabled.ok && isGamblingEnabled.value) {
     // 创建赌注会话
-    const sessionId = await storage.createBettingSession(chainId, chain.duration);
+    const sessionId = await storage.createBettingSession(
+      chainId,
+      chain.duration,
+    );
 
     // 显示下注对话框
     setPendingChainId(chainId);
     setCurrentSessionId(sessionId.value);
     setShowBettingModal(true);
-    return;  // 等待用户下注后再继续
+    return; // 等待用户下注后再继续
   }
 }
 ```
@@ -317,7 +330,7 @@ forwardTimerManager.stop(activeSession.id);
 
 ```typescript
 interface PauseOptions {
-  duration?: number;    // 暂停时长（秒），undefined = 无限
+  duration?: number; // 暂停时长（秒），undefined = 无限
   autoResume?: boolean; // 是否自动恢复
 }
 ```
@@ -325,7 +338,10 @@ interface PauseOptions {
 ### 暂停流程
 
 ```typescript
-const handlePauseSession = async (rule: ExceptionRule, options: PauseOptions) => {
+const handlePauseSession = async (
+  rule: ExceptionRule,
+  options: PauseOptions,
+) => {
   // 记录暂停时间
   const pausedSession: ActiveSession = {
     ...activeSession,

@@ -4,12 +4,19 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { BetPlacementRequest, BetPlacementResult } from '../domain/betting';
+import type {
+  BetPlacementRequest,
+  BetPlacementResult,
+} from '../domain/betting';
 import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
-import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../utils/errorMessage';
+import {
+  getSafeErrorDetail,
+  getSafeErrorDetailFromUnknown,
+} from '../utils/errorMessage';
+import { normalizeUnknownError } from '../utils/errors/normalizeError';
 
 interface UseBettingModalOptions {
   isOpen: boolean;
@@ -24,7 +31,13 @@ function validateDailyBetLimit(params: {
   language: string;
   setValidationError: (message: string) => void;
 }) {
-  const { numAmount, todayBetAmount, dailyBetLimit, language, setValidationError } = params;
+  const {
+    numAmount,
+    todayBetAmount,
+    dailyBetLimit,
+    language,
+    setValidationError,
+  } = params;
   if (!dailyBetLimit) return true;
 
   const totalToday = todayBetAmount + numAmount;
@@ -33,7 +46,7 @@ function validateDailyBetLimit(params: {
   setValidationError(
     language === 'zh'
       ? `超出每日押注限制：${dailyBetLimit}（今日已用：${todayBetAmount}）`
-      : `Exceeds daily limit: ${dailyBetLimit} (used today: ${todayBetAmount})`
+      : `Exceeds daily limit: ${dailyBetLimit} (used today: ${todayBetAmount})`,
   );
   return false;
 }
@@ -41,7 +54,7 @@ function validateDailyBetLimit(params: {
 export function useBettingModal({
   isOpen,
   sessionId,
-  onBetPlaced
+  onBetPlaced,
 }: UseBettingModalOptions) {
   const storage = useStorage();
   const { language, tr } = useI18n();
@@ -49,7 +62,8 @@ export function useBettingModal({
   // 状态
   const [betAmount, setBetAmount] = useState<string>('');
   const [availablePoints, setAvailablePoints] = useState<number>(0);
-  const [gamblingSettings, setGamblingSettings] = useState<GamblingSettings | null>(null);
+  const [gamblingSettings, setGamblingSettings] =
+    useState<GamblingSettings | null>(null);
   const [todayBetAmount, setTodayBetAmount] = useState<number>(0);
 
   const [isPlacingBet, setIsPlacingBet] = useState(false);
@@ -63,7 +77,12 @@ export function useBettingModal({
     if (!isOpen) return;
     if (storage.kind !== 'supabase') {
       setIsLoading(false);
-      setError(tr('当前存储不支持押注功能', 'Betting is not supported for the current storage'));
+      setError(
+        tr(
+          '当前存储不支持押注功能',
+          'Betting is not supported for the current storage',
+        ),
+      );
       return;
     }
 
@@ -71,88 +90,137 @@ export function useBettingModal({
     setError(null);
 
     try {
-      const [pointsResult, settingsResult, todayBetsResult] = await Promise.all([
-        storage.getUserAvailablePoints(),
-        storage.getGamblingSettings(),
-        storage.getTodayBetAmount(),
-      ]);
+      const [pointsResult, settingsResult, todayBetsResult] = await Promise.all(
+        [
+          storage.getUserAvailablePoints(),
+          storage.getGamblingSettings(),
+          storage.getTodayBetAmount(),
+        ],
+      );
 
       if (!pointsResult.ok) {
-        const safeDetail = getSafeErrorDetail(pointsResult.error.message || '', language);
-        setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
+        const safeDetail = getSafeErrorDetail(
+          pointsResult.error.message || '',
+          language,
+        );
+        setError(
+          safeDetail ??
+            tr(
+              '加载数据失败，请重试（详情见控制台）',
+              'Failed to load data. Check the console for details, then try again.',
+            ),
+        );
         return;
       }
       if (!settingsResult.ok) {
-        const safeDetail = getSafeErrorDetail(settingsResult.error.message || '', language);
-        setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
+        const safeDetail = getSafeErrorDetail(
+          settingsResult.error.message || '',
+          language,
+        );
+        setError(
+          safeDetail ??
+            tr(
+              '加载数据失败，请重试（详情见控制台）',
+              'Failed to load data. Check the console for details, then try again.',
+            ),
+        );
         return;
       }
       if (!todayBetsResult.ok) {
-        const safeDetail = getSafeErrorDetail(todayBetsResult.error.message || '', language);
-        setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
+        const safeDetail = getSafeErrorDetail(
+          todayBetsResult.error.message || '',
+          language,
+        );
+        setError(
+          safeDetail ??
+            tr(
+              '加载数据失败，请重试（详情见控制台）',
+              'Failed to load data. Check the console for details, then try again.',
+            ),
+        );
         return;
       }
 
       setAvailablePoints(pointsResult.value);
       setGamblingSettings(settingsResult.value);
       setTodayBetAmount(todayBetsResult.value);
-
     } catch (err) {
-      logger.error('BETTING', 'Failed to load betting data', undefined, err as Error);
+      logger.error(
+        'BETTING',
+        'Failed to load betting data',
+        undefined,
+        normalizeUnknownError(err),
+      );
       const safeDetail = getSafeErrorDetailFromUnknown(err, language);
-      setError(safeDetail ?? tr('加载数据失败，请重试（详情见控制台）', 'Failed to load data. Check the console for details, then try again.'));
+      setError(
+        safeDetail ??
+          tr(
+            '加载数据失败，请重试（详情见控制台）',
+            'Failed to load data. Check the console for details, then try again.',
+          ),
+      );
     } finally {
       setIsLoading(false);
     }
   }, [isOpen, language, storage, tr]);
 
   // 验证押注金额
-  const validateBetAmount = useCallback((amount: string): boolean => {
-    setValidationError(null);
+  const validateBetAmount = useCallback(
+    (amount: string): boolean => {
+      setValidationError(null);
 
-    if (!amount || amount.trim() === '') {
-      setValidationError(tr('请输入押注金额', 'Enter a bet amount'));
-      return false;
-    }
+      if (!amount || amount.trim() === '') {
+        setValidationError(tr('请输入押注金额', 'Enter a bet amount'));
+        return false;
+      }
 
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setValidationError(tr('押注金额必须大于 0', 'Bet amount must be greater than 0'));
-      return false;
-    }
+      const numAmount = parseFloat(amount);
+      if (isNaN(numAmount) || numAmount <= 0) {
+        setValidationError(
+          tr('押注金额必须大于 0', 'Bet amount must be greater than 0'),
+        );
+        return false;
+      }
 
-    if (!Number.isInteger(numAmount)) {
-      setValidationError(tr('押注金额必须是整数', 'Bet amount must be an integer'));
-      return false;
-    }
+      if (!Number.isInteger(numAmount)) {
+        setValidationError(
+          tr('押注金额必须是整数', 'Bet amount must be an integer'),
+        );
+        return false;
+      }
 
-    if (numAmount > availablePoints) {
-      setValidationError(
-        tr(
-          `可用积分不足，当前可用：${availablePoints}`,
-          `Not enough points. Available: ${availablePoints}`
-        )
-      );
-      return false;
-    }
+      if (numAmount > availablePoints) {
+        setValidationError(
+          tr(
+            `可用积分不足，当前可用：${availablePoints}`,
+            `Not enough points. Available: ${availablePoints}`,
+          ),
+        );
+        return false;
+      }
 
-    if (gamblingSettings?.max_single_bet && numAmount > gamblingSettings.max_single_bet) {
-      setValidationError(
-        tr(
-          `超出单次押注限制：${gamblingSettings.max_single_bet}`,
-          `Exceeds max single bet: ${gamblingSettings.max_single_bet}`
-        )
-      );
-      return false;
-    }
-    return validateDailyBetLimit({
-      numAmount,
-      todayBetAmount,
-      dailyBetLimit: gamblingSettings?.daily_bet_limit ?? undefined,
-      language,
-      setValidationError,
-    });
-  }, [availablePoints, gamblingSettings, todayBetAmount, language, tr]);
+      if (
+        gamblingSettings?.max_single_bet &&
+        numAmount > gamblingSettings.max_single_bet
+      ) {
+        setValidationError(
+          tr(
+            `超出单次押注限制：${gamblingSettings.max_single_bet}`,
+            `Exceeds max single bet: ${gamblingSettings.max_single_bet}`,
+          ),
+        );
+        return false;
+      }
+      return validateDailyBetLimit({
+        numAmount,
+        todayBetAmount,
+        dailyBetLimit: gamblingSettings?.daily_bet_limit ?? undefined,
+        language,
+        setValidationError,
+      });
+    },
+    [availablePoints, gamblingSettings, todayBetAmount, language, tr],
+  );
 
   // 处理押注金额变化
   const handleBetAmountChange = useCallback((value: string) => {
@@ -173,7 +241,12 @@ export function useBettingModal({
     }
 
     if (storage.kind !== 'supabase') {
-      setError(tr('当前存储不支持押注功能', 'Betting is not supported for the current storage'));
+      setError(
+        tr(
+          '当前存储不支持押注功能',
+          'Betting is not supported for the current storage',
+        ),
+      );
       return;
     }
 
@@ -184,14 +257,23 @@ export function useBettingModal({
     try {
       const betRequest: BetPlacementRequest = {
         session_id: sessionId,
-        bet_amount: numAmount
+        bet_amount: numAmount,
       };
 
       const result = await storage.placeBet(betRequest);
 
       if (!result.ok) {
-        const safeDetail = getSafeErrorDetail(result.error.message || '', language);
-        setError(safeDetail ?? tr('押注失败，请重试（详情见控制台）', 'Bet failed. Check the console for details, then try again.'));
+        const safeDetail = getSafeErrorDetail(
+          result.error.message || '',
+          language,
+        );
+        setError(
+          safeDetail ??
+            tr(
+              '押注失败，请重试（详情见控制台）',
+              'Bet failed. Check the console for details, then try again.',
+            ),
+        );
         return;
       }
 
@@ -199,28 +281,52 @@ export function useBettingModal({
         setSuccessMessage(
           language === 'zh'
             ? `押注成功！押注 ${numAmount} 积分，潜在收益 ${result.value.potential_payout} 积分`
-            : `Bet placed! Bet ${numAmount} points, potential payout ${result.value.potential_payout} points`
+            : `Bet placed! Bet ${numAmount} points, potential payout ${result.value.potential_payout} points`,
         );
 
-        setAvailablePoints(result.value.points_after ?? availablePoints - numAmount);
-        setTodayBetAmount(prev => prev + numAmount);
+        setAvailablePoints(
+          result.value.points_after ?? availablePoints - numAmount,
+        );
+        setTodayBetAmount((prev) => prev + numAmount);
 
         if (onBetPlaced) {
           onBetPlaced(result.value);
         }
-
       } else {
-        const safeDetail = getSafeErrorDetail(result.value.message || '', language);
+        const safeDetail = getSafeErrorDetail(
+          result.value.message || '',
+          language,
+        );
         setError(safeDetail ?? tr('押注失败', 'Bet failed'));
       }
     } catch (err) {
-      logger.error('BETTING', 'Failed to place bet', { sessionId }, err as Error);
+      logger.error(
+        'BETTING',
+        'Failed to place bet',
+        { sessionId },
+        normalizeUnknownError(err),
+      );
       const safeDetail = getSafeErrorDetailFromUnknown(err, language);
-      setError(safeDetail ?? tr('押注失败，请重试（详情见控制台）', 'Bet failed. Check the console for details, then try again.'));
+      setError(
+        safeDetail ??
+          tr(
+            '押注失败，请重试（详情见控制台）',
+            'Bet failed. Check the console for details, then try again.',
+          ),
+      );
     } finally {
       setIsPlacingBet(false);
     }
-  }, [betAmount, sessionId, availablePoints, onBetPlaced, validateBetAmount, storage, language, tr]);
+  }, [
+    betAmount,
+    sessionId,
+    availablePoints,
+    onBetPlaced,
+    validateBetAmount,
+    storage,
+    language,
+    tr,
+  ]);
 
   // 组件挂载时加载数据
   useEffect(() => {
@@ -238,7 +344,9 @@ export function useBettingModal({
   }, [isOpen]);
 
   // 快速押注选项
-  const quickBetOptions = [10, 25, 50, 100].filter(amount => amount <= availablePoints);
+  const quickBetOptions = [10, 25, 50, 100].filter(
+    (amount) => amount <= availablePoints,
+  );
 
   return {
     // 状态
@@ -260,6 +368,6 @@ export function useBettingModal({
     handleBetAmountChange,
     setQuickBetAmount,
     handlePlaceBet,
-    loadData
+    loadData,
   };
 }

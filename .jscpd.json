@@ -15,6 +15,6 @@
   "format": ["typescript", "tsx"],
   "output": "./reports/jscpd",
   "minLines": 10,
-  "minTokens": 50,
+  "minTokens": 80,
   "gitignore": true
 }

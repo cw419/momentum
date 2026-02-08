@@ -29,7 +29,11 @@ function getNotificationThreshold(durationMinutes: number): number | null {
   return Math.min(thresholdMinutes, 1) * 60; // 转换为秒，最多1分钟
 }
 
-export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCardOptions) {
+export function useChainCard({
+  chain,
+  scheduledSession,
+  onDelete,
+}: UseChainCardOptions) {
   const { language, tr } = useI18n();
   const storage = useStorage();
 
@@ -38,7 +42,9 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [hasShownWarning, setHasShownWarning] = useState(false);
-  const [lastCompletionTime, setLastCompletionTime] = useState<number | null>(null);
+  const [lastCompletionTime, setLastCompletionTime] = useState<number | null>(
+    null,
+  );
 
   // Refs
   const lastPlayedExpiresAtRef = useRef<number | null>(null);
@@ -48,7 +54,7 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
   // Memoized values
   const typeConfig = useMemo(
     () => getChainTypeConfig(chain.type, language),
-    [chain.type, language]
+    [chain.type, language],
   );
 
   const isScheduled = scheduledSession && timeRemaining > 0;
@@ -57,7 +63,9 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
   useEffect(() => {
     if (showDeleteConfirm && deleteDialogRef.current) {
       previouslyFocusedRef.current = document.activeElement as HTMLElement;
-      const cancelButton = deleteDialogRef.current.querySelector('[data-cancel-button]') as HTMLElement;
+      const cancelButton = deleteDialogRef.current.querySelector(
+        '[data-cancel-button]',
+      ) as HTMLElement;
       cancelButton?.focus();
     } else if (!showDeleteConfirm && previouslyFocusedRef.current) {
       previouslyFocusedRef.current.focus();
@@ -98,7 +106,12 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
           setLastCompletionTime(null);
         }
         if (isDev) {
-          logger.warn('CHAIN_CARD', 'Failed to load last completion time', { chainId: chain.id }, toError(error));
+          logger.warn(
+            'CHAIN_CARD',
+            'Failed to load last completion time',
+            { chainId: chain.id },
+            toError(error),
+          );
         }
       }
     })();
@@ -115,19 +128,26 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
       return;
     }
 
-    const notificationThreshold = getNotificationThreshold(chain.auxiliaryDuration);
+    const notificationThreshold = getNotificationThreshold(
+      chain.auxiliaryDuration,
+    );
 
     const updateTimer = () => {
       const remaining = getTimeRemaining(scheduledSession.expiresAt);
       setTimeRemaining(remaining);
 
       // 根据新逻辑显示警告通知
-      if (notificationThreshold && remaining <= notificationThreshold && remaining > 0 && !hasShownWarning) {
+      if (
+        notificationThreshold &&
+        remaining <= notificationThreshold &&
+        remaining > 0 &&
+        !hasShownWarning
+      ) {
         setHasShownWarning(true);
         const minutes = Math.max(1, Math.ceil(remaining / 60));
         notificationManager.notifyScheduleWarning(
           chain.name,
-          tr(`${minutes}分钟`, `${minutes} min`)
+          tr(`${minutes}分钟`, `${minutes} min`),
         );
       }
 
@@ -136,7 +156,10 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
         notificationManager.notifyScheduleFailed(chain.name);
 
         // Play sound when timer reaches 0, but only once per session
-        if (lastPlayedExpiresAtRef.current !== scheduledSession.expiresAt.getTime()) {
+        if (
+          lastPlayedExpiresAtRef.current !==
+          scheduledSession.expiresAt.getTime()
+        ) {
           soundManager.playTimerFinished();
           lastPlayedExpiresAtRef.current = scheduledSession.expiresAt.getTime();
         }
@@ -146,7 +169,13 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [scheduledSession, hasShownWarning, chain.name, chain.auxiliaryDuration, tr]);
+  }, [
+    scheduledSession,
+    hasShownWarning,
+    chain.name,
+    chain.auxiliaryDuration,
+    tr,
+  ]);
 
   // 重置警告状态当预约会话改变时
   useEffect(() => {
@@ -154,7 +183,7 @@ export function useChainCard({ chain, scheduledSession, onDelete }: UseChainCard
   }, [scheduledSession?.scheduledAt, scheduledSession?.chainId]);
 
   const handleToggleMenu = useCallback(() => {
-    setShowMenu(prev => !prev);
+    setShowMenu((prev) => !prev);
   }, []);
 
   const handleShowDeleteConfirm = useCallback(() => {

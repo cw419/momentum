@@ -10,10 +10,16 @@ import { getCurrentLanguage, tr } from './runtimeI18n';
 
 const DEFAULT_NOTIFICATION_ICON = '/icons/icon-192.png';
 
-const formatChainWithReason = (language: Language, chainName: string, reason?: string) => {
+const formatChainWithReason = (
+  language: Language,
+  chainName: string,
+  reason?: string,
+) => {
   const quotedChainName = `"${chainName}"`;
   if (!reason) return quotedChainName;
-  return language === 'zh' ? `${quotedChainName}：${reason}` : `${quotedChainName}: ${reason}`;
+  return language === 'zh'
+    ? `${quotedChainName}：${reason}`
+    : `${quotedChainName}: ${reason}`;
 };
 
 interface NotificationOptions {
@@ -47,7 +53,11 @@ class NotificationManager {
     });
   }
 
-  async notifyTaskCompleted(chainName: string, streak: number, message?: string) {
+  async notifyTaskCompleted(
+    chainName: string,
+    streak: number,
+    message?: string,
+  ) {
     if (!this.isNotificationsEnabled()) return null;
 
     const language = getCurrentLanguage();
@@ -131,7 +141,10 @@ class NotificationManager {
 
   async requestPermission(): Promise<boolean> {
     if (typeof window === 'undefined' || !('Notification' in window)) {
-      logger.warn('NOTIFICATIONS', 'Desktop notifications are not supported in this environment');
+      logger.warn(
+        'NOTIFICATIONS',
+        'Desktop notifications are not supported in this environment',
+      );
       return false;
     }
 
@@ -153,7 +166,12 @@ class NotificationManager {
       return permission === 'granted';
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('NOTIFICATIONS', 'Failed to request notification permission', undefined, err);
+      logger.error(
+        'NOTIFICATIONS',
+        'Failed to request notification permission',
+        undefined,
+        err,
+      );
       return false;
     }
   }
@@ -176,7 +194,9 @@ class NotificationManager {
     return this.isEnabled && this.permission === 'granted';
   }
 
-  async showNotification(options: NotificationOptions): Promise<Notification | null> {
+  async showNotification(
+    options: NotificationOptions,
+  ): Promise<Notification | null> {
     if (!this.isNotificationsEnabled()) return null;
 
     try {

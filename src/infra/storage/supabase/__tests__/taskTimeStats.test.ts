@@ -33,7 +33,9 @@ describe('supabase/taskTimeStats', () => {
 
   it('reads from storage once within cache TTL', async () => {
     const values = [JSON.stringify([statsItem()])];
-    localPreferencesMock.getTaskTimeStats.mockImplementation(() => values[0] ?? null);
+    localPreferencesMock.getTaskTimeStats.mockImplementation(
+      () => values[0] ?? null,
+    );
 
     const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(1_000);
     const { getTaskTimeStats } = await loadModule();
@@ -71,16 +73,32 @@ describe('supabase/taskTimeStats', () => {
   });
 
   it('saves stats, updates existing chains and inserts new chains', async () => {
-    localPreferencesMock.getTaskTimeStats.mockReturnValue(JSON.stringify([statsItem()]));
+    localPreferencesMock.getTaskTimeStats.mockReturnValue(
+      JSON.stringify([statsItem()]),
+    );
 
     const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(1_000);
-    const { saveTaskTimeStats, updateTaskTimeStats, getLastCompletionTime, getTaskAverageTime } = await loadModule();
+    const {
+      saveTaskTimeStats,
+      updateTaskTimeStats,
+      getLastCompletionTime,
+      getTaskAverageTime,
+    } = await loadModule();
 
-    await saveTaskTimeStats([statsItem({ chainId: 'save-1', totalCompletions: 3, totalTime: 360, averageCompletionTime: 120 })]);
+    await saveTaskTimeStats([
+      statsItem({
+        chainId: 'save-1',
+        totalCompletions: 3,
+        totalTime: 360,
+        averageCompletionTime: 120,
+      }),
+    ]);
     expect(localPreferencesMock.setTaskTimeStats).toHaveBeenCalledTimes(1);
 
     await updateTaskTimeStats('save-1', 180);
-    const savedExisting = JSON.parse(localPreferencesMock.setTaskTimeStats.mock.calls.at(-1)?.[0] ?? '[]') as TaskTimeStats[];
+    const savedExisting = JSON.parse(
+      localPreferencesMock.setTaskTimeStats.mock.calls.at(-1)?.[0] ?? '[]',
+    ) as TaskTimeStats[];
     expect(savedExisting[0]).toMatchObject({
       chainId: 'save-1',
       lastCompletionTime: 180,
@@ -90,7 +108,9 @@ describe('supabase/taskTimeStats', () => {
     });
 
     await updateTaskTimeStats('chain-1', 90);
-    const savedNew = JSON.parse(localPreferencesMock.setTaskTimeStats.mock.calls.at(-1)?.[0] ?? '[]') as TaskTimeStats[];
+    const savedNew = JSON.parse(
+      localPreferencesMock.setTaskTimeStats.mock.calls.at(-1)?.[0] ?? '[]',
+    ) as TaskTimeStats[];
     expect(savedNew.find((item) => item.chainId === 'chain-1')).toMatchObject({
       averageCompletionTime: 90,
       totalCompletions: 1,

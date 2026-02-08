@@ -1,6 +1,9 @@
 import type { ComponentHealth } from './types';
 
-function getNumberMetric(metrics: Record<string, unknown> | undefined, key: string): number | null {
+function getNumberMetric(
+  metrics: Record<string, unknown> | undefined,
+  key: string,
+): number | null {
   if (!metrics) return null;
 
   const value = metrics[key];
@@ -37,7 +40,9 @@ function getRecommendationsForComponent(component: ComponentHealth): string[] {
   return recommendations;
 }
 
-export function generateRecommendations(components: ComponentHealth[]): string[] {
+export function generateRecommendations(
+  components: ComponentHealth[],
+): string[] {
   const recommendations: string[] = [];
 
   for (const component of components) {
@@ -50,4 +55,3 @@ export function generateRecommendations(components: ComponentHealth[]): string[]
 
   return [...new Set(recommendations)]; // 去重
 }
-

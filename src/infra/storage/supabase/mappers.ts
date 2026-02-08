@@ -34,7 +34,9 @@ export function mapChainRowToChain(row: ChainRow): Chain {
     timeLimitExceptions: toStringArray(row.time_limit_exceptions),
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),
-    lastCompletedAt: row.last_completed_at ? new Date(row.last_completed_at) : undefined,
+    lastCompletedAt: row.last_completed_at
+      ? new Date(row.last_completed_at)
+      : undefined,
   };
 
   if (row.type === 'group') {
@@ -42,8 +44,12 @@ export function mapChainRowToChain(row: ChainRow): Chain {
       ...common,
       type: 'group',
       timeLimitHours: row.time_limit_hours ?? undefined,
-      groupStartedAt: row.group_started_at ? new Date(row.group_started_at) : undefined,
-      groupExpiresAt: row.group_expires_at ? new Date(row.group_expires_at) : undefined,
+      groupStartedAt: row.group_started_at
+        ? new Date(row.group_started_at)
+        : undefined,
+      groupExpiresAt: row.group_expires_at
+        ? new Date(row.group_expires_at)
+        : undefined,
       isTaskGroup: row.is_task_group ?? undefined,
       groupRepeatCount: row.group_repeat_count ?? undefined,
     } satisfies GroupChain;
@@ -57,7 +63,11 @@ export function mapChainRowToChain(row: ChainRow): Chain {
   return result;
 }
 
-export function buildChainRow(chain: Chain, userId: string, includeNewColumns: boolean): ChainInsert {
+export function buildChainRow(
+  chain: Chain,
+  userId: string,
+  includeNewColumns: boolean,
+): ChainInsert {
   const sanitizeString = (value: unknown, fallback: string = ''): string => {
     if (typeof value === 'string') return value;
     if (value == null) return fallback;
@@ -77,12 +87,13 @@ export function buildChainRow(chain: Chain, userId: string, includeNewColumns: b
 
   const sanitizeStringArray = (value: unknown): string[] => {
     if (!Array.isArray(value)) return [];
-    return value.filter(v => typeof v === 'string');
+    return value.filter((v) => typeof v === 'string');
   };
 
   const sanitizeIsoDate = (value: unknown): string | null => {
     if (value == null) return null;
-    if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+    if (value instanceof Date && !Number.isNaN(value.getTime()))
+      return value.toISOString();
 
     if (typeof value === 'string') {
       const parsed = new Date(value);
@@ -98,13 +109,15 @@ export function buildChainRow(chain: Chain, userId: string, includeNewColumns: b
     parentId = null;
   }
 
-  const createdAtIso = sanitizeIsoDate(chain.createdAt) ?? new Date().toISOString();
+  const createdAtIso =
+    sanitizeIsoDate(chain.createdAt) ?? new Date().toISOString();
   const lastCompletedAtIso = sanitizeIsoDate(chain.lastCompletedAt);
 
   const base: ChainInsert = {
     id: sanitizeString(chain.id),
     name: sanitizeString(chain.name),
-    parent_id: typeof parentId === 'string' && parentId.trim() ? parentId : null,
+    parent_id:
+      typeof parentId === 'string' && parentId.trim() ? parentId : null,
     type: sanitizeString(chain.type || 'unit', 'unit'),
     sort_order: sanitizeInt(chain.sortOrder, Math.floor(Date.now() / 1000)),
     trigger: sanitizeString(chain.trigger),
@@ -119,7 +132,9 @@ export function buildChainRow(chain: Chain, userId: string, includeNewColumns: b
     auxiliary_exceptions: sanitizeStringArray(chain.auxiliaryExceptions),
     auxiliary_signal: sanitizeString(chain.auxiliarySignal),
     auxiliary_duration: sanitizeInt(chain.auxiliaryDuration, 15),
-    auxiliary_completion_trigger: sanitizeString(chain.auxiliaryCompletionTrigger),
+    auxiliary_completion_trigger: sanitizeString(
+      chain.auxiliaryCompletionTrigger,
+    ),
     created_at: createdAtIso,
     last_completed_at: lastCompletedAtIso,
     user_id: userId,
@@ -130,15 +145,27 @@ export function buildChainRow(chain: Chain, userId: string, includeNewColumns: b
   return {
     ...base,
     is_durationless: sanitizeBool(chain.isDurationless, false),
-    minimum_duration: chain.minimumDuration != null ? sanitizeInt(chain.minimumDuration, 0) : null,
-    is_task_group: chain.isTaskGroup != null ? sanitizeBool(chain.isTaskGroup, false) : null,
-    task_repeat_count: chain.taskRepeatCount != null ? sanitizeInt(chain.taskRepeatCount, 0) : null,
-    group_repeat_count: chain.groupRepeatCount != null ? sanitizeInt(chain.groupRepeatCount, 0) : null,
-    time_limit_hours: chain.timeLimitHours != null ? sanitizeInt(chain.timeLimitHours, 0) : null,
+    minimum_duration:
+      chain.minimumDuration != null
+        ? sanitizeInt(chain.minimumDuration, 0)
+        : null,
+    is_task_group:
+      chain.isTaskGroup != null ? sanitizeBool(chain.isTaskGroup, false) : null,
+    task_repeat_count:
+      chain.taskRepeatCount != null
+        ? sanitizeInt(chain.taskRepeatCount, 0)
+        : null,
+    group_repeat_count:
+      chain.groupRepeatCount != null
+        ? sanitizeInt(chain.groupRepeatCount, 0)
+        : null,
+    time_limit_hours:
+      chain.timeLimitHours != null
+        ? sanitizeInt(chain.timeLimitHours, 0)
+        : null,
     time_limit_exceptions: sanitizeStringArray(chain.timeLimitExceptions),
     group_started_at: sanitizeIsoDate(chain.groupStartedAt),
     group_expires_at: sanitizeIsoDate(chain.groupExpiresAt),
     deleted_at: sanitizeIsoDate(chain.deletedAt),
   };
 }
-

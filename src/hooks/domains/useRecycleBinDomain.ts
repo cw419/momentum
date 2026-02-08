@@ -19,6 +19,7 @@ import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 import { useI18n } from '../../i18n';
 import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
+import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 
 interface UseRecycleBinDomainParams {
   state: AppState;
@@ -26,45 +27,74 @@ interface UseRecycleBinDomainParams {
   storage: MomentumStorage;
 }
 
-export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinDomainParams) {
+export function useRecycleBinDomain({
+  state,
+  setState,
+  storage,
+}: UseRecycleBinDomainParams) {
   const { language, tr } = useI18n();
   const handleDeleteChain = async (chainId: string) => {
     try {
-      const updatedChains = await realTimeSyncService.deleteWithSync(storage, chainId);
+      const updatedChains = await realTimeSyncService.deleteWithSync(
+        storage,
+        chainId,
+      );
 
-      const updatedScheduledSessions = state.scheduledSessions.filter(session => session.chainId !== chainId);
-      const updatedActiveSession = state.activeSession?.chainId === chainId ? null : state.activeSession;
+      const updatedScheduledSessions = state.scheduledSessions.filter(
+        (session) => session.chainId !== chainId,
+      );
+      const updatedActiveSession =
+        state.activeSession?.chainId === chainId ? null : state.activeSession;
 
-      storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
-        logger.error('RECYCLE_BIN', 'Failed to persist scheduled sessions after delete', { chainId }, error as Error);
+      storage.saveScheduledSessions(updatedScheduledSessions).catch((error) => {
+        logger.error(
+          'RECYCLE_BIN',
+          'Failed to persist scheduled sessions after delete',
+          { chainId },
+          normalizeUnknownError(error),
+        );
       });
       if (!updatedActiveSession) {
-        storage.saveActiveSession(null).catch(error => {
-          logger.error('RECYCLE_BIN', 'Failed to clear active session after delete', { chainId }, error as Error);
+        storage.saveActiveSession(null).catch((error) => {
+          logger.error(
+            'RECYCLE_BIN',
+            'Failed to clear active session after delete',
+            { chainId },
+            normalizeUnknownError(error),
+          );
         });
       }
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         chains: updatedChains,
         chainsRevision: prev.chainsRevision + 1,
         scheduledSessions: updatedScheduledSessions,
         activeSession: updatedActiveSession,
         currentView: updatedActiveSession ? prev.currentView : 'dashboard',
-        viewingChainId: prev.viewingChainId === chainId ? null : prev.viewingChainId,
+        viewingChainId:
+          prev.viewingChainId === chainId ? null : prev.viewingChainId,
       }));
     } catch (error) {
       const safeDetail = getSafeErrorDetailFromUnknown(error, language);
-      logger.error('RECYCLE_BIN', 'Delete failed', { chainId }, error as Error);
+      logger.error(
+        'RECYCLE_BIN',
+        'Delete failed',
+        { chainId },
+        normalizeUnknownError(error),
+      );
       toast.error(
         safeDetail
           ? tr(`删除失败: ${safeDetail}`, `Delete failed: ${safeDetail}`)
-          : tr('删除失败，请重试（详情见控制台）', 'Delete failed. Check the console for details, then try again.')
+          : tr(
+              '删除失败，请重试（详情见控制台）',
+              'Delete failed. Check the console for details, then try again.',
+            ),
       );
 
       try {
         const currentChains = await storage.getActiveChains();
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           chains: currentChains,
           chainsRevision: prev.chainsRevision + 1,
@@ -73,8 +103,8 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
         toast.warning(
           tr(
             '发生错误后无法恢复状态，建议刷新页面。',
-            "Couldn't restore state after the error. Refresh the page to recover."
-          )
+            "Couldn't restore state after the error. Refresh the page to recover.",
+          ),
         );
       }
     }
@@ -82,9 +112,12 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
 
   const handleRestoreChains = async (chainIds: string[]) => {
     try {
-      const updatedChains = await realTimeSyncService.restoreWithSync(storage, chainIds);
+      const updatedChains = await realTimeSyncService.restoreWithSync(
+        storage,
+        chainIds,
+      );
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         chains: updatedChains,
         chainsRevision: prev.chainsRevision + 1,
@@ -93,10 +126,13 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
       const safeDetail = getSafeErrorDetailFromUnknown(error, language);
 
       const rawMessage = error instanceof Error ? error.message : '';
-      if (rawMessage.includes('Partial restore failure') || rawMessage.includes('failed to restore')) {
+      if (
+        rawMessage.includes('Partial restore failure') ||
+        rawMessage.includes('failed to restore')
+      ) {
         try {
           const currentChains = await storage.getActiveChains();
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             chains: currentChains,
             chainsRevision: prev.chainsRevision + 1,
@@ -105,45 +141,74 @@ export function useRecycleBinDomain({ state, setState, storage }: UseRecycleBinD
           toast.warning(
             tr(
               '部分链条恢复可能失败，请检查回收箱确认结果。',
-              'Some chains may have failed to restore. Please check the recycle bin.'
-            )
+              'Some chains may have failed to restore. Please check the recycle bin.',
+            ),
           );
         } catch {
           toast.warning(
-            tr('恢复操作遇到问题，请刷新页面查看最新状态。', 'Restore encountered an issue. Refresh to see the latest status.')
+            tr(
+              '恢复操作遇到问题，请刷新页面查看最新状态。',
+              'Restore encountered an issue. Refresh to see the latest status.',
+            ),
           );
         }
         return;
       }
 
-      logger.error('RECYCLE_BIN', 'Restore failed', { chainIds }, error as Error);
+      logger.error(
+        'RECYCLE_BIN',
+        'Restore failed',
+        { chainIds },
+        normalizeUnknownError(error),
+      );
       toast.error(
         safeDetail
           ? tr(`恢复失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
-          : tr('恢复失败，请重试（详情见控制台）', 'Restore failed. Check the console for details, then try again.')
+          : tr(
+              '恢复失败，请重试（详情见控制台）',
+              'Restore failed. Check the console for details, then try again.',
+            ),
       );
     }
   };
 
   const handlePermanentDeleteChains = async (chainIds: string[]) => {
     try {
-      const updatedChains = await realTimeSyncService.permanentDeleteWithSync(storage, chainIds);
+      const updatedChains = await realTimeSyncService.permanentDeleteWithSync(
+        storage,
+        chainIds,
+      );
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         chains: updatedChains,
         chainsRevision: prev.chainsRevision + 1,
       }));
     } catch (error) {
       const safeDetail = getSafeErrorDetailFromUnknown(error, language);
-      logger.error('RECYCLE_BIN', 'Permanent delete failed', { chainIds }, error as Error);
+      logger.error(
+        'RECYCLE_BIN',
+        'Permanent delete failed',
+        { chainIds },
+        normalizeUnknownError(error),
+      );
       toast.error(
         safeDetail
-          ? tr(`永久删除失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
-          : tr('永久删除失败，请重试（详情见控制台）', 'Permanent delete failed. Check the console for details, then try again.')
+          ? tr(
+              `永久删除失败: ${safeDetail}`,
+              `Permanent delete failed: ${safeDetail}`,
+            )
+          : tr(
+              '永久删除失败，请重试（详情见控制台）',
+              'Permanent delete failed. Check the console for details, then try again.',
+            ),
       );
     }
   };
 
-  return { handleDeleteChain, handleRestoreChains, handlePermanentDeleteChains };
+  return {
+    handleDeleteChain,
+    handleRestoreChains,
+    handlePermanentDeleteChains,
+  };
 }

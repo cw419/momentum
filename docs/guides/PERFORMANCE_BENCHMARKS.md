@@ -16,40 +16,40 @@ This document defines performance targets, monitoring tools, and optimization gu
 
 ### 1.1 Rule Operations
 
-| Operation | Target Latency | Max Latency | Notes |
-|-----------|---------------|-------------|-------|
-| Rule Creation | 50ms | 100ms | Single rule creation |
-| Rule Validation | 10ms | 50ms | Input validation and constraint checking |
-| Rule Search | 100ms | 200ms | Full-text search across 200+ rules |
-| Rule Filtering by Type | 100ms | 200ms | Filter by `PAUSE_ONLY` or `EARLY_COMPLETION_ONLY` |
+| Operation              | Target Latency | Max Latency | Notes                                             |
+| ---------------------- | -------------- | ----------- | ------------------------------------------------- |
+| Rule Creation          | 50ms           | 100ms       | Single rule creation                              |
+| Rule Validation        | 10ms           | 50ms        | Input validation and constraint checking          |
+| Rule Search            | 100ms          | 200ms       | Full-text search across 200+ rules                |
+| Rule Filtering by Type | 100ms          | 200ms       | Filter by `PAUSE_ONLY` or `EARLY_COMPLETION_ONLY` |
 
 ### 1.2 Data Loading Operations
 
-| Operation | Target Latency | Max Latency | Notes |
-|-----------|---------------|-------------|-------|
-| Chain Retrieval | 100ms | 200ms | Fetch all active chains |
-| Chain Creation | 50ms | 100ms | Create single chain |
-| Chain Update | 75ms | 150ms | Update chain properties |
-| Chain Deletion (soft) | 50ms | 100ms | Move to recycle bin |
-| Batch Load (all data) | 300ms | 500ms | Parallel load of chains, sessions, history |
-| Bulk Insert (1000 chains) | 1000ms | 2000ms | Stress test threshold |
+| Operation                 | Target Latency | Max Latency | Notes                                      |
+| ------------------------- | -------------- | ----------- | ------------------------------------------ |
+| Chain Retrieval           | 100ms          | 200ms       | Fetch all active chains                    |
+| Chain Creation            | 50ms           | 100ms       | Create single chain                        |
+| Chain Update              | 75ms           | 150ms       | Update chain properties                    |
+| Chain Deletion (soft)     | 50ms           | 100ms       | Move to recycle bin                        |
+| Batch Load (all data)     | 300ms          | 500ms       | Parallel load of chains, sessions, history |
+| Bulk Insert (1000 chains) | 1000ms         | 2000ms      | Stress test threshold                      |
 
 ### 1.3 Component Rendering
 
-| Operation | Target Latency | Max Latency | Notes |
-|-----------|---------------|-------------|-------|
-| Component Render | 16.67ms | 100ms | 60 FPS threshold |
-| Chain Tree Build | 5ms | 10ms | Build hierarchical tree from chains |
-| UI Interaction Response | 100ms | 200ms | User-triggered actions |
+| Operation               | Target Latency | Max Latency | Notes                               |
+| ----------------------- | -------------- | ----------- | ----------------------------------- |
+| Component Render        | 16.67ms        | 100ms       | 60 FPS threshold                    |
+| Chain Tree Build        | 5ms            | 10ms        | Build hierarchical tree from chains |
+| UI Interaction Response | 100ms          | 200ms       | User-triggered actions              |
 
 ### 1.4 Core Web Vitals Targets
 
-| Metric | Target | Maximum | Description |
-|--------|--------|---------|-------------|
-| FPS | 60 | min 30 | Frames per second |
-| CLS | 0.1 | 0.25 | Cumulative Layout Shift |
-| Memory Usage | 20MB | 50MB | JS Heap Size |
-| Cache Hit Rate | 70% | min 50% | Query cache effectiveness |
+| Metric         | Target | Maximum | Description               |
+| -------------- | ------ | ------- | ------------------------- |
+| FPS            | 60     | min 30  | Frames per second         |
+| CLS            | 0.1    | 0.25    | Cumulative Layout Shift   |
+| Memory Usage   | 20MB   | 50MB    | JS Heap Size              |
+| Cache Hit Rate | 70%    | min 50% | Query cache effectiveness |
 
 ---
 
@@ -72,7 +72,10 @@ A comprehensive performance monitoring class that tracks rendering, interactions
 #### Usage
 
 ```typescript
-import { performanceMonitor, usePerformanceMonitoring } from '@/utils/performanceMonitor';
+import {
+  performanceMonitor,
+  usePerformanceMonitoring,
+} from '@/utils/performanceMonitor';
 
 // Direct API usage
 performanceMonitor.startMonitoring();
@@ -191,16 +194,19 @@ Monitors and automatically fixes layout stability issues including horizontal ov
 
 #### Issue Types Detected
 
-| Issue Type | Severity | Description |
-|------------|----------|-------------|
-| `horizontal-overflow` | Medium/High | Element content overflows horizontally |
-| `layout-shift` | Medium/High | Unexpected layout shifts detected |
-| `unstable-width` | Low | Elements with potentially unstable widths |
+| Issue Type            | Severity    | Description                               |
+| --------------------- | ----------- | ----------------------------------------- |
+| `horizontal-overflow` | Medium/High | Element content overflows horizontally    |
+| `layout-shift`        | Medium/High | Unexpected layout shifts detected         |
+| `unstable-width`      | Low         | Elements with potentially unstable widths |
 
 #### Usage
 
 ```typescript
-import { layoutStabilityMonitor, useLayoutStability } from '@/utils/LayoutStabilityMonitor';
+import {
+  layoutStabilityMonitor,
+  useLayoutStability,
+} from '@/utils/LayoutStabilityMonitor';
 
 // Direct API usage
 layoutStabilityMonitor.startMonitoring(containerElement);
@@ -317,7 +323,10 @@ Tracks React-specific performance metrics including render times and tree builds
 #### Usage
 
 ```typescript
-import { reactPerformanceMonitor, usePerformanceMonitor } from '@/utils/reactPerformanceMonitor';
+import {
+  reactPerformanceMonitor,
+  usePerformanceMonitor,
+} from '@/utils/reactPerformanceMonitor';
 
 // Track render time
 reactPerformanceMonitor.trackRender('ComponentName', renderTimeMs);
@@ -380,9 +389,12 @@ Database query optimization with caching, deduplication, and batch operations.
 import { queryOptimizer, useOptimizedData } from '@/utils/queryOptimizer';
 
 // Deduplicate queries
-const result = await queryOptimizer.deduplicateQuery('chains:getActive', async () => {
-  return storage.getActiveChains();
-});
+const result = await queryOptimizer.deduplicateQuery(
+  'chains:getActive',
+  async () => {
+    return storage.getActiveChains();
+  },
+);
 
 // Batch load all data
 const { chains, scheduledSessions, activeSession, completionHistory } =
@@ -446,26 +458,26 @@ npm run test:performance:watch
 import { performanceUtils } from '@/test/setup.performance';
 
 // Predefined thresholds
-performanceUtils.BENCHMARKS.FAST_OPERATION;     // 10ms
-performanceUtils.BENCHMARKS.MEDIUM_OPERATION;   // 100ms
-performanceUtils.BENCHMARKS.SLOW_OPERATION;     // 1000ms
-performanceUtils.BENCHMARKS.DATABASE_QUERY;     // 500ms
-performanceUtils.BENCHMARKS.UI_INTERACTION;     // 16.67ms (60fps)
-performanceUtils.BENCHMARKS.MEMORY_LIMIT;       // 50MB
+performanceUtils.BENCHMARKS.FAST_OPERATION; // 10ms
+performanceUtils.BENCHMARKS.MEDIUM_OPERATION; // 100ms
+performanceUtils.BENCHMARKS.SLOW_OPERATION; // 1000ms
+performanceUtils.BENCHMARKS.DATABASE_QUERY; // 500ms
+performanceUtils.BENCHMARKS.UI_INTERACTION; // 16.67ms (60fps)
+performanceUtils.BENCHMARKS.MEMORY_LIMIT; // 50MB
 ```
 
 #### Measurement Utilities
 
 ```typescript
 // Measure async operation
-const { result, duration } = await performanceUtils.measureAsyncOperation(
-  () => fetchData()
+const { result, duration } = await performanceUtils.measureAsyncOperation(() =>
+  fetchData(),
 );
 expect(duration).toBeLessThan(performanceUtils.BENCHMARKS.DATABASE_QUERY);
 
 // Measure sync operation
-const { result, duration } = performanceUtils.measureSyncOperation(
-  () => processData()
+const { result, duration } = performanceUtils.measureSyncOperation(() =>
+  processData(),
 );
 expect(duration).toBeLessThan(performanceUtils.BENCHMARKS.FAST_OPERATION);
 ```
@@ -507,8 +519,8 @@ import { performanceUtils } from '@/test/setup.performance';
 
 describe('MyFeature Performance', () => {
   it('should complete operation within threshold', async () => {
-    const { duration } = await performanceUtils.measureAsyncOperation(
-      () => myFeature.doSomething()
+    const { duration } = await performanceUtils.measureAsyncOperation(() =>
+      myFeature.doSomething(),
     );
 
     expect(duration).toBeLessThan(performanceUtils.BENCHMARKS.MEDIUM_OPERATION);
@@ -517,8 +529,8 @@ describe('MyFeature Performance', () => {
   it('should handle concurrent load', async () => {
     const result = await performanceUtils.runConcurrentOperations(
       () => myFeature.doSomething(),
-      20,  // concurrency
-      3    // iterations
+      20, // concurrency
+      3, // iterations
     );
 
     expect(result.operationsPerSecond).toBeGreaterThan(10);
@@ -548,14 +560,13 @@ describe('MyFeature Performance', () => {
   - Define custom comparison functions when needed
 
 - [ ] **Use `useMemo` for expensive computations**
+
   ```typescript
-  const expensiveResult = useMemo(
-    () => computeExpensiveValue(a, b),
-    [a, b]
-  );
+  const expensiveResult = useMemo(() => computeExpensiveValue(a, b), [a, b]);
   ```
 
 - [ ] **Use `useCallback` for callback stability**
+
   ```typescript
   const handleClick = useCallback(() => {
     doSomething(id);
@@ -563,6 +574,7 @@ describe('MyFeature Performance', () => {
   ```
 
 - [ ] **Avoid inline object/array creation in JSX**
+
   ```typescript
   // Bad
   <Component style={{ margin: 10 }} />
@@ -583,6 +595,7 @@ describe('MyFeature Performance', () => {
   - Avoid waterfall requests
 
 - [ ] **Implement query deduplication**
+
   ```typescript
   await queryOptimizer.deduplicateQuery(cacheKey, queryFn);
   ```
@@ -604,11 +617,13 @@ describe('MyFeature Performance', () => {
   - Longer for static reference data
 
 - [ ] **Implement cache invalidation on mutations**
+
   ```typescript
   queryOptimizer.onDataChange('chains');
   ```
 
 - [ ] **Use memoized tree building**
+
   ```typescript
   queryOptimizer.memoizedBuildChainTree(chains, chainsRevision);
   ```
@@ -625,18 +640,25 @@ describe('MyFeature Performance', () => {
 ### 4.4 Layout Stability
 
 - [ ] **Set explicit dimensions for images and media**
+
   ```html
   <img width="300" height="200" />
   ```
 
 - [ ] **Reserve space for dynamic content**
+
   ```css
-  .container { min-height: 100px; }
+  .container {
+    min-height: 100px;
+  }
   ```
 
 - [ ] **Use CSS `contain` property**
+
   ```css
-  .isolated { contain: layout style; }
+  .isolated {
+    contain: layout style;
+  }
   ```
 
 - [ ] **Avoid layout thrashing**
@@ -648,6 +670,7 @@ describe('MyFeature Performance', () => {
 ### 4.5 Memory Management
 
 - [ ] **Clean up subscriptions and timers**
+
   ```typescript
   useEffect(() => {
     const timer = setInterval(...);
@@ -705,14 +728,14 @@ const { passed, issues } = performanceMonitor.checkPerformance();
 
 #### Automated Detection Thresholds
 
-| Metric | Warning Threshold | Critical Threshold |
-|--------|------------------|-------------------|
-| FPS | < 30 | < 15 |
-| Interaction Time | > 100ms | > 200ms |
-| Layout Shift | > 0.1 | > 0.25 |
-| Memory Usage | > 50MB | > 100MB |
-| Render Time | > 16ms | > 100ms |
-| Cache Hit Rate | < 70% | < 50% |
+| Metric           | Warning Threshold | Critical Threshold |
+| ---------------- | ----------------- | ------------------ |
+| FPS              | < 30              | < 15               |
+| Interaction Time | > 100ms           | > 200ms            |
+| Layout Shift     | > 0.1             | > 0.25             |
+| Memory Usage     | > 50MB            | > 100MB            |
+| Render Time      | > 16ms            | > 100ms            |
+| Cache Hit Rate   | < 70%             | < 50%              |
 
 #### Regression Detection in Tests
 
@@ -721,7 +744,7 @@ it('should detect performance regressions', async () => {
   const baselineMetrics = {
     chain_operations_per_second: 50,
     memory_usage_mb: 20,
-    query_response_time_ms: 100
+    query_response_time_ms: 100,
   };
 
   // Measure and compare with 20% tolerance
@@ -729,7 +752,7 @@ it('should detect performance regressions', async () => {
 
   for (const [metric, baseline] of Object.entries(baselineMetrics)) {
     const current = currentMetrics[metric];
-    const threshold = baseline * 1.2;  // 20% degradation allowed
+    const threshold = baseline * 1.2; // 20% degradation allowed
     expect(current).toBeLessThanOrEqual(threshold);
   }
 });
@@ -771,11 +794,20 @@ Performance warnings are logged via `performanceLogger`:
 ### Import Paths
 
 ```typescript
-import { performanceMonitor, usePerformanceMonitoring } from '@/utils/performanceMonitor';
+import {
+  performanceMonitor,
+  usePerformanceMonitoring,
+} from '@/utils/performanceMonitor';
 import { performanceLogger } from '@/utils/performanceLogger';
-import { layoutStabilityMonitor, useLayoutStability } from '@/utils/LayoutStabilityMonitor';
+import {
+  layoutStabilityMonitor,
+  useLayoutStability,
+} from '@/utils/LayoutStabilityMonitor';
 import { performanceDashboard } from '@/utils/performanceDashboard';
-import { reactPerformanceMonitor, usePerformanceMonitor } from '@/utils/reactPerformanceMonitor';
+import {
+  reactPerformanceMonitor,
+  usePerformanceMonitor,
+} from '@/utils/reactPerformanceMonitor';
 import { queryOptimizer, useOptimizedData } from '@/utils/queryOptimizer';
 ```
 
@@ -789,11 +821,11 @@ npm run test:all              # Run all tests including performance
 
 ### Key Benchmark Values
 
-| Category | Value | Unit |
-|----------|-------|------|
-| Fast Operation | 10 | ms |
-| Medium Operation | 100 | ms |
-| Slow Operation | 1000 | ms |
-| Database Query | 500 | ms |
-| UI Frame | 16.67 | ms |
-| Memory Limit | 50 | MB |
+| Category         | Value | Unit |
+| ---------------- | ----- | ---- |
+| Fast Operation   | 10    | ms   |
+| Medium Operation | 100   | ms   |
+| Slow Operation   | 1000  | ms   |
+| Database Query   | 500   | ms   |
+| UI Frame         | 16.67 | ms   |
+| Memory Limit     | 50    | MB   |

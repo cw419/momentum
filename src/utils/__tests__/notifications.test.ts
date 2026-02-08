@@ -12,10 +12,23 @@ interface LoadOptions {
 
 interface LoadedModule {
   notificationManager: {
-    notifyTaskFailed(chainName: string, reason: string): Promise<Notification | null>;
-    notifyTaskCompleted(chainName: string, streak: number, message?: string): Promise<Notification | null>;
-    notifyTaskWarning(chainName: string, timeRemaining: string): Promise<Notification | null>;
-    notifyScheduleWarning(chainName: string, timeRemaining: string): Promise<Notification | null>;
+    notifyTaskFailed(
+      chainName: string,
+      reason: string,
+    ): Promise<Notification | null>;
+    notifyTaskCompleted(
+      chainName: string,
+      streak: number,
+      message?: string,
+    ): Promise<Notification | null>;
+    notifyTaskWarning(
+      chainName: string,
+      timeRemaining: string,
+    ): Promise<Notification | null>;
+    notifyScheduleWarning(
+      chainName: string,
+      timeRemaining: string,
+    ): Promise<Notification | null>;
     notifyScheduleFailed(chainName: string): Promise<Notification | null>;
     requestPermission(): Promise<boolean>;
     enableNotifications(): Promise<boolean>;
@@ -46,7 +59,9 @@ interface LoadedModule {
   restore(): void;
 }
 
-async function loadNotificationModule(options: LoadOptions = {}): Promise<LoadedModule> {
+async function loadNotificationModule(
+  options: LoadOptions = {},
+): Promise<LoadedModule> {
   const {
     supported = true,
     storedEnabled = false,
@@ -69,22 +84,30 @@ async function loadNotificationModule(options: LoadOptions = {}): Promise<Loaded
   };
 
   vi.doMock('../logger', () => ({ logger: loggerMock }));
-  vi.doMock('../localPreferences', () => ({ localPreferences: localPreferencesMock }));
+  vi.doMock('../localPreferences', () => ({
+    localPreferences: localPreferencesMock,
+  }));
   vi.doMock('../runtimeI18n', () => ({
     getCurrentLanguage: vi.fn(() => language),
-    tr: (zh: string, en: string, language: 'zh' | 'en' = 'en') => (language === 'zh' ? zh : en),
+    tr: (zh: string, en: string, language: 'zh' | 'en' = 'en') =>
+      language === 'zh' ? zh : en,
   }));
   vi.doMock('../random', () => ({
     randomId: vi.fn((prefix: string) => `${prefix}-test-id`),
   }));
 
-  const originalGlobal = (globalThis as { Notification?: unknown }).Notification;
-  const originalWindow = (window as Window & { Notification?: unknown }).Notification;
+  const originalGlobal = (globalThis as { Notification?: unknown })
+    .Notification;
+  const originalWindow = (window as Window & { Notification?: unknown })
+    .Notification;
 
   let notificationMock: NotificationMockHandle | null = null;
 
   if (supported) {
-    notificationMock = installNotificationMock({ initialPermission, requestResult });
+    notificationMock = installNotificationMock({
+      initialPermission,
+      requestResult,
+    });
   } else {
     delete (globalThis as { Notification?: unknown }).Notification;
     delete (window as Window & { Notification?: unknown }).Notification;
@@ -152,8 +175,12 @@ describe('notifications', () => {
       storedEnabled: false,
     });
     try {
-      await expect(granted.notificationManager.requestPermission()).resolves.toBe(true);
-      expect(granted.localPreferencesMock.setNotificationsEnabled).toHaveBeenCalledWith(true);
+      await expect(
+        granted.notificationManager.requestPermission(),
+      ).resolves.toBe(true);
+      expect(
+        granted.localPreferencesMock.setNotificationsEnabled,
+      ).toHaveBeenCalledWith(true);
     } finally {
       granted.restore();
     }
@@ -163,8 +190,12 @@ describe('notifications', () => {
       initialPermission: 'denied',
     });
     try {
-      await expect(denied.notificationManager.requestPermission()).resolves.toBe(false);
-      expect(denied.localPreferencesMock.setNotificationsEnabled).not.toHaveBeenCalled();
+      await expect(
+        denied.notificationManager.requestPermission(),
+      ).resolves.toBe(false);
+      expect(
+        denied.localPreferencesMock.setNotificationsEnabled,
+      ).not.toHaveBeenCalled();
     } finally {
       denied.restore();
     }
@@ -175,9 +206,15 @@ describe('notifications', () => {
       requestResult: 'granted',
     });
     try {
-      await expect(defaultFlow.notificationManager.requestPermission()).resolves.toBe(true);
-      expect(defaultFlow.notificationMock?.requestPermissionMock).toHaveBeenCalledTimes(1);
-      expect(defaultFlow.localPreferencesMock.setNotificationsEnabled).toHaveBeenCalledWith(true);
+      await expect(
+        defaultFlow.notificationManager.requestPermission(),
+      ).resolves.toBe(true);
+      expect(
+        defaultFlow.notificationMock?.requestPermissionMock,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        defaultFlow.localPreferencesMock.setNotificationsEnabled,
+      ).toHaveBeenCalledWith(true);
     } finally {
       defaultFlow.restore();
     }
@@ -188,9 +225,15 @@ describe('notifications', () => {
       requestResult: 'denied',
     });
     try {
-      await expect(defaultDeniedFlow.notificationManager.requestPermission()).resolves.toBe(false);
-      expect(defaultDeniedFlow.notificationMock?.requestPermissionMock).toHaveBeenCalledTimes(1);
-      expect(defaultDeniedFlow.localPreferencesMock.setNotificationsEnabled).toHaveBeenCalledWith(false);
+      await expect(
+        defaultDeniedFlow.notificationManager.requestPermission(),
+      ).resolves.toBe(false);
+      expect(
+        defaultDeniedFlow.notificationMock?.requestPermissionMock,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        defaultDeniedFlow.localPreferencesMock.setNotificationsEnabled,
+      ).toHaveBeenCalledWith(false);
     } finally {
       defaultDeniedFlow.restore();
     }
@@ -202,8 +245,12 @@ describe('notifications', () => {
       initialPermission: 'default',
     });
     try {
-      loaded.notificationMock?.requestPermissionMock.mockRejectedValueOnce(new Error('permission error'));
-      await expect(loaded.notificationManager.requestPermission()).resolves.toBe(false);
+      loaded.notificationMock?.requestPermissionMock.mockRejectedValueOnce(
+        new Error('permission error'),
+      );
+      await expect(
+        loaded.notificationManager.requestPermission(),
+      ).resolves.toBe(false);
       expect(loaded.loggerMock.error).toHaveBeenCalled();
     } finally {
       loaded.restore();
@@ -217,12 +264,16 @@ describe('notifications', () => {
       requestResult: 'granted',
     });
     try {
-      await expect(loaded.notificationManager.enableNotifications()).resolves.toBe(true);
+      await expect(
+        loaded.notificationManager.enableNotifications(),
+      ).resolves.toBe(true);
       expect(loaded.notificationManager.isNotificationsEnabled()).toBe(true);
 
       loaded.notificationManager.disableNotifications();
       expect(loaded.notificationManager.isNotificationsEnabled()).toBe(false);
-      expect(loaded.localPreferencesMock.setNotificationsEnabled).toHaveBeenLastCalledWith(false);
+      expect(
+        loaded.localPreferencesMock.setNotificationsEnabled,
+      ).toHaveBeenLastCalledWith(false);
     } finally {
       loaded.restore();
     }
@@ -235,7 +286,9 @@ describe('notifications', () => {
       initialPermission: 'granted',
     });
     try {
-      const focusSpy = vi.spyOn(window, 'focus').mockImplementation(() => undefined);
+      const focusSpy = vi
+        .spyOn(window, 'focus')
+        .mockImplementation(() => undefined);
 
       const notification = await loaded.notificationManager.showNotification({
         title: 'Task complete',
@@ -246,20 +299,25 @@ describe('notifications', () => {
       expect(loaded.notificationMock?.instances).toHaveLength(1);
 
       if (notification) {
-        const casted = notification as Notification & { close: ReturnType<typeof vi.fn> };
+        const casted = notification as Notification & {
+          close: ReturnType<typeof vi.fn>;
+        };
         notification.onclick?.(new Event('click'));
         expect(focusSpy).toHaveBeenCalled();
         expect(casted.close).toHaveBeenCalledTimes(1);
       }
 
-      const autoCloseNotification = await loaded.notificationManager.showNotification({
-        title: 'Reminder',
-        body: 'Auto close',
-      });
+      const autoCloseNotification =
+        await loaded.notificationManager.showNotification({
+          title: 'Reminder',
+          body: 'Auto close',
+        });
 
       expect(autoCloseNotification).not.toBeNull();
       if (autoCloseNotification) {
-        const casted = autoCloseNotification as Notification & { close: ReturnType<typeof vi.fn> };
+        const casted = autoCloseNotification as Notification & {
+          close: ReturnType<typeof vi.fn>;
+        };
         expect(casted.close).toHaveBeenCalledTimes(0);
         vi.advanceTimersByTime(5000);
         expect(casted.close).toHaveBeenCalledTimes(1);
@@ -284,7 +342,9 @@ describe('notifications', () => {
 
       expect(notification).not.toBeNull();
       if (notification) {
-        const casted = notification as Notification & { close: ReturnType<typeof vi.fn> };
+        const casted = notification as Notification & {
+          close: ReturnType<typeof vi.fn>;
+        };
         vi.advanceTimersByTime(6000);
         expect(casted.close).toHaveBeenCalledTimes(0);
       }
@@ -341,7 +401,7 @@ describe('notifications', () => {
         loaded.notificationManager.showNotification({
           title: 'Title',
           body: 'Body',
-        })
+        }),
       ).resolves.toBeNull();
     } finally {
       loaded.restore();
@@ -356,14 +416,28 @@ describe('notifications', () => {
       language: 'en',
     });
     try {
-      await expect(english.notificationManager.notifyTaskFailed('Alpha', 'timeout')).resolves.not.toBeNull();
-      await expect(english.notificationManager.notifyTaskCompleted('Beta', 12)).resolves.not.toBeNull();
       await expect(
-        english.notificationManager.notifyTaskCompleted('Gamma', 7, 'Keep going!')
+        english.notificationManager.notifyTaskFailed('Alpha', 'timeout'),
       ).resolves.not.toBeNull();
-      await expect(english.notificationManager.notifyTaskWarning('Delta', '3m')).resolves.not.toBeNull();
-      await expect(english.notificationManager.notifyScheduleWarning('Epsilon', '9m')).resolves.not.toBeNull();
-      await expect(english.notificationManager.notifyScheduleFailed('Zeta')).resolves.not.toBeNull();
+      await expect(
+        english.notificationManager.notifyTaskCompleted('Beta', 12),
+      ).resolves.not.toBeNull();
+      await expect(
+        english.notificationManager.notifyTaskCompleted(
+          'Gamma',
+          7,
+          'Keep going!',
+        ),
+      ).resolves.not.toBeNull();
+      await expect(
+        english.notificationManager.notifyTaskWarning('Delta', '3m'),
+      ).resolves.not.toBeNull();
+      await expect(
+        english.notificationManager.notifyScheduleWarning('Epsilon', '9m'),
+      ).resolves.not.toBeNull();
+      await expect(
+        english.notificationManager.notifyScheduleFailed('Zeta'),
+      ).resolves.not.toBeNull();
 
       const created = english.notificationMock?.instances ?? [];
       expect(created).toHaveLength(6);
@@ -386,8 +460,12 @@ describe('notifications', () => {
       language: 'zh',
     });
     try {
-      await expect(chinese.notificationManager.notifyTaskFailed('任务A', '原因')).resolves.not.toBeNull();
-      await expect(chinese.notificationManager.notifyTaskCompleted('任务B', 2)).resolves.not.toBeNull();
+      await expect(
+        chinese.notificationManager.notifyTaskFailed('任务A', '原因'),
+      ).resolves.not.toBeNull();
+      await expect(
+        chinese.notificationManager.notifyTaskCompleted('任务B', 2),
+      ).resolves.not.toBeNull();
 
       const created = chinese.notificationMock?.instances ?? [];
       expect(created).toHaveLength(2);

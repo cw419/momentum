@@ -48,7 +48,8 @@ export const rsipTypeColorMap: Record<
     border: 'border-blue-300 dark:border-blue-700',
   },
   reward: {
-    badge: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200',
+    badge:
+      'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200',
     ring: 'ring-yellow-400 dark:ring-yellow-600',
     bg: 'bg-yellow-100 dark:bg-yellow-900/40',
     border: 'border-yellow-300 dark:border-yellow-700',
@@ -66,19 +67,22 @@ export const rsipTypeColorMap: Record<
     border: 'border-pink-300 dark:border-pink-700',
   },
   goal: {
-    badge: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200',
+    badge:
+      'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200',
     ring: 'ring-emerald-400 dark:ring-emerald-600',
     bg: 'bg-emerald-100 dark:bg-emerald-900/40',
     border: 'border-emerald-300 dark:border-emerald-700',
   },
   trigger: {
-    badge: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200',
+    badge:
+      'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200',
     ring: 'ring-indigo-400 dark:ring-indigo-600',
     bg: 'bg-indigo-100 dark:bg-indigo-900/40',
     border: 'border-indigo-300 dark:border-indigo-700',
   },
   reminder: {
-    badge: 'bg-violet-100 dark:bg-violet-900/20 text-violet-800 dark:text-violet-200',
+    badge:
+      'bg-violet-100 dark:bg-violet-900/20 text-violet-800 dark:text-violet-200',
     ring: 'ring-violet-400 dark:ring-violet-600',
     bg: 'bg-violet-100 dark:bg-violet-900/40',
     border: 'border-violet-300 dark:border-violet-700',

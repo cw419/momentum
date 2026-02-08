@@ -18,7 +18,10 @@ class QueryOptimizer {
     this.chainTreeCache = new ChainTreeCache(this.cache, () => this.CACHE_TTL);
   }
 
-  async deduplicateQuery<T>(key: string, queryFn: () => Promise<T>): Promise<T> {
+  async deduplicateQuery<T>(
+    key: string,
+    queryFn: () => Promise<T>,
+  ): Promise<T> {
     return deduplicateQuery<T>({
       key,
       queryFn,
@@ -40,16 +43,17 @@ class QueryOptimizer {
       performanceLogger.debug('[QUERY_OPTIMIZER] Batch loading data...');
       const startTime = performance.now();
 
-      const [chains, scheduledSessions, activeSession, completionHistory] = await Promise.all([
-        storage.getActiveChains(),
-        storage.getScheduledSessions(),
-        storage.getActiveSession(),
-        storage.getCompletionHistory(),
-      ]);
+      const [chains, scheduledSessions, activeSession, completionHistory] =
+        await Promise.all([
+          storage.getActiveChains(),
+          storage.getScheduledSessions(),
+          storage.getActiveSession(),
+          storage.getCompletionHistory(),
+        ]);
 
       const endTime = performance.now();
       performanceLogger.debug(
-        `[QUERY_OPTIMIZER] Batch load completed in ${(endTime - startTime).toFixed(2)}ms`
+        `[QUERY_OPTIMIZER] Batch load completed in ${(endTime - startTime).toFixed(2)}ms`,
       );
 
       return {
@@ -62,20 +66,24 @@ class QueryOptimizer {
   }
 
   async getOptimizedChains(storage: MomentumStorage): Promise<Chain[]> {
-    return this.deduplicateQuery('chains:getActive', () => storage.getActiveChains());
+    return this.deduplicateQuery('chains:getActive', () =>
+      storage.getActiveChains(),
+    );
   }
 
   clearCache(): void {
-    performanceLogger.debugLazy('[QUERY_OPTIMIZER] Clearing all caches - current state', () =>
-      this.getCacheStats()
+    performanceLogger.debugLazy(
+      '[QUERY_OPTIMIZER] Clearing all caches - current state',
+      () => this.getCacheStats(),
     );
 
     this.cache.clear();
     this.pendingQueries.clear();
     this.chainTreeCache.clear();
 
-    performanceLogger.debugLazy('[QUERY_OPTIMIZER] All caches cleared successfully', () =>
-      this.getCacheStats()
+    performanceLogger.debugLazy(
+      '[QUERY_OPTIMIZER] All caches cleared successfully',
+      () => this.getCacheStats(),
     );
     performanceLogger.debug('[QUERY_OPTIMIZER] Cache cleared');
   }
@@ -103,9 +111,15 @@ class QueryOptimizer {
     const reactStats = reactPerformanceMonitor.generateReport();
 
     performanceLogger.group('🔧 Query Optimizer Stats', () => {
-      performanceLogger.log(`  – Active cache entries: ${cacheStats.cacheSize}`);
-      performanceLogger.log(`  – Pending queries: ${cacheStats.pendingQueries}`);
-      performanceLogger.log(`  – Cache keys: ${cacheStats.cacheKeys.join(', ')}`);
+      performanceLogger.log(
+        `  – Active cache entries: ${cacheStats.cacheSize}`,
+      );
+      performanceLogger.log(
+        `  – Pending queries: ${cacheStats.pendingQueries}`,
+      );
+      performanceLogger.log(
+        `  – Cache keys: ${cacheStats.cacheKeys.join(', ')}`,
+      );
     });
 
     return {
@@ -116,21 +130,30 @@ class QueryOptimizer {
 
   onDataChange(dataType: 'chains' | 'sessions' | 'history'): void {
     performanceLogger.debug(
-      `[QUERY_OPTIMIZER] Data change detected for: ${dataType}, invalidating relevant caches`
+      `[QUERY_OPTIMIZER] Data change detected for: ${dataType}, invalidating relevant caches`,
     );
-    performanceLogger.debug(`[QUERY_OPTIMIZER] Invalidating caches for: ${dataType}`);
+    performanceLogger.debug(
+      `[QUERY_OPTIMIZER] Invalidating caches for: ${dataType}`,
+    );
 
     if (dataType === 'chains') {
-      performanceLogger.debug('[QUERY_OPTIMIZER] Chains data changed - clearing chain cache and tree cache');
+      performanceLogger.debug(
+        '[QUERY_OPTIMIZER] Chains data changed - clearing chain cache and tree cache',
+      );
       invalidateCache(this.cache, 'chains');
       this.chainTreeCache.clear();
-      performanceLogger.debug('[QUERY_OPTIMIZER] Chain caches cleared, lastChainHash reset');
+      performanceLogger.debug(
+        '[QUERY_OPTIMIZER] Chain caches cleared, lastChainHash reset',
+      );
     }
 
     performanceLogger.debug('[QUERY_OPTIMIZER] Clearing batched data cache');
     invalidateCache(this.cache, 'batchedData');
 
-    performanceLogger.debugLazy('[QUERY_OPTIMIZER] Post-invalidation cache stats', () => this.getCacheStats());
+    performanceLogger.debugLazy(
+      '[QUERY_OPTIMIZER] Post-invalidation cache stats',
+      () => this.getCacheStats(),
+    );
   }
 }
 

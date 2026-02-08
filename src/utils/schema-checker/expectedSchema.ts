@@ -28,7 +28,14 @@ export const EXPECTED_SCHEMA = {
     'group_expires_at',
     'deleted_at',
   ],
-  scheduled_sessions: ['id', 'chain_id', 'scheduled_at', 'expires_at', 'auxiliary_signal', 'user_id'],
+  scheduled_sessions: [
+    'id',
+    'chain_id',
+    'scheduled_at',
+    'expires_at',
+    'auxiliary_signal',
+    'user_id',
+  ],
   active_sessions: [
     'id',
     'chain_id',
@@ -61,4 +68,3 @@ export const EXPECTED_SCHEMA = {
   ],
   rsip_meta: ['user_id', 'last_added_at', 'allow_multiple_per_day'],
 };
-

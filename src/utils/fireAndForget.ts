@@ -9,10 +9,17 @@ function toError(value: unknown): Error {
   return value instanceof Error ? value : new Error(String(value));
 }
 
-export function fireAndForget(promise: Promise<unknown>, options?: FireAndForgetOptions): void {
+export function fireAndForget(
+  promise: Promise<unknown>,
+  options?: FireAndForgetOptions,
+): void {
   promise.catch((error) => {
     options?.onError?.(error);
-    logger.warn('ASYNC', 'Unhandled async error', options?.label ? { label: options.label } : undefined, toError(error));
+    logger.warn(
+      'ASYNC',
+      'Unhandled async error',
+      options?.label ? { label: options.label } : undefined,
+      toError(error),
+    );
   });
 }
-

@@ -65,43 +65,75 @@ interface UseChainEditorFormParams {
   onSave: (chain: ChainDraft, isCopy?: boolean) => void;
 }
 
-export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }: UseChainEditorFormParams): ChainEditorFormModel {
+export function useChainEditorForm({
+  chain,
+  isEditing,
+  initialParentId,
+  onSave,
+}: UseChainEditorFormParams): ChainEditorFormModel {
   const [name, setName] = useState(chain?.name || '');
-  const [type, setType] = useState<UnitChainType>(chain && chain.type !== 'group' ? chain.type : 'unit');
+  const [type, setType] = useState<UnitChainType>(
+    chain && chain.type !== 'group' ? chain.type : 'unit',
+  );
 
-  const [parentId, setParentId] = useState<string | undefined>(chain ? chain.parentId : initialParentId);
-  const [sortOrder] = useState(chain?.sortOrder || Math.floor(Date.now() / 1000));
+  const [parentId, setParentId] = useState<string | undefined>(
+    chain ? chain.parentId : initialParentId,
+  );
+  const [sortOrder] = useState(
+    chain?.sortOrder || Math.floor(Date.now() / 1000),
+  );
 
-  const isCustomTriggerValue = !!(chain?.trigger && !TRIGGER_TEMPLATES.some(t => t.value === chain.trigger));
-  const [trigger, setTrigger] = useState(isCustomTriggerValue ? CUSTOM_TRIGGER_VALUE : chain?.trigger || '');
-  const [customTrigger, setCustomTrigger] = useState(isCustomTriggerValue ? chain!.trigger : '');
+  const isCustomTriggerValue = !!(
+    chain?.trigger && !TRIGGER_TEMPLATES.some((t) => t.value === chain.trigger)
+  );
+  const [trigger, setTrigger] = useState(
+    isCustomTriggerValue ? CUSTOM_TRIGGER_VALUE : chain?.trigger || '',
+  );
+  const [customTrigger, setCustomTrigger] = useState(
+    isCustomTriggerValue ? chain!.trigger : '',
+  );
 
   const [duration, setDuration] = useState(chain?.duration || 45);
   const [isCustomDuration, setIsCustomDuration] = useState(
-    chain?.duration ? !DURATION_PRESETS.includes(chain.duration) : false
+    chain?.duration ? !DURATION_PRESETS.includes(chain.duration) : false,
   );
-  const [isDurationless, setIsDurationless] = useState<boolean>(!!chain?.isDurationless);
-  const [minimumDuration, setMinimumDuration] = useState(chain?.minimumDuration || 30);
+  const [isDurationless, setIsDurationless] = useState<boolean>(
+    !!chain?.isDurationless,
+  );
+  const [minimumDuration, setMinimumDuration] = useState(
+    chain?.minimumDuration || 30,
+  );
   const [isCustomMinimumDuration, setIsCustomMinimumDuration] = useState(
-    chain?.minimumDuration ? !DURATION_PRESETS.includes(chain.minimumDuration) : false
+    chain?.minimumDuration
+      ? !DURATION_PRESETS.includes(chain.minimumDuration)
+      : false,
   );
   const [description, setDescription] = useState(chain?.description || '');
 
   const isCustomAuxiliarySignalValue = !!(
-    chain?.auxiliarySignal && !AUXILIARY_SIGNAL_TEMPLATES.some(t => t.value === chain.auxiliarySignal)
+    chain?.auxiliarySignal &&
+    !AUXILIARY_SIGNAL_TEMPLATES.some((t) => t.value === chain.auxiliarySignal)
   );
   const [auxiliarySignal, setAuxiliarySignal] = useState(
-    isCustomAuxiliarySignalValue ? CUSTOM_AUXILIARY_SIGNAL_VALUE : chain?.auxiliarySignal || ''
+    isCustomAuxiliarySignalValue
+      ? CUSTOM_AUXILIARY_SIGNAL_VALUE
+      : chain?.auxiliarySignal || '',
   );
   const [customAuxiliarySignal, setCustomAuxiliarySignal] = useState(
-    isCustomAuxiliarySignalValue ? chain!.auxiliarySignal : ''
+    isCustomAuxiliarySignalValue ? chain!.auxiliarySignal : '',
   );
 
-  const [auxiliaryDuration, setAuxiliaryDuration] = useState(chain?.auxiliaryDuration || 15);
-  const [isCustomAuxiliaryDuration, setIsCustomAuxiliaryDuration] = useState(
-    chain?.auxiliaryDuration ? !AUXILIARY_DURATION_PRESETS.includes(chain.auxiliaryDuration) : false
+  const [auxiliaryDuration, setAuxiliaryDuration] = useState(
+    chain?.auxiliaryDuration || 15,
   );
-  const [auxiliaryCompletionTrigger, setAuxiliaryCompletionTrigger] = useState(chain?.auxiliaryCompletionTrigger || '');
+  const [isCustomAuxiliaryDuration, setIsCustomAuxiliaryDuration] = useState(
+    chain?.auxiliaryDuration
+      ? !AUXILIARY_DURATION_PRESETS.includes(chain.auxiliaryDuration)
+      : false,
+  );
+  const [auxiliaryCompletionTrigger, setAuxiliaryCompletionTrigger] = useState(
+    chain?.auxiliaryCompletionTrigger || '',
+  );
 
   const [isCopyMode, setIsCopyMode] = useState(false);
 
@@ -138,7 +170,13 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
       });
     }
 
-    if (!name.trim() || !trigger.trim() || !description.trim() || !auxiliarySignal.trim() || !auxiliaryCompletionTrigger.trim()) {
+    if (
+      !name.trim() ||
+      !trigger.trim() ||
+      !description.trim() ||
+      !auxiliarySignal.trim() ||
+      !auxiliaryCompletionTrigger.trim()
+    ) {
       return;
     }
 
@@ -148,11 +186,16 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
     } else if (duration === 0) {
       finalDuration = 45;
     }
-    const finalAuxiliaryDuration = auxiliaryDuration === 0 ? 15 : auxiliaryDuration;
+    const finalAuxiliaryDuration =
+      auxiliaryDuration === 0 ? 15 : auxiliaryDuration;
 
     let finalParentId = parentId;
     if (chain && finalParentId === chain.id) {
-      logger.warn('CHAIN_EDITOR', 'Detected circular reference, resetting parentId to undefined', { chainId: chain.id });
+      logger.warn(
+        'CHAIN_EDITOR',
+        'Detected circular reference, resetting parentId to undefined',
+        { chainId: chain.id },
+      );
       finalParentId = undefined;
     }
 
@@ -161,13 +204,16 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
       type,
       parentId: finalParentId,
       sortOrder,
-      trigger: trigger === CUSTOM_TRIGGER_VALUE ? customTrigger.trim() : trigger,
+      trigger:
+        trigger === CUSTOM_TRIGGER_VALUE ? customTrigger.trim() : trigger,
       duration: finalDuration,
       isDurationless,
       minimumDuration: isDurationless ? minimumDuration : undefined,
       description: description.trim(),
       auxiliarySignal:
-        auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE ? customAuxiliarySignal.trim() : auxiliarySignal,
+        auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE
+          ? customAuxiliarySignal.trim()
+          : auxiliarySignal,
       auxiliaryDuration: finalAuxiliaryDuration,
       auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
       exceptions: chain?.exceptions || [],
@@ -176,7 +222,10 @@ export function useChainEditorForm({ chain, isEditing, initialParentId, onSave }
     };
 
     if (isDev) {
-      logger.debug('CHAIN_EDITOR', 'Chain data to save', { chainData, isEditing });
+      logger.debug('CHAIN_EDITOR', 'Chain data to save', {
+        chainData,
+        isEditing,
+      });
       if (chain) {
         logger.debug('CHAIN_EDITOR', 'Original chain data', { chain });
       }

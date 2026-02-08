@@ -24,4 +24,3 @@ ${result.errors.map((error, index) => `${index + 1}. ${error}`).join('\n')}
 迁移完成。
 `;
 }
-

@@ -30,9 +30,11 @@ class ReactPerformanceMonitor {
   trackRender(componentName: string, renderTime: number) {
     this.metrics.renderTimes.push(renderTime);
     this.metrics.totalRenders++;
-    
+
     if (isDev && renderTime > 16) {
-      performanceLogger.warn(`[PERF] Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`);
+      performanceLogger.warn(
+        `[PERF] Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`,
+      );
     }
   }
 
@@ -42,9 +44,11 @@ class ReactPerformanceMonitor {
   trackTreeBuild(buildTime: number) {
     this.metrics.treeBuilds.push(buildTime);
     this.metrics.totalTreeBuilds++;
-    
+
     if (isDev && buildTime > 10) {
-      performanceLogger.warn(`[PERF] Slow tree build: ${buildTime.toFixed(2)}ms`);
+      performanceLogger.warn(
+        `[PERF] Slow tree build: ${buildTime.toFixed(2)}ms`,
+      );
     }
   }
 
@@ -66,25 +70,34 @@ class ReactPerformanceMonitor {
    * Get performance statistics
    */
   getStats() {
-    const avgRenderTime = this.metrics.renderTimes.length > 0 
-      ? this.metrics.renderTimes.reduce((a, b) => a + b, 0) / this.metrics.renderTimes.length
-      : 0;
+    const avgRenderTime =
+      this.metrics.renderTimes.length > 0
+        ? this.metrics.renderTimes.reduce((a, b) => a + b, 0) /
+          this.metrics.renderTimes.length
+        : 0;
 
-    const avgTreeBuildTime = this.metrics.treeBuilds.length > 0
-      ? this.metrics.treeBuilds.reduce((a, b) => a + b, 0) / this.metrics.treeBuilds.length
-      : 0;
+    const avgTreeBuildTime =
+      this.metrics.treeBuilds.length > 0
+        ? this.metrics.treeBuilds.reduce((a, b) => a + b, 0) /
+          this.metrics.treeBuilds.length
+        : 0;
 
-    const maxRenderTime = this.metrics.renderTimes.length > 0
-      ? Math.max(...this.metrics.renderTimes)
-      : 0;
+    const maxRenderTime =
+      this.metrics.renderTimes.length > 0
+        ? Math.max(...this.metrics.renderTimes)
+        : 0;
 
-    const maxTreeBuildTime = this.metrics.treeBuilds.length > 0
-      ? Math.max(...this.metrics.treeBuilds)
-      : 0;
+    const maxTreeBuildTime =
+      this.metrics.treeBuilds.length > 0
+        ? Math.max(...this.metrics.treeBuilds)
+        : 0;
 
-    const cacheHitRate = this.metrics.cacheHits + this.metrics.cacheMisses > 0
-      ? (this.metrics.cacheHits / (this.metrics.cacheHits + this.metrics.cacheMisses)) * 100
-      : 0;
+    const cacheHitRate =
+      this.metrics.cacheHits + this.metrics.cacheMisses > 0
+        ? (this.metrics.cacheHits /
+            (this.metrics.cacheHits + this.metrics.cacheMisses)) *
+          100
+        : 0;
 
     return {
       avgRenderTime: avgRenderTime.toFixed(2),
@@ -104,34 +117,44 @@ class ReactPerformanceMonitor {
    */
   generateReport() {
     const stats = this.getStats();
-    
+
     performanceLogger.group('📊 React Performance Report', () => {
       performanceLogger.log('🚀 Render Performance:');
       performanceLogger.log(`  • Total renders: ${stats.totalRenders}`);
-      performanceLogger.log(`  • Average render time: ${stats.avgRenderTime}ms`);
+      performanceLogger.log(
+        `  • Average render time: ${stats.avgRenderTime}ms`,
+      );
       performanceLogger.log(`  • Max render time: ${stats.maxRenderTime}ms`);
-      
+
       performanceLogger.log('🌲 Tree Build Performance:');
       performanceLogger.log(`  • Total tree builds: ${stats.totalTreeBuilds}`);
-      performanceLogger.log(`  • Average build time: ${stats.avgTreeBuildTime}ms`);
+      performanceLogger.log(
+        `  • Average build time: ${stats.avgTreeBuildTime}ms`,
+      );
       performanceLogger.log(`  • Max build time: ${stats.maxTreeBuildTime}ms`);
-      
+
       performanceLogger.log('💾 Cache Performance:');
       performanceLogger.log(`  • Cache hit rate: ${stats.cacheHitRate}%`);
       performanceLogger.log(`  • Cache hits: ${stats.cacheHits}`);
       performanceLogger.log(`  • Cache misses: ${stats.cacheMisses}`);
-      
+
       // Performance recommendations
       if (parseFloat(stats.avgRenderTime) > 16) {
-        performanceLogger.warn('⚠️  Average render time exceeds 16ms (60 FPS threshold)');
+        performanceLogger.warn(
+          '⚠️  Average render time exceeds 16ms (60 FPS threshold)',
+        );
       }
-      
+
       if (parseFloat(stats.cacheHitRate) < 70) {
-        performanceLogger.warn('⚠️  Cache hit rate below 70% - consider optimizing cache strategy');
+        performanceLogger.warn(
+          '⚠️  Cache hit rate below 70% - consider optimizing cache strategy',
+        );
       }
-      
+
       if (parseFloat(stats.avgTreeBuildTime) > 5) {
-        performanceLogger.warn('⚠️  Tree building is slow - consider further optimization');
+        performanceLogger.warn(
+          '⚠️  Tree building is slow - consider further optimization',
+        );
       }
     });
 

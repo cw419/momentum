@@ -18,11 +18,19 @@ describe('translations', () => {
     expect(translations.zh['language.english']).toEqual(expect.any(String));
     expect(translations.zh['language.chinese']).toEqual(expect.any(String));
     expect(translations.zh['settings.title']).toEqual(expect.any(String));
-    expect(translations.zh['settings.language.title']).toEqual(expect.any(String));
-    expect(translations.zh['language.english'].trim().length).toBeGreaterThan(0);
-    expect(translations.zh['language.chinese'].trim().length).toBeGreaterThan(0);
+    expect(translations.zh['settings.language.title']).toEqual(
+      expect.any(String),
+    );
+    expect(translations.zh['language.english'].trim().length).toBeGreaterThan(
+      0,
+    );
+    expect(translations.zh['language.chinese'].trim().length).toBeGreaterThan(
+      0,
+    );
     expect(translations.zh['settings.title'].trim().length).toBeGreaterThan(0);
-    expect(translations.zh['settings.language.title'].trim().length).toBeGreaterThan(0);
+    expect(
+      translations.zh['settings.language.title'].trim().length,
+    ).toBeGreaterThan(0);
   });
 
   it('should not contain empty translation values', () => {

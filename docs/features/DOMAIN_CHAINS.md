@@ -9,6 +9,7 @@
 任务链（Chain）是 Momentum 的核心数据结构，代表一个需要培养的习惯或任务。链条系统支持多种类型，包括普通单元链和任务组。
 
 ### 核心特性
+
 - **类型区分**：UnitChain（单元链）和 GroupChain（任务组）
 - **层级结构**：支持父子关系（parentId）
 - **类型转换**：编辑时可在类型间转换
@@ -18,13 +19,13 @@
 
 ## 关键文件
 
-| 文件 | 职责 |
-|------|------|
-| `src/types/index.ts` | Chain, UnitChain, GroupChain, ChainDraft 类型定义 |
-| `src/hooks/domains/useChainsDomain.ts` | 链条 CRUD 业务逻辑 Hook |
-| `src/hooks/domains/useSafeSaveChains.ts` | 安全保存工具 Hook |
-| `src/components/chain-editor/` | 链条编辑器组件 |
-| `src/components/TaskGroupEditor.tsx` | 任务组编辑器组件 |
+| 文件                                     | 职责                                              |
+| ---------------------------------------- | ------------------------------------------------- |
+| `src/types/index.ts`                     | Chain, UnitChain, GroupChain, ChainDraft 类型定义 |
+| `src/hooks/domains/useChainsDomain.ts`   | 链条 CRUD 业务逻辑 Hook                           |
+| `src/hooks/domains/useSafeSaveChains.ts` | 安全保存工具 Hook                                 |
+| `src/components/chain-editor/`           | 链条编辑器组件                                    |
+| `src/components/TaskGroupEditor.tsx`     | 任务组编辑器组件                                  |
 
 ---
 
@@ -37,24 +38,24 @@
 interface ChainRecord {
   id: string;
   name: string;
-  trigger: string;              // 神圣座位触发条件
-  duration: number;             // 任务时长（分钟）
+  trigger: string; // 神圣座位触发条件
+  duration: number; // 任务时长（分钟）
   description: string;
-  currentStreak: number;        // 当前连胜
-  auxiliaryStreak: number;      // 辅助链连胜
-  totalCompletions: number;     // 总完成次数
-  totalFailures: number;        // 总失败次数
-  auxiliaryFailures: number;    // 辅助链失败次数
-  exceptions: string[];         // 例外规则
+  currentStreak: number; // 当前连胜
+  auxiliaryStreak: number; // 辅助链连胜
+  totalCompletions: number; // 总完成次数
+  totalFailures: number; // 总失败次数
+  auxiliaryFailures: number; // 辅助链失败次数
+  exceptions: string[]; // 例外规则
   auxiliaryExceptions: string[];
-  auxiliarySignal: string;      // 预约信号
-  auxiliaryDuration: number;    // 预约时长
+  auxiliarySignal: string; // 预约信号
+  auxiliaryDuration: number; // 预约时长
   auxiliaryCompletionTrigger: string;
   createdAt: Date;
   lastCompletedAt?: Date;
-  parentId?: string;            // 父任务组 ID
-  sortOrder?: number;           // 排序
-  deletedAt?: Date;             // 软删除时间戳
+  parentId?: string; // 父任务组 ID
+  sortOrder?: number; // 排序
+  deletedAt?: Date; // 软删除时间戳
 
   // 任务组相关
   timeLimitHours?: number;
@@ -71,18 +72,25 @@ interface ChainRecord {
 
 // 单元链类型
 type ChainType =
-  | 'unit'          // 基础单元
-  | 'assault'       // 突击单元（学习、实验）
-  | 'recon'         // 侦查单元（信息搜集）
-  | 'command'       // 指挥单元（制定计划）
-  | 'special_ops'   // 特勤单元（处理杂事）
-  | 'engineering'   // 工程单元（运动锻炼）
+  | 'unit' // 基础单元
+  | 'assault' // 突击单元（学习、实验）
+  | 'recon' // 侦查单元（信息搜集）
+  | 'command' // 指挥单元（制定计划）
+  | 'special_ops' // 特勤单元（处理杂事）
+  | 'engineering' // 工程单元（运动锻炼）
   | 'quartermaster' // 炊事单元（备餐做饭）
-  | 'group';        // 任务组
+  | 'group'; // 任务组
 
 // 单元链
 type UnitChain = ChainRecord & {
-  type: 'unit' | 'assault' | 'recon' | 'command' | 'special_ops' | 'engineering' | 'quartermaster';
+  type:
+    | 'unit'
+    | 'assault'
+    | 'recon'
+    | 'command'
+    | 'special_ops'
+    | 'engineering'
+    | 'quartermaster';
 };
 
 // 任务组链
@@ -167,20 +175,20 @@ sequenceDiagram
 
 ### useChainsDomain Hook
 
-| 方法 | 参数 | 说明 |
-|------|------|------|
-| `handleCreateChain` | `(parentId?)` | 打开创建链条编辑器 |
-| `handleCreateTaskGroup` | - | 打开创建任务组编辑器 |
-| `handleEditChain` | `(chainId)` | 打开编辑链条编辑器 |
-| `handleSaveChain` | `(draft, isCopy?)` | 保存链条 |
-| `handleCopyChain` | `(chainId)` | 复制链条 |
+| 方法                    | 参数               | 说明                 |
+| ----------------------- | ------------------ | -------------------- |
+| `handleCreateChain`     | `(parentId?)`      | 打开创建链条编辑器   |
+| `handleCreateTaskGroup` | -                  | 打开创建任务组编辑器 |
+| `handleEditChain`       | `(chainId)`        | 打开编辑链条编辑器   |
+| `handleSaveChain`       | `(draft, isCopy?)` | 保存链条             |
+| `handleCopyChain`       | `(chainId)`        | 复制链条             |
 
 ### SafelySaveChains
 
 ```typescript
 type SafelySaveChains = (
   updatedActiveChains: Chain[],
-  retryCount?: number
+  retryCount?: number,
 ) => Promise<void>;
 ```
 
@@ -211,7 +219,14 @@ if (chainData.type !== 'group') {
   if (chain.type === 'group') {
     // 从 GroupChain 转换为 UnitChain
     // 移除任务组特有字段
-    const { timeLimitHours, groupStartedAt, groupExpiresAt, isTaskGroup, groupRepeatCount, ...rest } = chain;
+    const {
+      timeLimitHours,
+      groupStartedAt,
+      groupExpiresAt,
+      isTaskGroup,
+      groupRepeatCount,
+      ...rest
+    } = chain;
     const updated: UnitChain = {
       ...rest,
       ...chainData,
@@ -230,7 +245,7 @@ if (chainData.type !== 'group') {
 ```typescript
 const newChain: UnitChain = {
   id: crypto.randomUUID(),
-  type: chainData.type,  // 'unit', 'assault', etc.
+  type: chainData.type, // 'unit', 'assault', etc.
   name: chainData.name,
   trigger: chainData.trigger,
   duration: chainData.duration,
@@ -284,7 +299,7 @@ const newChain: GroupChain = {
 
 ```typescript
 const handleCopyChain = async (chainId: string) => {
-  const original = chains.find(c => c.id === chainId);
+  const original = chains.find((c) => c.id === chainId);
   if (!original) return;
 
   // 构建复制草稿
@@ -309,7 +324,7 @@ const handleCreateChain = (parentId?: unknown) => {
   // React 事件处理器传入事件对象时，不应作为 parentId 使用
   const normalizedParentId = typeof parentId === 'string' ? parentId : null;
 
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
     currentView: 'editor',
     editingChain: null,
@@ -332,7 +347,9 @@ const safelySaveChains = async (chains: Chain[], retryCount = 0) => {
   } catch (error) {
     if (retryCount < 3) {
       // 等待后重试
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000 * (retryCount + 1)),
+      );
       return safelySaveChains(chains, retryCount + 1);
     }
     throw error;
@@ -346,8 +363,8 @@ const safelySaveChains = async (chains: Chain[], retryCount = 0) => {
 
 ```typescript
 const allExistingChains = await storage.getChains();
-const activeChains = allExistingChains.filter(c => c.deletedAt == null);
-const deletedChains = allExistingChains.filter(c => c.deletedAt != null);
+const activeChains = allExistingChains.filter((c) => c.deletedAt == null);
+const deletedChains = allExistingChains.filter((c) => c.deletedAt != null);
 
 // 合并保存
 await storage.saveChains([...updatedActiveChains, ...deletedChains]);

@@ -14,7 +14,10 @@ interface RuleListItemProps {
   showCreateNew: boolean;
   formatLastUsed: (date: Date) => string;
   getMatchTypeLabel: (matchType: string) => string;
-  highlightText: (text: string, ranges: Array<{ start: number; end: number }>) => ReactNode;
+  highlightText: (
+    text: string,
+    ranges: Array<{ start: number; end: number }>,
+  ) => ReactNode;
 }
 
 export function RuleListItem({
@@ -28,37 +31,40 @@ export function RuleListItem({
   showCreateNew,
   highlightText,
   formatLastUsed,
-  getMatchTypeLabel
+  getMatchTypeLabel,
 }: RuleListItemProps) {
   const rule = result.rule;
   const usageCount = rule.usageCount || 0;
   const usageUnit = usageCount === 1 ? 'time' : 'times';
-  const usageText = language === 'zh' ? `使用过 ${usageCount} 次` : `Used ${usageCount} ${usageUnit}`;
+  const usageText =
+    language === 'zh'
+      ? `使用过 ${usageCount} 次`
+      : `Used ${usageCount} ${usageUnit}`;
   const actualIndex = showCreateNew && searchQuery ? index - 1 : index;
 
   if (actualIndex < 0 || actualIndex >= rulesLength) return null;
 
   return (
     <div
-      className="absolute w-full rule-item"
+      className="rule-item absolute w-full"
       style={{
         height: itemHeight,
         top: index * itemHeight,
-        left: 0
+        left: 0,
       }}
       data-rule-item
     >
       <button
         type="button"
         onClick={() => onSelect(rule)}
-        className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-200 text-left border border-transparent hover:border-primary-200 dark:hover:border-primary-500/30"
+        className="flex w-full items-center justify-between rounded-xl border border-transparent bg-gray-50 p-3 text-left transition duration-200 hover:border-primary-200 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:border-primary-500/30 dark:hover:bg-gray-700"
         style={{ height: itemHeight }}
       >
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-gray-900 dark:text-white truncate">
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium text-gray-900 dark:text-white">
             {highlightText(rule.name, result.highlightRanges)}
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center space-x-4">
+          <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
             <span className="flex items-center space-x-1">
               <TrendingUp size={12} aria-hidden="true" />
               <span>{usageText}</span>
@@ -70,18 +76,20 @@ export function RuleListItem({
               </span>
             )}
             {result.matchType !== 'exact' && (
-              <span className="text-primary-500 text-xs">{getMatchTypeLabel(result.matchType)}</span>
+              <span className="text-xs text-primary-500">
+                {getMatchTypeLabel(result.matchType)}
+              </span>
             )}
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 ml-4">
+        <div className="ml-4 flex items-center space-x-2">
           {/* 使用频率可视化 */}
           <div className="flex items-center space-x-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className={`w-1 h-4 rounded-full ${
+                className={`h-4 w-1 rounded-full ${
                   i < Math.min((rule.usageCount || 0) / 2, 5)
                     ? 'bg-primary-500'
                     : 'bg-gray-200 dark:bg-gray-600'
@@ -90,7 +98,7 @@ export function RuleListItem({
             ))}
           </div>
           <CheckCircle
-            className="text-gray-400 hover:text-primary-500 transition-colors flex-shrink-0"
+            className="flex-shrink-0 text-gray-400 transition-colors hover:text-primary-500"
             size={20}
             aria-hidden="true"
           />

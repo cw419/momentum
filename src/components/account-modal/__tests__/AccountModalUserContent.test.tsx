@@ -8,14 +8,21 @@ function createUser(overrides?: Partial<AuthUser>): AuthUser {
   return {
     id: overrides?.id ?? 'user-1',
     email: overrides?.email ?? 'user@example.com',
-    createdAt: overrides?.createdAt !== undefined ? overrides.createdAt : '2026-01-02T00:00:00.000Z',
+    createdAt:
+      overrides?.createdAt !== undefined
+        ? overrides.createdAt
+        : '2026-01-02T00:00:00.000Z',
     lastSignInAt:
-      overrides?.lastSignInAt !== undefined ? overrides.lastSignInAt : '2026-01-03T00:00:00.000Z',
+      overrides?.lastSignInAt !== undefined
+        ? overrides.lastSignInAt
+        : '2026-01-03T00:00:00.000Z',
     userMetadata: overrides?.userMetadata ?? null,
   };
 }
 
-function createSettings(overrides?: Partial<GamblingSettings>): GamblingSettings {
+function createSettings(
+  overrides?: Partial<GamblingSettings>,
+): GamblingSettings {
   return {
     gambling_mode_enabled: overrides?.gambling_mode_enabled ?? false,
     daily_bet_limit: overrides?.daily_bet_limit ?? null,
@@ -39,7 +46,10 @@ function createProps(overrides?: {
   return {
     props: {
       user: overrides?.user ?? createUser(),
-      userFullName: overrides?.userFullName !== undefined ? overrides.userFullName : 'Demo User',
+      userFullName:
+        overrides?.userFullName !== undefined
+          ? overrides.userFullName
+          : 'Demo User',
       locale: 'en-US',
       tr: (_zh: string, en: string) => en,
       gamblingSettings: overrides?.gamblingSettings ?? createSettings(),
@@ -68,9 +78,13 @@ describe('AccountModalUserContent', () => {
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
     expect(screen.getByText('Demo User')).toBeInTheDocument();
     expect(screen.getByText(/Enabled/)).toBeInTheDocument();
-    expect(screen.getByText(/can bet when starting a task/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/can bet when starting a task/),
+    ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('switch', { name: 'Toggle gambling mode' }));
+    fireEvent.click(
+      screen.getByRole('switch', { name: 'Toggle gambling mode' }),
+    );
     expect(onToggleGambling).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
@@ -118,7 +132,9 @@ describe('AccountModalUserContent', () => {
     });
     render(<AccountModalUserContent {...props} />);
 
-    expect(screen.getByRole('switch', { name: 'Toggle gambling mode' })).toBeDisabled();
+    expect(
+      screen.getByRole('switch', { name: 'Toggle gambling mode' }),
+    ).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeDisabled();
     expect(screen.getByText('Signing out...')).toBeInTheDocument();
   });

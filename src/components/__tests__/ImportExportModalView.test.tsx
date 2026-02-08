@@ -5,7 +5,9 @@ import type { ImportExportImportOptions } from '../../services/ImportExportServi
 
 const tr = (_zh: string, en: string) => en;
 
-function createProps(overrides: Partial<React.ComponentProps<typeof ImportExportModalView>> = {}) {
+function createProps(
+  overrides: Partial<React.ComponentProps<typeof ImportExportModalView>> = {},
+) {
   const importOptions: ImportExportImportOptions = {
     preserveStatistics: true,
     preserveTimestamps: true,
@@ -38,7 +40,9 @@ describe('ImportExportModalView', () => {
     render(<ImportExportModalView {...props} />);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Export as JSON' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Export as JSON' }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Import' }));
     fireEvent.click(screen.getByRole('button', { name: 'Export as JSON' }));
@@ -50,7 +54,11 @@ describe('ImportExportModalView', () => {
   });
 
   it('disables import button when input is empty', () => {
-    const props = createProps({ activeTab: 'import', importData: '', chainsCount: 1 });
+    const props = createProps({
+      activeTab: 'import',
+      importData: '',
+      chainsCount: 1,
+    });
     render(<ImportExportModalView {...props} />);
 
     const importButton = screen.getByRole('button', { name: 'Import data' });
@@ -58,7 +66,11 @@ describe('ImportExportModalView', () => {
   });
 
   it('enables import flow and propagates form/file/options changes', () => {
-    const props = createProps({ activeTab: 'import', importData: '{"foo":1}', chainsCount: 1 });
+    const props = createProps({
+      activeTab: 'import',
+      importData: '{"foo":1}',
+      chainsCount: 1,
+    });
     render(<ImportExportModalView {...props} />);
 
     const importButton = screen.getByRole('button', { name: 'Import data' });
@@ -72,14 +84,16 @@ describe('ImportExportModalView', () => {
     expect(props.onImportDataChange).toHaveBeenCalledWith('{"bar":2}');
 
     const fileInput = screen.getByLabelText('Choose a file to import');
-    const file = new File(['{"a":1}'], 'import.json', { type: 'application/json' });
+    const file = new File(['{"a":1}'], 'import.json', {
+      type: 'application/json',
+    });
     fireEvent.change(fileInput, { target: { files: [file] } });
     expect(props.onFileUpload).toHaveBeenCalledTimes(1);
 
     const preserveStats = screen.getByLabelText('Preserve statistics');
     fireEvent.click(preserveStats);
     expect(props.onImportOptionsChange).toHaveBeenCalledWith(
-      expect.objectContaining({ preserveStatistics: false })
+      expect.objectContaining({ preserveStatistics: false }),
     );
   });
 
@@ -97,10 +111,18 @@ describe('ImportExportModalView', () => {
   });
 
   it('forces import tab when there are no chains', () => {
-    const props = createProps({ activeTab: 'export', chainsCount: 0, importData: '{"foo":1}' });
+    const props = createProps({
+      activeTab: 'export',
+      chainsCount: 0,
+      importData: '{"foo":1}',
+    });
     render(<ImportExportModalView {...props} />);
 
-    expect(screen.queryByRole('button', { name: 'Export as JSON' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Import data' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Export as JSON' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Import data' }),
+    ).toBeInTheDocument();
   });
 });

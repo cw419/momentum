@@ -1,6 +1,6 @@
 /**
  * 资源管理器
- * 
+ *
  * 统一管理应用中的各种资源，包括：
  * - 网络请求管理
  * - 事件监听器管理
@@ -64,7 +64,7 @@ class ResourceManager {
       requestTimeout: 30000,
       enableResourceTracking: true,
       enableAutoCleanup: true,
-      cleanupInterval: 60000 // 1分钟
+      cleanupInterval: 60000, // 1分钟
     };
 
     this.resourceMetrics = {
@@ -72,7 +72,7 @@ class ResourceManager {
       eventListeners: { count: 0, types: {} },
       timers: { intervals: 0, timeouts: 0 },
       workers: { active: 0, terminated: 0 },
-      dom: { elements: 0, observers: 0 }
+      dom: { elements: 0, observers: 0 },
     };
 
     this.initializeResourceManagement();
@@ -120,7 +120,7 @@ class ResourceManager {
       timeout?: number;
       retries?: number;
       metadata?: any;
-    } = {}
+    } = {},
   ): Promise<T> {
     const requestId = this.generateResourceId();
     const startTime = Date.now();
@@ -139,14 +139,16 @@ class ResourceManager {
       type: 'request',
       created: startTime,
       cleanup,
-      metadata: options.metadata
+      metadata: options.metadata,
     });
 
     this.resourceMetrics.networkRequests.active++;
 
     const requestPromise = Promise.race([
       requestFn(),
-      this.createTimeoutPromise<T>(options.timeout || this.config.requestTimeout)
+      this.createTimeoutPromise<T>(
+        options.timeout || this.config.requestTimeout,
+      ),
     ]);
 
     this.networkRequestQueue.push(requestPromise);
@@ -154,7 +156,7 @@ class ResourceManager {
     try {
       const result = await requestPromise;
       this.resourceMetrics.networkRequests.completed++;
-      
+
       // 估算响应大小
       const responseSize = this.estimateResponseSize(result);
       this.resourceMetrics.networkRequests.totalBytes += responseSize;
@@ -176,7 +178,7 @@ class ResourceManager {
     element: EventTarget,
     event: string,
     handler: EventListener,
-    options?: AddEventListenerOptions
+    options?: AddEventListenerOptions,
   ): () => void {
     const listenerId = this.generateResourceId();
 
@@ -184,7 +186,7 @@ class ResourceManager {
       element.removeEventListener(event, handler, options);
       this.trackedResources.delete(listenerId);
       this.resourceMetrics.eventListeners.count--;
-      this.resourceMetrics.eventListeners.types[event] = 
+      this.resourceMetrics.eventListeners.types[event] =
         (this.resourceMetrics.eventListeners.types[event] || 0) - 1;
     };
 
@@ -197,11 +199,11 @@ class ResourceManager {
       type: 'listener',
       created: Date.now(),
       cleanup,
-      metadata: { element, event }
+      metadata: { element, event },
     });
 
     this.resourceMetrics.eventListeners.count++;
-    this.resourceMetrics.eventListeners.types[event] = 
+    this.resourceMetrics.eventListeners.types[event] =
       (this.resourceMetrics.eventListeners.types[event] || 0) + 1;
 
     return cleanup;
@@ -225,7 +227,7 @@ class ResourceManager {
       type: 'timer',
       created: Date.now(),
       cleanup,
-      metadata: { type: 'interval', delay }
+      metadata: { type: 'interval', delay },
     });
 
     this.resourceMetrics.timers.intervals++;
@@ -254,7 +256,7 @@ class ResourceManager {
       type: 'timer',
       created: Date.now(),
       cleanup,
-      metadata: { type: 'timeout', delay }
+      metadata: { type: 'timeout', delay },
     });
 
     this.resourceMetrics.timers.timeouts++;
@@ -264,7 +266,10 @@ class ResourceManager {
   /**
    * 创建受管理的WebWorker
    */
-  createManagedWorker(scriptURL: string | URL, options?: WorkerOptions): {
+  createManagedWorker(
+    scriptURL: string | URL,
+    options?: WorkerOptions,
+  ): {
     worker: Worker;
     terminate: () => void;
   } {
@@ -289,21 +294,23 @@ class ResourceManager {
       type: 'worker',
       created: Date.now(),
       cleanup,
-      metadata: { scriptURL: scriptURL.toString() }
+      metadata: { scriptURL: scriptURL.toString() },
     });
 
     this.resourceMetrics.workers.active++;
 
     return {
       worker,
-      terminate: cleanup
+      terminate: cleanup,
     };
   }
 
   /**
    * 创建受管理的DOM观察器
    */
-  createManagedObserver<T extends MutationObserver | IntersectionObserver | ResizeObserver>(
+  createManagedObserver<
+    T extends MutationObserver | IntersectionObserver | ResizeObserver,
+  >(
     ObserverClass: new (...args: any[]) => T,
     callback: any,
     ...args: any[]
@@ -322,14 +329,14 @@ class ResourceManager {
       type: 'observer',
       created: Date.now(),
       cleanup,
-      metadata: { observerType: ObserverClass.name }
+      metadata: { observerType: ObserverClass.name },
     });
 
     this.resourceMetrics.dom.observers++;
 
     return {
       observer,
-      disconnect: cleanup
+      disconnect: cleanup,
     };
   }
 
@@ -337,7 +344,9 @@ class ResourceManager {
    * 等待请求队列空间
    */
   private async waitForRequestSlot(): Promise<void> {
-    while (this.networkRequestQueue.length >= this.config.maxConcurrentRequests) {
+    while (
+      this.networkRequestQueue.length >= this.config.maxConcurrentRequests
+    ) {
       // 等待至少一个请求完成
       try {
         await Promise.race(this.networkRequestQueue);
@@ -407,21 +416,27 @@ class ResourceManager {
     for (const [id, resource] of this.trackedResources) {
       // 清理过期的超时定时器和已完成的请求
       if (
-        (resource.type === 'timer' && resource.metadata?.type === 'timeout' && 
-         now - resource.created > resource.metadata?.delay + 1000) ||
+        (resource.type === 'timer' &&
+          resource.metadata?.type === 'timeout' &&
+          now - resource.created > resource.metadata?.delay + 1000) ||
         (resource.type === 'request' && now - resource.created > maxAge)
       ) {
         try {
           resource.cleanup();
           cleanedCount++;
         } catch (error) {
-          console.warn(`[ResourceManager] Failed to cleanup resource ${id}:`, error);
+          console.warn(
+            `[ResourceManager] Failed to cleanup resource ${id}:`,
+            error,
+          );
         }
       }
     }
 
     if (cleanedCount > 0) {
-      console.debug(`[ResourceManager] Cleaned up ${cleanedCount} expired resources`);
+      console.debug(
+        `[ResourceManager] Cleaned up ${cleanedCount} expired resources`,
+      );
     }
   }
 
@@ -430,7 +445,7 @@ class ResourceManager {
    */
   private suspendNonCriticalResources(): void {
     console.debug('[ResourceManager] Suspending non-critical resources');
-    
+
     // 暂停低优先级的请求
     // 注意：这里只是概念性实现，实际项目中需要更复杂的优先级管理
   }
@@ -447,7 +462,9 @@ class ResourceManager {
    * 清理所有资源
    */
   cleanupAllResources(): void {
-    console.info(`[ResourceManager] Cleaning up ${this.trackedResources.size} resources`);
+    console.info(
+      `[ResourceManager] Cleaning up ${this.trackedResources.size} resources`,
+    );
 
     const errors: Error[] = [];
 
@@ -456,7 +473,10 @@ class ResourceManager {
         resource.cleanup();
       } catch (error) {
         errors.push(error as Error);
-        console.error(`[ResourceManager] Failed to cleanup resource ${id}:`, error);
+        console.error(
+          `[ResourceManager] Failed to cleanup resource ${id}:`,
+          error,
+        );
       }
     }
 
@@ -469,11 +489,13 @@ class ResourceManager {
       eventListeners: { count: 0, types: {} },
       timers: { intervals: 0, timeouts: 0 },
       workers: { active: 0, terminated: 0 },
-      dom: { elements: 0, observers: 0 }
+      dom: { elements: 0, observers: 0 },
     };
 
     if (errors.length > 0) {
-      console.warn(`[ResourceManager] ${errors.length} resources failed to cleanup properly`);
+      console.warn(
+        `[ResourceManager] ${errors.length} resources failed to cleanup properly`,
+      );
     }
   }
 
@@ -489,7 +511,10 @@ class ResourceManager {
           resource.cleanup();
           cleanedCount++;
         } catch (error) {
-          console.error(`[ResourceManager] Failed to cleanup ${type} resource ${id}:`, error);
+          console.error(
+            `[ResourceManager] Failed to cleanup ${type} resource ${id}:`,
+            error,
+          );
         }
       }
     }
@@ -503,13 +528,13 @@ class ResourceManager {
   getResourceMetrics(): ResourceMetrics {
     return {
       networkRequests: { ...this.resourceMetrics.networkRequests },
-      eventListeners: { 
+      eventListeners: {
         count: this.resourceMetrics.eventListeners.count,
-        types: { ...this.resourceMetrics.eventListeners.types }
+        types: { ...this.resourceMetrics.eventListeners.types },
       },
       timers: { ...this.resourceMetrics.timers },
       workers: { ...this.resourceMetrics.workers },
-      dom: { ...this.resourceMetrics.dom }
+      dom: { ...this.resourceMetrics.dom },
     };
   }
 
@@ -556,7 +581,7 @@ class ResourceManager {
       summary,
       activeResources,
       recommendations,
-      issues
+      issues,
     };
   }
 

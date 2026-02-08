@@ -81,15 +81,18 @@ describe('performance-monitor/observers', () => {
       runWhenIdle: (cb: () => void) => cb(),
     };
 
-    expect(createPerformanceObservers({ ...baseArgs, isMonitoring: false })).toEqual({});
+    expect(
+      createPerformanceObservers({ ...baseArgs, isMonitoring: false }),
+    ).toEqual({});
 
     Object.defineProperty(window, 'PerformanceObserver', {
       value: undefined,
       configurable: true,
       writable: true,
     });
-    expect(createPerformanceObservers({ ...baseArgs, isMonitoring: true })).toEqual({});
-
+    expect(
+      createPerformanceObservers({ ...baseArgs, isMonitoring: true }),
+    ).toEqual({});
   });
 
   it('returns empty observers when window is unavailable', () => {
@@ -110,7 +113,7 @@ describe('performance-monitor/observers', () => {
         metrics,
         addToBuffer,
         runWhenIdle: (cb: () => void) => cb(),
-      })
+      }),
     ).toEqual({});
 
     Object.defineProperty(globalThis, 'window', {
@@ -137,9 +140,15 @@ describe('performance-monitor/observers', () => {
     expect(observers.measure).toBeDefined();
 
     const [layoutObserver, paintObserver, measureObserver] = instances;
-    expect(layoutObserver.observe).toHaveBeenCalledWith({ entryTypes: ['layout-shift'] });
-    expect(paintObserver.observe).toHaveBeenCalledWith({ entryTypes: ['paint'] });
-    expect(measureObserver.observe).toHaveBeenCalledWith({ entryTypes: ['measure'] });
+    expect(layoutObserver.observe).toHaveBeenCalledWith({
+      entryTypes: ['layout-shift'],
+    });
+    expect(paintObserver.observe).toHaveBeenCalledWith({
+      entryTypes: ['paint'],
+    });
+    expect(measureObserver.observe).toHaveBeenCalledWith({
+      entryTypes: ['measure'],
+    });
 
     layoutObserver.emit([
       {
@@ -173,7 +182,7 @@ describe('performance-monitor/observers', () => {
         type: 'paint',
         name: 'first-contentful-paint',
         startTime: 42,
-      })
+      }),
     );
 
     measureObserver.emit([
@@ -194,7 +203,7 @@ describe('performance-monitor/observers', () => {
         type: 'measure',
         name: 'chain-editor-open',
         duration: 18,
-      })
+      }),
     );
     expect(performanceLoggerMock.debug).toHaveBeenCalled();
   });
@@ -227,7 +236,7 @@ describe('performance-monitor/observers', () => {
       expect.objectContaining({
         type: 'layout-shift',
         value: 0.25,
-      })
+      }),
     );
     expect(performanceLoggerMock.warn).not.toHaveBeenCalled();
 
@@ -260,7 +269,9 @@ describe('performance-monitor/observers', () => {
     expect(paintWarn?.[0]).toEqual(expect.any(String));
     expect((paintWarn?.[1] as Error).message).toContain('unsupported: paint');
     expect(measureWarn?.[0]).toEqual(expect.any(String));
-    expect((measureWarn?.[1] as Error).message).toContain('unsupported: measure');
+    expect((measureWarn?.[1] as Error).message).toContain(
+      'unsupported: measure',
+    );
   });
 
   it('does not warn for small layout shift values in foreground mode', () => {

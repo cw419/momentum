@@ -6,14 +6,18 @@
 import { isDev } from './env';
 import { logger } from './logger';
 
-function parseLogArgs(args: unknown[]): { message: string; context?: Record<string, unknown>; error?: Error } {
+function parseLogArgs(args: unknown[]): {
+  message: string;
+  context?: Record<string, unknown>;
+  error?: Error;
+} {
   if (args.length === 0) return { message: '' };
 
   const [first, ...rest] = args;
   const message = typeof first === 'string' ? first : 'log';
   const payload = typeof first === 'string' ? rest : args;
-  const error = payload.find(a => a instanceof Error) as Error | undefined;
-  const contextArgs = payload.filter(a => !(a instanceof Error));
+  const error = payload.find((a): a is Error => a instanceof Error);
+  const contextArgs = payload.filter((a) => !(a instanceof Error));
   const context = contextArgs.length > 0 ? { args: contextArgs } : undefined;
 
   return { message, context, error };
@@ -130,7 +134,11 @@ export const performanceLogger = {
   /**
    * Lazy warning logging (development only) to avoid expensive argument evaluation.
    */
-  warnLazy: (message: string, getContext: () => Record<string, unknown>, error?: Error) => {
+  warnLazy: (
+    message: string,
+    getContext: () => Record<string, unknown>,
+    error?: Error,
+  ) => {
     if (isDev) {
       logger.warn('PERFORMANCE', message, getContext(), error);
     }
@@ -141,7 +149,11 @@ export const performanceLogger = {
    */
   trace: (label: string, ...args: unknown[]) => {
     if (isDev) {
-      logger.debug('PERFORMANCE', `Trace: ${label}`, args.length > 0 ? { args } : undefined);
+      logger.debug(
+        'PERFORMANCE',
+        `Trace: ${label}`,
+        args.length > 0 ? { args } : undefined,
+      );
     }
   },
 };

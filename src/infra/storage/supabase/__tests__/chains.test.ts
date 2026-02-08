@@ -26,7 +26,9 @@ vi.mock('../../../../utils/logger', () => ({
   },
 }));
 
-const createMockChainRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
+const createMockChainRow = (
+  overrides: Partial<Record<string, unknown>> = {},
+) => ({
   id: 'chain-1',
   name: 'Test Chain',
   parent_id: null,
@@ -60,32 +62,33 @@ const createMockChainRow = (overrides: Partial<Record<string, unknown>> = {}) =>
   ...overrides,
 });
 
-const createMockChain = (overrides: Partial<Chain> = {}): Chain => ({
-  id: 'chain-1',
-  name: 'Test Chain',
-  parentId: undefined,
-  type: 'unit',
-  sortOrder: 1,
-  trigger: 'Test trigger',
-  duration: 30,
-  description: 'Test description',
-  currentStreak: 5,
-  auxiliaryStreak: 0,
-  totalCompletions: 10,
-  totalFailures: 2,
-  auxiliaryFailures: 0,
-  exceptions: ['exception1'],
-  auxiliaryExceptions: [],
-  auxiliarySignal: 'Signal',
-  auxiliaryDuration: 15,
-  auxiliaryCompletionTrigger: 'Complete',
-  isDurationless: false,
-  timeLimitExceptions: [],
-  deletedAt: null,
-  createdAt: new Date('2024-01-01T00:00:00Z'),
-  lastCompletedAt: new Date('2024-01-10T00:00:00Z'),
-  ...overrides,
-} as Chain);
+const createMockChain = (overrides: Partial<Chain> = {}): Chain =>
+  ({
+    id: 'chain-1',
+    name: 'Test Chain',
+    parentId: undefined,
+    type: 'unit',
+    sortOrder: 1,
+    trigger: 'Test trigger',
+    duration: 30,
+    description: 'Test description',
+    currentStreak: 5,
+    auxiliaryStreak: 0,
+    totalCompletions: 10,
+    totalFailures: 2,
+    auxiliaryFailures: 0,
+    exceptions: ['exception1'],
+    auxiliaryExceptions: [],
+    auxiliarySignal: 'Signal',
+    auxiliaryDuration: 15,
+    auxiliaryCompletionTrigger: 'Complete',
+    isDurationless: false,
+    timeLimitExceptions: [],
+    deletedAt: null,
+    createdAt: new Date('2024-01-01T00:00:00Z'),
+    lastCompletedAt: new Date('2024-01-10T00:00:00Z'),
+    ...overrides,
+  }) as Chain;
 
 describe('chains.ts', () => {
   beforeEach(() => {
@@ -103,7 +106,10 @@ describe('chains.ts', () => {
 
     it('should return mapped chains on success', async () => {
       const mockData = [createMockChainRow()];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getChains(ctx);
@@ -129,7 +135,9 @@ describe('chains.ts', () => {
 
     it('should return empty array when data fetch throws error', async () => {
       const ctx = createMockContext();
-      ctx.retryOperation = vi.fn().mockRejectedValue(new Error('Network error'));
+      ctx.retryOperation = vi
+        .fn()
+        .mockRejectedValue(new Error('Network error'));
 
       const result = await getChains(ctx);
 
@@ -148,7 +156,10 @@ describe('chains.ts', () => {
           group_repeat_count: 3,
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getChains(ctx);
@@ -165,7 +176,10 @@ describe('chains.ts', () => {
       const mockData = [
         createMockChainRow({ id: 'chain-1', deleted_at: null }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getActiveChains(ctx);
@@ -188,7 +202,10 @@ describe('chains.ts', () => {
         return createMockQueryBuilder({
           data: [
             createMockChainRow({ id: 'active-1', deleted_at: null }),
-            createMockChainRow({ id: 'deleted-1', deleted_at: '2026-01-01T00:00:00Z' }),
+            createMockChainRow({
+              id: 'deleted-1',
+              deleted_at: '2026-01-01T00:00:00Z',
+            }),
           ],
           error: null,
         });
@@ -215,10 +232,19 @@ describe('chains.ts', () => {
   describe('getDeletedChains', () => {
     it('should return only deleted chains sorted by deletedAt descending', async () => {
       const mockData = [
-        createMockChainRow({ id: 'chain-3', deleted_at: '2024-01-20T00:00:00Z' }),
-        createMockChainRow({ id: 'chain-2', deleted_at: '2024-01-15T00:00:00Z' }),
+        createMockChainRow({
+          id: 'chain-3',
+          deleted_at: '2024-01-20T00:00:00Z',
+        }),
+        createMockChainRow({
+          id: 'chain-2',
+          deleted_at: '2024-01-15T00:00:00Z',
+        }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getDeletedChains(ctx);
@@ -250,9 +276,15 @@ describe('chains.ts', () => {
 
         return createMockQueryBuilder({
           data: [
-            createMockChainRow({ id: 'chain-old', deleted_at: '2024-01-01T00:00:00Z' }),
+            createMockChainRow({
+              id: 'chain-old',
+              deleted_at: '2024-01-01T00:00:00Z',
+            }),
             createMockChainRow({ id: 'chain-live', deleted_at: null }),
-            createMockChainRow({ id: 'chain-new', deleted_at: '2024-02-01T00:00:00Z' }),
+            createMockChainRow({
+              id: 'chain-new',
+              deleted_at: '2024-02-01T00:00:00Z',
+            }),
           ],
           error: null,
         });
@@ -260,7 +292,10 @@ describe('chains.ts', () => {
 
       const result = await getDeletedChains(ctx);
 
-      expect(result.map((chain) => chain.id)).toEqual(['chain-new', 'chain-old']);
+      expect(result.map((chain) => chain.id)).toEqual([
+        'chain-new',
+        'chain-old',
+      ]);
     });
   });
 
@@ -268,7 +303,9 @@ describe('chains.ts', () => {
     it('should throw error when user is not authenticated', async () => {
       const ctx = createMockContext({ user: null });
 
-      await expect(softDeleteChain(ctx, 'chain-1')).rejects.toThrow('User not authenticated');
+      await expect(softDeleteChain(ctx, 'chain-1')).rejects.toThrow(
+        'User not authenticated',
+      );
     });
 
     it('should soft delete chain and its children', async () => {
@@ -276,7 +313,10 @@ describe('chains.ts', () => {
         createMockChainRow({ id: 'parent', parent_id: null }),
         createMockChainRow({ id: 'child', parent_id: 'parent' }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       await softDeleteChain(ctx, 'parent');
@@ -317,15 +357,27 @@ describe('chains.ts', () => {
     it('should throw error when user is not authenticated', async () => {
       const ctx = createMockContext({ user: null });
 
-      await expect(restoreChain(ctx, 'chain-1')).rejects.toThrow('User not authenticated');
+      await expect(restoreChain(ctx, 'chain-1')).rejects.toThrow(
+        'User not authenticated',
+      );
     });
 
     it('should restore chain and its children', async () => {
       const mockData = [
-        createMockChainRow({ id: 'parent', deleted_at: '2024-01-15T00:00:00Z' }),
-        createMockChainRow({ id: 'child', parent_id: 'parent', deleted_at: '2024-01-15T00:00:00Z' }),
+        createMockChainRow({
+          id: 'parent',
+          deleted_at: '2024-01-15T00:00:00Z',
+        }),
+        createMockChainRow({
+          id: 'child',
+          parent_id: 'parent',
+          deleted_at: '2024-01-15T00:00:00Z',
+        }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       await restoreChain(ctx, 'parent');
@@ -352,7 +404,7 @@ describe('chains.ts', () => {
       ctx.retryOperation = vi.fn().mockImplementation((op) => op());
 
       await expect(restoreChain(ctx, 'chain-1')).rejects.toThrow(
-        'Database does not support soft delete'
+        'Database does not support soft delete',
       );
     });
   });
@@ -361,7 +413,9 @@ describe('chains.ts', () => {
     it('should throw error when user is not authenticated', async () => {
       const ctx = createMockContext({ user: null });
 
-      await expect(permanentlyDeleteChain(ctx, 'chain-1')).rejects.toThrow('User not authenticated');
+      await expect(permanentlyDeleteChain(ctx, 'chain-1')).rejects.toThrow(
+        'User not authenticated',
+      );
     });
 
     it('should permanently delete chain and its children', async () => {
@@ -369,7 +423,10 @@ describe('chains.ts', () => {
         createMockChainRow({ id: 'parent' }),
         createMockChainRow({ id: 'child', parent_id: 'parent' }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       await permanentlyDeleteChain(ctx, 'parent');
@@ -394,7 +451,7 @@ describe('chains.ts', () => {
       });
 
       await expect(permanentlyDeleteChain(ctx, 'chain-1')).rejects.toThrow(
-        'Permanent delete chain failed'
+        'Permanent delete chain failed',
       );
     });
   });
@@ -423,7 +480,7 @@ describe('chains.ts', () => {
         createMockQueryBuilder({
           data: null,
           error: createSupabaseError('42703', 'deleted_at does not exist'),
-        })
+        }),
       );
 
       const result = await cleanupExpiredDeletedChains(ctx, 30);
@@ -454,7 +511,9 @@ describe('chains.ts', () => {
     it('should throw error when user authentication fails', async () => {
       const ctx = createMockContext({ user: null, isAuthenticated: false });
 
-      await expect(saveChains(ctx, [])).rejects.toThrow('User authentication failed or timed out');
+      await expect(saveChains(ctx, [])).rejects.toThrow(
+        'User authentication failed or timed out',
+      );
     });
 
     it('should throw error on duplicate chain ids', async () => {
@@ -464,7 +523,9 @@ describe('chains.ts', () => {
       ];
       const ctx = createMockContext();
 
-      await expect(saveChains(ctx, chains)).rejects.toThrow('Duplicate chain id detected');
+      await expect(saveChains(ctx, chains)).rejects.toThrow(
+        'Duplicate chain id detected',
+      );
     });
 
     it('should save chains successfully', async () => {
@@ -477,7 +538,10 @@ describe('chains.ts', () => {
         if (callCount === 1) {
           return createMockQueryBuilder({ data: [], error: null });
         }
-        return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+        return createMockQueryBuilder({
+          data: [{ id: 'chain-1' }],
+          error: null,
+        });
       });
       ctx.retryWithAuth = vi.fn().mockImplementation((op) => op());
 
@@ -494,10 +558,16 @@ describe('chains.ts', () => {
       ctx.mockClient.from = vi.fn().mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
-          return createMockQueryBuilder({ data: [{ id: 'chain-1' }, { id: 'chain-2' }], error: null });
+          return createMockQueryBuilder({
+            data: [{ id: 'chain-1' }, { id: 'chain-2' }],
+            error: null,
+          });
         }
         if (callCount === 2) {
-          return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+          return createMockQueryBuilder({
+            data: [{ id: 'chain-1' }],
+            error: null,
+          });
         }
         return createMockQueryBuilder({ data: null, error: null });
       });
@@ -518,14 +588,20 @@ describe('chains.ts', () => {
         if (callCount === 1) {
           return createMockQueryBuilder({ data: [], error: null });
         }
-        return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+        return createMockQueryBuilder({
+          data: [{ id: 'chain-1' }],
+          error: null,
+        });
       });
 
       let retryCallCount = 0;
       ctx.retryWithAuth = vi.fn().mockImplementation(async (op) => {
         retryCallCount++;
         if (retryCallCount === 1) {
-          throw createSupabaseError('PGRST204', "column 'deleted_at' does not exist");
+          throw createSupabaseError(
+            'PGRST204',
+            "column 'deleted_at' does not exist",
+          );
         }
         return op();
       });
@@ -545,14 +621,20 @@ describe('chains.ts', () => {
         if (callCount === 1) {
           return createMockQueryBuilder({ data: [], error: null });
         }
-        return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+        return createMockQueryBuilder({
+          data: [{ id: 'chain-1' }],
+          error: null,
+        });
       });
 
       let retryCallCount = 0;
       ctx.retryWithAuth = vi.fn().mockImplementation(async (op) => {
         retryCallCount++;
         if (retryCallCount === 1) {
-          throw createSupabaseError('42703', "column 'group_expires_at' does not exist");
+          throw createSupabaseError(
+            '42703',
+            "column 'group_expires_at' does not exist",
+          );
         }
         return op();
       });
@@ -563,7 +645,10 @@ describe('chains.ts', () => {
     });
 
     it('should warn when some expected ids are missing from upsert result', async () => {
-      const chains = [createMockChain({ id: 'chain-1' }), createMockChain({ id: 'chain-2' })];
+      const chains = [
+        createMockChain({ id: 'chain-1' }),
+        createMockChain({ id: 'chain-2' }),
+      ];
       const ctx = createMockContext();
       (logger.warn as unknown as ReturnType<typeof vi.fn>).mockClear();
 
@@ -573,7 +658,10 @@ describe('chains.ts', () => {
         if (callCount === 1) {
           return createMockQueryBuilder({ data: [], error: null });
         }
-        return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+        return createMockQueryBuilder({
+          data: [{ id: 'chain-1' }],
+          error: null,
+        });
       });
       ctx.retryWithAuth = vi.fn().mockImplementation((op) => op());
 
@@ -584,7 +672,7 @@ describe('chains.ts', () => {
         'Some saved ids missing from result',
         expect.objectContaining({
           missingSavedIds: ['chain-2'],
-        })
+        }),
       );
     });
 
@@ -596,10 +684,16 @@ describe('chains.ts', () => {
       ctx.mockClient.from = vi.fn().mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
-          return createMockQueryBuilder({ data: [{ id: 'chain-1' }, { id: 'chain-2' }], error: null });
+          return createMockQueryBuilder({
+            data: [{ id: 'chain-1' }, { id: 'chain-2' }],
+            error: null,
+          });
         }
         if (callCount === 2) {
-          return createMockQueryBuilder({ data: [{ id: 'chain-1' }], error: null });
+          return createMockQueryBuilder({
+            data: [{ id: 'chain-1' }],
+            error: null,
+          });
         }
         return createMockQueryBuilder({
           data: null,
@@ -608,7 +702,9 @@ describe('chains.ts', () => {
       });
       ctx.retryWithAuth = vi.fn().mockImplementation((op) => op());
 
-      await expect(saveChains(ctx, chains)).rejects.toThrow('Failed to delete extra chains');
+      await expect(saveChains(ctx, chains)).rejects.toThrow(
+        'Failed to delete extra chains',
+      );
     });
   });
 });

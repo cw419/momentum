@@ -10,7 +10,7 @@ import {
   OverallUsageStats,
   PauseOptions,
   RuleUsageRecord,
-  SessionContext
+  SessionContext,
 } from '../../types';
 
 export type RuleUsageActionType = 'pause' | 'early_completion';
@@ -19,7 +19,7 @@ export function buildUsageRecordInput(
   rule: ExceptionRule,
   sessionContext: SessionContext,
   actionType: RuleUsageActionType,
-  pauseOptions?: PauseOptions
+  pauseOptions?: PauseOptions,
 ): Omit<RuleUsageRecord, 'id' | 'usedAt'> {
   return {
     ruleId: rule.id,
@@ -30,7 +30,7 @@ export function buildUsageRecordInput(
     taskRemainingTime: sessionContext.remainingTime,
     pauseDuration: pauseOptions?.duration,
     autoResume: pauseOptions?.autoResume,
-    ruleScope: rule.scope
+    ruleScope: rule.scope,
   };
 }
 
@@ -53,7 +53,7 @@ export function buildUsageExportData(
   overallStats: OverallUsageStats,
   activeRules: ExceptionRule[],
   usageRecords: RuleUsageRecord[],
-  exportedAt: Date = new Date()
+  exportedAt: Date = new Date(),
 ): UsageExportData {
   return {
     exportedAt: exportedAt.toISOString(),
@@ -64,34 +64,36 @@ export function buildUsageExportData(
       totalRules: activeRules.length,
       totalRecords: usageRecords.length,
       dateRange: {
-        earliest: usageRecords.length > 0
-          ? Math.min(...usageRecords.map(r => r.usedAt.getTime()))
-          : null,
-        latest: usageRecords.length > 0
-          ? Math.max(...usageRecords.map(r => r.usedAt.getTime()))
-          : null
-      }
-    }
+        earliest:
+          usageRecords.length > 0
+            ? Math.min(...usageRecords.map((r) => r.usedAt.getTime()))
+            : null,
+        latest:
+          usageRecords.length > 0
+            ? Math.max(...usageRecords.map((r) => r.usedAt.getTime()))
+            : null,
+      },
+    },
   };
 }
 
 export function formatUsageRecordsAsCsv(
   usageRecords: RuleUsageRecord[],
-  allRules: ExceptionRule[]
+  allRules: ExceptionRule[],
 ): string {
   const csvLines = [
     'Date,Rule Name,Action Type,Task Elapsed Time,Task Remaining Time,Chain ID',
-    ...usageRecords.map(record => {
-      const rule = allRules.find(r => r.id === record.ruleId);
+    ...usageRecords.map((record) => {
+      const rule = allRules.find((r) => r.id === record.ruleId);
       return [
         record.usedAt.toISOString(),
         rule?.name || 'Unknown',
         record.actionType,
         record.taskElapsedTime,
         record.taskRemainingTime || '',
-        record.chainId
+        record.chainId,
       ].join(',');
-    })
+    }),
   ];
 
   return csvLines.join('\n');
@@ -100,11 +102,13 @@ export function formatUsageRecordsAsCsv(
 export function countExpiredUsageRecords(
   usageRecords: RuleUsageRecord[],
   retentionDays: number,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): number {
   const cutoffDate = new Date(now);
   cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-  const validRecords = usageRecords.filter(record => record.usedAt > cutoffDate);
+  const validRecords = usageRecords.filter(
+    (record) => record.usedAt > cutoffDate,
+  );
   return usageRecords.length - validRecords.length;
 }

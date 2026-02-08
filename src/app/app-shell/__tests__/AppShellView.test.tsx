@@ -2,7 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppShellViewProps } from '../types';
 import { AppShellView } from '../AppShellView';
-import { createAppState, createGroupChain, createPetState, createUnitChain } from '../../../test/factories';
+import {
+  createAppState,
+  createGroupChain,
+  createPetState,
+  createUnitChain,
+} from '../../../test/factories';
 
 const queryOptimizerMock = vi.hoisted(() => ({
   memoizedBuildChainTree: vi.fn(() => []),
@@ -43,7 +48,9 @@ vi.mock('../../../components/GroupView', () => ({
 }));
 
 vi.mock('../../../components/TaskGroupEditor', () => ({
-  TaskGroupEditor: () => <div data-testid="taskgroup-editor">taskgroup-editor</div>,
+  TaskGroupEditor: () => (
+    <div data-testid="taskgroup-editor">taskgroup-editor</div>
+  ),
 }));
 
 vi.mock('../../../components/AuxiliaryJudgment', () => ({
@@ -56,7 +63,13 @@ vi.mock('../../../components/AuxiliaryJudgment', () => ({
 }));
 
 vi.mock('../../../components/BettingModal', () => ({
-  BettingModal: ({ chainName, taskDuration }: { chainName: string; taskDuration: number }) => (
+  BettingModal: ({
+    chainName,
+    taskDuration,
+  }: {
+    chainName: string;
+    taskDuration: number;
+  }) => (
     <div data-testid="betting-modal">
       {chainName}:{taskDuration}
     </div>
@@ -69,8 +82,14 @@ vi.mock('../../../components/pet/PetWidget', () => ({
   ),
 }));
 
-function createProps(overrides: Partial<AppShellViewProps> = {}): AppShellViewProps {
-  const chain = createUnitChain({ id: 'chain-1', name: 'Chain One', duration: 25 });
+function createProps(
+  overrides: Partial<AppShellViewProps> = {},
+): AppShellViewProps {
+  const chain = createUnitChain({
+    id: 'chain-1',
+    name: 'Chain One',
+    duration: 25,
+  });
   const state = createAppState({
     chains: [chain],
     activeSession: {
@@ -176,11 +195,13 @@ describe('AppShellView', () => {
           pendingChainId: 'chain-1',
           currentSessionId: 'session-1',
         })}
-      />
+      />,
     );
 
     expect(await screen.findByTestId('aux-judgment')).toBeInTheDocument();
-    expect(await screen.findByTestId('betting-modal')).toHaveTextContent('Chain One:25');
+    expect(await screen.findByTestId('betting-modal')).toHaveTextContent(
+      'Chain One:25',
+    );
 
     fireEvent.click(screen.getByText('cancel-aux'));
     expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(null);
@@ -205,14 +226,16 @@ describe('AppShellView', () => {
             currentView: 'taskgroup-editor',
           }),
         })}
-      />
+      />,
     );
     expect(await screen.findByTestId('taskgroup-editor')).toBeInTheDocument();
   });
 
   it('renders focus/detail/group/rsip views when required state is available', async () => {
     const chain = createUnitChain({ id: 'chain-1', parentId: undefined });
-    queryOptimizerMock.memoizedBuildChainTree.mockReturnValue([{ id: 'chain-1', type: 'group' }]);
+    queryOptimizerMock.memoizedBuildChainTree.mockReturnValue([
+      { id: 'chain-1', type: 'group' },
+    ]);
 
     const { rerender } = render(
       <AppShellView
@@ -229,7 +252,7 @@ describe('AppShellView', () => {
             },
           }),
         })}
-      />
+      />,
     );
     expect(await screen.findByTestId('focus-mode')).toBeInTheDocument();
 
@@ -242,7 +265,7 @@ describe('AppShellView', () => {
             viewingChainId: chain.id,
           }),
         })}
-      />
+      />,
     );
     expect(await screen.findByTestId('chain-detail')).toBeInTheDocument();
 
@@ -255,7 +278,7 @@ describe('AppShellView', () => {
             viewingChainId: chain.id,
           }),
         })}
-      />
+      />,
     );
     expect(await screen.findByTestId('group-view')).toBeInTheDocument();
 
@@ -267,7 +290,7 @@ describe('AppShellView', () => {
             currentView: 'rsip',
           }),
         })}
-      />
+      />,
     );
     expect(await screen.findByTestId('rsip-view')).toBeInTheDocument();
   });
@@ -282,7 +305,7 @@ describe('AppShellView', () => {
             activeSession: null,
           }),
         })}
-      />
+      />,
     );
     expect(container.querySelector('[data-testid="focus-mode"]')).toBeNull();
 
@@ -295,7 +318,7 @@ describe('AppShellView', () => {
             viewingChainId: 'missing',
           }),
         })}
-      />
+      />,
     );
     expect(container.querySelector('[data-testid="chain-detail"]')).toBeNull();
 
@@ -309,7 +332,7 @@ describe('AppShellView', () => {
             viewingChainId: 'chain-1',
           }),
         })}
-      />
+      />,
     );
     expect(container.querySelector('[data-testid="group-view"]')).toBeNull();
   });

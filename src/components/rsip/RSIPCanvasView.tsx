@@ -9,14 +9,24 @@ import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 
 export type ConfirmAction =
   | { kind: 'stopTimer'; nodeId: string }
-  | { kind: 'rollbackFailure'; nodeId: string; nodeTitle: string; descendants: number };
+  | {
+      kind: 'rollbackFailure';
+      nodeId: string;
+      nodeTitle: string;
+      descendants: number;
+    };
 
 interface RSIPCanvasViewProps {
   tree: RSIPTreeNode[];
   nodePositions: Record<string, NodePosition>;
   connectors: RSIPConnector[];
   containerHeight: number;
-  contentBounds: { minX: number; minY: number; width: number; height: number } | null;
+  contentBounds: {
+    minX: number;
+    minY: number;
+    width: number;
+    height: number;
+  } | null;
   filterType: string | null;
   confirmAction: ConfirmAction | null;
   now: number;
@@ -35,7 +45,11 @@ interface RSIPCanvasViewProps {
   onFilterTypeChange: (type: string | null) => void;
   onConfirmAction: () => void;
   onCancelConfirm: () => void;
-  onTransformed: (state: { scale: number; positionX: number; positionY: number }) => void;
+  onTransformed: (state: {
+    scale: number;
+    positionX: number;
+    positionY: number;
+  }) => void;
   onFitToContent: () => void;
   onTogglePinned: (nodeId: string) => void;
   onHoverStart: (nodeId: string) => void;
@@ -102,10 +116,11 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   if (isRollbackFailure && confirmAction) {
     confirmationTitle = tr('确认回溯', 'Confirm rollback');
 
-    const childNodesLabel = confirmAction.descendants === 1 ? 'child node' : 'child nodes';
+    const childNodesLabel =
+      confirmAction.descendants === 1 ? 'child node' : 'child nodes';
     confirmationMessage = tr(
       `判定失败：将删除「${confirmAction.nodeTitle}」及其 ${confirmAction.descendants} 个子节点。确认回溯？`,
-      `Marked as failed: this will delete "${confirmAction.nodeTitle}" and its ${confirmAction.descendants} ${childNodesLabel}. Roll back?`
+      `Marked as failed: this will delete "${confirmAction.nodeTitle}" and its ${confirmAction.descendants} ${childNodesLabel}. Roll back?`,
     );
     confirmationConfirmText = tr('回溯', 'Roll back');
     confirmationConfirmButtonClass = 'bg-red-500 hover:bg-red-600';

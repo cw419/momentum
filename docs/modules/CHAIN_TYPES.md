@@ -8,14 +8,14 @@
 
 ```typescript
 type ChainType =
-  | 'unit'          // 基础单元
-  | 'group'         // 任务群容器
-  | 'assault'       // 突击单元
-  | 'recon'         // 侦查单元
-  | 'command'       // 指挥单元
-  | 'special_ops'   // 特勤单元
-  | 'engineering'   // 工程单元
-  | 'quartermaster' // 炊事单元
+  | 'unit' // 基础单元
+  | 'group' // 任务群容器
+  | 'assault' // 突击单元
+  | 'recon' // 侦查单元
+  | 'command' // 指挥单元
+  | 'special_ops' // 特勤单元
+  | 'engineering' // 工程单元
+  | 'quartermaster'; // 炊事单元
 ```
 
 ---
@@ -30,11 +30,13 @@ type ChainType =
 最基础的链条类型，适用于一般性的专注任务。
 
 **使用场景**:
+
 - 日常工作任务
 - 学习阅读
 - 未分类的专注活动
 
 **特点**:
+
 - 无特殊行为
 - 默认推荐类型
 
@@ -48,23 +50,26 @@ type ChainType =
 任务群是一种特殊的容器类型，用于组织多个相关的链条。
 
 **使用场景**:
+
 - 项目管理（包含多个子任务）
 - 每日routine（包含多个步骤）
 - 主题分类（如"学习英语"下包含多个练习）
 
 **特点**:
+
 - 可包含子链条
 - 有时间限制（timeLimitHours）
 - 支持群组启动时间（groupStartedAt）
 - 子链条完成后自动推进
 
 **特有字段**:
+
 ```typescript
 interface GroupChain {
   type: 'group';
-  timeLimitHours: number;       // 群组总时限
-  groupStartedAt?: Date;        // 群组启动时间
-  childChainIds?: string[];     // 子链条ID列表
+  timeLimitHours: number; // 群组总时限
+  groupStartedAt?: Date; // 群组启动时间
+  childChainIds?: string[]; // 子链条ID列表
 }
 ```
 
@@ -78,6 +83,7 @@ interface GroupChain {
 用于需要高度集中注意力的学习或实验任务。
 
 **使用场景**:
+
 - 深度学习新知识
 - 攻克难题
 - 实验性项目
@@ -96,6 +102,7 @@ interface GroupChain {
 用于信息搜集和研究类任务。
 
 **使用场景**:
+
 - 市场调研
 - 资料搜集
 - 技术调研
@@ -114,6 +121,7 @@ interface GroupChain {
 用于计划制定和决策类任务。
 
 **使用场景**:
+
 - 周计划制定
 - 项目规划
 - 目标设定
@@ -132,6 +140,7 @@ interface GroupChain {
 用于处理杂务和临时任务。
 
 **使用场景**:
+
 - 处理邮件
 - 行政事务
 - 临时琐事
@@ -150,6 +159,7 @@ interface GroupChain {
 用于运动锻炼和身体活动。
 
 **使用场景**:
+
 - 健身锻炼
 - 跑步
 - 瑜伽
@@ -168,6 +178,7 @@ interface GroupChain {
 用于备餐和饮食相关任务。
 
 **使用场景**:
+
 - 做饭
 - 备餐
 - 烘焙
@@ -198,16 +209,16 @@ graph TD
 
 ## 类型与功能关系
 
-| 类型 | 支持子链条 | 支持时间限制 | 支持定时器 | 支持例外规则 |
-|------|:----------:|:------------:|:----------:|:------------:|
-| unit | ✗ | ✗ | ✓ | ✓ |
-| group | ✓ | ✓ | ✓ | ✓ |
-| assault | ✗ | ✗ | ✓ | ✓ |
-| recon | ✗ | ✗ | ✓ | ✓ |
-| command | ✗ | ✗ | ✓ | ✓ |
-| special_ops | ✗ | ✗ | ✓ | ✓ |
-| engineering | ✗ | ✗ | ✓ | ✓ |
-| quartermaster | ✗ | ✗ | ✓ | ✓ |
+| 类型          | 支持子链条 | 支持时间限制 | 支持定时器 | 支持例外规则 |
+| ------------- | :--------: | :----------: | :--------: | :----------: |
+| unit          |     ✗      |      ✗       |     ✓      |      ✓       |
+| group         |     ✓      |      ✓       |     ✓      |      ✓       |
+| assault       |     ✗      |      ✗       |     ✓      |      ✓       |
+| recon         |     ✗      |      ✗       |     ✓      |      ✓       |
+| command       |     ✗      |      ✗       |     ✓      |      ✓       |
+| special_ops   |     ✗      |      ✗       |     ✓      |      ✓       |
+| engineering   |     ✗      |      ✗       |     ✓      |      ✓       |
+| quartermaster |     ✗      |      ✗       |     ✓      |      ✓       |
 
 ---
 
@@ -220,15 +231,16 @@ interface TaskTimeStats {
   // 按类型统计
   byType: {
     [type in ChainType]?: {
-      totalTime: number;      // 总时间（秒）
+      totalTime: number; // 总时间（秒）
       completedCount: number; // 完成次数
-      averageTime: number;    // 平均时间
-    }
+      averageTime: number; // 平均时间
+    };
   };
 }
 ```
 
 这些统计数据可用于：
+
 1. 了解时间分配
 2. 优化任务规划
 3. 识别效率瓶颈

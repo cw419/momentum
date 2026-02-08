@@ -28,7 +28,10 @@ export function toOptionalStringFromTruthy(value: unknown): string | undefined {
   return String(value);
 }
 
-export function toBooleanWithDefault(value: unknown, fallback: boolean): boolean {
+export function toBooleanWithDefault(
+  value: unknown,
+  fallback: boolean,
+): boolean {
   if (value == null) return fallback;
   return Boolean(value);
 }
@@ -38,7 +41,11 @@ export function toOptionalTruthyBoolean(value: unknown): true | undefined {
   return true;
 }
 
-export function pickNonNullish(raw: Record<string, unknown>, primaryKey: string, secondaryKey: string): unknown {
+export function pickNonNullish(
+  raw: Record<string, unknown>,
+  primaryKey: string,
+  secondaryKey: string,
+): unknown {
   const primaryValue = raw[primaryKey];
   if (primaryValue != null) return primaryValue;
 
@@ -65,4 +72,3 @@ export function toOptionalString(value: unknown): string | undefined {
 export function parseTruthyDateOrNow(value: unknown): Date {
   return value ? new Date(String(value)) : new Date();
 }
-

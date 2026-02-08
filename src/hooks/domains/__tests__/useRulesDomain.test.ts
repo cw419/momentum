@@ -24,9 +24,14 @@ vi.mock('../../../utils/logger', () => ({
 
 function createStateContainer(initial: AppState) {
   let state = initial;
-  const setState = vi.fn((update: AppState | ((prev: AppState) => AppState)) => {
-    state = typeof update === 'function' ? (update as (prev: AppState) => AppState)(state) : update;
-  });
+  const setState = vi.fn(
+    (update: AppState | ((prev: AppState) => AppState)) => {
+      state =
+        typeof update === 'function'
+          ? (update as (prev: AppState) => AppState)(state)
+          : update;
+    },
+  );
   return {
     getState: () => state,
     setState,
@@ -43,8 +48,16 @@ describe('useRulesDomain', () => {
   });
 
   it('should handle auxiliary failure by resetting streak and incrementing failures', async () => {
-    const chain = createUnitChain({ id: 'chain-1', auxiliaryStreak: 4, auxiliaryFailures: 1 });
-    const unaffected = createUnitChain({ id: 'chain-9', auxiliaryStreak: 7, auxiliaryFailures: 3 });
+    const chain = createUnitChain({
+      id: 'chain-1',
+      auxiliaryStreak: 4,
+      auxiliaryFailures: 1,
+    });
+    const unaffected = createUnitChain({
+      id: 'chain-9',
+      auxiliaryStreak: 7,
+      auxiliaryFailures: 3,
+    });
     const stateRef = createStateContainer(
       createAppState({
         chains: [chain, unaffected],
@@ -63,7 +76,7 @@ describe('useRulesDomain', () => {
             auxiliarySignal: 'keep-me',
           },
         ],
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveScheduledSessions: vi.fn(async () => undefined),
@@ -78,7 +91,7 @@ describe('useRulesDomain', () => {
         storage,
         safelySaveChains,
         setShowAuxiliaryJudgment,
-      })
+      }),
     );
 
     act(() => {
@@ -87,9 +100,15 @@ describe('useRulesDomain', () => {
 
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
     const updatedChains = safelySaveChains.mock.calls[0]?.[0];
-    expect(updatedChains?.find((item) => item.id === chain.id)?.auxiliaryStreak).toBe(0);
-    expect(updatedChains?.find((item) => item.id === chain.id)?.auxiliaryFailures).toBe(2);
-    expect(updatedChains?.find((item) => item.id === unaffected.id)).toEqual(unaffected);
+    expect(
+      updatedChains?.find((item) => item.id === chain.id)?.auxiliaryStreak,
+    ).toBe(0);
+    expect(
+      updatedChains?.find((item) => item.id === chain.id)?.auxiliaryFailures,
+    ).toBe(2);
+    expect(updatedChains?.find((item) => item.id === unaffected.id)).toEqual(
+      unaffected,
+    );
     expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
       expect.objectContaining({ chainId: unaffected.id }),
     ]);
@@ -101,9 +120,14 @@ describe('useRulesDomain', () => {
   });
 
   it('should allow auxiliary exception rule and persist updates', () => {
-    const chain = { ...createUnitChain({ id: 'chain-2' }) } as ReturnType<typeof createUnitChain>;
+    const chain = { ...createUnitChain({ id: 'chain-2' }) } as ReturnType<
+      typeof createUnitChain
+    >;
     delete (chain as { auxiliaryExceptions?: string[] }).auxiliaryExceptions;
-    const untouched = createUnitChain({ id: 'chain-8', auxiliaryExceptions: ['untouched'] });
+    const untouched = createUnitChain({
+      id: 'chain-8',
+      auxiliaryExceptions: ['untouched'],
+    });
     const stateRef = createStateContainer(
       createAppState({
         chains: [chain, untouched],
@@ -122,7 +146,7 @@ describe('useRulesDomain', () => {
             auxiliarySignal: 'keep',
           },
         ],
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveScheduledSessions: vi.fn(async () => undefined),
@@ -137,17 +161,29 @@ describe('useRulesDomain', () => {
         storage,
         safelySaveChains,
         setShowAuxiliaryJudgment,
-      })
+      }),
     );
 
     act(() => {
-      result.current.handleAuxiliaryJudgmentAllow(chain.id, 'new-exception-rule');
+      result.current.handleAuxiliaryJudgmentAllow(
+        chain.id,
+        'new-exception-rule',
+      );
     });
 
     const updatedChains = safelySaveChains.mock.calls[0]?.[0];
-    expect(() => result.current.handleAuxiliaryJudgmentAllow(chain.id, 'new-exception-rule-2')).not.toThrow();
-    expect(updatedChains?.find((item) => item.id === chain.id)?.auxiliaryExceptions).toEqual(['new-exception-rule']);
-    expect(updatedChains?.find((item) => item.id === untouched.id)).toEqual(untouched);
+    expect(() =>
+      result.current.handleAuxiliaryJudgmentAllow(
+        chain.id,
+        'new-exception-rule-2',
+      ),
+    ).not.toThrow();
+    expect(
+      updatedChains?.find((item) => item.id === chain.id)?.auxiliaryExceptions,
+    ).toEqual(['new-exception-rule']);
+    expect(updatedChains?.find((item) => item.id === untouched.id)).toEqual(
+      untouched,
+    );
     expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
       expect.objectContaining({ chainId: untouched.id }),
     ]);
@@ -172,7 +208,7 @@ describe('useRulesDomain', () => {
         storage,
         safelySaveChains,
         setShowAuxiliaryJudgment: vi.fn(),
-      })
+      }),
     );
 
     act(() => {
@@ -202,7 +238,7 @@ describe('useRulesDomain', () => {
         storage,
         safelySaveChains,
         setShowAuxiliaryJudgment: vi.fn(),
-      })
+      }),
     );
 
     act(() => {
@@ -214,13 +250,13 @@ describe('useRulesDomain', () => {
       'RULES_DOMAIN',
       'Failed to persist chains after failure judgment',
       { chainId: chain.id },
-      expect.any(Error)
+      expect.any(Error),
     );
     expect(logger.error).toHaveBeenCalledWith(
       'RULES_DOMAIN',
       'Failed to persist scheduled sessions after failure judgment',
       { chainId: chain.id },
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
@@ -243,7 +279,7 @@ describe('useRulesDomain', () => {
         storage,
         safelySaveChains,
         setShowAuxiliaryJudgment: vi.fn(),
-      })
+      }),
     );
 
     act(() => {
@@ -255,13 +291,13 @@ describe('useRulesDomain', () => {
       'RULES_DOMAIN',
       'Failed to persist chains after allow judgment',
       { chainId: chain.id },
-      expect.any(Error)
+      expect.any(Error),
     );
     expect(logger.error).toHaveBeenCalledWith(
       'RULES_DOMAIN',
       'Failed to persist scheduled sessions after allow judgment',
       { chainId: chain.id },
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 });

@@ -26,4 +26,3 @@ export interface OperationState<T = unknown> {
   attempts: number;
   startTime: number;
 }
-

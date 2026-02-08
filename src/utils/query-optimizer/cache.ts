@@ -2,7 +2,11 @@ import type { CacheEntry } from './types';
 
 export type CacheMap = Map<string, CacheEntry<unknown>>;
 
-export function getCachedData<T>(cache: CacheMap, cacheTtlMs: number, key: string): T | null {
+export function getCachedData<T>(
+  cache: CacheMap,
+  cacheTtlMs: number,
+  key: string,
+): T | null {
   const entry = cache.get(key);
   if (!entry) return null;
 
@@ -18,7 +22,7 @@ export function setCachedData<T>(
   cache: CacheMap,
   key: string,
   data: T,
-  dependencies?: string[]
+  dependencies?: string[],
 ): void {
   cache.set(key, {
     data,
@@ -34,4 +38,3 @@ export function invalidateCache(cache: CacheMap, dependency: string): void {
     }
   }
 }
-

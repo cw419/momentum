@@ -127,7 +127,7 @@ describe('GroupViewContainer', () => {
         onUpdateTaskRepeatCount={onUpdateTaskRepeatCount}
         onReorderUnit={vi.fn()}
         onViewDetail={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByTestId('scheduled-found').textContent).toBe('yes');

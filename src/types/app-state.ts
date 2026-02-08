@@ -1,10 +1,21 @@
 import type { Chain } from './chain';
 import type { ExceptionRule, RuleUsageRecord } from './exception-rule';
 import type { RSIPExecutionRecord, RSIPMeta, RSIPNode } from './rsip';
-import type { ActiveSession, CompletionHistory, ScheduledSession } from './session';
+import type {
+  ActiveSession,
+  CompletionHistory,
+  ScheduledSession,
+} from './session';
 import type { TaskTimeStats } from './taskTimeStats';
 
-export type ViewState = 'dashboard' | 'editor' | 'focus' | 'detail' | 'group' | 'rsip' | 'taskgroup-editor';
+export type ViewState =
+  | 'dashboard'
+  | 'editor'
+  | 'focus'
+  | 'detail'
+  | 'group'
+  | 'rsip'
+  | 'taskgroup-editor';
 
 export interface AppState {
   chains: Chain[];
@@ -25,4 +36,3 @@ export interface AppState {
   exceptionRules: ExceptionRule[];
   ruleUsageRecords: RuleUsageRecord[];
 }
-

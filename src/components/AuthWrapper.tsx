@@ -30,7 +30,10 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     setLoading(true);
 
     const unsubscribeResult = storage.onAuthStateChange((event, session) => {
-      logger.debug('AUTH', 'Auth state changed', { event, hasUser: Boolean(session.user) });
+      logger.debug('AUTH', 'Auth state changed', {
+        event,
+        hasUser: Boolean(session.user),
+      });
       setUser(session.user);
       setLoading(false);
     });
@@ -69,23 +72,21 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="bg-background flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-xl">
-            <Loader2 className="text-white animate-spin" size={24} />
+          <div className="gradient-primary mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-3xl shadow-xl">
+            <Loader2 className="animate-spin text-white" size={24} />
           </div>
-          <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-2">
+          <h2 className="mb-2 font-chinese text-2xl font-bold text-gray-900 dark:text-slate-100">
             {tr('正在验证身份…', 'Authenticating…')}
           </h2>
-          <p className="text-gray-600 dark:text-slate-400 font-mono text-sm">
+          <p className="font-mono text-sm text-gray-600 dark:text-slate-400">
             {tr('验证中', 'AUTHENTICATING')}
           </p>
         </div>
       </div>
     );
   }
-
-
 
   if (!user) {
     if (view === 'intro') {

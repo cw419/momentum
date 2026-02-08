@@ -2,19 +2,19 @@ import type React from 'react';
 import type { Chain, ChainTreeNode, ScheduledSession } from '../../types';
 import type { IconName } from '../../utils/iconMap';
 
-export interface ProgressInfo {
+interface ProgressInfo {
   completed: number;
   total: number;
 }
 
-export interface TimeStatus {
+interface TimeStatus {
   isExpired: boolean;
   remainingTime: number;
   formattedTime: string;
   progress: number;
 }
 
-export interface ChainTypeConfig {
+interface ChainTypeConfig {
   icon: IconName;
   color: string;
   bgColor: string;
@@ -30,8 +30,16 @@ export interface GroupViewViewProps {
   onEditChain: (chainId: string) => void;
   onDeleteChain: (chainId: string) => void;
   onAddUnit: () => void;
-  onImportUnits: (unitIds: string[], groupId: string, mode?: 'move' | 'copy') => void;
-  onReorderUnit?: (groupId: string, unitId: string, direction: 'up' | 'down') => void;
+  onImportUnits: (
+    unitIds: string[],
+    groupId: string,
+    mode?: 'move' | 'copy',
+  ) => void;
+  onReorderUnit?: (
+    groupId: string,
+    unitId: string,
+    direction: 'up' | 'down',
+  ) => void;
   onViewDetail: (chainId: string) => void;
   getScheduledSession: (chainId: string) => ScheduledSession | undefined;
 
@@ -53,4 +61,3 @@ export interface GroupViewViewProps {
   handleOpenRepeatModal: (unit: ChainTreeNode) => void;
   handleUpdateRepeatCount: () => void;
 }
-

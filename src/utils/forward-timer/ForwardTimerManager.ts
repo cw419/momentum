@@ -24,7 +24,8 @@ export class ForwardTimerManager {
 
   start(): void {
     if (this.started) return;
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (typeof window === 'undefined' || typeof document === 'undefined')
+      return;
 
     this.started = true;
     this.setupVisibilityHandler();
@@ -298,4 +299,3 @@ export class ForwardTimerManager {
     this.timers.clear();
   }
 }
-

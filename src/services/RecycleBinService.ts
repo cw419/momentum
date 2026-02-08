@@ -30,11 +30,20 @@ export class RecycleBinService {
       const deletedChains = await storage.getDeletedChains();
       logger.debug('RECYCLE_BIN', '获取到已删除链条', {
         count: deletedChains.length,
-        chains: deletedChains.map(c => ({ id: c.id, name: c.name, deletedAt: c.deletedAt })),
+        chains: deletedChains.map((c) => ({
+          id: c.id,
+          name: c.name,
+          deletedAt: c.deletedAt,
+        })),
       });
       return deletedChains;
     } catch (error) {
-      logger.error('RECYCLE_BIN', '获取已删除链条失败', undefined, toError(error));
+      logger.error(
+        'RECYCLE_BIN',
+        '获取已删除链条失败',
+        undefined,
+        toError(error),
+      );
       throw new Error('获取已删除链条失败');
     }
   }
@@ -49,7 +58,12 @@ export class RecycleBinService {
       await storage.softDeleteChain(chainId);
       logger.info('RECYCLE_BIN', '链条已成功移动到回收箱', { chainId });
     } catch (error) {
-      logger.error('RECYCLE_BIN', '移动链条到回收箱失败', { chainId }, toError(error));
+      logger.error(
+        'RECYCLE_BIN',
+        '移动链条到回收箱失败',
+        { chainId },
+        toError(error),
+      );
       throw new Error(`移动链条到回收箱失败: ${getErrorMessage(error)}`);
     }
   }
@@ -79,7 +93,12 @@ export class RecycleBinService {
       await storage.permanentlyDeleteChain(chainId);
       logger.info('RECYCLE_BIN', '链条已永久删除', { chainId });
     } catch (error) {
-      logger.error('RECYCLE_BIN', '永久删除链条失败', { chainId }, toError(error));
+      logger.error(
+        'RECYCLE_BIN',
+        '永久删除链条失败',
+        { chainId },
+        toError(error),
+      );
       throw new Error(`永久删除链条失败: ${getErrorMessage(error)}`);
     }
   }
@@ -91,14 +110,21 @@ export class RecycleBinService {
     try {
       logger.info('RECYCLE_BIN', '批量恢复链条', { chainIds });
       const storage = this.getStorage();
-      
+
       for (const chainId of chainIds) {
         await storage.restoreChain(chainId);
       }
-      
-      logger.info('RECYCLE_BIN', '成功批量恢复链条', { count: chainIds.length });
+
+      logger.info('RECYCLE_BIN', '成功批量恢复链条', {
+        count: chainIds.length,
+      });
     } catch (error) {
-      logger.error('RECYCLE_BIN', '批量恢复链条失败', { chainIds }, toError(error));
+      logger.error(
+        'RECYCLE_BIN',
+        '批量恢复链条失败',
+        { chainIds },
+        toError(error),
+      );
       throw new Error(`批量恢复链条失败: ${getErrorMessage(error)}`);
     }
   }
@@ -110,14 +136,21 @@ export class RecycleBinService {
     try {
       logger.info('RECYCLE_BIN', '批量永久删除链条', { chainIds });
       const storage = this.getStorage();
-      
+
       for (const chainId of chainIds) {
         await storage.permanentlyDeleteChain(chainId);
       }
-      
-      logger.info('RECYCLE_BIN', '成功批量永久删除链条', { count: chainIds.length });
+
+      logger.info('RECYCLE_BIN', '成功批量永久删除链条', {
+        count: chainIds.length,
+      });
     } catch (error) {
-      logger.error('RECYCLE_BIN', '批量永久删除链条失败', { chainIds }, toError(error));
+      logger.error(
+        'RECYCLE_BIN',
+        '批量永久删除链条失败',
+        { chainIds },
+        toError(error),
+      );
       throw new Error(`批量永久删除链条失败: ${getErrorMessage(error)}`);
     }
   }
@@ -125,17 +158,25 @@ export class RecycleBinService {
   /**
    * 清理过期的已删除链条
    */
-  static async cleanupExpiredChains(olderThanDays: number = 30): Promise<number> {
+  static async cleanupExpiredChains(
+    olderThanDays: number = 30,
+  ): Promise<number> {
     try {
       logger.info('RECYCLE_BIN', '开始清理过期链条', { olderThanDays });
       const storage = this.getStorage();
-      
-      const deletedCount = await storage.cleanupExpiredDeletedChains(olderThanDays);
-      
+
+      const deletedCount =
+        await storage.cleanupExpiredDeletedChains(olderThanDays);
+
       logger.info('RECYCLE_BIN', '清理完成', { deletedCount });
       return deletedCount;
     } catch (error) {
-      logger.error('RECYCLE_BIN', '清理过期链条失败', { olderThanDays }, toError(error));
+      logger.error(
+        'RECYCLE_BIN',
+        '清理过期链条失败',
+        { olderThanDays },
+        toError(error),
+      );
       throw new Error(`清理过期链条失败: ${getErrorMessage(error)}`);
     }
   }
@@ -154,7 +195,7 @@ export class RecycleBinService {
       sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
       const retentionDays = 30;
-      const expiringSoon = deletedChains.filter(chain => {
+      const expiringSoon = deletedChains.filter((chain) => {
         const expiresAt = new Date(chain.deletedAt);
         expiresAt.setDate(expiresAt.getDate() + retentionDays);
         return expiresAt <= sevenDaysFromNow && expiresAt >= now;
@@ -162,10 +203,15 @@ export class RecycleBinService {
 
       return {
         totalDeleted: deletedChains.length,
-        expiringSoon
+        expiringSoon,
       };
     } catch (error) {
-      logger.warn('RECYCLE_BIN', '获取回收箱统计信息失败', undefined, toError(error));
+      logger.warn(
+        'RECYCLE_BIN',
+        '获取回收箱统计信息失败',
+        undefined,
+        toError(error),
+      );
       return { totalDeleted: 0, expiringSoon: 0 };
     }
   }

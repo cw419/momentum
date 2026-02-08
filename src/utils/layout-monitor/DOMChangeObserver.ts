@@ -15,12 +15,15 @@ export class DOMChangeObserver {
     this.observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach(node => {
+          mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
               this.onElementChange(node as HTMLElement);
             }
           });
-        } else if (mutation.type === 'attributes' && mutation.target.nodeType === Node.ELEMENT_NODE) {
+        } else if (
+          mutation.type === 'attributes' &&
+          mutation.target.nodeType === Node.ELEMENT_NODE
+        ) {
           this.onElementChange(mutation.target as HTMLElement);
         }
       }
@@ -30,7 +33,7 @@ export class DOMChangeObserver {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['style', 'class']
+      attributeFilter: ['style', 'class'],
     });
   }
 

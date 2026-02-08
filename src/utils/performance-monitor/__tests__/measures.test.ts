@@ -21,7 +21,9 @@ describe('performance-monitor/measures', () => {
 
   it('measureRender creates marks and handles measure failures', () => {
     const renderFn = vi.fn(() => ({ ok: true }));
-    const markSpy = vi.spyOn(performance, 'mark').mockImplementation(() => undefined);
+    const markSpy = vi
+      .spyOn(performance, 'mark')
+      .mockImplementation(() => undefined);
     const measureSpy = vi
       .spyOn(performance, 'measure')
       .mockImplementationOnce(() => undefined)
@@ -47,7 +49,9 @@ describe('performance-monitor/measures', () => {
   });
 
   it('measureInteraction updates max duration and warns/adds buffer on slow paths', () => {
-    const warnSpy = vi.spyOn(performanceLogger, 'warn').mockImplementation(() => undefined);
+    const warnSpy = vi
+      .spyOn(performanceLogger, 'warn')
+      .mockImplementation(() => undefined);
     const metrics: PerformanceMetrics = {
       renderTime: 0,
       interactionTime: 20,
@@ -97,7 +101,11 @@ describe('performance-monitor/measures', () => {
     expect(metrics.interactionTime).toBe(160);
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(addToBuffer).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'slow-interaction', name: 'expensive-sync', duration: 160 })
+      expect.objectContaining({
+        type: 'slow-interaction',
+        name: 'expensive-sync',
+        duration: 160,
+      }),
     );
   });
 

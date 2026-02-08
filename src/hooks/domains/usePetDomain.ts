@@ -19,9 +19,15 @@
  * @see src/utils/petLogic.ts - 计算逻辑
  */
 import { useCallback, useEffect, useState, useRef } from 'react';
-import type { PetState, PetMood, TaskCompletionReward, FeedResult } from '../../types/pet';
+import type {
+  PetState,
+  PetMood,
+  TaskCompletionReward,
+  FeedResult,
+} from '../../types/pet';
 import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
+import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 import {
   DEFAULT_PET_CONFIG,
   calculateDecay,
@@ -40,7 +46,10 @@ interface UsePetDomainReturn {
   // Actions
   createPet: (name: string) => Promise<PetState>;
   feedPet: () => Promise<FeedResult | null>;
-  onTaskCompleted: (duration: number, wasSuccessful: boolean) => Promise<TaskCompletionReward | null>;
+  onTaskCompleted: (
+    duration: number,
+    wasSuccessful: boolean,
+  ) => Promise<TaskCompletionReward | null>;
   updatePosition: (x: number, y: number) => Promise<void>;
   updateMinimizedPosition: (x: number, y: number) => Promise<void>;
   toggleVisibility: () => Promise<void>;
@@ -72,7 +81,12 @@ export function usePetDomain(): UsePetDomainReturn {
         await storage.savePetState(updatedPet);
       }
     } catch (error) {
-      logger.error('PET', 'Failed to load pet state', undefined, error as Error);
+      logger.error(
+        'PET',
+        'Failed to load pet state',
+        undefined,
+        normalizeUnknownError(error),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -88,21 +102,27 @@ export function usePetDomain(): UsePetDomainReturn {
       logger.info('PET', 'Created new pet', { name });
       return newPet;
     },
-    [storage]
+    [storage],
   );
 
   // Feed the pet (manual action)
   const feedPet = useCallback(async (): Promise<FeedResult | null> => {
     if (!pet) return null;
 
-    const hungerReduced = Math.min(pet.hunger, DEFAULT_PET_CONFIG.feedingHungerReduction);
+    const hungerReduced = Math.min(
+      pet.hunger,
+      DEFAULT_PET_CONFIG.feedingHungerReduction,
+    );
     const newHunger = pet.hunger - hungerReduced;
     const happinessGained = Math.min(5, hungerReduced / 6);
 
     const updatedPet: PetState = {
       ...pet,
-      hunger: Math.round((newHunger) * 10) / 10,
-      happiness: Math.min(100, Math.round((pet.happiness + happinessGained) * 10) / 10),
+      hunger: Math.round(newHunger * 10) / 10,
+      happiness: Math.min(
+        100,
+        Math.round((pet.happiness + happinessGained) * 10) / 10,
+      ),
       lastFedAt: new Date(),
       lastInteractedAt: new Date(),
     };
@@ -117,7 +137,10 @@ export function usePetDomain(): UsePetDomainReturn {
 
   // Handle task completion (called from SessionsDomain)
   const onTaskCompleted = useCallback(
-    async (taskDuration: number, wasSuccessful: boolean): Promise<TaskCompletionReward | null> => {
+    async (
+      taskDuration: number,
+      wasSuccessful: boolean,
+    ): Promise<TaskCompletionReward | null> => {
       if (!pet) return null;
 
       const reward = calculateTaskReward(pet, taskDuration, wasSuccessful);
@@ -130,8 +153,17 @@ export function usePetDomain(): UsePetDomainReturn {
 
       const updatedPet: PetState = {
         ...pet,
-        hunger: Math.max(0, Math.round((pet.hunger - reward.hungerReduced) * 10) / 10),
-        happiness: Math.min(100, Math.max(0, Math.round((pet.happiness + reward.happinessGained) * 10) / 10)),
+        hunger: Math.max(
+          0,
+          Math.round((pet.hunger - reward.hungerReduced) * 10) / 10,
+        ),
+        happiness: Math.min(
+          100,
+          Math.max(
+            0,
+            Math.round((pet.happiness + reward.happinessGained) * 10) / 10,
+          ),
+        ),
         experience: newExperience,
         level: reward.newLevel ?? pet.level,
         stage: reward.newStage ?? pet.stage,
@@ -150,7 +182,7 @@ export function usePetDomain(): UsePetDomainReturn {
 
       return reward;
     },
-    [pet, storage]
+    [pet, storage],
   );
 
   // Update pet position (for dragging when expanded)
@@ -162,7 +194,7 @@ export function usePetDomain(): UsePetDomainReturn {
       await storage.savePetState(updatedPet);
       setPet(updatedPet);
     },
-    [pet, storage]
+    [pet, storage],
   );
 
   // Update minimized position (for dragging when minimized)
@@ -174,7 +206,7 @@ export function usePetDomain(): UsePetDomainReturn {
       await storage.savePetState(updatedPet);
       setPet(updatedPet);
     },
-    [pet, storage]
+    [pet, storage],
   );
 
   // Toggle visibility
@@ -203,7 +235,7 @@ export function usePetDomain(): UsePetDomainReturn {
     const updatedPet = {
       ...pet,
       isMinimized: true,
-      minimizedPosition: { ...pet.position } // Minimize at current position
+      minimizedPosition: { ...pet.position }, // Minimize at current position
     };
     await storage.savePetState(updatedPet);
     setPet(updatedPet);
@@ -218,7 +250,7 @@ export function usePetDomain(): UsePetDomainReturn {
     const updatedPet = {
       ...pet,
       isMinimized: false,
-      position: { ...pet.minimizedPosition } // Expand at minimized position
+      position: { ...pet.minimizedPosition }, // Expand at minimized position
     };
     await storage.savePetState(updatedPet);
     setPet(updatedPet);
@@ -248,7 +280,9 @@ export function usePetDomain(): UsePetDomainReturn {
           logger.warn('PET', 'Pet is starving!', { hunger: updatedPet.hunger });
         }
         if (updatedPet.health < 30 && pet.health >= 30) {
-          logger.warn('PET', 'Pet health is low!', { health: updatedPet.health });
+          logger.warn('PET', 'Pet health is low!', {
+            health: updatedPet.health,
+          });
         }
       }
     };

@@ -16,7 +16,7 @@ const getChainTypeConfigMock = vi.hoisted(() =>
     bgColor: 'bg-slate-100',
     color: 'text-slate-700',
     name: 'Unit',
-  }))
+  })),
 );
 
 vi.mock('../../../storage/useStorage', () => ({
@@ -93,7 +93,9 @@ function createChain(overrides: Partial<ChainTreeNode> = {}): ChainTreeNode {
   };
 }
 
-function createScheduledSession(overrides: Partial<ScheduledSession> = {}): ScheduledSession {
+function createScheduledSession(
+  overrides: Partial<ScheduledSession> = {},
+): ScheduledSession {
   return {
     chainId: overrides.chainId ?? 'chain-1',
     scheduledAt: overrides.scheduledAt ?? new Date('2026-01-01T00:00:00.000Z'),
@@ -120,11 +122,16 @@ describe('useChainCard', () => {
 
   it('loads last completion time for durationless chains', async () => {
     const onDelete = vi.fn();
-    const durationlessChain = createChain({ isDurationless: true, duration: 0 });
+    const durationlessChain = createChain({
+      isDurationless: true,
+      duration: 0,
+    });
 
     getLastCompletionTimeMock.mockResolvedValue(123456);
 
-    const { result } = renderHook(() => useChainCard({ chain: durationlessChain, onDelete }));
+    const { result } = renderHook(() =>
+      useChainCard({ chain: durationlessChain, onDelete }),
+    );
 
     await waitFor(() => {
       expect(getLastCompletionTimeMock).toHaveBeenCalled();
@@ -134,11 +141,16 @@ describe('useChainCard', () => {
 
   it('logs warning when loading last completion time fails in development mode', async () => {
     const onDelete = vi.fn();
-    const durationlessChain = createChain({ isDurationless: true, duration: 0 });
+    const durationlessChain = createChain({
+      isDurationless: true,
+      duration: 0,
+    });
 
     getLastCompletionTimeMock.mockRejectedValue(new Error('load failed'));
 
-    const { result } = renderHook(() => useChainCard({ chain: durationlessChain, onDelete }));
+    const { result } = renderHook(() =>
+      useChainCard({ chain: durationlessChain, onDelete }),
+    );
 
     await waitFor(() => {
       expect(loggerWarnMock).toHaveBeenCalledTimes(1);
@@ -160,11 +172,14 @@ describe('useChainCard', () => {
         chain,
         scheduledSession,
         onDelete,
-      })
+      }),
     );
 
     expect(notifyScheduleWarningMock).toHaveBeenCalled();
-    expect(notifyScheduleWarningMock).toHaveBeenCalledWith('Demo chain', '1 min');
+    expect(notifyScheduleWarningMock).toHaveBeenCalledWith(
+      'Demo chain',
+      '1 min',
+    );
 
     act(() => {
       vi.advanceTimersByTime(3000);
@@ -186,7 +201,7 @@ describe('useChainCard', () => {
         chain,
         scheduledSession,
         onDelete,
-      })
+      }),
     );
 
     await waitFor(() => {
@@ -213,13 +228,14 @@ describe('useChainCard', () => {
           scheduledSession: session,
           onDelete,
         }),
-      { initialProps: { session: firstSession } }
+      { initialProps: { session: firstSession } },
     );
 
     await waitFor(() => {
       expect(notifyScheduleWarningMock).toHaveBeenCalled();
     });
-    const warningCallsBeforeSessionChange = notifyScheduleWarningMock.mock.calls.length;
+    const warningCallsBeforeSessionChange =
+      notifyScheduleWarningMock.mock.calls.length;
 
     const secondSession = createScheduledSession({
       scheduledAt: new Date('2026-01-01T01:00:00.000Z'),
@@ -229,7 +245,9 @@ describe('useChainCard', () => {
     rerender({ session: secondSession });
 
     await waitFor(() => {
-      expect(notifyScheduleWarningMock.mock.calls.length).toBeGreaterThan(warningCallsBeforeSessionChange);
+      expect(notifyScheduleWarningMock.mock.calls.length).toBeGreaterThan(
+        warningCallsBeforeSessionChange,
+      );
     });
   });
 
@@ -249,11 +267,14 @@ describe('useChainCard', () => {
       useChainCard({
         chain,
         onDelete,
-      })
+      }),
     );
 
     act(() => {
-      (result.current.deleteDialogRef as React.MutableRefObject<HTMLDivElement | null>).current = dialog;
+      (
+        result.current
+          .deleteDialogRef as React.MutableRefObject<HTMLDivElement | null>
+      ).current = dialog;
       result.current.handleToggleMenu();
     });
     expect(result.current.showMenu).toBe(true);

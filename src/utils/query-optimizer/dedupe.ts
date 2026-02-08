@@ -11,7 +11,8 @@ export async function deduplicateQuery<T>(args: {
   cacheTtlMs: number;
   dependencies: string[];
 }): Promise<T> {
-  const { key, queryFn, cache, pendingQueries, cacheTtlMs, dependencies } = args;
+  const { key, queryFn, cache, pendingQueries, cacheTtlMs, dependencies } =
+    args;
 
   if (pendingQueries.has(key)) {
     return pendingQueries.get(key) as Promise<T>;
@@ -35,4 +36,3 @@ export async function deduplicateQuery<T>(args: {
   setCachedData(cache, key, result, dependencies);
   return result;
 }
-

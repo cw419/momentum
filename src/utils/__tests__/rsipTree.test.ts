@@ -31,7 +31,10 @@ describe('rsipTree utilities', () => {
     const tree = buildRSIPTree(nodes);
 
     expect(tree.map((item) => item.id)).toEqual(['root', 'orphan']);
-    expect(tree[0]?.children.map((item) => item.id)).toEqual(['child-a', 'child-b']);
+    expect(tree[0]?.children.map((item) => item.id)).toEqual([
+      'child-a',
+      'child-b',
+    ]);
     expect(tree[0]?.children[0]?.depth).toBe(1);
   });
 
@@ -73,7 +76,11 @@ describe('rsipTree utilities', () => {
 
     const remaining = deleteNodeAndDescendants(nodes, 'child-1');
 
-    expect(remaining.map((item) => item.id)).toEqual(['root', 'child-2', 'other-root']);
+    expect(remaining.map((item) => item.id)).toEqual([
+      'root',
+      'child-2',
+      'other-root',
+    ]);
   });
 
   it('returns descendant ids and count for a node', () => {

@@ -60,7 +60,9 @@ export type GroupChain = Omit<ChainRecord, 'type'> & {
 
 export type Chain = UnitChain | GroupChain;
 
-export type DistributiveOmit<T, K extends PropertyKey> = T extends any ? Omit<T, K> : never;
+export type DistributiveOmit<T, K extends PropertyKey> = T extends any
+  ? Omit<T, K>
+  : never;
 
 type ChainSystemFields =
   | 'id'
@@ -94,4 +96,3 @@ export type ChainTreeNode = Chain & {
   children: ChainTreeNode[];
   depth: number;
 };
-

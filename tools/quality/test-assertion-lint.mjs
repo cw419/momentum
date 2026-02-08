@@ -13,7 +13,11 @@ async function listFiles(dir) {
   const files = [];
 
   for (const entry of entries) {
-    if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'coverage') {
+    if (
+      entry.name === 'node_modules' ||
+      entry.name === 'dist' ||
+      entry.name === 'coverage'
+    ) {
       continue;
     }
 
@@ -66,13 +70,21 @@ const outPath = path.join(reportsDir, 'test-assertion-lint.json');
 await fs.writeFile(outPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
 
 if (violations.length > 0) {
-  console.error(`[test-assertion-lint] found ${violations.length} weak assertion(s).`);
+  console.error(
+    `[test-assertion-lint] found ${violations.length} weak assertion(s).`,
+  );
   for (const v of violations) {
     console.error(`- ${v.file}:${v.line} uses ${v.matcher}`);
   }
-  console.error(`[test-assertion-lint] report: ${path.relative(repoRoot, outPath)}`);
+  console.error(
+    `[test-assertion-lint] report: ${path.relative(repoRoot, outPath)}`,
+  );
   process.exit(1);
 }
 
-console.log(`[test-assertion-lint] scanned ${files.length} files, no banned assertions found.`);
-console.log(`[test-assertion-lint] report: ${path.relative(repoRoot, outPath)}`);
+console.log(
+  `[test-assertion-lint] scanned ${files.length} files, no banned assertions found.`,
+);
+console.log(
+  `[test-assertion-lint] report: ${path.relative(repoRoot, outPath)}`,
+);

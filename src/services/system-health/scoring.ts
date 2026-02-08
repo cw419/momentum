@@ -5,4 +5,3 @@ export function statusFromScore(score: number): HealthStatus {
   if (score >= 60) return 'warning';
   return 'critical';
 }
-

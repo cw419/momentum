@@ -31,4 +31,3 @@ export interface ValidationIssue {
 }
 
 export type ActionType = 'pause' | 'early_completion';
-

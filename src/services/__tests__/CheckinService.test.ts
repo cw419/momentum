@@ -125,4 +125,3 @@ describe('CheckinService (storage wrapper)', () => {
     expect(result).toEqual(ok(9));
   });
 });
-

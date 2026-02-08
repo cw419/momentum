@@ -49,7 +49,10 @@ import {
   initializeDefaultStrategies,
 } from '../DefaultStrategies';
 
-function createError(type: ExceptionRuleError, message = 'test error'): ExceptionRuleException {
+function createError(
+  type: ExceptionRuleError,
+  message = 'test error',
+): ExceptionRuleException {
   return new ExceptionRuleException(type, message);
 }
 
@@ -65,9 +68,18 @@ describe('recovery/DefaultStrategies', () => {
         handler: async () => ({ success: false, message: 'fallback' }),
       },
     ]);
-    recoveryHandlersMock.handleValidationFix.mockResolvedValue({ success: true, message: 'validation fixed' });
-    recoveryHandlersMock.handleGenericRecovery.mockResolvedValue({ success: true, message: 'generic fixed' });
-    recoveryHandlersMock.handleSystemReset.mockResolvedValue({ success: true, message: 'reset done' });
+    recoveryHandlersMock.handleValidationFix.mockResolvedValue({
+      success: true,
+      message: 'validation fixed',
+    });
+    recoveryHandlersMock.handleGenericRecovery.mockResolvedValue({
+      success: true,
+      message: 'generic fixed',
+    });
+    recoveryHandlersMock.handleSystemReset.mockResolvedValue({
+      success: true,
+      message: 'reset done',
+    });
     extractRuleIdFromErrorMock.mockReturnValue(null);
   });
 
@@ -75,30 +87,49 @@ describe('recovery/DefaultStrategies', () => {
     const registry = new RecoveryStrategyRegistry();
     initializeDefaultStrategies(registry);
 
-    expect(registry.hasStrategies(ExceptionRuleError.RULE_NOT_FOUND)).toBe(true);
-    expect(registry.hasStrategies(ExceptionRuleError.DUPLICATE_RULE_NAME)).toBe(true);
-    expect(registry.hasStrategies(ExceptionRuleError.RULE_TYPE_MISMATCH)).toBe(true);
+    expect(registry.hasStrategies(ExceptionRuleError.RULE_NOT_FOUND)).toBe(
+      true,
+    );
+    expect(registry.hasStrategies(ExceptionRuleError.DUPLICATE_RULE_NAME)).toBe(
+      true,
+    );
+    expect(registry.hasStrategies(ExceptionRuleError.RULE_TYPE_MISMATCH)).toBe(
+      true,
+    );
     expect(registry.hasStrategies(ExceptionRuleError.STORAGE_ERROR)).toBe(true);
-    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(true);
+    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(
+      true,
+    );
   });
 
   it('handles missing rules by recovering temporary rules or returning user actions', async () => {
     const registry = new RecoveryStrategyRegistry();
     initializeDefaultStrategies(registry);
-    const strategy = registry.getStrategies(ExceptionRuleError.RULE_NOT_FOUND)[0];
+    const strategy = registry.getStrategies(
+      ExceptionRuleError.RULE_NOT_FOUND,
+    )[0];
 
     extractRuleIdFromErrorMock.mockReturnValueOnce('temp_123');
-    ruleStateManagerMock.waitForRuleCreation.mockResolvedValueOnce({ id: 'temp_123', name: 'Recovered' });
-    const recovered = await strategy!.handler(createError(ExceptionRuleError.RULE_NOT_FOUND), {} as never);
+    ruleStateManagerMock.waitForRuleCreation.mockResolvedValueOnce({
+      id: 'temp_123',
+      name: 'Recovered',
+    });
+    const recovered = await strategy!.handler(
+      createError(ExceptionRuleError.RULE_NOT_FOUND),
+      {} as never,
+    );
     expect(recovered).toEqual(
       expect.objectContaining({
         success: true,
         recoveredData: { id: 'temp_123', name: 'Recovered' },
-      })
+      }),
     );
 
     extractRuleIdFromErrorMock.mockReturnValueOnce('rule-regular');
-    const unresolved = await strategy!.handler(createError(ExceptionRuleError.RULE_NOT_FOUND), {} as never);
+    const unresolved = await strategy!.handler(
+      createError(ExceptionRuleError.RULE_NOT_FOUND),
+      {} as never,
+    );
     expect(unresolved.success).toBe(false);
     expect(unresolved.requiresUserAction).toBe(true);
     expect(unresolved.actions).toHaveLength(1);
@@ -110,36 +141,57 @@ describe('recovery/DefaultStrategies', () => {
 
     const duplicate = await registry
       .getStrategies(ExceptionRuleError.DUPLICATE_RULE_NAME)[0]!
-      .handler(createError(ExceptionRuleError.DUPLICATE_RULE_NAME), {} as never);
+      .handler(
+        createError(ExceptionRuleError.DUPLICATE_RULE_NAME),
+        {} as never,
+      );
     const mismatch = await registry
       .getStrategies(ExceptionRuleError.RULE_TYPE_MISMATCH)[0]!
       .handler(createError(ExceptionRuleError.RULE_TYPE_MISMATCH), {} as never);
 
     expect(duplicate.requiresUserAction).toBe(true);
     expect(mismatch.requiresUserAction).toBe(true);
-    expect(recoveryOptionsProviderMock.getRecoveryOptions).toHaveBeenCalledTimes(2);
+    expect(
+      recoveryOptionsProviderMock.getRecoveryOptions,
+    ).toHaveBeenCalledTimes(2);
   });
 
   it('auto-fixes storage errors when integrity issues are fixable and falls back otherwise', async () => {
     const registry = new RecoveryStrategyRegistry();
     initializeDefaultStrategies(registry);
-    const strategy = registry.getStrategies(ExceptionRuleError.STORAGE_ERROR)[0];
+    const strategy = registry.getStrategies(
+      ExceptionRuleError.STORAGE_ERROR,
+    )[0];
 
     dataIntegrityCheckerMock.checkRuleDataIntegrity.mockResolvedValueOnce({
-      issues: [{ id: '1', autoFixable: true }, { id: '2', autoFixable: false }],
+      issues: [
+        { id: '1', autoFixable: true },
+        { id: '2', autoFixable: false },
+      ],
     });
-    dataIntegrityCheckerMock.autoFixIssues.mockResolvedValueOnce([{ success: true }, { success: false }]);
+    dataIntegrityCheckerMock.autoFixIssues.mockResolvedValueOnce([
+      { success: true },
+      { success: false },
+    ]);
 
-    const autoFixed = await strategy!.handler(createError(ExceptionRuleError.STORAGE_ERROR), {} as never);
+    const autoFixed = await strategy!.handler(
+      createError(ExceptionRuleError.STORAGE_ERROR),
+      {} as never,
+    );
     expect(autoFixed).toEqual(
       expect.objectContaining({
         success: true,
         message: 'Auto-fixed 1 data issue(s)',
-      })
+      }),
     );
 
-    dataIntegrityCheckerMock.checkRuleDataIntegrity.mockRejectedValueOnce(new Error('integrity check failed'));
-    const fallback = await strategy!.handler(createError(ExceptionRuleError.STORAGE_ERROR), {} as never);
+    dataIntegrityCheckerMock.checkRuleDataIntegrity.mockRejectedValueOnce(
+      new Error('integrity check failed'),
+    );
+    const fallback = await strategy!.handler(
+      createError(ExceptionRuleError.STORAGE_ERROR),
+      {} as never,
+    );
     expect(fallback.success).toBe(false);
     expect(fallback.requiresUserAction).toBe(true);
   });
@@ -147,7 +199,9 @@ describe('recovery/DefaultStrategies', () => {
   it('creates validation strategy actions that delegate to recovery handlers', async () => {
     const registry = new RecoveryStrategyRegistry();
     initializeDefaultStrategies(registry);
-    const strategy = registry.getStrategies(ExceptionRuleError.VALIDATION_ERROR)[0];
+    const strategy = registry.getStrategies(
+      ExceptionRuleError.VALIDATION_ERROR,
+    )[0];
     const error = createError(ExceptionRuleError.VALIDATION_ERROR);
 
     const result = await strategy!.handler(error, {} as never);
@@ -155,8 +209,13 @@ describe('recovery/DefaultStrategies', () => {
     expect(result.actions).toHaveLength(1);
 
     const actionResult = await result.actions?.[0]?.handler();
-    expect(recoveryHandlersMock.handleValidationFix).toHaveBeenCalledWith(error);
-    expect(actionResult).toEqual({ success: true, message: 'validation fixed' });
+    expect(recoveryHandlersMock.handleValidationFix).toHaveBeenCalledWith(
+      error,
+    );
+    expect(actionResult).toEqual({
+      success: true,
+      message: 'validation fixed',
+    });
   });
 
   it('builds unknown and failure recovery results with executable actions', async () => {
@@ -180,4 +239,3 @@ describe('recovery/DefaultStrategies', () => {
     expect(recoveryHandlersMock.handleSystemReset).toHaveBeenCalledTimes(1);
   });
 });
-

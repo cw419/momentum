@@ -18,13 +18,33 @@ function removeToastById(toasts: ToastMessage[], id: string) {
 function getKindStyles(kind: ToastKind) {
   switch (kind) {
     case 'success':
-      return { icon: CheckCircle, bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-800 dark:text-green-200' };
+      return {
+        icon: CheckCircle,
+        bg: 'bg-green-50 dark:bg-green-900/20',
+        border: 'border-green-200 dark:border-green-800',
+        text: 'text-green-800 dark:text-green-200',
+      };
     case 'info':
-      return { icon: Info, bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-800 dark:text-blue-200' };
+      return {
+        icon: Info,
+        bg: 'bg-blue-50 dark:bg-blue-900/20',
+        border: 'border-blue-200 dark:border-blue-800',
+        text: 'text-blue-800 dark:text-blue-200',
+      };
     case 'warning':
-      return { icon: AlertTriangle, bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-900 dark:text-amber-200' };
+      return {
+        icon: AlertTriangle,
+        bg: 'bg-amber-50 dark:bg-amber-900/20',
+        border: 'border-amber-200 dark:border-amber-800',
+        text: 'text-amber-900 dark:text-amber-200',
+      };
     case 'error':
-      return { icon: XCircle, bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800', text: 'text-red-800 dark:text-red-200' };
+      return {
+        icon: XCircle,
+        bg: 'bg-red-50 dark:bg-red-900/20',
+        border: 'border-red-200 dark:border-red-800',
+        text: 'text-red-800 dark:text-red-200',
+      };
   }
 }
 
@@ -78,7 +98,7 @@ export function ToastViewport() {
 
   return (
     <div
-      className="fixed top-4 right-4 z-[100] space-y-3 w-[min(380px,calc(100vw-2rem))]"
+      className="fixed right-4 top-4 z-[100] w-[min(380px,calc(100vw-2rem))] space-y-3"
       aria-live="polite"
       aria-atomic="false"
     >
@@ -90,24 +110,26 @@ export function ToastViewport() {
         return (
           <div
             key={t.id}
-            className={`${styles.bg} ${styles.border} ${styles.text} border rounded-2xl shadow-lg backdrop-blur-sm p-4 flex items-start gap-3 ${isExiting ? 'animate-toast-exit' : 'animate-toast-enter'}`}
+            className={`${styles.bg} ${styles.border} ${styles.text} flex items-start gap-3 rounded-2xl border p-4 shadow-lg backdrop-blur-sm ${isExiting ? 'animate-toast-exit' : 'animate-toast-enter'}`}
             role={t.kind === 'error' ? 'alert' : 'status'}
           >
             <div className="mt-0.5">
-              <Icon className="w-5 h-5" />
+              <Icon className="h-5 w-5" />
             </div>
 
-            <div className="flex-1 min-w-0">
-              {t.title && <div className="font-medium mb-0.5">{t.title}</div>}
-              <div className="text-sm leading-snug break-words whitespace-pre-line">{t.message}</div>
+            <div className="min-w-0 flex-1">
+              {t.title && <div className="mb-0.5 font-medium">{t.title}</div>}
+              <div className="whitespace-pre-line break-words text-sm leading-snug">
+                {t.message}
+              </div>
             </div>
 
             <button
               onClick={() => dismiss(t.id)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors focus-ring rounded"
+              className="focus-ring rounded text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               aria-label="Close notification"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         );

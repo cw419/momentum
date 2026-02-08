@@ -47,30 +47,42 @@ export const ImportExportModalView: React.FC<ImportExportModalViewProps> = ({
   onClose,
   tr,
 }) => {
-  const isImportDisabled = !importData.trim() ||
+  const isImportDisabled =
+    !importData.trim() ||
     importStatus === 'success' ||
     importStatus === 'checking-auth' ||
     importStatus === 'creating-session' ||
     importStatus === 'importing';
 
-  const isImporting = importStatus === 'checking-auth' ||
+  const isImporting =
+    importStatus === 'checking-auth' ||
     importStatus === 'creating-session' ||
     importStatus === 'importing';
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="import-export-modal-title"
-        className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-slate-600 shadow-2xl animate-scale-in"
+        className="max-h-[90vh] w-full max-w-2xl animate-scale-in overflow-y-auto rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-slate-600 dark:bg-slate-800"
         style={{ overscrollBehavior: 'contain' }}
       >
         <ModalHeader onClose={onClose} tr={tr} />
-        <TabNavigation activeTab={activeTab} chainsCount={chainsCount} onTabChange={onTabChange} tr={tr} />
+        <TabNavigation
+          activeTab={activeTab}
+          chainsCount={chainsCount}
+          onTabChange={onTabChange}
+          tr={tr}
+        />
 
         {activeTab === 'export' && chainsCount > 0 && (
-          <ExportTab chainsCount={chainsCount} onExport={onExport} language={language} tr={tr} />
+          <ExportTab
+            chainsCount={chainsCount}
+            onExport={onExport}
+            language={language}
+            tr={tr}
+          />
         )}
 
         {(activeTab === 'import' || chainsCount === 0) && (
@@ -93,17 +105,23 @@ export const ImportExportModalView: React.FC<ImportExportModalViewProps> = ({
   );
 };
 
-const ModalHeader: React.FC<{ onClose: () => void; tr: (zh: string, en: string) => string }> = ({ onClose, tr }) => (
-  <div className="flex items-center justify-between mb-8">
+const ModalHeader: React.FC<{
+  onClose: () => void;
+  tr: (zh: string, en: string) => string;
+}> = ({ onClose, tr }) => (
+  <div className="mb-8 flex items-center justify-between">
     <div className="flex items-center space-x-3">
-      <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500/10">
         <FileText className="text-primary-500" size={24} />
       </div>
       <div>
-        <h2 id="import-export-modal-title" className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+        <h2
+          id="import-export-modal-title"
+          className="font-chinese text-2xl font-bold text-gray-900 dark:text-slate-100"
+        >
           {tr('数据管理', 'Data management')}
         </h2>
-        <p className="text-sm font-mono text-gray-500 tracking-wide">
+        <p className="font-mono text-sm tracking-wide text-gray-500">
           {tr('数据管理', 'DATA MANAGEMENT')}
         </p>
       </div>
@@ -112,7 +130,7 @@ const ModalHeader: React.FC<{ onClose: () => void; tr: (zh: string, en: string) 
       type="button"
       onClick={onClose}
       aria-label={tr('关闭', 'Close')}
-      className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700"
+      className="rounded-xl p-2 text-gray-400 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
     >
       <X size={20} />
     </button>
@@ -126,16 +144,21 @@ interface TabNavigationProps {
   tr: (zh: string, en: string) => string;
 }
 
-const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, chainsCount, onTabChange, tr }) => (
-  <div className="flex bg-gray-100 dark:bg-slate-700 rounded-2xl p-1 mb-8">
+const TabNavigation: React.FC<TabNavigationProps> = ({
+  activeTab,
+  chainsCount,
+  onTabChange,
+  tr,
+}) => (
+  <div className="mb-8 flex rounded-2xl bg-gray-100 p-1 dark:bg-slate-700">
     {chainsCount > 0 && (
       <button
         type="button"
         onClick={() => onTabChange('export')}
-        className={`flex-1 px-4 py-3 rounded-xl font-medium transition duration-300 flex items-center justify-center space-x-2 font-chinese ${
+        className={`flex flex-1 items-center justify-center space-x-2 rounded-xl px-4 py-3 font-chinese font-medium transition duration-300 ${
           activeTab === 'export'
-            ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-slate-100 shadow-sm'
-            : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
+            ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-600 dark:text-slate-100'
+            : 'text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200'
         }`}
       >
         <Download size={16} />
@@ -145,10 +168,10 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, chainsCount, o
     <button
       type="button"
       onClick={() => onTabChange('import')}
-      className={`${chainsCount > 0 ? 'flex-1' : 'w-full'} px-4 py-3 rounded-xl font-medium transition duration-300 flex items-center justify-center space-x-2 font-chinese ${
+      className={`${chainsCount > 0 ? 'flex-1' : 'w-full'} flex items-center justify-center space-x-2 rounded-xl px-4 py-3 font-chinese font-medium transition duration-300 ${
         activeTab === 'import'
-          ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-slate-100 shadow-sm'
-          : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
+          ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-600 dark:text-slate-100'
+          : 'text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200'
       }`}
     >
       <Upload size={16} />
@@ -187,9 +210,21 @@ const ImportTab: React.FC<ImportTabProps> = ({
   <div className="space-y-6">
     <ImportInfoBox tr={tr} />
     <FileUploadSection onFileUpload={onFileUpload} tr={tr} />
-    <ManualInputSection importData={importData} onImportDataChange={onImportDataChange} tr={tr} />
-    <ImportOptionsSection importOptions={importOptions} onImportOptionsChange={onImportOptionsChange} tr={tr} />
-    <ImportStatusDisplay importStatus={importStatus} importError={importError} tr={tr} />
+    <ManualInputSection
+      importData={importData}
+      onImportDataChange={onImportDataChange}
+      tr={tr}
+    />
+    <ImportOptionsSection
+      importOptions={importOptions}
+      onImportOptionsChange={onImportOptionsChange}
+      tr={tr}
+    />
+    <ImportStatusDisplay
+      importStatus={importStatus}
+      importError={importError}
+      tr={tr}
+    />
     <ImportButton
       importStatus={importStatus}
       isImportDisabled={isImportDisabled}

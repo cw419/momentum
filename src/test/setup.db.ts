@@ -4,11 +4,16 @@ import { createClient } from '@supabase/supabase-js';
 import { createTestDatabase, cleanupTestDatabase } from './utils/testDatabase';
 
 // Test database configuration
-const TEST_SUPABASE_URL = process.env.VITE_TEST_SUPABASE_URL || 'https://test.supabase.co';
-const TEST_SUPABASE_ANON_KEY = process.env.VITE_TEST_SUPABASE_ANON_KEY || 'test-key';
+const TEST_SUPABASE_URL =
+  process.env.VITE_TEST_SUPABASE_URL || 'https://test.supabase.co';
+const TEST_SUPABASE_ANON_KEY =
+  process.env.VITE_TEST_SUPABASE_ANON_KEY || 'test-key';
 
 // Create test Supabase client
-const testSupabaseClient = createClient(TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY);
+const testSupabaseClient = createClient(
+  TEST_SUPABASE_URL,
+  TEST_SUPABASE_ANON_KEY,
+);
 
 // Test user configuration
 const TEST_USER_ID = 'test-user-123';
@@ -21,7 +26,7 @@ const dbTestUtils = {
     return {
       id: TEST_USER_ID,
       email: TEST_USER_EMAIL,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
   },
 
@@ -51,7 +56,7 @@ const dbTestUtils = {
       created_at: new Date().toISOString(),
       last_completed_at: null,
       user_id: TEST_USER_ID,
-      ...overrides
+      ...overrides,
     };
     return defaultChain;
   },
@@ -66,7 +71,7 @@ const dbTestUtils = {
       paused_at: null,
       total_paused_time: 0,
       user_id: TEST_USER_ID,
-      ...overrides
+      ...overrides,
     };
   },
 
@@ -79,9 +84,9 @@ const dbTestUtils = {
       was_successful: true,
       reason_for_failure: null,
       user_id: TEST_USER_ID,
-      ...overrides
+      ...overrides,
     };
-  }
+  },
 };
 
 // Setup database for tests
@@ -108,9 +113,9 @@ vi.mock('../lib/supabase', async () => {
     supabase: testSupabaseClient,
     getCurrentUser: vi.fn().mockResolvedValue({
       id: TEST_USER_ID,
-      email: TEST_USER_EMAIL
+      email: TEST_USER_EMAIL,
     }),
-    isSupabaseConfigured: true
+    isSupabaseConfigured: true,
   };
 });
 

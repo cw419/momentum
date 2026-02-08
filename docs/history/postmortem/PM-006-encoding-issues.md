@@ -13,11 +13,13 @@
 ## 2. 影响范围
 
 ### 用户可见症状
+
 - 部分中文文案显示为乱码（如 `æ\x9c\x80å\x90\x8e`）
 - 宠物功能关闭提示不可读
 - 用户可能误以为是浏览器或系统问题
 
 ### 影响面
+
 - 中文用户
 - 涉及特定文案的功能入口
 
@@ -41,7 +43,7 @@ E6 9C 80 E5 90 8E
 ```typescript
 // 某处的 i18n 定义文件
 export const petMessages = {
-  closePrompt: tr('æ\x9c\x80å\x90\x8e...', 'Last...'),  // ❌ 乱码
+  closePrompt: tr('æ\x9c\x80å\x90\x8e...', 'Last...'), // ❌ 乱码
 };
 ```
 
@@ -78,7 +80,7 @@ function isMojibake(text: string): boolean {
   // 中文文案应该包含汉字
   // 如果不包含汉字，可能是 mojibake
   const hasChineseChar = /[\u4e00-\u9fff]/.test(text);
-  const hasSuspiciousPattern = /[æåã]/.test(text);  // Windows-1252 典型特征
+  const hasSuspiciousPattern = /[æåã]/.test(text); // Windows-1252 典型特征
 
   return !hasChineseChar && hasSuspiciousPattern;
 }
@@ -86,9 +88,7 @@ function isMojibake(text: string): boolean {
 function tryFixMojibake(text: string): string | null {
   try {
     // 尝试 Windows-1252 → UTF-8 转换
-    const bytes = new Uint8Array(
-      [...text].map(c => c.charCodeAt(0))
-    );
+    const bytes = new Uint8Array([...text].map((c) => c.charCodeAt(0)));
     const decoded = new TextDecoder('utf-8').decode(bytes);
 
     // 验证转换结果包含汉字
@@ -160,13 +160,14 @@ done
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
+| Commit    | 描述                              |
+| --------- | --------------------------------- |
 | `9fae93f` | 修复：i18n tr() 自动纠错 mojibake |
 
 ## 7. 经验教训
 
 > **核心教训**: 字符编码问题往往隐藏很深，因为：
+>
 > 1. 回退机制掩盖了问题
 > 2. 部分内容正常，让问题看起来是"个案"
 > 3. 开发者环境可能与问题环境不同
@@ -191,5 +192,5 @@ done
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

@@ -20,5 +20,6 @@
   "MD024": false, // duplicate headings
   "MD026": false, // trailing punctuation in heading
   "MD045": false, // images should have alt text
-  "MD056": false  // table column count
+  "MD056": false, // table column count
+  "MD049": false, // emphasis style consistency (prettier controls markdown emphasis formatting)
 }

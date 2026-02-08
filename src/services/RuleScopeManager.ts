@@ -13,30 +13,38 @@ export class RuleScopeManager {
   /**
    * 获取指定链的可用规则（链专属 + 全局）
    */
-  async getAvailableRules(chainId: string, actionType: ExceptionRuleType): Promise<ExceptionRule[]> {
+  async getAvailableRules(
+    chainId: string,
+    actionType: ExceptionRuleType,
+  ): Promise<ExceptionRule[]> {
     try {
       // 获取所有规则
       const allRules = await exceptionRuleManager.getAllRules();
-      
+
       // 筛选出可用的规则：匹配动作类型 + (全局规则 + 该链的专属规则)
-      const availableRules = allRules.filter(rule => 
-        rule.type === actionType && (
-          rule.scope === 'global' || 
-          (rule.scope === 'chain' && rule.chainId === chainId)
-        )
+      const availableRules = allRules.filter(
+        (rule) =>
+          rule.type === actionType &&
+          (rule.scope === 'global' ||
+            (rule.scope === 'chain' && rule.chainId === chainId)),
       );
-      
+
       // 按优先级排序：链专属规则优先，然后是全局规则
       return availableRules.sort((a, b) => {
         if (a.scope === 'chain' && b.scope === 'global') return -1;
         if (a.scope === 'global' && b.scope === 'chain') return 1;
-        
+
         // 同类型规则按使用频率排序
         return b.usageCount - a.usageCount;
       });
     } catch (error) {
       const err = toError(error);
-      logger.error('RULE_SCOPE', '获取可用规则失败', { chainId, actionType }, err);
+      logger.error(
+        'RULE_SCOPE',
+        '获取可用规则失败',
+        { chainId, actionType },
+        err,
+      );
       return [];
     }
   }
@@ -44,20 +52,37 @@ export class RuleScopeManager {
   /**
    * 创建链专属规则
    */
-  async createChainRule(chainId: string, name: string, type: ExceptionRuleType, description?: string): Promise<ExceptionRule> {
+  async createChainRule(
+    chainId: string,
+    name: string,
+    type: ExceptionRuleType,
+    description?: string,
+  ): Promise<ExceptionRule> {
     try {
-      const result = await exceptionRuleManager.createRule(name, type, description);
-      
+      const result = await exceptionRuleManager.createRule(
+        name,
+        type,
+        description,
+      );
+
       // 更新规则为链专属（使用存储层直接更新）
-      const updatedRule = await exceptionRuleStorage.updateRule(result.rule.id, {
-        chainId,
-        scope: 'chain'
-      });
-      
+      const updatedRule = await exceptionRuleStorage.updateRule(
+        result.rule.id,
+        {
+          chainId,
+          scope: 'chain',
+        },
+      );
+
       return updatedRule;
     } catch (error) {
       const err = toError(error);
-      logger.error('RULE_SCOPE', '创建链专属规则失败', { chainId, name, type }, err);
+      logger.error(
+        'RULE_SCOPE',
+        '创建链专属规则失败',
+        { chainId, name, type },
+        err,
+      );
       throw error;
     }
   }
@@ -65,10 +90,18 @@ export class RuleScopeManager {
   /**
    * 创建全局规则
    */
-  async createGlobalRule(name: string, type: ExceptionRuleType, description?: string): Promise<ExceptionRule> {
+  async createGlobalRule(
+    name: string,
+    type: ExceptionRuleType,
+    description?: string,
+  ): Promise<ExceptionRule> {
     try {
-      const result = await exceptionRuleManager.createRule(name, type, description);
-      
+      const result = await exceptionRuleManager.createRule(
+        name,
+        type,
+        description,
+      );
+
       // 规则默认就是全局的，直接返回
       return result.rule;
     } catch (error) {
@@ -81,22 +114,31 @@ export class RuleScopeManager {
   /**
    * 规则作用域转换
    */
-  async convertRuleScope(ruleId: string, newScope: 'chain' | 'global', chainId?: string): Promise<void> {
+  async convertRuleScope(
+    ruleId: string,
+    newScope: 'chain' | 'global',
+    chainId?: string,
+  ): Promise<void> {
     try {
       const updates: Partial<ExceptionRule> = {
-        scope: newScope
+        scope: newScope,
       };
-      
+
       if (newScope === 'chain' && chainId) {
         updates.chainId = chainId;
       } else if (newScope === 'global') {
         updates.chainId = undefined;
       }
-      
+
       await exceptionRuleStorage.updateRule(ruleId, updates);
     } catch (error) {
       const err = toError(error);
-      logger.error('RULE_SCOPE', '转换规则作用域失败', { ruleId, newScope, chainId }, err);
+      logger.error(
+        'RULE_SCOPE',
+        '转换规则作用域失败',
+        { ruleId, newScope, chainId },
+        err,
+      );
       throw error;
     }
   }
@@ -107,7 +149,9 @@ export class RuleScopeManager {
   async getChainRuleCount(chainId: string): Promise<number> {
     try {
       const allRules = await exceptionRuleManager.getAllRules();
-      return allRules.filter(rule => rule.scope === 'chain' && rule.chainId === chainId).length;
+      return allRules.filter(
+        (rule) => rule.scope === 'chain' && rule.chainId === chainId,
+      ).length;
     } catch (error) {
       const err = toError(error);
       logger.error('RULE_SCOPE', '获取链规则数量失败', { chainId }, err);
@@ -121,7 +165,7 @@ export class RuleScopeManager {
   async getGlobalRuleCount(): Promise<number> {
     try {
       const allRules = await exceptionRuleManager.getAllRules();
-      return allRules.filter(rule => rule.scope === 'global').length;
+      return allRules.filter((rule) => rule.scope === 'global').length;
     } catch (error) {
       const err = toError(error);
       logger.error('RULE_SCOPE', '获取全局规则数量失败', undefined, err);
@@ -132,29 +176,40 @@ export class RuleScopeManager {
   /**
    * 检查规则名称在指定作用域内是否重复
    */
-  async checkRuleNameDuplication(name: string, scope: 'chain' | 'global', chainId?: string): Promise<boolean> {
+  async checkRuleNameDuplication(
+    name: string,
+    scope: 'chain' | 'global',
+    chainId?: string,
+  ): Promise<boolean> {
     try {
       const allRules = await exceptionRuleManager.getAllRules();
-      
+
       if (scope === 'global') {
         // 检查全局规则中是否有重复
-        return allRules.some(rule => 
-          rule.scope === 'global' && 
-          rule.name.toLowerCase() === name.toLowerCase()
+        return allRules.some(
+          (rule) =>
+            rule.scope === 'global' &&
+            rule.name.toLowerCase() === name.toLowerCase(),
         );
       } else if (scope === 'chain' && chainId) {
         // 检查指定链的规则中是否有重复
-        return allRules.some(rule => 
-          rule.scope === 'chain' && 
-          rule.chainId === chainId && 
-          rule.name.toLowerCase() === name.toLowerCase()
+        return allRules.some(
+          (rule) =>
+            rule.scope === 'chain' &&
+            rule.chainId === chainId &&
+            rule.name.toLowerCase() === name.toLowerCase(),
         );
       }
-      
+
       return false;
     } catch (error) {
       const err = toError(error);
-      logger.error('RULE_SCOPE', '检查规则名称重复失败', { name, chainId }, err);
+      logger.error(
+        'RULE_SCOPE',
+        '检查规则名称重复失败',
+        { name, chainId },
+        err,
+      );
       return false;
     }
   }
@@ -162,16 +217,19 @@ export class RuleScopeManager {
   /**
    * 获取规则的作用域信息
    */
-  getRuleScopeInfo(rule: ExceptionRule): { scope: string; description: string } {
+  getRuleScopeInfo(rule: ExceptionRule): {
+    scope: string;
+    description: string;
+  } {
     if (rule.scope === 'global') {
       return {
         scope: '全局',
-        description: '可在所有任务中使用'
+        description: '可在所有任务中使用',
       };
     } else {
       return {
         scope: '链专属',
-        description: '仅在当前任务中使用'
+        description: '仅在当前任务中使用',
       };
     }
   }

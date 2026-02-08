@@ -50,5 +50,5 @@ export default tseslint.config(
       'testing-library/prefer-find-by': 'warn',
       'testing-library/prefer-screen-queries': 'warn',
     },
-  }
+  },
 );

@@ -43,13 +43,16 @@ describe('ExceptionRuleMigrationService', () => {
 
     test('已经迁移过的数据应该返回false', async () => {
       // Set migration info
-      localStorage.setItem('momentum_exception_rules_migration', JSON.stringify({
-        version: '1.0.0',
-        migratedAt: new Date().toISOString(),
-        totalRules: 5,
-        skippedRules: 0,
-        errors: 0
-      }));
+      localStorage.setItem(
+        'momentum_exception_rules_migration',
+        JSON.stringify({
+          version: '1.0.0',
+          migratedAt: new Date().toISOString(),
+          totalRules: 5,
+          skippedRules: 0,
+          errors: 0,
+        }),
+      );
 
       const needsMigration = await migrationService.needsMigration();
       expect(needsMigration).toBe(false);
@@ -60,13 +63,13 @@ describe('ExceptionRuleMigrationService', () => {
         {
           id: 'chain1',
           name: '测试任务1',
-          exceptions: ['上厕所', '喝水']
+          exceptions: ['上厕所', '喝水'],
         },
         {
           id: 'chain2',
           name: '测试任务2',
-          exceptions: ['休息']
-        }
+          exceptions: ['休息'],
+        },
       ];
       mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
@@ -81,13 +84,13 @@ describe('ExceptionRuleMigrationService', () => {
         {
           id: 'chain1',
           name: '任务1',
-          exceptions: ['上厕所', '喝水', '上厕所'] // 包含重复
+          exceptions: ['上厕所', '喝水', '上厕所'], // 包含重复
         },
         {
           id: 'chain2',
           name: '任务2',
-          exceptions: ['上厕所', '休息'] // 上厕所重复
-        }
+          exceptions: ['上厕所', '休息'], // 上厕所重复
+        },
       ];
       mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
@@ -106,14 +109,16 @@ describe('ExceptionRuleMigrationService', () => {
         {
           id: 'chain1',
           name: '任务1',
-          exceptions: ['上厕所', '喝水', '接电话', '查看消息']
-        }
+          exceptions: ['上厕所', '喝水', '接电话', '查看消息'],
+        },
       ];
       mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       const suggestions = await migrationService.getMigrationSuggestions();
 
-      expect(suggestions.recommendations.some(r => r.includes('常见模式'))).toBe(true);
+      expect(
+        suggestions.recommendations.some((r) => r.includes('常见模式')),
+      ).toBe(true);
     });
 
     test('规则数量过多时应该给出建议', async () => {
@@ -121,14 +126,16 @@ describe('ExceptionRuleMigrationService', () => {
         {
           id: 'chain1',
           name: '任务1',
-          exceptions: Array.from({ length: 25 }, (_, i) => `规则${i}`)
-        }
+          exceptions: Array.from({ length: 25 }, (_, i) => `规则${i}`),
+        },
       ];
       mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       const suggestions = await migrationService.getMigrationSuggestions();
 
-      expect(suggestions.recommendations.some(r => r.includes('规则数量较多'))).toBe(true);
+      expect(
+        suggestions.recommendations.some((r) => r.includes('规则数量较多')),
+      ).toBe(true);
     });
   });
 
@@ -138,29 +145,41 @@ describe('ExceptionRuleMigrationService', () => {
         {
           id: 'chain1',
           name: '任务1',
-          exceptions: ['上厕所', '喝水']
+          exceptions: ['上厕所', '喝水'],
         },
         {
           id: 'chain2',
           name: '任务2',
-          exceptions: ['休息']
-        }
+          exceptions: ['休息'],
+        },
       ];
       mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       // Mock rule creation
       vi.spyOn(exceptionRuleManager, 'createRule')
         .mockResolvedValueOnce({
-          rule: { id: 'rule1', name: '上厕所', type: ExceptionRuleType.PAUSE_ONLY },
-          warnings: []
+          rule: {
+            id: 'rule1',
+            name: '上厕所',
+            type: ExceptionRuleType.PAUSE_ONLY,
+          },
+          warnings: [],
         })
         .mockResolvedValueOnce({
-          rule: { id: 'rule2', name: '喝水', type: ExceptionRuleType.PAUSE_ONLY },
-          warnings: []
+          rule: {
+            id: 'rule2',
+            name: '喝水',
+            type: ExceptionRuleType.PAUSE_ONLY,
+          },
+          warnings: [],
         })
         .mockResolvedValueOnce({
-          rule: { id: 'rule3', name: '休息', type: ExceptionRuleType.PAUSE_ONLY },
-          warnings: []
+          rule: {
+            id: 'rule3',
+            name: '休息',
+            type: ExceptionRuleType.PAUSE_ONLY,
+          },
+          warnings: [],
         });
 
       const progressCallback = vi.fn();
@@ -179,16 +198,20 @@ describe('ExceptionRuleMigrationService', () => {
         {
           id: 'chain1',
           name: '任务1',
-          exceptions: ['有效规则', '无效规则']
-        }
+          exceptions: ['有效规则', '无效规则'],
+        },
       ];
       mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
       // Mock rule creation with one success and one failure
       vi.spyOn(exceptionRuleManager, 'createRule')
         .mockResolvedValueOnce({
-          rule: { id: 'rule1', name: '有效规则', type: ExceptionRuleType.PAUSE_ONLY },
-          warnings: []
+          rule: {
+            id: 'rule1',
+            name: '有效规则',
+            type: ExceptionRuleType.PAUSE_ONLY,
+          },
+          warnings: [],
         })
         .mockRejectedValueOnce(new Error('创建失败'));
 
@@ -205,16 +228,19 @@ describe('ExceptionRuleMigrationService', () => {
         {
           id: 'chain1',
           name: '任务1',
-          exceptions: ['规则1', '规则2']
-        }
+          exceptions: ['规则1', '规则2'],
+        },
       ];
       mockStorage.getChains.mockResolvedValueOnce(mockChains as any);
 
-      vi.spyOn(exceptionRuleManager, 'createRule')
-        .mockResolvedValue({
-          rule: { id: 'rule1', name: '规则1', type: ExceptionRuleType.PAUSE_ONLY },
-          warnings: []
-        });
+      vi.spyOn(exceptionRuleManager, 'createRule').mockResolvedValue({
+        rule: {
+          id: 'rule1',
+          name: '规则1',
+          type: ExceptionRuleType.PAUSE_ONLY,
+        },
+        warnings: [],
+      });
 
       const progressCallback = vi.fn();
       await migrationService.migrate(progressCallback);
@@ -222,20 +248,20 @@ describe('ExceptionRuleMigrationService', () => {
       expect(progressCallback).toHaveBeenCalledWith(
         expect.objectContaining({
           phase: 'analyzing',
-          message: '分析现有数据...'
-        })
+          message: '分析现有数据...',
+        }),
       );
 
       expect(progressCallback).toHaveBeenCalledWith(
         expect.objectContaining({
-          phase: 'migrating'
-        })
+          phase: 'migrating',
+        }),
       );
 
       expect(progressCallback).toHaveBeenCalledWith(
         expect.objectContaining({
-          phase: 'complete'
-        })
+          phase: 'complete',
+        }),
       );
     });
   });
@@ -243,13 +269,16 @@ describe('ExceptionRuleMigrationService', () => {
   describe('迁移验证', () => {
     test('应该验证迁移结果', async () => {
       // Set migration info
-      localStorage.setItem('momentum_exception_rules_migration', JSON.stringify({
-        version: '1.0.0',
-        migratedAt: new Date().toISOString(),
-        totalRules: 2,
-        skippedRules: 0,
-        errors: 0
-      }));
+      localStorage.setItem(
+        'momentum_exception_rules_migration',
+        JSON.stringify({
+          version: '1.0.0',
+          migratedAt: new Date().toISOString(),
+          totalRules: 2,
+          skippedRules: 0,
+          errors: 0,
+        }),
+      );
 
       // Mock rule manager
       vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
@@ -258,15 +287,15 @@ describe('ExceptionRuleMigrationService', () => {
           name: '规则1',
           type: ExceptionRuleType.PAUSE_ONLY,
           description: '从旧系统迁移的规则',
-          isActive: true
+          isActive: true,
         },
         {
           id: 'rule2',
           name: '规则2',
           type: ExceptionRuleType.PAUSE_ONLY,
           description: '从旧系统迁移的规则',
-          isActive: true
-        }
+          isActive: true,
+        },
       ]);
 
       const validation = await migrationService.validateMigration();
@@ -279,13 +308,16 @@ describe('ExceptionRuleMigrationService', () => {
 
     test('应该检测数据不一致', async () => {
       // Set migration info with different count
-      localStorage.setItem('momentum_exception_rules_migration', JSON.stringify({
-        version: '1.0.0',
-        migratedAt: new Date().toISOString(),
-        totalRules: 3, // 期望3个，但实际只有2个
-        skippedRules: 0,
-        errors: 0
-      }));
+      localStorage.setItem(
+        'momentum_exception_rules_migration',
+        JSON.stringify({
+          version: '1.0.0',
+          migratedAt: new Date().toISOString(),
+          totalRules: 3, // 期望3个，但实际只有2个
+          skippedRules: 0,
+          errors: 0,
+        }),
+      );
 
       vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
         {
@@ -293,47 +325,52 @@ describe('ExceptionRuleMigrationService', () => {
           name: '规则1',
           type: ExceptionRuleType.PAUSE_ONLY,
           description: '从旧系统迁移的规则',
-          isActive: true
+          isActive: true,
         },
         {
           id: 'rule2',
           name: '规则2',
           type: ExceptionRuleType.PAUSE_ONLY,
           description: '从旧系统迁移的规则',
-          isActive: true
-        }
+          isActive: true,
+        },
       ]);
 
       const validation = await migrationService.validateMigration();
 
       expect(validation.isValid).toBe(false);
-      expect(validation.issues.some(issue => issue.includes('数量不匹配'))).toBe(true);
+      expect(
+        validation.issues.some((issue) => issue.includes('数量不匹配')),
+      ).toBe(true);
     });
   });
 
   describe('迁移回滚', () => {
     test('应该能够回滚迁移', async () => {
       // Set migration info
-      localStorage.setItem('momentum_exception_rules_migration', JSON.stringify({
-        version: '1.0.0',
-        migratedAt: new Date().toISOString(),
-        totalRules: 2,
-        skippedRules: 0,
-        errors: 0
-      }));
+      localStorage.setItem(
+        'momentum_exception_rules_migration',
+        JSON.stringify({
+          version: '1.0.0',
+          migratedAt: new Date().toISOString(),
+          totalRules: 2,
+          skippedRules: 0,
+          errors: 0,
+        }),
+      );
 
       // Mock migrated rules
       vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
         {
           id: 'rule1',
           name: '规则1',
-          description: '从旧系统迁移的规则'
+          description: '从旧系统迁移的规则',
         },
         {
           id: 'rule2',
           name: '规则2',
-          description: '从旧系统迁移的规则'
-        }
+          description: '从旧系统迁移的规则',
+        },
       ]);
 
       vi.spyOn(exceptionRuleManager, 'deleteRule').mockResolvedValue(undefined);
@@ -343,7 +380,9 @@ describe('ExceptionRuleMigrationService', () => {
       expect(result.success).toBe(true);
       expect(result.deletedRules).toBe(2);
       expect(exceptionRuleManager.deleteRule).toHaveBeenCalledTimes(2);
-      expect(localStorage.getItem('momentum_exception_rules_migration')).toBeNull();
+      expect(
+        localStorage.getItem('momentum_exception_rules_migration'),
+      ).toBeNull();
     });
 
     test('没有迁移记录时应该返回失败', async () => {
@@ -358,21 +397,24 @@ describe('ExceptionRuleMigrationService', () => {
   describe('迁移报告', () => {
     test('应该生成完整的迁移报告', async () => {
       // Set migration info
-      localStorage.setItem('momentum_exception_rules_migration', JSON.stringify({
-        version: '1.0.0',
-        migratedAt: new Date().toISOString(),
-        totalRules: 2,
-        skippedRules: 0,
-        errors: 0
-      }));
+      localStorage.setItem(
+        'momentum_exception_rules_migration',
+        JSON.stringify({
+          version: '1.0.0',
+          migratedAt: new Date().toISOString(),
+          totalRules: 2,
+          skippedRules: 0,
+          errors: 0,
+        }),
+      );
 
       vi.spyOn(exceptionRuleManager, 'getAllRules').mockResolvedValue([
         {
           id: 'rule1',
           name: '规则1',
           description: '从旧系统迁移的规则',
-          isActive: true
-        }
+          isActive: true,
+        },
       ]);
 
       mockStorage.getChains.mockResolvedValueOnce([] as any);
@@ -389,7 +431,9 @@ describe('ExceptionRuleMigrationService', () => {
     });
 
     test('发生错误时应该生成错误报告', async () => {
-      vi.spyOn(exceptionRuleManager, 'getAllRules').mockRejectedValue(new Error('测试错误'));
+      vi.spyOn(exceptionRuleManager, 'getAllRules').mockRejectedValue(
+        new Error('测试错误'),
+      );
       mockStorage.getChains.mockResolvedValueOnce([] as any);
 
       const report = await migrationService.generateMigrationReport();

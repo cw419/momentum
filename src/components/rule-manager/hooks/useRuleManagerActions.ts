@@ -3,11 +3,18 @@ import type { ExceptionRule } from '../../../types';
 import { ExceptionRuleError, ExceptionRuleException } from '../../../types';
 import { exceptionRuleManager } from '../../../services/ExceptionRuleManager';
 import { asyncOperationManager } from '../../../utils/AsyncOperationManager';
-import { getSafeErrorDetail, getSafeErrorDetailFromUnknown } from '../../../utils/errorMessage';
+import {
+  getSafeErrorDetail,
+  getSafeErrorDetailFromUnknown,
+} from '../../../utils/errorMessage';
 import type { Language } from '../../../i18n/translations';
 import type { RuleManagerFormData } from '../types';
 
-function replaceRuleById(rules: ExceptionRule[], targetId: string, nextRule: ExceptionRule) {
+function replaceRuleById(
+  rules: ExceptionRule[],
+  targetId: string,
+  nextRule: ExceptionRule,
+) {
   return rules.map((rule) => (rule.id === targetId ? nextRule : rule));
 }
 
@@ -50,9 +57,14 @@ export function useRuleManagerActions(args: {
     setDuplicateSuggestions,
   } = args;
 
-  const [deleteConfirmationRule, setDeleteConfirmationRule] = useState<ExceptionRule | null>(null);
-  const [savingOperations, setSavingOperations] = useState<Set<string>>(new Set());
-  const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, ExceptionRule>>(new Map());
+  const [deleteConfirmationRule, setDeleteConfirmationRule] =
+    useState<ExceptionRule | null>(null);
+  const [savingOperations, setSavingOperations] = useState<Set<string>>(
+    new Set(),
+  );
+  const [optimisticUpdates, setOptimisticUpdates] = useState<
+    Map<string, ExceptionRule>
+  >(new Map());
 
   const handleCreateRule = useCallback(async () => {
     const operationId = `create-rule-${Date.now()}`;
@@ -79,7 +91,11 @@ export function useRuleManagerActions(args: {
       await asyncOperationManager.executeOperation({
         id: operationId,
         operation: () =>
-          exceptionRuleManager.createRule(formData.name, formData.type, formData.description || undefined),
+          exceptionRuleManager.createRule(
+            formData.name,
+            formData.type,
+            formData.description || undefined,
+          ),
         timeout: 3000,
         retryCount: 2,
         onSuccess: (result) => {
@@ -109,16 +125,26 @@ export function useRuleManagerActions(args: {
             const safe = getSafeErrorDetail(error.message, language);
             setFormErrors([
               safe ??
-                tr('创建规则失败，请重试', 'Failed to create rule. Please try again.'),
+                tr(
+                  '创建规则失败，请重试',
+                  'Failed to create rule. Please try again.',
+                ),
             ]);
 
             if (error.type === ExceptionRuleError.DUPLICATE_RULE_NAME) {
-              exceptionRuleManager.getDuplicationSuggestions(formData.name).then((suggestions) => {
-                setDuplicateSuggestions(suggestions.nameSuggestions);
-              });
+              exceptionRuleManager
+                .getDuplicationSuggestions(formData.name)
+                .then((suggestions) => {
+                  setDuplicateSuggestions(suggestions.nameSuggestions);
+                });
             }
           } else {
-            setFormErrors([tr('创建规则失败，请重试', 'Failed to create rule. Please try again.')]);
+            setFormErrors([
+              tr(
+                '创建规则失败，请重试',
+                'Failed to create rule. Please try again.',
+              ),
+            ]);
           }
         },
       });
@@ -190,15 +216,26 @@ export function useRuleManagerActions(args: {
           }
         },
         onError: (error) => {
-          setRules((prev) => replaceRuleById(prev, originalRule.id, originalRule));
+          setRules((prev) =>
+            replaceRuleById(prev, originalRule.id, originalRule),
+          );
 
           if (error instanceof ExceptionRuleException) {
             const safe = getSafeErrorDetail(error.message, language);
             setFormErrors([
-              safe ?? tr('更新规则失败，请重试', 'Failed to update rule. Please try again.'),
+              safe ??
+                tr(
+                  '更新规则失败，请重试',
+                  'Failed to update rule. Please try again.',
+                ),
             ]);
           } else {
-            setFormErrors([tr('更新规则失败，请重试', 'Failed to update rule. Please try again.')]);
+            setFormErrors([
+              tr(
+                '更新规则失败，请重试',
+                'Failed to update rule. Please try again.',
+              ),
+            ]);
           }
         },
       });
@@ -248,7 +285,7 @@ export function useRuleManagerActions(args: {
     (rule: ExceptionRule) => {
       beginEditRule(rule);
     },
-    [beginEditRule]
+    [beginEditRule],
   );
 
   const handleExportRules = useCallback(async () => {

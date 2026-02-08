@@ -26,36 +26,48 @@ interface UseRSIPLayoutResult {
 export function useRSIPLayout(
   nodes: RSIPNode[],
   tree: RSIPTreeNode[],
-  filterType: string | null
+  filterType: string | null,
 ): UseRSIPLayoutResult {
   const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [layoutNodeHeight, setLayoutNodeHeight] = useState<number>(MIN_RSIP_NODE_SPACING_Y);
-  const [nodePositions, setNodePositions] = useState<Record<string, NodePosition>>({});
+  const [layoutNodeHeight, setLayoutNodeHeight] = useState<number>(
+    MIN_RSIP_NODE_SPACING_Y,
+  );
+  const [nodePositions, setNodePositions] = useState<
+    Record<string, NodePosition>
+  >({});
   const [containerHeight, setContainerHeight] = useState<number>(600);
 
-  const setNodeRef = useCallback((nodeId: string, el: HTMLDivElement | null) => {
-    nodeRefs.current[nodeId] = el;
-  }, []);
+  const setNodeRef = useCallback(
+    (nodeId: string, el: HTMLDivElement | null) => {
+      nodeRefs.current[nodeId] = el;
+    },
+    [],
+  );
 
-  const nodesById = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
+  const nodesById = useMemo(
+    () => new Map(nodes.map((n) => [n.id, n])),
+    [nodes],
+  );
 
   const filteredTree = useMemo(() => {
     if (!filterType) return tree;
     const filteredNodes = new Set(
-      nodes.filter(n => (n.type || 'policy') === filterType).map(n => n.id)
+      nodes.filter((n) => (n.type || 'policy') === filterType).map((n) => n.id),
     );
     if (filteredNodes.size === 0) return [];
 
     const visibleNodes = new Set<string>();
-    filteredNodes.forEach(id => {
+    filteredNodes.forEach((id) => {
       let current = nodesById.get(id);
       while (current) {
         visibleNodes.add(current.id);
-        current = current.parentId ? nodesById.get(current.parentId) : undefined;
+        current = current.parentId
+          ? nodesById.get(current.parentId)
+          : undefined;
       }
     });
 
-    const finalNodes = nodes.filter(n => visibleNodes.has(n.id));
+    const finalNodes = nodes.filter((n) => visibleNodes.has(n.id));
     return buildRSIPTree(finalNodes);
   }, [tree, filterType, nodes, nodesById]);
 
@@ -82,7 +94,7 @@ export function useRSIPLayout(
       }
 
       const childYs: number[] = [];
-      node.children.forEach(child => {
+      node.children.forEach((child) => {
         childYs.push(layout(child, depth + 1));
       });
 
@@ -97,7 +109,7 @@ export function useRSIPLayout(
       return y;
     };
 
-    filteredTree.forEach(root => {
+    filteredTree.forEach((root) => {
       layout(root, 0);
       currentY += 40;
     });
@@ -109,17 +121,17 @@ export function useRSIPLayout(
   useEffect(() => {
     const measureAndUpdate = () => {
       const heights = Object.values(nodeRefs.current)
-        .map(el => el?.offsetHeight ?? 0)
-        .filter(h => h > 0);
+        .map((el) => el?.offsetHeight ?? 0)
+        .filter((h) => h > 0);
       if (heights.length === 0) return;
 
       const maxCardHeight = Math.max(...heights);
       const nextSpacing = Math.max(
         MIN_RSIP_NODE_SPACING_Y,
-        Math.ceil(maxCardHeight + RSIP_NODE_SPACING_PADDING_Y)
+        Math.ceil(maxCardHeight + RSIP_NODE_SPACING_PADDING_Y),
       );
 
-      setLayoutNodeHeight(prev => (nextSpacing > prev ? nextSpacing : prev));
+      setLayoutNodeHeight((prev) => (nextSpacing > prev ? nextSpacing : prev));
     };
 
     const raf = window.requestAnimationFrame(measureAndUpdate);

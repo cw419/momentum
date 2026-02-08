@@ -21,9 +21,11 @@ export function calculateRuleUsageTrend(
   records: RuleUsageRecord[],
   startDate: Date,
   endDate: Date,
-  days: number
+  days: number,
 ): RuleUsageTrend {
-  const filteredRecords = records.filter(record => record.usedAt >= startDate && record.usedAt <= endDate);
+  const filteredRecords = records.filter(
+    (record) => record.usedAt >= startDate && record.usedAt <= endDate,
+  );
 
   const dailyUsageMap = new Map<string, number>();
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -43,16 +45,17 @@ export function calculateRuleUsageTrend(
   const totalUsage = filteredRecords.length;
   const averageDailyUsage = totalUsage / days;
 
-  const peakUsage = Math.max(...trend.map(t => t.count));
-  const peakUsageDate = peakUsage > 0
-    ? trend.find(t => t.count === peakUsage)?.date || null
-    : null;
+  const peakUsage = Math.max(...trend.map((t) => t.count));
+  const peakUsageDate =
+    peakUsage > 0
+      ? trend.find((t) => t.count === peakUsage)?.date || null
+      : null;
 
   return {
     trend,
     totalUsage,
     averageDailyUsage,
-    peakUsageDate
+    peakUsageDate,
   };
 }
 
@@ -66,27 +69,32 @@ interface RuleEfficiencyAnalysis {
   recommendations: string[];
 }
 
-export function calculateRuleEfficiencyAnalysis(records: RuleUsageRecord[]): RuleEfficiencyAnalysis {
-  const recordsWithProgress = records.filter(r => r.taskRemainingTime !== undefined);
+export function calculateRuleEfficiencyAnalysis(
+  records: RuleUsageRecord[],
+): RuleEfficiencyAnalysis {
+  const recordsWithProgress = records.filter(
+    (r) => r.taskRemainingTime !== undefined,
+  );
 
   if (recordsWithProgress.length === 0) {
     return {
       averageTaskProgress: 0,
       usagePatterns: { earlyUsage: 0, midUsage: 0, lateUsage: 0 },
-      recommendations: ['暂无足够数据进行分析']
+      recommendations: ['暂无足够数据进行分析'],
     };
   }
 
-  const progressData = recordsWithProgress.map(record => {
+  const progressData = recordsWithProgress.map((record) => {
     const totalTime = record.taskElapsedTime + (record.taskRemainingTime || 0);
     return totalTime > 0 ? record.taskElapsedTime / totalTime : 0;
   });
 
-  const averageTaskProgress = progressData.reduce((sum, p) => sum + p, 0) / progressData.length;
+  const averageTaskProgress =
+    progressData.reduce((sum, p) => sum + p, 0) / progressData.length;
 
-  const earlyUsage = progressData.filter(p => p < 0.25).length;
-  const midUsage = progressData.filter(p => p >= 0.25 && p <= 0.75).length;
-  const lateUsage = progressData.filter(p => p > 0.75).length;
+  const earlyUsage = progressData.filter((p) => p < 0.25).length;
+  const midUsage = progressData.filter((p) => p >= 0.25 && p <= 0.75).length;
+  const lateUsage = progressData.filter((p) => p > 0.75).length;
 
   const recommendations: string[] = [];
 
@@ -95,7 +103,9 @@ export function calculateRuleEfficiencyAnalysis(records: RuleUsageRecord[]): Rul
   }
 
   if (lateUsage > earlyUsage + midUsage) {
-    recommendations.push('该规则主要在任务后期使用，建议检查任务时间估算是否合理');
+    recommendations.push(
+      '该规则主要在任务后期使用，建议检查任务时间估算是否合理',
+    );
   }
 
   if (averageTaskProgress < 0.3) {
@@ -113,6 +123,6 @@ export function calculateRuleEfficiencyAnalysis(records: RuleUsageRecord[]): Rul
   return {
     averageTaskProgress,
     usagePatterns: { earlyUsage, midUsage, lateUsage },
-    recommendations
+    recommendations,
   };
 }

@@ -47,11 +47,11 @@ Momentum uses a three-tier caching strategy to optimize performance:
 +---------------------------+
 ```
 
-| Cache Layer | Location | TTL | Purpose |
-|-------------|----------|-----|---------|
-| Request-Level | `queryOptimizer.pendingQueries` | In-flight only | Deduplicate concurrent queries |
-| Memory Cache | Various service caches | 2-10 minutes | Fast access, reduce API calls |
-| Local Storage | `localStorage` | Persistent | Offline support, session recovery |
+| Cache Layer   | Location                        | TTL            | Purpose                           |
+| ------------- | ------------------------------- | -------------- | --------------------------------- |
+| Request-Level | `queryOptimizer.pendingQueries` | In-flight only | Deduplicate concurrent queries    |
+| Memory Cache  | Various service caches          | 2-10 minutes   | Fast access, reduce API calls     |
+| Local Storage | `localStorage`                  | Persistent     | Offline support, session recovery |
 
 ---
 
@@ -65,21 +65,21 @@ The primary cache for exception rules, providing chain-specific rule caching and
 
 #### Configuration
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| `DEFAULT_TTL` | 5 minutes (300,000 ms) | Default time-to-live for cache entries |
-| `MAX_CACHE_SIZE` | 1,000 entries | Maximum number of cache entries |
-| Cleanup Interval | 1 minute | Periodic expired entry cleanup |
+| Parameter        | Value                  | Description                            |
+| ---------------- | ---------------------- | -------------------------------------- |
+| `DEFAULT_TTL`    | 5 minutes (300,000 ms) | Default time-to-live for cache entries |
+| `MAX_CACHE_SIZE` | 1,000 entries          | Maximum number of cache entries        |
+| Cleanup Interval | 1 minute               | Periodic expired entry cleanup         |
 
 #### Cache Key Patterns
 
-| Key Pattern | Data Type | TTL | Description |
-|-------------|-----------|-----|-------------|
-| `chain_rules_{chainId}` | `ExceptionRule[]` | 5 min | Chain-specific rules |
-| `rule_{ruleId}` | `ExceptionRule` | 5 min | Individual rule details |
-| `usage_{key}` | `RuleUsageRecord[]` | 5 min | Usage records |
-| `search_{query}_{actionType}` | `ExceptionRule[]` | 2 min | Search results |
-| `stats_{key}` | varies | 10 min | Statistics data |
+| Key Pattern                   | Data Type           | TTL    | Description             |
+| ----------------------------- | ------------------- | ------ | ----------------------- |
+| `chain_rules_{chainId}`       | `ExceptionRule[]`   | 5 min  | Chain-specific rules    |
+| `rule_{ruleId}`               | `ExceptionRule`     | 5 min  | Individual rule details |
+| `usage_{key}`                 | `RuleUsageRecord[]` | 5 min  | Usage records           |
+| `search_{query}_{actionType}` | `ExceptionRule[]`   | 2 min  | Search results          |
+| `stats_{key}`                 | varies              | 10 min | Statistics data         |
 
 #### Invalidation Triggers
 
@@ -129,8 +129,8 @@ Caches rule validation results to avoid redundant validation operations.
 
 #### Configuration
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
+| Parameter   | Value                  | Description           |
+| ----------- | ---------------------- | --------------------- |
 | `CACHE_TTL` | 5 minutes (300,000 ms) | Validation result TTL |
 
 #### Cache Key Pattern
@@ -157,7 +157,7 @@ enhancedRuleValidationService.cleanupExpiredCache();
 // Cached validation - fast path for repeated checks
 const result = await enhancedRuleValidationService.preValidateRuleUsage(
   ruleId,
-  actionType
+  actionType,
 );
 ```
 
@@ -171,8 +171,8 @@ Caches duplication check results for rule name validation.
 
 #### Configuration
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
+| Parameter   | Value                  | Description                  |
+| ----------- | ---------------------- | ---------------------------- |
 | `CACHE_TTL` | 2 minutes (120,000 ms) | Shorter TTL for real-time UX |
 
 #### Cache Key Pattern
@@ -203,8 +203,8 @@ General-purpose query cache for database operations and chain tree building.
 
 #### Configuration
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
+| Parameter   | Value      | Description                    |
+| ----------- | ---------- | ------------------------------ |
 | `CACHE_TTL` | 30 seconds | Shorter TTL for data freshness |
 
 #### Special Features
@@ -213,9 +213,8 @@ General-purpose query cache for database operations and chain tree building.
 
    ```typescript
    // Multiple calls to the same query return the same promise
-   const data = await queryOptimizer.deduplicateQuery(
-     'chains:getActive',
-     () => storage.getActiveChains()
+   const data = await queryOptimizer.deduplicateQuery('chains:getActive', () =>
+     storage.getActiveChains(),
    );
    ```
 
@@ -255,18 +254,18 @@ Manages rule state for optimistic updates and temporary ID mapping.
 
 #### Configuration
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| State TTL | 10 minutes | Expired state cleanup threshold |
-| Cleanup Interval | 5 minutes | Periodic cleanup frequency |
+| Parameter        | Value      | Description                     |
+| ---------------- | ---------- | ------------------------------- |
+| State TTL        | 10 minutes | Expired state cleanup threshold |
+| Cleanup Interval | 5 minutes  | Periodic cleanup frequency      |
 
 #### Cached Data
 
-| Data Type | Purpose |
-|-----------|---------|
-| `states` | Rule status tracking (`active`, `creating`, `error`, etc.) |
-| `pendingCreations` | In-progress rule creation promises |
-| `idMappings` | Temporary ID to real ID mappings |
+| Data Type          | Purpose                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `states`           | Rule status tracking (`active`, `creating`, `error`, etc.) |
+| `pendingCreations` | In-progress rule creation promises                         |
+| `idMappings`       | Temporary ID to real ID mappings                           |
 
 #### Lifecycle
 
@@ -291,15 +290,15 @@ Persistent cache for UI preferences and service state recovery.
 
 ### Storage Keys
 
-| Key | Purpose | Data Type |
-|-----|---------|-----------|
-| `momentum_exception_rules` | Exception rules backup | JSON string |
-| `momentum_rule_usage_records` | Usage records | JSON string |
-| `momentum_timer_{sessionId}` | Timer state persistence | `TimerPersistData` |
-| `momentum_auto_resume` | Auto-resume data | `AutoResumeData` |
-| `momentum:rsip-canvas-state` | Canvas position/zoom | `CanvasState` |
-| `theme` | UI theme preference | `'light'` | `'dark'` |
-| `language` | Language preference | `'en'` | `'zh'` |
+| Key                           | Purpose                 | Data Type          |
+| ----------------------------- | ----------------------- | ------------------ | -------- |
+| `momentum_exception_rules`    | Exception rules backup  | JSON string        |
+| `momentum_rule_usage_records` | Usage records           | JSON string        |
+| `momentum_timer_{sessionId}`  | Timer state persistence | `TimerPersistData` |
+| `momentum_auto_resume`        | Auto-resume data        | `AutoResumeData`   |
+| `momentum:rsip-canvas-state`  | Canvas position/zoom    | `CanvasState`      |
+| `theme`                       | UI theme preference     | `'light'`          | `'dark'` |
+| `language`                    | Language preference     | `'en'`             | `'zh'`   |
 
 ### Timer State Cleanup
 
@@ -377,22 +376,22 @@ exceptionRuleCache.subscribe((chainId, rules) => {
 
 ### When to Use Cache
 
-| Scenario | Recommended Cache | Reason |
-|----------|-------------------|--------|
-| Repeated rule lookups | `ExceptionRuleCache` | High hit rate for same chain |
-| Rule validation | `EnhancedRuleValidationService` | Expensive validation operations |
-| Name duplication checks | `EnhancedDuplicationHandler` | Real-time UX feedback |
-| Initial data load | `QueryOptimizer.batchLoadData` | Parallel query optimization |
-| Chain tree rendering | `QueryOptimizer.memoizedBuildChainTree` | Expensive tree computation |
+| Scenario                | Recommended Cache                       | Reason                          |
+| ----------------------- | --------------------------------------- | ------------------------------- |
+| Repeated rule lookups   | `ExceptionRuleCache`                    | High hit rate for same chain    |
+| Rule validation         | `EnhancedRuleValidationService`         | Expensive validation operations |
+| Name duplication checks | `EnhancedDuplicationHandler`            | Real-time UX feedback           |
+| Initial data load       | `QueryOptimizer.batchLoadData`          | Parallel query optimization     |
+| Chain tree rendering    | `QueryOptimizer.memoizedBuildChainTree` | Expensive tree computation      |
 
 ### When to Bypass Cache
 
-| Scenario | Action | Reason |
-|----------|--------|--------|
-| After data mutation | Call `invalidate*()` | Ensure consistency |
-| User-initiated refresh | Call `clearCache()` | Explicit user intent |
-| Critical operations | Query storage directly | Guarantee freshness |
-| Debugging issues | Disable cache temporarily | Isolate problems |
+| Scenario               | Action                    | Reason               |
+| ---------------------- | ------------------------- | -------------------- |
+| After data mutation    | Call `invalidate*()`      | Ensure consistency   |
+| User-initiated refresh | Call `clearCache()`       | Explicit user intent |
+| Critical operations    | Query storage directly    | Guarantee freshness  |
+| Debugging issues       | Disable cache temporarily | Isolate problems     |
 
 ### Cache Hygiene
 
@@ -422,11 +421,11 @@ useEffect(() => {
 
 ### Target Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Cache Hit Rate | > 80% | `exceptionRuleCache.getCacheStats().hitRate` |
-| Memory Usage | < 5MB | `exceptionRuleCache.getCacheStats().memoryUsage` |
-| Query Deduplication | > 50% | Compare `pendingQueries` to total requests |
+| Metric              | Target | Measurement                                      |
+| ------------------- | ------ | ------------------------------------------------ |
+| Cache Hit Rate      | > 80%  | `exceptionRuleCache.getCacheStats().hitRate`     |
+| Memory Usage        | < 5MB  | `exceptionRuleCache.getCacheStats().memoryUsage` |
+| Query Deduplication | > 50%  | Compare `pendingQueries` to total requests       |
 
 ### Monitoring Cache Performance
 
@@ -438,7 +437,7 @@ console.log({
   hitCount: stats.hitCount,
   missCount: stats.missCount,
   hitRate: stats.hitRate,
-  memoryUsage: stats.memoryUsage
+  memoryUsage: stats.memoryUsage,
 });
 
 // Get QueryOptimizer stats
@@ -446,7 +445,7 @@ const queryStats = queryOptimizer.getCacheStats();
 console.log({
   cacheSize: queryStats.cacheSize,
   pendingQueries: queryStats.pendingQueries,
-  cacheKeys: queryStats.cacheKeys
+  cacheKeys: queryStats.cacheKeys,
 });
 
 // Performance dashboard (dev only)
@@ -468,7 +467,7 @@ console.log({
   hitRate: report.hitRate,
   totalHits: report.totalHits,
   totalMisses: report.totalMisses,
-  metricsHistory: report.metricsHistory
+  metricsHistory: report.metricsHistory,
 });
 
 // Display console report
@@ -481,12 +480,12 @@ performanceDashboard.displayConsoleReport();
 
 ### Common Issues and Solutions
 
-| Issue | Symptom | Solution |
-|-------|---------|----------|
+| Issue                | Symptom             | Solution                                     |
+| -------------------- | ------------------- | -------------------------------------------- |
 | Stale data displayed | UI shows old values | Call `invalidateRelated()` or `clearCache()` |
-| High memory usage | Slow performance | Check `MAX_CACHE_SIZE`, reduce TTL |
-| Low hit rate | Frequent API calls | Review cache key patterns, increase TTL |
-| Race conditions | Inconsistent state | Use query deduplication |
+| High memory usage    | Slow performance    | Check `MAX_CACHE_SIZE`, reduce TTL           |
+| Low hit rate         | Frequent API calls  | Review cache key patterns, increase TTL      |
+| Race conditions      | Inconsistent state  | Use query deduplication                      |
 
 ### Debug Commands
 
@@ -525,22 +524,22 @@ import { logger } from '../utils/logger';
 
 ## Summary
 
-| Cache | File | TTL | Key Use Case |
-|-------|------|-----|--------------|
-| `exceptionRuleCache` | `exceptionRuleCache.ts` | 5 min | Rule data caching |
-| `validationCache` | `EnhancedRuleValidationService.ts` | 5 min | Validation results |
-| `checkCache` | `EnhancedDuplicationHandler.ts` | 2 min | Name duplication |
-| `queryOptimizer` | `queryOptimizer.ts` | 30 sec | Query deduplication |
-| `ruleStateManager` | `RuleStateManager.ts` | 10 min | Optimistic updates |
-| `localPreferences` | `localPreferences.ts` | Persistent | UI state recovery |
+| Cache                | File                               | TTL        | Key Use Case        |
+| -------------------- | ---------------------------------- | ---------- | ------------------- |
+| `exceptionRuleCache` | `exceptionRuleCache.ts`            | 5 min      | Rule data caching   |
+| `validationCache`    | `EnhancedRuleValidationService.ts` | 5 min      | Validation results  |
+| `checkCache`         | `EnhancedDuplicationHandler.ts`    | 2 min      | Name duplication    |
+| `queryOptimizer`     | `queryOptimizer.ts`                | 30 sec     | Query deduplication |
+| `ruleStateManager`   | `RuleStateManager.ts`              | 10 min     | Optimistic updates  |
+| `localPreferences`   | `localPreferences.ts`              | Persistent | UI state recovery   |
 
 ---
 
 ## Related Documentation
 
-| Document | Description |
-|----------|-------------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System architecture overview |
-| [DEBUGGING_GUIDE.md](./DEBUGGING_GUIDE.md) | Debugging strategies |
-| `src/utils/performanceDashboard.ts` | Performance monitoring |
-| `src/utils/performanceMonitor.ts` | Component performance tracking |
+| Document                                   | Description                    |
+| ------------------------------------------ | ------------------------------ |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)       | System architecture overview   |
+| [DEBUGGING_GUIDE.md](./DEBUGGING_GUIDE.md) | Debugging strategies           |
+| `src/utils/performanceDashboard.ts`        | Performance monitoring         |
+| `src/utils/performanceMonitor.ts`          | Component performance tracking |

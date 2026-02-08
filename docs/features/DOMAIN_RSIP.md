@@ -9,6 +9,7 @@
 RSIP（Recursive Steady-state Iteration Protocol，递归稳态迭代协议）是一个个人规则管理系统，类似于"个人宪法"或"生活准则"。它帮助用户建立和维护长期习惯和行为规范。
 
 ### 核心理念
+
 - **层级规则**：规则可以有父子关系，形成规则树
 - **每日限制**：默认每天只能添加一条新规则，防止过度承诺
 - **违规回滚**：违反规则时，该节点及其所有子节点将被删除
@@ -23,18 +24,19 @@ RSIP 支持两种运行模式，通过 `allowMultiplePerDay` 设置切换：
 
 ### 模式对比
 
-| 功能 | 自由模式 | 严格模式 |
-|------|---------|---------|
-| 每日添加限制 | 无限制 | 每天最多 1 条 |
-| 定式执行追踪 | ❌ | ✅ |
-| 稳态迁移追踪 | ❌ | ✅ |
+| 功能         | 自由模式 | 严格模式       |
+| ------------ | -------- | -------------- |
+| 每日添加限制 | 无限制   | 每天最多 1 条  |
+| 定式执行追踪 | ❌       | ✅             |
+| 稳态迁移追踪 | ❌       | ✅             |
 | 堆栈删除机制 | 手动删除 | 违反时自动触发 |
-| 约束力可视化 | ❌ | ✅ |
-| 每日打开提醒 | ❌ | ✅ |
+| 约束力可视化 | ❌       | ✅             |
+| 每日打开提醒 | ❌       | ✅             |
 
 ### 自由模式
 
 适用于新手入门或灵活使用场景：
+
 - 可以一天添加多条定式
 - 简单的定式列表展示
 - 手动管理定式
@@ -42,6 +44,7 @@ RSIP 支持两种运行模式，通过 `allowMultiplePerDay` 设置切换：
 ### 严格模式
 
 完整实现原作者 RSIP 理念：
+
 - 每天最多添加 1 条定式
 - 定式执行/违反追踪
 - 稳态阶段可视化（E0/E1/E2）
@@ -54,11 +57,11 @@ RSIP 支持两种运行模式，通过 `allowMultiplePerDay` 设置切换：
 
 ### 三个稳态阶段
 
-| 阶段 | 名称 | 图标 | 升级条件 | 说明 |
-|------|------|------|---------|------|
-| E0 | 新建 | 🌱 | - | 刚创建的定式 |
-| E1 | 稳定 | 🌿 | 连续执行 7 天 | 初步形成习惯 |
-| E2 | 内化 | 🌳 | 连续执行 21 天 | 习惯已内化 |
+| 阶段 | 名称 | 图标 | 升级条件       | 说明         |
+| ---- | ---- | ---- | -------------- | ------------ |
+| E0   | 新建 | 🌱   | -              | 刚创建的定式 |
+| E1   | 稳定 | 🌿   | 连续执行 7 天  | 初步形成习惯 |
+| E2   | 内化 | 🌳   | 连续执行 21 天 | 习惯已内化   |
 
 ### 稳态迁移规则
 
@@ -74,10 +77,10 @@ E0 (新建) ──[连续7天执行]──> E1 (稳定) ──[连续21天执行
 约束力（失败代价）= (子节点数 + 1) × 稳态权重
 
 | 稳态阶段 | 权重 |
-|---------|------|
-| E0 | 1 |
-| E1 | 2 |
-| E2 | 3 |
+| -------- | ---- |
+| E0       | 1    |
+| E1       | 2    |
+| E2       | 3    |
 
 **示例**：一个 E2 阶段的定式有 4 个子节点，失败代价 = (4 + 1) × 3 = 15
 
@@ -85,20 +88,20 @@ E0 (新建) ──[连续7天执行]──> E1 (稳定) ──[连续21天执行
 
 ## 关键文件
 
-| 文件 | 职责 |
-|------|------|
-| `src/types/index.ts` | RSIPNode, RSIPMeta, RSIPExecutionRecord 类型定义 |
-| `src/hooks/domains/useRsipDomain.ts` | RSIP 业务逻辑 Hook |
-| `src/utils/rsipTree.ts` | RSIP 树结构工具函数 |
-| `src/infra/storage/supabase/rsip.ts` | Supabase 存储实现 |
-| `src/components/RSIPView.tsx` | RSIP 视图组件 |
-| `src/components/rsip/RSIPStrictModeCard.tsx` | 严格模式定式卡片 |
-| `src/components/rsip/RSIPPhaseBadge.tsx` | 稳态阶段徽章 |
-| `src/components/rsip/RSIPPhaseProgress.tsx` | 稳态进度条 |
-| `src/components/rsip/RSIPConstraintIndicator.tsx` | 约束力指标 |
-| `src/components/rsip/RSIPModeSwitch.tsx` | 模式切换组件 |
-| `src/components/rsip/RSIPDailyReminder.tsx` | 每日提醒横幅 |
-| `src/components/rsip/RSIPViolationDialog.tsx` | 违反确认对话框 |
+| 文件                                              | 职责                                             |
+| ------------------------------------------------- | ------------------------------------------------ |
+| `src/types/index.ts`                              | RSIPNode, RSIPMeta, RSIPExecutionRecord 类型定义 |
+| `src/hooks/domains/useRsipDomain.ts`              | RSIP 业务逻辑 Hook                               |
+| `src/utils/rsipTree.ts`                           | RSIP 树结构工具函数                              |
+| `src/infra/storage/supabase/rsip.ts`              | Supabase 存储实现                                |
+| `src/components/RSIPView.tsx`                     | RSIP 视图组件                                    |
+| `src/components/rsip/RSIPStrictModeCard.tsx`      | 严格模式定式卡片                                 |
+| `src/components/rsip/RSIPPhaseBadge.tsx`          | 稳态阶段徽章                                     |
+| `src/components/rsip/RSIPPhaseProgress.tsx`       | 稳态进度条                                       |
+| `src/components/rsip/RSIPConstraintIndicator.tsx` | 约束力指标                                       |
+| `src/components/rsip/RSIPModeSwitch.tsx`          | 模式切换组件                                     |
+| `src/components/rsip/RSIPDailyReminder.tsx`       | 每日提醒横幅                                     |
+| `src/components/rsip/RSIPViolationDialog.tsx`     | 违反确认对话框                                   |
 
 ---
 
@@ -117,38 +120,38 @@ type RSIPMode = 'free' | 'strict';
 
 interface RSIPNode {
   id: string;
-  parentId?: string;      // 父节点ID
-  title: string;          // 国策/定式名称
-  rule: string;           // 精准、可执行的规则描述
-  sortOrder: number;      // 排序（同一父节点下）
-  createdAt: Date;        // 创建时间
+  parentId?: string; // 父节点ID
+  title: string; // 国策/定式名称
+  rule: string; // 精准、可执行的规则描述
+  sortOrder: number; // 排序（同一父节点下）
+  createdAt: Date; // 创建时间
 
   // 可选计时配置
-  useTimer?: boolean;     // 是否使用计时
-  timerMinutes?: number;  // 倒计时分钟数
+  useTimer?: boolean; // 是否使用计时
+  timerMinutes?: number; // 倒计时分钟数
 
   // UI 展示
-  emoji?: string;         // 展示图标
+  emoji?: string; // 展示图标
 
   // 严格模式字段
-  stabilityPhase?: RSIPStabilityPhase;  // 稳态阶段
-  phaseStartedAt?: Date;                // 当前阶段开始时间
-  lastExecutedAt?: Date;                // 最近执行时间
-  lastViolatedAt?: Date;                // 最近违反时间
-  consecutiveExecutions?: number;       // 连续执行次数
-  consecutiveViolations?: number;       // 连续违反次数
-  totalExecutions?: number;             // 总执行次数
-  totalViolations?: number;             // 总违反次数
+  stabilityPhase?: RSIPStabilityPhase; // 稳态阶段
+  phaseStartedAt?: Date; // 当前阶段开始时间
+  lastExecutedAt?: Date; // 最近执行时间
+  lastViolatedAt?: Date; // 最近违反时间
+  consecutiveExecutions?: number; // 连续执行次数
+  consecutiveViolations?: number; // 连续违反次数
+  totalExecutions?: number; // 总执行次数
+  totalViolations?: number; // 总违反次数
 }
 
 interface RSIPMeta {
-  lastAddedAt?: Date;              // 最近一次添加时间
-  allowMultiplePerDay?: boolean;   // 是否允许一天添加多条（false=严格模式）
+  lastAddedAt?: Date; // 最近一次添加时间
+  allowMultiplePerDay?: boolean; // 是否允许一天添加多条（false=严格模式）
 
   // 严格模式字段
-  lastTreeOpenedAt?: Date;         // 最近打开国策树时间
+  lastTreeOpenedAt?: Date; // 最近打开国策树时间
   dailyTreeOpenRequired?: boolean; // 是否要求每日打开
-  treeOpenStreak?: number;         // 连续打开天数
+  treeOpenStreak?: number; // 连续打开天数
 }
 
 // 执行记录（严格模式）
@@ -165,6 +168,7 @@ interface RSIPExecutionRecord {
 ### 数据库表
 
 #### rsip_nodes
+
 ```sql
 id: uuid PRIMARY KEY
 user_id: uuid NOT NULL
@@ -189,6 +193,7 @@ total_violations: integer DEFAULT 0
 ```
 
 #### rsip_meta
+
 ```sql
 user_id: uuid PRIMARY KEY
 last_added_at: timestamptz
@@ -201,6 +206,7 @@ tree_open_streak: integer DEFAULT 0
 ```
 
 #### rsip_execution_records（严格模式）
+
 ```sql
 id: uuid PRIMARY KEY DEFAULT gen_random_uuid()
 user_id: uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
@@ -238,7 +244,9 @@ export const buildRSIPTree = (nodes: RSIPNode[]): RSIPTreeNode[] => {
  */
 export const countDescendants = (node: RSIPTreeNode): number => {
   let count = node.children.length;
-  node.children.forEach(c => { count += countDescendants(c); });
+  node.children.forEach((c) => {
+    count += countDescendants(c);
+  });
   return count;
 };
 ```
@@ -249,7 +257,10 @@ export const countDescendants = (node: RSIPTreeNode): number => {
 /**
  * 删除节点及其所有子节点，返回新数组
  */
-export const deleteNodeAndDescendants = (nodes: RSIPNode[], nodeId: string): RSIPNode[] => {
+export const deleteNodeAndDescendants = (
+  nodes: RSIPNode[],
+  nodeId: string,
+): RSIPNode[] => {
   // 递归收集所有需要删除的 ID
   // 过滤并返回新数组
 };
@@ -310,31 +321,31 @@ sequenceDiagram
 
 #### 基础方法
 
-| 方法 | 说明 |
-|------|------|
-| `openRSIP()` | 打开 RSIP 视图 |
-| `saveNodes(nodes)` | 保存 RSIP 节点列表 |
-| `saveMeta(meta)` | 保存 RSIP 元数据（乐观更新） |
+| 方法               | 说明                         |
+| ------------------ | ---------------------------- |
+| `openRSIP()`       | 打开 RSIP 视图               |
+| `saveNodes(nodes)` | 保存 RSIP 节点列表           |
+| `saveMeta(meta)`   | 保存 RSIP 元数据（乐观更新） |
 
 #### 严格模式方法
 
-| 方法 | 说明 |
-|------|------|
-| `getMode(meta)` | 获取当前模式（'free' \| 'strict'） |
-| `isStrictMode(meta)` | 判断是否为严格模式 |
-| `markExecuted(nodeId, nodes, notes?)` | 标记定式已执行 |
-| `markViolated(nodeId, nodes, notes?)` | 标记定式已违反（触发堆栈删除） |
-| `recordTreeOpened(meta)` | 记录今日已打开国策树 |
-| `hasOpenedToday(meta)` | 检查今日是否已打开国策树 |
-| `calculateConstraintPower(nodeId, nodes)` | 计算约束力（子节点数、失败代价） |
-| `calculatePhaseDistribution(nodes)` | 计算各阶段定式数量分布 |
+| 方法                                      | 说明                               |
+| ----------------------------------------- | ---------------------------------- |
+| `getMode(meta)`                           | 获取当前模式（'free' \| 'strict'） |
+| `isStrictMode(meta)`                      | 判断是否为严格模式                 |
+| `markExecuted(nodeId, nodes, notes?)`     | 标记定式已执行                     |
+| `markViolated(nodeId, nodes, notes?)`     | 标记定式已违反（触发堆栈删除）     |
+| `recordTreeOpened(meta)`                  | 记录今日已打开国策树               |
+| `hasOpenedToday(meta)`                    | 检查今日是否已打开国策树           |
+| `calculateConstraintPower(nodeId, nodes)` | 计算约束力（子节点数、失败代价）   |
+| `calculatePhaseDistribution(nodes)`       | 计算各阶段定式数量分布             |
 
 ### rsipTree 工具函数
 
-| 函数 | 说明 |
-|------|------|
-| `buildRSIPTree(nodes)` | 构建树结构 |
-| `countDescendants(node)` | 计算子孙数量 |
+| 函数                                      | 说明             |
+| ----------------------------------------- | ---------------- |
+| `buildRSIPTree(nodes)`                    | 构建树结构       |
+| `countDescendants(node)`                  | 计算子孙数量     |
 | `deleteNodeAndDescendants(nodes, nodeId)` | 删除节点及子节点 |
 
 ---
@@ -372,7 +383,7 @@ const canAddToday = (meta: RSIPMeta): boolean => {
 ```typescript
 const newNode: RSIPNode = {
   id: crypto.randomUUID(),
-  parentId: undefined,  // 根级节点
+  parentId: undefined, // 根级节点
   title: '早起',
   rule: '每天早上 7:00 前起床',
   sortOrder: 0,
@@ -389,7 +400,7 @@ await saveMeta({ lastAddedAt: new Date() });
 ```typescript
 const childNode: RSIPNode = {
   id: crypto.randomUUID(),
-  parentId: 'parent-node-id',  // 指定父节点
+  parentId: 'parent-node-id', // 指定父节点
   title: '早起后晨练',
   rule: '早起后进行 15 分钟拉伸运动',
   sortOrder: 0,
@@ -472,10 +483,7 @@ await handleImportChains(importedChains, {
 显示距离下一阶段的进度：
 
 ```tsx
-<RSIPPhaseProgress
-  phase="E0"
-  consecutiveDays={5}
-/>
+<RSIPPhaseProgress phase="E0" consecutiveDays={5} />
 // 显示: → E1  5/7 天
 ```
 
@@ -484,10 +492,7 @@ await handleImportChains(importedChains, {
 显示子节点数量和失败代价：
 
 ```tsx
-<RSIPConstraintIndicator
-  descendantCount={4}
-  failureCost={15}
-/>
+<RSIPConstraintIndicator descendantCount={4} failureCost={15} />
 // 显示: 🌿 4 子节点  ⚠️ 代价 15
 ```
 
@@ -510,12 +515,14 @@ await handleImportChains(importedChains, {
 显示每日打开国策树的提醒横幅：
 
 ```tsx
-{!hasOpenedToday(meta) && (
-  <RSIPDailyReminder
-    treeOpenStreak={meta.treeOpenStreak}
-    onRecordOpened={() => recordTreeOpened(meta)}
-  />
-)}
+{
+  !hasOpenedToday(meta) && (
+    <RSIPDailyReminder
+      treeOpenStreak={meta.treeOpenStreak}
+      onRecordOpened={() => recordTreeOpened(meta)}
+    />
+  );
+}
 ```
 
 ### RSIPViolationDialog - 违反确认对话框

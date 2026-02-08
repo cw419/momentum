@@ -12,11 +12,17 @@ describe('storage/chainHierarchy', () => {
     ];
 
     const descendants = collectDescendantIds('root', chains);
-    expect([...descendants].sort()).toEqual(['child-1', 'child-2', 'grandchild']);
+    expect([...descendants].sort()).toEqual([
+      'child-1',
+      'child-2',
+      'grandchild',
+    ]);
   });
 
   it('returns an empty set for unknown roots', () => {
-    const descendants = collectDescendantIds('missing', [createUnitChain({ id: 'unit' })]);
+    const descendants = collectDescendantIds('missing', [
+      createUnitChain({ id: 'unit' }),
+    ]);
     expect(descendants.size).toBe(0);
   });
 

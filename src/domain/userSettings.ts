@@ -8,4 +8,3 @@ export interface UpdateSettingsResult {
   success: boolean;
   message: string;
 }
-

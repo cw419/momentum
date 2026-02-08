@@ -39,32 +39,57 @@ async function loadBuilderWithEnv(isDevValue: boolean): Promise<{
 
 describe('chain-tree/treeBuilder', () => {
   it('returns empty and logs error for non-array input', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(false);
 
     const result = buildChainTree(null as unknown as Chain[]);
 
     expect(result).toEqual([]);
-    expect(performanceLogger.error).toHaveBeenCalledWith(expect.stringMatching(/.+/));
+    expect(performanceLogger.error).toHaveBeenCalledWith(
+      expect.stringMatching(/.+/),
+    );
   });
 
   it('returns early for empty input and emits debug marker', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(true);
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(true);
 
     const result = buildChainTree([]);
 
     expect(result).toEqual([]);
-    expect(performanceLogger.debug).toHaveBeenCalledWith(expect.stringMatching(/.+/));
+    expect(performanceLogger.debug).toHaveBeenCalledWith(
+      expect.stringMatching(/.+/),
+    );
   });
 
   it('builds sorted tree structure with correct depth propagation', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(true);
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(true);
     const parent = createGroupChain({ id: 'g-1', sortOrder: 2 });
     const otherRoot = createGroupChain({ id: 'g-2', sortOrder: 1 });
-    const childA = createUnitChain({ id: 'c-a', parentId: 'g-1', sortOrder: 2 });
-    const childB = createUnitChain({ id: 'c-b', parentId: 'g-1', sortOrder: 1 });
-    const grandChild = createUnitChain({ id: 'gc', parentId: 'c-b', sortOrder: 1 });
+    const childA = createUnitChain({
+      id: 'c-a',
+      parentId: 'g-1',
+      sortOrder: 2,
+    });
+    const childB = createUnitChain({
+      id: 'c-b',
+      parentId: 'g-1',
+      sortOrder: 1,
+    });
+    const grandChild = createUnitChain({
+      id: 'gc',
+      parentId: 'c-b',
+      sortOrder: 1,
+    });
 
-    const result = buildChainTree([parent, otherRoot, childA, childB, grandChild]);
+    const result = buildChainTree([
+      parent,
+      otherRoot,
+      childA,
+      childB,
+      grandChild,
+    ]);
 
     expect(result.map((node) => node.id)).toEqual(['g-2', 'g-1']);
     expect(result[1].children.map((node) => node.id)).toEqual(['c-b', 'c-a']);
@@ -76,7 +101,8 @@ describe('chain-tree/treeBuilder', () => {
   });
 
   it('keeps root nodes without parent warnings when parentId is absent', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(false);
     const root = createUnitChain({ id: 'root-no-parent', parentId: undefined });
 
     const result = buildChainTree([root]);
@@ -87,7 +113,8 @@ describe('chain-tree/treeBuilder', () => {
   });
 
   it('logs missing-node errors for two-node circular references', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(false);
     const nodeA = createUnitChain({ id: 'a', parentId: 'b' });
     const nodeB = createUnitChain({ id: 'b', parentId: 'a' });
 
@@ -96,7 +123,7 @@ describe('chain-tree/treeBuilder', () => {
     expect(result).toEqual([]);
     expect(performanceLogger.error).toHaveBeenCalledWith(
       expect.stringMatching(/.+/),
-      expect.arrayContaining(['a', 'b'])
+      expect.arrayContaining(['a', 'b']),
     );
   });
 
@@ -113,8 +140,13 @@ describe('chain-tree/treeBuilder', () => {
   });
 
   it('converts self-parent references to root nodes', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
-    const selfParent = createUnitChain({ id: 'self', parentId: 'self', sortOrder: 1 });
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(false);
+    const selfParent = createUnitChain({
+      id: 'self',
+      parentId: 'self',
+      sortOrder: 1,
+    });
 
     const result = buildChainTree([selfParent]);
 
@@ -125,8 +157,13 @@ describe('chain-tree/treeBuilder', () => {
   });
 
   it('promotes nodes with missing parents to roots', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
-    const orphan = createUnitChain({ id: 'orphan', parentId: 'missing', sortOrder: 2 });
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(false);
+    const orphan = createUnitChain({
+      id: 'orphan',
+      parentId: 'missing',
+      sortOrder: 2,
+    });
     const root = createUnitChain({ id: 'root', sortOrder: 1 });
 
     const result = buildChainTree([orphan, root]);
@@ -137,8 +174,13 @@ describe('chain-tree/treeBuilder', () => {
   });
 
   it('logs data integrity warnings for duplicate ids and missing names', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
-    const duplicateA = createUnitChain({ id: 'dup', name: 'first', sortOrder: 1 });
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(false);
+    const duplicateA = createUnitChain({
+      id: 'dup',
+      name: 'first',
+      sortOrder: 1,
+    });
     const duplicateB = createUnitChain({ id: 'dup', name: '', sortOrder: 2 });
 
     const result = buildChainTree([duplicateA, duplicateB]);
@@ -147,22 +189,29 @@ describe('chain-tree/treeBuilder', () => {
     expect(performanceLogger.warn).toHaveBeenCalledTimes(1);
     expect(performanceLogger.warn).toHaveBeenCalledWith(
       expect.stringMatching(/.+/),
-      expect.arrayContaining([expect.stringContaining('dup')])
+      expect.arrayContaining([expect.stringContaining('dup')]),
     );
   });
 
   it('skips malformed chains without ids while keeping valid entries', async () => {
-    const { buildChainTree, performanceLogger } = await loadBuilderWithEnv(false);
+    const { buildChainTree, performanceLogger } =
+      await loadBuilderWithEnv(false);
     const valid = createUnitChain({ id: 'valid-id', sortOrder: 1 });
-    const malformed = { ...createUnitChain({ id: 'placeholder', sortOrder: 2 }), id: '' } as Chain;
+    const malformed = {
+      ...createUnitChain({ id: 'placeholder', sortOrder: 2 }),
+      id: '',
+    } as Chain;
 
     const result = buildChainTree([valid, malformed]);
 
     expect(result.map((node) => node.id)).toEqual(['valid-id']);
     expect(performanceLogger.warn).toHaveBeenCalledWith(
       expect.stringMatching(/.+/),
-      expect.arrayContaining([expect.stringMatching(/.+/)])
+      expect.arrayContaining([expect.stringMatching(/.+/)]),
     );
-    expect(performanceLogger.error).toHaveBeenCalledWith(expect.stringMatching(/.+/), expect.anything());
+    expect(performanceLogger.error).toHaveBeenCalledWith(
+      expect.stringMatching(/.+/),
+      expect.anything(),
+    );
   });
 });

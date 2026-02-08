@@ -1,6 +1,10 @@
 import type { CanvasState, Language, Theme, TimerPersistData } from './types';
 import { clearAutoResume, getAutoResume, setAutoResume } from './autoResume';
-import { clearCanvasState, getCanvasState, setCanvasState } from './canvasState';
+import {
+  clearCanvasState,
+  getCanvasState,
+  setCanvasState,
+} from './canvasState';
 import {
   clearExceptionRulesMigration,
   getExceptionRules,
@@ -11,7 +15,10 @@ import {
   setExceptionRulesUsage,
 } from './exceptionRulesCache';
 import { getLanguage, setLanguage } from './language';
-import { getNotificationsEnabled, setNotificationsEnabled } from './notifications';
+import {
+  getNotificationsEnabled,
+  setNotificationsEnabled,
+} from './notifications';
 import { getAllKeys, getRaw, remove, setRaw } from './raw';
 import { getTaskTimeStats, setTaskTimeStats } from './taskTimeStatsCache';
 import { getTheme, setTheme } from './theme';
@@ -164,4 +171,3 @@ class LocalPreferencesManager {
 }
 
 export const localPreferences = new LocalPreferencesManager();
-

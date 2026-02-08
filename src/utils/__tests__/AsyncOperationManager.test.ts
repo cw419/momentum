@@ -21,7 +21,7 @@ describe('AsyncOperationManager', () => {
       const result = await manager.executeOperation({
         id: 'test-op',
         operation: mockOperation,
-        onSuccess
+        onSuccess,
       });
 
       expect(result).toBe('success');
@@ -33,19 +33,22 @@ describe('AsyncOperationManager', () => {
       const mockOperation = vi.fn().mockRejectedValue(new Error('Test error'));
       const onError = vi.fn();
 
-      await expect(manager.executeOperation({
-        id: 'test-op',
-        operation: mockOperation,
-        retryCount: 0,
-        onError
-      })).rejects.toThrow('Test error');
+      await expect(
+        manager.executeOperation({
+          id: 'test-op',
+          operation: mockOperation,
+          retryCount: 0,
+          onError,
+        }),
+      ).rejects.toThrow('Test error');
 
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('should retry failed operations', async () => {
       vi.useFakeTimers();
-      const mockOperation = vi.fn()
+      const mockOperation = vi
+        .fn()
         .mockRejectedValueOnce(new Error('First failure'))
         .mockRejectedValueOnce(new Error('Second failure'))
         .mockResolvedValue('success');
@@ -56,7 +59,7 @@ describe('AsyncOperationManager', () => {
         id: 'test-op',
         operation: mockOperation,
         retryCount: 2,
-        onRetry
+        onRetry,
       });
       await vi.runAllTimersAsync();
       const result = await pending;
@@ -68,12 +71,14 @@ describe('AsyncOperationManager', () => {
 
     it('should timeout operations', async () => {
       vi.useFakeTimers();
-      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(resolve, 1000)));
+      const mockOperation = vi.fn(
+        () => new Promise((resolve) => setTimeout(resolve, 1000)),
+      );
 
       const pending = manager.executeOperation({
         id: 'test-op',
         operation: mockOperation,
-        timeout: 100
+        timeout: 100,
       });
       const rejection = expect(pending).rejects.toThrow(/100ms/);
       await vi.runAllTimersAsync();
@@ -92,7 +97,7 @@ describe('AsyncOperationManager', () => {
         operation: mockOperation,
         optimisticValue: 'optimistic-result',
         updateUI,
-        rollback
+        rollback,
       });
 
       expect(updateUI).toHaveBeenCalledWith('optimistic-result');
@@ -102,18 +107,22 @@ describe('AsyncOperationManager', () => {
     });
 
     it('should rollback on optimistic update failure', async () => {
-      const mockOperation = vi.fn().mockRejectedValue(new Error('Operation failed'));
+      const mockOperation = vi
+        .fn()
+        .mockRejectedValue(new Error('Operation failed'));
       const updateUI = vi.fn();
       const rollback = vi.fn();
 
-      await expect(manager.optimisticUpdate({
-        id: 'test-optimistic',
-        operation: mockOperation,
-        retryCount: 0,
-        optimisticValue: 'optimistic-result',
-        updateUI,
-        rollback
-      })).rejects.toThrow('Operation failed');
+      await expect(
+        manager.optimisticUpdate({
+          id: 'test-optimistic',
+          operation: mockOperation,
+          retryCount: 0,
+          optimisticValue: 'optimistic-result',
+          updateUI,
+          rollback,
+        }),
+      ).rejects.toThrow('Operation failed');
 
       expect(updateUI).toHaveBeenCalledWith('optimistic-result');
       expect(rollback).toHaveBeenCalled();
@@ -133,15 +142,15 @@ describe('AsyncOperationManager', () => {
           operation: mockOperation1,
           optimisticValue: 'opt1',
           updateUI: updateUI1,
-          rollback: rollback1
+          rollback: rollback1,
         },
         {
           id: 'test2',
           operation: mockOperation2,
           optimisticValue: 'opt2',
           updateUI: updateUI2,
-          rollback: rollback2
-        }
+          rollback: rollback2,
+        },
       ]);
 
       expect(results).toEqual(['result1', 'result2']);
@@ -172,7 +181,7 @@ describe('AsyncOperationManager', () => {
 
       const [result1, result2] = await Promise.all([
         manager.executeOnce('key1', mockOperation1),
-        manager.executeOnce('key2', mockOperation2)
+        manager.executeOnce('key2', mockOperation2),
       ]);
 
       expect(result1).toBe('result1');
@@ -188,9 +197,21 @@ describe('AsyncOperationManager', () => {
       const mockOperation = vi.fn().mockResolvedValue('result');
 
       // Fire multiple rapid operations
-      const _promise1 = manager.debounceOperation('debounce-key', mockOperation, 100);
-      const _promise2 = manager.debounceOperation('debounce-key', mockOperation, 100);
-      const promise3 = manager.debounceOperation('debounce-key', mockOperation, 100);
+      const _promise1 = manager.debounceOperation(
+        'debounce-key',
+        mockOperation,
+        100,
+      );
+      const _promise2 = manager.debounceOperation(
+        'debounce-key',
+        mockOperation,
+        100,
+      );
+      const promise3 = manager.debounceOperation(
+        'debounce-key',
+        mockOperation,
+        100,
+      );
 
       // Wait for debounce delay
       await vi.advanceTimersByTimeAsync(150);
@@ -211,12 +232,12 @@ describe('AsyncOperationManager', () => {
 
       const promise1 = manager.queueOperation({
         id: 'queue1',
-        operation: mockOperation1
+        operation: mockOperation1,
       });
 
       const promise2 = manager.queueOperation({
         id: 'queue2',
-        operation: mockOperation2
+        operation: mockOperation2,
       });
 
       const [result1, result2] = await Promise.all([promise1, promise2]);
@@ -229,11 +250,14 @@ describe('AsyncOperationManager', () => {
   describe('operation management', () => {
     it('should track operation status', async () => {
       vi.useFakeTimers();
-      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 100)));
+      const mockOperation = vi.fn(
+        () =>
+          new Promise((resolve) => setTimeout(() => resolve('result'), 100)),
+      );
 
       const promise = manager.executeOperation({
         id: 'tracked-op',
-        operation: mockOperation
+        operation: mockOperation,
       });
 
       const status = manager.getOperationStatus('tracked-op');
@@ -248,11 +272,14 @@ describe('AsyncOperationManager', () => {
 
     it('should cancel pending operations', async () => {
       vi.useFakeTimers();
-      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 1000)));
+      const mockOperation = vi.fn(
+        () =>
+          new Promise((resolve) => setTimeout(() => resolve('result'), 1000)),
+      );
 
       const pending = manager.executeOperation({
         id: 'cancel-op',
-        operation: mockOperation
+        operation: mockOperation,
       });
 
       const cancelled = manager.cancelOperation('cancel-op');
@@ -266,16 +293,19 @@ describe('AsyncOperationManager', () => {
 
     it('should get pending operations', async () => {
       vi.useFakeTimers();
-      const mockOperation = vi.fn(() => new Promise(resolve => setTimeout(() => resolve('result'), 100)));
+      const mockOperation = vi.fn(
+        () =>
+          new Promise((resolve) => setTimeout(() => resolve('result'), 100)),
+      );
 
       manager.executeOperation({
         id: 'pending1',
-        operation: mockOperation
+        operation: mockOperation,
       });
 
       manager.executeOperation({
         id: 'pending2',
-        operation: mockOperation
+        operation: mockOperation,
       });
 
       const pending = manager.getPendingOperations();
@@ -290,7 +320,7 @@ describe('AsyncOperationManager', () => {
 
       await manager.executeOperation({
         id: 'stats-op',
-        operation: mockOperation
+        operation: mockOperation,
       });
 
       const stats = manager.getOperationStats();
@@ -304,7 +334,7 @@ describe('AsyncOperationManager', () => {
 
       await manager.executeOperation({
         id: 'expired-op',
-        operation: mockOperation
+        operation: mockOperation,
       });
 
       // Simulate time passing
@@ -325,7 +355,7 @@ describe('AsyncOperationManager', () => {
 
       await manager.executeOperation({
         id: 'clear-op',
-        operation: mockOperation
+        operation: mockOperation,
       });
 
       manager.clearAll();
@@ -335,5 +365,3 @@ describe('AsyncOperationManager', () => {
     });
   });
 });
-
-

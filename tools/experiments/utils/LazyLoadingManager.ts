@@ -1,6 +1,6 @@
 /**
  * 智能懒加载管理器
- * 
+ *
  * 实现高级懒加载策略，包括：
  * - 智能预测性加载
  * - 基于用户行为的预加载
@@ -49,12 +49,15 @@ interface LoadingContext {
 interface UserBehaviorPattern {
   frequentlyAccessedItems: Set<string>;
   recentlyAccessedItems: string[];
-  accessPatterns: Map<string, {
-    frequency: number;
-    lastAccess: Date;
-    avgAccessInterval: number;
-    predictedNextAccess: Date;
-  }>;
+  accessPatterns: Map<
+    string,
+    {
+      frequency: number;
+      lastAccess: Date;
+      avgAccessInterval: number;
+      predictedNextAccess: Date;
+    }
+  >;
   sessionDuration: number;
   interactionType: 'reading' | 'creating' | 'editing' | 'browsing';
 }
@@ -96,7 +99,7 @@ class LazyLoadingManager {
       recentlyAccessedItems: [],
       accessPatterns: new Map(),
       sessionDuration: 0,
-      interactionType: 'browsing'
+      interactionType: 'browsing',
     };
 
     this.loadingContext = {
@@ -104,7 +107,7 @@ class LazyLoadingManager {
       userBehavior: this.userBehaviorPattern,
       timeOfDay: this.getTimeOfDay(),
       connectionSpeed: this.detectConnectionSpeed(),
-      memoryPressure: this.detectMemoryPressure()
+      memoryPressure: this.detectMemoryPressure(),
     };
 
     this.stats = {
@@ -115,7 +118,7 @@ class LazyLoadingManager {
       averageLoadTime: 0,
       memoryUsage: 0,
       loadingErrors: 0,
-      totalLoadTime: 0
+      totalLoadTime: 0,
     };
 
     this.initializeLazyLoadingStrategies();
@@ -141,10 +144,10 @@ class LazyLoadingManager {
       dependencies?: string[];
       predicates?: (() => boolean)[];
       expiry?: number;
-    } = {}
+    } = {},
   ): string {
     const id = this.generateItemId();
-    
+
     const item: LazyLoadItem = {
       id,
       key,
@@ -153,7 +156,7 @@ class LazyLoadingManager {
       dependencies: options.dependencies || [],
       predicates: options.predicates || [],
       expiry: options.expiry || 5 * 60 * 1000, // 5分钟默认过期
-      loadCount: 0
+      loadCount: 0,
     };
 
     this.lazyItems.set(key, item);
@@ -162,7 +165,7 @@ class LazyLoadingManager {
     logger.debug(`[LazyLoadingManager] 注册懒加载项: ${key}`, {
       itemId: id,
       priority: item.priority,
-      dependencies: item.dependencies.length
+      dependencies: item.dependencies.length,
     });
 
     // 触发智能预加载检查
@@ -205,7 +208,7 @@ class LazyLoadingManager {
 
     try {
       const result = await loadingPromise;
-      
+
       // 更新统计
       item.loadCount++;
       item.lastAccessed = new Date();
@@ -238,13 +241,13 @@ class LazyLoadingManager {
 
       // 执行加载
       const result = await item.loader();
-      
+
       const loadTime = performance.now() - startTime;
       this.updateLoadTimeStats(loadTime);
 
       logger.debug(`[LazyLoadingManager] 项目加载完成: ${item.key}`, {
         loadTime: loadTime.toFixed(2) + 'ms',
-        size: this.estimateDataSize(result)
+        size: this.estimateDataSize(result),
       });
 
       return result;
@@ -258,19 +261,26 @@ class LazyLoadingManager {
   /**
    * 批量加载项目
    */
-  async loadMultipleItems(keys: string[], maxConcurrent: number = 3): Promise<Map<string, any>> {
+  async loadMultipleItems(
+    keys: string[],
+    maxConcurrent: number = 3,
+  ): Promise<Map<string, any>> {
     const results = new Map<string, any>();
-    
+
     // 按优先级排序
     const sortedItems = keys
-      .map(key => this.lazyItems.get(key))
-      .filter(item => item !== undefined)
-      .sort((a, b) => this.getPriorityValue(a!.priority) - this.getPriorityValue(b!.priority));
+      .map((key) => this.lazyItems.get(key))
+      .filter((item) => item !== undefined)
+      .sort(
+        (a, b) =>
+          this.getPriorityValue(a!.priority) -
+          this.getPriorityValue(b!.priority),
+      );
 
     // 分批处理
     for (let i = 0; i < sortedItems.length; i += maxConcurrent) {
       const batch = sortedItems.slice(i, i + maxConcurrent);
-      
+
       const batchPromises = batch.map(async (item) => {
         try {
           const result = await this.loadItem(item!.key);
@@ -281,7 +291,7 @@ class LazyLoadingManager {
       });
 
       const batchResults = await Promise.all(batchPromises);
-      
+
       batchResults.forEach(({ key, result, success }) => {
         if (success) {
           results.set(key, result);
@@ -295,29 +305,37 @@ class LazyLoadingManager {
   /**
    * 预加载基于策略
    */
-  async preloadBasedOnContext(context: Partial<LoadingContext> = {}): Promise<void> {
+  async preloadBasedOnContext(
+    context: Partial<LoadingContext> = {},
+  ): Promise<void> {
     // 更新加载上下文
     this.loadingContext = { ...this.loadingContext, ...context };
 
     // 获取候选预加载项
     const candidates = this.getPreloadCandidates();
-    
+
     if (candidates.length === 0) return;
 
     // 执行预加载策略
     for (const strategy of this.loadingStrategies) {
-      const applicableItems = candidates.filter(item => 
-        strategy.condition(item, this.loadingContext)
+      const applicableItems = candidates.filter((item) =>
+        strategy.condition(item, this.loadingContext),
       );
 
       if (applicableItems.length > 0) {
         try {
           await strategy.execute(applicableItems, this.loadingContext);
-          logger.debug(`[LazyLoadingManager] 执行预加载策略: ${strategy.name}`, {
-            itemCount: applicableItems.length
-          });
+          logger.debug(
+            `[LazyLoadingManager] 执行预加载策略: ${strategy.name}`,
+            {
+              itemCount: applicableItems.length,
+            },
+          );
         } catch (error) {
-          logger.error(`[LazyLoadingManager] 预加载策略失败: ${strategy.name}`, error);
+          logger.error(
+            `[LazyLoadingManager] 预加载策略失败: ${strategy.name}`,
+            error,
+          );
         }
       }
     }
@@ -328,19 +346,23 @@ class LazyLoadingManager {
    */
   async predictivePreload(): Promise<void> {
     const predictions = this.predictNextAccess();
-    
-    for (const prediction of predictions.slice(0, 5)) { // 限制预加载数量
+
+    for (const prediction of predictions.slice(0, 5)) {
+      // 限制预加载数量
       if (this.shouldPreload(prediction)) {
         try {
           await this.loadItem(prediction.key);
           this.stats.preloadedItems++;
-          
+
           logger.debug(`[LazyLoadingManager] 预测性预加载: ${prediction.key}`, {
             probability: prediction.probability,
-            reasons: prediction.reasons
+            reasons: prediction.reasons,
           });
         } catch (error) {
-          logger.error(`[LazyLoadingManager] 预测性预加载失败: ${prediction.key}`, error);
+          logger.error(
+            `[LazyLoadingManager] 预测性预加载失败: ${prediction.key}`,
+            error,
+          );
         }
       }
     }
@@ -359,9 +381,11 @@ class LazyLoadingManager {
         },
         execute: async (items, context) => {
           const visibleItems = items.slice(0, 3); // 只加载前3个可见项
-          await Promise.all(visibleItems.map(item => this.loadItem(item.key)));
+          await Promise.all(
+            visibleItems.map((item) => this.loadItem(item.key)),
+          );
         },
-        priority: 1
+        priority: 1,
       },
 
       // 用户行为预测策略
@@ -374,9 +398,11 @@ class LazyLoadingManager {
         execute: async (items, context) => {
           // 基于访问频率排序
           const sortedItems = items
-            .map(item => ({
+            .map((item) => ({
               item,
-              frequency: context.userBehavior.accessPatterns.get(item.key)?.frequency || 0
+              frequency:
+                context.userBehavior.accessPatterns.get(item.key)?.frequency ||
+                0,
             }))
             .sort((a, b) => b.frequency - a.frequency)
             .slice(0, 5)
@@ -384,7 +410,7 @@ class LazyLoadingManager {
 
           await this.staggeredLoad(sortedItems, 500); // 每500ms加载一个
         },
-        priority: 2
+        priority: 2,
       },
 
       // 时间敏感策略
@@ -393,7 +419,7 @@ class LazyLoadingManager {
         condition: (item, context) => {
           const pattern = context.userBehavior.accessPatterns.get(item.key);
           if (!pattern) return false;
-          
+
           const now = Date.now();
           const predictedNext = pattern.predictedNextAccess.getTime();
           return predictedNext - now <= 60000; // 1分钟内预期访问
@@ -405,32 +431,39 @@ class LazyLoadingManager {
               const aPattern = context.userBehavior.accessPatterns.get(a.key);
               const bPattern = context.userBehavior.accessPatterns.get(b.key);
               if (!aPattern || !bPattern) return 0;
-              return aPattern.predictedNextAccess.getTime() - bPattern.predictedNextAccess.getTime();
+              return (
+                aPattern.predictedNextAccess.getTime() -
+                bPattern.predictedNextAccess.getTime()
+              );
             })
             .slice(0, 3);
 
-          await Promise.all(sortedItems.map(item => this.loadItem(item.key)));
+          await Promise.all(sortedItems.map((item) => this.loadItem(item.key)));
         },
-        priority: 0 // 最高优先级
+        priority: 0, // 最高优先级
       },
 
       // 空闲时间策略
       {
         name: 'idle-time',
         condition: (item, context) => {
-          return context.userBehavior.interactionType === 'browsing' && 
-                 context.memoryPressure !== 'high';
+          return (
+            context.userBehavior.interactionType === 'browsing' &&
+            context.memoryPressure !== 'high'
+          );
         },
         execute: async (items, context) => {
           // 空闲时加载低优先级项目
           const idleItems = items
-            .filter(item => item.priority === 'low' || item.priority === 'normal')
+            .filter(
+              (item) => item.priority === 'low' || item.priority === 'normal',
+            )
             .slice(0, 2);
 
           await this.staggeredLoad(idleItems, 2000); // 每2秒加载一个
         },
-        priority: 3
-      }
+        priority: 3,
+      },
     ];
 
     // 按优先级排序策略
@@ -440,16 +473,22 @@ class LazyLoadingManager {
   /**
    * 错开加载
    */
-  private async staggeredLoad(items: LazyLoadItem[], delayMs: number): Promise<void> {
+  private async staggeredLoad(
+    items: LazyLoadItem[],
+    delayMs: number,
+  ): Promise<void> {
     for (let i = 0; i < items.length; i++) {
       if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
-      
+
       try {
         await this.loadItem(items[i].key);
       } catch (error) {
-        logger.error(`[LazyLoadingManager] 错开加载失败: ${items[i].key}`, error);
+        logger.error(
+          `[LazyLoadingManager] 错开加载失败: ${items[i].key}`,
+          error,
+        );
       }
     }
   }
@@ -459,17 +498,18 @@ class LazyLoadingManager {
    */
   private getPreloadCandidates(): LazyLoadItem[] {
     const candidates: LazyLoadItem[] = [];
-    
+
     for (const item of this.lazyItems.values()) {
       // 跳过已加载的项目
       if (this.loadingQueue.has(item.key)) continue;
-      
+
       // 跳过最近已加载的项目
-      if (item.loadedAt && Date.now() - item.loadedAt.getTime() < item.expiry!) continue;
-      
+      if (item.loadedAt && Date.now() - item.loadedAt.getTime() < item.expiry!)
+        continue;
+
       candidates.push(item);
     }
-    
+
     return candidates;
   }
 
@@ -487,7 +527,10 @@ class LazyLoadingManager {
       reasons: string[];
     }> = [];
 
-    for (const [key, pattern] of this.userBehaviorPattern.accessPatterns.entries()) {
+    for (const [
+      key,
+      pattern,
+    ] of this.userBehaviorPattern.accessPatterns.entries()) {
       const reasons: string[] = [];
       let probability = 0;
 
@@ -511,7 +554,10 @@ class LazyLoadingManager {
       }
 
       // 基于用户当前行为的预测
-      if (this.userBehaviorPattern.interactionType === 'creating' && key.includes('template')) {
+      if (
+        this.userBehaviorPattern.interactionType === 'creating' &&
+        key.includes('template')
+      ) {
         probability += 0.3;
         reasons.push('当前创建模式');
       }
@@ -528,19 +574,31 @@ class LazyLoadingManager {
   /**
    * 判断是否应该预加载
    */
-  private shouldPreload(prediction: { key: string; probability: number }): boolean {
+  private shouldPreload(prediction: {
+    key: string;
+    probability: number;
+  }): boolean {
     // 检查内存压力
-    if (this.loadingContext.memoryPressure === 'high' && prediction.probability < 0.8) {
+    if (
+      this.loadingContext.memoryPressure === 'high' &&
+      prediction.probability < 0.8
+    ) {
       return false;
     }
 
     // 检查网络条件
-    if (this.loadingContext.connectionSpeed === 'slow' && prediction.probability < 0.6) {
+    if (
+      this.loadingContext.connectionSpeed === 'slow' &&
+      prediction.probability < 0.6
+    ) {
       return false;
     }
 
     // 检查电池电量（如果可用）
-    if (this.loadingContext.batteryLevel === 'low' && prediction.probability < 0.7) {
+    if (
+      this.loadingContext.batteryLevel === 'low' &&
+      prediction.probability < 0.7
+    ) {
       return false;
     }
 
@@ -558,16 +616,19 @@ class LazyLoadingManager {
       // 更新现有模式
       pattern.frequency++;
       const timeSinceLastAccess = now.getTime() - pattern.lastAccess.getTime();
-      pattern.avgAccessInterval = (pattern.avgAccessInterval + timeSinceLastAccess) / 2;
+      pattern.avgAccessInterval =
+        (pattern.avgAccessInterval + timeSinceLastAccess) / 2;
       pattern.lastAccess = now;
-      pattern.predictedNextAccess = new Date(now.getTime() + pattern.avgAccessInterval);
+      pattern.predictedNextAccess = new Date(
+        now.getTime() + pattern.avgAccessInterval,
+      );
     } else {
       // 创建新模式
       this.userBehaviorPattern.accessPatterns.set(key, {
         frequency: 1,
         lastAccess: now,
         avgAccessInterval: 0,
-        predictedNextAccess: now
+        predictedNextAccess: now,
       });
     }
 
@@ -579,7 +640,7 @@ class LazyLoadingManager {
     // 更新最近访问项目
     this.userBehaviorPattern.recentlyAccessedItems.unshift(key);
     if (this.userBehaviorPattern.recentlyAccessedItems.length > 10) {
-      this.userBehaviorPattern.recentlyAccessedItems = 
+      this.userBehaviorPattern.recentlyAccessedItems =
         this.userBehaviorPattern.recentlyAccessedItems.slice(0, 10);
     }
   }
@@ -596,11 +657,14 @@ class LazyLoadingManager {
     }, 30000);
 
     // 每5分钟执行一次预测性预加载
-    setInterval(() => {
-      this.predictivePreload().catch(error => {
-        logger.error('[LazyLoadingManager] 预测性预加载失败:', error);
-      });
-    }, 5 * 60 * 1000);
+    setInterval(
+      () => {
+        this.predictivePreload().catch((error) => {
+          logger.error('[LazyLoadingManager] 预测性预加载失败:', error);
+        });
+      },
+      5 * 60 * 1000,
+    );
   }
 
   /**
@@ -610,7 +674,7 @@ class LazyLoadingManager {
     // 监控内存压力
     this.memoryPressureTimer = setInterval(() => {
       this.loadingContext.memoryPressure = this.detectMemoryPressure();
-      
+
       // 在高内存压力下清理过期缓存
       if (this.loadingContext.memoryPressure === 'high') {
         this.cleanupExpiredCache();
@@ -621,14 +685,16 @@ class LazyLoadingManager {
     if ('PerformanceObserver' in window) {
       this.performanceObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.name.includes('lazy-load')) {
             this.updateLoadTimeStats(entry.duration);
           }
         });
       });
-      
-      this.performanceObserver.observe({ entryTypes: ['measure', 'navigation'] });
+
+      this.performanceObserver.observe({
+        entryTypes: ['measure', 'navigation'],
+      });
     }
   }
 
@@ -673,33 +739,40 @@ class LazyLoadingManager {
     return await smartCache.get<T>(`lazy_${key}`);
   }
 
-  private async cacheLoadedItem(key: string, data: any, item: LazyLoadItem): Promise<void> {
+  private async cacheLoadedItem(
+    key: string,
+    data: any,
+    item: LazyLoadItem,
+  ): Promise<void> {
     await smartCache.set(`lazy_${key}`, data, {
       ttl: item.expiry,
       priority: item.priority === 'critical' ? 'high' : 'normal',
-      tags: ['lazy_load', key]
+      tags: ['lazy_load', key],
     });
   }
 
   private checkPredicates(item: LazyLoadItem): boolean {
-    return item.predicates?.every(predicate => predicate()) ?? true;
+    return item.predicates?.every((predicate) => predicate()) ?? true;
   }
 
   private async loadDependencies(item: LazyLoadItem): Promise<void> {
     if (item.dependencies && item.dependencies.length > 0) {
-      await Promise.all(
-        item.dependencies.map(dep => this.loadItem(dep))
-      );
+      await Promise.all(item.dependencies.map((dep) => this.loadItem(dep)));
     }
   }
 
   private getPriorityValue(priority: string): number {
     switch (priority) {
-      case 'critical': return 0;
-      case 'high': return 1;
-      case 'normal': return 2;
-      case 'low': return 3;
-      default: return 2;
+      case 'critical':
+        return 0;
+      case 'high':
+        return 1;
+      case 'normal':
+        return 2;
+      case 'low':
+        return 3;
+      default:
+        return 2;
     }
   }
 
@@ -709,7 +782,8 @@ class LazyLoadingManager {
 
   private updateLoadTimeStats(loadTime: number): void {
     this.stats.totalLoadTime += loadTime;
-    this.stats.averageLoadTime = this.stats.totalLoadTime / this.stats.loadedItems;
+    this.stats.averageLoadTime =
+      this.stats.totalLoadTime / this.stats.loadedItems;
   }
 
   private estimateDataSize(data: any): number {
@@ -742,7 +816,7 @@ class LazyLoadingManager {
   getUserBehaviorPattern(): UserBehaviorPattern {
     return {
       ...this.userBehaviorPattern,
-      accessPatterns: new Map(this.userBehaviorPattern.accessPatterns)
+      accessPatterns: new Map(this.userBehaviorPattern.accessPatterns),
     };
   }
 
@@ -751,7 +825,7 @@ class LazyLoadingManager {
    */
   updateViewContext(view: string): void {
     this.loadingContext.currentView = view;
-    
+
     // 触发基于上下文的预加载
     setTimeout(() => {
       this.preloadBasedOnContext();
@@ -762,15 +836,15 @@ class LazyLoadingManager {
    * 预加载指定项目
    */
   async preloadItem<T>(
-    key: string, 
-    loader: () => Promise<T>, 
-    options: { priority?: 'low' | 'normal' | 'high' | 'critical' } = {}
+    key: string,
+    loader: () => Promise<T>,
+    options: { priority?: 'low' | 'normal' | 'high' | 'critical' } = {},
   ): Promise<T> {
     // 注册项目（如果不存在）
     if (!this.lazyItems.has(key)) {
       this.registerLazyItem(key, loader, { priority: options.priority });
     }
-    
+
     // 加载项目
     return this.loadItem<T>(key);
   }
@@ -779,17 +853,17 @@ class LazyLoadingManager {
    * 调度预加载
    */
   schedulePreload(
-    key: string, 
-    loader: () => Promise<any>, 
-    options: { priority?: 'low' | 'normal' | 'high' | 'critical' } = {}
+    key: string,
+    loader: () => Promise<any>,
+    options: { priority?: 'low' | 'normal' | 'high' | 'critical' } = {},
   ): void {
     // 注册项目
     this.registerLazyItem(key, loader, { priority: options.priority });
-    
+
     // 根据优先级调度预加载
     const delay = this.getPriorityDelay(options.priority || 'normal');
     setTimeout(() => {
-      this.preloadItem(key, loader, options).catch(error => {
+      this.preloadItem(key, loader, options).catch((error) => {
         logger.warn(`[LazyLoadingManager] 调度预加载失败: ${key}`, error);
       });
     }, delay);
@@ -808,12 +882,14 @@ class LazyLoadingManager {
   /**
    * 获取优先级延迟
    */
-  private getPriorityDelay(priority: 'low' | 'normal' | 'high' | 'critical'): number {
+  private getPriorityDelay(
+    priority: 'low' | 'normal' | 'high' | 'critical',
+  ): number {
     const delays = {
       critical: 0,
       high: 100,
       normal: 500,
-      low: 1000
+      low: 1000,
     };
     return delays[priority];
   }
@@ -837,11 +913,11 @@ class LazyLoadingManager {
       averageLoadTime: this.stats.averageLoadTime,
       memoryUsage: this.stats.memoryUsage,
       loadingErrors: this.stats.loadingErrors,
-      totalLoadTime: this.stats.totalLoadTime
+      totalLoadTime: this.stats.totalLoadTime,
     };
 
     // 判断健康状态
-    const isHealthy = 
+    const isHealthy =
       this.stats.loadingErrors < this.stats.totalItems * 0.1 && // 错误率小于10%
       this.stats.averageLoadTime < 2000 && // 平均加载时间小于2秒
       this.stats.cacheHitRate > 0.5; // 缓存命中率大于50%
@@ -856,7 +932,7 @@ class LazyLoadingManager {
     smartCache.invalidateByTag('lazy_load');
     this.stats.loadedItems = 0;
     this.stats.preloadedItems = 0;
-    
+
     logger.info('[LazyLoadingManager] 所有懒加载缓存已清理');
   }
 
@@ -866,19 +942,19 @@ class LazyLoadingManager {
   destroy(): void {
     this.lazyItems.clear();
     this.loadingQueue.clear();
-    
+
     if (this.memoryPressureTimer) {
       clearInterval(this.memoryPressureTimer);
     }
-    
+
     if (this.performanceObserver) {
       this.performanceObserver.disconnect();
     }
-    
+
     if (this.viewportObserver) {
       this.viewportObserver.disconnect();
     }
-    
+
     logger.info('[LazyLoadingManager] 实例已销毁');
   }
 }

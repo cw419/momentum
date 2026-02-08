@@ -1,6 +1,17 @@
-import type { Chain, CompletionHistory, DistributiveOmit, RSIPMeta, RSIPNode } from '../../types';
+import type {
+  Chain,
+  CompletionHistory,
+  DistributiveOmit,
+  RSIPMeta,
+  RSIPNode,
+} from '../../types';
 
-type ChainDateFields = 'createdAt' | 'lastCompletedAt' | 'groupStartedAt' | 'groupExpiresAt' | 'deletedAt';
+type ChainDateFields =
+  | 'createdAt'
+  | 'lastCompletedAt'
+  | 'groupStartedAt'
+  | 'groupExpiresAt'
+  | 'deletedAt';
 type ExportedChain = DistributiveOmit<Chain, ChainDateFields> & {
   createdAt: string;
   lastCompletedAt?: string;
@@ -9,10 +20,14 @@ type ExportedChain = DistributiveOmit<Chain, ChainDateFields> & {
   deletedAt?: string | null;
 };
 
-type ExportedCompletionHistory = Omit<CompletionHistory, 'completedAt'> & { completedAt: string };
+type ExportedCompletionHistory = Omit<CompletionHistory, 'completedAt'> & {
+  completedAt: string;
+};
 
 type ExportedRSIPNode = Omit<RSIPNode, 'createdAt'> & { createdAt: string };
-type ExportedRSIPMeta = Omit<RSIPMeta, 'lastAddedAt'> & { lastAddedAt?: string };
+type ExportedRSIPMeta = Omit<RSIPMeta, 'lastAddedAt'> & {
+  lastAddedAt?: string;
+};
 
 export interface MomentumExportDataV2 {
   version: '2.0';
@@ -25,39 +40,58 @@ export interface MomentumExportDataV2 {
   exceptionRules?: unknown;
 }
 
-function serializeDeletedAt(deletedAt: Date | null | undefined): string | null | undefined {
+function serializeDeletedAt(
+  deletedAt: Date | null | undefined,
+): string | null | undefined {
   if (deletedAt === null) return null;
   return deletedAt ? deletedAt.toISOString() : undefined;
 }
 
 export function toExportedChain(chain: Chain): ExportedChain {
+  const {
+    createdAt,
+    lastCompletedAt,
+    groupStartedAt,
+    groupExpiresAt,
+    deletedAt,
+    ...rest
+  } = chain;
+
   return {
-    ...(chain as unknown as ExportedChain),
-    createdAt: chain.createdAt.toISOString(),
-    lastCompletedAt: chain.lastCompletedAt?.toISOString(),
-    groupStartedAt: chain.groupStartedAt?.toISOString(),
-    groupExpiresAt: chain.groupExpiresAt?.toISOString(),
-    deletedAt: serializeDeletedAt(chain.deletedAt),
+    ...rest,
+    createdAt: createdAt.toISOString(),
+    lastCompletedAt: lastCompletedAt?.toISOString(),
+    groupStartedAt: groupStartedAt?.toISOString(),
+    groupExpiresAt: groupExpiresAt?.toISOString(),
+    deletedAt: serializeDeletedAt(deletedAt),
   };
 }
 
-export function toExportedCompletionHistory(entry: CompletionHistory): ExportedCompletionHistory {
+export function toExportedCompletionHistory(
+  entry: CompletionHistory,
+): ExportedCompletionHistory {
+  const { completedAt, ...rest } = entry;
+
   return {
-    ...(entry as unknown as ExportedCompletionHistory),
-    completedAt: entry.completedAt.toISOString(),
+    ...rest,
+    completedAt: completedAt.toISOString(),
   };
 }
 
 export function toExportedRSIPNode(node: RSIPNode): ExportedRSIPNode {
+  const { createdAt, ...rest } = node;
+
   return {
-    ...(node as unknown as ExportedRSIPNode),
-    createdAt: node.createdAt.toISOString(),
+    ...rest,
+    createdAt: createdAt.toISOString(),
   };
 }
 
 export function toExportedRSIPMeta(meta: RSIPMeta): ExportedRSIPMeta {
+  const { lastAddedAt, ...rest } = meta;
+
   return {
-    ...(meta as unknown as ExportedRSIPMeta),
-    lastAddedAt: meta.lastAddedAt?.toISOString(),
+    ...rest,
+    lastAddedAt: lastAddedAt?.toISOString(),
   };
 }

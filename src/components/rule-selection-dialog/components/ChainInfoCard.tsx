@@ -15,10 +15,12 @@ export function ChainInfoCard({
   const actionColor = getActionColorClass(actionType);
 
   return (
-    <div className={`mx-6 mt-4 p-4 rounded-2xl border ${actionBg}`}>
+    <div className={`mx-6 mt-4 rounded-2xl border p-4 ${actionBg}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-medium text-gray-900 dark:text-white">{sessionContext.chainName}</h3>
+          <h3 className="font-medium text-gray-900 dark:text-white">
+            {sessionContext.chainName}
+          </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {language === 'zh'
               ? `已进行 ${Math.floor(sessionContext.elapsedTime / 60)} 分钟`
@@ -32,7 +34,7 @@ export function ChainInfoCard({
             )}
           </p>
         </div>
-        <div className={`text-2xl font-mono ${actionColor}`}>
+        <div className={`font-mono text-2xl ${actionColor}`}>
           {Math.floor(sessionContext.elapsedTime / 60)}:
           {(sessionContext.elapsedTime % 60).toString().padStart(2, '0')}
         </div>

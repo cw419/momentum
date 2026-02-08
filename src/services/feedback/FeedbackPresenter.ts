@@ -3,10 +3,7 @@
  * 负责显示各类反馈消息（错误、警告、信息、成功）
  */
 
-import {
-  ExceptionRuleError,
-  ExceptionRuleException
-} from '../../types';
+import { ExceptionRuleError, ExceptionRuleException } from '../../types';
 import { errorRecoveryManager, RecoveryAction } from '../ErrorRecoveryManager';
 import { getSafeErrorDetail } from '../../utils/errorMessage';
 import { getCurrentLanguage, tr } from '../../utils/runtimeI18n';
@@ -18,7 +15,7 @@ import type { FeedbackMessage, FeedbackAction, ProgressInfo } from './types';
 export class FeedbackPresenter {
   constructor(
     private readonly store: MessageStore,
-    private readonly formatter: ErrorMessageFormatter
+    private readonly formatter: ErrorMessageFormatter,
   ) {}
 
   showErrorMessage(error: ExceptionRuleException, context?: unknown): string {
@@ -34,14 +31,18 @@ export class FeedbackPresenter {
       message: userFriendlyMessage,
       actions: this.convertRecoveryActionsToFeedbackActions(recoveryActions),
       persistent: true,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.store.addMessage(feedbackMessage);
     return messageId;
   }
 
-  showWarning(title: string, message: string, actions?: FeedbackAction[]): string {
+  showWarning(
+    title: string,
+    message: string,
+    actions?: FeedbackAction[],
+  ): string {
     const messageId = this.store.generateMessageId();
 
     const feedbackMessage: FeedbackMessage = {
@@ -52,7 +53,7 @@ export class FeedbackPresenter {
       actions,
       autoHide: true,
       duration: 8000,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.store.addMessage(feedbackMessage);
@@ -69,14 +70,18 @@ export class FeedbackPresenter {
       message,
       autoHide,
       duration: autoHide ? 5000 : undefined,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.store.addMessage(feedbackMessage);
     return messageId;
   }
 
-  showSuccess(title: string, message: string, autoHide: boolean = true): string {
+  showSuccess(
+    title: string,
+    message: string,
+    autoHide: boolean = true,
+  ): string {
     const messageId = this.store.generateMessageId();
 
     const feedbackMessage: FeedbackMessage = {
@@ -86,7 +91,7 @@ export class FeedbackPresenter {
       message,
       autoHide,
       duration: autoHide ? 3000 : undefined,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.store.addMessage(feedbackMessage);
@@ -98,7 +103,7 @@ export class FeedbackPresenter {
       operation,
       progress,
       message,
-      isIndeterminate: progress === undefined
+      isIndeterminate: progress === undefined,
     });
   }
 
@@ -114,8 +119,10 @@ export class FeedbackPresenter {
     return this.store.getProgress();
   }
 
-  private convertRecoveryActionsToFeedbackActions(recoveryActions: RecoveryAction[]): FeedbackAction[] {
-    return recoveryActions.map(action => ({
+  private convertRecoveryActionsToFeedbackActions(
+    recoveryActions: RecoveryAction[],
+  ): FeedbackAction[] {
+    return recoveryActions.map((action) => ({
       id: action.id,
       label: action.label,
       type: action.type,
@@ -144,9 +151,14 @@ export class FeedbackPresenter {
             message = getSafeErrorDetail(error.message, language) ?? message;
           }
 
-          this.showErrorMessage(new ExceptionRuleException(ExceptionRuleError.STORAGE_ERROR, message));
+          this.showErrorMessage(
+            new ExceptionRuleException(
+              ExceptionRuleError.STORAGE_ERROR,
+              message,
+            ),
+          );
         }
-      }
+      },
     }));
   }
 }

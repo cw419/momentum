@@ -16,7 +16,13 @@
  * @see src/types/index.ts - RSIPNode, RSIPMeta, RSIPExecutionRecord 类型定义
  */
 import type { Dispatch, SetStateAction } from 'react';
-import type { AppState, RSIPMeta, RSIPNode, RSIPStabilityPhase, RSIPMode } from '../../types';
+import type {
+  AppState,
+  RSIPMeta,
+  RSIPNode,
+  RSIPStabilityPhase,
+  RSIPMode,
+} from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { getDescendantIds, getDescendantCount } from '../../utils/rsipTree';
 import { logger } from '../../utils/logger';
@@ -29,26 +35,36 @@ interface UseRsipDomainParams {
 
 export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
   const openRSIP = () => {
-    setState(prev => ({ ...prev, currentView: 'rsip' }));
+    setState((prev) => ({ ...prev, currentView: 'rsip' }));
   };
 
   const saveNodes = async (nodes: RSIPNode[]) => {
-    setState(prev => ({ ...prev, rsipNodes: nodes }));
+    setState((prev) => ({ ...prev, rsipNodes: nodes }));
     try {
       await storage.saveRSIPNodes(nodes);
     } catch (error) {
-      logger.error('RSIP', 'Failed to save RSIP nodes', { nodeCount: nodes.length }, toError(error));
+      logger.error(
+        'RSIP',
+        'Failed to save RSIP nodes',
+        { nodeCount: nodes.length },
+        toError(error),
+      );
     }
   };
 
   const saveMeta = async (meta: RSIPMeta) => {
     // 乐观更新：先更新本地状态，确保 UI 立即响应
-    setState(prev => ({ ...prev, rsipMeta: meta }));
+    setState((prev) => ({ ...prev, rsipMeta: meta }));
     try {
       await storage.saveRSIPMeta(meta);
     } catch (error) {
       // 保存失败时记录错误，但不回滚状态（允许用户继续操作）
-      logger.error('RSIP', 'Failed to save RSIP meta', { meta }, toError(error));
+      logger.error(
+        'RSIP',
+        'Failed to save RSIP meta',
+        { meta },
+        toError(error),
+      );
     }
   };
 
@@ -68,10 +84,10 @@ export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
   const markExecuted = async (
     nodeId: string,
     nodes: RSIPNode[],
-    _notes?: string
+    _notes?: string,
   ): Promise<RSIPNode[]> => {
     const now = new Date();
-    const updatedNodes = nodes.map(node => {
+    const updatedNodes = nodes.map((node) => {
       if (node.id !== nodeId) return node;
 
       const consecutiveExecutions = (node.consecutiveExecutions ?? 0) + 1;
@@ -108,13 +124,13 @@ export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
   const markViolated = async (
     nodeId: string,
     nodes: RSIPNode[],
-    _notes?: string
+    _notes?: string,
   ): Promise<RSIPNode[]> => {
     // 获取要删除的节点ID（当前节点 + 所有子孙节点）
     const idsToDelete = new Set([nodeId, ...getDescendantIds(nodes, nodeId)]);
 
     // 过滤掉要删除的节点
-    const updatedNodes = nodes.filter(node => !idsToDelete.has(node.id));
+    const updatedNodes = nodes.filter((node) => !idsToDelete.has(node.id));
 
     await saveNodes(updatedNodes);
     return updatedNodes;
@@ -159,9 +175,9 @@ export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
   /** 计算约束力（失败代价） */
   const calculateConstraintPower = (
     nodeId: string,
-    nodes: RSIPNode[]
+    nodes: RSIPNode[],
   ): { descendantCount: number; failureCost: number } => {
-    const node = nodes.find(n => n.id === nodeId);
+    const node = nodes.find((n) => n.id === nodeId);
     if (!node) return { descendantCount: 0, failureCost: 0 };
 
     const descendantCount = getDescendantCount(nodes, nodeId);
@@ -182,7 +198,7 @@ export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
 
   /** 计算各阶段定式数量分布 */
   const calculatePhaseDistribution = (
-    nodes: RSIPNode[]
+    nodes: RSIPNode[],
   ): { E0: number; E1: number; E2: number } => {
     const distribution = { E0: 0, E1: 0, E2: 0 };
     for (const node of nodes) {
@@ -207,4 +223,3 @@ export function useRsipDomain({ setState, storage }: UseRsipDomainParams) {
     calculatePhaseDistribution,
   };
 }
-

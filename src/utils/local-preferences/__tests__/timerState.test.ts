@@ -85,15 +85,21 @@ describe('local-preferences/timerState', () => {
   });
 
   it('returns safe fallbacks and logs warnings when storage operations throw', () => {
-    const getItemSpy = vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
-      throw new Error('blocked get');
-    });
-    const setItemSpy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('blocked set');
-    });
-    const removeItemSpy = vi.spyOn(window.localStorage, 'removeItem').mockImplementation(() => {
-      throw new Error('blocked remove');
-    });
+    const getItemSpy = vi
+      .spyOn(window.localStorage, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('blocked get');
+      });
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('blocked set');
+      });
+    const removeItemSpy = vi
+      .spyOn(window.localStorage, 'removeItem')
+      .mockImplementation(() => {
+        throw new Error('blocked remove');
+      });
 
     expect(getTimerState('session-2')).toBeNull();
     expect(() =>
@@ -104,7 +110,7 @@ describe('local-preferences/timerState', () => {
         totalPausedDuration: 0,
         isPaused: false,
         timestamp: 1,
-      })
+      }),
     ).not.toThrow();
     expect(() => clearTimerState('session-2')).not.toThrow();
 
@@ -134,9 +140,11 @@ describe('local-preferences/timerState', () => {
         createEnumerableStorage({
           [`${LOCAL_STORAGE_KEYS.TIMER_PREFIX}session-3`]: 'value-1',
           other_key: 'value-2',
-        })
+        }),
       );
-      expect(getAllTimerKeys()).toEqual([`${LOCAL_STORAGE_KEYS.TIMER_PREFIX}session-3`]);
+      expect(getAllTimerKeys()).toEqual([
+        `${LOCAL_STORAGE_KEYS.TIMER_PREFIX}session-3`,
+      ]);
 
       replaceLocalStorage({
         length: 2,
@@ -145,7 +153,10 @@ describe('local-preferences/timerState', () => {
         unrelated: '3',
       });
       expect(getAllTimerKeys().sort()).toEqual(
-        [`${LOCAL_STORAGE_KEYS.TIMER_PREFIX}a`, `${LOCAL_STORAGE_KEYS.TIMER_PREFIX}b`].sort()
+        [
+          `${LOCAL_STORAGE_KEYS.TIMER_PREFIX}a`,
+          `${LOCAL_STORAGE_KEYS.TIMER_PREFIX}b`,
+        ].sort(),
       );
     } finally {
       replaceLocalStorage(originalLocalStorage);
@@ -163,7 +174,10 @@ describe('local-preferences/timerState', () => {
       });
 
       expect(getAllTimerKeys().sort()).toEqual(
-        [`${LOCAL_STORAGE_KEYS.TIMER_PREFIX}x`, `${LOCAL_STORAGE_KEYS.TIMER_PREFIX}y`].sort()
+        [
+          `${LOCAL_STORAGE_KEYS.TIMER_PREFIX}x`,
+          `${LOCAL_STORAGE_KEYS.TIMER_PREFIX}y`,
+        ].sort(),
       );
     } finally {
       replaceLocalStorage(originalLocalStorage);
@@ -232,7 +246,7 @@ describe('local-preferences/timerState', () => {
         'LOCAL_PREFERENCES',
         'Failed to cleanup expired timers',
         undefined,
-        expect.any(Error)
+        expect.any(Error),
       );
     } finally {
       replaceLocalStorage(originalLocalStorage);

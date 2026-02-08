@@ -59,7 +59,7 @@ describe('useBettingDomain', () => {
         setActiveSessionId,
         setShowBettingModal,
         handleStartChain,
-      })
+      }),
     );
 
     await act(async () => {
@@ -67,7 +67,11 @@ describe('useBettingDomain', () => {
     });
 
     expect(emitPointsChanged).toHaveBeenCalledTimes(1);
-    expect(logger.debug).toHaveBeenCalledWith('BETTING', 'Bet placed successfully', { betResult });
+    expect(logger.debug).toHaveBeenCalledWith(
+      'BETTING',
+      'Bet placed successfully',
+      { betResult },
+    );
     expect(setActiveSessionId).toHaveBeenCalledWith('session-1');
     expect(handleStartChain).toHaveBeenCalledWith('chain-1');
     expect(setPendingChainId).toHaveBeenCalledWith(null);
@@ -92,7 +96,7 @@ describe('useBettingDomain', () => {
         setActiveSessionId,
         setShowBettingModal,
         handleStartChain,
-      })
+      }),
     );
 
     await act(async () => {
@@ -122,7 +126,7 @@ describe('useBettingDomain', () => {
         setActiveSessionId: vi.fn(),
         setShowBettingModal: vi.fn(),
         handleStartChain: vi.fn(async () => undefined),
-      })
+      }),
     );
 
     await act(async () => {
@@ -135,7 +139,7 @@ describe('useBettingDomain', () => {
     expect(logger.debug).toHaveBeenCalledWith(
       'BETTING',
       'Cancelled session deleted (refund handled by trigger)',
-      { sessionId: 'session-2' }
+      { sessionId: 'session-2' },
     );
   });
 
@@ -156,7 +160,7 @@ describe('useBettingDomain', () => {
         setActiveSessionId,
         setShowBettingModal,
         handleStartChain: vi.fn(async () => undefined),
-      })
+      }),
     );
 
     await act(async () => {
@@ -196,7 +200,7 @@ describe('useBettingDomain', () => {
         setActiveSessionId,
         setShowBettingModal,
         handleStartChain: vi.fn(async () => undefined),
-      })
+      }),
     );
 
     await act(async () => {
@@ -204,13 +208,17 @@ describe('useBettingDomain', () => {
     });
 
     expect(storage.deleteBettingSession).toHaveBeenCalledWith('session-4');
-    expect(logger.error).toHaveBeenCalledWith('BETTING', 'Failed to delete cancelled session', {
-      sessionId: 'session-4',
-      error: {
-        code: 'BET_DELETE_FAILED',
-        message: 'delete failed',
+    expect(logger.error).toHaveBeenCalledWith(
+      'BETTING',
+      'Failed to delete cancelled session',
+      {
+        sessionId: 'session-4',
+        error: {
+          code: 'BET_DELETE_FAILED',
+          message: 'delete failed',
+        },
       },
-    });
+    );
     expect(setPendingChainId).toHaveBeenCalledWith(null);
     expect(setCurrentSessionId).toHaveBeenCalledWith(null);
     expect(setActiveSessionId).toHaveBeenCalledWith(null);
@@ -238,7 +246,7 @@ describe('useBettingDomain', () => {
         setActiveSessionId,
         setShowBettingModal,
         handleStartChain: vi.fn(async () => undefined),
-      })
+      }),
     );
 
     await act(async () => {
@@ -249,7 +257,7 @@ describe('useBettingDomain', () => {
       'BETTING',
       expect.any(String),
       expect.objectContaining({ sessionId: 'session-5' }),
-      expect.any(Error)
+      expect.any(Error),
     );
     expect(emitPointsChanged).toHaveBeenCalledTimes(1);
     expect(setPendingChainId).toHaveBeenCalledWith(null);

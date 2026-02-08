@@ -4,12 +4,23 @@ import {
   supabase,
   waitForAuthentication as supabaseWaitForAuthentication,
 } from '../../../lib/supabase';
-import type { AuthenticationResult, AuthSession, AuthStateChangeEvent, AuthUser } from '../../../domain/auth';
-import type { BetPlacementRequest, BetPlacementResult } from '../../../domain/betting';
+import type {
+  AuthenticationResult,
+  AuthSession,
+  AuthStateChangeEvent,
+  AuthUser,
+} from '../../../domain/auth';
+import type {
+  BetPlacementRequest,
+  BetPlacementResult,
+} from '../../../domain/betting';
 import type { CheckinResult, CheckinStats } from '../../../domain/checkin';
 import type { AppError } from '../../../domain/errors';
 import type { Result } from '../../../domain/result';
-import type { GamblingSettings, UpdateSettingsResult } from '../../../domain/userSettings';
+import type {
+  GamblingSettings,
+  UpdateSettingsResult,
+} from '../../../domain/userSettings';
 import type {
   ActiveSession,
   Chain,
@@ -50,7 +61,10 @@ export class SupabaseStorage implements MomentumStorage {
    * If a request with the same key is already in-flight, returns the existing promise.
    * This prevents redundant database queries when multiple components request the same data simultaneously.
    */
-  private deduplicatedRequest<T>(key: string, request: () => Promise<T>): Promise<T> {
+  private deduplicatedRequest<T>(
+    key: string,
+    request: () => Promise<T>,
+  ): Promise<T> {
     const existing = this.pendingRequests.get(key);
     if (existing) {
       return existing as Promise<T>;
@@ -80,7 +94,10 @@ export class SupabaseStorage implements MomentumStorage {
     this.clearSchemaCache();
   }
 
-  async verifySchemaColumns(tableName: string, requiredColumns: string[]): Promise<SchemaVerificationResult> {
+  async verifySchemaColumns(
+    tableName: string,
+    requiredColumns: string[],
+  ): Promise<SchemaVerificationResult> {
     const cacheKey = `${tableName}:${requiredColumns.join(',')}`;
 
     if (this.sessionSchemaVerified.has(cacheKey)) {
@@ -92,7 +109,8 @@ export class SupabaseStorage implements MomentumStorage {
     const result: SchemaVerificationResult = {
       hasAllColumns: true,
       missingColumns: [],
-      error: 'Schema verification skipped to prevent information_schema access issues',
+      error:
+        'Schema verification skipped to prevent information_schema access issues',
     };
 
     this.schemaCache.set(cacheKey, result);
@@ -103,35 +121,45 @@ export class SupabaseStorage implements MomentumStorage {
   private readonly ctx: SupabaseStorageContext = {
     getClient: () => this.getClient(),
     getCurrentUser: () => supabaseGetCurrentUser(),
-    waitForAuthentication: (maxWaitTime?: number) => supabaseWaitForAuthentication(maxWaitTime),
+    waitForAuthentication: (maxWaitTime?: number) =>
+      supabaseWaitForAuthentication(maxWaitTime),
     isUserAuthenticated: () => supabaseIsUserAuthenticated(),
-    retryOperation: (operation, maxRetries, baseDelay) => retryOperation(operation, maxRetries, baseDelay),
+    retryOperation: (operation, maxRetries, baseDelay) =>
+      retryOperation(operation, maxRetries, baseDelay),
     retryWithAuth: (operation, maxRetries, baseDelay) =>
       retryWithAuth(
         {
           isUserAuthenticated: () => supabaseIsUserAuthenticated(),
-          waitForAuthentication: (maxWaitTime?: number) => supabaseWaitForAuthentication(maxWaitTime),
+          waitForAuthentication: (maxWaitTime?: number) =>
+            supabaseWaitForAuthentication(maxWaitTime),
         },
         operation,
         maxRetries,
-        baseDelay
+        baseDelay,
       ),
-    verifySchemaColumns: (tableName, requiredColumns) => this.verifySchemaColumns(tableName, requiredColumns),
+    verifySchemaColumns: (tableName, requiredColumns) =>
+      this.verifySchemaColumns(tableName, requiredColumns),
     clearSchemaCache: () => this.clearSchemaCache(),
   };
 
   // Chains (with request deduplication for read operations)
   getChains(): Promise<Chain[]> {
-    return this.deduplicatedRequest('getChains', () => chainsApi.getChains(this.ctx));
+    return this.deduplicatedRequest('getChains', () =>
+      chainsApi.getChains(this.ctx),
+    );
   }
   saveChains(chains: Chain[]): Promise<void> {
     return chainsApi.saveChains(this.ctx, chains);
   }
   getActiveChains(): Promise<Chain[]> {
-    return this.deduplicatedRequest('getActiveChains', () => chainsApi.getActiveChains(this.ctx));
+    return this.deduplicatedRequest('getActiveChains', () =>
+      chainsApi.getActiveChains(this.ctx),
+    );
   }
   getDeletedChains(): Promise<DeletedChain[]> {
-    return this.deduplicatedRequest('getDeletedChains', () => chainsApi.getDeletedChains(this.ctx));
+    return this.deduplicatedRequest('getDeletedChains', () =>
+      chainsApi.getDeletedChains(this.ctx),
+    );
   }
   softDeleteChain(chainId: string): Promise<void> {
     return chainsApi.softDeleteChain(this.ctx, chainId);
@@ -148,7 +176,9 @@ export class SupabaseStorage implements MomentumStorage {
 
   // Scheduled sessions (with request deduplication for read operations)
   getScheduledSessions(): Promise<ScheduledSession[]> {
-    return this.deduplicatedRequest('getScheduledSessions', () => sessionsApi.getScheduledSessions(this.ctx));
+    return this.deduplicatedRequest('getScheduledSessions', () =>
+      sessionsApi.getScheduledSessions(this.ctx),
+    );
   }
   saveScheduledSessions(sessions: ScheduledSession[]): Promise<void> {
     return sessionsApi.saveScheduledSessions(this.ctx, sessions);
@@ -156,7 +186,9 @@ export class SupabaseStorage implements MomentumStorage {
 
   // Active session (with request deduplication for read operations)
   getActiveSession(): Promise<ActiveSession | null> {
-    return this.deduplicatedRequest('getActiveSession', () => sessionsApi.getActiveSession(this.ctx));
+    return this.deduplicatedRequest('getActiveSession', () =>
+      sessionsApi.getActiveSession(this.ctx),
+    );
   }
   saveActiveSession(session: ActiveSession | null): Promise<void> {
     return sessionsApi.saveActiveSession(this.ctx, session);
@@ -164,7 +196,9 @@ export class SupabaseStorage implements MomentumStorage {
 
   // Completion history (with request deduplication for read operations)
   getCompletionHistory(): Promise<CompletionHistory[]> {
-    return this.deduplicatedRequest('getCompletionHistory', () => historyApi.getCompletionHistory(this.ctx));
+    return this.deduplicatedRequest('getCompletionHistory', () =>
+      historyApi.getCompletionHistory(this.ctx),
+    );
   }
   saveCompletionHistory(history: CompletionHistory[]): Promise<void> {
     return historyApi.saveCompletionHistory(this.ctx, history);
@@ -172,13 +206,17 @@ export class SupabaseStorage implements MomentumStorage {
 
   // RSIP (with request deduplication for read operations)
   getRSIPNodes(): Promise<RSIPNode[]> {
-    return this.deduplicatedRequest('getRSIPNodes', () => rsipApi.getRSIPNodes(this.ctx));
+    return this.deduplicatedRequest('getRSIPNodes', () =>
+      rsipApi.getRSIPNodes(this.ctx),
+    );
   }
   saveRSIPNodes(nodes: RSIPNode[]): Promise<void> {
     return rsipApi.saveRSIPNodes(this.ctx, nodes);
   }
   getRSIPMeta(): Promise<RSIPMeta> {
-    return this.deduplicatedRequest('getRSIPMeta', () => rsipApi.getRSIPMeta(this.ctx));
+    return this.deduplicatedRequest('getRSIPMeta', () =>
+      rsipApi.getRSIPMeta(this.ctx),
+    );
   }
   saveRSIPMeta(meta: RSIPMeta): Promise<void> {
     return rsipApi.saveRSIPMeta(this.ctx, meta);
@@ -204,8 +242,14 @@ export class SupabaseStorage implements MomentumStorage {
   // Compatibility / maintenance
   async migrateCompletionHistoryForTiming(): Promise<void> {
     try {
-      const [history, chains] = await Promise.all([this.getCompletionHistory(), this.getChains()]);
-      const { updatedHistory, hasChanges } = migrateCompletionHistoryForTiming(history, chains);
+      const [history, chains] = await Promise.all([
+        this.getCompletionHistory(),
+        this.getChains(),
+      ]);
+      const { updatedHistory, hasChanges } = migrateCompletionHistoryForTiming(
+        history,
+        chains,
+      );
 
       if (hasChanges) {
         await this.saveCompletionHistory(updatedHistory);
@@ -219,7 +263,9 @@ export class SupabaseStorage implements MomentumStorage {
   getCurrentUser(): Promise<Result<AuthUser | null, AppError>> {
     return authApi.getCurrentUser();
   }
-  waitForAuthentication(maxWaitTime?: number): Promise<Result<AuthenticationResult, AppError>> {
+  waitForAuthentication(
+    maxWaitTime?: number,
+  ): Promise<Result<AuthenticationResult, AppError>> {
     return authApi.waitForAuthentication(maxWaitTime);
   }
   isUserAuthenticated(): Promise<Result<boolean, AppError>> {
@@ -234,7 +280,9 @@ export class SupabaseStorage implements MomentumStorage {
   signOut(): Promise<Result<void, AppError>> {
     return authApi.signOut();
   }
-  onAuthStateChange(callback: (event: AuthStateChangeEvent, session: AuthSession) => void): Result<() => void, AppError> {
+  onAuthStateChange(
+    callback: (event: AuthStateChangeEvent, session: AuthSession) => void,
+  ): Result<() => void, AppError> {
     return authApi.onAuthStateChange(callback);
   }
 
@@ -250,16 +298,30 @@ export class SupabaseStorage implements MomentumStorage {
   }
 
   // Betting (supabase)
-  createBettingSession(chainId: string, duration: number): Promise<Result<string, AppError>> {
+  createBettingSession(
+    chainId: string,
+    duration: number,
+  ): Promise<Result<string, AppError>> {
     return bettingApi.createBettingSession(this.ctx, chainId, duration);
   }
   deleteBettingSession(sessionId: string): Promise<Result<void, AppError>> {
     return bettingApi.deleteBettingSession(this.ctx, sessionId);
   }
-  completeTaskWithBetting(sessionId: string, wasSuccessful: boolean, completionNotes?: string): Promise<Result<unknown, AppError>> {
-    return bettingApi.completeTaskWithBetting(this.ctx, sessionId, wasSuccessful, completionNotes);
+  completeTaskWithBetting(
+    sessionId: string,
+    wasSuccessful: boolean,
+    completionNotes?: string,
+  ): Promise<Result<unknown, AppError>> {
+    return bettingApi.completeTaskWithBetting(
+      this.ctx,
+      sessionId,
+      wasSuccessful,
+      completionNotes,
+    );
   }
-  placeBet(betRequest: BetPlacementRequest): Promise<Result<BetPlacementResult, AppError>> {
+  placeBet(
+    betRequest: BetPlacementRequest,
+  ): Promise<Result<BetPlacementResult, AppError>> {
     return bettingApi.placeBet(this.ctx, betRequest);
   }
   getUserAvailablePoints(): Promise<Result<number, AppError>> {
@@ -285,4 +347,3 @@ export class SupabaseStorage implements MomentumStorage {
     return localStorageUtils.savePetState(pet);
   }
 }
-

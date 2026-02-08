@@ -23,17 +23,27 @@ export function useGroupCardScheduleCountdown(params: {
   useEffect(() => {
     if (!scheduledSession) return;
 
-    const durationForWarning = nextUnit ? nextUnit.auxiliaryDuration : group.auxiliaryDuration;
+    const durationForWarning = nextUnit
+      ? nextUnit.auxiliaryDuration
+      : group.auxiliaryDuration;
     const notificationThreshold = getNotificationThreshold(durationForWarning);
 
     const updateTimer = () => {
       const remaining = getTimeRemaining(scheduledSession.expiresAt);
       setTimeRemaining(remaining);
 
-      if (notificationThreshold && remaining <= notificationThreshold && remaining > 0 && !hasShownWarning) {
+      if (
+        notificationThreshold &&
+        remaining <= notificationThreshold &&
+        remaining > 0 &&
+        !hasShownWarning
+      ) {
         setHasShownWarning(true);
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        notificationManager.notifyScheduleWarning(group.name, tr(`${minutes}分钟`, `${minutes} min`));
+        notificationManager.notifyScheduleWarning(
+          group.name,
+          tr(`${minutes}分钟`, `${minutes} min`),
+        );
       }
 
       if (remaining <= 0) {
@@ -44,7 +54,14 @@ export function useGroupCardScheduleCountdown(params: {
     updateTimer();
     const interval = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(interval);
-  }, [group.auxiliaryDuration, group.name, hasShownWarning, nextUnit, scheduledSession, tr]);
+  }, [
+    group.auxiliaryDuration,
+    group.name,
+    hasShownWarning,
+    nextUnit,
+    scheduledSession,
+    tr,
+  ]);
 
   useEffect(() => {
     setHasShownWarning(false);
@@ -52,4 +69,3 @@ export function useGroupCardScheduleCountdown(params: {
 
   return { timeRemaining };
 }
-

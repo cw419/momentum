@@ -6,22 +6,27 @@ interface MockNotificationOptions {
 }
 
 export interface NotificationMockHandle {
-  instances: Array<{ title: string; options: NotificationOptions; close: ReturnType<typeof vi.fn> }>;
+  instances: Array<{
+    title: string;
+    options: NotificationOptions;
+    close: ReturnType<typeof vi.fn>;
+  }>;
   requestPermissionMock: ReturnType<typeof vi.fn>;
   setPermission(permission: NotificationPermission): void;
   restore(): void;
 }
 
-export function installNotificationMock(options: MockNotificationOptions = {}): NotificationMockHandle {
-  const {
-    initialPermission = 'default',
-    requestResult = 'granted',
-  } = options;
+export function installNotificationMock(
+  options: MockNotificationOptions = {},
+): NotificationMockHandle {
+  const { initialPermission = 'default', requestResult = 'granted' } = options;
 
-  const originalGlobal = (globalThis as { Notification?: unknown }).Notification;
-  const originalWindow = typeof window !== 'undefined'
-    ? (window as Window & { Notification?: unknown }).Notification
-    : undefined;
+  const originalGlobal = (globalThis as { Notification?: unknown })
+    .Notification;
+  const originalWindow =
+    typeof window !== 'undefined'
+      ? (window as Window & { Notification?: unknown }).Notification
+      : undefined;
 
   const instances: NotificationMockHandle['instances'] = [];
   const requestPermissionMock = vi.fn(async () => requestResult);
@@ -34,7 +39,7 @@ export function installNotificationMock(options: MockNotificationOptions = {}): 
 
     constructor(
       public title: string,
-      public options: NotificationOptions = {}
+      public options: NotificationOptions = {},
     ) {
       instances.push({
         title,
@@ -89,4 +94,3 @@ export function installNotificationMock(options: MockNotificationOptions = {}): 
     },
   };
 }
-

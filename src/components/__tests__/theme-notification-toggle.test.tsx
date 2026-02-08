@@ -19,15 +19,21 @@ describe('Theme and notification toggles', () => {
 
   describe('ThemeToggle', () => {
     it('uses stored theme and toggles to light', async () => {
-      const getThemeSpy = vi.spyOn(localPreferences, 'getTheme').mockReturnValue('dark');
-      const setThemeSpy = vi.spyOn(localPreferences, 'setTheme').mockImplementation(() => undefined);
+      const getThemeSpy = vi
+        .spyOn(localPreferences, 'getTheme')
+        .mockReturnValue('dark');
+      const setThemeSpy = vi
+        .spyOn(localPreferences, 'setTheme')
+        .mockImplementation(() => undefined);
 
       renderWithI18n(<ThemeToggle />);
 
       expect(document.documentElement.classList.contains('dark')).toBe(true);
       expect(setThemeSpy).toHaveBeenCalledWith('dark');
 
-      await userEvent.click(screen.getByRole('button', { name: 'Toggle theme' }));
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Toggle theme' }),
+      );
 
       await waitFor(() => {
         expect(document.documentElement.classList.contains('dark')).toBe(false);
@@ -40,7 +46,9 @@ describe('Theme and notification toggles', () => {
 
     it('falls back to matchMedia preference when no stored theme', () => {
       vi.spyOn(localPreferences, 'getTheme').mockReturnValue(null);
-      vi.spyOn(localPreferences, 'setTheme').mockImplementation(() => undefined);
+      vi.spyOn(localPreferences, 'setTheme').mockImplementation(
+        () => undefined,
+      );
       vi.spyOn(window, 'matchMedia').mockImplementation(
         (query: string) =>
           ({
@@ -52,7 +60,7 @@ describe('Theme and notification toggles', () => {
             addEventListener: vi.fn(),
             removeEventListener: vi.fn(),
             dispatchEvent: vi.fn(),
-          }) as MediaQueryList
+          }) as MediaQueryList,
       );
 
       renderWithI18n(<ThemeToggle />);
@@ -70,39 +78,59 @@ describe('Theme and notification toggles', () => {
 
     it('enables notifications when switch is turned on', async () => {
       vi.spyOn(notificationManager, 'isSupported').mockReturnValue(true);
-      vi.spyOn(notificationManager, 'isNotificationsEnabled').mockReturnValue(false);
-      const enableSpy = vi.spyOn(notificationManager, 'enableNotifications').mockResolvedValue(true);
-      vi.spyOn(notificationManager, 'disableNotifications').mockImplementation(() => undefined);
+      vi.spyOn(notificationManager, 'isNotificationsEnabled').mockReturnValue(
+        false,
+      );
+      const enableSpy = vi
+        .spyOn(notificationManager, 'enableNotifications')
+        .mockResolvedValue(true);
+      vi.spyOn(notificationManager, 'disableNotifications').mockImplementation(
+        () => undefined,
+      );
 
       renderWithI18n(<NotificationToggle />);
 
-      const toggle = await screen.findByRole('switch', { name: 'Toggle desktop notifications' });
+      const toggle = await screen.findByRole('switch', {
+        name: 'Toggle desktop notifications',
+      });
       expect(toggle).toHaveAttribute('aria-checked', 'false');
 
       await userEvent.click(toggle);
 
       expect(enableSpy).toHaveBeenCalledTimes(1);
       await waitFor(() => {
-        expect(screen.getByRole('switch', { name: 'Toggle desktop notifications' })).toHaveAttribute('aria-checked', 'true');
+        expect(
+          screen.getByRole('switch', { name: 'Toggle desktop notifications' }),
+        ).toHaveAttribute('aria-checked', 'true');
       });
     });
 
     it('disables notifications when switch is turned off', async () => {
       vi.spyOn(notificationManager, 'isSupported').mockReturnValue(true);
-      vi.spyOn(notificationManager, 'isNotificationsEnabled').mockReturnValue(true);
-      vi.spyOn(notificationManager, 'enableNotifications').mockResolvedValue(true);
-      const disableSpy = vi.spyOn(notificationManager, 'disableNotifications').mockImplementation(() => undefined);
+      vi.spyOn(notificationManager, 'isNotificationsEnabled').mockReturnValue(
+        true,
+      );
+      vi.spyOn(notificationManager, 'enableNotifications').mockResolvedValue(
+        true,
+      );
+      const disableSpy = vi
+        .spyOn(notificationManager, 'disableNotifications')
+        .mockImplementation(() => undefined);
 
       renderWithI18n(<NotificationToggle />);
 
-      const toggle = await screen.findByRole('switch', { name: 'Toggle desktop notifications' });
+      const toggle = await screen.findByRole('switch', {
+        name: 'Toggle desktop notifications',
+      });
       expect(toggle).toHaveAttribute('aria-checked', 'true');
 
       await userEvent.click(toggle);
 
       expect(disableSpy).toHaveBeenCalledTimes(1);
       await waitFor(() => {
-        expect(screen.getByRole('switch', { name: 'Toggle desktop notifications' })).toHaveAttribute('aria-checked', 'false');
+        expect(
+          screen.getByRole('switch', { name: 'Toggle desktop notifications' }),
+        ).toHaveAttribute('aria-checked', 'false');
       });
     });
   });

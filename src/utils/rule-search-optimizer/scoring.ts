@@ -2,13 +2,17 @@ import type { ExceptionRule } from '../../types';
 import { calculateSimilarity } from '../stringUtils';
 import type { SearchResult } from './types';
 
-export function applyUsageBonuses(rule: ExceptionRule, baseScore: number): number {
+export function applyUsageBonuses(
+  rule: ExceptionRule,
+  baseScore: number,
+): number {
   let score = baseScore;
   const usageBonus = Math.min((rule.usageCount || 0) * 10, 200);
   score += usageBonus;
 
   if (rule.lastUsedAt) {
-    const daysSinceLastUse = (Date.now() - rule.lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceLastUse =
+      (Date.now() - rule.lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceLastUse < 7) {
       score += 50;
     }
@@ -56,6 +60,6 @@ export function scoreRule(rule: ExceptionRule, query: string): SearchResult {
     rule,
     score,
     matchType,
-    highlightRanges
+    highlightRanges,
   };
 }

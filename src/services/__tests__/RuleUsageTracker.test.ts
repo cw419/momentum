@@ -4,7 +4,11 @@
 
 import { RuleUsageTracker } from '../RuleUsageTracker';
 import { ExceptionRuleStorageService } from '../ExceptionRuleStorage';
-import { ExceptionRuleType, SessionContext, ExceptionRuleException } from '../../types';
+import {
+  ExceptionRuleType,
+  SessionContext,
+  ExceptionRuleException,
+} from '../../types';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -20,12 +24,12 @@ const localStorageMock = (() => {
     },
     clear: () => {
       store = {};
-    }
+    },
   };
 })();
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
 describe('RuleUsageTracker', () => {
@@ -38,7 +42,9 @@ describe('RuleUsageTracker', () => {
     localStorage.clear();
   });
 
-  const createMockSessionContext = (overrides: Partial<SessionContext> = {}): SessionContext => ({
+  const createMockSessionContext = (
+    overrides: Partial<SessionContext> = {},
+  ): SessionContext => ({
     sessionId: 'session_1',
     chainId: 'chain_1',
     chainName: '测试任务',
@@ -46,18 +52,22 @@ describe('RuleUsageTracker', () => {
     elapsedTime: 300, // 5分钟
     remainingTime: 600, // 10分钟
     isDurationless: false,
-    ...overrides
+    ...overrides,
   });
 
   describe('记录规则使用', () => {
     test('应该能够记录规则使用', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const sessionContext = createMockSessionContext();
-      const record = await tracker.recordUsage(rule.id, sessionContext, 'pause');
+      const record = await tracker.recordUsage(
+        rule.id,
+        sessionContext,
+        'pause',
+      );
 
       expect(record.ruleId).toBe(rule.id);
       expect(record.chainId).toBe(sessionContext.chainId);
@@ -70,22 +80,24 @@ describe('RuleUsageTracker', () => {
 
     test('记录不存在的规则使用应该抛出异常', async () => {
       const sessionContext = createMockSessionContext();
-      
-      await expect(tracker.recordUsage('non_existent_id', sessionContext, 'pause'))
-        .rejects.toThrow(ExceptionRuleException);
+
+      await expect(
+        tracker.recordUsage('non_existent_id', sessionContext, 'pause'),
+      ).rejects.toThrow(ExceptionRuleException);
     });
 
     test('记录已删除规则的使用应该抛出异常', async () => {
       const rule = await storage.createRule({
         name: '待删除规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       await storage.deleteRule(rule.id);
       const sessionContext = createMockSessionContext();
 
-      await expect(tracker.recordUsage(rule.id, sessionContext, 'pause'))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        tracker.recordUsage(rule.id, sessionContext, 'pause'),
+      ).rejects.toThrow(ExceptionRuleException);
     });
   });
 
@@ -93,13 +105,19 @@ describe('RuleUsageTracker', () => {
     test('应该能够获取规则使用统计', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       // 创建多个使用记录
-      const sessionContext1 = createMockSessionContext({ sessionId: 'session_1', elapsedTime: 300 });
-      const sessionContext2 = createMockSessionContext({ sessionId: 'session_2', elapsedTime: 450 });
-      
+      const sessionContext1 = createMockSessionContext({
+        sessionId: 'session_1',
+        elapsedTime: 300,
+      });
+      const sessionContext2 = createMockSessionContext({
+        sessionId: 'session_2',
+        elapsedTime: 450,
+      });
+
       await tracker.recordUsage(rule.id, sessionContext1, 'pause');
       await tracker.recordUsage(rule.id, sessionContext2, 'pause');
 
@@ -116,7 +134,7 @@ describe('RuleUsageTracker', () => {
     test('没有使用记录的规则应该返回零统计', async () => {
       const rule = await storage.createRule({
         name: '未使用规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const stats = await tracker.getRuleUsageStats(rule.id);
@@ -128,8 +146,9 @@ describe('RuleUsageTracker', () => {
     });
 
     test('获取不存在规则的统计应该抛出异常', async () => {
-      await expect(tracker.getRuleUsageStats('non_existent_id'))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        tracker.getRuleUsageStats('non_existent_id'),
+      ).rejects.toThrow(ExceptionRuleException);
     });
   });
 
@@ -137,11 +156,11 @@ describe('RuleUsageTracker', () => {
     test('应该能够获取整体使用统计', async () => {
       const rule1 = await storage.createRule({
         name: '暂停规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       const rule2 = await storage.createRule({
         name: '完成规则',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
       const sessionContext = createMockSessionContext();
@@ -177,12 +196,16 @@ describe('RuleUsageTracker', () => {
     test('应该能够获取规则使用历史', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
-      const sessionContext1 = createMockSessionContext({ sessionId: 'session_1' });
-      const sessionContext2 = createMockSessionContext({ sessionId: 'session_2' });
-      
+      const sessionContext1 = createMockSessionContext({
+        sessionId: 'session_1',
+      });
+      const sessionContext2 = createMockSessionContext({
+        sessionId: 'session_2',
+      });
+
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
       await tracker.recordUsage(rule.id, sessionContext1, 'pause');
@@ -200,12 +223,14 @@ describe('RuleUsageTracker', () => {
     test('应该能够限制历史记录数量', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       // 创建3条记录
       for (let i = 0; i < 3; i++) {
-        const sessionContext = createMockSessionContext({ sessionId: `session_${i}` });
+        const sessionContext = createMockSessionContext({
+          sessionId: `session_${i}`,
+        });
         await tracker.recordUsage(rule.id, sessionContext, 'pause');
       }
 
@@ -216,25 +241,32 @@ describe('RuleUsageTracker', () => {
     test('应该能够获取会话使用历史', async () => {
       const rule1 = await storage.createRule({
         name: '规则1',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
       const rule2 = await storage.createRule({
         name: '规则2',
-        type: ExceptionRuleType.EARLY_COMPLETION_ONLY
+        type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
       });
 
-      const sessionContext = createMockSessionContext({ sessionId: 'target_session' });
+      const sessionContext = createMockSessionContext({
+        sessionId: 'target_session',
+      });
       await tracker.recordUsage(rule1.id, sessionContext, 'pause');
       await tracker.recordUsage(rule2.id, sessionContext, 'early_completion');
 
       // 创建其他会话的记录
-      const otherSessionContext = createMockSessionContext({ sessionId: 'other_session' });
+      const otherSessionContext = createMockSessionContext({
+        sessionId: 'other_session',
+      });
       await tracker.recordUsage(rule1.id, otherSessionContext, 'pause');
 
-      const sessionHistory = await tracker.getSessionUsageHistory('target_session');
+      const sessionHistory =
+        await tracker.getSessionUsageHistory('target_session');
 
       expect(sessionHistory).toHaveLength(2);
-      expect(sessionHistory.every(r => r.sessionId === 'target_session')).toBe(true);
+      expect(
+        sessionHistory.every((r) => r.sessionId === 'target_session'),
+      ).toBe(true);
     });
   });
 
@@ -242,7 +274,7 @@ describe('RuleUsageTracker', () => {
     test('应该能够获取时间范围内的使用统计', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const sessionContext = createMockSessionContext();
@@ -265,7 +297,7 @@ describe('RuleUsageTracker', () => {
     test('时间范围外的记录应该被排除', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const sessionContext = createMockSessionContext();
@@ -289,7 +321,7 @@ describe('RuleUsageTracker', () => {
     test('应该能够获取规则使用趋势', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const sessionContext = createMockSessionContext();
@@ -298,7 +330,7 @@ describe('RuleUsageTracker', () => {
       const trend = await tracker.getRuleUsageTrend(rule.id, 7);
 
       expect(trend.totalUsage).toBe(1);
-      expect(trend.averageDailyUsage).toBeCloseTo(1/7, 2);
+      expect(trend.averageDailyUsage).toBeCloseTo(1 / 7, 2);
       expect(trend.trend).toHaveLength(8); // 7天 + 今天
       expect(trend.peakUsageDate).toEqual(expect.any(String));
     });
@@ -306,7 +338,7 @@ describe('RuleUsageTracker', () => {
     test('没有使用记录的规则应该返回空趋势', async () => {
       const rule = await storage.createRule({
         name: '未使用规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const trend = await tracker.getRuleUsageTrend(rule.id, 7);
@@ -321,21 +353,21 @@ describe('RuleUsageTracker', () => {
     test('应该能够分析规则使用效率', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       // 创建不同进度的使用记录
-      const earlyContext = createMockSessionContext({ 
-        elapsedTime: 100, 
-        remainingTime: 800 // 进度 11%
+      const earlyContext = createMockSessionContext({
+        elapsedTime: 100,
+        remainingTime: 800, // 进度 11%
       });
-      const midContext = createMockSessionContext({ 
-        elapsedTime: 400, 
-        remainingTime: 600 // 进度 40%
+      const midContext = createMockSessionContext({
+        elapsedTime: 400,
+        remainingTime: 600, // 进度 40%
       });
-      const lateContext = createMockSessionContext({ 
-        elapsedTime: 800, 
-        remainingTime: 200 // 进度 80%
+      const lateContext = createMockSessionContext({
+        elapsedTime: 800,
+        remainingTime: 200, // 进度 80%
       });
 
       await tracker.recordUsage(rule.id, earlyContext, 'pause');
@@ -355,7 +387,7 @@ describe('RuleUsageTracker', () => {
     test('没有进度数据时应该返回默认分析', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const analysis = await tracker.getRuleEfficiencyAnalysis(rule.id);
@@ -372,7 +404,7 @@ describe('RuleUsageTracker', () => {
     test('应该能够导出JSON格式的使用数据', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const sessionContext = createMockSessionContext();
@@ -392,7 +424,7 @@ describe('RuleUsageTracker', () => {
     test('应该能够导出CSV格式的使用数据', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const sessionContext = createMockSessionContext();
@@ -411,7 +443,7 @@ describe('RuleUsageTracker', () => {
     test('应该能够计算需要清理的过期记录数量', async () => {
       const rule = await storage.createRule({
         name: '测试规则',
-        type: ExceptionRuleType.PAUSE_ONLY
+        type: ExceptionRuleType.PAUSE_ONLY,
       });
 
       const sessionContext = createMockSessionContext();

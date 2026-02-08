@@ -7,7 +7,7 @@ import {
   ExceptionRule,
   ExceptionRuleError,
   ExceptionRuleException,
-  ExceptionRuleType
+  ExceptionRuleType,
 } from '../../types';
 import { RulePersistence } from './RulePersistence';
 import { RuleValidator, ExceptionRuleCreateInput } from './RuleValidator';
@@ -18,7 +18,7 @@ import { RuleValidator, ExceptionRuleCreateInput } from './RuleValidator';
 export class RuleRepository {
   constructor(
     private persistence: RulePersistence,
-    private validator: RuleValidator
+    private validator: RuleValidator,
   ) {}
 
   private getRuleIndexOrThrow(rules: ExceptionRule[], id: string): number {
@@ -26,7 +26,7 @@ export class RuleRepository {
     if (ruleIndex === -1) {
       throw new ExceptionRuleException(
         ExceptionRuleError.RULE_NOT_FOUND,
-        `规则 ID ${id} 不存在`
+        `规则 ID ${id} 不存在`,
       );
     }
     return ruleIndex;
@@ -42,7 +42,7 @@ export class RuleRepository {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '获取例外规则失败',
-        error
+        error,
       );
     }
   }
@@ -52,7 +52,7 @@ export class RuleRepository {
    */
   async getRuleById(id: string): Promise<ExceptionRule | null> {
     const rules = await this.getRules();
-    return rules.find(rule => rule.id === id) || null;
+    return rules.find((rule) => rule.id === id) || null;
   }
 
   /**
@@ -60,7 +60,7 @@ export class RuleRepository {
    */
   async getRulesByType(type: ExceptionRuleType): Promise<ExceptionRule[]> {
     const rules = await this.getRules();
-    return rules.filter(rule => rule.type === type && rule.isActive);
+    return rules.filter((rule) => rule.type === type && rule.isActive);
   }
 
   /**
@@ -77,7 +77,7 @@ export class RuleRepository {
         const scopeText = normalizedRule.scope === 'chain' ? '此链中' : '全局';
         throw new ExceptionRuleException(
           ExceptionRuleError.DUPLICATE_RULE_NAME,
-          `规则名称 "${normalizedRule.name}" 在${scopeText}已存在`
+          `规则名称 "${normalizedRule.name}" 在${scopeText}已存在`,
         );
       }
 
@@ -86,7 +86,7 @@ export class RuleRepository {
         id: this.persistence.generateId(),
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       };
 
       const rules = [...existingRules, newRule];
@@ -100,7 +100,7 @@ export class RuleRepository {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '创建例外规则失败',
-        error
+        error,
       );
     }
   }
@@ -108,7 +108,10 @@ export class RuleRepository {
   /**
    * 更新例外规则
    */
-  async updateRule(id: string, updates: Partial<ExceptionRule>): Promise<ExceptionRule> {
+  async updateRule(
+    id: string,
+    updates: Partial<ExceptionRule>,
+  ): Promise<ExceptionRule> {
     try {
       const rules = await this.getRules();
       const ruleIndex = this.getRuleIndexOrThrow(rules, id);
@@ -117,11 +120,11 @@ export class RuleRepository {
       if (
         updatedName &&
         updatedName !== rules[ruleIndex].name &&
-        rules.some(r => r.name === updatedName && r.id !== id && r.isActive)
+        rules.some((r) => r.name === updatedName && r.id !== id && r.isActive)
       ) {
         throw new ExceptionRuleException(
           ExceptionRuleError.DUPLICATE_RULE_NAME,
-          `规则名称 "${updatedName}" 已存在`
+          `规则名称 "${updatedName}" 已存在`,
         );
       }
 
@@ -137,7 +140,7 @@ export class RuleRepository {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '更新例外规则失败',
-        error
+        error,
       );
     }
   }
@@ -159,7 +162,7 @@ export class RuleRepository {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '删除例外规则失败',
-        error
+        error,
       );
     }
   }
@@ -169,7 +172,7 @@ export class RuleRepository {
    */
   async updateRuleUsageStats(ruleId: string): Promise<void> {
     const rules = await this.getRules();
-    const ruleIndex = rules.findIndex(rule => rule.id === ruleId);
+    const ruleIndex = rules.findIndex((rule) => rule.id === ruleId);
 
     if (ruleIndex !== -1) {
       rules[ruleIndex].usageCount += 1;

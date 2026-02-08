@@ -4,24 +4,40 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, CheckCircle, Info, AlertTriangle, Loader } from 'lucide-react';
-import { userFeedbackHandler, FeedbackAction, FeedbackMessage, ProgressInfo } from '../services/UserFeedbackHandler';
+import {
+  X,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  AlertTriangle,
+  Loader,
+} from 'lucide-react';
+import {
+  userFeedbackHandler,
+  FeedbackAction,
+  FeedbackMessage,
+  ProgressInfo,
+} from '../services/UserFeedbackHandler';
 import { logger } from '../utils/logger';
 
 interface UserFeedbackDisplayProps {
   className?: string;
 }
 
-export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({ className = '' }) => {
+export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({
+  className = '',
+}) => {
   const [messages, setMessages] = useState<FeedbackMessage[]>([]);
   const [progress, setProgress] = useState<ProgressInfo | null>(null);
 
   useEffect(() => {
     // 订阅消息变化
-    const unsubscribeMessages = userFeedbackHandler.onMessagesChange(setMessages);
-    
+    const unsubscribeMessages =
+      userFeedbackHandler.onMessagesChange(setMessages);
+
     // 订阅进度变化
-    const unsubscribeProgress = userFeedbackHandler.onProgressChange(setProgress);
+    const unsubscribeProgress =
+      userFeedbackHandler.onProgressChange(setProgress);
 
     return () => {
       unsubscribeMessages();
@@ -32,17 +48,17 @@ export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({ classN
   const getMessageIcon = (type: FeedbackMessage['type']) => {
     switch (type) {
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'info':
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="h-5 w-5 text-blue-500" />;
       case 'loading':
-        return <Loader className="w-5 h-5 text-blue-500 animate-spin" />;
+        return <Loader className="h-5 w-5 animate-spin text-blue-500" />;
       default:
-        return <Info className="w-5 h-5 text-gray-500" />;
+        return <Info className="h-5 w-5 text-gray-500" />;
     }
   };
 
@@ -89,30 +105,30 @@ export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({ classN
   };
 
   return (
-    <div className={`fixed top-4 right-4 z-50 space-y-3 max-w-md ${className}`}>
+    <div className={`fixed right-4 top-4 z-50 max-w-md space-y-3 ${className}`}>
       {/* 进度指示器 */}
       {progress && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center space-x-3">
-            <Loader className="w-5 h-5 text-blue-500 animate-spin" />
+            <Loader className="h-5 w-5 animate-spin text-blue-500" />
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900 dark:text-white">
                 {progress.operation}
               </div>
               {progress.message && (
-                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   {progress.message}
                 </div>
               )}
               {progress.progress !== undefined && !progress.isIndeterminate && (
                 <div className="mt-2">
-                  <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-[width] duration-300"
+                  <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div
+                      className="h-2 rounded-full bg-blue-600 transition-[width] duration-300"
                       style={{ width: `${progress.progress}%` }}
                     />
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                     {Math.round(progress.progress)}%
                   </div>
                 </div>
@@ -126,29 +142,29 @@ export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({ classN
       {messages.map((message) => (
         <div
           key={message.id}
-          className={`border rounded-lg shadow-lg p-4 ${getMessageStyles(message.type)} animate-slide-in-right`}
+          className={`rounded-lg border p-4 shadow-lg ${getMessageStyles(message.type)} animate-slide-in-right`}
         >
           <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 mt-0.5">
+            <div className="mt-0.5 flex-shrink-0">
               {getMessageIcon(message.type)}
             </div>
-            
-            <div className="flex-1 min-w-0">
+
+            <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-gray-900 dark:text-white">
                 {message.title}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap">
+              <div className="mt-1 whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">
                 {message.message}
               </div>
-              
+
               {/* 操作按钮 */}
               {message.actions && message.actions.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {message.actions.map((action) => (
                     <button
                       key={action.id}
                       onClick={() => handleActionClick(action)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${getButtonStyles(action.type)}`}
+                      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${getButtonStyles(action.type)}`}
                     >
                       {action.label}
                     </button>
@@ -156,14 +172,14 @@ export const UserFeedbackDisplay: React.FC<UserFeedbackDisplayProps> = ({ classN
                 </div>
               )}
             </div>
-            
+
             {/* 关闭按钮 */}
             {!message.persistent && (
               <button
                 onClick={() => handleMessageClose(message.id)}
-                className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="flex-shrink-0 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             )}
           </div>

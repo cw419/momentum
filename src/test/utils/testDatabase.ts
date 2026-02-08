@@ -12,7 +12,7 @@ let testDatabase: {
   scheduled_sessions: new Map(),
   active_sessions: new Map(),
   completion_history: new Map(),
-  users: new Map()
+  users: new Map(),
 };
 
 export const createTestDatabase = async (): Promise<void> => {
@@ -22,14 +22,14 @@ export const createTestDatabase = async (): Promise<void> => {
     scheduled_sessions: new Map(),
     active_sessions: new Map(),
     completion_history: new Map(),
-    users: new Map()
+    users: new Map(),
   };
 
   // Add default test user
   testDatabase.users.set('test-user-123', {
     id: 'test-user-123',
     email: 'test@momentum.app',
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
   });
 
   console.log('[TEST_DB] Test database created and initialized');
@@ -41,13 +41,13 @@ export const cleanupTestDatabase = async (): Promise<void> => {
   testDatabase.scheduled_sessions.clear();
   testDatabase.active_sessions.clear();
   testDatabase.completion_history.clear();
-  
+
   console.log('[TEST_DB] Test database cleaned up');
 };
 
 export const seedTestData = async (): Promise<void> => {
   const testUserId = 'test-user-123';
-  
+
   // Seed test chains
   const testChain1 = {
     id: 'chain-1',
@@ -73,7 +73,7 @@ export const seedTestData = async (): Promise<void> => {
     deleted_at: null,
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
     last_completed_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-    user_id: testUserId
+    user_id: testUserId,
   };
 
   const testChain2 = {
@@ -99,8 +99,10 @@ export const seedTestData = async (): Promise<void> => {
     group_expires_at: null,
     deleted_at: null,
     created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days ago
-    last_completed_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-    user_id: testUserId
+    last_completed_at: new Date(
+      Date.now() - 3 * 24 * 60 * 60 * 1000,
+    ).toISOString(), // 3 days ago
+    user_id: testUserId,
   };
 
   const deletedChain = {
@@ -126,8 +128,10 @@ export const seedTestData = async (): Promise<void> => {
     group_expires_at: null,
     deleted_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-    last_completed_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-    user_id: testUserId
+    last_completed_at: new Date(
+      Date.now() - 5 * 24 * 60 * 60 * 1000,
+    ).toISOString(), // 5 days ago
+    user_id: testUserId,
   };
 
   testDatabase.chains.set(testChain1.id, testChain1);
@@ -143,7 +147,7 @@ export const seedTestData = async (): Promise<void> => {
       duration: 45,
       was_successful: true,
       reason_for_failure: null,
-      user_id: testUserId
+      user_id: testUserId,
     },
     {
       id: 'completion-2',
@@ -152,20 +156,22 @@ export const seedTestData = async (): Promise<void> => {
       duration: 42,
       was_successful: true,
       reason_for_failure: null,
-      user_id: testUserId
+      user_id: testUserId,
     },
     {
       id: 'completion-3',
       chain_id: 'chain-2',
-      completed_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      completed_at: new Date(
+        Date.now() - 3 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
       duration: 85,
       was_successful: false,
       reason_for_failure: 'Interrupted',
-      user_id: testUserId
-    }
+      user_id: testUserId,
+    },
   ];
 
-  completions.forEach(completion => {
+  completions.forEach((completion) => {
     testDatabase.completion_history.set(completion.id, completion);
   });
 
@@ -174,13 +180,15 @@ export const seedTestData = async (): Promise<void> => {
 
 export const testDbUtils = {
   async query(table: string, filters: Record<string, any> = {}) {
-    const data = Array.from(testDatabase[table as keyof typeof testDatabase].values());
-    
+    const data = Array.from(
+      testDatabase[table as keyof typeof testDatabase].values(),
+    );
+
     if (Object.keys(filters).length === 0) {
       return data;
     }
 
-    return data.filter(item => {
+    return data.filter((item) => {
       return Object.entries(filters).every(([key, value]) => {
         if (key === 'user_id' && value === 'eq.test-user-123') {
           return item.user_id === 'test-user-123';
@@ -201,9 +209,9 @@ export const testDbUtils = {
     const record = {
       ...data,
       id,
-      created_at: data.created_at || new Date().toISOString()
+      created_at: data.created_at || new Date().toISOString(),
     };
-    
+
     testDatabase[table as keyof typeof testDatabase].set(id, record);
     return record;
   },
@@ -213,7 +221,7 @@ export const testDbUtils = {
     if (!existing) {
       throw new Error(`Record not found: ${id}`);
     }
-    
+
     const updated = { ...existing, ...updates };
     testDatabase[table as keyof typeof testDatabase].set(id, updated);
     return updated;
@@ -239,5 +247,5 @@ export const testDbUtils = {
 
   resetTable(table: string) {
     testDatabase[table as keyof typeof testDatabase].clear();
-  }
+  },
 };

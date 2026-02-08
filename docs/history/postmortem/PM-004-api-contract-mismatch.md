@@ -14,14 +14,15 @@
 
 ### 问题类型
 
-| 子类型 | 示例 | 影响 |
-|--------|------|------|
-| 参数名不匹配 | `userId` vs `user_id` | 调用失败 |
-| 类型不匹配 | `string` vs `uuid` | 隐式转换错误 |
-| 必选/可选不一致 | 前端漏传必选参数 | 400 错误 |
-| 返回值结构变化 | 后端改了返回格式 | 前端解析失败 |
+| 子类型          | 示例                  | 影响         |
+| --------------- | --------------------- | ------------ |
+| 参数名不匹配    | `userId` vs `user_id` | 调用失败     |
+| 类型不匹配      | `string` vs `uuid`    | 隐式转换错误 |
+| 必选/可选不一致 | 前端漏传必选参数      | 400 错误     |
+| 返回值结构变化  | 后端改了返回格式      | 前端解析失败 |
 
 ### 用户可见症状
+
 - 功能完全不可用
 - 控制台显示 400/500 错误
 - 数据保存后丢失字段
@@ -80,14 +81,14 @@ const { success, data } = result;
 ```typescript
 // 方案 A：前端适配后端命名
 const { error } = await supabase.rpc('import_chain_with_new_id', {
-  user_id: user.id,        // ✅ 使用 snake_case
+  user_id: user.id, // ✅ 使用 snake_case
   chain_data: chainJson,
 });
 
 // 方案 B：创建映射层
 function toSnakeCase(obj: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [camelToSnake(k), v])
+    Object.entries(obj).map(([k, v]) => [camelToSnake(k), v]),
   );
 }
 ```
@@ -111,11 +112,13 @@ interface Database {
 }
 
 // 使用类型安全的调用
-const { data, error } = await supabase
-  .rpc<'import_chain_with_new_id'>('import_chain_with_new_id', {
-    user_id: user.id,  // TypeScript 会检查参数名和类型
+const { data, error } = await supabase.rpc<'import_chain_with_new_id'>(
+  'import_chain_with_new_id',
+  {
+    user_id: user.id, // TypeScript 会检查参数名和类型
     chain_data: chainJson,
-  });
+  },
+);
 ```
 
 ### 4.3 迁移兼容处理
@@ -198,15 +201,16 @@ describe('import_chain_with_new_id', () => {
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
+| Commit    | 描述                                 |
+| --------- | ------------------------------------ |
 | `7f221a1` | 修复参数名称不匹配：userId → user_id |
-| `3fe978d` | 修复 session type 类型不匹配 |
-| `cfd9899` | 解决 types/index.ts 合并冲突 |
+| `3fe978d` | 修复 session type 类型不匹配         |
+| `cfd9899` | 解决 types/index.ts 合并冲突         |
 
 ## 7. 经验教训
 
 > **核心教训**: 前后端接口是"契约"，任何一方的变更都必须双向同步。推荐：
+>
 > 1. 使用代码生成保持类型同步
 > 2. API 变更必须同时更新前后端
 > 3. 集成测试覆盖所有 RPC 调用
@@ -229,5 +233,5 @@ describe('import_chain_with_new_id', () => {
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

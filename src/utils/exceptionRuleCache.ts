@@ -8,5 +8,5 @@
 
 export {
   ExceptionRuleCache,
-  exceptionRuleCache
+  exceptionRuleCache,
 } from './cache/ExceptionRuleCache';

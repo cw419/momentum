@@ -19,7 +19,9 @@ export interface SchemaStatus {
   recommendations: string[];
 }
 
-export type SchemaDiff = Pick<SchemaStatus, 'missingTables' | 'missingColumns' | 'extraColumns'>;
+export type SchemaDiff = Pick<
+  SchemaStatus,
+  'missingTables' | 'missingColumns' | 'extraColumns'
+>;
 
 export type MigrationStatus = SchemaStatus['migrationStatus'];
-

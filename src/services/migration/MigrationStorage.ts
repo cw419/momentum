@@ -42,7 +42,10 @@ export class MigrationStorage {
     try {
       const storage = this.storage;
       if (!storage) {
-        logger.warn('MIGRATION_STORAGE', 'No storage configured; skipping legacy chain scan');
+        logger.warn(
+          'MIGRATION_STORAGE',
+          'No storage configured; skipping legacy chain scan',
+        );
         return [];
       }
 
@@ -65,7 +68,7 @@ export class MigrationStorage {
       const parsed = JSON.parse(data);
       return {
         ...parsed,
-        migratedAt: new Date(parsed.migratedAt)
+        migratedAt: new Date(parsed.migratedAt),
       };
     } catch (error) {
       const err = toError(error);

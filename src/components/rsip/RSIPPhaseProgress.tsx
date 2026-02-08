@@ -17,10 +17,15 @@ const PHASE_GRADIENT_CLASS: Record<RSIPStabilityPhase, string> = {
   E2: 'bg-gradient-to-r from-emerald-500 to-emerald-400',
 };
 
-export function RSIPPhaseProgress({ phase, consecutiveDays }: RSIPPhaseProgressProps) {
+export function RSIPPhaseProgress({
+  phase,
+  consecutiveDays,
+}: RSIPPhaseProgressProps) {
   const threshold = PHASE_THRESHOLDS[phase];
   const isMaxPhase = phase === 'E2';
-  const progress = isMaxPhase ? 100 : Math.min((consecutiveDays / threshold) * 100, 100);
+  const progress = isMaxPhase
+    ? 100
+    : Math.min((consecutiveDays / threshold) * 100, 100);
 
   const gradientClass = PHASE_GRADIENT_CLASS[phase];
 
@@ -39,12 +44,12 @@ export function RSIPPhaseProgress({ phase, consecutiveDays }: RSIPPhaseProgressP
         <span className="text-slate-600 dark:text-white/50">
           {phaseStatusText}
         </span>
-        <span className="text-slate-800 dark:text-white/70 font-medium">
+        <span className="font-medium text-slate-800 dark:text-white/70">
           {isMaxPhase ? '完成' : `${consecutiveDays}/${threshold} 天`}
         </span>
       </div>
 
-      <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+      <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
         <div
           className={`h-full rounded-full transition-[width] duration-500 ${gradientClass}`}
           style={{ width: `${progress}%` }}

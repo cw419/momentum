@@ -55,9 +55,15 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
   if (isPinned) zIndex = 80;
   if (isReparentingSelected) zIndex = 90;
 
-  const highlightClass = isHighlighted ? `ring-2 ${color.ring} scale-105 shadow-2xl` : '';
-  const cursorClass = isInvalidParentTarget ? 'opacity-40 saturate-50 cursor-not-allowed' : 'cursor-pointer';
-  const reparentClass = isReparentingSelected ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl' : '';
+  const highlightClass = isHighlighted
+    ? `ring-2 ${color.ring} scale-105 shadow-2xl`
+    : '';
+  const cursorClass = isInvalidParentTarget
+    ? 'opacity-40 saturate-50 cursor-not-allowed'
+    : 'cursor-pointer';
+  const reparentClass = isReparentingSelected
+    ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-2xl'
+    : '';
   const className = `rsip-node absolute w-64 rounded-2xl p-4 backdrop-blur-sm shadow-lg transition duration-300 transform-gpu ${color.bg} ${color.border} ${highlightClass} ${cursorClass} ${reparentClass}`;
 
   return (
@@ -80,17 +86,19 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
       className={className}
     >
       <div className="flex items-start space-x-3">
-        <div className="text-3xl leading-none pt-1" aria-hidden>
+        <div className="pt-1 text-3xl leading-none" aria-hidden>
           {node.emoji || '📝'}
         </div>
         <div className="flex-1">
-          <h4 className="text-md font-bold font-chinese text-gray-900 dark:text-slate-100 rsip-title-clamp">
+          <h4 className="text-md rsip-title-clamp font-chinese font-bold text-gray-900 dark:text-slate-100">
             {node.title}
           </h4>
-          <p className="text-xs text-gray-600 dark:text-slate-400 font-chinese rsip-rule-clamp mt-1">{node.rule}</p>
+          <p className="rsip-rule-clamp mt-1 font-chinese text-xs text-gray-600 dark:text-slate-400">
+            {node.rule}
+          </p>
         </div>
       </div>
-      <div className="flex items-center justify-between mt-3">
+      <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {node.useTimer && (
             <button
@@ -102,15 +110,17 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
                   timer.onStart();
                 }
               }}
-              className={`inline-flex items-center text-xs px-2 py-1 rounded-xl transition-colors ${timer.isRunning ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 animate-pulse' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'}`}
+              className={`inline-flex items-center rounded-xl px-2 py-1 text-xs transition-colors ${timer.isRunning ? 'animate-pulse bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/40'}`}
             >
               {timer.isRunning ? (
                 <>
-                  <Clock size={12} className="mr-1" /> {formatRemaining(timer.remainingMs)}
+                  <Clock size={12} className="mr-1" />{' '}
+                  {formatRemaining(timer.remainingMs)}
                 </>
               ) : (
                 <>
-                  <Play size={12} className="mr-1" /> {formatMinutesLabel(timer.minutes)}
+                  <Play size={12} className="mr-1" />{' '}
+                  {formatMinutesLabel(timer.minutes)}
                 </>
               )}
             </button>
@@ -123,9 +133,17 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
               e.stopPropagation();
               onToggleReparent();
             }}
-            className={`p-1.5 rounded-lg transition-colors ${isReparentingSelected ? 'text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-700' : 'text-gray-500 hover:text-gray-700 dark:text-slate-300 dark:hover:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-700'}`}
-            title={isReparentingSelected ? tr('取消更改继承', 'Cancel reparent') : tr('更改继承关系', 'Change parent')}
-            aria-label={isReparentingSelected ? tr('取消更改继承', 'Cancel reparent') : tr('更改继承关系', 'Change parent')}
+            className={`rounded-lg p-1.5 transition-colors ${isReparentingSelected ? 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100'}`}
+            title={
+              isReparentingSelected
+                ? tr('取消更改继承', 'Cancel reparent')
+                : tr('更改继承关系', 'Change parent')
+            }
+            aria-label={
+              isReparentingSelected
+                ? tr('取消更改继承', 'Cancel reparent')
+                : tr('更改继承关系', 'Change parent')
+            }
           >
             {isReparentingSelected ? <X size={14} /> : <Link2 size={14} />}
           </button>
@@ -135,8 +153,11 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
               e.stopPropagation();
               onMarkFailed();
             }}
-            className="p-1.5 text-red-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-            title={tr('判定失败（删除此节点及其所有子节点）', 'Mark as failed (delete this node and all descendants)')}
+            className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+            title={tr(
+              '判定失败（删除此节点及其所有子节点）',
+              'Mark as failed (delete this node and all descendants)',
+            )}
             aria-label={tr('判定失败', 'Mark as failed')}
           >
             <Trash2 size={14} />

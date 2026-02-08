@@ -9,30 +9,39 @@ import type { MomentumStorage } from '../storage/MomentumStorage';
  * This wrapper keeps the old import path stable while routing operations through MomentumStorage.
  */
 export class CheckinService {
-  static async performDailyCheckin(storage: MomentumStorage): Promise<Result<CheckinResult, AppError>> {
+  static async performDailyCheckin(
+    storage: MomentumStorage,
+  ): Promise<Result<CheckinResult, AppError>> {
     return storage.performDailyCheckin();
   }
 
-  static async getUserStats(storage: MomentumStorage): Promise<Result<CheckinStats, AppError>> {
+  static async getUserStats(
+    storage: MomentumStorage,
+  ): Promise<Result<CheckinStats, AppError>> {
     return storage.getUserCheckinStats();
   }
 
-  static async hasCheckedInToday(storage: MomentumStorage): Promise<Result<boolean, AppError>> {
+  static async hasCheckedInToday(
+    storage: MomentumStorage,
+  ): Promise<Result<boolean, AppError>> {
     const stats = await storage.getUserCheckinStats();
     if (!stats.ok) return stats;
     return ok(stats.value.has_checked_in_today);
   }
 
-  static async getUserPoints(storage: MomentumStorage): Promise<Result<number, AppError>> {
+  static async getUserPoints(
+    storage: MomentumStorage,
+  ): Promise<Result<number, AppError>> {
     const stats = await storage.getUserCheckinStats();
     if (!stats.ok) return stats;
     return ok(stats.value.total_points);
   }
 
-  static async getCurrentStreak(storage: MomentumStorage): Promise<Result<number, AppError>> {
+  static async getCurrentStreak(
+    storage: MomentumStorage,
+  ): Promise<Result<number, AppError>> {
     const stats = await storage.getUserCheckinStats();
     if (!stats.ok) return stats;
     return ok(stats.value.current_streak);
   }
 }
-

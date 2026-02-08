@@ -2,7 +2,11 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import type { AuthSession } from '../../../domain/auth';
 import { ok, err } from '../../../domain/result';
-import { createAppState, createLocalStorageMock, createSupabaseStorageMock } from '../../../test/factories';
+import {
+  createAppState,
+  createLocalStorageMock,
+  createSupabaseStorageMock,
+} from '../../../test/factories';
 import { useAuthController } from '../useAuthController';
 
 vi.mock('../../../utils/logger', () => ({
@@ -27,7 +31,7 @@ describe('useAuthController', () => {
         storage,
         resetAppState,
         setState,
-      })
+      }),
     );
 
     expect(result.current.authUserId).toBeNull();
@@ -37,13 +41,18 @@ describe('useAuthController', () => {
 
   it('should react to auth user changes in supabase mode', () => {
     const setState = vi.fn();
-    const resetAppState = vi.fn(() => createAppState({ currentView: 'dashboard' }));
+    const resetAppState = vi.fn(() =>
+      createAppState({ currentView: 'dashboard' }),
+    );
     let callback: ((event: string, session: AuthSession) => void) | null = null;
     const unsubscribe = vi.fn();
 
     const storage = createSupabaseStorageMock({
       onAuthStateChange: vi.fn((cb) => {
-        callback = cb as unknown as (event: string, session: AuthSession) => void;
+        callback = cb as unknown as (
+          event: string,
+          session: AuthSession,
+        ) => void;
         return ok(unsubscribe);
       }),
     });
@@ -53,7 +62,7 @@ describe('useAuthController', () => {
         storage,
         resetAppState,
         setState,
-      })
+      }),
     );
 
     expect(result.current.isAuthReady).toBe(false);
@@ -83,7 +92,9 @@ describe('useAuthController', () => {
 
   it('should log warning when auth subscription setup fails', () => {
     const storage = createSupabaseStorageMock({
-      onAuthStateChange: vi.fn(() => err({ code: 'AUTH', message: 'subscription failed' })),
+      onAuthStateChange: vi.fn(() =>
+        err({ code: 'AUTH', message: 'subscription failed' }),
+      ),
     });
 
     const { result } = renderHook(() =>
@@ -91,7 +102,7 @@ describe('useAuthController', () => {
         storage,
         resetAppState: () => createAppState(),
         setState: vi.fn(),
-      })
+      }),
     );
 
     expect(result.current.authUserId).toBeNull();

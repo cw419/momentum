@@ -20,14 +20,19 @@ const DurationSectionComponent: React.FC<DurationSectionProps> = ({
   onAuxiliaryDurationModeChange,
   tr,
 }) => (
-  <div data-testid="task-group-editor-duration" className="bento-card p-4 md:p-5 border-l-4 border-l-blue-500 animate-scale-in">
-    <div className="flex items-center gap-3 mb-3">
+  <div
+    data-testid="task-group-editor-duration"
+    className="bento-card animate-scale-in border-l-4 border-l-blue-500 p-4 md:p-5"
+  >
+    <div className="mb-3 flex items-center gap-3">
       <Hourglass className="text-blue-500" size={18} />
       <div className="min-w-0">
-        <h4 className="text-base font-semibold font-chinese text-gray-900 dark:text-slate-100">
+        <h4 className="font-chinese text-base font-semibold text-gray-900 dark:text-slate-100">
           {tr('预约时长', 'Booking duration')}
         </h4>
-        <p className="text-[11px] font-mono text-gray-500">{tr('预约时长', 'BOOKING DURATION')}</p>
+        <p className="font-mono text-[11px] text-gray-500">
+          {tr('预约时长', 'BOOKING DURATION')}
+        </p>
       </div>
     </div>
 
@@ -43,19 +48,22 @@ const DurationSectionComponent: React.FC<DurationSectionProps> = ({
             onAuxiliaryDurationModeChange(false, Number(e.target.value));
           }
         }}
-        className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-gray-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition duration-300 font-chinese"
+        className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-chinese text-gray-900 transition duration-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
         required
       >
         {AUXILIARY_DURATION_PRESETS.map((preset) => (
           <option
             key={preset}
             value={preset}
-            className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700"
+            className="bg-white text-gray-900 dark:bg-slate-700 dark:text-slate-100"
           >
             {tr(`${preset}分钟`, `${preset} min`)}
           </option>
         ))}
-        <option value="custom" className="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700">
+        <option
+          value="custom"
+          className="bg-white text-gray-900 dark:bg-slate-700 dark:text-slate-100"
+        >
           {tr('自定义时长', 'Custom duration')}
         </option>
       </select>
@@ -63,7 +71,10 @@ const DurationSectionComponent: React.FC<DurationSectionProps> = ({
       {isCustomAuxiliaryDuration && (
         <SliderContainer
           label={tr('自定义预约时长', 'Custom booking duration')}
-          description={tr('设置预约阶段的持续时间', 'Set how long the booking phase lasts')}
+          description={tr(
+            '设置预约阶段的持续时间',
+            'Set how long the booking phase lasts',
+          )}
           orientation="horizontal"
           showKeyboardInput={true}
           keyboardInputProps={{
@@ -89,8 +100,11 @@ const DurationSectionComponent: React.FC<DurationSectionProps> = ({
         </SliderContainer>
       )}
 
-      <p className="text-gray-500 text-xs leading-relaxed">
-        {tr('预约阶段的持续时间，用于准备和调整状态', 'How long the booking phase lasts for preparation and alignment')}
+      <p className="text-xs leading-relaxed text-gray-500">
+        {tr(
+          '预约阶段的持续时间，用于准备和调整状态',
+          'How long the booking phase lasts for preparation and alignment',
+        )}
       </p>
     </div>
   </div>
@@ -99,4 +113,3 @@ const DurationSectionComponent: React.FC<DurationSectionProps> = ({
 export const DurationSection = React.memo(DurationSectionComponent);
 
 DurationSection.displayName = 'DurationSection';
-

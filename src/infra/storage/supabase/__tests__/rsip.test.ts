@@ -20,7 +20,9 @@ vi.mock('../../../../utils/logger', () => ({
   },
 }));
 
-const createMockRSIPNodeRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
+const createMockRSIPNodeRow = (
+  overrides: Partial<Record<string, unknown>> = {},
+) => ({
   id: 'rsip-1',
   parent_id: null,
   title: 'Morning Routine',
@@ -33,7 +35,9 @@ const createMockRSIPNodeRow = (overrides: Partial<Record<string, unknown>> = {})
   ...overrides,
 });
 
-const createMockRSIPMetaRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
+const createMockRSIPMetaRow = (
+  overrides: Partial<Record<string, unknown>> = {},
+) => ({
   user_id: 'test-user-123',
   last_added_at: '2024-01-15T10:00:00Z',
   allow_multiple_per_day: false,
@@ -68,7 +72,10 @@ describe('rsip.ts', () => {
 
     it('should return mapped RSIP nodes on success', async () => {
       const mockData = [createMockRSIPNodeRow()];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getRSIPNodes(ctx);
@@ -88,7 +95,10 @@ describe('rsip.ts', () => {
         createMockRSIPNodeRow({ id: 'parent', parent_id: null }),
         createMockRSIPNodeRow({ id: 'child', parent_id: 'parent' }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getRSIPNodes(ctx);
@@ -105,7 +115,10 @@ describe('rsip.ts', () => {
           timer_minutes: null,
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getRSIPNodes(ctx);
@@ -116,7 +129,10 @@ describe('rsip.ts', () => {
 
     it('should handle empty parent_id string as undefined', async () => {
       const mockData = [createMockRSIPNodeRow({ parent_id: '' })];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getRSIPNodes(ctx);
@@ -209,7 +225,9 @@ describe('rsip.ts', () => {
         },
       ];
 
-      await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow('Failed to query RSIP nodes');
+      await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow(
+        'Failed to query RSIP nodes',
+      );
     });
 
     it('should throw error when delete fails', async () => {
@@ -240,7 +258,9 @@ describe('rsip.ts', () => {
         },
       ];
 
-      await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow('Failed to delete removed RSIP nodes');
+      await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow(
+        'Failed to delete removed RSIP nodes',
+      );
     });
 
     it('should throw error when upsert fails', async () => {
@@ -267,7 +287,9 @@ describe('rsip.ts', () => {
         },
       ];
 
-      await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow('Failed to save RSIP nodes');
+      await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow(
+        'Failed to save RSIP nodes',
+      );
     });
 
     it('should fallback to basic payload when strict columns are missing', async () => {
@@ -280,7 +302,7 @@ describe('rsip.ts', () => {
           return {
             error: createSupabaseError(
               'PGRST204',
-              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache"
+              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache",
             ),
           };
         }
@@ -311,8 +333,14 @@ describe('rsip.ts', () => {
 
       expect(upsert).toHaveBeenCalledTimes(2);
 
-      const firstPayload = upsert.mock.calls[0]?.[0] as Record<string, unknown>[];
-      const secondPayload = upsert.mock.calls[1]?.[0] as Record<string, unknown>[];
+      const firstPayload = upsert.mock.calls[0]?.[0] as Record<
+        string,
+        unknown
+      >[];
+      const secondPayload = upsert.mock.calls[1]?.[0] as Record<
+        string,
+        unknown
+      >[];
 
       expect(firstPayload[0]).toHaveProperty('consecutive_executions');
       expect(secondPayload[0]).not.toHaveProperty('consecutive_executions');
@@ -329,7 +357,7 @@ describe('rsip.ts', () => {
           return {
             error: createSupabaseError(
               'PGRST204',
-              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache"
+              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache",
             ),
           };
         }
@@ -365,7 +393,10 @@ describe('rsip.ts', () => {
       // Second save: should only use basic payload (1 call)
       expect(upsert).toHaveBeenCalledTimes(3);
 
-      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<string, unknown>[];
+      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<
+        string,
+        unknown
+      >[];
       expect(payloadThirdCall[0]).not.toHaveProperty('consecutive_executions');
     });
 
@@ -520,7 +551,10 @@ describe('rsip.ts', () => {
 
     it('should return mapped RSIP meta on success', async () => {
       const mockData = [createMockRSIPMetaRow()];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getRSIPMeta(ctx);
@@ -530,8 +564,13 @@ describe('rsip.ts', () => {
     });
 
     it('should handle meta with allowMultiplePerDay true', async () => {
-      const mockData = [createMockRSIPMetaRow({ allow_multiple_per_day: true })];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const mockData = [
+        createMockRSIPMetaRow({ allow_multiple_per_day: true }),
+      ];
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getRSIPMeta(ctx);
@@ -541,7 +580,10 @@ describe('rsip.ts', () => {
 
     it('should handle meta with null last_added_at', async () => {
       const mockData = [createMockRSIPMetaRow({ last_added_at: null })];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getRSIPMeta(ctx);
@@ -589,19 +631,24 @@ describe('rsip.ts', () => {
     it('should skip strict meta upsert after detecting legacy schema', async () => {
       const ctx = createMockContext();
 
-      const upsert = vi.fn().mockImplementation((data: Record<string, unknown>) => {
-        const currentCall = upsert.mock.calls.length;
+      const upsert = vi
+        .fn()
+        .mockImplementation((data: Record<string, unknown>) => {
+          const currentCall = upsert.mock.calls.length;
 
-        if (currentCall === 1) {
-          // strict payload includes additional fields and fails on legacy schema
-          expect(data).toHaveProperty('last_tree_opened_at');
-          return {
-            error: createSupabaseError('PGRST204', "Could not find the 'last_tree_opened_at' column of 'rsip_meta'"),
-          };
-        }
+          if (currentCall === 1) {
+            // strict payload includes additional fields and fails on legacy schema
+            expect(data).toHaveProperty('last_tree_opened_at');
+            return {
+              error: createSupabaseError(
+                'PGRST204',
+                "Could not find the 'last_tree_opened_at' column of 'rsip_meta'",
+              ),
+            };
+          }
 
-        return { error: null };
-      });
+          return { error: null };
+        });
 
       ctx.mockClient.from = vi.fn().mockReturnValue({ upsert });
 
@@ -620,7 +667,10 @@ describe('rsip.ts', () => {
       // Second save: should only use basic payload (1 call)
       expect(upsert).toHaveBeenCalledTimes(3);
 
-      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<string, unknown>;
+      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<
+        string,
+        unknown
+      >;
       expect(payloadThirdCall).not.toHaveProperty('last_tree_opened_at');
     });
 
@@ -637,7 +687,9 @@ describe('rsip.ts', () => {
         allowMultiplePerDay: true,
       };
 
-      await expect(saveRSIPMeta(ctx, meta)).rejects.toThrow('Failed to save RSIP meta');
+      await expect(saveRSIPMeta(ctx, meta)).rejects.toThrow(
+        'Failed to save RSIP meta',
+      );
     });
 
     it('should handle empty meta', async () => {

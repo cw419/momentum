@@ -9,7 +9,7 @@ declare global {
   interface Window {
     requestIdleCallback?: (
       callback: (deadline: MomentumIdleDeadline) => void,
-      options?: { timeout?: number }
+      options?: { timeout?: number },
     ) => number;
     cancelIdleCallback?: (handle: number) => void;
 
@@ -53,4 +53,3 @@ declare global {
     readonly sources: LayoutShiftAttribution[];
   }
 }
-

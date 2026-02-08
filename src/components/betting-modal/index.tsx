@@ -90,13 +90,13 @@ const BettingModalViewComponent: React.FC<BettingModalViewProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div
         ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="betting-modal-title"
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md"
+        className="w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
       >
         <BettingHeader tr={tr} onClose={onClose} />
 
@@ -107,4 +107,3 @@ const BettingModalViewComponent: React.FC<BettingModalViewProps> = ({
 };
 
 export const BettingModalView = React.memo(BettingModalViewComponent);
-

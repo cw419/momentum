@@ -6,7 +6,10 @@ import {
 } from '../../../types';
 import { errorClassificationService } from '../ErrorClassificationService';
 
-function createError(type: ExceptionRuleError, message: string): ExceptionRuleException {
+function createError(
+  type: ExceptionRuleError,
+  message: string,
+): ExceptionRuleException {
   return new ExceptionRuleException(type, message);
 }
 
@@ -16,8 +19,14 @@ describe('errorClassification/ErrorClassificationService', () => {
   });
 
   it('analyzes single errors and links related history entries', () => {
-    const first = createError(ExceptionRuleError.DUPLICATE_RULE_NAME, 'duplicate alpha');
-    const second = createError(ExceptionRuleError.DUPLICATE_RULE_NAME, 'duplicate beta');
+    const first = createError(
+      ExceptionRuleError.DUPLICATE_RULE_NAME,
+      'duplicate alpha',
+    );
+    const second = createError(
+      ExceptionRuleError.DUPLICATE_RULE_NAME,
+      'duplicate beta',
+    );
 
     const firstAnalysis = errorClassificationService.analyzeError(first);
     const secondAnalysis = errorClassificationService.analyzeError(second);
@@ -41,9 +50,13 @@ describe('errorClassification/ErrorClassificationService', () => {
     expect(result.summary.totalErrors).toBe(3);
     expect(result.summary.criticalErrors).toBe(0);
     expect(result.summary.recoverableErrors).toBe(3);
-    expect(result.summary.mostCommonType).toBe(ExceptionRuleError.DUPLICATE_RULE_NAME);
-    expect(result.summary.prioritizedErrors[0]?.classification.priority).toBeGreaterThanOrEqual(
-      result.summary.prioritizedErrors[1]?.classification.priority ?? 0
+    expect(result.summary.mostCommonType).toBe(
+      ExceptionRuleError.DUPLICATE_RULE_NAME,
+    );
+    expect(
+      result.summary.prioritizedErrors[0]?.classification.priority,
+    ).toBeGreaterThanOrEqual(
+      result.summary.prioritizedErrors[1]?.classification.priority ?? 0,
     );
   });
 
@@ -51,7 +64,7 @@ describe('errorClassification/ErrorClassificationService', () => {
     const enhanced = errorClassificationService.createEnhancedError(
       ExceptionRuleError.RULE_NOT_FOUND,
       'rule not found',
-      { id: 'rule-9' }
+      { id: 'rule-9' },
     );
 
     expect(enhanced).toBeInstanceOf(EnhancedExceptionRuleException);
@@ -65,31 +78,49 @@ describe('errorClassification/ErrorClassificationService', () => {
   it('tracks trends/statistics and truncates history to configured max size', () => {
     for (let i = 0; i < 105; i += 1) {
       const type =
-        i % 2 === 0 ? ExceptionRuleError.RULE_NOT_FOUND : ExceptionRuleError.STORAGE_ERROR;
+        i % 2 === 0
+          ? ExceptionRuleError.RULE_NOT_FOUND
+          : ExceptionRuleError.STORAGE_ERROR;
       errorClassificationService.analyzeError(createError(type, `error-${i}`));
     }
 
     const stats = errorClassificationService.getErrorStatistics();
     expect(stats.totalErrors).toBe(100);
-    expect((stats.errorsByType.get(ExceptionRuleError.RULE_NOT_FOUND) ?? 0) + (stats.errorsByType.get(ExceptionRuleError.STORAGE_ERROR) ?? 0)).toBe(100);
-    expect([...stats.errorsBySeverity.values()].reduce((acc, n) => acc + n, 0)).toBe(100);
-    expect([...stats.errorsByCategory.values()].reduce((acc, n) => acc + n, 0)).toBe(100);
+    expect(
+      (stats.errorsByType.get(ExceptionRuleError.RULE_NOT_FOUND) ?? 0) +
+        (stats.errorsByType.get(ExceptionRuleError.STORAGE_ERROR) ?? 0),
+    ).toBe(100);
+    expect(
+      [...stats.errorsBySeverity.values()].reduce((acc, n) => acc + n, 0),
+    ).toBe(100);
+    expect(
+      [...stats.errorsByCategory.values()].reduce((acc, n) => acc + n, 0),
+    ).toBe(100);
 
     const trends = errorClassificationService.getErrorTrends();
     expect(trends.recentErrors).toHaveLength(20);
-    expect([...trends.errorFrequency.values()].reduce((acc, n) => acc + n, 0)).toBe(100);
-    expect([...trends.severityDistribution.values()].reduce((acc, n) => acc + n, 0)).toBe(100);
-    expect(trends.timeDistribution.get(new Date().getHours().toString())).toBe(100);
+    expect(
+      [...trends.errorFrequency.values()].reduce((acc, n) => acc + n, 0),
+    ).toBe(100);
+    expect(
+      [...trends.severityDistribution.values()].reduce((acc, n) => acc + n, 0),
+    ).toBe(100);
+    expect(trends.timeDistribution.get(new Date().getHours().toString())).toBe(
+      100,
+    );
   });
 
   it('supports direct classify and clear history operations', () => {
-    const error = createError(ExceptionRuleError.NETWORK_ERROR, 'network timeout');
+    const error = createError(
+      ExceptionRuleError.NETWORK_ERROR,
+      'network timeout',
+    );
 
     const classification = errorClassificationService.classifyError(error);
     expect(classification).toEqual(
       expect.objectContaining({
         category: 'network_error',
-      })
+      }),
     );
 
     errorClassificationService.analyzeError(error);

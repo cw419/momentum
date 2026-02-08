@@ -9,6 +9,7 @@ import { executeWithRetry } from './retry';
 import type { AsyncOperation, OperationState, OptimisticUpdate } from './types';
 import { executeOnce } from './dedupe';
 import { debounceOperation } from './debounce';
+import { normalizeUnknownError } from '../errors/normalizeError';
 
 export class AsyncOperationManager {
   private operations = new Map<string, OperationState>();
@@ -44,10 +45,11 @@ export class AsyncOperationManager {
       operation.onSuccess?.(result);
       return result;
     } catch (error) {
+      const normalizedError = normalizeUnknownError(error);
       operationState.status = 'error';
-      operationState.error = error as Error;
+      operationState.error = normalizedError;
 
-      operation.onError?.(error as Error);
+      operation.onError?.(normalizedError);
       throw error;
     } finally {
       setTimeout(() => {
@@ -95,7 +97,9 @@ export class AsyncOperationManager {
   }
 
   getPendingOperations(): OperationState[] {
-    return Array.from(this.operations.values()).filter((op) => op.status === 'pending');
+    return Array.from(this.operations.values()).filter(
+      (op) => op.status === 'pending',
+    );
   }
 
   clearAll(): void {
@@ -127,7 +131,11 @@ export class AsyncOperationManager {
     return executeOnce(this.pendingOperations, key, operation);
   }
 
-  debounceOperation<T>(key: string, operation: () => Promise<T>, delay: number = 300): Promise<T> {
+  debounceOperation<T>(
+    key: string,
+    operation: () => Promise<T>,
+    delay: number = 300,
+  ): Promise<T> {
     return debounceOperation({
       debounceTimers: this.debounceTimers,
       pendingOperations: this.pendingOperations,
@@ -164,7 +172,8 @@ export class AsyncOperationManager {
       pendingOperations: this.pendingOperations.size,
       successfulOperations: successful.length,
       failedOperations: failed.length,
-      averageExecutionTime: successful.length > 0 ? totalExecutionTime / successful.length : 0,
+      averageExecutionTime:
+        successful.length > 0 ? totalExecutionTime / successful.length : 0,
     };
   }
 

@@ -4,16 +4,16 @@
 
 ## 报告分类
 
-| 编号 | 分类 | 文件 | 严重程度 |
-|------|------|------|----------|
-| PM-001 | 操作顺序依赖 | [PM-001-operation-sequence-bugs.md](./PM-001-operation-sequence-bugs.md) | Critical |
-| PM-002 | 事件对象泄漏 | [PM-002-event-object-leakage.md](./PM-002-event-object-leakage.md) | High |
-| PM-003 | 状态同步问题 | [PM-003-state-synchronization.md](./PM-003-state-synchronization.md) | High |
-| PM-004 | 前后端接口不匹配 | [PM-004-api-contract-mismatch.md](./PM-004-api-contract-mismatch.md) | Medium |
-| PM-005 | CSS 过度优化 | [PM-005-css-over-optimization.md](./PM-005-css-over-optimization.md) | Medium |
-| PM-006 | 字符编码问题 | [PM-006-encoding-issues.md](./PM-006-encoding-issues.md) | Low |
-| PM-007 | 数据库安全策略 | [PM-007-database-security-policy.md](./PM-007-database-security-policy.md) | Medium |
-| PM-008 | 任务群执行逻辑 | [PM-008-task-group-execution.md](./PM-008-task-group-execution.md) | High |
+| 编号   | 分类             | 文件                                                                       | 严重程度 |
+| ------ | ---------------- | -------------------------------------------------------------------------- | -------- |
+| PM-001 | 操作顺序依赖     | [PM-001-operation-sequence-bugs.md](./PM-001-operation-sequence-bugs.md)   | Critical |
+| PM-002 | 事件对象泄漏     | [PM-002-event-object-leakage.md](./PM-002-event-object-leakage.md)         | High     |
+| PM-003 | 状态同步问题     | [PM-003-state-synchronization.md](./PM-003-state-synchronization.md)       | High     |
+| PM-004 | 前后端接口不匹配 | [PM-004-api-contract-mismatch.md](./PM-004-api-contract-mismatch.md)       | Medium   |
+| PM-005 | CSS 过度优化     | [PM-005-css-over-optimization.md](./PM-005-css-over-optimization.md)       | Medium   |
+| PM-006 | 字符编码问题     | [PM-006-encoding-issues.md](./PM-006-encoding-issues.md)                   | Low      |
+| PM-007 | 数据库安全策略   | [PM-007-database-security-policy.md](./PM-007-database-security-policy.md) | Medium   |
+| PM-008 | 任务群执行逻辑   | [PM-008-task-group-execution.md](./PM-008-task-group-execution.md)         | High     |
 
 ## 阅读指南
 
@@ -34,4 +34,4 @@
 
 ---
 
-*最后更新：2026-01-12*
+_最后更新：2026-01-12_

@@ -25,7 +25,12 @@ class ToastStore {
     return () => this.listeners.delete(listener);
   }
 
-  private publish(toast: Omit<ToastMessage, 'id' | 'createdAt'> & { id?: string; createdAt?: number }) {
+  private publish(
+    toast: Omit<ToastMessage, 'id' | 'createdAt'> & {
+      id?: string;
+      createdAt?: number;
+    },
+  ) {
     const message: ToastMessage = {
       id: toast.id ?? generateToastId(),
       createdAt: toast.createdAt ?? Date.now(),
@@ -55,4 +60,3 @@ class ToastStore {
 }
 
 export const toast = new ToastStore();
-

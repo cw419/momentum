@@ -6,7 +6,7 @@
 import {
   ExceptionRule,
   ExceptionRuleError,
-  ExceptionRuleException
+  ExceptionRuleException,
 } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
 import { getDuplicationReport } from '../duplication/duplicationDetection';
@@ -47,31 +47,44 @@ class RuleMaintenanceService {
    */
   async updateRule(
     id: string,
-    updates: Partial<Pick<ExceptionRule, 'name' | 'type' | 'description'>>
+    updates: Partial<Pick<ExceptionRule, 'name' | 'type' | 'description'>>,
   ): Promise<RuleUpdateResult> {
     try {
       const warnings: string[] = [];
 
-      if (updates.name !== undefined || updates.type !== undefined || updates.description !== undefined) {
+      if (
+        updates.name !== undefined ||
+        updates.type !== undefined ||
+        updates.description !== undefined
+      ) {
         exceptionRuleStorage.validateRule(updates);
       }
 
       if (updates.name) {
         const allRules = await exceptionRuleStorage.getRules();
-        const duplicationReport = getDuplicationReport(allRules, updates.name, id);
+        const duplicationReport = getDuplicationReport(
+          allRules,
+          updates.name,
+          id,
+        );
 
         if (duplicationReport.hasExactMatch) {
           throw new ExceptionRuleException(
             ExceptionRuleError.DUPLICATE_RULE_NAME,
             `Rule name "${updates.name}" already exists`,
-            { existingRules: duplicationReport.exactMatches }
+            { existingRules: duplicationReport.exactMatches },
           );
         }
 
         if (duplicationReport.hasSimilarRules) {
-          const similarRuleNames = duplicationReport.similarRules.map(r => r.rule.name).join(', ');
+          const similarRuleNames = duplicationReport.similarRules
+            .map((r) => r.rule.name)
+            .join(', ');
           warnings.push(
-            tr(`发现相似规则: ${similarRuleNames}`, `Similar rules found: ${similarRuleNames}`)
+            tr(
+              `发现相似规则: ${similarRuleNames}`,
+              `Similar rules found: ${similarRuleNames}`,
+            ),
           );
         }
       }
@@ -86,7 +99,7 @@ class RuleMaintenanceService {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         'Failed to update rule',
-        error
+        error,
       );
     }
   }
@@ -104,7 +117,7 @@ class RuleMaintenanceService {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         'Failed to delete rule',
-        error
+        error,
       );
     }
   }
@@ -118,7 +131,7 @@ class RuleMaintenanceService {
 
       if (options.removeExpiredRecords) {
         removedRecords = await ruleUsageTracker.cleanupExpiredRecords(
-          options.retentionDays || 90
+          options.retentionDays || 90,
         );
       }
 
@@ -126,13 +139,13 @@ class RuleMaintenanceService {
 
       return {
         removedRecords,
-        cleanedAt: new Date()
+        cleanedAt: new Date(),
       };
     } catch (error) {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         'Failed to cleanup data',
-        error
+        error,
       );
     }
   }
@@ -143,7 +156,7 @@ class RuleMaintenanceService {
   async getSystemHealth(): Promise<SystemHealthStatus> {
     try {
       const allRules = await exceptionRuleStorage.getRules();
-      const activeRules = allRules.filter(r => r.isActive);
+      const activeRules = allRules.filter((r) => r.isActive);
       const usageRecords = await exceptionRuleStorage.getUsageRecords();
 
       const issues: string[] = [];
@@ -155,26 +168,39 @@ class RuleMaintenanceService {
       }
 
       if (usageRecords.length === 0 && activeRules.length > 0) {
-        issues.push(tr('有规则但没有使用记录', 'Rules exist but no usage records'));
+        issues.push(
+          tr('有规则但没有使用记录', 'Rules exist but no usage records'),
+        );
         status = 'warning';
       }
 
-      const lastUsedAt = usageRecords.length > 0
-        ? new Date(Math.max(...usageRecords.map(r => r.usedAt.getTime())))
-        : undefined;
+      const lastUsedAt =
+        usageRecords.length > 0
+          ? new Date(Math.max(...usageRecords.map((r) => r.usedAt.getTime())))
+          : undefined;
 
       if (lastUsedAt) {
-        const daysSinceLastUse = (Date.now() - lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
+        const daysSinceLastUse =
+          (Date.now() - lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
         if (daysSinceLastUse > 30) {
-          issues.push(tr('超过30天未使用任何规则', 'No rules used in the last 30 days'));
+          issues.push(
+            tr('超过30天未使用任何规则', 'No rules used in the last 30 days'),
+          );
           status = 'warning';
         }
       }
 
-      const ruleNames = activeRules.map(r => r.name);
-      const duplicateNames = ruleNames.filter((name, index) => ruleNames.indexOf(name) !== index);
+      const ruleNames = activeRules.map((r) => r.name);
+      const duplicateNames = ruleNames.filter(
+        (name, index) => ruleNames.indexOf(name) !== index,
+      );
       if (duplicateNames.length > 0) {
-        issues.push(tr(`发现重复规则名称: ${duplicateNames.join(', ')}`, `Duplicate rule names found: ${duplicateNames.join(', ')}`));
+        issues.push(
+          tr(
+            `发现重复规则名称: ${duplicateNames.join(', ')}`,
+            `Duplicate rule names found: ${duplicateNames.join(', ')}`,
+          ),
+        );
         status = 'error';
       }
 
@@ -184,7 +210,7 @@ class RuleMaintenanceService {
         activeRules: activeRules.length,
         totalUsageRecords: usageRecords.length,
         lastUsedAt,
-        issues
+        issues,
       };
     } catch (error) {
       return {
@@ -192,7 +218,12 @@ class RuleMaintenanceService {
         totalRules: 0,
         activeRules: 0,
         totalUsageRecords: 0,
-        issues: [tr('系统检查失败: ', 'System check failed: ') + (error instanceof Error ? error.message : tr('未知错误', 'Unknown error'))]
+        issues: [
+          tr('系统检查失败: ', 'System check failed: ') +
+            (error instanceof Error
+              ? error.message
+              : tr('未知错误', 'Unknown error')),
+        ],
       };
     }
   }

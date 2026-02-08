@@ -55,7 +55,7 @@ describe('StorageProvider', () => {
     const { unmount } = render(
       <StorageProvider storage={storage as any}>
         <StorageConsumer />
-      </StorageProvider>
+      </StorageProvider>,
     );
 
     expect(screen.getByTestId('storage-kind').textContent).toBe('supabase');
@@ -74,7 +74,7 @@ describe('StorageProvider', () => {
     render(
       <StorageProvider>
         <StorageConsumer />
-      </StorageProvider>
+      </StorageProvider>,
     );
 
     expect(screen.getByTestId('storage-kind').textContent).toBe('local');

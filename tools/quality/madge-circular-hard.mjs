@@ -2,7 +2,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const repoRoot = process.cwd();
-const reportPath = path.join(repoRoot, 'reports', 'quality', 'madge-circular.json');
+const reportPath = path.join(
+  repoRoot,
+  'reports',
+  'quality',
+  'madge-circular.json',
+);
 
 const report = JSON.parse(await fs.readFile(reportPath, 'utf8'));
 const circularCount = report?.circularCount ?? 0;

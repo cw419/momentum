@@ -39,8 +39,12 @@ describe('fixRuleTypeIssues', () => {
 
     expect(result.fixed).toBe(true);
     expect(result.issues.some((item) => item.includes('type'))).toBe(true);
-    expect(storageMock.updateRule).toHaveBeenCalledWith('rule-1', { type: ExceptionRuleType.PAUSE_ONLY });
-    expect(storageMock.updateRule).toHaveBeenCalledWith('rule-1', { usageCount: 0 });
+    expect(storageMock.updateRule).toHaveBeenCalledWith('rule-1', {
+      type: ExceptionRuleType.PAUSE_ONLY,
+    });
+    expect(storageMock.updateRule).toHaveBeenCalledWith('rule-1', {
+      usageCount: 0,
+    });
   });
 
   it('repairs missing type and reports empty name issue without failing', async () => {
@@ -56,7 +60,9 @@ describe('fixRuleTypeIssues', () => {
 
     expect(result.fixed).toBe(true);
     expect(result.issues.length).toBeGreaterThan(1);
-    expect(storageMock.updateRule).toHaveBeenCalledWith('rule-2', { type: ExceptionRuleType.PAUSE_ONLY });
+    expect(storageMock.updateRule).toHaveBeenCalledWith('rule-2', {
+      type: ExceptionRuleType.PAUSE_ONLY,
+    });
   });
 
   it('returns failure result when storage throws', async () => {

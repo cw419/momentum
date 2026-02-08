@@ -11,7 +11,8 @@ describe('useViewValidation', () => {
   it('should redirect focus view to dashboard when active chain is missing', () => {
     const setState = vi.fn();
     const { rerender } = renderHook(
-      ({ state, isInitialized }) => useViewValidation({ state, setState, isInitialized }),
+      ({ state, isInitialized }) =>
+        useViewValidation({ state, setState, isInitialized }),
       {
         initialProps: {
           state: createAppState({
@@ -26,7 +27,7 @@ describe('useViewValidation', () => {
           }),
           isInitialized: false,
         },
-      }
+      },
     );
 
     rerender({
@@ -44,8 +45,12 @@ describe('useViewValidation', () => {
     });
 
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
-    const updater = setState.mock.calls[0]?.[0] as (prev: ReturnType<typeof createAppState>) => ReturnType<typeof createAppState>;
-    const next = updater(createAppState({ currentView: 'focus', viewingChainId: 'x' }));
+    const updater = setState.mock.calls[0]?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
+    const next = updater(
+      createAppState({ currentView: 'focus', viewingChainId: 'x' }),
+    );
     expect(next.currentView).toBe('dashboard');
     expect(next.viewingChainId).toBeNull();
   });
@@ -57,11 +62,20 @@ describe('useViewValidation', () => {
       viewingChainId: 'missing-chain',
     });
 
-    renderHook(() => useViewValidation({ state, setState, isInitialized: true }));
+    renderHook(() =>
+      useViewValidation({ state, setState, isInitialized: true }),
+    );
 
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
-    const updater = setState.mock.calls[0]?.[0] as (prev: ReturnType<typeof createAppState>) => ReturnType<typeof createAppState>;
-    const next = updater(createAppState({ currentView: 'detail', viewingChainId: 'missing-chain' }));
+    const updater = setState.mock.calls[0]?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
+    const next = updater(
+      createAppState({
+        currentView: 'detail',
+        viewingChainId: 'missing-chain',
+      }),
+    );
     expect(next.currentView).toBe('dashboard');
     expect(next.viewingChainId).toBeNull();
   });
@@ -75,7 +89,9 @@ describe('useViewValidation', () => {
       viewingChainId: chain.id,
     });
 
-    renderHook(() => useViewValidation({ state, setState, isInitialized: true }));
+    renderHook(() =>
+      useViewValidation({ state, setState, isInitialized: true }),
+    );
 
     expect(setState).not.toHaveBeenCalled();
   });

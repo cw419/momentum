@@ -1,2 +1,1 @@
 export { MigrationHelper } from './MigrationHelper';
-

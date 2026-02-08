@@ -10,7 +10,7 @@ export async function getTaskTimeStats(): Promise<TaskTimeStats[]> {
   const now = Date.now();
 
   // Return cached data if valid
-  if (statsCache !== null && (now - cacheTimestamp) < CACHE_TTL) {
+  if (statsCache !== null && now - cacheTimestamp < CACHE_TTL) {
     return statsCache;
   }
 
@@ -38,15 +38,20 @@ export async function saveTaskTimeStats(stats: TaskTimeStats[]): Promise<void> {
   }
 }
 
-export async function getLastCompletionTime(chainId: string): Promise<number | null> {
+export async function getLastCompletionTime(
+  chainId: string,
+): Promise<number | null> {
   const stats = await getTaskTimeStats();
-  const chainStats = stats.find(s => s.chainId === chainId);
+  const chainStats = stats.find((s) => s.chainId === chainId);
   return chainStats?.lastCompletionTime || null;
 }
 
-export async function updateTaskTimeStats(chainId: string, actualDuration: number): Promise<void> {
+export async function updateTaskTimeStats(
+  chainId: string,
+  actualDuration: number,
+): Promise<void> {
   const stats = await getTaskTimeStats();
-  const existingIndex = stats.findIndex(s => s.chainId === chainId);
+  const existingIndex = stats.findIndex((s) => s.chainId === chainId);
 
   if (existingIndex >= 0) {
     const existing = stats[existingIndex];
@@ -73,8 +78,10 @@ export async function updateTaskTimeStats(chainId: string, actualDuration: numbe
   await saveTaskTimeStats(stats);
 }
 
-export async function getTaskAverageTime(chainId: string): Promise<number | null> {
+export async function getTaskAverageTime(
+  chainId: string,
+): Promise<number | null> {
   const stats = await getTaskTimeStats();
-  const chainStats = stats.find(s => s.chainId === chainId);
+  const chainStats = stats.find((s) => s.chainId === chainId);
   return chainStats?.averageCompletionTime || null;
 }

@@ -1,9 +1,15 @@
 import type { ComponentHealth, HealthStatus } from './types';
 
-export function generateSummary(status: HealthStatus, score: number, components: ComponentHealth[]): string {
+export function generateSummary(
+  status: HealthStatus,
+  score: number,
+  components: ComponentHealth[],
+): string {
   const healthyCount = components.filter((c) => c.status === 'healthy').length;
   const warningCount = components.filter((c) => c.status === 'warning').length;
-  const criticalCount = components.filter((c) => c.status === 'critical').length;
+  const criticalCount = components.filter(
+    (c) => c.status === 'critical',
+  ).length;
 
   let summary = `系统健康分数: ${score}/100。`;
 
@@ -17,4 +23,3 @@ export function generateSummary(status: HealthStatus, score: number, components:
 
   return summary;
 }
-

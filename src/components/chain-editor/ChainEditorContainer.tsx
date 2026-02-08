@@ -1,5 +1,9 @@
 import type { Chain, ChainDraft } from '../../types';
-import { useMobileOptimization, useTouchOptimization, useVirtualKeyboardAdaptation } from '../../hooks/useMobileOptimization';
+import {
+  useMobileOptimization,
+  useTouchOptimization,
+  useVirtualKeyboardAdaptation,
+} from '../../hooks/useMobileOptimization';
 import { useChainEditorForm } from './hooks/useChainEditorForm';
 import { ChainEditorView } from './ChainEditorView';
 
@@ -11,8 +15,19 @@ interface ChainEditorProps {
   onCancel: () => void;
 }
 
-export function ChainEditor({ chain, isEditing, initialParentId, onSave, onCancel }: ChainEditorProps) {
-  const form = useChainEditorForm({ chain, isEditing, initialParentId, onSave });
+export function ChainEditor({
+  chain,
+  isEditing,
+  initialParentId,
+  onSave,
+  onCancel,
+}: ChainEditorProps) {
+  const form = useChainEditorForm({
+    chain,
+    isEditing,
+    initialParentId,
+    onSave,
+  });
 
   const mobileInfo = useMobileOptimization();
   useTouchOptimization();
@@ -29,4 +44,3 @@ export function ChainEditor({ chain, isEditing, initialParentId, onSave, onCance
     />
   );
 }
-

@@ -54,7 +54,11 @@ export interface RuleUsageStats {
   earlyCompletionUsage: number;
   lastUsedAt?: Date;
   averageTaskElapsedTime: number;
-  mostUsedWithChains: Array<{ chainId: string; chainName: string; count: number }>;
+  mostUsedWithChains: Array<{
+    chainId: string;
+    chainName: string;
+    count: number;
+  }>;
 }
 
 export interface OverallUsageStats {
@@ -71,4 +75,3 @@ export interface ExceptionRuleStorage {
   usageRecords: RuleUsageRecord[];
   lastSyncAt?: Date;
 }
-

@@ -43,7 +43,9 @@ async function loadRuleStateManager() {
 
   vi.doMock('../../utils/env', () => ({ isDev: false }));
   vi.doMock('../../utils/logger', () => ({ logger: loggerMock }));
-  vi.doMock('../../utils/random', () => ({ randomId: vi.fn(() => 'rule-real-1') }));
+  vi.doMock('../../utils/random', () => ({
+    randomId: vi.fn(() => 'rule-real-1'),
+  }));
   vi.doMock('../ExceptionRuleStorage', () => ({
     exceptionRuleStorage: exceptionRuleStorageMock,
   }));
@@ -90,7 +92,11 @@ describe('RuleStateManager', () => {
       name: 'Optimistic Rule',
     });
 
-    const { temporaryId, temporaryRule } = manager.startOptimisticCreation('Optimistic Rule', 'pause', 'desc');
+    const { temporaryId, temporaryRule } = manager.startOptimisticCreation(
+      'Optimistic Rule',
+      'pause',
+      'desc',
+    );
     expect(temporaryRule.id).toBe(temporaryId);
 
     const immediateValidation = await manager.validateRuleId(temporaryId);
@@ -110,10 +116,17 @@ describe('RuleStateManager', () => {
     const { manager, exceptionRuleStorageMock } = await loadRuleStateManager();
     manager.clearAllStates();
 
-    exceptionRuleStorageMock.createRule.mockRejectedValue(new Error('storage unavailable'));
-    const { temporaryId } = manager.startOptimisticCreation('Broken Rule', 'pause');
+    exceptionRuleStorageMock.createRule.mockRejectedValue(
+      new Error('storage unavailable'),
+    );
+    const { temporaryId } = manager.startOptimisticCreation(
+      'Broken Rule',
+      'pause',
+    );
 
-    await expect(manager.waitForRuleCreation(temporaryId)).rejects.toThrow('storage unavailable');
+    await expect(manager.waitForRuleCreation(temporaryId)).rejects.toThrow(
+      'storage unavailable',
+    );
 
     const state = manager.getRuleState(temporaryId);
     expect(state?.status).toBe('error');
@@ -124,7 +137,9 @@ describe('RuleStateManager', () => {
     const { manager, exceptionRuleStorageMock } = await loadRuleStateManager();
     manager.clearAllStates();
 
-    exceptionRuleStorageMock.getRuleById.mockResolvedValueOnce(baseRule).mockResolvedValueOnce(null);
+    exceptionRuleStorageMock.getRuleById
+      .mockResolvedValueOnce(baseRule)
+      .mockResolvedValueOnce(null);
 
     const valid = await manager.validateRuleId('rule-1');
     expect(valid).toMatchObject({
@@ -146,14 +161,20 @@ describe('RuleStateManager', () => {
     const wait = deferred<ExceptionRule>();
     exceptionRuleStorageMock.createRule.mockReturnValue(wait.promise);
 
-    const { temporaryId } = manager.startOptimisticCreation('Pending Rule', 'pause');
+    const { temporaryId } = manager.startOptimisticCreation(
+      'Pending Rule',
+      'pause',
+    );
     expect(await manager.ruleExists(temporaryId)).toBe(true);
 
     wait.resolve({ ...baseRule, id: 'db-id' });
     const resolved = await manager.waitForRuleCreation(temporaryId);
     expect(resolved.id).toBe('rule-real-1');
 
-    exceptionRuleStorageMock.getRuleById.mockResolvedValueOnce({ ...baseRule, id: 'rule-real-1' });
+    exceptionRuleStorageMock.getRuleById.mockResolvedValueOnce({
+      ...baseRule,
+      id: 'rule-real-1',
+    });
     expect(await manager.ruleExists(temporaryId)).toBe(true);
   });
 

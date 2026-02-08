@@ -1,4 +1,6 @@
-export function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShift {
+export function isLayoutShiftEntry(
+  entry: PerformanceEntry,
+): entry is LayoutShift {
   if (entry.entryType !== 'layout-shift') return false;
   const candidate = entry as Partial<LayoutShift>;
   return (
@@ -7,4 +9,3 @@ export function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShif
     Array.isArray(candidate.sources)
   );
 }
-

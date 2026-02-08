@@ -1,6 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { AppState } from '../../../../types';
-import { createAppState, createLocalStorageMock, createUnitChain } from '../../../../test/factories';
+import {
+  createAppState,
+  createLocalStorageMock,
+  createUnitChain,
+} from '../../../../test/factories';
 import { createSchedulingHandlers } from '../scheduling';
 import { queryOptimizer } from '../../../../utils/queryOptimizer';
 import { notificationManager } from '../../../../utils/notifications';
@@ -36,9 +40,14 @@ function flushPromises() {
 
 function createStateContainer(initialState: AppState) {
   let state = initialState;
-  const setState = vi.fn((update: AppState | ((prev: AppState) => AppState)) => {
-    state = typeof update === 'function' ? (update as (prev: AppState) => AppState)(state) : update;
-  });
+  const setState = vi.fn(
+    (update: AppState | ((prev: AppState) => AppState)) => {
+      state =
+        typeof update === 'function'
+          ? (update as (prev: AppState) => AppState)(state)
+          : update;
+    },
+  );
   return {
     getState: () => state,
     setState,
@@ -59,7 +68,9 @@ describe('createSchedulingHandlers', () => {
       auxiliarySignal: 'bell',
       auxiliaryStreak: 4,
     });
-    const stateRef = createStateContainer(createAppState({ chains: [chain], chainsRevision: 2 }));
+    const stateRef = createStateContainer(
+      createAppState({ chains: [chain], chainsRevision: 2 }),
+    );
     const storage = createLocalStorageMock({
       saveScheduledSessions: vi.fn(async () => undefined),
     });
@@ -84,8 +95,12 @@ describe('createSchedulingHandlers', () => {
       chainId: chain.id,
       auxiliarySignal: chain.auxiliarySignal,
     });
-    expect(nextState.chains.find((item) => item.id === chain.id)?.auxiliaryStreak).toBe(5);
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith(nextState.scheduledSessions);
+    expect(
+      nextState.chains.find((item) => item.id === chain.id)?.auxiliaryStreak,
+    ).toBe(5);
+    expect(storage.saveScheduledSessions).toHaveBeenCalledWith(
+      nextState.scheduledSessions,
+    );
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
   });
@@ -102,7 +117,7 @@ describe('createSchedulingHandlers', () => {
       createAppState({
         chains: [chain],
         scheduledSessions: [existingSession],
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveScheduledSessions: vi.fn(async () => undefined),
@@ -144,7 +159,11 @@ describe('createSchedulingHandlers', () => {
   });
 
   it('should complete booking, remove schedule, and increment streak', async () => {
-    const chain = createUnitChain({ id: 'chain-4', auxiliaryStreak: 2, name: 'Booking Chain' });
+    const chain = createUnitChain({
+      id: 'chain-4',
+      auxiliaryStreak: 2,
+      name: 'Booking Chain',
+    });
     const stateRef = createStateContainer(
       createAppState({
         chains: [chain],
@@ -156,7 +175,7 @@ describe('createSchedulingHandlers', () => {
             auxiliarySignal: 'signal',
           },
         ],
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveScheduledSessions: vi.fn(async () => undefined),
@@ -176,8 +195,15 @@ describe('createSchedulingHandlers', () => {
     await flushPromises();
 
     expect(stateRef.getState().scheduledSessions).toHaveLength(0);
-    expect(stateRef.getState().chains.find((item) => item.id === chain.id)?.auxiliaryStreak).toBe(3);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(chain.name, 3, 'Schedule completed');
+    expect(
+      stateRef.getState().chains.find((item) => item.id === chain.id)
+        ?.auxiliaryStreak,
+    ).toBe(3);
+    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+      chain.name,
+      3,
+      'Schedule completed',
+    );
     expect(storage.saveScheduledSessions).toHaveBeenCalledWith([]);
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
   });
@@ -204,6 +230,8 @@ describe('createSchedulingHandlers', () => {
     handleScheduleChain(chain.id);
     await flushPromises();
 
-    expect(toast.error).toHaveBeenCalledWith('Failed to schedule. Please try again.');
+    expect(toast.error).toHaveBeenCalledWith(
+      'Failed to schedule. Please try again.',
+    );
   });
 });

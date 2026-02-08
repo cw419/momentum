@@ -61,7 +61,11 @@ describe('integrity/RuleIntegrityChecker', () => {
 
     const issues = ruleIntegrityChecker.validateRuleIds(rules);
     expect(issues).toHaveLength(3);
-    expect(issues.map((issue) => issue.type)).toEqual(['missing_id', 'missing_id', 'missing_id']);
+    expect(issues.map((issue) => issue.type)).toEqual([
+      'missing_id',
+      'missing_id',
+      'missing_id',
+    ]);
 
     for (const issue of issues) {
       await issue.fixAction?.();
@@ -76,10 +80,22 @@ describe('integrity/RuleIntegrityChecker', () => {
 
   it('detects duplicate active names and renames conflicting rules during auto-fix', async () => {
     const activeA = createRule({ id: 'a', name: 'Same Name', isActive: true });
-    const activeB = createRule({ id: 'b', name: ' same name ', isActive: true });
-    const inactive = createRule({ id: 'c', name: 'Same Name', isActive: false });
+    const activeB = createRule({
+      id: 'b',
+      name: ' same name ',
+      isActive: true,
+    });
+    const inactive = createRule({
+      id: 'c',
+      name: 'Same Name',
+      isActive: false,
+    });
 
-    const issues = ruleIntegrityChecker.checkDuplicateNames([activeA, activeB, inactive]);
+    const issues = ruleIntegrityChecker.checkDuplicateNames([
+      activeA,
+      activeB,
+      inactive,
+    ]);
     expect(issues).toHaveLength(1);
     expect(issues[0]?.type).toBe('duplicate_name');
     expect(issues[0]?.affectedItems).toEqual(['a', 'b']);
@@ -105,7 +121,10 @@ describe('integrity/RuleIntegrityChecker', () => {
       type: 'not_a_real_type' as unknown as ExceptionRuleType,
     });
 
-    const issues = ruleIntegrityChecker.checkRuleFields([missingFieldsRule, invalidTypeRule]);
+    const issues = ruleIntegrityChecker.checkRuleFields([
+      missingFieldsRule,
+      invalidTypeRule,
+    ]);
 
     expect(issues.map((issue) => issue.type)).toEqual([
       'invalid_type',

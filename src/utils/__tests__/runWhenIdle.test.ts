@@ -14,7 +14,9 @@ describe('runWhenIdle', () => {
 
     try {
       runWhenIdle(callback, 321);
-      expect(requestIdleCallbackMock).toHaveBeenCalledWith(callback, { timeout: 321 });
+      expect(requestIdleCallbackMock).toHaveBeenCalledWith(callback, {
+        timeout: 321,
+      });
       expect(callback).toHaveBeenCalledTimes(1);
     } finally {
       window.requestIdleCallback = previous;

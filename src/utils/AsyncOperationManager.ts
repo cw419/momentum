@@ -1,2 +1,4 @@
-export { AsyncOperationManager, asyncOperationManager } from './async-operation-manager/AsyncOperationManager';
-
+export {
+  AsyncOperationManager,
+  asyncOperationManager,
+} from './async-operation-manager/AsyncOperationManager';

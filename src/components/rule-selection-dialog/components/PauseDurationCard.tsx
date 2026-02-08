@@ -12,8 +12,8 @@ export function PauseDurationCard({
   onIndefiniteChange: (value: boolean) => void;
 }) {
   return (
-    <div className="mx-6 mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-2xl">
-      <h3 className="font-medium text-gray-900 dark:text-white mb-3">
+    <div className="mx-6 mt-4 rounded-2xl bg-gray-50 p-4 dark:bg-gray-700/50">
+      <h3 className="mb-3 font-medium text-gray-900 dark:text-white">
         {tr('暂停时长设置', 'Pause duration')}
       </h3>
 
@@ -30,16 +30,21 @@ export function PauseDurationCard({
             }
 
             const parsed = Number.parseInt(raw, 10);
-            onDurationMinutesChange(Number.isFinite(parsed) ? parsed : undefined);
+            onDurationMinutesChange(
+              Number.isFinite(parsed) ? parsed : undefined,
+            );
           }}
           placeholder={tr('输入分钟', 'Minutes')}
           disabled={isIndefinite}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-200 dark:disabled:bg-gray-600"
+          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-600"
         />
       </div>
 
-      <div className="flex items-center justify-end mt-2">
-        <label htmlFor="isIndefinite" className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+      <div className="mt-2 flex items-center justify-end">
+        <label
+          htmlFor="isIndefinite"
+          className="mr-2 text-sm text-gray-600 dark:text-gray-400"
+        >
           {tr('无限时间', 'Indefinite')}
         </label>
         <input
@@ -53,7 +58,7 @@ export function PauseDurationCard({
               onDurationMinutesChange(undefined);
             }
           }}
-          className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+          className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary-600 focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
         />
       </div>
     </div>

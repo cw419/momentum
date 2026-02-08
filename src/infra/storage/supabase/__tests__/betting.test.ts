@@ -170,10 +170,17 @@ describe('betting.ts', () => {
   describe('completeTaskWithBetting', () => {
     it('should call rpc with correct parameters', async () => {
       const ctx = createMockContext();
-      const mockRpc = vi.fn().mockResolvedValue({ data: { success: true }, error: null });
+      const mockRpc = vi
+        .fn()
+        .mockResolvedValue({ data: { success: true }, error: null });
       ctx.mockClient.rpc = mockRpc;
 
-      const result = await completeTaskWithBetting(ctx, 'session-1', true, 'Great job!');
+      const result = await completeTaskWithBetting(
+        ctx,
+        'session-1',
+        true,
+        'Great job!',
+      );
 
       expect(mockRpc).toHaveBeenCalledWith('complete_task_with_betting', {
         p_session_id: 'session-1',
@@ -185,9 +192,10 @@ describe('betting.ts', () => {
 
     it('should return error when rpc fails', async () => {
       const ctx = createMockContext();
-      ctx.mockClient.rpc = vi
-        .fn()
-        .mockResolvedValue({ data: null, error: createSupabaseError('UNKNOWN', 'RPC failed') });
+      ctx.mockClient.rpc = vi.fn().mockResolvedValue({
+        data: null,
+        error: createSupabaseError('UNKNOWN', 'RPC failed'),
+      });
 
       const result = await completeTaskWithBetting(ctx, 'session-1', false);
 
@@ -199,7 +207,9 @@ describe('betting.ts', () => {
 
     it('should handle null completion notes', async () => {
       const ctx = createMockContext();
-      const mockRpc = vi.fn().mockResolvedValue({ data: { success: true }, error: null });
+      const mockRpc = vi
+        .fn()
+        .mockResolvedValue({ data: { success: true }, error: null });
       ctx.mockClient.rpc = mockRpc;
 
       await completeTaskWithBetting(ctx, 'session-1', true);
@@ -301,7 +311,10 @@ describe('betting.ts', () => {
         if (name === 'place_task_bet') {
           return Promise.resolve({
             data: null,
-            error: createSupabaseError('INSUFFICIENT_POINTS', 'Not enough points'),
+            error: createSupabaseError(
+              'INSUFFICIENT_POINTS',
+              'Not enough points',
+            ),
           });
         }
         return Promise.resolve({ data: null, error: null });

@@ -19,28 +19,28 @@ export function RepeatCountModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md animate-scale-in shadow-2xl border border-gray-200 dark:border-slate-600">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md animate-scale-in rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-slate-600 dark:bg-slate-800">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="font-chinese text-xl font-bold text-gray-900 dark:text-slate-100">
             {tr('设置重复次数', 'Set repeat count')}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
           >
             <X size={20} />
           </button>
         </div>
 
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3 font-chinese">
+          <label className="mb-3 block font-chinese text-sm font-medium text-gray-700 dark:text-slate-300">
             {tr('重复次数 (1-99)', 'Repeat count (1-99)')}
           </label>
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setRepeatCount(Math.max(1, repeatCount - 1))}
-              className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 flex items-center justify-center text-gray-600 dark:text-slate-300 font-bold transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 font-bold text-gray-600 transition-colors hover:bg-gray-300 dark:bg-slate-600 dark:text-slate-300 dark:hover:bg-slate-500"
               disabled={repeatCount <= 1}
             >
               -
@@ -55,19 +55,19 @@ export function RepeatCountModal({
                 const value = parseInt(event.target.value) || 1;
                 setRepeatCount(Math.min(99, Math.max(1, value)));
               }}
-              className="w-20 h-12 text-center text-2xl font-bold bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-slate-100"
+              className="h-12 w-20 rounded-xl border border-gray-300 bg-gray-50 text-center text-2xl font-bold text-gray-900 focus:border-transparent focus:ring-2 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
             />
 
             <button
               onClick={() => setRepeatCount(Math.min(99, repeatCount + 1))}
-              className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 flex items-center justify-center text-gray-600 dark:text-slate-300 font-bold transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 font-bold text-gray-600 transition-colors hover:bg-gray-300 dark:bg-slate-600 dark:text-slate-300 dark:hover:bg-slate-500"
               disabled={repeatCount >= 99}
             >
               +
             </button>
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-slate-400 mt-2 font-chinese">
+          <p className="mt-2 font-chinese text-xs text-gray-500 dark:text-slate-400">
             {tr(
               '设置该任务单元在任务群中需要重复执行的次数',
               'Set how many times this unit must be repeated in the group',
@@ -78,13 +78,13 @@ export function RepeatCountModal({
         <div className="flex space-x-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-chinese"
+            className="flex-1 rounded-xl border border-gray-300 px-4 py-3 font-chinese text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             {tr('取消', 'Cancel')}
           </button>
           <button
             onClick={onSave}
-            className="flex-1 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors font-chinese font-medium"
+            className="flex-1 rounded-xl bg-primary-500 px-4 py-3 font-chinese font-medium text-white transition-colors hover:bg-primary-600"
           >
             {tr('确认设置', 'Save')}
           </button>
@@ -93,4 +93,3 @@ export function RepeatCountModal({
     </div>
   );
 }
-

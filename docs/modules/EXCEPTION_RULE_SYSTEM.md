@@ -49,15 +49,15 @@
 
 ### 服务职责
 
-| 服务 | 文件 | 行数目标 | 职责 |
-|------|------|----------|------|
-| **RuleCreator** | `RuleCreator.ts` | <200 | 规则创建、名称检查、乐观更新 |
-| **RuleQueryService** | `RuleQueryService.ts` | <200 | 规则查询、搜索、建议 |
-| **RuleExecutor** | `RuleExecutor.ts` | <150 | 规则执行、验证、使用记录 |
-| **RuleStatsService** | `RuleStatsService.ts` | <150 | 统计计算、类型分布 |
-| **RuleExportImportService** | `RuleExportImportService.ts` | <150 | 数据导入导出 |
-| **RuleMaintenanceService** | `RuleMaintenanceService.ts` | <200 | 更新、删除、清理、健康检查 |
-| **ExceptionRuleManager** | `ExceptionRuleManager.ts` | <150 | 协调器，初始化，外部接口 |
+| 服务                        | 文件                         | 行数目标 | 职责                         |
+| --------------------------- | ---------------------------- | -------- | ---------------------------- |
+| **RuleCreator**             | `RuleCreator.ts`             | <200     | 规则创建、名称检查、乐观更新 |
+| **RuleQueryService**        | `RuleQueryService.ts`        | <200     | 规则查询、搜索、建议         |
+| **RuleExecutor**            | `RuleExecutor.ts`            | <150     | 规则执行、验证、使用记录     |
+| **RuleStatsService**        | `RuleStatsService.ts`        | <150     | 统计计算、类型分布           |
+| **RuleExportImportService** | `RuleExportImportService.ts` | <150     | 数据导入导出                 |
+| **RuleMaintenanceService**  | `RuleMaintenanceService.ts`  | <200     | 更新、删除、清理、健康检查   |
+| **ExceptionRuleManager**    | `ExceptionRuleManager.ts`    | <150     | 协调器，初始化，外部接口     |
 
 ---
 
@@ -118,12 +118,12 @@ sequenceDiagram
 
 ### 错误分类
 
-| 类别 | 错误类型 | 处理策略 | 用户提示 |
-|------|----------|----------|----------|
+| 类别         | 错误类型                              | 处理策略           | 用户提示            |
+| ------------ | ------------------------------------- | ------------------ | ------------------- |
 | **用户错误** | VALIDATION_ERROR, DUPLICATE_RULE_NAME | 显示提示，引导修正 | 具体原因 + 建议操作 |
-| **系统错误** | STORAGE_ERROR, OPERATION_TIMEOUT | 自动重试，降级处理 | "请稍后重试" |
-| **数据错误** | DATA_INTEGRITY_ERROR | 自动修复 | 不打扰用户 |
-| **网络错误** | NETWORK_ERROR | 重试 + 离线模式 | "网络连接异常" |
+| **系统错误** | STORAGE_ERROR, OPERATION_TIMEOUT      | 自动重试，降级处理 | "请稍后重试"        |
+| **数据错误** | DATA_INTEGRITY_ERROR                  | 自动修复           | 不打扰用户          |
+| **网络错误** | NETWORK_ERROR                         | 重试 + 离线模式    | "网络连接异常"      |
 
 ### 错误恢复流程
 
@@ -152,22 +152,25 @@ try {
 
 ### 缓存层次
 
-| 缓存类型 | TTL | 失效条件 | 存储位置 |
-|----------|-----|----------|----------|
-| 验证结果缓存 | 5分钟 | 规则变更 | 内存 |
-| 重复检查缓存 | 2分钟 | 规则创建/删除 | 内存 |
-| 规则列表缓存 | 请求级 | 请求结束 | 内存 |
-| 统计数据缓存 | 10分钟 | 使用记录新增 | 内存 |
+| 缓存类型     | TTL    | 失效条件      | 存储位置 |
+| ------------ | ------ | ------------- | -------- |
+| 验证结果缓存 | 5分钟  | 规则变更      | 内存     |
+| 重复检查缓存 | 2分钟  | 规则创建/删除 | 内存     |
+| 规则列表缓存 | 请求级 | 请求结束      | 内存     |
+| 统计数据缓存 | 10分钟 | 使用记录新增  | 内存     |
 
 ### 缓存清理
 
 ```typescript
 // 定期清理（在 AppShellContainer 中）
 useEffect(() => {
-  const interval = setInterval(() => {
-    enhancedRuleValidationService.cleanupExpiredCache();
-    enhancedDuplicationHandler.clearCache();
-  }, 5 * 60 * 1000); // 5分钟
+  const interval = setInterval(
+    () => {
+      enhancedRuleValidationService.cleanupExpiredCache();
+      enhancedDuplicationHandler.clearCache();
+    },
+    5 * 60 * 1000,
+  ); // 5分钟
 
   return () => clearInterval(interval);
 }, []);
@@ -179,13 +182,13 @@ useEffect(() => {
 
 ### 单元测试覆盖
 
-| 模块 | 覆盖率目标 | 重点测试 |
-|------|-----------|----------|
-| RuleCreator | 80% | 创建流程、重复检测、乐观更新 |
-| RuleQueryService | 70% | 查询准确性、搜索算法 |
-| RuleExecutor | 90% | 规则验证、使用记录 |
-| RuleStatsService | 70% | 统计计算、边界条件 |
-| ErrorRecoveryManager | 80% | 恢复策略、错误分类 |
+| 模块                 | 覆盖率目标 | 重点测试                     |
+| -------------------- | ---------- | ---------------------------- |
+| RuleCreator          | 80%        | 创建流程、重复检测、乐观更新 |
+| RuleQueryService     | 70%        | 查询准确性、搜索算法         |
+| RuleExecutor         | 90%        | 规则验证、使用记录           |
+| RuleStatsService     | 70%        | 统计计算、边界条件           |
+| ErrorRecoveryManager | 80%        | 恢复策略、错误分类           |
 
 ### 集成测试场景
 
@@ -207,12 +210,12 @@ useEffect(() => {
 
 ### 性能指标
 
-| 操作 | 目标延迟 | 当前延迟 |
-|------|----------|----------|
-| 规则创建 | <300ms | 200ms |
-| 规则验证 | <100ms | 80ms |
-| 规则搜索 | <150ms | 100ms |
-| 统计计算 | <200ms | 150ms |
+| 操作     | 目标延迟 | 当前延迟 |
+| -------- | -------- | -------- |
+| 规则创建 | <300ms   | 200ms    |
+| 规则验证 | <100ms   | 80ms     |
+| 规则搜索 | <150ms   | 100ms    |
+| 统计计算 | <200ms   | 150ms    |
 
 ---
 
@@ -221,11 +224,12 @@ useEffect(() => {
 ### 添加新的规则类型
 
 1. 在 `src/types/index.ts` 中添加枚举值：
+
    ```typescript
    enum ExceptionRuleType {
      PAUSE_ONLY = 'pause_only',
      EARLY_COMPLETION_ONLY = 'early_completion_only',
-     NEW_TYPE = 'new_type',  // 新增
+     NEW_TYPE = 'new_type', // 新增
    }
    ```
 
@@ -236,6 +240,7 @@ useEffect(() => {
 ### 添加新的恢复策略
 
 1. 在 `RecoveryStrategy.ts` 中定义策略：
+
    ```typescript
    const newStrategy: RecoveryStrategy = {
      errorType: ExceptionRuleError.NEW_ERROR,

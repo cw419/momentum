@@ -10,7 +10,11 @@ describe('useStorage', () => {
     const storage = createLocalStorageMock();
 
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(StorageContext.Provider, { value: storage }, children);
+      React.createElement(
+        StorageContext.Provider,
+        { value: storage },
+        children,
+      );
 
     const { result } = renderHook(() => useStorage(), { wrapper });
 

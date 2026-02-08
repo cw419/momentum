@@ -55,16 +55,20 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
   const disableComplete = isDurationless && !description.trim();
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-completion-dialog-title"
-        className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-gray-800"
       >
-        <TaskCompletionDialogHeader chainName={chainName} tr={tr} onCancel={handleCancel} />
+        <TaskCompletionDialogHeader
+          chainName={chainName}
+          tr={tr}
+          onCancel={handleCancel}
+        />
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 space-y-4 overflow-y-auto p-6">
           <TaskDescriptionSection
             tr={tr}
             isDurationless={isDurationless}
@@ -99,4 +103,3 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
     </div>
   );
 };
-

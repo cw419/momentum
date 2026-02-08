@@ -4,19 +4,23 @@
 
 import { EnhancedDuplicationHandler } from '../EnhancedDuplicationHandler';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
-import { ExceptionRule, ExceptionRuleType, ExceptionRuleException } from '../../types';
+import {
+  ExceptionRule,
+  ExceptionRuleType,
+  ExceptionRuleException,
+} from '../../types';
 
 // Mock dependencies
 vi.mock('../ExceptionRuleStorage', () => ({
   exceptionRuleStorage: {
     getRules: vi.fn(),
-    createRule: vi.fn()
-  }
+    createRule: vi.fn(),
+  },
 }));
 
 vi.mock('../../utils/runtimeI18n', () => ({
   getCurrentLanguage: vi.fn(() => 'zh'),
-  tr: vi.fn((zh: string) => zh)
+  tr: vi.fn((zh: string) => zh),
 }));
 
 describe('EnhancedDuplicationHandler', () => {
@@ -34,7 +38,7 @@ describe('EnhancedDuplicationHandler', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 5,
-        isActive: true
+        isActive: true,
       },
       {
         id: '2',
@@ -44,8 +48,8 @@ describe('EnhancedDuplicationHandler', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 3,
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
     vi.clearAllMocks();
@@ -98,7 +102,9 @@ describe('EnhancedDuplicationHandler', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      vi.mocked(exceptionRuleStorage.getRules).mockRejectedValue(new Error('Storage error'));
+      vi.mocked(exceptionRuleStorage.getRules).mockRejectedValue(
+        new Error('Storage error'),
+      );
 
       const result = await handler.checkDuplicationRealTime('测试');
 
@@ -150,7 +156,7 @@ describe('EnhancedDuplicationHandler', () => {
     });
 
     it('should ignore inactive rules', async () => {
-      const inactiveRules = mockRules.map(r => ({ ...r, isActive: false }));
+      const inactiveRules = mockRules.map((r) => ({ ...r, isActive: false }));
       vi.mocked(exceptionRuleStorage.getRules).mockResolvedValue(inactiveRules);
 
       const result = await handler.checkDuplication('上厕所');
@@ -168,9 +174,13 @@ describe('EnhancedDuplicationHandler', () => {
     });
 
     it('should throw exception on storage error', async () => {
-      vi.mocked(exceptionRuleStorage.getRules).mockRejectedValue(new Error('Storage error'));
+      vi.mocked(exceptionRuleStorage.getRules).mockRejectedValue(
+        new Error('Storage error'),
+      );
 
-      await expect(handler.checkDuplication('测试')).rejects.toThrow(ExceptionRuleException);
+      await expect(handler.checkDuplication('测试')).rejects.toThrow(
+        ExceptionRuleException,
+      );
     });
   });
 
@@ -184,12 +194,12 @@ describe('EnhancedDuplicationHandler', () => {
         scope: 'global',
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       });
 
       const result = await handler.handleDuplicateCreation(
         '新规则',
-        ExceptionRuleType.PAUSE_ONLY
+        ExceptionRuleType.PAUSE_ONLY,
       );
 
       expect(result.action).toBe('created_new');
@@ -206,12 +216,12 @@ describe('EnhancedDuplicationHandler', () => {
         scope: 'global',
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       });
 
       const result = await handler.handleDuplicateCreation(
         '上厕所',
-        ExceptionRuleType.PAUSE_ONLY
+        ExceptionRuleType.PAUSE_ONLY,
       );
 
       expect(result.warnings.length).toBeGreaterThan(0);
@@ -224,7 +234,7 @@ describe('EnhancedDuplicationHandler', () => {
         '上厕所',
         ExceptionRuleType.PAUSE_ONLY,
         undefined,
-        'use_existing'
+        'use_existing',
       );
 
       expect(result.action).toBe('used_existing');
@@ -238,7 +248,7 @@ describe('EnhancedDuplicationHandler', () => {
         '上厕所',
         ExceptionRuleType.BREAK_CHAIN,
         undefined,
-        'use_existing'
+        'use_existing',
       );
 
       expect(result.action).toBe('used_existing_different_type');
@@ -253,8 +263,8 @@ describe('EnhancedDuplicationHandler', () => {
           '上厕所',
           ExceptionRuleType.PAUSE_ONLY,
           undefined,
-          'create_anyway'
-        )
+          'create_anyway',
+        ),
       ).rejects.toThrow(ExceptionRuleException);
     });
 
@@ -267,14 +277,14 @@ describe('EnhancedDuplicationHandler', () => {
         scope: 'global',
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       });
 
       const result = await handler.handleDuplicateCreation(
         '去厕所',
         ExceptionRuleType.PAUSE_ONLY,
         undefined,
-        'create_anyway'
+        'create_anyway',
       );
 
       expect(result.action).toBe('created_despite_similarity');
@@ -285,10 +295,7 @@ describe('EnhancedDuplicationHandler', () => {
       vi.mocked(exceptionRuleStorage.getRules).mockResolvedValue(mockRules);
 
       await expect(
-        handler.handleDuplicateCreation(
-          '上厕所',
-          ExceptionRuleType.PAUSE_ONLY
-        )
+        handler.handleDuplicateCreation('上厕所', ExceptionRuleType.PAUSE_ONLY),
       ).rejects.toThrow(ExceptionRuleException);
     });
   });
@@ -297,13 +304,22 @@ describe('EnhancedDuplicationHandler', () => {
     it('should generate numeric suffix suggestions', () => {
       const suggestions = handler.generateNameSuggestions('上厕所', ['上厕所']);
 
-      expect(suggestions.some(s => s.includes('上厕所 2'))).toBe(true);
+      expect(suggestions.some((s) => s.includes('上厕所 2'))).toBe(true);
     });
 
     it('should generate descriptive suffix suggestions', () => {
       // Fill up numeric suffixes so descriptive ones appear
-      const existingNames = ['上厕所', '上厕所 2', '上厕所 3', '上厕所 4', '上厕所 5'];
-      const suggestions = handler.generateNameSuggestions('上厕所', existingNames);
+      const existingNames = [
+        '上厕所',
+        '上厕所 2',
+        '上厕所 3',
+        '上厕所 4',
+        '上厕所 5',
+      ];
+      const suggestions = handler.generateNameSuggestions(
+        '上厕所',
+        existingNames,
+      );
 
       // Should have descriptive suffixes when numeric ones are taken
       expect(suggestions.length).toBeGreaterThan(0);
@@ -311,7 +327,10 @@ describe('EnhancedDuplicationHandler', () => {
 
     it('should avoid existing names', () => {
       const existingNames = ['上厕所', '上厕所 2', '上厕所 3'];
-      const suggestions = handler.generateNameSuggestions('上厕所', existingNames);
+      const suggestions = handler.generateNameSuggestions(
+        '上厕所',
+        existingNames,
+      );
 
       for (const suggestion of suggestions) {
         expect(existingNames).not.toContain(suggestion);

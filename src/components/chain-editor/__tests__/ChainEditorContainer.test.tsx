@@ -25,7 +25,9 @@ vi.mock('../ChainEditorView', () => ({
   }) => (
     <div>
       <div data-testid="keyboard-height">{props.keyboardHeight}</div>
-      <div data-testid="keyboard-visible">{String(props.isKeyboardVisible)}</div>
+      <div data-testid="keyboard-visible">
+        {String(props.isKeyboardVisible)}
+      </div>
       <button onClick={props.onCancel}>cancel</button>
     </div>
   ),
@@ -45,11 +47,7 @@ describe('ChainEditorContainer', () => {
   it('provides form and device adapters to view and wires cancel action', () => {
     const onCancel = vi.fn();
     render(
-      <ChainEditor
-        isEditing={false}
-        onSave={vi.fn()}
-        onCancel={onCancel}
-      />
+      <ChainEditor isEditing={false} onSave={vi.fn()} onCancel={onCancel} />,
     );
 
     expect(useChainEditorFormMock).toHaveBeenCalledWith({

@@ -23,11 +23,23 @@ const allowedChainTypes = new Set([
   'quartermaster',
 ]);
 
-type ChainImportEntry = { raw: Record<string, unknown>; sourceId: string; newId: string };
+type ChainImportEntry = {
+  raw: Record<string, unknown>;
+  sourceId: string;
+  newId: string;
+};
 
-export function getRawChainsFromPayload(payload: Record<string, unknown>, tr: ImportTranslator): unknown[] {
+export function getRawChainsFromPayload(
+  payload: Record<string, unknown>,
+  tr: ImportTranslator,
+): unknown[] {
   if (!('chains' in payload) || !Array.isArray(payload.chains)) {
-    throw new Error(tr('导入数据格式错误：未找到有效的链条数据。', 'Invalid import format: no valid chains found'));
+    throw new Error(
+      tr(
+        '导入数据格式错误：未找到有效的链条数据。',
+        'Invalid import format: no valid chains found',
+      ),
+    );
   }
 
   return payload.chains as unknown[];
@@ -35,7 +47,7 @@ export function getRawChainsFromPayload(payload: Record<string, unknown>, tr: Im
 
 export function buildChainEntriesAndIdMap(
   rawChains: unknown[],
-  tr: ImportTranslator
+  tr: ImportTranslator,
 ): { chainEntries: ChainImportEntry[]; idMap: Map<string, string> } {
   const chainEntries: ChainImportEntry[] = [];
   const seenIds = new Set<string>();
@@ -45,14 +57,21 @@ export function buildChainEntriesAndIdMap(
     const sourceId = String(record.id ?? generateId('chain'));
 
     if (seenIds.has(sourceId)) {
-      throw new Error(tr(`导入数据包包含重复的链条ID: ${sourceId}`, `Import data contains duplicate chain ID: ${sourceId}`));
+      throw new Error(
+        tr(
+          `导入数据包包含重复的链条ID: ${sourceId}`,
+          `Import data contains duplicate chain ID: ${sourceId}`,
+        ),
+      );
     }
 
     seenIds.add(sourceId);
     chainEntries.push({ raw: record, sourceId, newId: generateId('chain') });
   }
 
-  const idMap = new Map<string, string>(chainEntries.map((e) => [e.sourceId, e.newId]));
+  const idMap = new Map<string, string>(
+    chainEntries.map((e) => [e.sourceId, e.newId]),
+  );
   return { chainEntries, idMap };
 }
 
@@ -61,7 +80,10 @@ function getImportedChainType(raw: Record<string, unknown>): string {
   return allowedChainTypes.has(rawType) ? rawType : 'unit';
 }
 
-function buildImportedChainStats(raw: Record<string, unknown>, preserveStatistics: boolean) {
+function buildImportedChainStats(
+  raw: Record<string, unknown>,
+  preserveStatistics: boolean,
+) {
   if (!preserveStatistics) {
     return {
       currentStreak: 0,
@@ -81,19 +103,28 @@ function buildImportedChainStats(raw: Record<string, unknown>, preserveStatistic
   };
 }
 
-function parsePreservedDateOrNow(value: unknown, preserveTimestamps: boolean): Date {
+function parsePreservedDateOrNow(
+  value: unknown,
+  preserveTimestamps: boolean,
+): Date {
   if (!preserveTimestamps) return new Date();
   if (!value) return new Date();
   return new Date(String(value));
 }
 
-function parseOptionalPreservedDate(value: unknown, preserveTimestamps: boolean): Date | undefined {
+function parseOptionalPreservedDate(
+  value: unknown,
+  preserveTimestamps: boolean,
+): Date | undefined {
   if (!preserveTimestamps) return undefined;
   if (!value) return undefined;
   return new Date(String(value));
 }
 
-function mapImportedChainParentId(raw: Record<string, unknown>, idMap: Map<string, string>): string | undefined {
+function mapImportedChainParentId(
+  raw: Record<string, unknown>,
+  idMap: Map<string, string>,
+): string | undefined {
   const sourceParentId = pickNonNullish(raw, 'parentId', 'parent_id');
   if (sourceParentId == null) return undefined;
   return idMap.get(String(sourceParentId));
@@ -106,21 +137,31 @@ export function buildImportChains(params: {
   preserveTimestamps: boolean;
   tr: ImportTranslator;
 }): Chain[] {
-  const { chainEntries, idMap, preserveStatistics, preserveTimestamps, tr } = params;
+  const { chainEntries, idMap, preserveStatistics, preserveTimestamps, tr } =
+    params;
 
   return chainEntries.map(({ raw, newId }) => {
     const type = getImportedChainType(raw);
     const stats = buildImportedChainStats(raw, preserveStatistics);
 
-    const createdAt = parsePreservedDateOrNow(raw.createdAt, preserveTimestamps);
-    const lastCompletedAt = parseOptionalPreservedDate(raw.lastCompletedAt, preserveTimestamps);
+    const createdAt = parsePreservedDateOrNow(
+      raw.createdAt,
+      preserveTimestamps,
+    );
+    const lastCompletedAt = parseOptionalPreservedDate(
+      raw.lastCompletedAt,
+      preserveTimestamps,
+    );
     const parentId = mapImportedChainParentId(raw, idMap);
 
     const common = {
       id: newId,
       name: String(raw.name ?? tr('未命名链条', 'Untitled chain')),
       parentId,
-      sortOrder: toNumber(pickNonNullish(raw, 'sortOrder', 'sort_order'), Math.floor(Date.now() / 1000)),
+      sortOrder: toNumber(
+        pickNonNullish(raw, 'sortOrder', 'sort_order'),
+        Math.floor(Date.now() / 1000),
+      ),
       trigger: toStringWithDefault(raw.trigger, ''),
       duration: toNumber(raw.duration, 45),
       description: toStringWithDefault(raw.description, ''),
@@ -129,11 +170,23 @@ export function buildImportChains(params: {
       auxiliaryExceptions: toStringArray(raw.auxiliaryExceptions),
       auxiliarySignal: toStringWithDefault(raw.auxiliarySignal, ''),
       auxiliaryDuration: toNumber(raw.auxiliaryDuration, 15),
-      auxiliaryCompletionTrigger: toStringWithDefault(raw.auxiliaryCompletionTrigger, ''),
-      timeLimitExceptions: toStringArray(pickNonNullish(raw, 'timeLimitExceptions', 'time_limit_exceptions')),
-      isDurationless: toBooleanWithDefault(pickNonNullish(raw, 'isDurationless', 'is_durationless'), false),
-      minimumDuration: toOptionalNumber(pickNonNullish(raw, 'minimumDuration', 'minimum_duration')),
-      taskRepeatCount: toOptionalNumber(pickNonNullish(raw, 'taskRepeatCount', 'task_repeat_count')),
+      auxiliaryCompletionTrigger: toStringWithDefault(
+        raw.auxiliaryCompletionTrigger,
+        '',
+      ),
+      timeLimitExceptions: toStringArray(
+        pickNonNullish(raw, 'timeLimitExceptions', 'time_limit_exceptions'),
+      ),
+      isDurationless: toBooleanWithDefault(
+        pickNonNullish(raw, 'isDurationless', 'is_durationless'),
+        false,
+      ),
+      minimumDuration: toOptionalNumber(
+        pickNonNullish(raw, 'minimumDuration', 'minimum_duration'),
+      ),
+      taskRepeatCount: toOptionalNumber(
+        pickNonNullish(raw, 'taskRepeatCount', 'task_repeat_count'),
+      ),
       createdAt,
       lastCompletedAt,
       deletedAt: null as null,
@@ -143,9 +196,15 @@ export function buildImportChains(params: {
       return {
         ...common,
         type: 'group',
-        timeLimitHours: toOptionalNumber(pickNonNullish(raw, 'timeLimitHours', 'time_limit_hours')),
-        groupRepeatCount: toOptionalNumber(pickNonNullish(raw, 'groupRepeatCount', 'group_repeat_count')),
-        isTaskGroup: toOptionalTruthyBoolean(pickNonNullish(raw, 'isTaskGroup', 'is_task_group')),
+        timeLimitHours: toOptionalNumber(
+          pickNonNullish(raw, 'timeLimitHours', 'time_limit_hours'),
+        ),
+        groupRepeatCount: toOptionalNumber(
+          pickNonNullish(raw, 'groupRepeatCount', 'group_repeat_count'),
+        ),
+        isTaskGroup: toOptionalTruthyBoolean(
+          pickNonNullish(raw, 'isTaskGroup', 'is_task_group'),
+        ),
         groupStartedAt: undefined,
         groupExpiresAt: undefined,
       } as Chain;
@@ -157,4 +216,3 @@ export function buildImportChains(params: {
     } as Chain;
   });
 }
-

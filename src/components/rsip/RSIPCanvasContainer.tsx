@@ -1,6 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import type { RSIPNode, RSIPTreeNode } from '../../types';
-import { buildRSIPTree, countDescendants, deleteNodeAndDescendants } from '../../utils/rsipTree';
+import {
+  buildRSIPTree,
+  countDescendants,
+  deleteNodeAndDescendants,
+} from '../../utils/rsipTree';
 import { useCanvasState } from '../../hooks/useCanvasState';
 import { useRSIPLayout } from './hooks/useRSIPLayout';
 import { useRSIPTimers } from './hooks/useRSIPTimers';
@@ -26,7 +30,9 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
 }) => {
   const { savedState, isLoaded, saveCanvasState } = useCanvasState();
   const [filterType, setFilterType] = useState<string | null>(null);
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
+    null,
+  );
 
   const {
     nodePositions,
@@ -114,7 +120,7 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
         descendants,
       });
     },
-    [nodes]
+    [nodes],
   );
 
   const handleConfirmAction = useCallback(() => {

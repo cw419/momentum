@@ -31,7 +31,9 @@ export function createUnitChain(overrides: Partial<UnitChain> = {}): UnitChain {
   };
 }
 
-export function createGroupChain(overrides: Partial<GroupChain> = {}): GroupChain {
+export function createGroupChain(
+  overrides: Partial<GroupChain> = {},
+): GroupChain {
   return {
     id: overrides.id ?? 'group-chain-id',
     name: overrides.name ?? 'Group Chain',
@@ -68,15 +70,21 @@ export function createGroupChain(overrides: Partial<GroupChain> = {}): GroupChai
 
 export function createChain(
   kind: 'unit' | 'group' = 'unit',
-  overrides: Partial<Chain> = {}
+  overrides: Partial<Chain> = {},
 ): Chain {
   return kind === 'group'
     ? createGroupChain(overrides as Partial<GroupChain>)
     : createUnitChain(overrides as Partial<UnitChain>);
 }
 
-export function createChains(count: number, factory: (index: number) => Chain = (index) =>
-  createUnitChain({ id: `unit-${index}`, name: `Unit ${index}`, sortOrder: index })
+export function createChains(
+  count: number,
+  factory: (index: number) => Chain = (index) =>
+    createUnitChain({
+      id: `unit-${index}`,
+      name: `Unit ${index}`,
+      sortOrder: index,
+    }),
 ): Chain[] {
   return Array.from({ length: count }, (_, index) => factory(index));
 }

@@ -15,20 +15,20 @@
   }
 
   /* 按钮优化 */
-  button:not([role="switch"]), 
-  .btn:not([role="switch"]),
-  input[type="submit"],
-  input[type="button"] {
+  button:not([role='switch']),
+  .btn:not([role='switch']),
+  input[type='submit'],
+  input[type='button'] {
     min-height: 44px;
     padding: 12px 16px;
     font-size: 16px; /* 防止iOS缩放 */
   }
 
   /* 输入框优化 */
-  input[type="text"],
-  input[type="number"],
-  input[type="email"],
-  input[type="password"],
+  input[type='text'],
+  input[type='number'],
+  input[type='email'],
+  input[type='password'],
   textarea,
   select {
     min-height: 44px;

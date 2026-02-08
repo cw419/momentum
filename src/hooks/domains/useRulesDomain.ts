@@ -36,8 +36,12 @@ export function useRulesDomain({
   safelySaveChains,
   setShowAuxiliaryJudgment,
 }: UseRulesDomainParams) {
-  const persistChains = (chainId: string, updatedChains: AppState['chains'], context: string) => {
-    safelySaveChains(updatedChains).catch(error => {
+  const persistChains = (
+    chainId: string,
+    updatedChains: AppState['chains'],
+    context: string,
+  ) => {
+    safelySaveChains(updatedChains).catch((error) => {
       queryOptimizer.onDataChange('chains');
       logger.error('RULES_DOMAIN', context, { chainId }, toError(error));
     });
@@ -46,29 +50,39 @@ export function useRulesDomain({
   const persistScheduledSessions = (
     chainId: string,
     updatedScheduledSessions: AppState['scheduledSessions'],
-    context: string
+    context: string,
   ) => {
-    storage.saveScheduledSessions(updatedScheduledSessions).catch(error => {
+    storage.saveScheduledSessions(updatedScheduledSessions).catch((error) => {
       logger.error('RULES_DOMAIN', context, { chainId }, toError(error));
     });
   };
 
   const handleAuxiliaryJudgmentFailure = (chainId: string) => {
-    const updatedScheduledSessions = state.scheduledSessions.filter(session => session.chainId !== chainId);
-    const updatedChains = state.chains.map(chain =>
+    const updatedScheduledSessions = state.scheduledSessions.filter(
+      (session) => session.chainId !== chainId,
+    );
+    const updatedChains = state.chains.map((chain) =>
       chain.id === chainId
         ? {
             ...chain,
             auxiliaryStreak: 0,
             auxiliaryFailures: chain.auxiliaryFailures + 1,
           }
-        : chain
+        : chain,
     );
 
-    persistChains(chainId, updatedChains, 'Failed to persist chains after failure judgment');
-    persistScheduledSessions(chainId, updatedScheduledSessions, 'Failed to persist scheduled sessions after failure judgment');
+    persistChains(
+      chainId,
+      updatedChains,
+      'Failed to persist chains after failure judgment',
+    );
+    persistScheduledSessions(
+      chainId,
+      updatedScheduledSessions,
+      'Failed to persist scheduled sessions after failure judgment',
+    );
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       chains: updatedChains,
       chainsRevision: prev.chainsRevision + 1,
@@ -77,18 +91,37 @@ export function useRulesDomain({
     setShowAuxiliaryJudgment(null);
   };
 
-  const handleAuxiliaryJudgmentAllow = (chainId: string, exceptionRule: string) => {
-    const updatedScheduledSessions = state.scheduledSessions.filter(session => session.chainId !== chainId);
-    const updatedChains = state.chains.map(chain =>
+  const handleAuxiliaryJudgmentAllow = (
+    chainId: string,
+    exceptionRule: string,
+  ) => {
+    const updatedScheduledSessions = state.scheduledSessions.filter(
+      (session) => session.chainId !== chainId,
+    );
+    const updatedChains = state.chains.map((chain) =>
       chain.id === chainId
-        ? { ...chain, auxiliaryExceptions: [...(chain.auxiliaryExceptions || []), exceptionRule] }
-        : chain
+        ? {
+            ...chain,
+            auxiliaryExceptions: [
+              ...(chain.auxiliaryExceptions || []),
+              exceptionRule,
+            ],
+          }
+        : chain,
     );
 
-    persistChains(chainId, updatedChains, 'Failed to persist chains after allow judgment');
-    persistScheduledSessions(chainId, updatedScheduledSessions, 'Failed to persist scheduled sessions after allow judgment');
+    persistChains(
+      chainId,
+      updatedChains,
+      'Failed to persist chains after allow judgment',
+    );
+    persistScheduledSessions(
+      chainId,
+      updatedScheduledSessions,
+      'Failed to persist scheduled sessions after allow judgment',
+    );
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       chains: updatedChains,
       chainsRevision: prev.chainsRevision + 1,

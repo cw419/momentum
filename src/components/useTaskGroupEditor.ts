@@ -4,7 +4,11 @@
 
 import { useState, useCallback } from 'react';
 import type { Chain, ChainDraft } from '../types';
-import { useMobileOptimization, useTouchOptimization, useVirtualKeyboardAdaptation } from '../hooks/useMobileOptimization';
+import {
+  useMobileOptimization,
+  useTouchOptimization,
+  useVirtualKeyboardAdaptation,
+} from '../hooks/useMobileOptimization';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
 import { useI18n } from '../i18n';
@@ -38,15 +42,19 @@ export function useTaskGroupEditor({
   const [name, setName] = useState(chain?.name || '');
   const [description, setDescription] = useState(chain?.description || '');
   const [auxiliarySignal, setAuxiliarySignal] = useState(
-    chain?.auxiliarySignal || AUXILIARY_SIGNAL_TEMPLATES[0]?.value || ''
+    chain?.auxiliarySignal || AUXILIARY_SIGNAL_TEMPLATES[0]?.value || '',
   );
   const [customAuxiliarySignal, setCustomAuxiliarySignal] = useState('');
-  const [auxiliaryDuration, setAuxiliaryDuration] = useState(chain?.auxiliaryDuration || 15);
+  const [auxiliaryDuration, setAuxiliaryDuration] = useState(
+    chain?.auxiliaryDuration || 15,
+  );
   const [isCustomAuxiliaryDuration, setIsCustomAuxiliaryDuration] = useState(
-    chain?.auxiliaryDuration ? !AUXILIARY_DURATION_PRESETS.includes(chain.auxiliaryDuration) : false
+    chain?.auxiliaryDuration
+      ? !AUXILIARY_DURATION_PRESETS.includes(chain.auxiliaryDuration)
+      : false,
   );
   const [auxiliaryCompletionTrigger, setAuxiliaryCompletionTrigger] = useState(
-    chain?.auxiliaryCompletionTrigger || '开始第一个子任务'
+    chain?.auxiliaryCompletionTrigger || '开始第一个子任务',
   );
   const [errors, setErrors] = useState<TaskGroupEditorFormErrors>({});
 
@@ -55,46 +63,64 @@ export function useTaskGroupEditor({
   useTouchOptimization();
   const { keyboardHeight, isKeyboardVisible } = useVirtualKeyboardAdaptation();
 
-  const handleAuxiliarySignalSelect = useCallback((value: string) => {
-    setAuxiliarySignal(value);
-    if (value !== CUSTOM_AUXILIARY_SIGNAL_VALUE) {
-      setCustomAuxiliarySignal('');
-    }
-    if (errors.auxiliarySignal && value) {
-      setErrors(prev => ({ ...prev, auxiliarySignal: undefined }));
-    }
-  }, [errors.auxiliarySignal]);
+  const handleAuxiliarySignalSelect = useCallback(
+    (value: string) => {
+      setAuxiliarySignal(value);
+      if (value !== CUSTOM_AUXILIARY_SIGNAL_VALUE) {
+        setCustomAuxiliarySignal('');
+      }
+      if (errors.auxiliarySignal && value) {
+        setErrors((prev) => ({ ...prev, auxiliarySignal: undefined }));
+      }
+    },
+    [errors.auxiliarySignal],
+  );
 
-  const handleNameChange = useCallback((value: string) => {
-    setName(value);
-    if (errors.name && value.trim()) {
-      setErrors(prev => ({ ...prev, name: undefined }));
-    }
-  }, [errors.name]);
+  const handleNameChange = useCallback(
+    (value: string) => {
+      setName(value);
+      if (errors.name && value.trim()) {
+        setErrors((prev) => ({ ...prev, name: undefined }));
+      }
+    },
+    [errors.name],
+  );
 
-  const handleDescriptionChange = useCallback((value: string) => {
-    setDescription(value);
-    if (errors.description && value.trim()) {
-      setErrors(prev => ({ ...prev, description: undefined }));
-    }
-  }, [errors.description]);
+  const handleDescriptionChange = useCallback(
+    (value: string) => {
+      setDescription(value);
+      if (errors.description && value.trim()) {
+        setErrors((prev) => ({ ...prev, description: undefined }));
+      }
+    },
+    [errors.description],
+  );
 
-  const handleCustomAuxiliarySignalChange = useCallback((value: string) => {
-    setCustomAuxiliarySignal(value);
-    if (errors.auxiliarySignal && value.trim()) {
-      setErrors(prev => ({ ...prev, auxiliarySignal: undefined }));
-    }
-  }, [errors.auxiliarySignal]);
+  const handleCustomAuxiliarySignalChange = useCallback(
+    (value: string) => {
+      setCustomAuxiliarySignal(value);
+      if (errors.auxiliarySignal && value.trim()) {
+        setErrors((prev) => ({ ...prev, auxiliarySignal: undefined }));
+      }
+    },
+    [errors.auxiliarySignal],
+  );
 
-  const handleAuxiliaryCompletionTriggerChange = useCallback((value: string) => {
-    setAuxiliaryCompletionTrigger(value);
-    if (errors.auxiliaryCompletionTrigger && value.trim()) {
-      setErrors(prev => ({ ...prev, auxiliaryCompletionTrigger: undefined }));
-    }
-  }, [errors.auxiliaryCompletionTrigger]);
+  const handleAuxiliaryCompletionTriggerChange = useCallback(
+    (value: string) => {
+      setAuxiliaryCompletionTrigger(value);
+      if (errors.auxiliaryCompletionTrigger && value.trim()) {
+        setErrors((prev) => ({
+          ...prev,
+          auxiliaryCompletionTrigger: undefined,
+        }));
+      }
+    },
+    [errors.auxiliaryCompletionTrigger],
+  );
 
   const handleDurationSelect = useCallback((value: string) => {
-    if (value === "custom") {
+    if (value === 'custom') {
       setIsCustomAuxiliaryDuration(true);
       setAuxiliaryDuration(25);
     } else {
@@ -103,91 +129,118 @@ export function useTaskGroupEditor({
     }
   }, []);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
 
-    if (isDev) {
-      logger.debug('TASK_GROUP_EDITOR', '提交表单');
-      logger.debug('TASK_GROUP_EDITOR', '当前表单数据', {
+      if (isDev) {
+        logger.debug('TASK_GROUP_EDITOR', '提交表单');
+        logger.debug('TASK_GROUP_EDITOR', '当前表单数据', {
+          name: name.trim(),
+          description: description.trim(),
+          auxiliarySignal:
+            auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE
+              ? customAuxiliarySignal.trim()
+              : auxiliarySignal,
+          auxiliaryDuration,
+          auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
+        });
+      }
+
+      setErrors({});
+
+      const newErrors: TaskGroupEditorFormErrors = {};
+
+      if (!name.trim()) {
+        newErrors.name = tr('请输入任务群名称', 'Please enter a group name');
+      }
+
+      if (!description.trim()) {
+        newErrors.description = tr(
+          '请输入任务群描述',
+          'Please enter a group description',
+        );
+      }
+
+      if (!auxiliarySignal) {
+        newErrors.auxiliarySignal = tr(
+          '请选择预约信号',
+          'Please choose a booking signal',
+        );
+      } else if (
+        auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE &&
+        !customAuxiliarySignal.trim()
+      ) {
+        newErrors.auxiliarySignal = tr(
+          '请输入自定义预约信号',
+          'Please enter a custom booking signal',
+        );
+      }
+
+      if (!auxiliaryCompletionTrigger.trim()) {
+        newErrors.auxiliaryCompletionTrigger = tr(
+          '请输入预约完成条件',
+          'Please enter a booking completion condition',
+        );
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        if (isDev) {
+          logger.warn('TASK_GROUP_EDITOR', '表单验证失败', {
+            errors: newErrors,
+          });
+        }
+        return;
+      }
+
+      const finalAuxiliarySignal =
+        auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE
+          ? customAuxiliarySignal.trim()
+          : auxiliarySignal;
+
+      const chainData: Extract<ChainDraft, { type: 'group' }> = {
         name: name.trim(),
+        type: 'group',
+        parentId: chain?.parentId || initialParentId,
+        sortOrder: chain?.sortOrder || Math.floor(Date.now() / 1000),
+        trigger: '任务群容器',
+        duration: 0,
+        isDurationless: true,
         description: description.trim(),
-        auxiliarySignal: auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE ? customAuxiliarySignal.trim() : auxiliarySignal,
+        auxiliarySignal: finalAuxiliarySignal,
         auxiliaryDuration,
         auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
-      });
-    }
+        exceptions: chain?.exceptions || [],
+        auxiliaryExceptions: chain?.auxiliaryExceptions || [],
+        isTaskGroup: true,
+        groupRepeatCount: chain?.groupRepeatCount ?? 0,
+        taskRepeatCount: chain?.taskRepeatCount ?? 1,
+        timeLimitHours:
+          chain?.type === 'group' ? (chain.timeLimitHours ?? 24) : 24,
+        timeLimitExceptions: chain?.timeLimitExceptions || [],
+      };
 
-    setErrors({});
-
-    const newErrors: TaskGroupEditorFormErrors = {};
-
-    if (!name.trim()) {
-      newErrors.name = tr('请输入任务群名称', 'Please enter a group name');
-    }
-
-    if (!description.trim()) {
-      newErrors.description = tr('请输入任务群描述', 'Please enter a group description');
-    }
-
-    if (!auxiliarySignal) {
-      newErrors.auxiliarySignal = tr('请选择预约信号', 'Please choose a booking signal');
-    } else if (auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE && !customAuxiliarySignal.trim()) {
-      newErrors.auxiliarySignal = tr('请输入自定义预约信号', 'Please enter a custom booking signal');
-    }
-
-    if (!auxiliaryCompletionTrigger.trim()) {
-      newErrors.auxiliaryCompletionTrigger = tr('请输入预约完成条件', 'Please enter a booking completion condition');
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
       if (isDev) {
-        logger.warn('TASK_GROUP_EDITOR', '表单验证失败', { errors: newErrors });
+        logger.debug('TASK_GROUP_EDITOR', '即将保存的任务群数据', {
+          chainData,
+        });
       }
-      return;
-    }
-
-    const finalAuxiliarySignal = auxiliarySignal === CUSTOM_AUXILIARY_SIGNAL_VALUE
-      ? customAuxiliarySignal.trim()
-      : auxiliarySignal;
-
-    const chainData: Extract<ChainDraft, { type: 'group' }> = {
-      name: name.trim(),
-      type: 'group',
-      parentId: chain?.parentId || initialParentId,
-      sortOrder: chain?.sortOrder || Math.floor(Date.now() / 1000),
-      trigger: '任务群容器',
-      duration: 0,
-      isDurationless: true,
-      description: description.trim(),
-      auxiliarySignal: finalAuxiliarySignal,
+      onSave(chainData);
+    },
+    [
+      name,
+      description,
+      auxiliarySignal,
+      customAuxiliarySignal,
       auxiliaryDuration,
-      auxiliaryCompletionTrigger: auxiliaryCompletionTrigger.trim(),
-      exceptions: chain?.exceptions || [],
-      auxiliaryExceptions: chain?.auxiliaryExceptions || [],
-      isTaskGroup: true,
-      groupRepeatCount: chain?.groupRepeatCount ?? 0,
-      taskRepeatCount: chain?.taskRepeatCount ?? 1,
-      timeLimitHours: chain?.type === 'group' ? (chain.timeLimitHours ?? 24) : 24,
-      timeLimitExceptions: chain?.timeLimitExceptions || [],
-    };
-
-    if (isDev) {
-      logger.debug('TASK_GROUP_EDITOR', '即将保存的任务群数据', { chainData });
-    }
-    onSave(chainData);
-  }, [
-    name,
-    description,
-    auxiliarySignal,
-    customAuxiliarySignal,
-    auxiliaryDuration,
-    auxiliaryCompletionTrigger,
-    chain,
-    initialParentId,
-    onSave,
-    tr,
-  ]);
+      auxiliaryCompletionTrigger,
+      chain,
+      initialParentId,
+      onSave,
+      tr,
+    ],
+  );
 
   return {
     // i18n

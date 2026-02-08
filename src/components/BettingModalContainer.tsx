@@ -18,58 +18,53 @@ interface BettingModalProps {
   taskDuration: number;
 }
 
-export const BettingModalContainer: React.FC<BettingModalProps> = React.memo(({
-  isOpen,
-  onClose,
-  onBetPlaced,
-  sessionId,
-  chainName,
-  taskDuration
-}) => {
-  const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
+export const BettingModalContainer: React.FC<BettingModalProps> = React.memo(
+  ({ isOpen, onClose, onBetPlaced, sessionId, chainName, taskDuration }) => {
+    const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
 
-  const {
-    betAmount,
-    availablePoints,
-    todayBetAmount,
-    isPlacingBet,
-    isLoading,
-    error,
-    validationError,
-    successMessage,
-    quickBetOptions,
-    language,
-    tr,
-    handleBetAmountChange,
-    setQuickBetAmount,
-    handlePlaceBet,
-    loadData
-  } = useBettingModal({ isOpen, sessionId, onBetPlaced });
+    const {
+      betAmount,
+      availablePoints,
+      todayBetAmount,
+      isPlacingBet,
+      isLoading,
+      error,
+      validationError,
+      successMessage,
+      quickBetOptions,
+      language,
+      tr,
+      handleBetAmountChange,
+      setQuickBetAmount,
+      handlePlaceBet,
+      loadData,
+    } = useBettingModal({ isOpen, sessionId, onBetPlaced });
 
-  return (
-    <BettingModalView
-      isOpen={isOpen}
-      chainName={chainName}
-      taskDuration={taskDuration}
-      language={language}
-      tr={tr}
-      betAmount={betAmount}
-      availablePoints={availablePoints}
-      todayBetAmount={todayBetAmount}
-      isPlacingBet={isPlacingBet}
-      isLoading={isLoading}
-      error={error}
-      validationError={validationError}
-      successMessage={successMessage}
-      quickBetOptions={quickBetOptions}
-      onClose={onClose}
-      onBetAmountChange={handleBetAmountChange}
-      onQuickBetAmount={setQuickBetAmount}
-      onPlaceBet={handlePlaceBet}
-      onReload={loadData}
-      focusTrapRef={focusTrapRef}
-    />
-  );
-});
+    return (
+      <BettingModalView
+        isOpen={isOpen}
+        chainName={chainName}
+        taskDuration={taskDuration}
+        language={language}
+        tr={tr}
+        betAmount={betAmount}
+        availablePoints={availablePoints}
+        todayBetAmount={todayBetAmount}
+        isPlacingBet={isPlacingBet}
+        isLoading={isLoading}
+        error={error}
+        validationError={validationError}
+        successMessage={successMessage}
+        quickBetOptions={quickBetOptions}
+        onClose={onClose}
+        onBetAmountChange={handleBetAmountChange}
+        onQuickBetAmount={setQuickBetAmount}
+        onPlaceBet={handlePlaceBet}
+        onReload={loadData}
+        focusTrapRef={focusTrapRef}
+      />
+    );
+  },
+);
 
 BettingModalContainer.displayName = 'BettingModalContainer';

@@ -18,7 +18,7 @@ import {
   type MigrationProgress,
   type MigrationSuggestions,
   type MigrationValidation,
-  type RollbackResult
+  type RollbackResult,
 } from './migration';
 
 /**
@@ -52,7 +52,7 @@ export class ExceptionRuleMigrationService {
    * 执行迁移
    */
   async migrate(
-    onProgress?: (progress: MigrationProgress) => void
+    onProgress?: (progress: MigrationProgress) => void,
   ): Promise<MigrationResult> {
     return this.executor.migrate(onProgress);
   }

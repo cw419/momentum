@@ -1,6 +1,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { createAppState, createGroupChain, createLocalStorageMock, createUnitChain } from '../../../test/factories';
+import {
+  createAppState,
+  createGroupChain,
+  createLocalStorageMock,
+  createUnitChain,
+} from '../../../test/factories';
 import { usePeriodicCleanup } from '../usePeriodicCleanup';
 import { isGroupExpired, resetGroupProgress } from '../../../utils/timeLimit';
 import { isSessionExpired } from '../../../utils/time';
@@ -46,8 +51,14 @@ describe('usePeriodicCleanup', () => {
   });
 
   it('should periodically reset expired groups and persist changes', async () => {
-    const expiredGroup = createGroupChain({ id: 'group-1', name: 'Expired Group' });
-    const resetGroup = createGroupChain({ ...expiredGroup, totalFailures: expiredGroup.totalFailures + 1 });
+    const expiredGroup = createGroupChain({
+      id: 'group-1',
+      name: 'Expired Group',
+    });
+    const resetGroup = createGroupChain({
+      ...expiredGroup,
+      totalFailures: expiredGroup.totalFailures + 1,
+    });
     const state = createAppState({ chains: [expiredGroup], chainsRevision: 2 });
     const setState = vi.fn();
     const storage = createLocalStorageMock({
@@ -66,7 +77,7 @@ describe('usePeriodicCleanup', () => {
         storage,
         isInitialized: true,
         setShowAuxiliaryJudgment: vi.fn(),
-      })
+      }),
     );
 
     vi.advanceTimersByTime(60000);
@@ -77,8 +88,14 @@ describe('usePeriodicCleanup', () => {
   });
 
   it('should clean expired scheduled sessions, notify, and persist active schedules', async () => {
-    const expiredChain = createUnitChain({ id: 'expired-chain', name: 'Expired Schedule Chain' });
-    const activeChain = createUnitChain({ id: 'active-chain', name: 'Active Schedule Chain' });
+    const expiredChain = createUnitChain({
+      id: 'expired-chain',
+      name: 'Expired Schedule Chain',
+    });
+    const activeChain = createUnitChain({
+      id: 'active-chain',
+      name: 'Active Schedule Chain',
+    });
     const expiredSession = {
       chainId: expiredChain.id,
       scheduledAt: new Date('2026-02-02T14:50:00.000Z'),
@@ -101,7 +118,9 @@ describe('usePeriodicCleanup', () => {
       saveScheduledSessions: vi.fn(async () => undefined),
     });
 
-    vi.mocked(isSessionExpired).mockImplementation((expiresAt) => expiresAt.getTime() <= Date.now());
+    vi.mocked(isSessionExpired).mockImplementation(
+      (expiresAt) => expiresAt.getTime() <= Date.now(),
+    );
 
     renderHook(() =>
       usePeriodicCleanup({
@@ -110,14 +129,16 @@ describe('usePeriodicCleanup', () => {
         storage,
         isInitialized: true,
         setShowAuxiliaryJudgment,
-      })
+      }),
     );
 
     vi.advanceTimersByTime(10000);
     await Promise.resolve();
 
     expect(soundManager.playTimerFinished).toHaveBeenCalledTimes(1);
-    expect(notificationManager.notifyScheduleFailed).toHaveBeenCalledWith(expiredChain.name);
+    expect(notificationManager.notifyScheduleFailed).toHaveBeenCalledWith(
+      expiredChain.name,
+    );
     expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(expiredChain.id);
     expect(storage.saveScheduledSessions).toHaveBeenCalledWith([activeSession]);
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
@@ -137,7 +158,7 @@ describe('usePeriodicCleanup', () => {
         storage,
         isInitialized: false,
         setShowAuxiliaryJudgment: vi.fn(),
-      })
+      }),
     );
 
     vi.advanceTimersByTime(120000);

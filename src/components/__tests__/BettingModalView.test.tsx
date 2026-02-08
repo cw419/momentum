@@ -5,7 +5,9 @@ import { BettingModalView } from '../BettingModalView';
 
 const tr = (_zh: string, en: string) => en;
 
-function createProps(overrides: Partial<React.ComponentProps<typeof BettingModalView>> = {}) {
+function createProps(
+  overrides: Partial<React.ComponentProps<typeof BettingModalView>> = {},
+) {
   return {
     isOpen: true,
     chainName: 'Deep Work',
@@ -33,19 +35,23 @@ function createProps(overrides: Partial<React.ComponentProps<typeof BettingModal
 
 describe('BettingModalView', () => {
   it('returns null when closed', () => {
-    const { container } = render(<BettingModalView {...createProps({ isOpen: false })} />);
+    const { container } = render(
+      <BettingModalView {...createProps({ isOpen: false })} />,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders loading, error and success states', () => {
-    const { rerender } = render(<BettingModalView {...createProps({ isLoading: true })} />);
+    const { rerender } = render(
+      <BettingModalView {...createProps({ isLoading: true })} />,
+    );
     expect(screen.getByText('Loading betting data...')).toBeInTheDocument();
 
     const onReload = vi.fn();
     rerender(
       <BettingModalView
         {...createProps({ isLoading: false, error: 'Network error', onReload })}
-      />
+      />,
     );
     expect(screen.getByText('Network error')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Reload data' }));
@@ -54,7 +60,7 @@ describe('BettingModalView', () => {
     rerender(
       <BettingModalView
         {...createProps({ error: null, successMessage: 'Bet accepted' })}
-      />
+      />,
     );
     expect(screen.getByText('Bet placed!')).toBeInTheDocument();
     expect(screen.getByText('Bet accepted')).toBeInTheDocument();
@@ -68,8 +74,13 @@ describe('BettingModalView', () => {
 
     render(
       <BettingModalView
-        {...createProps({ onClose, onPlaceBet, onBetAmountChange, onQuickBetAmount })}
-      />
+        {...createProps({
+          onClose,
+          onPlaceBet,
+          onBetAmountChange,
+          onQuickBetAmount,
+        })}
+      />,
     );
 
     expect(screen.getByText('Deep Work')).toBeInTheDocument();
@@ -93,7 +104,7 @@ describe('BettingModalView', () => {
     render(
       <BettingModalView
         {...createProps({ validationError: 'Too many points' })}
-      />
+      />,
     );
 
     expect(screen.getByText('Too many points')).toBeInTheDocument();

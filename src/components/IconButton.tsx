@@ -1,11 +1,20 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+type IconButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children'
+> & {
   label: string;
   children: ReactNode;
 };
 
-export function IconButton({ label, className, type = 'button', children, ...props }: IconButtonProps) {
+export function IconButton({
+  label,
+  className,
+  type = 'button',
+  children,
+  ...props
+}: IconButtonProps) {
   return (
     <button
       type={type}
@@ -17,4 +26,3 @@ export function IconButton({ label, className, type = 'button', children, ...pro
     </button>
   );
 }
-

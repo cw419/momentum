@@ -6,20 +6,20 @@
 import {
   ExceptionRuleError,
   ExceptionRuleException,
-  EnhancedExceptionRuleException
+  EnhancedExceptionRuleException,
 } from '../../types';
 import {
   ErrorClassification,
   ErrorAnalysis,
   ErrorTrends,
   ErrorStatistics,
-  BatchAnalysisResult
+  BatchAnalysisResult,
 } from './types';
 import {
   DefaultErrorClassifier,
   calculateConfidence,
   generateRecommendations,
-  generateUserFriendlyMessage
+  generateUserFriendlyMessage,
 } from './ErrorClassifiers';
 
 class ErrorClassificationService {
@@ -31,7 +31,11 @@ class ErrorClassificationService {
     const pattern = this.classifier.getPattern(error.type);
     const classification = this.classifier.classify(error);
     const confidence = calculateConfidence(error, pattern);
-    const recommendations = generateRecommendations(error, classification, pattern);
+    const recommendations = generateRecommendations(
+      error,
+      classification,
+      pattern,
+    );
     const relatedErrors = this.findRelatedErrors(error);
 
     this.recordError(error);
@@ -42,7 +46,7 @@ class ErrorClassificationService {
       pattern,
       confidence,
       recommendations,
-      relatedErrors
+      relatedErrors,
     };
   }
 
@@ -51,18 +55,18 @@ class ErrorClassificationService {
   }
 
   analyzeErrors(errors: ExceptionRuleException[]): BatchAnalysisResult {
-    const analyses = errors.map(error => this.analyzeError(error));
+    const analyses = errors.map((error) => this.analyzeError(error));
 
     const criticalErrors = analyses.filter(
-      a => a.classification.severity === 'critical'
+      (a) => a.classification.severity === 'critical',
     ).length;
     const recoverableErrors = analyses.filter(
-      a => a.classification.recoverable
+      (a) => a.classification.recoverable,
     ).length;
 
     const mostCommonType = this.findMostCommonType(analyses);
     const prioritizedErrors = [...analyses].sort(
-      (a, b) => b.classification.priority - a.classification.priority
+      (a, b) => b.classification.priority - a.classification.priority,
     );
 
     return {
@@ -72,18 +76,21 @@ class ErrorClassificationService {
         criticalErrors,
         recoverableErrors,
         mostCommonType,
-        prioritizedErrors
-      }
+        prioritizedErrors,
+      },
     };
   }
 
   createEnhancedError(
     type: ExceptionRuleError,
     message: string,
-    context?: unknown
+    context?: unknown,
   ): EnhancedExceptionRuleException {
     const pattern = this.classifier.getPattern(type);
-    const classification = this.classifier.classify({ type, message } as ExceptionRuleException);
+    const classification = this.classifier.classify({
+      type,
+      message,
+    } as ExceptionRuleException);
 
     return new EnhancedExceptionRuleException(
       type,
@@ -93,7 +100,7 @@ class ErrorClassificationService {
       pattern?.recommendedActions || [],
       classification.severity,
       generateUserFriendlyMessage(type, message, pattern),
-      { originalMessage: message }
+      { originalMessage: message },
     );
   }
 
@@ -112,7 +119,8 @@ class ErrorClassificationService {
       timeDistribution.set(hour, timeCount + 1);
 
       const classification = this.classifier.classify(error);
-      const severityCount = severityDistribution.get(classification.severity) || 0;
+      const severityCount =
+        severityDistribution.get(classification.severity) || 0;
       severityDistribution.set(classification.severity, severityCount + 1);
     }
 
@@ -120,7 +128,7 @@ class ErrorClassificationService {
       recentErrors,
       errorFrequency,
       timeDistribution,
-      severityDistribution
+      severityDistribution,
     };
   }
 
@@ -145,7 +153,7 @@ class ErrorClassificationService {
       totalErrors: this.errorHistory.length,
       errorsByType,
       errorsBySeverity,
-      errorsByCategory
+      errorsByCategory,
     };
   }
 
@@ -153,9 +161,11 @@ class ErrorClassificationService {
     this.errorHistory = [];
   }
 
-  private findMostCommonType(analyses: ErrorAnalysis[]): ExceptionRuleError | null {
+  private findMostCommonType(
+    analyses: ErrorAnalysis[],
+  ): ExceptionRuleError | null {
     const typeCount = new Map<ExceptionRuleError, number>();
-    analyses.forEach(a => {
+    analyses.forEach((a) => {
       const count = typeCount.get(a.error.type) || 0;
       typeCount.set(a.error.type, count + 1);
     });
@@ -171,11 +181,14 @@ class ErrorClassificationService {
     return mostCommonType;
   }
 
-  private findRelatedErrors(error: ExceptionRuleException): ExceptionRuleException[] {
+  private findRelatedErrors(
+    error: ExceptionRuleException,
+  ): ExceptionRuleException[] {
     return this.errorHistory
-      .filter(e =>
-        e.type === error.type ||
-        e.message.includes(error.message.split(' ')[0])
+      .filter(
+        (e) =>
+          e.type === error.type ||
+          e.message.includes(error.message.split(' ')[0]),
       )
       .slice(-5);
   }

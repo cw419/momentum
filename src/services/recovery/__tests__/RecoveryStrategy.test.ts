@@ -3,7 +3,11 @@ import { ExceptionRuleError } from '../../../types';
 import type { RecoveryStrategy } from '../RecoveryStrategy';
 import { RecoveryStrategyRegistry } from '../RecoveryStrategy';
 
-function makeStrategy(errorType: ExceptionRuleError, priority: number, label: string): RecoveryStrategy {
+function makeStrategy(
+  errorType: ExceptionRuleError,
+  priority: number,
+  label: string,
+): RecoveryStrategy {
   return {
     errorType,
     strategy: 'fallback',
@@ -34,24 +38,38 @@ describe('recovery/RecoveryStrategyRegistry', () => {
   it('returns empty list and false when no strategies exist', () => {
     const registry = new RecoveryStrategyRegistry();
 
-    expect(registry.getStrategies(ExceptionRuleError.NETWORK_ERROR)).toEqual([]);
-    expect(registry.hasStrategies(ExceptionRuleError.NETWORK_ERROR)).toBe(false);
+    expect(registry.getStrategies(ExceptionRuleError.NETWORK_ERROR)).toEqual(
+      [],
+    );
+    expect(registry.hasStrategies(ExceptionRuleError.NETWORK_ERROR)).toBe(
+      false,
+    );
   });
 
   it('treats an empty bucket as no strategies and supports clear', () => {
     const registry = new RecoveryStrategyRegistry();
-    registry.registerStrategy(makeStrategy(ExceptionRuleError.VALIDATION_ERROR, 2, 'x'));
-    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(true);
-
-    (registry as unknown as { strategies: Map<ExceptionRuleError, RecoveryStrategy[]> }).strategies.set(
-      ExceptionRuleError.VALIDATION_ERROR,
-      []
+    registry.registerStrategy(
+      makeStrategy(ExceptionRuleError.VALIDATION_ERROR, 2, 'x'),
     );
-    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(false);
+    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(
+      true,
+    );
+
+    (
+      registry as unknown as {
+        strategies: Map<ExceptionRuleError, RecoveryStrategy[]>;
+      }
+    ).strategies.set(ExceptionRuleError.VALIDATION_ERROR, []);
+    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(
+      false,
+    );
 
     registry.clear();
-    expect(registry.getStrategies(ExceptionRuleError.VALIDATION_ERROR)).toEqual([]);
-    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(false);
+    expect(registry.getStrategies(ExceptionRuleError.VALIDATION_ERROR)).toEqual(
+      [],
+    );
+    expect(registry.hasStrategies(ExceptionRuleError.VALIDATION_ERROR)).toBe(
+      false,
+    );
   });
 });
-

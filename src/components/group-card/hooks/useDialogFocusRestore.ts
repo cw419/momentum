@@ -12,7 +12,9 @@ export function useDialogFocusRestore(params: {
   useEffect(() => {
     if (isOpen && dialogRef.current) {
       previouslyFocusedRef.current = document.activeElement as HTMLElement;
-      const cancelButton = dialogRef.current.querySelector('[data-cancel-button]') as HTMLElement;
+      const cancelButton = dialogRef.current.querySelector(
+        '[data-cancel-button]',
+      ) as HTMLElement;
       cancelButton?.focus();
     } else if (!isOpen && previouslyFocusedRef.current) {
       previouslyFocusedRef.current.focus();
@@ -33,4 +35,3 @@ export function useDialogFocusRestore(params: {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 }
-

@@ -22,8 +22,12 @@ interface RuleUsageSuggestions {
   suggested: ExceptionRule[];
 }
 
-export function buildRuleTypeChangeSuggestion(rule: ExceptionRule, desiredAction: RuleActionType): string {
-  const currentTypeName = rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
+export function buildRuleTypeChangeSuggestion(
+  rule: ExceptionRule,
+  desiredAction: RuleActionType,
+): string {
+  const currentTypeName =
+    rule.type === ExceptionRuleType.PAUSE_ONLY ? '暂停' : '提前完成';
   const desiredTypeName = desiredAction === 'pause' ? '暂停' : '提前完成';
 
   if (validateRuleTypeForAction(rule, desiredAction)) {
@@ -33,9 +37,12 @@ export function buildRuleTypeChangeSuggestion(rule: ExceptionRule, desiredAction
   return `规则 "${rule.name}" 当前只能用于${currentTypeName}操作。如需用于${desiredTypeName}操作，请创建新规则或修改现有规则类型。`;
 }
 
-export function getRuleTypeStatsFromGrouped(grouped: Record<ExceptionRuleType, ExceptionRule[]>): RuleTypeStats {
+export function getRuleTypeStatsFromGrouped(
+  grouped: Record<ExceptionRuleType, ExceptionRule[]>,
+): RuleTypeStats {
   const pauseCount = grouped[ExceptionRuleType.PAUSE_ONLY].length;
-  const completionCount = grouped[ExceptionRuleType.EARLY_COMPLETION_ONLY].length;
+  const completionCount =
+    grouped[ExceptionRuleType.EARLY_COMPLETION_ONLY].length;
   const total = pauseCount + completionCount;
 
   let mostUsedType: ExceptionRuleType | null = null;
@@ -50,8 +57,13 @@ export function getRuleTypeStatsFromGrouped(grouped: Record<ExceptionRuleType, E
       leastUsedType = ExceptionRuleType.PAUSE_ONLY;
     } else {
       // 数量相等时，比较使用频率
-      const pauseUsage = grouped[ExceptionRuleType.PAUSE_ONLY].reduce((sum, rule) => sum + rule.usageCount, 0);
-      const completionUsage = grouped[ExceptionRuleType.EARLY_COMPLETION_ONLY].reduce((sum, rule) => sum + rule.usageCount, 0);
+      const pauseUsage = grouped[ExceptionRuleType.PAUSE_ONLY].reduce(
+        (sum, rule) => sum + rule.usageCount,
+        0,
+      );
+      const completionUsage = grouped[
+        ExceptionRuleType.EARLY_COMPLETION_ONLY
+      ].reduce((sum, rule) => sum + rule.usageCount, 0);
 
       if (pauseUsage > completionUsage) {
         mostUsedType = ExceptionRuleType.PAUSE_ONLY;
@@ -68,11 +80,14 @@ export function getRuleTypeStatsFromGrouped(grouped: Record<ExceptionRuleType, E
     pauseOnly: pauseCount,
     earlyCompletionOnly: completionCount,
     mostUsedType,
-    leastUsedType
+    leastUsedType,
   };
 }
 
-export function getRecommendedRuleTypeFromStats(stats: RuleTypeStats, basedOnUsage: boolean = true): ExceptionRuleType {
+export function getRecommendedRuleTypeFromStats(
+  stats: RuleTypeStats,
+  basedOnUsage: boolean = true,
+): ExceptionRuleType {
   if (!basedOnUsage) {
     // 默认推荐暂停类型（更常用）
     return ExceptionRuleType.PAUSE_ONLY;
@@ -87,7 +102,9 @@ export function getRecommendedRuleTypeFromStats(stats: RuleTypeStats, basedOnUsa
   return ExceptionRuleType.PAUSE_ONLY;
 }
 
-export function getRuleUsageSuggestionsFromList(rules: ExceptionRule[]): RuleUsageSuggestions {
+export function getRuleUsageSuggestionsFromList(
+  rules: ExceptionRule[],
+): RuleUsageSuggestions {
   // 最常用的规则（按使用次数排序）
   const mostUsed = [...rules]
     .sort((a, b) => b.usageCount - a.usageCount)
@@ -95,8 +112,10 @@ export function getRuleUsageSuggestionsFromList(rules: ExceptionRule[]): RuleUsa
 
   // 最近使用的规则
   const recentlyUsed = [...rules]
-    .filter(rule => rule.lastUsedAt)
-    .sort((a, b) => (b.lastUsedAt?.getTime() || 0) - (a.lastUsedAt?.getTime() || 0))
+    .filter((rule) => rule.lastUsedAt)
+    .sort(
+      (a, b) => (b.lastUsedAt?.getTime() || 0) - (a.lastUsedAt?.getTime() || 0),
+    )
     .slice(0, 3);
 
   // 建议的规则（综合考虑使用频率和最近使用时间）
@@ -111,7 +130,7 @@ export function getRuleUsageSuggestionsFromList(rules: ExceptionRule[]): RuleUsa
   return {
     mostUsed,
     recentlyUsed,
-    suggested
+    suggested,
   };
 }
 
@@ -123,17 +142,19 @@ function calculateRuleScore(rule: ExceptionRule): number {
 
   // 最近使用时间权重 (30%)
   if (rule.lastUsedAt) {
-    const daysSinceLastUse = (Date.now() - rule.lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceLastUse =
+      (Date.now() - rule.lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
     score += Math.max(0, 30 - daysSinceLastUse) * 0.3;
   }
 
   // 规则创建时间权重 (20%) - 较新的规则得分稍高
-  const daysSinceCreation = (Date.now() - rule.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-  score += Math.max(0, 365 - daysSinceCreation) / 365 * 20 * 0.2;
+  const daysSinceCreation =
+    (Date.now() - rule.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+  score += (Math.max(0, 365 - daysSinceCreation) / 365) * 20 * 0.2;
 
   // 规则名称长度权重 (10%) - 较短的名称得分稍高（更简洁）
   const nameLength = rule.name.length;
-  score += Math.max(0, 50 - nameLength) / 50 * 10 * 0.1;
+  score += (Math.max(0, 50 - nameLength) / 50) * 10 * 0.1;
 
   return score;
 }

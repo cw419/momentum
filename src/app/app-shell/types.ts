@@ -8,9 +8,14 @@ import type {
   RSIPNode,
 } from '../../types';
 import type { BetPlacementResult } from '../../domain/betting';
-import type { FeedResult, PetMood, PetState, TaskCompletionReward } from '../../types/pet';
+import type {
+  FeedResult,
+  PetMood,
+  PetState,
+  TaskCompletionReward,
+} from '../../types/pet';
 
-export interface ImportChainsOptions {
+interface ImportChainsOptions {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
@@ -56,12 +61,29 @@ export interface AppShellViewProps {
   handlePermanentDeleteChains: (chainIds: string[]) => Promise<void>;
 
   handleAuxiliaryJudgmentFailure: (chainId: string) => void;
-  handleAuxiliaryJudgmentAllow: (chainId: string, exceptionRule: string) => void;
+  handleAuxiliaryJudgmentAllow: (
+    chainId: string,
+    exceptionRule: string,
+  ) => void;
 
-  handleImportChains: (importedChains: Chain[], options?: ImportChainsOptions) => Promise<void>;
-  handleImportUnits: (unitIds: string[], groupId: string, mode?: 'move' | 'copy') => Promise<void>;
-  handleUpdateTaskRepeatCount: (chainId: string, repeatCount: number) => Promise<void>;
-  handleReorderUnit: (groupId: string, unitId: string, direction: 'up' | 'down') => Promise<void>;
+  handleImportChains: (
+    importedChains: Chain[],
+    options?: ImportChainsOptions,
+  ) => Promise<void>;
+  handleImportUnits: (
+    unitIds: string[],
+    groupId: string,
+    mode?: 'move' | 'copy',
+  ) => Promise<void>;
+  handleUpdateTaskRepeatCount: (
+    chainId: string,
+    repeatCount: number,
+  ) => Promise<void>;
+  handleReorderUnit: (
+    groupId: string,
+    unitId: string,
+    direction: 'up' | 'down',
+  ) => Promise<void>;
 
   handleBetPlaced: (betResult: BetPlacementResult) => Promise<void>;
   handleBetCancelled: () => Promise<void>;
@@ -73,7 +95,10 @@ export interface AppShellViewProps {
     hasPet: boolean;
     createPet: (name: string) => Promise<PetState>;
     feedPet: () => Promise<FeedResult | null>;
-    onTaskCompleted: (duration: number, wasSuccessful: boolean) => Promise<TaskCompletionReward | null>;
+    onTaskCompleted: (
+      duration: number,
+      wasSuccessful: boolean,
+    ) => Promise<TaskCompletionReward | null>;
     updatePosition: (x: number, y: number) => Promise<void>;
     updateMinimizedPosition: (x: number, y: number) => Promise<void>;
     toggleVisibility: () => Promise<void>;
@@ -82,4 +107,3 @@ export interface AppShellViewProps {
     expand: () => Promise<void>;
   };
 }
-

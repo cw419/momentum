@@ -9,7 +9,7 @@ import {
   SessionContext,
   PauseOptions,
   ExceptionRuleError,
-  ExceptionRuleException
+  ExceptionRuleException,
 } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
 import { ruleClassificationService } from '../RuleClassificationService';
@@ -35,7 +35,7 @@ class RuleExecutor {
     ruleId: string,
     sessionContext: SessionContext,
     actionType: 'pause' | 'early_completion',
-    pauseOptions?: PauseOptions
+    pauseOptions?: PauseOptions,
   ): Promise<RuleExecutionResult> {
     try {
       if (isDev) {
@@ -45,14 +45,20 @@ class RuleExecutor {
       const validation = await ruleStateManager.validateRuleId(ruleId);
 
       if (isDev) {
-        logger.debug('RULE_EXECUTOR', 'RuleId validation result', { ruleId, validation });
+        logger.debug('RULE_EXECUTOR', 'RuleId validation result', {
+          ruleId,
+          validation,
+        });
       }
 
       if (!validation.isValid) {
-        logger.error('RULE_EXECUTOR', 'RuleId validation failed', { ruleId, validation });
+        logger.error('RULE_EXECUTOR', 'RuleId validation failed', {
+          ruleId,
+          validation,
+        });
         throw new ExceptionRuleException(
           ExceptionRuleError.RULE_NOT_FOUND,
-          validation.error || `Rule ID ${ruleId} is invalid`
+          validation.error || `Rule ID ${ruleId} is invalid`,
         );
       }
 
@@ -68,13 +74,21 @@ class RuleExecutor {
       if (!rule) {
         throw new ExceptionRuleException(
           ExceptionRuleError.RULE_NOT_FOUND,
-          `Rule ID ${ruleId} does not exist`
+          `Rule ID ${ruleId} does not exist`,
         );
       }
 
-      await ruleClassificationService.validateRuleForAction(realRuleId, actionType);
+      await ruleClassificationService.validateRuleForAction(
+        realRuleId,
+        actionType,
+      );
 
-      const record = await ruleUsageTracker.recordUsage(realRuleId, sessionContext, actionType, pauseOptions);
+      const record = await ruleUsageTracker.recordUsage(
+        realRuleId,
+        sessionContext,
+        actionType,
+        pauseOptions,
+      );
 
       return { record, rule };
     } catch (error) {
@@ -84,7 +98,7 @@ class RuleExecutor {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         'Failed to use rule',
-        error
+        error,
       );
     }
   }
@@ -92,7 +106,10 @@ class RuleExecutor {
   /**
    * 验证规则是否可用于指定操作
    */
-  async validateRuleForAction(ruleId: string, actionType: 'pause' | 'early_completion'): Promise<boolean> {
+  async validateRuleForAction(
+    ruleId: string,
+    actionType: 'pause' | 'early_completion',
+  ): Promise<boolean> {
     try {
       await ruleClassificationService.validateRuleForAction(ruleId, actionType);
       return true;

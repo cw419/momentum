@@ -113,45 +113,53 @@ describe('RuleManagerFormModal', () => {
     expect(setFormData).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Rule A',
-      })
+      }),
     );
 
-    fireEvent.change(screen.getByPlaceholderText('e.g. bathroom break, water, phone call'), {
-      target: { value: 'Renamed rule' },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText('e.g. bathroom break, water, phone call'),
+      {
+        target: { value: 'Renamed rule' },
+      },
+    );
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: ExceptionRuleType.EARLY_COMPLETION_ONLY },
     });
-    fireEvent.change(screen.getByPlaceholderText('Describe this exception...'), {
-      target: { value: 'Updated description' },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Describe this exception...'),
+      {
+        target: { value: 'Updated description' },
+      },
+    );
 
     expect(setFormData).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Renamed rule',
-      })
+      }),
     );
     expect(setFormData).toHaveBeenCalledWith(
       expect.objectContaining({
         type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
-      })
+      }),
     );
     expect(setFormData).toHaveBeenCalledWith(
       expect.objectContaining({
         description: 'Updated description',
-      })
+      }),
     );
   });
 
   it('disables submit when name is blank or save is in progress and handles cancel', () => {
-    const { props, setShowCreateForm, setEditingRule, resetForm } = createProps({
-      formData: {
-        name: '   ',
-        type: ExceptionRuleType.PAUSE_ONLY,
-        description: '',
+    const { props, setShowCreateForm, setEditingRule, resetForm } = createProps(
+      {
+        formData: {
+          name: '   ',
+          type: ExceptionRuleType.PAUSE_ONLY,
+          description: '',
+        },
+        savingOperations: new Set(['saving']),
       },
-      savingOperations: new Set(['saving']),
-    });
+    );
     render(<RuleManagerFormModal {...props} />);
 
     const createButton = screen.getByRole('button', { name: 'Create' });
@@ -163,4 +171,3 @@ describe('RuleManagerFormModal', () => {
     expect(resetForm).toHaveBeenCalledTimes(1);
   });
 });
-

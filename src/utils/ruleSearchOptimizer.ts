@@ -33,7 +33,7 @@ export class RuleSearchOptimizer {
   searchRulesDebounced(
     rules: ExceptionRule[],
     query: string,
-    callback: (results: SearchResult[]) => void
+    callback: (results: SearchResult[]) => void,
   ): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
@@ -75,7 +75,10 @@ export class RuleSearchOptimizer {
     return results;
   }
 
-  getSearchSuggestions(query: string, rules: ExceptionRule[]): SearchSuggestion[] {
+  getSearchSuggestions(
+    query: string,
+    rules: ExceptionRule[],
+  ): SearchSuggestion[] {
     const suggestions: SearchSuggestion[] = [];
     const normalizedQuery = query.toLowerCase().trim();
 
@@ -93,12 +96,19 @@ export class RuleSearchOptimizer {
 
   detectDuplicates(
     name: string,
-    existingRules: ExceptionRule[]
-  ): { hasExactMatch: boolean; exactMatches: ExceptionRule[]; similarRules: ExceptionRule[] } {
+    existingRules: ExceptionRule[],
+  ): {
+    hasExactMatch: boolean;
+    exactMatches: ExceptionRule[];
+    similarRules: ExceptionRule[];
+  } {
     return this.duplicates.detectDuplicates(name, existingRules);
   }
 
-  generateNameSuggestions(partialName: string, actionType: ExceptionRuleType): string[] {
+  generateNameSuggestions(
+    partialName: string,
+    actionType: ExceptionRuleType,
+  ): string[] {
     return this.duplicates.generateNameSuggestions(partialName, actionType);
   }
 
@@ -114,4 +124,3 @@ export class RuleSearchOptimizer {
     return this.cache.getSearchStats();
   }
 }
-

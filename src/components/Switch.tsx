@@ -42,12 +42,14 @@ export const Switch: React.FC<SwitchProps> = ({
       disabled={disabled || loading}
       className={[
         'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full',
-        'p-0 min-h-0',
+        'min-h-0 p-0',
         'transition duration-200 ease-in-out',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
         'ring-1 ring-inset ring-black/10 dark:ring-white/10',
         checked ? checkedTrack : uncheckedTrack,
-        disabled || loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+        disabled || loading
+          ? 'cursor-not-allowed opacity-50'
+          : 'cursor-pointer',
         className ?? '',
       ]
         .filter(Boolean)
@@ -65,10 +67,9 @@ export const Switch: React.FC<SwitchProps> = ({
 
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <Loader2 className="w-3 h-3 animate-spin text-white" />
+          <Loader2 className="h-3 w-3 animate-spin text-white" />
         </span>
       )}
     </button>
   );
 };
-

@@ -31,15 +31,28 @@ export function useTaskCompletionDialog(params: {
       try {
         const history = await storage.getCompletionHistory();
         const chainHistory = history
-          .filter((h) => h.chainId === chainId && h.wasSuccessful && h.description)
-          .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+          .filter(
+            (h) => h.chainId === chainId && h.wasSuccessful && h.description,
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.completedAt).getTime() -
+              new Date(a.completedAt).getTime(),
+          )
           .slice(0, 5);
 
-        const descriptions = chainHistory.map((h) => h.description!).filter(Boolean);
+        const descriptions = chainHistory
+          .map((h) => h.description!)
+          .filter(Boolean);
         const uniqueDescriptions = Array.from(new Set(descriptions));
         if (isActive) setRecentDescriptions(uniqueDescriptions);
       } catch (error) {
-        logger.error('TASK_COMPLETION', 'Failed to load recent descriptions', { chainId }, toError(error));
+        logger.error(
+          'TASK_COMPLETION',
+          'Failed to load recent descriptions',
+          { chainId },
+          toError(error),
+        );
       }
     };
 
@@ -87,7 +100,14 @@ export function useTaskCompletionDialog(params: {
 
     onComplete(sanitizedDescription || '', sanitizedNotes);
     resetForm();
-  }, [description, isDurationless, notes, onComplete, resetForm, sanitizeInput]);
+  }, [
+    description,
+    isDurationless,
+    notes,
+    onComplete,
+    resetForm,
+    sanitizeInput,
+  ]);
 
   const handleCancel = useCallback(() => {
     resetForm();
@@ -169,4 +189,3 @@ export function useTaskCompletionDialog(params: {
     handleNotesKeyDown,
   };
 }
-

@@ -38,7 +38,9 @@ interface RuleSelectionDialogViewProps {
   onCreateNewRule: (name: string) => void;
 }
 
-export const RuleSelectionDialogView: React.FC<RuleSelectionDialogViewProps> = ({
+export const RuleSelectionDialogView: React.FC<
+  RuleSelectionDialogViewProps
+> = ({
   actionType,
   sessionContext,
   language,
@@ -59,19 +61,28 @@ export const RuleSelectionDialogView: React.FC<RuleSelectionDialogViewProps> = (
   onSelectRule,
   onCreateNewRule,
 }) => (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
     <div
       ref={containerRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="rule-selection-dialog-title"
-      className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+      className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-gray-800"
       style={{ maxWidth: 'min(640px, 100vw - 2rem)' }}
     >
-      <DialogHeader actionType={actionType} tr={tr} language={language} onCancel={onCancel} />
+      <DialogHeader
+        actionType={actionType}
+        tr={tr}
+        language={language}
+        onCancel={onCancel}
+      />
 
       <div className="flex-shrink-0">
-        <ChainInfoCard actionType={actionType} sessionContext={sessionContext} language={language} />
+        <ChainInfoCard
+          actionType={actionType}
+          sessionContext={sessionContext}
+          language={language}
+        />
 
         {actionType === 'pause' && (
           <PauseDurationCard
@@ -83,17 +94,26 @@ export const RuleSelectionDialogView: React.FC<RuleSelectionDialogViewProps> = (
           />
         )}
 
-        {error && <ErrorBanner tr={tr} error={error} onDismiss={onDismissError} />}
+        {error && (
+          <ErrorBanner tr={tr} error={error} onDismiss={onDismissError} />
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto" data-scroll-container>
         <div className="p-6">
-          <SearchBar tr={tr} searchInputRef={searchInputRef} value={searchQuery} onChange={onSearchQueryChange} />
+          <SearchBar
+            tr={tr}
+            searchInputRef={searchInputRef}
+            value={searchQuery}
+            onChange={onSearchQueryChange}
+          />
 
           <VirtualizedRuleList
             rules={searchResults}
             onSelect={(rule) => onSelectRule(rule)}
-            onCreateNew={searchQuery.trim() ? (name) => onCreateNewRule(name) : undefined}
+            onCreateNew={
+              searchQuery.trim() ? (name) => onCreateNewRule(name) : undefined
+            }
             searchQuery={searchQuery}
             isLoading={isLoading}
             itemHeight={60}
@@ -102,8 +122,12 @@ export const RuleSelectionDialogView: React.FC<RuleSelectionDialogViewProps> = (
         </div>
       </div>
 
-      <DialogFooter language={language} tr={tr} count={searchResults.length} onCancel={onCancel} />
+      <DialogFooter
+        language={language}
+        tr={tr}
+        count={searchResults.length}
+        onCancel={onCancel}
+      />
     </div>
   </div>
 );
-

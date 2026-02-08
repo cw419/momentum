@@ -17,7 +17,14 @@ export class ExportService {
     userPreferences?: unknown;
     exceptionRules?: unknown;
   }): MomentumExportDataV2 {
-    const { chains, history, rsipNodes, rsipMeta, userPreferences, exceptionRules } = params;
+    const {
+      chains,
+      history,
+      rsipNodes,
+      rsipMeta,
+      userPreferences,
+      exceptionRules,
+    } = params;
 
     return {
       version: '2.0',
@@ -31,4 +38,3 @@ export class ExportService {
     };
   }
 }
-

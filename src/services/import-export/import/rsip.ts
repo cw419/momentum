@@ -17,7 +17,10 @@ function buildRsipIdMap(rawNodes: unknown[], existingIds: Set<string>) {
   for (const raw of rawNodes) {
     if (!isRecord(raw)) continue;
 
-    const originalId = typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id : generateId('rsip');
+    const originalId =
+      typeof raw.id === 'string' && raw.id.trim().length > 0
+        ? raw.id
+        : generateId('rsip');
 
     let nextId = generateId('rsip');
     while (existingIds.has(nextId)) nextId = generateId('rsip');
@@ -33,13 +36,20 @@ function getOriginalRsipId(raw: Record<string, unknown>): string {
   return getTrimmedNonEmptyString(raw.id) ?? generateId('rsip');
 }
 
-function mapRsipParentId(raw: Record<string, unknown>, idMapRsip: Map<string, string>): string | undefined {
+function mapRsipParentId(
+  raw: Record<string, unknown>,
+  idMapRsip: Map<string, string>,
+): string | undefined {
   const originalParentId = getTrimmedNonEmptyString(raw.parentId);
   if (!originalParentId) return undefined;
   return idMapRsip.get(originalParentId) ?? originalParentId;
 }
 
-function mapImportedRsipNode(raw: Record<string, unknown>, idMapRsip: Map<string, string>, tr: ImportTranslator): RSIPNode {
+function mapImportedRsipNode(
+  raw: Record<string, unknown>,
+  idMapRsip: Map<string, string>,
+  tr: ImportTranslator,
+): RSIPNode {
   const originalId = getOriginalRsipId(raw);
   const id = idMapRsip.get(originalId) ?? generateId('rsip');
 
@@ -60,7 +70,7 @@ function mapImportedRsipNode(raw: Record<string, unknown>, idMapRsip: Map<string
 export function parseImportRsipNodes(
   rsipNodes: unknown,
   existingRsipNodes: RSIPNode[] | undefined,
-  tr: ImportTranslator
+  tr: ImportTranslator,
 ): RSIPNode[] {
   if (!Array.isArray(rsipNodes)) return [];
 
@@ -81,8 +91,13 @@ export function parseImportRsipMeta(rsipMeta: unknown): RSIPMeta | undefined {
 
   return {
     ...rsipMeta,
-    lastAddedAt: rsipMeta.lastAddedAt != null ? new Date(String(rsipMeta.lastAddedAt)) : undefined,
-    allowMultiplePerDay: typeof rsipMeta.allowMultiplePerDay === 'boolean' ? rsipMeta.allowMultiplePerDay : undefined,
+    lastAddedAt:
+      rsipMeta.lastAddedAt != null
+        ? new Date(String(rsipMeta.lastAddedAt))
+        : undefined,
+    allowMultiplePerDay:
+      typeof rsipMeta.allowMultiplePerDay === 'boolean'
+        ? rsipMeta.allowMultiplePerDay
+        : undefined,
   } as RSIPMeta;
 }
-

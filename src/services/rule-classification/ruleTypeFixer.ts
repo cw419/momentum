@@ -42,7 +42,9 @@ export async function fixRuleTypeIssues(ruleId: string): Promise<{
     if (!rule.createdAt) {
       issues.push('缺少创建时间');
       rule.createdAt = new Date();
-      await exceptionRuleStorage.updateRule(ruleId, { createdAt: rule.createdAt });
+      await exceptionRuleStorage.updateRule(ruleId, {
+        createdAt: rule.createdAt,
+      });
       actions.push('已设置创建时间');
       fixed = true;
     }
@@ -50,7 +52,9 @@ export async function fixRuleTypeIssues(ruleId: string): Promise<{
     if (typeof rule.usageCount !== 'number' || rule.usageCount < 0) {
       issues.push('使用计数无效');
       rule.usageCount = 0;
-      await exceptionRuleStorage.updateRule(ruleId, { usageCount: rule.usageCount });
+      await exceptionRuleStorage.updateRule(ruleId, {
+        usageCount: rule.usageCount,
+      });
       actions.push('已重置使用计数');
       fixed = true;
     }
@@ -64,4 +68,3 @@ export async function fixRuleTypeIssues(ruleId: string): Promise<{
     };
   }
 }
-

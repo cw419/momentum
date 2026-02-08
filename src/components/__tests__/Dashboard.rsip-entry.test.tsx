@@ -37,7 +37,7 @@ describe('Dashboard RSIP entry', () => {
             onPermanentDeleteChains={vi.fn()}
           />
         </StorageProvider>
-      </I18nProvider>
+      </I18nProvider>,
     );
 
     const rsipButton = screen.getByRole('button', { name: /RSIP Tree/i });
@@ -47,4 +47,3 @@ describe('Dashboard RSIP entry', () => {
     expect(onOpenRSIP).toHaveBeenCalledTimes(1);
   });
 });
-

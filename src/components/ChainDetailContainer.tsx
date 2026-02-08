@@ -16,45 +16,41 @@ interface ChainDetailProps {
   onDelete: () => void;
 }
 
-export const ChainDetailContainer: React.FC<ChainDetailProps> = React.memo(({
-  chain,
-  history,
-  onBack,
-  onEdit,
-  onDelete,
-}) => {
-  const {
-    showDeleteConfirm,
-    recentHistory,
-    successRate,
-    chainHistoryCount,
-    language,
-    locale,
-    tr,
-    formatFailureReason,
-    handleDeleteClick,
-    handleDeleteConfirm,
-    handleDeleteCancel
-  } = useChainDetail({ chain, history, onDelete });
+export const ChainDetailContainer: React.FC<ChainDetailProps> = React.memo(
+  ({ chain, history, onBack, onEdit, onDelete }) => {
+    const {
+      showDeleteConfirm,
+      recentHistory,
+      successRate,
+      chainHistoryCount,
+      language,
+      locale,
+      tr,
+      formatFailureReason,
+      handleDeleteClick,
+      handleDeleteConfirm,
+      handleDeleteCancel,
+    } = useChainDetail({ chain, history, onDelete });
 
-  return (
-    <ChainDetailView
-      chain={chain}
-      recentHistory={recentHistory}
-      chainHistoryCount={chainHistoryCount}
-      successRate={successRate}
-      showDeleteConfirm={showDeleteConfirm}
-      language={language}
-      locale={locale}
-      tr={tr}
-      formatFailureReason={formatFailureReason}
-      onBack={onBack}
-      onEdit={onEdit}
-      onDeleteClick={handleDeleteClick}
-      onDeleteConfirm={handleDeleteConfirm}
-      onDeleteCancel={handleDeleteCancel}
-    />
-  );
-});
+    return (
+      <ChainDetailView
+        chain={chain}
+        recentHistory={recentHistory}
+        chainHistoryCount={chainHistoryCount}
+        successRate={successRate}
+        showDeleteConfirm={showDeleteConfirm}
+        language={language}
+        locale={locale}
+        tr={tr}
+        formatFailureReason={formatFailureReason}
+        onBack={onBack}
+        onEdit={onEdit}
+        onDeleteClick={handleDeleteClick}
+        onDeleteConfirm={handleDeleteConfirm}
+        onDeleteCancel={handleDeleteCancel}
+      />
+    );
+  },
+);
 
 ChainDetailContainer.displayName = 'ChainDetailContainer';

@@ -12,7 +12,7 @@ describe('AccessibleFormField', () => {
           type="text"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -32,9 +32,9 @@ describe('AccessibleFormField', () => {
           onChange={() => {}}
           options={[
             { value: 'option1', label: 'Option 1' },
-            { value: 'option2', label: 'Option 2' }
+            { value: 'option2', label: 'Option 2' },
           ]}
-        />
+        />,
       );
 
       const select = screen.getByRole('combobox');
@@ -52,7 +52,7 @@ describe('AccessibleFormField', () => {
           type="textarea"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const textarea = screen.getByRole('textbox');
@@ -70,7 +70,7 @@ describe('AccessibleFormField', () => {
           type="checkbox"
           value={false}
           onChange={() => {}}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox');
@@ -89,11 +89,11 @@ describe('AccessibleFormField', () => {
           required={true}
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const label = screen.getByText('Required Field');
-      expect(label).toHaveClass('after:content-[\'*\']');
+      expect(label).toHaveClass("after:content-['*']");
     });
 
     it('should have proper ARIA attributes for description', () => {
@@ -105,13 +105,16 @@ describe('AccessibleFormField', () => {
           description="This is a helpful description"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
       const description = screen.getByText('This is a helpful description');
 
-      expect(input).toHaveAttribute('aria-describedby', 'described-field-description');
+      expect(input).toHaveAttribute(
+        'aria-describedby',
+        'described-field-description',
+      );
       expect(description).toHaveAttribute('id', 'described-field-description');
     });
 
@@ -124,7 +127,7 @@ describe('AccessibleFormField', () => {
           error="This field has an error"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -146,11 +149,14 @@ describe('AccessibleFormField', () => {
           error="Field error"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
-      expect(input).toHaveAttribute('aria-describedby', 'complex-field-description complex-field-error');
+      expect(input).toHaveAttribute(
+        'aria-describedby',
+        'complex-field-description complex-field-error',
+      );
     });
 
     it('should have proper name attribute', () => {
@@ -162,7 +168,7 @@ describe('AccessibleFormField', () => {
           type="text"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -177,7 +183,7 @@ describe('AccessibleFormField', () => {
           type="text"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -195,7 +201,7 @@ describe('AccessibleFormField', () => {
           type="text"
           value=""
           onChange={mockOnChange}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -213,7 +219,7 @@ describe('AccessibleFormField', () => {
           type="number"
           value={0}
           onChange={mockOnChange}
-        />
+        />,
       );
 
       const input = screen.getByRole('spinbutton');
@@ -231,7 +237,7 @@ describe('AccessibleFormField', () => {
           type="checkbox"
           value={false}
           onChange={mockOnChange}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox');
@@ -251,9 +257,9 @@ describe('AccessibleFormField', () => {
           onChange={mockOnChange}
           options={[
             { value: 'option1', label: 'Option 1' },
-            { value: 'option2', label: 'Option 2' }
+            { value: 'option2', label: 'Option 2' },
           ]}
-        />
+        />,
       );
 
       const select = screen.getByRole('combobox');
@@ -271,7 +277,7 @@ describe('AccessibleFormField', () => {
           disabled={true}
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -287,7 +293,7 @@ describe('AccessibleFormField', () => {
           required={true}
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -305,7 +311,7 @@ describe('AccessibleFormField', () => {
           error="Error message"
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');
@@ -321,7 +327,7 @@ describe('AccessibleFormField', () => {
           disabled={true}
           value=""
           onChange={() => {}}
-        />
+        />,
       );
 
       const input = screen.getByRole('textbox');

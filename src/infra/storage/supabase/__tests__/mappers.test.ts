@@ -76,12 +76,18 @@ describe('supabase/mappers', () => {
       expect(chain.timeLimitExceptions).toEqual(['x']);
       expect(chain.deletedAt?.toISOString()).toBe('2026-02-01T00:00:00.000Z');
       expect(chain.createdAt.toISOString()).toBe('2026-01-01T00:00:00.000Z');
-      expect(chain.lastCompletedAt?.toISOString()).toBe('2026-02-02T00:00:00.000Z');
-      expect((chain as Chain & { timeLimitHours?: number }).timeLimitHours).toBe(24);
+      expect(chain.lastCompletedAt?.toISOString()).toBe(
+        '2026-02-02T00:00:00.000Z',
+      );
+      expect(
+        (chain as Chain & { timeLimitHours?: number }).timeLimitHours,
+      ).toBe(24);
     });
 
     it('maps non-group row and applies sensible defaults for missing fields', () => {
-      const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-02-06T12:00:00.000Z').getTime());
+      const nowSpy = vi
+        .spyOn(Date, 'now')
+        .mockReturnValue(new Date('2026-02-06T12:00:00.000Z').getTime());
       expect(nowSpy).toBeDefined();
 
       const row = {
@@ -129,7 +135,9 @@ describe('supabase/mappers', () => {
     it('sanitizes invalid values and omits new columns when includeNewColumns is false', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-02-06T12:00:00.000Z'));
-      vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-02-06T12:00:00.000Z').getTime());
+      vi.spyOn(Date, 'now').mockReturnValue(
+        new Date('2026-02-06T12:00:00.000Z').getTime(),
+      );
 
       const row = buildChainRow(
         {
@@ -155,14 +163,16 @@ describe('supabase/mappers', () => {
           lastCompletedAt: 'also-invalid' as unknown as Date,
         } as Chain,
         'user-1',
-        false
+        false,
       );
 
       expect(row.id).toBe('123');
       expect(row.name).toBe('');
       expect(row.parent_id).toBeNull();
       expect(row.type).toBe('unit');
-      expect(row.sort_order).toBe(Math.floor(new Date('2026-02-06T12:00:00.000Z').getTime() / 1000));
+      expect(row.sort_order).toBe(
+        Math.floor(new Date('2026-02-06T12:00:00.000Z').getTime() / 1000),
+      );
       expect(row.duration).toBe(45);
       expect(row.current_streak).toBe(0);
       expect(row.auxiliary_streak).toBe(0);
@@ -196,7 +206,7 @@ describe('supabase/mappers', () => {
           deletedAt: 'bad-date' as unknown as Date,
         }),
         'user-2',
-        true
+        true,
       );
 
       expect(row.parent_id).toBeNull();

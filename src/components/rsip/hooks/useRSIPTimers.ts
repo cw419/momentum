@@ -11,7 +11,7 @@ interface UseRSIPTimersResult {
 }
 
 export function useRSIPTimers(
-  tr: (zh: string, en: string) => string
+  tr: (zh: string, en: string) => string,
 ): UseRSIPTimersResult {
   const [now, setNow] = useState<number>(Date.now());
   const [activeTimers, setActiveTimers] = useState<Record<string, number>>({});
@@ -24,7 +24,7 @@ export function useRSIPTimers(
   useEffect(() => {
     Object.entries(activeTimers).forEach(([id, endsAt]) => {
       if (now >= endsAt) {
-        setActiveTimers(prev => {
+        setActiveTimers((prev) => {
           const copy = { ...prev } as Record<string, number>;
           delete copy[id];
           return copy;
@@ -32,10 +32,9 @@ export function useRSIPTimers(
         try {
           if ('Notification' in window) {
             if (Notification.permission === 'granted') {
-              new Notification(
-                tr('计时完成', 'Timer complete'),
-                { body: tr('RSIP 定式计时已结束', 'RSIP timer has ended') }
-              );
+              new Notification(tr('计时完成', 'Timer complete'), {
+                body: tr('RSIP 定式计时已结束', 'RSIP timer has ended'),
+              });
             } else if (Notification.permission !== 'denied') {
               Notification.requestPermission();
             }
@@ -49,19 +48,21 @@ export function useRSIPTimers(
 
   const formatRemaining = useCallback((ms: number) => {
     const s = Math.max(0, Math.floor(ms / 1000));
-    const mm = Math.floor(s / 60).toString().padStart(2, '0');
+    const mm = Math.floor(s / 60)
+      .toString()
+      .padStart(2, '0');
     const ss = (s % 60).toString().padStart(2, '0');
     return `${mm}:${ss}`;
   }, []);
 
   const formatMinutesLabel = useCallback(
     (minutes: number) => tr(`${minutes} 分钟`, `${minutes} min`),
-    [tr]
+    [tr],
   );
 
   const handleStartTimer = useCallback((nodeId: string, minutes: number) => {
     const endsAt = Date.now() + minutes * 60 * 1000;
-    setActiveTimers(prev => ({ ...prev, [nodeId]: endsAt }));
+    setActiveTimers((prev) => ({ ...prev, [nodeId]: endsAt }));
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
@@ -72,7 +73,7 @@ export function useRSIPTimers(
   }, []);
 
   const confirmStopTimer = useCallback((nodeId: string) => {
-    setActiveTimers(prev => {
+    setActiveTimers((prev) => {
       const copy = { ...prev };
       delete copy[nodeId];
       return copy;

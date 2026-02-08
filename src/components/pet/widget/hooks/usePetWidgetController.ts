@@ -97,8 +97,10 @@ export function usePetWidgetController(params: {
     (event: MouseEvent) => {
       if (!isDragging || !dragRef.current || !widgetRef.current) return;
 
-      const deltaX = ((event.clientX - dragRef.current.startX) / window.innerWidth) * 100;
-      const deltaY = ((event.clientY - dragRef.current.startY) / window.innerHeight) * 100;
+      const deltaX =
+        ((event.clientX - dragRef.current.startX) / window.innerWidth) * 100;
+      const deltaY =
+        ((event.clientY - dragRef.current.startY) / window.innerHeight) * 100;
 
       const pixelDeltaX = Math.abs(event.clientX - dragRef.current.startX);
       const pixelDeltaY = Math.abs(event.clientY - dragRef.current.startY);
@@ -196,4 +198,3 @@ export function usePetWidgetController(params: {
     handleExpand,
   };
 }
-

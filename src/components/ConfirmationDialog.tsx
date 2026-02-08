@@ -26,11 +26,14 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
 
   // ESC 键关闭
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onCancel();
-    }
-  }, [onCancel]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCancel();
+      }
+    },
+    [onCancel],
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -42,22 +45,28 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
       <div
         ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirmation-dialog-title"
-        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md"
+        className="w-full max-w-md rounded-3xl bg-white shadow-2xl dark:bg-slate-800"
         style={{ overscrollBehavior: 'contain' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-600">
+        <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-slate-600">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
-              <AlertTriangle size={20} className="text-orange-600 dark:text-orange-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-900/20">
+              <AlertTriangle
+                size={20}
+                className="text-orange-600 dark:text-orange-400"
+              />
             </div>
-            <h3 id="confirmation-dialog-title" className="text-xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+            <h3
+              id="confirmation-dialog-title"
+              className="font-chinese text-xl font-bold text-gray-900 dark:text-slate-100"
+            >
               {title}
             </h3>
           </div>
@@ -65,7 +74,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             type="button"
             onClick={onCancel}
             aria-label="关闭"
-            className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 flex items-center justify-center transition-colors focus-ring"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 transition-colors hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600"
           >
             <X size={22} className="text-gray-600 dark:text-slate-300" />
           </button>
@@ -73,7 +82,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
         {/* Content */}
         <div className="p-6">
-          <p className="text-gray-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+          <p className="whitespace-pre-line leading-relaxed text-gray-700 dark:text-slate-300">
             {message}
           </p>
         </div>
@@ -83,14 +92,14 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-xl transition-colors font-medium focus-ring"
+            className="focus-ring flex-1 rounded-xl bg-gray-100 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
           >
             {cancelText}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`flex-1 px-4 py-3 text-white rounded-xl transition-colors font-medium focus-ring ${confirmButtonClass}`}
+            className={`focus-ring flex-1 rounded-xl px-4 py-3 font-medium text-white transition-colors ${confirmButtonClass}`}
           >
             {confirmText}
           </button>

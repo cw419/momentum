@@ -28,13 +28,11 @@ import {
   recoveryOptionsProvider,
   initializeDefaultStrategies,
   createUnknownErrorResult,
-  createRecoveryFailureResult
+  createRecoveryFailureResult,
 } from './recovery';
 
 // 重新导出类型以保持向后兼容
-export type {
-  RecoveryAction
-};
+export type { RecoveryAction };
 
 /**
  * 错误恢复管理器
@@ -67,20 +65,20 @@ class ErrorRecoveryManager {
   async attemptRecovery(
     error: ExceptionRuleException,
     context: unknown,
-    originalOperation?: string
+    originalOperation?: string,
   ): Promise<RecoveryResult> {
     const recoveryContext: RecoveryContext = {
       errorType: error.type,
       originalOperation: originalOperation || 'unknown',
       operationData: context,
       timestamp: new Date(),
-      retryCount: 0
+      retryCount: 0,
     };
 
     logger.info('ERROR_RECOVERY', '开始错误恢复', {
       error: error.message,
       type: error.type,
-      context
+      context,
     });
 
     try {
@@ -99,7 +97,9 @@ class ErrorRecoveryManager {
           this.recordHistory(error, recoveryContext, result);
 
           if (result.success) {
-            logger.info('ERROR_RECOVERY', '错误恢复成功', { message: result.message });
+            logger.info('ERROR_RECOVERY', '错误恢复成功', {
+              message: result.message,
+            });
             return result;
           }
 
@@ -108,9 +108,10 @@ class ErrorRecoveryManager {
             return result;
           }
         } catch (strategyError) {
-          const err = strategyError instanceof Error
-            ? strategyError
-            : new Error(String(strategyError));
+          const err =
+            strategyError instanceof Error
+              ? strategyError
+              : new Error(String(strategyError));
           logger.error('ERROR_RECOVERY', '恢复策略执行失败', undefined, err);
           continue;
         }
@@ -119,24 +120,30 @@ class ErrorRecoveryManager {
       // 所有策略都失败了
       return createRecoveryFailureResult();
     } catch (recoveryError) {
-      const err = recoveryError instanceof Error
-        ? recoveryError
-        : new Error(String(recoveryError));
+      const err =
+        recoveryError instanceof Error
+          ? recoveryError
+          : new Error(String(recoveryError));
       logger.error('ERROR_RECOVERY', '错误恢复过程失败', undefined, err);
 
       return {
         success: false,
         message: tr('错误恢复过程失败', 'Error recovery failed'),
-        actions: [{
-          id: 'manual_intervention',
-          label: tr('手动处理', 'Manual fix'),
-          description: tr('需要手动解决此问题', 'This requires manual intervention'),
-          type: 'danger',
-          handler: async () => ({
-            success: false,
-            message: tr('需要手动处理', 'Manual intervention required')
-          })
-        }]
+        actions: [
+          {
+            id: 'manual_intervention',
+            label: tr('手动处理', 'Manual fix'),
+            description: tr(
+              '需要手动解决此问题',
+              'This requires manual intervention',
+            ),
+            type: 'danger',
+            handler: async () => ({
+              success: false,
+              message: tr('需要手动处理', 'Manual intervention required'),
+            }),
+          },
+        ],
       };
     }
   }
@@ -171,13 +178,13 @@ class ErrorRecoveryManager {
   private recordHistory(
     error: ExceptionRuleException,
     context: RecoveryContext,
-    result: RecoveryResult
+    result: RecoveryResult,
   ): void {
     this.recoveryHistory.push({
       error,
       context,
       result,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 }

@@ -1,7 +1,7 @@
 export async function executeOnce<T>(
   pendingOperations: Map<string, Promise<unknown>>,
   key: string,
-  operation: () => Promise<T>
+  operation: () => Promise<T>,
 ): Promise<T> {
   if (pendingOperations.has(key)) {
     return pendingOperations.get(key) as Promise<T>;
@@ -16,4 +16,3 @@ export async function executeOnce<T>(
     pendingOperations.delete(key);
   }
 }
-

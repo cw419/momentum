@@ -36,12 +36,12 @@ describe('Storage TaskTimeStats Functions', () => {
           lastCompletionTime: 25,
           averageCompletionTime: 23,
           totalCompletions: 3,
-          totalTime: 70
-        }
+          totalTime: 70,
+        },
       ];
-      
+
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockStats));
-      
+
       const stats = storage.getTaskTimeStats();
       expect(stats).toEqual(mockStats);
     });
@@ -55,15 +55,15 @@ describe('Storage TaskTimeStats Functions', () => {
           lastCompletionTime: 30,
           averageCompletionTime: 25,
           totalCompletions: 2,
-          totalTime: 50
-        }
+          totalTime: 50,
+        },
       ];
-      
+
       storage.saveTaskTimeStats(mockStats);
-      
+
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'momentum_task_time_stats',
-        JSON.stringify(mockStats)
+        JSON.stringify(mockStats),
       );
     });
   });
@@ -81,19 +81,19 @@ describe('Storage TaskTimeStats Functions', () => {
           lastCompletionTime: 25,
           averageCompletionTime: 23,
           totalCompletions: 3,
-          totalTime: 70
+          totalTime: 70,
         },
         {
           chainId: 'chain-2',
           lastCompletionTime: 15,
           averageCompletionTime: 18,
           totalCompletions: 2,
-          totalTime: 35
-        }
+          totalTime: 35,
+        },
       ];
-      
+
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockStats));
-      
+
       const lastTime = storage.getLastCompletionTime('chain-1');
       expect(lastTime).toBe(25);
     });
@@ -105,12 +105,12 @@ describe('Storage TaskTimeStats Functions', () => {
           lastCompletionTime: 25,
           averageCompletionTime: 23,
           totalCompletions: 3,
-          totalTime: 70
-        }
+          totalTime: 70,
+        },
       ];
-      
+
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockStats));
-      
+
       const lastTime = storage.getLastCompletionTime('non-existent-chain');
       expect(lastTime).toBeNull();
     });
@@ -119,22 +119,22 @@ describe('Storage TaskTimeStats Functions', () => {
   describe('updateTaskTimeStats', () => {
     test('应该创建新的统计记录当链条不存在时', () => {
       mockLocalStorage.getItem.mockReturnValue('[]');
-      
+
       storage.updateTaskTimeStats('chain-1', 30);
-      
+
       const expectedStats: TaskTimeStats[] = [
         {
           chainId: 'chain-1',
           lastCompletionTime: 30,
           averageCompletionTime: 30,
           totalCompletions: 1,
-          totalTime: 30
-        }
+          totalTime: 30,
+        },
       ];
-      
+
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'momentum_task_time_stats',
-        JSON.stringify(expectedStats)
+        JSON.stringify(expectedStats),
       );
     });
 
@@ -145,27 +145,27 @@ describe('Storage TaskTimeStats Functions', () => {
           lastCompletionTime: 20,
           averageCompletionTime: 22,
           totalCompletions: 2,
-          totalTime: 45
-        }
+          totalTime: 45,
+        },
       ];
-      
+
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(existingStats));
-      
+
       storage.updateTaskTimeStats('chain-1', 35);
-      
+
       const expectedStats: TaskTimeStats[] = [
         {
           chainId: 'chain-1',
           lastCompletionTime: 35,
           averageCompletionTime: 27, // (45 + 35) / 3 = 26.67 -> 27 (rounded)
           totalCompletions: 3,
-          totalTime: 80
-        }
+          totalTime: 80,
+        },
       ];
-      
+
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'momentum_task_time_stats',
-        JSON.stringify(expectedStats)
+        JSON.stringify(expectedStats),
       );
     });
 
@@ -176,27 +176,27 @@ describe('Storage TaskTimeStats Functions', () => {
           lastCompletionTime: 10,
           averageCompletionTime: 15,
           totalCompletions: 4,
-          totalTime: 60
-        }
+          totalTime: 60,
+        },
       ];
-      
+
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(existingStats));
-      
+
       storage.updateTaskTimeStats('chain-1', 40);
-      
+
       const expectedStats: TaskTimeStats[] = [
         {
           chainId: 'chain-1',
           lastCompletionTime: 40,
           averageCompletionTime: 20, // (60 + 40) / 5 = 20
           totalCompletions: 5,
-          totalTime: 100
-        }
+          totalTime: 100,
+        },
       ];
-      
+
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'momentum_task_time_stats',
-        JSON.stringify(expectedStats)
+        JSON.stringify(expectedStats),
       );
     });
   });
@@ -214,12 +214,12 @@ describe('Storage TaskTimeStats Functions', () => {
           lastCompletionTime: 25,
           averageCompletionTime: 23,
           totalCompletions: 3,
-          totalTime: 70
-        }
+          totalTime: 70,
+        },
       ];
-      
+
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockStats));
-      
+
       const avgTime = storage.getTaskAverageTime('chain-1');
       expect(avgTime).toBe(23);
     });
@@ -232,7 +232,7 @@ describe('Storage TaskTimeStats Functions', () => {
           chainId: 'chain-1',
           completedAt: new Date(),
           duration: 30,
-          wasSuccessful: true
+          wasSuccessful: true,
           // 没有 actualDuration 和 isForwardTimed
         },
         {
@@ -241,9 +241,9 @@ describe('Storage TaskTimeStats Functions', () => {
           duration: 15,
           wasSuccessful: false,
           actualDuration: 15,
-          isForwardTimed: false
+          isForwardTimed: false,
           // 已有用时数据
-        }
+        },
       ];
 
       const mockChains: Chain[] = [
@@ -258,23 +258,27 @@ describe('Storage TaskTimeStats Functions', () => {
           name: 'Test Chain 2',
           isDurationless: false,
           // ... 其他必需字段
-        } as Chain
+        } as Chain,
       ];
 
       // Mock getCompletionHistory 和 getChains
       let getCompletionHistoryCallCount = 0;
       mockLocalStorage.getItem.mockImplementation((key: string) => {
         if (key === 'momentum_completion_history') {
-          return JSON.stringify(mockHistory.map(h => ({
-            ...h,
-            completedAt: h.completedAt.toISOString()
-          })));
+          return JSON.stringify(
+            mockHistory.map((h) => ({
+              ...h,
+              completedAt: h.completedAt.toISOString(),
+            })),
+          );
         }
         if (key === 'momentum_chains') {
-          return JSON.stringify(mockChains.map(c => ({
-            ...c,
-            createdAt: new Date().toISOString()
-          })));
+          return JSON.stringify(
+            mockChains.map((c) => ({
+              ...c,
+              createdAt: new Date().toISOString(),
+            })),
+          );
         }
         return null;
       });
@@ -284,25 +288,25 @@ describe('Storage TaskTimeStats Functions', () => {
       // 应该保存更新后的历史记录
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'momentum_completion_history',
-        expect.stringContaining('actualDuration')
+        expect.stringContaining('actualDuration'),
       );
 
       // 验证保存的数据包含正确的迁移值
       const saveCall = mockLocalStorage.setItem.mock.calls.find(
-        call => call[0] === 'momentum_completion_history'
+        (call) => call[0] === 'momentum_completion_history',
       );
-      
+
       if (saveCall) {
         const savedData = JSON.parse(saveCall[1]);
         expect(savedData[0]).toMatchObject({
           chainId: 'chain-1',
           actualDuration: 30,
-          isForwardTimed: true
+          isForwardTimed: true,
         });
         expect(savedData[1]).toMatchObject({
           chainId: 'chain-2',
           actualDuration: 15,
-          isForwardTimed: false
+          isForwardTimed: false,
         });
       }
     });
@@ -315,16 +319,18 @@ describe('Storage TaskTimeStats Functions', () => {
           duration: 30,
           wasSuccessful: true,
           actualDuration: 25,
-          isForwardTimed: true
-        }
+          isForwardTimed: true,
+        },
       ];
 
       mockLocalStorage.getItem.mockImplementation((key: string) => {
         if (key === 'momentum_completion_history') {
-          return JSON.stringify(mockHistory.map(h => ({
-            ...h,
-            completedAt: h.completedAt.toISOString()
-          })));
+          return JSON.stringify(
+            mockHistory.map((h) => ({
+              ...h,
+              completedAt: h.completedAt.toISOString(),
+            })),
+          );
         }
         if (key === 'momentum_chains') {
           return JSON.stringify([]);
@@ -337,7 +343,7 @@ describe('Storage TaskTimeStats Functions', () => {
       // 由于没有需要迁移的数据，不应该调用 setItem
       expect(mockLocalStorage.setItem).not.toHaveBeenCalledWith(
         'momentum_completion_history',
-        expect.any(String)
+        expect.any(String),
       );
     });
   });

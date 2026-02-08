@@ -16,13 +16,13 @@ manim -pqh main.py IntroScene
 
 ## 场景列表
 
-| 场景 | 内容 |
-|------|------|
-| IntroScene | 问题引入 |
-| MathModelScene | 数学模型 |
-| CTDPScene | CTDP原理 |
-| RSIPScene | RSIP思想 |
-| OutroScene | Momentum介绍 |
+| 场景           | 内容         |
+| -------------- | ------------ |
+| IntroScene     | 问题引入     |
+| MathModelScene | 数学模型     |
+| CTDPScene      | CTDP原理     |
+| RSIPScene      | RSIP思想     |
+| OutroScene     | Momentum介绍 |
 
 ## 渲染全部场景
 

@@ -11,7 +11,7 @@ describe('types/exception-rule-errors', () => {
     const error = new ExceptionRuleException(
       ExceptionRuleError.RULE_NOT_FOUND,
       'Rule missing',
-      details
+      details,
     );
 
     expect(error.name).toBe('ExceptionRuleException');
@@ -25,18 +25,20 @@ describe('types/exception-rule-errors', () => {
       ExceptionRuleError.VALIDATION_ERROR,
       'Please fix the form',
       'validation internals',
-      { field: 'name' }
+      { field: 'name' },
     );
     const recoverable = EnhancedExceptionRuleException.createRecoverable(
       ExceptionRuleError.CONCURRENT_MODIFICATION,
       'Conflict detected',
       ['Retry'],
-      { id: 'rule-1' }
+      { id: 'rule-1' },
     );
 
     expect(userFriendly.userMessage).toBe('Please fix the form');
     expect(userFriendly.recoverable).toBe(true);
-    expect(userFriendly.technicalDetails).toEqual({ technicalMessage: 'validation internals' });
+    expect(userFriendly.technicalDetails).toEqual({
+      technicalMessage: 'validation internals',
+    });
     expect(userFriendly.getCategory()).toBe('user_error');
 
     expect(recoverable.recoverable).toBe(true);
@@ -48,7 +50,7 @@ describe('types/exception-rule-errors', () => {
     const critical = EnhancedExceptionRuleException.createCritical(
       ExceptionRuleError.STORAGE_ERROR,
       'database unavailable',
-      { op: 'write' }
+      { op: 'write' },
     )
       .addSuggestedAction('Contact admin')
       .setSeverity('critical')
@@ -85,7 +87,7 @@ describe('types/exception-rule-errors', () => {
       ['Request access'],
       'high',
       'Permission denied',
-      { trace: 'abc' }
+      { trace: 'abc' },
     );
     original.stack = 'stack-line-1';
 
@@ -100,4 +102,3 @@ describe('types/exception-rule-errors', () => {
     expect(restored.stack).toBe('stack-line-1');
   });
 });
-

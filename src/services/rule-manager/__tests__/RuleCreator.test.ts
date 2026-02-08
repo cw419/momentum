@@ -106,15 +106,24 @@ describe('rule-manager/RuleCreator', () => {
       invalidRules: [],
     });
     errorClassificationServiceMock.analyzeError.mockReturnValue({
-      error: new ExceptionRuleException(ExceptionRuleError.STORAGE_ERROR, 'classified error'),
+      error: new ExceptionRuleException(
+        ExceptionRuleError.STORAGE_ERROR,
+        'classified error',
+      ),
     });
-    errorRecoveryManagerMock.attemptRecovery.mockResolvedValue({ success: false });
+    errorRecoveryManagerMock.attemptRecovery.mockResolvedValue({
+      success: false,
+    });
     ruleStateManagerMock.startOptimisticCreation.mockReturnValue({
       temporaryRule: createRule({ id: 'temp-1' }),
       temporaryId: 'temp-1',
     });
-    ruleStateManagerMock.waitForRuleCreation.mockResolvedValue(createRule({ id: 'rule-final' }));
-    exceptionRuleStorageMock.getRuleById.mockResolvedValue(createRule({ id: 'rule-recovered' }));
+    ruleStateManagerMock.waitForRuleCreation.mockResolvedValue(
+      createRule({ id: 'rule-final' }),
+    );
+    exceptionRuleStorageMock.getRuleById.mockResolvedValue(
+      createRule({ id: 'rule-recovered' }),
+    );
     enhancedDuplicationHandlerMock.checkDuplicationRealTime.mockResolvedValue({
       hasConflict: true,
       conflictMessage: 'duplicate found',
@@ -130,17 +139,27 @@ describe('rule-manager/RuleCreator', () => {
   });
 
   it('creates rules through duplication handler and returns warnings', async () => {
-    const result = await ruleCreator.createRule('Focus Rule', ExceptionRuleType.PAUSE_ONLY, 'test desc');
-
-    expect(exceptionRuleStorageMock.validateRule).toHaveBeenCalledWith(
-      { name: 'Focus Rule', type: ExceptionRuleType.PAUSE_ONLY, description: 'test desc' },
-      true
-    );
-    expect(enhancedDuplicationHandlerMock.handleDuplicateCreation).toHaveBeenCalledWith(
+    const result = await ruleCreator.createRule(
       'Focus Rule',
       ExceptionRuleType.PAUSE_ONLY,
       'test desc',
-      undefined
+    );
+
+    expect(exceptionRuleStorageMock.validateRule).toHaveBeenCalledWith(
+      {
+        name: 'Focus Rule',
+        type: ExceptionRuleType.PAUSE_ONLY,
+        description: 'test desc',
+      },
+      true,
+    );
+    expect(
+      enhancedDuplicationHandlerMock.handleDuplicateCreation,
+    ).toHaveBeenCalledWith(
+      'Focus Rule',
+      ExceptionRuleType.PAUSE_ONLY,
+      'test desc',
+      undefined,
     );
     expect(result).toEqual({
       rule: createRule(),
@@ -159,41 +178,66 @@ describe('rule-manager/RuleCreator', () => {
   });
 
   it('recovers creation errors when recovery returns a valid rule id', async () => {
-    const classifiedError = new ExceptionRuleException(ExceptionRuleError.STORAGE_ERROR, 'classified');
-    enhancedDuplicationHandlerMock.handleDuplicateCreation.mockRejectedValue(new Error('duplicate handler failed'));
-    errorClassificationServiceMock.analyzeError.mockReturnValue({ error: classifiedError });
+    const classifiedError = new ExceptionRuleException(
+      ExceptionRuleError.STORAGE_ERROR,
+      'classified',
+    );
+    enhancedDuplicationHandlerMock.handleDuplicateCreation.mockRejectedValue(
+      new Error('duplicate handler failed'),
+    );
+    errorClassificationServiceMock.analyzeError.mockReturnValue({
+      error: classifiedError,
+    });
     errorRecoveryManagerMock.attemptRecovery.mockResolvedValue({
       success: true,
       recoveredData: { id: 'rule-recovered' },
     });
-    exceptionRuleStorageMock.getRuleById.mockResolvedValue(createRule({ id: 'rule-recovered' }));
+    exceptionRuleStorageMock.getRuleById.mockResolvedValue(
+      createRule({ id: 'rule-recovered' }),
+    );
 
-    const result = await ruleCreator.createRule('Recovered Rule', ExceptionRuleType.PAUSE_ONLY);
+    const result = await ruleCreator.createRule(
+      'Recovered Rule',
+      ExceptionRuleType.PAUSE_ONLY,
+    );
 
     expect(result.rule.id).toBe('rule-recovered');
     expect(result.warnings).toEqual(['Rule created via error recovery']);
   });
 
   it('throws classified errors when recovery cannot resolve creation failure', async () => {
-    const classifiedError = new ExceptionRuleException(ExceptionRuleError.STORAGE_ERROR, 'classified');
-    enhancedDuplicationHandlerMock.handleDuplicateCreation.mockRejectedValue(new Error('duplicate handler failed'));
-    errorClassificationServiceMock.analyzeError.mockReturnValue({ error: classifiedError });
-    errorRecoveryManagerMock.attemptRecovery.mockResolvedValue({ success: false });
+    const classifiedError = new ExceptionRuleException(
+      ExceptionRuleError.STORAGE_ERROR,
+      'classified',
+    );
+    enhancedDuplicationHandlerMock.handleDuplicateCreation.mockRejectedValue(
+      new Error('duplicate handler failed'),
+    );
+    errorClassificationServiceMock.analyzeError.mockReturnValue({
+      error: classifiedError,
+    });
+    errorRecoveryManagerMock.attemptRecovery.mockResolvedValue({
+      success: false,
+    });
 
     await expect(
-      ruleCreator.createRule('Failed Rule', ExceptionRuleType.PAUSE_ONLY)
+      ruleCreator.createRule('Failed Rule', ExceptionRuleType.PAUSE_ONLY),
     ).rejects.toBe(classifiedError);
   });
 
   it('creates chain-scoped rules and returns wrapped storage errors when needed', async () => {
-    const chainRule = createRule({ id: 'chain-rule', scope: 'chain', chainId: 'chain-1' });
+    const chainRule = createRule({
+      id: 'chain-rule',
+      scope: 'chain',
+      chainId: 'chain-1',
+    });
     exceptionRuleStorageMock.createRule.mockResolvedValueOnce(chainRule);
 
     const success = await ruleCreator.createChainRule(
       'chain-1',
       'Chain Rule',
       ExceptionRuleType.EARLY_COMPLETION_ONLY,
-      'chain desc'
+      'chain desc',
     );
 
     expect(exceptionRuleStorageMock.createRule).toHaveBeenCalledWith({
@@ -205,15 +249,28 @@ describe('rule-manager/RuleCreator', () => {
     });
     expect(success).toEqual({ rule: chainRule, warnings: [] });
 
-    const knownError = new ExceptionRuleException(ExceptionRuleError.DUPLICATE_RULE_NAME, 'duplicate');
+    const knownError = new ExceptionRuleException(
+      ExceptionRuleError.DUPLICATE_RULE_NAME,
+      'duplicate',
+    );
     exceptionRuleStorageMock.createRule.mockRejectedValueOnce(knownError);
     await expect(
-      ruleCreator.createChainRule('chain-1', 'Known Error', ExceptionRuleType.PAUSE_ONLY)
+      ruleCreator.createChainRule(
+        'chain-1',
+        'Known Error',
+        ExceptionRuleType.PAUSE_ONLY,
+      ),
     ).rejects.toBe(knownError);
 
-    exceptionRuleStorageMock.createRule.mockRejectedValueOnce(new Error('db down'));
+    exceptionRuleStorageMock.createRule.mockRejectedValueOnce(
+      new Error('db down'),
+    );
     await expect(
-      ruleCreator.createChainRule('chain-1', 'Wrapped Error', ExceptionRuleType.PAUSE_ONLY)
+      ruleCreator.createChainRule(
+        'chain-1',
+        'Wrapped Error',
+        ExceptionRuleType.PAUSE_ONLY,
+      ),
     ).rejects.toMatchObject({
       type: ExceptionRuleError.STORAGE_ERROR,
       message: 'Failed to create chain rule',
@@ -224,18 +281,23 @@ describe('rule-manager/RuleCreator', () => {
     const optimistic = ruleCreator.createRuleOptimistic(
       'Optimistic Rule',
       ExceptionRuleType.PAUSE_ONLY,
-      'optimistic desc'
+      'optimistic desc',
     );
 
     expect(ruleStateManagerMock.startOptimisticCreation).toHaveBeenCalledWith(
       'Optimistic Rule',
       ExceptionRuleType.PAUSE_ONLY,
-      'optimistic desc'
+      'optimistic desc',
     );
     expect(optimistic.temporaryId).toBe('temp-1');
-    await expect(optimistic.promise).resolves.toEqual(createRule({ id: 'rule-final' }));
+    await expect(optimistic.promise).resolves.toEqual(
+      createRule({ id: 'rule-final' }),
+    );
 
-    const checkResult = await ruleCreator.checkRuleNameRealTime('Rule Name', 'exclude-id');
+    const checkResult = await ruleCreator.checkRuleNameRealTime(
+      'Rule Name',
+      'exclude-id',
+    );
     expect(checkResult).toEqual({
       hasConflict: true,
       conflictMessage: 'duplicate found',
@@ -250,12 +312,13 @@ describe('rule-manager/RuleCreator', () => {
     });
 
     enhancedDuplicationHandlerMock.checkDuplicationRealTime.mockRejectedValueOnce(
-      new Error('real-time check failed')
+      new Error('real-time check failed'),
     );
-    await expect(ruleCreator.checkRuleNameRealTime('Rule Name')).resolves.toEqual({
+    await expect(
+      ruleCreator.checkRuleNameRealTime('Rule Name'),
+    ).resolves.toEqual({
       hasConflict: false,
       suggestions: [],
     });
   });
 });
-

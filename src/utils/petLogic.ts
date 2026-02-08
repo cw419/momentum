@@ -1,4 +1,10 @@
-import type { PetConfig, PetMood, PetStage, PetState, TaskCompletionReward } from '../types/pet';
+import type {
+  PetConfig,
+  PetMood,
+  PetStage,
+  PetState,
+  TaskCompletionReward,
+} from '../types/pet';
 
 // Default configuration constants
 export const DEFAULT_PET_CONFIG: PetConfig = {
@@ -65,7 +71,7 @@ function getStageForLevel(level: number): PetStage {
  */
 export function calculateDecay(
   pet: PetState,
-  now: Date
+  now: Date,
 ): Pick<PetState, 'hunger' | 'happiness' | 'health' | 'lastDecayCalculatedAt'> {
   const hoursSinceLastCalc =
     (now.getTime() - pet.lastDecayCalculatedAt.getTime()) / (1000 * 60 * 60);
@@ -83,20 +89,21 @@ export function calculateDecay(
   // Calculate new hunger (capped at 100)
   const newHunger = Math.min(
     100,
-    pet.hunger + DEFAULT_PET_CONFIG.hungerDecayRate * hoursSinceLastCalc
+    pet.hunger + DEFAULT_PET_CONFIG.hungerDecayRate * hoursSinceLastCalc,
   );
 
   // Calculate new happiness (capped at 0)
   const newHappiness = Math.max(
     0,
-    pet.happiness - DEFAULT_PET_CONFIG.happinessDecayRate * hoursSinceLastCalc
+    pet.happiness - DEFAULT_PET_CONFIG.happinessDecayRate * hoursSinceLastCalc,
   );
 
   // Health only decays when starving (hunger > 80)
   let newHealth = pet.health;
   if (pet.hunger > 80) {
     const starvingFactor = (pet.hunger - 80) / 20; // 0-1 based on how starving
-    const healthDecay = DEFAULT_PET_CONFIG.healthDecayRate * hoursSinceLastCalc * starvingFactor;
+    const healthDecay =
+      DEFAULT_PET_CONFIG.healthDecayRate * hoursSinceLastCalc * starvingFactor;
     newHealth = Math.max(0, pet.health - healthDecay);
   } else if (pet.hunger < 50 && pet.health < 100) {
     // Health slowly recovers when well-fed
@@ -118,7 +125,7 @@ export function calculateDecay(
 export function calculateTaskReward(
   pet: PetState,
   taskDuration: number, // in minutes
-  wasSuccessful: boolean
+  wasSuccessful: boolean,
 ): TaskCompletionReward {
   if (!wasSuccessful) {
     return {
@@ -167,7 +174,8 @@ export function calculateTaskReward(
  */
 export function calculateMood(pet: PetState): PetMood {
   // Weighted average of stats (happiness weighted more)
-  const score = pet.happiness * 0.5 + (100 - pet.hunger) * 0.3 + pet.health * 0.2;
+  const score =
+    pet.happiness * 0.5 + (100 - pet.hunger) * 0.3 + pet.health * 0.2;
 
   if (score >= 85) return 'ecstatic';
   if (score >= 65) return 'happy';
@@ -208,7 +216,10 @@ export function getMoodEmoji(mood: PetMood): string {
 /**
  * Get stage display name
  */
-export function getStageName(stage: PetStage, language: 'zh' | 'en' = 'zh'): string {
+export function getStageName(
+  stage: PetStage,
+  language: 'zh' | 'en' = 'zh',
+): string {
   const names: Record<PetStage, { zh: string; en: string }> = {
     egg: { zh: '蛋', en: 'Egg' },
     baby: { zh: '幼崽', en: 'Baby' },
@@ -223,7 +234,9 @@ export function getStageName(stage: PetStage, language: 'zh' | 'en' = 'zh'): str
 /**
  * Calculate progress to next level (0-100)
  */
-export function getLevelProgress(pet: Pick<PetState, 'level' | 'experience'>): number {
+export function getLevelProgress(
+  pet: Pick<PetState, 'level' | 'experience'>,
+): number {
   const xpRequired = getXpForLevel(pet.level);
   return Math.min(100, Math.round((pet.experience / xpRequired) * 100));
 }

@@ -17,7 +17,11 @@ export async function cleanupInvalidData(): Promise<void> {
       storage.saveTaskTimeStats(validStats);
     }
   } catch (error) {
-    logger.warn('DATA_MIGRATION', '清理无效数据时出错', undefined, toError(error));
+    logger.warn(
+      'DATA_MIGRATION',
+      '清理无效数据时出错',
+      undefined,
+      toError(error),
+    );
   }
 }
-

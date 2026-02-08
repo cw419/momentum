@@ -11,7 +11,7 @@ export async function quickFixRules(): Promise<{
   issues: string[];
 }> {
   console.log('🔧 开始快速修复规则数据...');
-  
+
   let fixed = 0;
   const issues: string[] = [];
 
@@ -60,18 +60,21 @@ export async function quickFixRules(): Promise<{
           console.log(`✅ 已修复规则: ${rule.name}`);
         } catch (error) {
           console.error(`❌ 修复规则失败: ${rule.name}`, error);
-          issues.push(`修复规则 "${rule.name}" 失败: ${error instanceof Error ? error.message : '未知错误'}`);
+          issues.push(
+            `修复规则 "${rule.name}" 失败: ${error instanceof Error ? error.message : '未知错误'}`,
+          );
         }
       }
     }
 
     console.log(`🎉 快速修复完成，修复了 ${fixed} 个规则`);
-    
-    return { fixed, issues };
 
+    return { fixed, issues };
   } catch (error) {
     console.error('❌ 快速修复失败:', error);
-    issues.push(`快速修复失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    issues.push(
+      `快速修复失败: ${error instanceof Error ? error.message : '未知错误'}`,
+    );
     return { fixed, issues };
   }
 }
@@ -83,7 +86,7 @@ if (typeof window !== 'undefined') {
 
 // 自动运行快速修复
 setTimeout(() => {
-  quickFixRules().then(result => {
+  quickFixRules().then((result) => {
     if (result.fixed > 0) {
       console.log(`🔧 自动修复了 ${result.fixed} 个规则问题`);
     }

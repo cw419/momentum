@@ -1,10 +1,9 @@
-import type {
-  Chain,
-  CompletionHistory,
-  RSIPMeta,
-  RSIPNode,
-} from '../../types';
-import { buildChainEntriesAndIdMap, buildImportChains, getRawChainsFromPayload } from './import/chains';
+import type { Chain, CompletionHistory, RSIPMeta, RSIPNode } from '../../types';
+import {
+  buildChainEntriesAndIdMap,
+  buildImportChains,
+  getRawChainsFromPayload,
+} from './import/chains';
 import type { ExceptionRuleImportData } from './import/exceptionRules';
 import { parseExceptionRulesToImport } from './import/exceptionRules';
 import { parseImportHistory } from './import/history';
@@ -50,11 +49,17 @@ export class ImportService {
     const importHistory = parseImportHistory(
       parsed.completionHistory,
       Boolean(options.importCompletionHistory),
-      idMap
+      idMap,
     );
-    const importedRsipNodes = parseImportRsipNodes(parsed.rsipNodes, existingRsipNodes, tr);
+    const importedRsipNodes = parseImportRsipNodes(
+      parsed.rsipNodes,
+      existingRsipNodes,
+      tr,
+    );
     const rsipMeta = parseImportRsipMeta(parsed.rsipMeta);
-    const exceptionRulesToImport = parseExceptionRulesToImport(parsed.exceptionRules);
+    const exceptionRulesToImport = parseExceptionRulesToImport(
+      parsed.exceptionRules,
+    );
 
     return {
       chains: importChains,

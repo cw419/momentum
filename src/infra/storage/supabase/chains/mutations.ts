@@ -10,7 +10,10 @@ import { getChains } from './queries';
 
 type ChainInsert = Database['public']['Tables']['chains']['Insert'];
 
-export async function softDeleteChain(ctx: SupabaseStorageContext, chainId: string): Promise<void> {
+export async function softDeleteChain(
+  ctx: SupabaseStorageContext,
+  chainId: string,
+): Promise<void> {
   const user = await ctx.getCurrentUser();
   if (!user) {
     throw new Error('User not authenticated');
@@ -26,13 +29,20 @@ export async function softDeleteChain(ctx: SupabaseStorageContext, chainId: stri
       .update({ deleted_at: new Date().toISOString() })
       .in(
         'id',
-        chainsToDelete.map((c) => c.id)
+        chainsToDelete.map((c) => c.id),
       )
       .eq('user_id', user.id);
 
     if (error) {
-      if (error.code === '42703' || error.message?.includes('deleted_at') || error.code === 'PGRST204') {
-        logger.warn('SUPABASE_STORAGE', 'Database does not support soft delete; falling back to permanent delete');
+      if (
+        error.code === '42703' ||
+        error.message?.includes('deleted_at') ||
+        error.code === 'PGRST204'
+      ) {
+        logger.warn(
+          'SUPABASE_STORAGE',
+          'Database does not support soft delete; falling back to permanent delete',
+        );
         await permanentlyDeleteChain(ctx, chainId);
         return;
       }
@@ -40,8 +50,14 @@ export async function softDeleteChain(ctx: SupabaseStorageContext, chainId: stri
     }
   } catch (error) {
     const errorObj = toError(error);
-    if (errorObj.message.includes('deleted_at') || errorObj.message.includes('PGRST204')) {
-      logger.warn('SUPABASE_STORAGE', 'Database does not support soft delete; falling back to permanent delete');
+    if (
+      errorObj.message.includes('deleted_at') ||
+      errorObj.message.includes('PGRST204')
+    ) {
+      logger.warn(
+        'SUPABASE_STORAGE',
+        'Database does not support soft delete; falling back to permanent delete',
+      );
       await permanentlyDeleteChain(ctx, chainId);
       return;
     }
@@ -49,7 +65,10 @@ export async function softDeleteChain(ctx: SupabaseStorageContext, chainId: stri
   }
 }
 
-export async function restoreChain(ctx: SupabaseStorageContext, chainId: string): Promise<void> {
+export async function restoreChain(
+  ctx: SupabaseStorageContext,
+  chainId: string,
+): Promise<void> {
   const user = await ctx.getCurrentUser();
   if (!user) {
     throw new Error('User not authenticated');
@@ -65,14 +84,20 @@ export async function restoreChain(ctx: SupabaseStorageContext, chainId: string)
       .update({ deleted_at: null })
       .in(
         'id',
-        chainsToRestore.map((c) => c.id)
+        chainsToRestore.map((c) => c.id),
       )
       .eq('user_id', user.id)
       .select('id');
 
     if (error) {
-      if (error.code === '42703' || error.message?.includes('deleted_at') || error.code === 'PGRST204') {
-        throw new Error('Database does not support soft delete, cannot restore deleted chains');
+      if (
+        error.code === '42703' ||
+        error.message?.includes('deleted_at') ||
+        error.code === 'PGRST204'
+      ) {
+        throw new Error(
+          'Database does not support soft delete, cannot restore deleted chains',
+        );
       }
       throw new Error(`Restore chain failed: ${error.message}`);
     }
@@ -91,7 +116,10 @@ export async function restoreChain(ctx: SupabaseStorageContext, chainId: string)
   ctx.clearSchemaCache();
 }
 
-export async function permanentlyDeleteChain(ctx: SupabaseStorageContext, chainId: string): Promise<void> {
+export async function permanentlyDeleteChain(
+  ctx: SupabaseStorageContext,
+  chainId: string,
+): Promise<void> {
   const user = await ctx.getCurrentUser();
   if (!user) {
     throw new Error('User not authenticated');
@@ -106,7 +134,7 @@ export async function permanentlyDeleteChain(ctx: SupabaseStorageContext, chainI
     .delete()
     .in(
       'id',
-      chainsToDelete.map((c) => c.id)
+      chainsToDelete.map((c) => c.id),
     )
     .eq('user_id', user.id);
 
@@ -115,7 +143,10 @@ export async function permanentlyDeleteChain(ctx: SupabaseStorageContext, chainI
   }
 }
 
-export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): Promise<void> {
+export async function saveChains(
+  ctx: SupabaseStorageContext,
+  chains: Chain[],
+): Promise<void> {
   const { user, isAuthenticated } = await ctx.waitForAuthentication(10000);
   if (!isAuthenticated || !user) {
     throw new Error('User authentication failed or timed out');
@@ -155,15 +186,23 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
 
   const client = ctx.getClient();
 
-  const { data: existingRows, error: existingErr } = await client.from('chains').select('id').eq('user_id', user.id);
+  const { data: existingRows, error: existingErr } = await client
+    .from('chains')
+    .select('id')
+    .eq('user_id', user.id);
   if (existingErr) {
-    throw new Error(`Failed to query existing chains: ${formatDbError(existingErr)}`);
+    throw new Error(
+      `Failed to query existing chains: ${formatDbError(existingErr)}`,
+    );
   }
   const existingIds = new Set((existingRows || []).map((r) => r.id));
 
   const tryUpsert = async (rows: ChainInsert[]) => {
     return await ctx.retryWithAuth(async () => {
-      const { data, error } = await client.from('chains').upsert(rows, { onConflict: 'id' }).select('id');
+      const { data, error } = await client
+        .from('chains')
+        .upsert(rows, { onConflict: 'id' })
+        .select('id');
       if (error) throw error;
       return (data || []) as Array<{ id: string }>;
     });
@@ -191,9 +230,15 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
   const newIds = new Set(chains.map((c) => c.id));
   const idsToDelete = [...existingIds].filter((id) => !newIds.has(id));
   if (idsToDelete.length > 0) {
-    const { error: delErr } = await client.from('chains').delete().in('id', idsToDelete).eq('user_id', user.id);
+    const { error: delErr } = await client
+      .from('chains')
+      .delete()
+      .in('id', idsToDelete)
+      .eq('user_id', user.id);
     if (delErr) {
-      throw new Error(`Failed to delete extra chains: ${formatDbError(delErr)}`);
+      throw new Error(
+        `Failed to delete extra chains: ${formatDbError(delErr)}`,
+      );
     }
   }
 
@@ -201,7 +246,8 @@ export async function saveChains(ctx: SupabaseStorageContext, chains: Chain[]): 
   const expectedIds = new Set(chains.map((c) => c.id));
   const missingSavedIds = [...expectedIds].filter((id) => !savedIds.has(id));
   if (missingSavedIds.length > 0) {
-    logger.warn('SUPABASE_STORAGE', 'Some saved ids missing from result', { missingSavedIds });
+    logger.warn('SUPABASE_STORAGE', 'Some saved ids missing from result', {
+      missingSavedIds,
+    });
   }
 }
-

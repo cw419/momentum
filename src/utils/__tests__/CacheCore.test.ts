@@ -57,7 +57,7 @@ describe('CacheCore', () => {
 
       expect(cache.get('key1')).toBe('value1');
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(cache.get('key1')).toBeNull();
     });
@@ -90,7 +90,7 @@ describe('CacheCore', () => {
       cache.set('key1', 'value1', 50);
       cache.set('key2', 'value2', 5000);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const cleared = cache.clearExpired();
       expect(cleared).toBe(1);
@@ -172,9 +172,9 @@ describe('CacheCore', () => {
 
       smallCache.set('key1', 'value1');
       // Add small delay to ensure different timestamps
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       smallCache.set('key2', 'value2');
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       smallCache.set('key3', 'value3');
 
       // One of the first two entries should be evicted
@@ -206,7 +206,7 @@ describe('CacheCore', () => {
       const customCache = new CacheCore({ defaultTTL: 50 });
       customCache.set('key1', 'value1');
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(customCache.get('key1')).toBeNull();
       customCache.stop();

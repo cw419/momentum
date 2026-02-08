@@ -1,7 +1,11 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import type { RSIPMeta, RSIPNode, RSIPTreeNode, RSIPMode } from '../types';
 import { useI18n } from '../i18n';
-import { buildRSIPTree, getDescendantIds, getDescendantCount } from '../utils/rsipTree';
+import {
+  buildRSIPTree,
+  getDescendantIds,
+  getDescendantCount,
+} from '../utils/rsipTree';
 import { RSIPCanvas } from './rsip/RSIPCanvas';
 import { RSIPForm } from './rsip/RSIPForm';
 import { RSIPModeSwitch } from './rsip/RSIPModeSwitch';
@@ -18,11 +22,19 @@ interface RSIPViewProps {
   onSaveMeta: (meta: RSIPMeta) => void;
 }
 
-export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveNodes, onSaveMeta }) => {
+export const RSIPView: React.FC<RSIPViewProps> = ({
+  nodes,
+  meta,
+  onBack,
+  onSaveNodes,
+  onSaveMeta,
+}) => {
   const { language, tr } = useI18n();
   const tree = useMemo<RSIPTreeNode[]>(() => buildRSIPTree(nodes), [nodes]);
 
-  const [selectedParentId, setSelectedParentId] = useState<string | undefined>(undefined);
+  const [selectedParentId, setSelectedParentId] = useState<string | undefined>(
+    undefined,
+  );
   const [title, setTitle] = useState('');
   const [rule, setRule] = useState('');
   const [createUseTimer, setCreateUseTimer] = useState<boolean>(false);
@@ -31,7 +43,8 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   const [createEmoji, setCreateEmoji] = useState<string>('📝');
 
   // 严格模式状态
-  const [violationDialogNode, setViolationDialogNode] = useState<RSIPNode | null>(null);
+  const [violationDialogNode, setViolationDialogNode] =
+    useState<RSIPNode | null>(null);
 
   // 计算当前模式
   const currentMode: RSIPMode = meta.allowMultiplePerDay ? 'free' : 'strict';
@@ -40,7 +53,10 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   // 检查今日是否已打开国策树
   const hasOpenedToday = useMemo(() => {
     if (!meta.lastTreeOpenedAt) return false;
-    return new Date(meta.lastTreeOpenedAt).toDateString() === new Date().toDateString();
+    return (
+      new Date(meta.lastTreeOpenedAt).toDateString() ===
+      new Date().toDateString()
+    );
   }, [meta.lastTreeOpenedAt]);
 
   const canAddToday = (() => {
@@ -52,80 +68,95 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   })();
 
   // 模式切换处理
-  const handleModeChange = useCallback((mode: RSIPMode) => {
-    onSaveMeta({ ...meta, allowMultiplePerDay: mode === 'free' });
-  }, [meta, onSaveMeta]);
+  const handleModeChange = useCallback(
+    (mode: RSIPMode) => {
+      onSaveMeta({ ...meta, allowMultiplePerDay: mode === 'free' });
+    },
+    [meta, onSaveMeta],
+  );
 
   // 记录打开国策树
   const handleRecordTreeOpened = useCallback(() => {
     const now = new Date();
     const today = now.toDateString();
-    const lastOpened = meta.lastTreeOpenedAt ? new Date(meta.lastTreeOpenedAt).toDateString() : null;
+    const lastOpened = meta.lastTreeOpenedAt
+      ? new Date(meta.lastTreeOpenedAt).toDateString()
+      : null;
 
     let treeOpenStreak = meta.treeOpenStreak ?? 0;
     if (lastOpened !== today) {
       const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
-      treeOpenStreak = lastOpened === yesterday.toDateString() ? treeOpenStreak + 1 : 1;
+      treeOpenStreak =
+        lastOpened === yesterday.toDateString() ? treeOpenStreak + 1 : 1;
     }
 
     onSaveMeta({ ...meta, lastTreeOpenedAt: now, treeOpenStreak });
   }, [meta, onSaveMeta]);
 
   // 标记定式已执行
-  const handleMarkExecuted = useCallback((nodeId: string) => {
-    const now = new Date();
-    const updatedNodes = nodes.map(node => {
-      if (node.id !== nodeId) return node;
+  const handleMarkExecuted = useCallback(
+    (nodeId: string) => {
+      const now = new Date();
+      const updatedNodes = nodes.map((node) => {
+        if (node.id !== nodeId) return node;
 
-      const consecutiveExecutions = (node.consecutiveExecutions ?? 0) + 1;
-      const totalExecutions = (node.totalExecutions ?? 0) + 1;
+        const consecutiveExecutions = (node.consecutiveExecutions ?? 0) + 1;
+        const totalExecutions = (node.totalExecutions ?? 0) + 1;
 
-      let stabilityPhase = node.stabilityPhase ?? 'E0';
-      let phaseStartedAt = node.phaseStartedAt;
+        let stabilityPhase = node.stabilityPhase ?? 'E0';
+        let phaseStartedAt = node.phaseStartedAt;
 
-      if (stabilityPhase === 'E0' && consecutiveExecutions >= 7) {
-        stabilityPhase = 'E1';
-        phaseStartedAt = now;
-      } else if (stabilityPhase === 'E1' && consecutiveExecutions >= 21) {
-        stabilityPhase = 'E2';
-        phaseStartedAt = now;
-      }
+        if (stabilityPhase === 'E0' && consecutiveExecutions >= 7) {
+          stabilityPhase = 'E1';
+          phaseStartedAt = now;
+        } else if (stabilityPhase === 'E1' && consecutiveExecutions >= 21) {
+          stabilityPhase = 'E2';
+          phaseStartedAt = now;
+        }
 
-      return {
-        ...node,
-        lastExecutedAt: now,
-        consecutiveExecutions,
-        consecutiveViolations: 0,
-        totalExecutions,
-        stabilityPhase,
-        phaseStartedAt,
-      };
-    });
+        return {
+          ...node,
+          lastExecutedAt: now,
+          consecutiveExecutions,
+          consecutiveViolations: 0,
+          totalExecutions,
+          stabilityPhase,
+          phaseStartedAt,
+        };
+      });
 
-    onSaveNodes(updatedNodes);
-  }, [nodes, onSaveNodes]);
+      onSaveNodes(updatedNodes);
+    },
+    [nodes, onSaveNodes],
+  );
 
   // 标记定式已违反（触发堆栈删除）
-  const handleMarkViolated = useCallback((nodeId: string) => {
-    const idsToDelete = new Set([nodeId, ...getDescendantIds(nodes, nodeId)]);
-    const updatedNodes = nodes.filter(node => !idsToDelete.has(node.id));
-    onSaveNodes(updatedNodes);
-    setViolationDialogNode(null);
-  }, [nodes, onSaveNodes]);
+  const handleMarkViolated = useCallback(
+    (nodeId: string) => {
+      const idsToDelete = new Set([nodeId, ...getDescendantIds(nodes, nodeId)]);
+      const updatedNodes = nodes.filter((node) => !idsToDelete.has(node.id));
+      onSaveNodes(updatedNodes);
+      setViolationDialogNode(null);
+    },
+    [nodes, onSaveNodes],
+  );
 
   // 计算约束力
-  const calculateConstraintPower = useCallback((nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node) return { descendantCount: 0, failureCost: 0 };
+  const calculateConstraintPower = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return { descendantCount: 0, failureCost: 0 };
 
-    const descendantCount = getDescendantCount(nodes, nodeId);
-    const phaseWeight = { E0: 1, E1: 2, E2: 3 };
-    const weight = phaseWeight[node.stabilityPhase ?? 'E0'];
-    const failureCost = (descendantCount + 1) * weight;
+      const descendantCount = getDescendantCount(nodes, nodeId);
+      const phaseWeight = { E0: 1, E1: 2, E2: 3 };
+      const weight = phaseWeight[node.stabilityPhase ?? 'E0'];
+      const failureCost = (descendantCount + 1) * weight;
 
-    return { descendantCount, failureCost };
-  }, [nodes]);
+      return { descendantCount, failureCost };
+    },
+    [nodes],
+  );
 
   const handleAdd = () => {
     if (!canAddToday) return;
@@ -150,26 +181,28 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-7xl mx-auto relative">
-        <header className="flex items-center justify-between mb-8">
+    <div className="bg-background min-h-screen p-4 md:p-6">
+      <div className="relative mx-auto max-w-7xl">
+        <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <BackButton
               onClick={onBack}
               label={tr('返回', 'Back')}
               iconSize={22}
-              className="p-3 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-slate-800/60"
+              className="rounded-2xl p-3 text-gray-400 hover:bg-white/60 hover:text-gray-700 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
             />
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+              <h1 className="font-chinese text-3xl font-bold text-gray-900 dark:text-slate-100 md:text-4xl">
                 {tr('国策树 · RSIP', 'RSIP Policy Tree')}
               </h1>
-              <p className="text-xs font-mono text-gray-600 dark:text-slate-400 tracking-wider uppercase">
-                {tr('递归稳定迭代协议', 'Recursive Stabilization Iteration Protocol')}
+              <p className="font-mono text-xs uppercase tracking-wider text-gray-600 dark:text-slate-400">
+                {tr(
+                  '递归稳定迭代协议',
+                  'Recursive Stabilization Iteration Protocol',
+                )}
               </p>
             </div>
           </div>
-
         </header>
 
         {/* 模式切换 */}
@@ -188,14 +221,14 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
 
         {/* First-time empty state */}
         {nodes.length === 0 && (
-          <div className="bento-card max-w-3xl mx-auto mb-8">
-            <h2 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100 mb-3">
+          <div className="bento-card mx-auto mb-8 max-w-3xl">
+            <h2 className="mb-3 font-chinese text-2xl font-bold text-gray-900 dark:text-slate-100">
               {tr('开始你的第一条国策', 'Create your first policy')}
             </h2>
-            <p className="text-gray-700 dark:text-slate-300 leading-relaxed font-chinese">
+            <p className="font-chinese leading-relaxed text-gray-700 dark:text-slate-300">
               {tr(
                 'RSIP 强调通过「每天至多新增一个、失败即回溯」来稳定迭代你的生活定式。选择一个小而稳的起点，建立第一条国策吧。',
-                'RSIP stabilizes your routines by adding at most one item per day and rolling back on failure. Start small and steady—create your first policy.'
+                'RSIP stabilizes your routines by adding at most one item per day and rolling back on failure. Start small and steady—create your first policy.',
               )}
             </p>
           </div>
@@ -223,17 +256,24 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
           tr={tr}
         />
 
-        <RSIPCanvas nodes={nodes} tree={tree} onSaveNodes={onSaveNodes} language={language} tr={tr} />
+        <RSIPCanvas
+          nodes={nodes}
+          tree={tree}
+          onSaveNodes={onSaveNodes}
+          language={language}
+          tr={tr}
+        />
 
         {/* 严格模式：定式列表视图 */}
         {isStrictMode && nodes.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
               {tr('定式执行追踪', 'Policy Execution Tracking')}
             </h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {nodes.map(node => {
-                const { descendantCount, failureCost } = calculateConstraintPower(node.id);
+              {nodes.map((node) => {
+                const { descendantCount, failureCost } =
+                  calculateConstraintPower(node.id);
                 return (
                   <RSIPStrictModeCard
                     key={node.id}
@@ -254,8 +294,8 @@ export const RSIPView: React.FC<RSIPViewProps> = ({ nodes, meta, onBack, onSaveN
           <RSIPViolationDialog
             isOpen={true}
             node={violationDialogNode}
-            descendants={nodes.filter(n =>
-              getDescendantIds(nodes, violationDialogNode.id).includes(n.id)
+            descendants={nodes.filter((n) =>
+              getDescendantIds(nodes, violationDialogNode.id).includes(n.id),
             )}
             onConfirm={() => handleMarkViolated(violationDialogNode.id)}
             onCancel={() => setViolationDialogNode(null)}

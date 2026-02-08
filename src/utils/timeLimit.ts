@@ -5,13 +5,21 @@ import type { TimeLanguage } from './time';
  * 检查任务群是否已过期
  */
 export const isGroupExpired = (group: Chain): boolean => {
-  if (group.type !== 'group' || !group.timeLimitHours || !group.groupStartedAt) {
+  if (
+    group.type !== 'group' ||
+    !group.timeLimitHours ||
+    !group.groupStartedAt
+  ) {
     return false;
   }
 
   const now = new Date();
-  const expiresAt = group.groupExpiresAt || new Date(group.groupStartedAt.getTime() + group.timeLimitHours * 60 * 60 * 1000);
-  
+  const expiresAt =
+    group.groupExpiresAt ||
+    new Date(
+      group.groupStartedAt.getTime() + group.timeLimitHours * 60 * 60 * 1000,
+    );
+
   return now > expiresAt;
 };
 
@@ -19,20 +27,31 @@ export const isGroupExpired = (group: Chain): boolean => {
  * 获取任务群剩余时间（毫秒）
  */
 const getGroupRemainingTime = (group: Chain): number => {
-  if (group.type !== 'group' || !group.timeLimitHours || !group.groupStartedAt) {
+  if (
+    group.type !== 'group' ||
+    !group.timeLimitHours ||
+    !group.groupStartedAt
+  ) {
     return 0;
   }
 
   const now = new Date();
-  const expiresAt = group.groupExpiresAt || new Date(group.groupStartedAt.getTime() + group.timeLimitHours * 60 * 60 * 1000);
-  
+  const expiresAt =
+    group.groupExpiresAt ||
+    new Date(
+      group.groupStartedAt.getTime() + group.timeLimitHours * 60 * 60 * 1000,
+    );
+
   return Math.max(0, expiresAt.getTime() - now.getTime());
 };
 
 /**
  * 格式化剩余时间显示
  */
-const formatRemainingTime = (remainingMs: number, language: TimeLanguage = 'en'): string => {
+const formatRemainingTime = (
+  remainingMs: number,
+  language: TimeLanguage = 'en',
+): string => {
   if (remainingMs <= 0) {
     return language === 'zh' ? '已过期' : 'Expired';
   }
@@ -42,9 +61,13 @@ const formatRemainingTime = (remainingMs: number, language: TimeLanguage = 'en')
   const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
   if (hours > 0) {
-    return language === 'zh' ? `${hours}小时${minutes}分钟` : `${hours}h ${minutes}m`;
+    return language === 'zh'
+      ? `${hours}小时${minutes}分钟`
+      : `${hours}h ${minutes}m`;
   } else if (minutes > 0) {
-    return language === 'zh' ? `${minutes}分钟${seconds}秒` : `${minutes}m ${seconds}s`;
+    return language === 'zh'
+      ? `${minutes}分钟${seconds}秒`
+      : `${minutes}m ${seconds}s`;
   } else {
     return language === 'zh' ? `${seconds}秒` : `${seconds}s`;
   }
@@ -59,7 +82,9 @@ export const startGroupTimer = (group: Chain): Chain => {
   }
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + group.timeLimitHours * 60 * 60 * 1000);
+  const expiresAt = new Date(
+    now.getTime() + group.timeLimitHours * 60 * 60 * 1000,
+  );
 
   return {
     ...group,
@@ -96,13 +121,20 @@ export const resetGroupProgress = (group: Chain): Chain => {
 /**
  * 获取任务群状态信息
  */
-export const getGroupTimeStatus = (group: Chain, language: TimeLanguage = 'en'): {
+export const getGroupTimeStatus = (
+  group: Chain,
+  language: TimeLanguage = 'en',
+): {
   isExpired: boolean;
   remainingTime: number;
   formattedTime: string;
   progress: number; // 0-1 之间的进度
 } => {
-  if (group.type !== 'group' || !group.timeLimitHours || !group.groupStartedAt) {
+  if (
+    group.type !== 'group' ||
+    !group.timeLimitHours ||
+    !group.groupStartedAt
+  ) {
     return {
       isExpired: false,
       remainingTime: 0,
@@ -114,7 +146,7 @@ export const getGroupTimeStatus = (group: Chain, language: TimeLanguage = 'en'):
   const isExpired = isGroupExpired(group);
   const remainingTime = getGroupRemainingTime(group);
   const formattedTime = formatRemainingTime(remainingTime, language);
-  
+
   // 计算时间进度（已用时间 / 总时间）
   const totalTime = group.timeLimitHours * 60 * 60 * 1000;
   const usedTime = totalTime - remainingTime;

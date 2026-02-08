@@ -24,7 +24,10 @@ export class AccessibilityManager {
   private static instance: AccessibilityManager;
   private announcer: HTMLElement | null = null;
   private focusHistory: HTMLElement[] = [];
-  private keyboardNavigationHandlers = new Map<HTMLElement, (event: KeyboardEvent) => void>();
+  private keyboardNavigationHandlers = new Map<
+    HTMLElement,
+    (event: KeyboardEvent) => void
+  >();
 
   constructor() {
     this.setupScreenReaderAnnouncer();
@@ -50,7 +53,7 @@ export class AccessibilityManager {
       if (this.announcer) {
         this.announcer.setAttribute('aria-live', priority);
         this.announcer.textContent = message;
-        
+
         // 清除消息，以便相同消息可以再次宣布
         setTimeout(() => {
           if (this.announcer) {
@@ -71,13 +74,20 @@ export class AccessibilityManager {
    * 设置键盘导航
    */
   setupKeyboardNavigation(options: KeyboardNavigationOptions): () => void {
-    const { container, selector = '[tabindex], button, input, select, textarea, a[href]', loop = true, onNavigate } = options;
-    
+    const {
+      container,
+      selector = '[tabindex], button, input, select, textarea, a[href]',
+      loop = true,
+      onNavigate,
+    } = options;
+
     const handler = (event: KeyboardEvent) => {
       const focusableElements = this.getFocusableElements(container, selector);
       if (focusableElements.length === 0) return;
 
-      const currentIndex = focusableElements.findIndex(el => el === document.activeElement);
+      const currentIndex = focusableElements.findIndex(
+        (el) => el === document.activeElement,
+      );
       let nextIndex = currentIndex;
 
       switch (event.key) {
@@ -133,7 +143,10 @@ export class AccessibilityManager {
   /**
    * 安全地聚焦元素
    */
-  focusElement(element: HTMLElement, options: { preventScroll?: boolean; restoreFocus?: boolean } = {}): void {
+  focusElement(
+    element: HTMLElement,
+    options: { preventScroll?: boolean; restoreFocus?: boolean } = {},
+  ): void {
     const { preventScroll = false, restoreFocus = false } = options;
 
     if (restoreFocus && document.activeElement instanceof HTMLElement) {
@@ -142,13 +155,13 @@ export class AccessibilityManager {
 
     try {
       element.focus({ preventScroll });
-      
+
       // 确保元素可见
       if (!preventScroll) {
-        element.scrollIntoView({ 
-          behavior: 'smooth', 
+        element.scrollIntoView({
+          behavior: 'smooth',
           block: 'nearest',
-          inline: 'nearest'
+          inline: 'nearest',
         });
       }
     } catch (error) {
@@ -209,7 +222,10 @@ export class AccessibilityManager {
   /**
    * 设置ARIA属性
    */
-  setAriaAttributes(element: HTMLElement, attributes: Record<string, string | boolean | number>): void {
+  setAriaAttributes(
+    element: HTMLElement,
+    attributes: Record<string, string | boolean | number>,
+  ): void {
     for (const [key, value] of Object.entries(attributes)) {
       const ariaKey = key.startsWith('aria-') ? key : `aria-${key}`;
       element.setAttribute(ariaKey, String(value));
@@ -219,13 +235,16 @@ export class AccessibilityManager {
   /**
    * 创建可访问的按钮
    */
-  makeButtonAccessible(button: HTMLElement, options: {
-    label?: string;
-    description?: string;
-    expanded?: boolean;
-    pressed?: boolean;
-    disabled?: boolean;
-  } = {}): void {
+  makeButtonAccessible(
+    button: HTMLElement,
+    options: {
+      label?: string;
+      description?: string;
+      expanded?: boolean;
+      pressed?: boolean;
+      disabled?: boolean;
+    } = {},
+  ): void {
     const { label, description, expanded, pressed, disabled } = options;
 
     // 确保按钮有正确的角色
@@ -286,11 +305,14 @@ export class AccessibilityManager {
   /**
    * 创建可访问的对话框
    */
-  makeDialogAccessible(dialog: HTMLElement, options: {
-    title?: string;
-    description?: string;
-    modal?: boolean;
-  } = {}): () => void {
+  makeDialogAccessible(
+    dialog: HTMLElement,
+    options: {
+      title?: string;
+      description?: string;
+      modal?: boolean;
+    } = {},
+  ): () => void {
     const { title, description, modal = true } = options;
 
     // 设置对话框角色和属性
@@ -302,7 +324,9 @@ export class AccessibilityManager {
     // 设置标题
     if (title) {
       const titleId = `dialog-title-${Math.random().toString(36).substr(2, 9)}`;
-      const titleElement = dialog.querySelector('h1, h2, h3, h4, h5, h6') as HTMLElement;
+      const titleElement = dialog.querySelector(
+        'h1, h2, h3, h4, h5, h6',
+      ) as HTMLElement;
       if (titleElement) {
         titleElement.id = titleId;
         dialog.setAttribute('aria-labelledby', titleId);
@@ -337,7 +361,7 @@ export class AccessibilityManager {
     // 宣布对话框打开
     this.announce({
       message: `对话框已打开${title ? `: ${title}` : ''}`,
-      priority: 'assertive'
+      priority: 'assertive',
     });
 
     // 返回清理函数
@@ -350,10 +374,13 @@ export class AccessibilityManager {
   /**
    * 创建可访问的列表
    */
-  makeListAccessible(list: HTMLElement, options: {
-    multiselectable?: boolean;
-    orientation?: 'vertical' | 'horizontal';
-  } = {}): void {
+  makeListAccessible(
+    list: HTMLElement,
+    options: {
+      multiselectable?: boolean;
+      orientation?: 'vertical' | 'horizontal';
+    } = {},
+  ): void {
     const { multiselectable = false, orientation = 'vertical' } = options;
 
     list.setAttribute('role', 'listbox');
@@ -367,7 +394,7 @@ export class AccessibilityManager {
       element.setAttribute('role', 'option');
       element.setAttribute('aria-posinset', String(index + 1));
       element.setAttribute('aria-setsize', String(items.length));
-      
+
       if (!element.hasAttribute('tabindex')) {
         element.setAttribute('tabindex', index === 0 ? '0' : '-1');
       }
@@ -380,16 +407,22 @@ export class AccessibilityManager {
       onNavigate: (element, index) => {
         // 更新tabindex
         items.forEach((item, i) => {
-          (item as HTMLElement).setAttribute('tabindex', i === index ? '0' : '-1');
+          (item as HTMLElement).setAttribute(
+            'tabindex',
+            i === index ? '0' : '-1',
+          );
         });
-      }
+      },
     });
   }
 
   /**
    * 检查颜色对比度
    */
-  checkColorContrast(foreground: string, background: string): {
+  checkColorContrast(
+    foreground: string,
+    background: string,
+  ): {
     ratio: number;
     wcagAA: boolean;
     wcagAAA: boolean;
@@ -399,7 +432,7 @@ export class AccessibilityManager {
       const rgb = this.hexToRgb(color);
       if (!rgb) return 0;
 
-      const [r, g, b] = [rgb.r, rgb.g, rgb.b].map(c => {
+      const [r, g, b] = [rgb.r, rgb.g, rgb.b].map((c) => {
         c = c / 255;
         return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
       });
@@ -414,14 +447,17 @@ export class AccessibilityManager {
     return {
       ratio,
       wcagAA: ratio >= 4.5,
-      wcagAAA: ratio >= 7
+      wcagAAA: ratio >= 7,
     };
   }
 
   /**
    * 获取可聚焦元素
    */
-  private getFocusableElements(container: HTMLElement, selector?: string): HTMLElement[] {
+  private getFocusableElements(
+    container: HTMLElement,
+    selector?: string,
+  ): HTMLElement[] {
     const defaultSelector = [
       'button:not([disabled])',
       'input:not([disabled])',
@@ -429,15 +465,17 @@ export class AccessibilityManager {
       'textarea:not([disabled])',
       'a[href]',
       '[tabindex]:not([tabindex="-1"])',
-      '[contenteditable="true"]'
+      '[contenteditable="true"]',
     ].join(', ');
 
     const elements = container.querySelectorAll(selector || defaultSelector);
-    return Array.from(elements).filter(el => {
+    return Array.from(elements).filter((el) => {
       const element = el as HTMLElement;
-      return element.offsetParent !== null && // 元素可见
-             !element.hasAttribute('aria-hidden') &&
-             element.getAttribute('aria-disabled') !== 'true';
+      return (
+        element.offsetParent !== null && // 元素可见
+        !element.hasAttribute('aria-hidden') &&
+        element.getAttribute('aria-disabled') !== 'true'
+      );
     }) as HTMLElement[];
   }
 
@@ -480,12 +518,14 @@ export class AccessibilityManager {
    * 跳转到主内容
    */
   private skipToMainContent(): void {
-    const mainContent = document.querySelector('main, [role="main"], #main-content');
+    const mainContent = document.querySelector(
+      'main, [role="main"], #main-content',
+    );
     if (mainContent instanceof HTMLElement) {
       this.focusElement(mainContent);
       this.announce({
         message: '已跳转到主内容',
-        priority: 'assertive'
+        priority: 'assertive',
       });
     }
   }
@@ -495,11 +535,13 @@ export class AccessibilityManager {
    */
   private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null;
   }
 }
 
@@ -509,31 +551,40 @@ export class AccessibilityManager {
 export function useAccessibility() {
   const manager = AccessibilityManager.getInstance();
 
-  const announce = React.useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    manager.announce({ message, priority });
-  }, [manager]);
+  const announce = React.useCallback(
+    (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+      manager.announce({ message, priority });
+    },
+    [manager],
+  );
 
-  const setupKeyboardNavigation = React.useCallback((
-    containerRef: React.RefObject<HTMLElement>,
-    options: Omit<KeyboardNavigationOptions, 'container'> = {}
-  ) => {
-    React.useEffect(() => {
-      if (!containerRef.current) return;
-      
-      return manager.setupKeyboardNavigation({
-        container: containerRef.current,
-        ...options
-      });
-    }, [containerRef, options]);
-  }, [manager]);
+  const setupKeyboardNavigation = React.useCallback(
+    (
+      containerRef: React.RefObject<HTMLElement>,
+      options: Omit<KeyboardNavigationOptions, 'container'> = {},
+    ) => {
+      React.useEffect(() => {
+        if (!containerRef.current) return;
 
-  const createFocusTrap = React.useCallback((containerRef: React.RefObject<HTMLElement>) => {
-    React.useEffect(() => {
-      if (!containerRef.current) return;
-      
-      return manager.createFocusTrap(containerRef.current);
-    }, [containerRef]);
-  }, [manager]);
+        return manager.setupKeyboardNavigation({
+          container: containerRef.current,
+          ...options,
+        });
+      }, [containerRef, options]);
+    },
+    [manager],
+  );
+
+  const createFocusTrap = React.useCallback(
+    (containerRef: React.RefObject<HTMLElement>) => {
+      React.useEffect(() => {
+        if (!containerRef.current) return;
+
+        return manager.createFocusTrap(containerRef.current);
+      }, [containerRef]);
+    },
+    [manager],
+  );
 
   return {
     announce,
@@ -544,7 +595,7 @@ export function useAccessibility() {
     makeButtonAccessible: manager.makeButtonAccessible.bind(manager),
     makeDialogAccessible: manager.makeDialogAccessible.bind(manager),
     makeListAccessible: manager.makeListAccessible.bind(manager),
-    checkColorContrast: manager.checkColorContrast.bind(manager)
+    checkColorContrast: manager.checkColorContrast.bind(manager),
   };
 }
 

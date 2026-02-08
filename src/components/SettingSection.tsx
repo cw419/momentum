@@ -23,21 +23,21 @@ export const SettingSection: React.FC<SettingSectionProps> = ({
   className = '',
   collapsible = false,
   defaultExpanded = true,
-  description
+  description,
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   const headerContent = (
     <>
-      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 flex items-center justify-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10">
         {icon}
       </div>
       <div className="flex-1">
-        <h3 className="text-2xl font-bold font-chinese text-gray-900 dark:text-slate-100">
+        <h3 className="font-chinese text-2xl font-bold text-gray-900 dark:text-slate-100">
           {title}
         </h3>
         {description && (
-          <p className="text-sm text-gray-600 dark:text-slate-400 mt-1 font-chinese">
+          <p className="mt-1 font-chinese text-sm text-gray-600 dark:text-slate-400">
             {description}
           </p>
         )}
@@ -51,33 +51,29 @@ export const SettingSection: React.FC<SettingSectionProps> = ({
         {collapsible ? (
           <button
             type="button"
-            className="flex items-center space-x-3 w-full cursor-pointer text-left focus-ring rounded-2xl group"
+            className="focus-ring group flex w-full cursor-pointer items-center space-x-3 rounded-2xl text-left"
             onClick={() => setIsExpanded(!isExpanded)}
             aria-expanded={isExpanded}
           >
             {headerContent}
             <span
-              className="p-2 rounded-lg transition-colors group-hover:bg-gray-100 dark:group-hover:bg-slate-700"
+              className="rounded-lg p-2 transition-colors group-hover:bg-gray-100 dark:group-hover:bg-slate-700"
               aria-hidden="true"
             >
               {isExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-500" />
+                <ChevronUp className="h-5 w-5 text-gray-500" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-gray-500" />
+                <ChevronDown className="h-5 w-5 text-gray-500" />
               )}
             </span>
           </button>
         ) : (
-          <div className="flex items-center space-x-3">
-            {headerContent}
-          </div>
+          <div className="flex items-center space-x-3">{headerContent}</div>
         )}
       </div>
-      
+
       {(!collapsible || isExpanded) && (
-        <div className="section-content space-y-6">
-          {children}
-        </div>
+        <div className="section-content space-y-6">{children}</div>
       )}
     </section>
   );

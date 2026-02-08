@@ -12,4 +12,3 @@ export interface SearchSuggestion {
   type: 'recent' | 'popular' | 'similar';
   score: number;
 }
-

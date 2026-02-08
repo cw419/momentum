@@ -26,7 +26,10 @@ describe('local-preferences/autoResume', () => {
     localStorage.setItem(LOCAL_STORAGE_KEYS.AUTO_RESUME, '{bad-json');
     expect(getAutoResume()).toBeNull();
 
-    localStorage.setItem(LOCAL_STORAGE_KEYS.AUTO_RESUME, JSON.stringify({ chainId: 'chain-2' }));
+    localStorage.setItem(
+      LOCAL_STORAGE_KEYS.AUTO_RESUME,
+      JSON.stringify({ chainId: 'chain-2' }),
+    );
     clearAutoResume();
     expect(localStorage.getItem(LOCAL_STORAGE_KEYS.AUTO_RESUME)).toBeNull();
   });

@@ -36,7 +36,9 @@ vi.mock('../RecycleBinModalView', () => ({
       <button onClick={() => props.onSelectChain('c1')}>select-chain</button>
       <button onClick={props.onSelectAll}>select-all</button>
       <button onClick={() => props.onSingleRestore('c1')}>restore-one</button>
-      <button onClick={() => props.onSinglePermanentDelete('c1')}>delete-one</button>
+      <button onClick={() => props.onSinglePermanentDelete('c1')}>
+        delete-one
+      </button>
       <button onClick={props.onBulkRestore}>restore-bulk</button>
       <button onClick={props.onBulkPermanentDelete}>delete-bulk</button>
       <button onClick={props.onConfirmAction}>confirm</button>
@@ -67,7 +69,7 @@ describe('RecycleBinModalContainer', () => {
         onClose={vi.fn()}
         onRestore={vi.fn()}
         onPermanentDelete={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByTestId('deleted-count').textContent).toBe('2');
@@ -84,7 +86,9 @@ describe('RecycleBinModalContainer', () => {
     expect(modalHandlers.handleSelectChain).toHaveBeenCalledWith('c1');
     expect(modalHandlers.handleSelectAll).toHaveBeenCalledTimes(1);
     expect(modalHandlers.handleSingleRestore).toHaveBeenCalledWith('c1');
-    expect(modalHandlers.handleSinglePermanentDelete).toHaveBeenCalledWith('c1');
+    expect(modalHandlers.handleSinglePermanentDelete).toHaveBeenCalledWith(
+      'c1',
+    );
     expect(modalHandlers.handleBulkRestore).toHaveBeenCalledTimes(1);
     expect(modalHandlers.handleBulkPermanentDelete).toHaveBeenCalledTimes(1);
     expect(modalHandlers.handleConfirmAction).toHaveBeenCalledTimes(1);

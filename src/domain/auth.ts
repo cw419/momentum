@@ -23,4 +23,3 @@ export type AuthStateChangeEvent =
 export interface AuthSession {
   user: AuthUser | null;
 }
-

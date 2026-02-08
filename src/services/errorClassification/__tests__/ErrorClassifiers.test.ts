@@ -8,7 +8,10 @@ import {
 } from '../ErrorClassifiers';
 import type { ErrorClassification, ErrorPattern } from '../types';
 
-function createError(type: ExceptionRuleError, message: string): ExceptionRuleException {
+function createError(
+  type: ExceptionRuleError,
+  message: string,
+): ExceptionRuleException {
   return new ExceptionRuleException(type, message);
 }
 
@@ -16,17 +19,19 @@ describe('errorClassification/ErrorClassifiers', () => {
   it('classifies known patterns and unknown types with fallback rules', () => {
     const classifier = new DefaultErrorClassifier();
 
-    const known = classifier.classify(createError(ExceptionRuleError.STORAGE_ERROR, 'storage down'));
+    const known = classifier.classify(
+      createError(ExceptionRuleError.STORAGE_ERROR, 'storage down'),
+    );
     expect(known).toEqual(
       expect.objectContaining({
         category: 'system_error',
         severity: 'high',
         priority: 80,
-      })
+      }),
     );
 
     const fallback = classifier.classify(
-      createError(ExceptionRuleError.PERMISSION_DENIED, 'unknown fallback')
+      createError(ExceptionRuleError.PERMISSION_DENIED, 'unknown fallback'),
     );
     expect(fallback).toEqual(
       expect.objectContaining({
@@ -34,7 +39,7 @@ describe('errorClassification/ErrorClassifiers', () => {
         severity: 'medium',
         priority: 50,
         recoverable: true,
-      })
+      }),
     );
   });
 
@@ -45,7 +50,9 @@ describe('errorClassification/ErrorClassifiers', () => {
     };
     classifier.errorPatterns = new Map();
 
-    const dataError = classifier.classify(createError(ExceptionRuleError.RULE_NOT_FOUND, 'x'));
+    const dataError = classifier.classify(
+      createError(ExceptionRuleError.RULE_NOT_FOUND, 'x'),
+    );
     expect(dataError).toEqual({
       category: 'data_error',
       severity: 'medium',
@@ -55,7 +62,9 @@ describe('errorClassification/ErrorClassifiers', () => {
       requiresImmedateAction: false,
     });
 
-    const userError = classifier.classify(createError(ExceptionRuleError.DUPLICATE_RULE_NAME, 'x'));
+    const userError = classifier.classify(
+      createError(ExceptionRuleError.DUPLICATE_RULE_NAME, 'x'),
+    );
     expect(userError).toEqual({
       category: 'user_error',
       severity: 'low',
@@ -65,7 +74,9 @@ describe('errorClassification/ErrorClassifiers', () => {
       requiresImmedateAction: false,
     });
 
-    const systemError = classifier.classify(createError(ExceptionRuleError.STORAGE_ERROR, 'x'));
+    const systemError = classifier.classify(
+      createError(ExceptionRuleError.STORAGE_ERROR, 'x'),
+    );
     expect(systemError).toEqual({
       category: 'system_error',
       severity: 'high',
@@ -75,7 +86,9 @@ describe('errorClassification/ErrorClassifiers', () => {
       requiresImmedateAction: true,
     });
 
-    const networkError = classifier.classify(createError(ExceptionRuleError.NETWORK_ERROR, 'x'));
+    const networkError = classifier.classify(
+      createError(ExceptionRuleError.NETWORK_ERROR, 'x'),
+    );
     expect(networkError).toEqual({
       category: 'network_error',
       severity: 'medium',
@@ -85,7 +98,9 @@ describe('errorClassification/ErrorClassifiers', () => {
       requiresImmedateAction: false,
     });
 
-    const fallback = classifier.classify(createError(ExceptionRuleError.PERMISSION_DENIED, 'x'));
+    const fallback = classifier.classify(
+      createError(ExceptionRuleError.PERMISSION_DENIED, 'x'),
+    );
     expect(fallback).toEqual({
       category: 'system_error',
       severity: 'medium',
@@ -100,12 +115,14 @@ describe('errorClassification/ErrorClassifiers', () => {
     const classifier = new DefaultErrorClassifier();
     const pattern = classifier.getPattern(ExceptionRuleError.RULE_NOT_FOUND);
 
-    const noPattern = calculateConfidence(createError(ExceptionRuleError.RULE_NOT_FOUND, 'anything'));
+    const noPattern = calculateConfidence(
+      createError(ExceptionRuleError.RULE_NOT_FOUND, 'anything'),
+    );
     expect(noPattern).toBe(0.5);
 
     const matched = calculateConfidence(
       createError(ExceptionRuleError.RULE_NOT_FOUND, 'Rule ID is missing'),
-      pattern
+      pattern,
     );
     expect(matched).toBeGreaterThan(0.7);
     expect(matched).toBeLessThanOrEqual(1.0);
@@ -126,13 +143,22 @@ describe('errorClassification/ErrorClassifiers', () => {
     };
 
     expect(
-      calculateConfidence(createError(ExceptionRuleError.VALIDATION_ERROR, 'alpha and beta'), syntheticPattern)
+      calculateConfidence(
+        createError(ExceptionRuleError.VALIDATION_ERROR, 'alpha and beta'),
+        syntheticPattern,
+      ),
     ).toBe(1);
     expect(
-      calculateConfidence(createError(ExceptionRuleError.VALIDATION_ERROR, 'only alpha'), syntheticPattern)
+      calculateConfidence(
+        createError(ExceptionRuleError.VALIDATION_ERROR, 'only alpha'),
+        syntheticPattern,
+      ),
     ).toBe(0.85);
     expect(
-      calculateConfidence(createError(ExceptionRuleError.VALIDATION_ERROR, 'none'), syntheticPattern)
+      calculateConfidence(
+        createError(ExceptionRuleError.VALIDATION_ERROR, 'none'),
+        syntheticPattern,
+      ),
     ).toBe(0.7);
   });
 
@@ -156,24 +182,28 @@ describe('errorClassification/ErrorClassifiers', () => {
     const recommendations = generateRecommendations(
       createError(ExceptionRuleError.STORAGE_ERROR, 'storage'),
       classification,
-      pattern
+      pattern,
     );
 
     expect(recommendations).toContain('retry-now');
-    expect(recommendations.some(item => /retry|重新|尝试/i.test(item))).toBe(true);
+    expect(recommendations.some((item) => /retry|重新|尝试/i.test(item))).toBe(
+      true,
+    );
     expect(new Set(recommendations).size).toBe(recommendations.length);
     expect(recommendations[0]).not.toBe('retry-now');
   });
 
   it('generates user-facing message for friendly patterns and keeps raw message otherwise', () => {
     const classifier = new DefaultErrorClassifier();
-    const friendlyPattern = classifier.getPattern(ExceptionRuleError.DUPLICATE_RULE_NAME);
+    const friendlyPattern = classifier.getPattern(
+      ExceptionRuleError.DUPLICATE_RULE_NAME,
+    );
     expect(friendlyPattern).toBeDefined();
 
     const userFriendly = generateUserFriendlyMessage(
       ExceptionRuleError.DUPLICATE_RULE_NAME,
       'raw message',
-      friendlyPattern
+      friendlyPattern,
     );
     expect(userFriendly).not.toBe('raw message');
 
@@ -188,46 +218,48 @@ describe('errorClassification/ErrorClassifiers', () => {
       generateUserFriendlyMessage(
         ExceptionRuleError.DUPLICATE_RULE_NAME,
         'raw message',
-        nonFriendlyPattern
-      )
+        nonFriendlyPattern,
+      ),
     ).toBe('raw message');
 
     expect(
       generateUserFriendlyMessage(
         ExceptionRuleError.PERMISSION_DENIED,
         'keep me',
-        friendlyPattern
-      )
+        friendlyPattern,
+      ),
     ).toBe('keep me');
 
     expect(
       generateUserFriendlyMessage(
         ExceptionRuleError.RULE_NOT_FOUND,
         'raw',
-        friendlyPattern
-      )
+        friendlyPattern,
+      ),
     ).toBe('找不到指定的规则，可能已被删除或移动');
     expect(
       generateUserFriendlyMessage(
         ExceptionRuleError.RULE_TYPE_MISMATCH,
         'raw',
-        friendlyPattern
-      )
+        friendlyPattern,
+      ),
     ).toBe('所选规则类型与当前操作不匹配');
     expect(
       generateUserFriendlyMessage(
         ExceptionRuleError.VALIDATION_ERROR,
         'raw',
-        friendlyPattern
-      )
+        friendlyPattern,
+      ),
     ).toBe('输入的信息不符合要求，请检查后重试');
     expect(
       generateUserFriendlyMessage(
         ExceptionRuleError.NETWORK_ERROR,
         'raw',
-        friendlyPattern
-      )
+        friendlyPattern,
+      ),
     ).toBe('网络连接出现问题，请检查网络后重试');
-    expect(generateUserFriendlyMessage(ExceptionRuleError.NETWORK_ERROR, 'raw')).toBe('raw');
+    expect(
+      generateUserFriendlyMessage(ExceptionRuleError.NETWORK_ERROR, 'raw'),
+    ).toBe('raw');
   });
 });

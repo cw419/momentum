@@ -1,6 +1,6 @@
 export function throttle<TArgs extends unknown[]>(
   func: (...args: TArgs) => void,
-  wait: number
+  wait: number,
 ): (...args: TArgs) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let previous = 0;
@@ -28,4 +28,3 @@ export function throttle<TArgs extends unknown[]>(
     }, remaining);
   };
 }
-

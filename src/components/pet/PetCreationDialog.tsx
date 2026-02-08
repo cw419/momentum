@@ -6,7 +6,10 @@ interface PetCreationDialogProps {
   onCancel: () => void;
 }
 
-export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps) {
+export function PetCreationDialog({
+  onSubmit,
+  onCancel,
+}: PetCreationDialogProps) {
   const { tr } = useI18n();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -17,11 +20,14 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
     window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   // ESC 键关闭
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onCancel();
-    }
-  }, [onCancel]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCancel();
+      }
+    },
+    [onCancel],
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -56,16 +62,19 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
         role="dialog"
         aria-modal="true"
         aria-labelledby="pet-creation-dialog-title"
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 animate-scale-in"
+        className="mx-4 w-full max-w-sm animate-scale-in rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800"
         style={{ overscrollBehavior: 'contain' }}
       >
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-3">🥒</div>
-          <h2 id="pet-creation-dialog-title" className="text-xl font-bold text-gray-800 dark:text-gray-100">
+        <div className="mb-6 text-center">
+          <div className="mb-3 text-5xl">🥒</div>
+          <h2
+            id="pet-creation-dialog-title"
+            className="text-xl font-bold text-gray-800 dark:text-gray-100"
+          >
             {tr('领养你的宠物', 'Adopt Your Pet')}
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             {tr('给你的新伙伴起个名字吧！', 'Give your new companion a name!')}
           </p>
         </div>
@@ -79,7 +88,7 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
               name="petName"
               autoComplete="off"
               value={name}
-              onChange={e => {
+              onChange={(e) => {
                 setName(e.target.value);
                 setError('');
               }}
@@ -87,18 +96,14 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
               aria-label={tr('宠物名称', 'Pet name')}
               aria-invalid={!!error}
               aria-describedby={error ? 'pet-name-error' : undefined}
-              className={`
-                w-full px-4 py-3 rounded-xl border-2
-                ${error ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'}
-                bg-gray-50 dark:bg-gray-700
-                text-gray-800 dark:text-gray-100
-                placeholder-gray-400 dark:placeholder-gray-500
-                focus:outline-none focus:border-green-400 dark:focus:border-green-500
-                transition-colors
-              `}
+              className={`w-full rounded-xl border-2 px-4 py-3 ${error ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'} bg-gray-50 text-gray-800 placeholder-gray-400 transition-colors focus:border-green-400 focus:outline-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-green-500`}
               maxLength={20}
             />
-            {error && <p id="pet-name-error" className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && (
+              <p id="pet-name-error" className="mt-1 text-sm text-red-500">
+                {error}
+              </p>
+            )}
           </div>
 
           {/* Buttons */}
@@ -106,25 +111,13 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
             <button
               type="button"
               onClick={onCancel}
-              className="
-                flex-1 py-3 rounded-xl
-                bg-gray-100 dark:bg-gray-700
-                text-gray-600 dark:text-gray-300
-                hover:bg-gray-200 dark:hover:bg-gray-600
-                transition-colors
-              "
+              className="flex-1 rounded-xl bg-gray-100 py-3 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
             >
               {tr('稍后再说', 'Maybe Later')}
             </button>
             <button
               type="submit"
-              className="
-                flex-1 py-3 rounded-xl
-                bg-gradient-to-r from-green-400 to-emerald-500
-                text-white font-medium
-                hover:from-green-500 hover:to-emerald-600
-                transition-colors
-              "
+              className="flex-1 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 py-3 font-medium text-white transition-colors hover:from-green-500 hover:to-emerald-600"
             >
               {tr('领养', 'Adopt')} 🎉
             </button>
@@ -132,10 +125,10 @@ export function PetCreationDialog({ onSubmit, onCancel }: PetCreationDialogProps
         </form>
 
         {/* Info */}
-        <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">
+        <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
           {tr(
             '完成任务可以喂养宠物，让它成长进化！',
-            'Complete tasks to feed your pet and help it grow!'
+            'Complete tasks to feed your pet and help it grow!',
           )}
         </p>
       </div>

@@ -11,7 +11,7 @@ describe('UI primitives', () => {
       render(
         <IconButton label="Settings" className="custom-class">
           <span>icon</span>
-        </IconButton>
+        </IconButton>,
       );
 
       const button = screen.getByRole('button', { name: 'Settings' });
@@ -25,7 +25,7 @@ describe('UI primitives', () => {
       render(
         <IconButton label="Submit" type="submit" onClick={onClick}>
           <span>icon</span>
-        </IconButton>
+        </IconButton>,
       );
 
       const button = screen.getByRole('button', { name: 'Submit' });
@@ -64,10 +64,12 @@ describe('UI primitives', () => {
           checked={false}
           onCheckedChange={onCheckedChange}
           aria-label="Desktop notifications"
-        />
+        />,
       );
 
-      const switchButton = screen.getByRole('switch', { name: 'Desktop notifications' });
+      const switchButton = screen.getByRole('switch', {
+        name: 'Desktop notifications',
+      });
       expect(switchButton).toHaveAttribute('aria-checked', 'false');
 
       fireEvent.click(switchButton);
@@ -82,7 +84,7 @@ describe('UI primitives', () => {
           disabled
           onCheckedChange={onCheckedChange}
           aria-label="Toggle"
-        />
+        />,
       );
 
       const switchButton = screen.getByRole('switch', { name: 'Toggle' });
@@ -96,7 +98,7 @@ describe('UI primitives', () => {
           loading
           onCheckedChange={onCheckedChange}
           aria-label="Toggle"
-        />
+        />,
       );
 
       expect(screen.getByRole('switch', { name: 'Toggle' })).toBeDisabled();
@@ -110,10 +112,12 @@ describe('UI primitives', () => {
           variant="danger"
           onCheckedChange={() => undefined}
           aria-label="Danger switch"
-        />
+        />,
       );
 
-      const switchButton = screen.getByRole('switch', { name: 'Danger switch' });
+      const switchButton = screen.getByRole('switch', {
+        name: 'Danger switch',
+      });
       expect(switchButton.className).toContain('from-red-500');
     });
   });
@@ -123,7 +127,7 @@ describe('UI primitives', () => {
       render(
         <Portal>
           <div data-testid="portal-child">portal content</div>
-        </Portal>
+        </Portal>,
       );
 
       const child = screen.getByTestId('portal-child');

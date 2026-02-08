@@ -1,9 +1,14 @@
 import type { CompletionHistory } from '../../../types';
-import { isRecord, parseTruthyDateOrNow, toNumber, toOptionalStringFromTruthy } from './coercions';
+import {
+  isRecord,
+  parseTruthyDateOrNow,
+  toNumber,
+  toOptionalStringFromTruthy,
+} from './coercions';
 
 function mapImportedCompletionHistoryEntry(
   raw: unknown,
-  idMap: Map<string, string>
+  idMap: Map<string, string>,
 ): CompletionHistory | undefined {
   if (!isRecord(raw)) return undefined;
   if (!('chainId' in raw)) return undefined;
@@ -19,7 +24,10 @@ function mapImportedCompletionHistoryEntry(
     duration,
     wasSuccessful: Boolean(raw.wasSuccessful),
     reasonForFailure: toOptionalStringFromTruthy(raw.reasonForFailure),
-    actualDuration: raw.actualDuration != null ? Math.max(0, toNumber(raw.actualDuration, duration)) : undefined,
+    actualDuration:
+      raw.actualDuration != null
+        ? Math.max(0, toNumber(raw.actualDuration, duration))
+        : undefined,
     isForwardTimed: Boolean(raw.isForwardTimed),
     description: toOptionalStringFromTruthy(raw.description),
     notes: toOptionalStringFromTruthy(raw.notes),
@@ -29,7 +37,7 @@ function mapImportedCompletionHistoryEntry(
 export function parseImportHistory(
   completionHistory: unknown,
   shouldImport: boolean,
-  idMap: Map<string, string>
+  idMap: Map<string, string>,
 ): CompletionHistory[] {
   if (!shouldImport) return [];
   if (!Array.isArray(completionHistory)) return [];
@@ -42,4 +50,3 @@ export function parseImportHistory(
 
   return result;
 }
-

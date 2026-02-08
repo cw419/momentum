@@ -6,4 +6,3 @@
  */
 
 export { BettingModalView } from './betting-modal';
-

@@ -11,7 +11,12 @@ import {
 import { getCompletionHistory, saveCompletionHistory } from './history';
 import { getPetState, savePetState } from './pet';
 import { getRSIPMeta, getRSIPNodes, saveRSIPMeta, saveRSIPNodes } from './rsip';
-import { getActiveSession, getScheduledSessions, saveActiveSession, saveScheduledSessions } from './sessions';
+import {
+  getActiveSession,
+  getScheduledSessions,
+  saveActiveSession,
+  saveScheduledSessions,
+} from './sessions';
 import {
   getLastCompletionTime,
   getTaskAverageTime,

@@ -36,7 +36,7 @@ describe('Dashboard sections', () => {
             onPermanentDeleteChains={vi.fn()}
           />
         </StorageProvider>
-      </I18nProvider>
+      </I18nProvider>,
     );
 
     expect(screen.getByTestId('dashboard-topbar')).toBeInTheDocument();
@@ -44,4 +44,3 @@ describe('Dashboard sections', () => {
     expect(screen.getByTestId('dashboard-empty-state')).toBeInTheDocument();
   });
 });
-

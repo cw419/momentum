@@ -74,7 +74,9 @@ describe('localStorageAdapter', () => {
   it('delegates all local-storage-backed methods to storage utils', async () => {
     const chain = createUnitChain({ id: 'chain-1', name: 'Chain 1' });
     const chains = [chain];
-    const scheduledSessions = [{ chainId: chain.id, scheduledAt: new Date(), expiresAt: new Date() }];
+    const scheduledSessions = [
+      { chainId: chain.id, scheduledAt: new Date(), expiresAt: new Date() },
+    ];
     const activeSession = {
       chainId: chain.id,
       startedAt: new Date(),
@@ -91,27 +93,53 @@ describe('localStorageAdapter', () => {
     storageUtilsMock.getChains.mockResolvedValueOnce(chains);
     storageUtilsMock.getActiveChains.mockResolvedValueOnce(chains);
     storageUtilsMock.getDeletedChains.mockResolvedValueOnce(chains);
-    storageUtilsMock.getScheduledSessions.mockResolvedValueOnce(scheduledSessions as never[]);
-    storageUtilsMock.getActiveSession.mockResolvedValueOnce(activeSession as never);
-    storageUtilsMock.getCompletionHistory.mockResolvedValueOnce(history as never[]);
+    storageUtilsMock.getScheduledSessions.mockResolvedValueOnce(
+      scheduledSessions as never[],
+    );
+    storageUtilsMock.getActiveSession.mockResolvedValueOnce(
+      activeSession as never,
+    );
+    storageUtilsMock.getCompletionHistory.mockResolvedValueOnce(
+      history as never[],
+    );
     storageUtilsMock.getRSIPNodes.mockResolvedValueOnce(rsipNodes as never[]);
     storageUtilsMock.getRSIPMeta.mockResolvedValueOnce(rsipMeta as never);
-    storageUtilsMock.getTaskTimeStats.mockResolvedValueOnce(taskTimeStats as never[]);
+    storageUtilsMock.getTaskTimeStats.mockResolvedValueOnce(
+      taskTimeStats as never[],
+    );
     storageUtilsMock.getLastCompletionTime.mockResolvedValueOnce(1234);
     storageUtilsMock.getTaskAverageTime.mockResolvedValueOnce(456);
     storageUtilsMock.getPetState.mockResolvedValueOnce(pet);
 
     await expect(localStorageAdapter.getChains()).resolves.toEqual(chains);
-    await expect(localStorageAdapter.getActiveChains()).resolves.toEqual(chains);
-    await expect(localStorageAdapter.getDeletedChains()).resolves.toEqual(chains);
-    await expect(localStorageAdapter.getScheduledSessions()).resolves.toEqual(scheduledSessions);
-    await expect(localStorageAdapter.getActiveSession()).resolves.toEqual(activeSession);
-    await expect(localStorageAdapter.getCompletionHistory()).resolves.toEqual(history);
-    await expect(localStorageAdapter.getRSIPNodes()).resolves.toEqual(rsipNodes);
+    await expect(localStorageAdapter.getActiveChains()).resolves.toEqual(
+      chains,
+    );
+    await expect(localStorageAdapter.getDeletedChains()).resolves.toEqual(
+      chains,
+    );
+    await expect(localStorageAdapter.getScheduledSessions()).resolves.toEqual(
+      scheduledSessions,
+    );
+    await expect(localStorageAdapter.getActiveSession()).resolves.toEqual(
+      activeSession,
+    );
+    await expect(localStorageAdapter.getCompletionHistory()).resolves.toEqual(
+      history,
+    );
+    await expect(localStorageAdapter.getRSIPNodes()).resolves.toEqual(
+      rsipNodes,
+    );
     await expect(localStorageAdapter.getRSIPMeta()).resolves.toEqual(rsipMeta);
-    await expect(localStorageAdapter.getTaskTimeStats()).resolves.toEqual(taskTimeStats);
-    await expect(localStorageAdapter.getLastCompletionTime(chain.id)).resolves.toBe(1234);
-    await expect(localStorageAdapter.getTaskAverageTime(chain.id)).resolves.toBe(456);
+    await expect(localStorageAdapter.getTaskTimeStats()).resolves.toEqual(
+      taskTimeStats,
+    );
+    await expect(
+      localStorageAdapter.getLastCompletionTime(chain.id),
+    ).resolves.toBe(1234);
+    await expect(
+      localStorageAdapter.getTaskAverageTime(chain.id),
+    ).resolves.toBe(456);
     await expect(localStorageAdapter.getPetState()).resolves.toEqual(pet);
 
     await localStorageAdapter.saveChains(chains);
@@ -120,7 +148,9 @@ describe('localStorageAdapter', () => {
     await localStorageAdapter.permanentlyDeleteChain(chain.id);
     await localStorageAdapter.cleanupExpiredDeletedChains(30);
 
-    await localStorageAdapter.saveScheduledSessions(scheduledSessions as never[]);
+    await localStorageAdapter.saveScheduledSessions(
+      scheduledSessions as never[],
+    );
     await localStorageAdapter.saveActiveSession(activeSession as never);
 
     await localStorageAdapter.saveCompletionHistory(history as never[]);
@@ -137,41 +167,69 @@ describe('localStorageAdapter', () => {
     expect(storageUtilsMock.saveChains).toHaveBeenCalledWith(chains);
     expect(storageUtilsMock.softDeleteChain).toHaveBeenCalledWith(chain.id);
     expect(storageUtilsMock.restoreChain).toHaveBeenCalledWith(chain.id);
-    expect(storageUtilsMock.permanentlyDeleteChain).toHaveBeenCalledWith(chain.id);
-    expect(storageUtilsMock.cleanupExpiredDeletedChains).toHaveBeenCalledWith(30);
+    expect(storageUtilsMock.permanentlyDeleteChain).toHaveBeenCalledWith(
+      chain.id,
+    );
+    expect(storageUtilsMock.cleanupExpiredDeletedChains).toHaveBeenCalledWith(
+      30,
+    );
 
-    expect(storageUtilsMock.saveScheduledSessions).toHaveBeenCalledWith(scheduledSessions);
-    expect(storageUtilsMock.saveActiveSession).toHaveBeenCalledWith(activeSession);
+    expect(storageUtilsMock.saveScheduledSessions).toHaveBeenCalledWith(
+      scheduledSessions,
+    );
+    expect(storageUtilsMock.saveActiveSession).toHaveBeenCalledWith(
+      activeSession,
+    );
 
-    expect(storageUtilsMock.saveCompletionHistory).toHaveBeenCalledWith(history);
+    expect(storageUtilsMock.saveCompletionHistory).toHaveBeenCalledWith(
+      history,
+    );
     expect(storageUtilsMock.saveRSIPNodes).toHaveBeenCalledWith(rsipNodes);
     expect(storageUtilsMock.saveRSIPMeta).toHaveBeenCalledWith(rsipMeta);
 
-    expect(storageUtilsMock.saveTaskTimeStats).toHaveBeenCalledWith(taskTimeStats);
-    expect(storageUtilsMock.updateTaskTimeStats).toHaveBeenCalledWith(chain.id, 900);
-    expect(storageUtilsMock.migrateCompletionHistoryForTiming).toHaveBeenCalledTimes(1);
+    expect(storageUtilsMock.saveTaskTimeStats).toHaveBeenCalledWith(
+      taskTimeStats,
+    );
+    expect(storageUtilsMock.updateTaskTimeStats).toHaveBeenCalledWith(
+      chain.id,
+      900,
+    );
+    expect(
+      storageUtilsMock.migrateCompletionHistoryForTiming,
+    ).toHaveBeenCalledTimes(1);
 
     expect(storageUtilsMock.savePetState).toHaveBeenCalledWith(pet);
     expect(storageUtilsMock.clearCache).toHaveBeenCalledTimes(1);
   });
 
   it('returns NOT_SUPPORTED for auth, user settings, betting, and check-in methods', async () => {
-    const signInResult = await localStorageAdapter.signIn('user@example.com', 'password');
-    const signUpResult = await localStorageAdapter.signUp('user@example.com', 'password');
+    const signInResult = await localStorageAdapter.signIn(
+      'user@example.com',
+      'password',
+    );
+    const signUpResult = await localStorageAdapter.signUp(
+      'user@example.com',
+      'password',
+    );
     const signOutResult = await localStorageAdapter.signOut();
 
     const settingsResult = await localStorageAdapter.getGamblingSettings();
     const toggleSettingsResult = await localStorageAdapter.toggleGamblingMode();
 
-    const createBettingSessionResult = await localStorageAdapter.createBettingSession('chain-1', 1200);
-    const deleteBettingSessionResult = await localStorageAdapter.deleteBettingSession('session-1');
-    const completeTaskWithBettingResult = await localStorageAdapter.completeTaskWithBetting('session-1');
+    const createBettingSessionResult =
+      await localStorageAdapter.createBettingSession('chain-1', 1200);
+    const deleteBettingSessionResult =
+      await localStorageAdapter.deleteBettingSession('session-1');
+    const completeTaskWithBettingResult =
+      await localStorageAdapter.completeTaskWithBetting('session-1');
     const placeBetResult = await localStorageAdapter.placeBet({
       session_id: 'session-1',
       bet_amount: 1,
     });
-    const getAvailablePointsResult = await localStorageAdapter.getUserAvailablePoints();
-    const getTodayBetAmountResult = await localStorageAdapter.getTodayBetAmount();
+    const getAvailablePointsResult =
+      await localStorageAdapter.getUserAvailablePoints();
+    const getTodayBetAmountResult =
+      await localStorageAdapter.getTodayBetAmount();
 
     const checkinResult = await localStorageAdapter.performDailyCheckin();
     const checkinStatsResult = await localStorageAdapter.getUserCheckinStats();
@@ -205,7 +263,8 @@ describe('localStorageAdapter', () => {
     const authenticatedResult = await localStorageAdapter.isUserAuthenticated();
     const waitResult = await localStorageAdapter.waitForAuthentication();
     const subscriptionResult = localStorageAdapter.onAuthStateChange(vi.fn());
-    const gamblingModeEnabledResult = await localStorageAdapter.isGamblingModeEnabled();
+    const gamblingModeEnabledResult =
+      await localStorageAdapter.isGamblingModeEnabled();
 
     expect(currentUserResult).toEqual({ ok: true, value: null });
     expect(authenticatedResult).toEqual({ ok: true, value: false });

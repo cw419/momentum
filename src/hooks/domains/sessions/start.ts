@@ -2,12 +2,20 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { ActiveSession, AppState } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import type { SafelySaveChains } from '../useChainsDomain';
-import { getNextUnitInGroup, incrementGroupCompletionCount } from '../../../utils/chainTree';
+import {
+  getNextUnitInGroup,
+  incrementGroupCompletionCount,
+} from '../../../utils/chainTree';
 import { logger } from '../../../utils/logger';
 import { notificationManager } from '../../../utils/notifications';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
-import { isGroupExpired, resetGroupProgress, startGroupTimer } from '../../../utils/timeLimit';
+import {
+  isGroupExpired,
+  resetGroupProgress,
+  startGroupTimer,
+} from '../../../utils/timeLimit';
 import { toast } from '../../../utils/toast';
+import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 
 type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];
@@ -57,23 +65,39 @@ export function createStartChainHandler({
   }
 
   function findScheduledSession(chainId: string): ScheduledSession | null {
-    return state.scheduledSessions.find((session) => session.chainId === chainId) ?? null;
+    return (
+      state.scheduledSessions.find((session) => session.chainId === chainId) ??
+      null
+    );
   }
 
-  function persistScheduledSessions(chainId: string, scheduledSessions: AppState['scheduledSessions']): void {
+  function persistScheduledSessions(
+    chainId: string,
+    scheduledSessions: AppState['scheduledSessions'],
+  ): void {
     storage.saveScheduledSessions(scheduledSessions).catch((error) => {
-      logger.error('SESSIONS', 'Failed to persist scheduled sessions', { chainId }, error as Error);
+      logger.error(
+        'SESSIONS',
+        'Failed to persist scheduled sessions',
+        { chainId },
+        normalizeUnknownError(error),
+      );
     });
   }
 
   function persistActiveSession(chainId: string, session: ActiveSession): void {
     storage.saveActiveSession(session).catch((error) => {
-      logger.error('SESSIONS', 'Failed to persist active session', { chainId }, error as Error);
+      logger.error(
+        'SESSIONS',
+        'Failed to persist active session',
+        { chainId },
+        normalizeUnknownError(error),
+      );
       toast.error(
         tr(
           '无法保存任务会话：数据库可能处于只读状态或写入被拒绝（查看控制台）',
-          'Failed to persist session: database may be read-only or write is denied (check console).'
-        )
+          'Failed to persist session: database may be read-only or write is denied (check console).',
+        ),
       );
     });
   }
@@ -81,7 +105,12 @@ export function createStartChainHandler({
   function persistChains(chainId: string, chains: AppState['chains']): void {
     safelySaveChains(chains).catch((error) => {
       queryOptimizer.onDataChange('chains');
-      logger.error('SESSIONS', '开始任务时保存链条数据失败', { chainId }, error as Error);
+      logger.error(
+        'SESSIONS',
+        '开始任务时保存链条数据失败',
+        { chainId },
+        normalizeUnknownError(error),
+      );
     });
   }
 
@@ -96,7 +125,10 @@ export function createStartChainHandler({
       const chain = findChain(chainId);
       if (!chain) return true;
 
-      const sessionId = await storage.createBettingSession(chainId, chain.duration);
+      const sessionId = await storage.createBettingSession(
+        chainId,
+        chain.duration,
+      );
       if (!sessionId.ok) {
         logger.error('SESSIONS', 'Failed to create betting session', {
           chainId,
@@ -106,8 +138,8 @@ export function createStartChainHandler({
         toast.error(
           tr(
             '无法创建押注会话：数据库可能处于只读状态（查看控制台）',
-            'Failed to create betting session: database may be read-only (check console).'
-          )
+            'Failed to create betting session: database may be read-only (check console).',
+          ),
         );
         return true;
       }
@@ -117,13 +149,20 @@ export function createStartChainHandler({
       setShowBettingModal(true);
       return true;
     } catch (error) {
-      logger.error('SESSIONS', 'Failed to check gambling mode', undefined, error as Error);
+      logger.error(
+        'SESSIONS',
+        'Failed to check gambling mode',
+        undefined,
+        normalizeUnknownError(error),
+      );
       return false;
     }
   }
 
   function resetExpiredGroup(groupId: string, groupName: string): void {
-    const updatedChains = state.chains.map((chain) => (chain.id === groupId ? resetGroupProgress(chain) : chain));
+    const updatedChains = state.chains.map((chain) =>
+      chain.id === groupId ? resetGroupProgress(chain) : chain,
+    );
 
     setState((prev) => ({
       ...prev,
@@ -131,11 +170,16 @@ export function createStartChainHandler({
       chainsRevision: prev.chainsRevision + 1,
     }));
 
-    notificationManager.notifyTaskFailed(groupName, tr('任务群已超时', 'Group has expired'));
+    notificationManager.notifyTaskFailed(
+      groupName,
+      tr('任务群已超时', 'Group has expired'),
+    );
   }
 
   function startGroupTimerIfNeeded(groupId: string): void {
-    const updatedChains = state.chains.map((chain) => (chain.id === groupId ? startGroupTimer(chain) : chain));
+    const updatedChains = state.chains.map((chain) =>
+      chain.id === groupId ? startGroupTimer(chain) : chain,
+    );
     setState((prev) => ({
       ...prev,
       chains: updatedChains,
@@ -160,24 +204,37 @@ export function createStartChainHandler({
               break;
             }
           }
-          const firstUnit = newGroupNode ? getNextUnitInGroup(newGroupNode) : null;
+          const firstUnit = newGroupNode
+            ? getNextUnitInGroup(newGroupNode)
+            : null;
           if (!firstUnit) return;
 
           logger.debug(
             'SESSIONS',
-            `任务群 ${params.groupName} 开始新一轮（第${params.nextCycleNumber}轮），从 ${firstUnit.name} 开始`
+            `任务群 ${params.groupName} 开始新一轮（第${params.nextCycleNumber}轮），从 ${firstUnit.name} 开始`,
           );
 
           return handleStartChain(firstUnit.id);
         })
         .catch((error) => {
-          logger.error('SESSIONS', 'Failed to start next cycle first unit', { chainId: params.groupId }, error as Error);
+          logger.error(
+            'SESSIONS',
+            'Failed to start next cycle first unit',
+            { chainId: params.groupId },
+            normalizeUnknownError(error),
+          );
         });
     }, 100);
   }
 
-  async function completeGroupCycle(groupId: string, groupName: string): Promise<void> {
-    logger.debug('SESSIONS', `任务群 ${groupName} 所有子任务已完成，开始新一轮循环`);
+  async function completeGroupCycle(
+    groupId: string,
+    groupName: string,
+  ): Promise<void> {
+    logger.debug(
+      'SESSIONS',
+      `任务群 ${groupName} 所有子任务已完成，开始新一轮循环`,
+    );
 
     const updatedChains = incrementGroupCompletionCount(state.chains, groupId);
     const updatedGroup = updatedChains.find((chain) => chain.id === groupId);
@@ -188,15 +245,19 @@ export function createStartChainHandler({
         updatedGroup.totalCompletions,
         tr(
           `第${updatedGroup.totalCompletions}轮已完成，正在开始第${updatedGroup.totalCompletions + 1}轮`,
-          `Cycle ${updatedGroup.totalCompletions} completed. Starting cycle ${updatedGroup.totalCompletions + 1}.`
-        )
+          `Cycle ${updatedGroup.totalCompletions} completed. Starting cycle ${updatedGroup.totalCompletions + 1}.`,
+        ),
       );
     }
 
     try {
       await safelySaveChains(updatedChains);
       queryOptimizer.onDataChange('chains');
-      setState((prev) => ({ ...prev, chains: updatedChains, chainsRevision: prev.chainsRevision + 1 }));
+      setState((prev) => ({
+        ...prev,
+        chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
+      }));
 
       scheduleStartFirstUnitInNextCycle({
         groupId,
@@ -204,7 +265,12 @@ export function createStartChainHandler({
         nextCycleNumber: (updatedGroup?.totalCompletions ?? 0) + 1,
       });
     } catch (error) {
-      logger.error('SESSIONS', '保存任务群完成计数失败', undefined, error as Error);
+      logger.error(
+        'SESSIONS',
+        '保存任务群完成计数失败',
+        undefined,
+        normalizeUnknownError(error),
+      );
     }
   }
 
@@ -218,16 +284,24 @@ export function createStartChainHandler({
       startGroupTimerIfNeeded(groupChain.id);
     }
 
-    const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains, state.chainsRevision);
+    const chainTree = queryOptimizer.memoizedBuildChainTree(
+      state.chains,
+      state.chainsRevision,
+    );
     const groupNode = chainTree.find((node) => node.id === groupChain.id);
     if (!groupNode) {
-      logger.error('SESSIONS', '无法找到任务群节点', { chainId: groupChain.id });
+      logger.error('SESSIONS', '无法找到任务群节点', {
+        chainId: groupChain.id,
+      });
       return;
     }
 
     const nextUnit = getNextUnitInGroup(groupNode);
     if (nextUnit) {
-      logger.debug('SESSIONS', `任务群 ${groupChain.name} 开始下一个任务: ${nextUnit.name}`);
+      logger.debug(
+        'SESSIONS',
+        `任务群 ${groupChain.name} 开始下一个任务: ${nextUnit.name}`,
+      );
       await handleStartChain(nextUnit.id);
       return;
     }
@@ -237,14 +311,23 @@ export function createStartChainHandler({
 
   function startSingleChain(chain: Chain): void {
     const existingScheduledSession = findScheduledSession(chain.id);
-    const bettingSessionId = pendingChainId === chain.id ? currentSessionId : null;
+    const bettingSessionId =
+      pendingChainId === chain.id ? currentSessionId : null;
 
-    const activeSession = buildActiveSession({ chainId: chain.id, chain, bettingSessionId });
-    const updatedScheduledSessions = state.scheduledSessions.filter((session) => session.chainId !== chain.id);
+    const activeSession = buildActiveSession({
+      chainId: chain.id,
+      chain,
+      bettingSessionId,
+    });
+    const updatedScheduledSessions = state.scheduledSessions.filter(
+      (session) => session.chainId !== chain.id,
+    );
 
     const updatedChains = existingScheduledSession
       ? state.chains.map((item) =>
-          item.id === chain.id ? { ...item, auxiliaryStreak: item.auxiliaryStreak + 1 } : item
+          item.id === chain.id
+            ? { ...item, auxiliaryStreak: item.auxiliaryStreak + 1 }
+            : item,
         )
       : state.chains;
 
@@ -252,7 +335,7 @@ export function createStartChainHandler({
       notificationManager.notifyTaskCompleted(
         chain.name,
         chain.auxiliaryStreak + 1,
-        tr('预约已完成', 'Schedule completed')
+        tr('预约已完成', 'Schedule completed'),
       );
     }
 

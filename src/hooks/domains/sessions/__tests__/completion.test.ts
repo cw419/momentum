@@ -1,13 +1,23 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../../../types';
-import { createAppState, createGroupChain, createLocalStorageMock, createSupabaseStorageMock, createUnitChain } from '../../../../test/factories';
+import {
+  createAppState,
+  createGroupChain,
+  createLocalStorageMock,
+  createSupabaseStorageMock,
+  createUnitChain,
+} from '../../../../test/factories';
 import { createCompletionHandlers } from '../completion';
 import { queryOptimizer } from '../../../../utils/queryOptimizer';
 import { forwardTimerManager } from '../../../../utils/forwardTimer';
 import { notificationManager } from '../../../../utils/notifications';
 import { emitPointsChanged } from '../../../../utils/pointsEvents';
-import { incrementGroupCompletionCount, isGroupFullyCompleted, resetGroupCompletionCount } from '../../../../utils/chainTree';
+import {
+  incrementGroupCompletionCount,
+  isGroupFullyCompleted,
+  resetGroupCompletionCount,
+} from '../../../../utils/chainTree';
 import { logger } from '../../../../utils/logger';
 
 vi.mock('../../../../utils/logger', () => ({
@@ -56,7 +66,10 @@ function flushPromises() {
 function createStateContainer(initialState: AppState) {
   let state = initialState;
   const setState: Dispatch<SetStateAction<AppState>> = (update) => {
-    state = typeof update === 'function' ? (update as (prev: AppState) => AppState)(state) : update;
+    state =
+      typeof update === 'function'
+        ? (update as (prev: AppState) => AppState)(state)
+        : update;
   };
   return {
     getState: () => state,
@@ -72,7 +85,11 @@ describe('createCompletionHandlers', () => {
   });
 
   it('should update local state and persist completion when session completes', async () => {
-    const group = createGroupChain({ id: 'group-1', name: 'Parent Group', currentStreak: 2 });
+    const group = createGroupChain({
+      id: 'group-1',
+      name: 'Parent Group',
+      currentStreak: 2,
+    });
     const chain = createUnitChain({
       id: 'chain-1',
       name: 'Unit 1',
@@ -109,7 +126,11 @@ describe('createCompletionHandlers', () => {
     ] as unknown as ReturnType<typeof queryOptimizer.memoizedBuildChainTree>);
     vi.mocked(isGroupFullyCompleted).mockReturnValue(true);
     vi.mocked(incrementGroupCompletionCount).mockImplementation((chains) =>
-      chains.map((item) => (item.id === group.id ? { ...item, currentStreak: item.currentStreak + 1 } : item))
+      chains.map((item) =>
+        item.id === group.id
+          ? { ...item, currentStreak: item.currentStreak + 1 }
+          : item,
+      ),
     );
 
     const { handleCompleteSession } = createCompletionHandlers({
@@ -143,22 +164,40 @@ describe('createCompletionHandlers', () => {
     });
 
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
-    expect(storage.saveCompletionHistory).toHaveBeenCalledWith(nextState.completionHistory);
+    expect(storage.saveCompletionHistory).toHaveBeenCalledWith(
+      nextState.completionHistory,
+    );
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(storage.updateTaskTimeStats).toHaveBeenCalledWith(chain.id, 25);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(chain.name, 2);
+    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+      chain.name,
+      2,
+    );
     expect(setActiveSessionId).toHaveBeenCalledWith(null);
-    expect(queryOptimizer.memoizedBuildChainTree).toHaveBeenCalledWith(expect.any(Array), 4);
-    expect(isGroupFullyCompleted).toHaveBeenCalledWith(expect.objectContaining({ id: group.id, type: 'group' }));
-    expect(incrementGroupCompletionCount).toHaveBeenCalledWith(expect.any(Array), group.id);
+    expect(queryOptimizer.memoizedBuildChainTree).toHaveBeenCalledWith(
+      expect.any(Array),
+      4,
+    );
+    expect(isGroupFullyCompleted).toHaveBeenCalledWith(
+      expect.objectContaining({ id: group.id, type: 'group' }),
+    );
+    expect(incrementGroupCompletionCount).toHaveBeenCalledWith(
+      expect.any(Array),
+      group.id,
+    );
     expect(logger.debug).toHaveBeenCalledWith('SESSIONS', expect.any(String));
-    expect((vi.mocked(logger.debug).mock.calls[0]?.[1] ?? '').length).toBeGreaterThan(0);
+    expect(
+      (vi.mocked(logger.debug).mock.calls[0]?.[1] ?? '').length,
+    ).toBeGreaterThan(0);
     expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
       group.name,
       expect.any(Number),
-      '任务群完成一轮'
+      '任务群完成一轮',
     );
-    expect(tr).toHaveBeenCalledWith(expect.any(String), 'Group completed a cycle');
+    expect(tr).toHaveBeenCalledWith(
+      expect.any(String),
+      'Group completed a cycle',
+    );
     expect(emitPointsChanged).not.toHaveBeenCalled();
   });
 
@@ -180,7 +219,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
 
     const storage = createLocalStorageMock({
@@ -209,8 +248,14 @@ describe('createCompletionHandlers', () => {
   });
 
   it('should not increment group cycle when parent group is incomplete', async () => {
-    const group = createGroupChain({ id: 'incomplete-group', name: 'Incomplete Group' });
-    const chain = createUnitChain({ id: 'incomplete-unit', parentId: group.id });
+    const group = createGroupChain({
+      id: 'incomplete-group',
+      name: 'Incomplete Group',
+    });
+    const chain = createUnitChain({
+      id: 'incomplete-unit',
+      parentId: group.id,
+    });
     const stateRef = createStateContainer(
       createAppState({
         chains: [group, chain],
@@ -222,7 +267,7 @@ describe('createCompletionHandlers', () => {
           totalPausedTime: 0,
         },
         chainsRevision: 10,
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
@@ -248,14 +293,23 @@ describe('createCompletionHandlers', () => {
     handleCompleteSession();
     await flushPromises();
 
-    expect(isGroupFullyCompleted).toHaveBeenCalledWith(expect.objectContaining({ id: group.id }));
+    expect(isGroupFullyCompleted).toHaveBeenCalledWith(
+      expect.objectContaining({ id: group.id }),
+    );
     expect(incrementGroupCompletionCount).not.toHaveBeenCalled();
     expect(tr).not.toHaveBeenCalled();
   });
 
   it('should skip parent group completion notification when parent chain is missing after increment', async () => {
-    const group = createGroupChain({ id: 'missing-parent-group', name: 'Missing Parent Group' });
-    const chain = createUnitChain({ id: 'missing-parent-unit', parentId: group.id, currentStreak: 2 });
+    const group = createGroupChain({
+      id: 'missing-parent-group',
+      name: 'Missing Parent Group',
+    });
+    const chain = createUnitChain({
+      id: 'missing-parent-unit',
+      parentId: group.id,
+      currentStreak: 2,
+    });
     const stateRef = createStateContainer(
       createAppState({
         chains: [group, chain],
@@ -267,7 +321,7 @@ describe('createCompletionHandlers', () => {
           totalPausedTime: 0,
         },
         chainsRevision: 8,
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
@@ -283,7 +337,11 @@ describe('createCompletionHandlers', () => {
       stateRef
         .getState()
         .chains.filter((item) => item.id !== group.id)
-        .map((item) => (item.id === chain.id ? { ...item, currentStreak: item.currentStreak + 1 } : item))
+        .map((item) =>
+          item.id === chain.id
+            ? { ...item, currentStreak: item.currentStreak + 1 }
+            : item,
+        ),
     );
 
     const { handleCompleteSession } = createCompletionHandlers({
@@ -299,8 +357,14 @@ describe('createCompletionHandlers', () => {
     handleCompleteSession();
     await flushPromises();
 
-    expect(incrementGroupCompletionCount).toHaveBeenCalledWith(expect.any(Array), group.id);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(chain.name, 3);
+    expect(incrementGroupCompletionCount).toHaveBeenCalledWith(
+      expect.any(Array),
+      group.id,
+    );
+    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+      chain.name,
+      3,
+    );
     expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledTimes(1);
     expect(tr).not.toHaveBeenCalled();
   });
@@ -329,7 +393,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
 
     const storage = createLocalStorageMock({
@@ -352,11 +416,21 @@ describe('createCompletionHandlers', () => {
     await flushPromises();
 
     const nextState = stateRef.getState();
-    const completedNext = nextState.chains.find((item) => item.id === completed.id);
-    const untouchedNext = nextState.chains.find((item) => item.id === untouched.id);
+    const completedNext = nextState.chains.find(
+      (item) => item.id === completed.id,
+    );
+    const untouchedNext = nextState.chains.find(
+      (item) => item.id === untouched.id,
+    );
 
-    expect(completedNext).toMatchObject({ currentStreak: 2, totalCompletions: 3 });
-    expect(untouchedNext).toMatchObject({ currentStreak: 9, totalCompletions: 99 });
+    expect(completedNext).toMatchObject({
+      currentStreak: 2,
+      totalCompletions: 3,
+    });
+    expect(untouchedNext).toMatchObject({
+      currentStreak: 9,
+      totalCompletions: 99,
+    });
     expect(queryOptimizer.memoizedBuildChainTree).not.toHaveBeenCalled();
     expect(incrementGroupCompletionCount).not.toHaveBeenCalled();
   });
@@ -405,7 +479,7 @@ describe('createCompletionHandlers', () => {
     await flushPromises();
 
     expect(forwardTimerManager.stopTimer).toHaveBeenCalledWith(
-      `${chain.id}_${initialState.activeSession?.startedAt.getTime()}`
+      `${chain.id}_${initialState.activeSession?.startedAt.getTime()}`,
     );
     expect(storage.updateTaskTimeStats).toHaveBeenCalledWith(chain.id, 3);
     expect(onPetTaskCompleted).toHaveBeenCalledWith(3, true);
@@ -414,7 +488,11 @@ describe('createCompletionHandlers', () => {
   });
 
   it('should not persist task-time stats or pet callback when actual duration is zero', async () => {
-    const chain = createUnitChain({ id: 'zero-duration-chain', currentStreak: 4, duration: 0 });
+    const chain = createUnitChain({
+      id: 'zero-duration-chain',
+      currentStreak: 4,
+      duration: 0,
+    });
     const stateRef = createStateContainer(
       createAppState({
         chains: [chain],
@@ -425,7 +503,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
@@ -488,16 +566,23 @@ describe('createCompletionHandlers', () => {
     await flushPromises();
 
     expect(storage.saveCompletionHistory).toHaveBeenCalledTimes(1);
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+      .calls[0]?.[0];
     expect(persisted).toHaveLength(1);
-    expect(persisted?.[0]).toMatchObject({ chainId: chain.id, wasSuccessful: true });
+    expect(persisted?.[0]).toMatchObject({
+      chainId: chain.id,
+      wasSuccessful: true,
+    });
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(setActiveSessionId).toHaveBeenCalledWith(null);
     expect(emitPointsChanged).toHaveBeenCalledTimes(1);
   });
 
   it('should avoid supabase cleanup helper when activeSessionId is null', async () => {
-    const chain = createUnitChain({ id: 'supabase-no-active-id', currentStreak: 1 });
+    const chain = createUnitChain({
+      id: 'supabase-no-active-id',
+      currentStreak: 1,
+    });
     const existingRecord = {
       chainId: 'old-record',
       completedAt: new Date('2026-01-01T10:00:00.000Z'),
@@ -517,7 +602,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
     const storage = createSupabaseStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
@@ -566,7 +651,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
@@ -587,10 +672,14 @@ describe('createCompletionHandlers', () => {
     handleCompleteSession();
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+      .calls[0]?.[0];
     expect(persisted).toHaveLength(2);
     expect(persisted?.[0]).toMatchObject(existingRecord);
-    expect(persisted?.[1]).toMatchObject({ chainId: chain.id, wasSuccessful: true });
+    expect(persisted?.[1]).toMatchObject({
+      chainId: chain.id,
+      wasSuccessful: true,
+    });
     expect(emitPointsChanged).not.toHaveBeenCalled();
   });
 
@@ -615,7 +704,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
     const storage = createSupabaseStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
@@ -635,9 +724,13 @@ describe('createCompletionHandlers', () => {
     handleCompleteSession();
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+      .calls[0]?.[0];
     expect(persisted).toHaveLength(1);
-    expect(persisted?.[0]).toMatchObject({ chainId: chain.id, wasSuccessful: true });
+    expect(persisted?.[0]).toMatchObject({
+      chainId: chain.id,
+      wasSuccessful: true,
+    });
     expect(stateRef.getState().completionHistory).toHaveLength(2);
   });
 
@@ -684,18 +777,21 @@ describe('createCompletionHandlers', () => {
       'SESSIONS',
       'Failed to persist completion history after completion',
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
     expect(logger.error).toHaveBeenCalledWith(
       'SESSIONS',
       'Failed to clear active session after completion',
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
   it('should log unexpected supabase cleanup errors from cleanup callback', async () => {
-    const chain = createUnitChain({ id: 'supa-unexpected-chain', currentStreak: 2 });
+    const chain = createUnitChain({
+      id: 'supa-unexpected-chain',
+      currentStreak: 2,
+    });
     const initialState = createAppState({
       chains: [chain],
       activeSession: {
@@ -733,7 +829,7 @@ describe('createCompletionHandlers', () => {
       'SESSIONS',
       'Unexpected completion cleanup error',
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
@@ -784,14 +880,19 @@ describe('createCompletionHandlers', () => {
     await flushPromises();
 
     expect(forwardTimerManager.clearTimer).toHaveBeenCalledWith(
-      `${chain.id}_${initialState.activeSession?.startedAt.getTime()}`
+      `${chain.id}_${initialState.activeSession?.startedAt.getTime()}`,
     );
     const nextState = stateRef.getState();
     const updated = nextState.chains.find((item) => item.id === chain.id);
-    const untouchedAfter = nextState.chains.find((item) => item.id === untouched.id);
+    const untouchedAfter = nextState.chains.find(
+      (item) => item.id === untouched.id,
+    );
     expect(updated?.currentStreak).toBe(0);
     expect(updated?.totalFailures).toBe(3);
-    expect(untouchedAfter).toMatchObject({ currentStreak: 7, totalFailures: 1 });
+    expect(untouchedAfter).toMatchObject({
+      currentStreak: 7,
+      totalFailures: 1,
+    });
     expect(nextState.chainsRevision).toBe(12);
     expect(nextState.activeSession).toBeNull();
     expect(nextState.currentView).toBe('dashboard');
@@ -800,9 +901,14 @@ describe('createCompletionHandlers', () => {
       wasSuccessful: false,
       reasonForFailure: 'manual-stop',
     });
-    expect(resetGroupCompletionCount).toHaveBeenCalledWith(expect.any(Array), 'group-9');
+    expect(resetGroupCompletionCount).toHaveBeenCalledWith(
+      expect.any(Array),
+      'group-9',
+    );
     expect(logger.debug).toHaveBeenCalledWith('SESSIONS', expect.any(String));
-    expect((vi.mocked(logger.debug).mock.calls.at(-1)?.[1] ?? '').length).toBeGreaterThan(0);
+    expect(
+      (vi.mocked(logger.debug).mock.calls.at(-1)?.[1] ?? '').length,
+    ).toBeGreaterThan(0);
   });
 
   it('should use default interrupt reason when reason is not provided', async () => {
@@ -823,7 +929,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
 
     const { handleInterruptSession } = createCompletionHandlers({
@@ -845,7 +951,9 @@ describe('createCompletionHandlers', () => {
     expect(forwardTimerManager.clearTimer).not.toHaveBeenCalled();
     expect(stateRef.getState().chainsRevision).toBe(1);
     expect(stateRef.getState().currentView).toBe('dashboard');
-    expect(stateRef.getState().completionHistory.at(-1)?.reasonForFailure).toBe('用户主动中断');
+    expect(stateRef.getState().completionHistory.at(-1)?.reasonForFailure).toBe(
+      '用户主动中断',
+    );
   });
 
   it('should not reset group completion count when interrupted chain itself is a group', async () => {
@@ -866,7 +974,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
 
     const { handleInterruptSession } = createCompletionHandlers({
@@ -889,7 +997,10 @@ describe('createCompletionHandlers', () => {
   });
 
   it('should log non-empty chain persistence context when interrupt persistence fails', async () => {
-    const chain = createUnitChain({ id: 'interrupt-save-fail', parentId: 'group-z' });
+    const chain = createUnitChain({
+      id: 'interrupt-save-fail',
+      parentId: 'group-z',
+    });
     const stateRef = createStateContainer(
       createAppState({
         chains: [chain],
@@ -900,7 +1011,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
 
     const { handleInterruptSession } = createCompletionHandlers({
@@ -924,14 +1035,18 @@ describe('createCompletionHandlers', () => {
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
     const interruptErrorCall = vi
       .mocked(logger.error)
-      .mock.calls.find((call) => call[0] === 'SESSIONS' && typeof call[1] === 'string');
+      .mock.calls.find(
+        (call) => call[0] === 'SESSIONS' && typeof call[1] === 'string',
+      );
     expect(interruptErrorCall?.[1]).toEqual(expect.any(String));
     expect((interruptErrorCall?.[1] as string).length).toBeGreaterThan(0);
   });
 
   it('should no-op when completing or interrupting without active session / chain', async () => {
     const chain = createUnitChain({ id: 'valid-chain' });
-    const stateRefNoSession = createStateContainer(createAppState({ chains: [chain], activeSession: null }));
+    const stateRefNoSession = createStateContainer(
+      createAppState({ chains: [chain], activeSession: null }),
+    );
     const storage = createLocalStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
@@ -964,7 +1079,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
     const missingChainHandlers = createCompletionHandlers({
       state: stateRefMissingChain.getState(),
@@ -984,7 +1099,11 @@ describe('createCompletionHandlers', () => {
   });
 
   it('should persist full interrupt history for local storage when activeSessionId is present', async () => {
-    const chain = createUnitChain({ id: 'local-interrupt-history', currentStreak: 5, totalFailures: 1 });
+    const chain = createUnitChain({
+      id: 'local-interrupt-history',
+      currentStreak: 5,
+      totalFailures: 1,
+    });
     const existingRecord = {
       chainId: 'old-failure',
       completedAt: new Date('2026-01-31T10:00:00.000Z'),
@@ -1005,7 +1124,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
     const storage = createLocalStorageMock({
       saveCompletionHistory: vi.fn(async () => undefined),
@@ -1025,15 +1144,24 @@ describe('createCompletionHandlers', () => {
     handleInterruptSession('manual-stop');
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+      .calls[0]?.[0];
     expect(persisted).toHaveLength(2);
     expect(persisted?.[0]).toMatchObject(existingRecord);
-    expect(persisted?.[1]).toMatchObject({ chainId: chain.id, wasSuccessful: false, reasonForFailure: 'manual-stop' });
+    expect(persisted?.[1]).toMatchObject({
+      chainId: chain.id,
+      wasSuccessful: false,
+      reasonForFailure: 'manual-stop',
+    });
     expect(emitPointsChanged).not.toHaveBeenCalled();
   });
 
   it('should persist only one interrupt history record for supabase sessions', async () => {
-    const chain = createUnitChain({ id: 'supa-interrupt-chain', currentStreak: 5, totalFailures: 1 });
+    const chain = createUnitChain({
+      id: 'supa-interrupt-chain',
+      currentStreak: 5,
+      totalFailures: 1,
+    });
     const existingRecord = {
       chainId: 'old-record',
       completedAt: new Date('2026-01-31T10:00:00.000Z'),
@@ -1053,7 +1181,7 @@ describe('createCompletionHandlers', () => {
           isPaused: false,
           totalPausedTime: 0,
         },
-      })
+      }),
     );
 
     const storage = createSupabaseStorageMock({
@@ -1075,7 +1203,8 @@ describe('createCompletionHandlers', () => {
     handleInterruptSession('manual-stop');
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock.calls[0]?.[0];
+    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+      .calls[0]?.[0];
     expect(persisted).toHaveLength(1);
     expect(persisted?.[0]).toMatchObject({
       chainId: chain.id,
@@ -1088,7 +1217,10 @@ describe('createCompletionHandlers', () => {
   });
 
   it('should still update state when persistence fails', async () => {
-    const chain = createUnitChain({ id: 'persist-fail-chain', currentStreak: 0 });
+    const chain = createUnitChain({
+      id: 'persist-fail-chain',
+      currentStreak: 0,
+    });
     const initialState = createAppState({
       chains: [chain],
       activeSession: {
@@ -1135,25 +1267,25 @@ describe('createCompletionHandlers', () => {
       'SESSIONS',
       'Failed to persist completion history after completion',
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
     expect(logger.error).toHaveBeenCalledWith(
       'SESSIONS',
       'Failed to clear active session after completion',
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
     expect(logger.error).toHaveBeenCalledWith(
       'SESSIONS',
       'Failed to update task time stats after completion',
       { chainId: chain.id },
-      expect.any(Error)
+      expect.any(Error),
     );
     expect(logger.error).toHaveBeenCalledWith(
       'SESSIONS',
       expect.stringContaining('保存链条'),
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 });

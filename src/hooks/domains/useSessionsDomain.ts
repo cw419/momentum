@@ -60,7 +60,11 @@ export function useSessionsDomain({
 }: UseSessionsDomainParams) {
   const { tr } = useI18n();
 
-  const { handleScheduleChain, handleCancelScheduledSession, handleCompleteBooking } = createSchedulingHandlers({
+  const {
+    handleScheduleChain,
+    handleCancelScheduledSession,
+    handleCompleteBooking,
+  } = createSchedulingHandlers({
     state,
     setState,
     storage,
@@ -82,18 +86,21 @@ export function useSessionsDomain({
     tr,
   });
 
-  const { handleCompleteSession, handleInterruptSession } = createCompletionHandlers({
-    state,
-    setState,
-    storage,
-    safelySaveChains,
-    activeSessionId,
-    setActiveSessionId,
-    onPetTaskCompleted,
-    tr,
-  });
+  const { handleCompleteSession, handleInterruptSession } =
+    createCompletionHandlers({
+      state,
+      setState,
+      storage,
+      safelySaveChains,
+      activeSessionId,
+      setActiveSessionId,
+      onPetTaskCompleted,
+      tr,
+    });
 
-  const { handlePauseSession, handleResumeSession } = createPauseResumeHandlers({ state, setState, storage });
+  const { handlePauseSession, handleResumeSession } = createPauseResumeHandlers(
+    { state, setState, storage },
+  );
 
   return {
     handleScheduleChain,
@@ -106,4 +113,3 @@ export function useSessionsDomain({
     handleCompleteBooking,
   };
 }
-

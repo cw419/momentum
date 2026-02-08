@@ -33,17 +33,25 @@ describe('useSafeSaveChains', () => {
 
   it('should persist active and deleted chains together', async () => {
     const activeChain = createUnitChain({ id: 'active-1' });
-    const deletedChain = createUnitChain({ id: 'deleted-1', deletedAt: new Date('2026-02-01T10:00:00.000Z') });
+    const deletedChain = createUnitChain({
+      id: 'deleted-1',
+      deletedAt: new Date('2026-02-01T10:00:00.000Z'),
+    });
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [activeChain, deletedChain]),
     });
-    vi.mocked(realTimeSyncService.saveWithSync).mockResolvedValue([activeChain]);
+    vi.mocked(realTimeSyncService.saveWithSync).mockResolvedValue([
+      activeChain,
+    ]);
 
     const { result } = renderHook(() => useSafeSaveChains(storage));
 
     await result.current([activeChain]);
 
-    expect(realTimeSyncService.saveWithSync).toHaveBeenCalledWith(storage, [activeChain, deletedChain]);
+    expect(realTimeSyncService.saveWithSync).toHaveBeenCalledWith(storage, [
+      activeChain,
+      deletedChain,
+    ]);
   });
 
   it('should fail immediately on non-retryable client errors', async () => {
@@ -52,12 +60,14 @@ describe('useSafeSaveChains', () => {
       getChains: vi.fn(async () => [chain]),
     });
     vi.mocked(realTimeSyncService.saveWithSync).mockRejectedValue(
-      new Error('Converting circular structure to JSON')
+      new Error('Converting circular structure to JSON'),
     );
 
     const { result } = renderHook(() => useSafeSaveChains(storage));
 
-    await expect(result.current([chain])).rejects.toThrow('Converting circular structure to JSON');
+    await expect(result.current([chain])).rejects.toThrow(
+      'Converting circular structure to JSON',
+    );
     expect(realTimeSyncService.clearAllCaches).not.toHaveBeenCalled();
   });
 
@@ -87,7 +97,9 @@ describe('useSafeSaveChains', () => {
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [chain]),
     });
-    vi.mocked(realTimeSyncService.saveWithSync).mockRejectedValue(new Error('persistent failure'));
+    vi.mocked(realTimeSyncService.saveWithSync).mockRejectedValue(
+      new Error('persistent failure'),
+    );
 
     const { result } = renderHook(() => useSafeSaveChains(storage));
 

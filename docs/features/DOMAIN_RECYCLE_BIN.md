@@ -9,6 +9,7 @@
 回收箱功能提供软删除机制，允许用户恢复误删的链条，避免数据永久丢失。
 
 ### 核心特性
+
 - **软删除**：删除的链条移入回收箱而非永久删除
 - **恢复功能**：可随时恢复已删除的链条
 - **永久删除**：支持从回收箱永久删除
@@ -18,12 +19,12 @@
 
 ## 关键文件
 
-| 文件 | 职责 |
-|------|------|
+| 文件                                       | 职责                |
+| ------------------------------------------ | ------------------- |
 | `src/hooks/domains/useRecycleBinDomain.ts` | 回收箱业务逻辑 Hook |
-| `src/services/RecycleBinService.ts` | 回收箱底层服务 |
-| `src/services/RealTimeSyncService.ts` | 实时同步服务 |
-| `src/components/RecycleBinModal.tsx` | 回收箱模态框组件 |
+| `src/services/RecycleBinService.ts`        | 回收箱底层服务      |
+| `src/services/RealTimeSyncService.ts`      | 实时同步服务        |
+| `src/components/RecycleBinModal.tsx`       | 回收箱模态框组件    |
 
 ---
 
@@ -36,7 +37,7 @@
 ```typescript
 interface Chain {
   // ... 其他字段
-  deletedAt?: Date;  // 软删除时间戳，null = 未删除
+  deletedAt?: Date; // 软删除时间戳，null = 未删除
 }
 ```
 
@@ -118,21 +119,21 @@ sequenceDiagram
 
 ### useRecycleBinDomain Hook
 
-| 方法 | 参数 | 说明 |
-|------|------|------|
-| `handleDeleteChain` | `(chainId: string)` | 软删除单个链条 |
-| `handleRestoreChains` | `(chainIds: string[])` | 恢复多个链条 |
+| 方法                          | 参数                   | 说明             |
+| ----------------------------- | ---------------------- | ---------------- |
+| `handleDeleteChain`           | `(chainId: string)`    | 软删除单个链条   |
+| `handleRestoreChains`         | `(chainIds: string[])` | 恢复多个链条     |
 | `handlePermanentDeleteChains` | `(chainIds: string[])` | 永久删除多个链条 |
 
 ### Storage 方法
 
-| 方法 | 说明 |
-|------|------|
-| `getActiveChains()` | 获取未删除的链条 |
-| `getDeletedChains()` | 获取已删除的链条 |
-| `softDeleteChain(chainId)` | 软删除链条 |
-| `restoreChains(chainIds)` | 恢复链条 |
-| `permanentDeleteChains(chainIds)` | 永久删除链条 |
+| 方法                              | 说明             |
+| --------------------------------- | ---------------- |
+| `getActiveChains()`               | 获取未删除的链条 |
+| `getDeletedChains()`              | 获取已删除的链条 |
+| `softDeleteChain(chainId)`        | 软删除链条       |
+| `restoreChains(chainIds)`         | 恢复链条         |
+| `permanentDeleteChains(chainIds)` | 永久删除链条     |
 
 ---
 
@@ -143,17 +144,19 @@ sequenceDiagram
 ```typescript
 const handleDeleteChain = async (chainId: string) => {
   // 1. 软删除链条
-  const updatedChains = await realTimeSyncService.deleteWithSync(storage, chainId);
+  const updatedChains = await realTimeSyncService.deleteWithSync(
+    storage,
+    chainId,
+  );
 
   // 2. 清理相关预约会话
   const updatedScheduledSessions = state.scheduledSessions.filter(
-    session => session.chainId !== chainId
+    (session) => session.chainId !== chainId,
   );
 
   // 3. 清理当前活动会话（如果是该链条）
-  const updatedActiveSession = state.activeSession?.chainId === chainId
-    ? null
-    : state.activeSession;
+  const updatedActiveSession =
+    state.activeSession?.chainId === chainId ? null : state.activeSession;
 
   // 4. 持久化
   await storage.saveScheduledSessions(updatedScheduledSessions);
@@ -162,7 +165,7 @@ const handleDeleteChain = async (chainId: string) => {
   }
 
   // 5. 更新状态
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
     chains: updatedChains,
     scheduledSessions: updatedScheduledSessions,
@@ -180,13 +183,22 @@ const handleDeleteChain = async (chainId: string) => {
 
 ```typescript
 // 删除时同步
-const updatedChains = await realTimeSyncService.deleteWithSync(storage, chainId);
+const updatedChains = await realTimeSyncService.deleteWithSync(
+  storage,
+  chainId,
+);
 
 // 恢复时同步
-const updatedChains = await realTimeSyncService.restoreWithSync(storage, chainIds);
+const updatedChains = await realTimeSyncService.restoreWithSync(
+  storage,
+  chainIds,
+);
 
 // 永久删除时同步
-const updatedChains = await realTimeSyncService.permanentDeleteWithSync(storage, chainIds);
+const updatedChains = await realTimeSyncService.permanentDeleteWithSync(
+  storage,
+  chainIds,
+);
 ```
 
 ### 同步事件
@@ -208,7 +220,7 @@ try {
   if (rawMessage.includes('Partial restore failure')) {
     // 重新加载数据
     const currentChains = await storage.getActiveChains();
-    setState(prev => ({ ...prev, chains: currentChains }));
+    setState((prev) => ({ ...prev, chains: currentChains }));
 
     toast.warning('部分链条恢复可能失败，请检查回收箱确认结果。');
     return;
@@ -226,7 +238,7 @@ try {
 } catch (error) {
   // 重新加载数据以恢复状态
   const currentChains = await storage.getActiveChains();
-  setState(prev => ({ ...prev, chains: currentChains }));
+  setState((prev) => ({ ...prev, chains: currentChains }));
 
   toast.error('删除失败，请重试');
 }
@@ -240,11 +252,11 @@ try {
 
 ```typescript
 // 获取已删除的链条
-const deletedChains = chains.filter(c => c.deletedAt != null);
+const deletedChains = chains.filter((c) => c.deletedAt != null);
 
 // 按删除时间排序
-deletedChains.sort((a, b) =>
-  new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime()
+deletedChains.sort(
+  (a, b) => new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime(),
 );
 ```
 
@@ -265,8 +277,8 @@ const restoreSelected = async (selectedIds: string[]) => {
 
 ```typescript
 const emptyRecycleBin = async () => {
-  const deletedChains = chains.filter(c => c.deletedAt != null);
-  const ids = deletedChains.map(c => c.id);
+  const deletedChains = chains.filter((c) => c.deletedAt != null);
+  const ids = deletedChains.map((c) => c.id);
 
   if (confirm('确定要永久删除所有回收箱中的链条吗？此操作不可恢复。')) {
     await handlePermanentDeleteChains(ids);

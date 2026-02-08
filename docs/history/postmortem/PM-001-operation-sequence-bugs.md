@@ -13,11 +13,13 @@
 ## 2. 影响范围
 
 ### 用户可见症状
+
 - 押注成功后，无论任务成功还是失败，积分都不变
 - "今日已押"统计始终显示 0
 - 用户认为押注功能"完全坏了"
 
 ### 影响面
+
 - 所有使用押注功能的用户
 - 核心 Gamification 功能失效
 - 用户信任度下降
@@ -32,7 +34,7 @@ const completeTask = async () => {
   // ... 保存链条数据 ...
 
   // ❌ 错误：先清理 active session
-  await storage.saveActiveSession(null);  // 这会 DELETE active_sessions 记录
+  await storage.saveActiveSession(null); // 这会 DELETE active_sessions 记录
 
   // ❌ 此时数据库触发器已经把 pending bet 退款了
 
@@ -88,7 +90,11 @@ const completeTask = async () => {
   // ... 保存链条数据 ...
 
   // ✅ 先结算押注
-  const result = await storage.completeTaskWithBetting(sessionIdToSettle, true, '任务完成');
+  const result = await storage.completeTaskWithBetting(
+    sessionIdToSettle,
+    true,
+    '任务完成',
+  );
 
   // ✅ 检查结算是否真正成功
   const settledOk = result.ok && result.value?.success === true;
@@ -108,7 +114,7 @@ const completeTask = async () => {
 const bettingSessionId = pendingChainId === chainId ? currentSessionId : null;
 
 const activeSession: ActiveSession = {
-  ...(bettingSessionId ? { id: bettingSessionId } : {}),  // ✅ 复用 ID
+  ...(bettingSessionId ? { id: bettingSessionId } : {}), // ✅ 复用 ID
   chainId,
   startedAt: new Date(),
   // ...
@@ -121,8 +127,10 @@ const activeSession: ActiveSession = {
 // 不再静默失败，给用户明确反馈
 if (!settledOk) {
   toast.warning(
-    tr('押注结算失败，积分可能未更新（数据库可能只读）',
-       'Bet settlement failed; points may not update (database may be read-only).')
+    tr(
+      '押注结算失败，积分可能未更新（数据库可能只读）',
+      'Bet settlement failed; points may not update (database may be read-only).',
+    ),
   );
 }
 ```
@@ -172,22 +180,23 @@ test('betting settlement should work when task completes', async () => {
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
-| `764f184` | 主要修复：调整结算顺序，复用 session ID |
-| `472fa81` | 增强错误处理：写入失败抛错并 toast |
-| `66b08b3` | 早期修复尝试：修复押注成功后没有收到奖励 |
-| `982034a` | 早期修复尝试：修复 session ID 格式问题 |
+| Commit    | 描述                                             |
+| --------- | ------------------------------------------------ |
+| `764f184` | 主要修复：调整结算顺序，复用 session ID          |
+| `472fa81` | 增强错误处理：写入失败抛错并 toast               |
+| `66b08b3` | 早期修复尝试：修复押注成功后没有收到奖励         |
+| `982034a` | 早期修复尝试：修复 session ID 格式问题           |
 | `4ef2177` | 早期修复尝试：继续修复 database error in betting |
 
 ## 7. 经验教训
 
 > **核心教训**: 当系统涉及"状态清理"操作时，永远要问：
+>
 > 1. 清理会触发什么隐式副作用（触发器、级联删除）？
 > 2. 清理之前的数据是否还被其他操作依赖？
 > 3. 清理失败会造成什么后果？
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

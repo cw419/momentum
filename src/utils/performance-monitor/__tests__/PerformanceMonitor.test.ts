@@ -2,13 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const addToBufferMock = vi.hoisted(() => vi.fn());
 const processBatchDataMock = vi.hoisted(() => vi.fn(async () => undefined));
-const runWhenIdleMock = vi.hoisted(() => vi.fn((callback: () => void) => callback()));
+const runWhenIdleMock = vi.hoisted(() =>
+  vi.fn((callback: () => void) => callback()),
+);
 const startFpsMonitoringMock = vi.hoisted(() => vi.fn());
 const measureRenderMock = vi.hoisted(() => vi.fn());
 const measureInteractionMock = vi.hoisted(() => vi.fn());
 const createPerformanceObserversMock = vi.hoisted(() => vi.fn());
-const reportMetricsMock = vi.hoisted(() => vi.fn((metrics) => ({ ...metrics })));
-const checkPerformanceMock = vi.hoisted(() => vi.fn(() => ({ passed: true, issues: [] })));
+const reportMetricsMock = vi.hoisted(() =>
+  vi.fn((metrics) => ({ ...metrics })),
+);
+const checkPerformanceMock = vi.hoisted(() =>
+  vi.fn(() => ({ passed: true, issues: [] })),
+);
 const performanceLoggerMock = vi.hoisted(() => ({
   debug: vi.fn(),
 }));
@@ -52,9 +58,19 @@ import { performanceMonitor } from '../PerformanceMonitor';
 
 function resetMonitorState() {
   const monitor = performanceMonitor as unknown as {
-    metrics: { renderTime: number; interactionTime: number; layoutShifts: number; fps: number };
+    metrics: {
+      renderTime: number;
+      interactionTime: number;
+      layoutShifts: number;
+      fps: number;
+    };
     observers: Record<string, { disconnect?: () => void }>;
-    fpsCounter: { frames: number; lastTime: number; fps: number; lastWarnTime: number };
+    fpsCounter: {
+      frames: number;
+      lastTime: number;
+      fps: number;
+      lastWarnTime: number;
+    };
     isMonitoring: boolean;
     backgroundMode: boolean;
     dataBuffer: unknown[];
@@ -125,7 +141,10 @@ describe('performance-monitor/PerformanceMonitor', () => {
     performanceMonitor.start();
 
     expect(processBatchDataMock).not.toHaveBeenCalled();
-    expect((performanceMonitor as unknown as { batchInterval: unknown }).batchInterval).toBeNull();
+    expect(
+      (performanceMonitor as unknown as { batchInterval: unknown })
+        .batchInterval,
+    ).toBeNull();
     expect(performanceLoggerMock.debug).toHaveBeenCalledTimes(1);
   });
 
@@ -160,11 +179,22 @@ describe('performance-monitor/PerformanceMonitor', () => {
   it('delegates measure and reporting APIs', () => {
     measureRenderMock.mockReturnValue('render-result');
     measureInteractionMock.mockReturnValue(123);
-    reportMetricsMock.mockReturnValue({ renderTime: 5, interactionTime: 6, layoutShifts: 0, fps: 60 });
+    reportMetricsMock.mockReturnValue({
+      renderTime: 5,
+      interactionTime: 6,
+      layoutShifts: 0,
+      fps: 60,
+    });
     checkPerformanceMock.mockReturnValue({ passed: false, issues: ['slow'] });
 
-    const renderResult = performanceMonitor.measureRender('Card', () => 'ignored');
-    const interactionResult = performanceMonitor.measureInteraction('click', () => 1);
+    const renderResult = performanceMonitor.measureRender(
+      'Card',
+      () => 'ignored',
+    );
+    const interactionResult = performanceMonitor.measureInteraction(
+      'click',
+      () => 1,
+    );
     const reportResult = performanceMonitor.reportMetrics();
     const checkResult = performanceMonitor.checkPerformance();
 
@@ -173,14 +203,19 @@ describe('performance-monitor/PerformanceMonitor', () => {
     expect(measureRenderMock).toHaveBeenCalledWith(
       expect.objectContaining({
         componentName: 'Card',
-      })
+      }),
     );
     expect(measureInteractionMock).toHaveBeenCalledWith(
       expect.objectContaining({
         interactionName: 'click',
-      })
+      }),
     );
-    expect(reportResult).toEqual({ renderTime: 5, interactionTime: 6, layoutShifts: 0, fps: 60 });
+    expect(reportResult).toEqual({
+      renderTime: 5,
+      interactionTime: 6,
+      layoutShifts: 0,
+      fps: 60,
+    });
     expect(checkResult).toEqual({ passed: false, issues: ['slow'] });
   });
 
@@ -198,22 +233,35 @@ describe('performance-monitor/PerformanceMonitor', () => {
     observerArgs.addToBuffer({ type: 'paint', timestamp: 11 });
 
     measureInteractionMock.mockImplementation(({ addToBuffer }) => {
-      addToBuffer({ type: 'measure', name: 'chain-editor-click', duration: 5, timestamp: 22 });
+      addToBuffer({
+        type: 'measure',
+        name: 'chain-editor-click',
+        duration: 5,
+        timestamp: 22,
+      });
       return 'interaction-result';
     });
 
-    const result = performanceMonitor.measureInteraction('click', () => 'unused');
+    const result = performanceMonitor.measureInteraction(
+      'click',
+      () => 'unused',
+    );
 
     expect(result).toBe('interaction-result');
     expect(addToBufferMock).toHaveBeenCalledWith(
       expect.any(Array),
       100,
-      expect.objectContaining({ type: 'paint', timestamp: 11 })
+      expect.objectContaining({ type: 'paint', timestamp: 11 }),
     );
     expect(addToBufferMock).toHaveBeenCalledWith(
       expect.any(Array),
       100,
-      expect.objectContaining({ type: 'measure', name: 'chain-editor-click', duration: 5, timestamp: 22 })
+      expect.objectContaining({
+        type: 'measure',
+        name: 'chain-editor-click',
+        duration: 5,
+        timestamp: 22,
+      }),
     );
 
     performanceMonitor.stop();
@@ -230,7 +278,7 @@ describe('performance-monitor/PerformanceMonitor', () => {
     expect(addToBufferMock).toHaveBeenCalledWith(
       expect.any(Array),
       100,
-      expect.objectContaining({ type: 'paint', timestamp: 1 })
+      expect.objectContaining({ type: 'paint', timestamp: 1 }),
     );
   });
 });

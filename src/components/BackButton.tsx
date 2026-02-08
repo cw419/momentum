@@ -13,4 +13,3 @@ export function BackButton({ iconSize = 24, ...props }: BackButtonProps) {
     </IconButton>
   );
 }
-

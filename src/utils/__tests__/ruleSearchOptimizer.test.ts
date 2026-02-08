@@ -16,7 +16,7 @@ describe('RuleSearchOptimizer', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 5,
-        isActive: true
+        isActive: true,
       },
       {
         id: '2',
@@ -26,7 +26,7 @@ describe('RuleSearchOptimizer', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 3,
-        isActive: true
+        isActive: true,
       },
       {
         id: '3',
@@ -36,8 +36,8 @@ describe('RuleSearchOptimizer', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 8,
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
   });
 
@@ -84,21 +84,21 @@ describe('RuleSearchOptimizer', () => {
     it('should find prefix matches', () => {
       const results = optimizer.searchRules(mockRules, '上');
       expect(results.length).toBeGreaterThan(0);
-      const exactMatch = results.find(r => r.rule.name === '上厕所');
+      const exactMatch = results.find((r) => r.rule.name === '上厕所');
       expect(exactMatch?.matchType).toBe('prefix');
     });
 
     it('should find contains matches', () => {
       const results = optimizer.searchRules(mockRules, '电话');
       expect(results.length).toBeGreaterThan(0);
-      const match = results.find(r => r.rule.name === '接电话');
+      const match = results.find((r) => r.rule.name === '接电话');
       expect(match?.matchType).toBe('contains');
     });
 
     it('should cache search results', () => {
       optimizer.searchRules(mockRules, '上厕所');
       optimizer.searchRules(mockRules, '喝水');
-      
+
       const stats = optimizer.getSearchStats();
       expect(stats.cacheSize).toBe(2);
     });
@@ -106,7 +106,7 @@ describe('RuleSearchOptimizer', () => {
     it('should record search history', () => {
       optimizer.searchRules(mockRules, '上厕所');
       optimizer.searchRules(mockRules, '喝水');
-      
+
       const stats = optimizer.getSearchStats();
       expect(stats.historySize).toBe(2);
     });
@@ -148,7 +148,7 @@ describe('RuleSearchOptimizer', () => {
     it('should return history suggestions when query is empty', () => {
       const suggestions = optimizer.getSearchSuggestions('', mockRules);
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions.some(s => s.type === 'recent')).toBe(true);
+      expect(suggestions.some((s) => s.type === 'recent')).toBe(true);
     });
 
     it('should return similar suggestions for partial queries', () => {
@@ -179,15 +179,21 @@ describe('RuleSearchOptimizer', () => {
 
   describe('generateNameSuggestions', () => {
     it('should generate suggestions for pause rules', () => {
-      const suggestions = optimizer.generateNameSuggestions('上', ExceptionRuleType.PAUSE_ONLY);
+      const suggestions = optimizer.generateNameSuggestions(
+        '上',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions.some(s => s.includes('上'))).toBe(true);
+      expect(suggestions.some((s) => s.includes('上'))).toBe(true);
     });
 
     it('should generate suggestions for completion rules', () => {
-      const suggestions = optimizer.generateNameSuggestions('任务', ExceptionRuleType.EARLY_COMPLETION);
+      const suggestions = optimizer.generateNameSuggestions(
+        '任务',
+        ExceptionRuleType.EARLY_COMPLETION,
+      );
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions.some(s => s.includes('任务'))).toBe(true);
+      expect(suggestions.some((s) => s.includes('任务'))).toBe(true);
     });
   });
 
@@ -215,7 +221,7 @@ describe('RuleSearchOptimizer', () => {
           type: ExceptionRuleType.PAUSE_ONLY,
           createdAt: new Date(),
           usageCount: Math.floor(Math.random() * 10),
-          isActive: true
+          isActive: true,
         });
       }
 

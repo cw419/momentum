@@ -42,4 +42,3 @@ describe('migrateCompletionHistoryForTiming', () => {
     expect(result.updatedHistory[0].isForwardTimed).toBe(false);
   });
 });
-

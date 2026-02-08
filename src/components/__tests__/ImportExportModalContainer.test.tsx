@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+﻿import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ImportExportModalContainer } from '../ImportExportModalContainer';
 
@@ -29,6 +29,9 @@ vi.mock('../../utils/logger', () => ({
 
 vi.mock('../../utils/errorMessage', () => ({
   getSafeErrorDetail: getSafeErrorDetailMock,
+  toError: vi.fn((value: unknown) =>
+    value instanceof Error ? value : new Error(String(value)),
+  ),
 }));
 
 vi.mock('../../services/ExceptionRuleManager', () => ({
@@ -65,8 +68,12 @@ vi.mock('../ImportExportModalView', () => ({
       <div data-testid="active-tab">{props.activeTab}</div>
       <div data-testid="import-status">{props.importStatus}</div>
       <div data-testid="import-error">{props.importError}</div>
-      <button onClick={() => props.onImportDataChange('{"version":2}')}>set-import-json</button>
-      <button onClick={() => props.onTabChange('import')}>switch-to-import</button>
+      <button onClick={() => props.onImportDataChange('{"version":2}')}>
+        set-import-json
+      </button>
+      <button onClick={() => props.onTabChange('import')}>
+        switch-to-import
+      </button>
       <button
         onClick={() =>
           props.onImportOptionsChange({
@@ -82,7 +89,11 @@ vi.mock('../ImportExportModalView', () => ({
         onClick={() =>
           props.onFileUpload({
             target: {
-              files: [new File(['from-file'], 'import.json', { type: 'application/json' })],
+              files: [
+                new File(['from-file'], 'import.json', {
+                  type: 'application/json',
+                }),
+              ],
             },
           } as React.ChangeEvent<HTMLInputElement>)
         }
@@ -162,7 +173,10 @@ describe('ImportExportModalContainer', () => {
     });
     importRulesMock.mockResolvedValue({ imported: [{ id: 'rule-a' }] });
     exportRulesMock.mockResolvedValue([{ id: 'rule-a' }]);
-    createExportDataMock.mockReturnValue({ version: 2, chains: [{ id: 'c1' }] });
+    createExportDataMock.mockReturnValue({
+      version: 2,
+      chains: [{ id: 'c1' }],
+    });
 
     if (!URL.createObjectURL) {
       Object.defineProperty(URL, 'createObjectURL', {
@@ -184,12 +198,14 @@ describe('ImportExportModalContainer', () => {
     const originalCreateElement = Document.prototype.createElement;
     const anchor = originalCreateElement.call(document, 'a');
     vi.spyOn(anchor, 'click').mockImplementation(() => undefined);
-    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
-      if (tagName.toLowerCase() === 'a') {
-        return anchor;
-      }
-      return originalCreateElement.call(document, tagName);
-    });
+    vi.spyOn(document, 'createElement').mockImplementation(
+      (tagName: string) => {
+        if (tagName.toLowerCase() === 'a') {
+          return anchor;
+        }
+        return originalCreateElement.call(document, tagName);
+      },
+    );
   });
 
   it('selects import tab when there are no chains and export tab otherwise', () => {
@@ -198,7 +214,7 @@ describe('ImportExportModalContainer', () => {
         chains={[]}
         onImport={vi.fn(async () => undefined)}
         onClose={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByTestId('active-tab').textContent).toBe('import');
@@ -210,7 +226,7 @@ describe('ImportExportModalContainer', () => {
         chains={[{ id: 'c1' } as never]}
         onImport={vi.fn(async () => undefined)}
         onClose={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByTestId('active-tab').textContent).toBe('export');
@@ -225,7 +241,7 @@ describe('ImportExportModalContainer', () => {
         chains={[{ id: 'existing' } as never]}
         onImport={onImport}
         onClose={onClose}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('set-import-json'));
@@ -245,7 +261,7 @@ describe('ImportExportModalContainer', () => {
         rsipNodes: [{ id: 'r1' }],
         rsipMeta: { allowMultiplePerDay: true },
         exceptionRules: [{ id: 'rule-a' }],
-      })
+      }),
     );
 
     expect(screen.getByTestId('import-status').textContent).toBe('success');
@@ -273,7 +289,7 @@ describe('ImportExportModalContainer', () => {
         chains={[{ id: 'existing' } as never]}
         onImport={onImport}
         onClose={vi.fn()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('switch-to-import'));
@@ -295,14 +311,14 @@ describe('ImportExportModalContainer', () => {
           preserveTimestamps: true,
           importCompletionHistory: false,
         },
-      })
+      }),
     );
     expect(importRulesMock).not.toHaveBeenCalled();
     expect(onImport).toHaveBeenCalledWith(
       [{ id: 'c-local' }],
       expect.objectContaining({
         exceptionRules: [],
-      })
+      }),
     );
   });
 
@@ -323,7 +339,7 @@ describe('ImportExportModalContainer', () => {
         chains={[{ id: 'existing' } as never]}
         onImport={vi.fn(async () => undefined)}
         onClose={vi.fn()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('set-import-json'));
@@ -334,7 +350,7 @@ describe('ImportExportModalContainer', () => {
     expect(parseImportDataMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('import-status').textContent).toBe('error');
     expect(screen.getByTestId('import-error').textContent).toBe(
-      'Authentication failed: please make sure you are signed in and try importing again.'
+      'Authentication failed: please make sure you are signed in and try importing again.',
     );
   });
 
@@ -344,7 +360,7 @@ describe('ImportExportModalContainer', () => {
         chains={[{ id: 'existing' } as never]}
         onImport={vi.fn(async () => undefined)}
         onClose={vi.fn()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('set-import-json'));
@@ -356,7 +372,7 @@ describe('ImportExportModalContainer', () => {
       fireEvent.click(screen.getByText('run-import'));
     });
     expect(screen.getByTestId('import-error').textContent).toBe(
-      'Invalid import format: please make sure you uploaded a valid JSON file.'
+      'Invalid import format: please make sure you uploaded a valid JSON file.',
     );
 
     parseImportDataMock.mockImplementationOnce(() => {
@@ -366,7 +382,9 @@ describe('ImportExportModalContainer', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('run-import'));
     });
-    expect(screen.getByTestId('import-error').textContent).toBe('Import failed: sanitized detail');
+    expect(screen.getByTestId('import-error').textContent).toBe(
+      'Import failed: sanitized detail',
+    );
 
     parseImportDataMock.mockImplementationOnce(() => {
       throw new Error('still bad');
@@ -376,7 +394,7 @@ describe('ImportExportModalContainer', () => {
       fireEvent.click(screen.getByText('run-import'));
     });
     expect(screen.getByTestId('import-error').textContent).toBe(
-      'Import failed. Check the console for details, then try again.'
+      'Import failed. Check the console for details, then try again.',
     );
 
     parseImportDataMock.mockImplementationOnce(() => {
@@ -385,7 +403,9 @@ describe('ImportExportModalContainer', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('run-import'));
     });
-    expect(screen.getByTestId('import-error').textContent).toBe('Import failed: unknown error');
+    expect(screen.getByTestId('import-error').textContent).toBe(
+      'Import failed: unknown error',
+    );
   });
 
   it('runs export flow and delegates payload construction', async () => {
@@ -398,7 +418,7 @@ describe('ImportExportModalContainer', () => {
         userPreferences={{ theme: 'dark' }}
         onImport={vi.fn(async () => undefined)}
         onClose={vi.fn()}
-      />
+      />,
     );
 
     await act(async () => {
@@ -412,7 +432,7 @@ describe('ImportExportModalContainer', () => {
         history: [{ id: 'h1' }],
         rsipNodes: [{ id: 'r1' }],
         exceptionRules: [{ id: 'rule-a' }],
-      })
+      }),
     );
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
   });
@@ -425,7 +445,7 @@ describe('ImportExportModalContainer', () => {
         chains={[{ id: 'c1' } as never]}
         onImport={vi.fn(async () => undefined)}
         onClose={vi.fn()}
-      />
+      />,
     );
 
     await act(async () => {
@@ -436,7 +456,7 @@ describe('ImportExportModalContainer', () => {
       'IMPORT_EXPORT',
       'Export failed',
       undefined,
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 });

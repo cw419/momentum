@@ -12,21 +12,23 @@ import type { FeedbackMessage, FeedbackAction } from './types';
 export class InteractiveFeedback {
   constructor(
     private readonly store: MessageStore,
-    private readonly presenter: FeedbackPresenter
+    private readonly presenter: FeedbackPresenter,
   ) {}
 
-  async showRecoveryOptions(options: RecoveryAction[]): Promise<RecoveryAction | null> {
+  async showRecoveryOptions(
+    options: RecoveryAction[],
+  ): Promise<RecoveryAction | null> {
     return new Promise((resolve) => {
       const messageId = this.store.generateMessageId();
 
-      const actions: FeedbackAction[] = options.map(option => ({
+      const actions: FeedbackAction[] = options.map((option) => ({
         id: option.id,
         label: option.label,
         type: option.type,
         handler: async () => {
           this.store.removeMessage(messageId);
           resolve(option);
-        }
+        },
       }));
 
       actions.push({
@@ -36,17 +38,20 @@ export class InteractiveFeedback {
         handler: () => {
           this.store.removeMessage(messageId);
           resolve(null);
-        }
+        },
       });
 
       const feedbackMessage: FeedbackMessage = {
         id: messageId,
         type: 'warning',
         title: tr('选择恢复操作', 'Choose a recovery action'),
-        message: tr('请选择如何处理这个问题：', 'Choose how to handle this issue:'),
+        message: tr(
+          '请选择如何处理这个问题：',
+          'Choose how to handle this issue:',
+        ),
         actions,
         persistent: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       this.store.addMessage(feedbackMessage);
@@ -57,7 +62,7 @@ export class InteractiveFeedback {
     title: string,
     message: string,
     confirmLabel?: string,
-    cancelLabel?: string
+    cancelLabel?: string,
   ): Promise<boolean> {
     return new Promise((resolve) => {
       const messageId = this.store.generateMessageId();
@@ -72,7 +77,7 @@ export class InteractiveFeedback {
           handler: () => {
             this.store.removeMessage(messageId);
             resolve(true);
-          }
+          },
         },
         {
           id: 'cancel',
@@ -81,8 +86,8 @@ export class InteractiveFeedback {
           handler: () => {
             this.store.removeMessage(messageId);
             resolve(false);
-          }
-        }
+          },
+        },
       ];
 
       const feedbackMessage: FeedbackMessage = {
@@ -92,7 +97,7 @@ export class InteractiveFeedback {
         message,
         actions,
         persistent: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       this.store.addMessage(feedbackMessage);
@@ -104,16 +109,19 @@ export class InteractiveFeedback {
     total: number,
     success: number,
     failed: number,
-    errors?: string[]
+    errors?: string[],
   ): string {
     const language = getCurrentLanguage();
-    const title = language === 'zh' ? `${operation}完成` : `${operation} completed`;
-    let message = language === 'zh'
-      ? `总计 ${total} 项，成功 ${success} 项`
-      : `Total ${total}, succeeded ${success}`;
+    const title =
+      language === 'zh' ? `${operation}完成` : `${operation} completed`;
+    let message =
+      language === 'zh'
+        ? `总计 ${total} 项，成功 ${success} 项`
+        : `Total ${total}, succeeded ${success}`;
 
     if (failed > 0) {
-      message += language === 'zh' ? `，失败 ${failed} 项` : `, failed ${failed}`;
+      message +=
+        language === 'zh' ? `，失败 ${failed} 项` : `, failed ${failed}`;
     }
 
     const actions: FeedbackAction[] = [];
@@ -124,12 +132,17 @@ export class InteractiveFeedback {
         label: tr('查看错误详情', 'View error details', language),
         type: 'secondary',
         handler: () => {
-          this.presenter.showInfo(tr('错误详情', 'Error details', language), errors.join('\n'), false);
-        }
+          this.presenter.showInfo(
+            tr('错误详情', 'Error details', language),
+            errors.join('\n'),
+            false,
+          );
+        },
       });
     }
 
-    const messageType: FeedbackMessage['type'] = failed > 0 ? 'warning' : 'success';
+    const messageType: FeedbackMessage['type'] =
+      failed > 0 ? 'warning' : 'success';
     const messageId = this.store.generateMessageId();
 
     this.store.addMessage({
@@ -140,7 +153,7 @@ export class InteractiveFeedback {
       actions: actions.length > 0 ? actions : undefined,
       autoHide: true,
       duration: 8000,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     return messageId;

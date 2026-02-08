@@ -34,11 +34,16 @@ function createForm(overrides: Record<string, unknown> = {}) {
 describe('MainChainSettingsSection', () => {
   it('shows custom trigger input and updates custom trigger text', async () => {
     const user = userEvent.setup();
-    const form = createForm({ trigger: CUSTOM_TRIGGER_VALUE, customTrigger: 'old trigger' });
+    const form = createForm({
+      trigger: CUSTOM_TRIGGER_VALUE,
+      customTrigger: 'old trigger',
+    });
 
     render(<MainChainSettingsSection form={form} />);
 
-    const customInput = screen.getByPlaceholderText('Enter your custom trigger');
+    const customInput = screen.getByPlaceholderText(
+      'Enter your custom trigger',
+    );
     expect(customInput).toBeInTheDocument();
 
     await user.clear(customInput);
@@ -49,11 +54,17 @@ describe('MainChainSettingsSection', () => {
 
   it('switches to custom duration and sets default duration value', async () => {
     const user = userEvent.setup();
-    const form = createForm({ isDurationless: false, isCustomDuration: false, duration: 30 });
+    const form = createForm({
+      isDurationless: false,
+      isCustomDuration: false,
+      duration: 30,
+    });
 
     render(<MainChainSettingsSection form={form} />);
 
-    const durationSelect = document.getElementById('task-duration') as HTMLSelectElement;
+    const durationSelect = document.getElementById(
+      'task-duration',
+    ) as HTMLSelectElement;
     await user.selectOptions(durationSelect, 'custom');
 
     expect(form.setIsCustomDuration).toHaveBeenCalledWith(true);
@@ -62,7 +73,11 @@ describe('MainChainSettingsSection', () => {
 
   it('toggles durationless mode and clears minimum duration', async () => {
     const user = userEvent.setup();
-    const form = createForm({ isDurationless: true, minimumDuration: 20, isCustomMinimumDuration: true });
+    const form = createForm({
+      isDurationless: true,
+      minimumDuration: 20,
+      isCustomMinimumDuration: true,
+    });
 
     render(<MainChainSettingsSection form={form} />);
 

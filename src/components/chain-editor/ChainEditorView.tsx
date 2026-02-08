@@ -21,10 +21,17 @@ interface ChainEditorViewProps {
   isKeyboardVisible: boolean;
 }
 
-export function ChainEditorView({ isEditing, onCancel, form, mobileInfo, keyboardHeight, isKeyboardVisible }: ChainEditorViewProps) {
+export function ChainEditorView({
+  isEditing,
+  onCancel,
+  form,
+  mobileInfo,
+  keyboardHeight,
+  isKeyboardVisible,
+}: ChainEditorViewProps) {
   return (
     <div
-      className={`chain-editor-container min-h-screen bg-background overflow-x-hidden performance-layer ${
+      className={`chain-editor-container bg-background performance-layer min-h-screen overflow-x-hidden ${
         isKeyboardVisible ? 'keyboard-active' : ''
       }`}
       style={{ paddingBottom: isKeyboardVisible ? `${keyboardHeight}px` : '0' }}
@@ -37,12 +44,20 @@ export function ChainEditorView({ isEditing, onCancel, form, mobileInfo, keyboar
       >
         <ChainEditorHeader isEditing={isEditing} onCancel={onCancel} />
 
-        <form onSubmit={form.handleSubmit} className="space-y-8 animate-slide-up performance-layer">
+        <form
+          onSubmit={form.handleSubmit}
+          className="performance-layer animate-slide-up space-y-8"
+        >
           <BasicInfoSection form={form} />
           <MainChainSettingsSection form={form} />
           <AuxiliaryChainSettingsSection form={form} />
           <TaskDescriptionSection form={form} />
-          <ChainEditorActions isEditing={isEditing} onCancel={onCancel} form={form} mobileInfo={mobileInfo} />
+          <ChainEditorActions
+            isEditing={isEditing}
+            onCancel={onCancel}
+            form={form}
+            mobileInfo={mobileInfo}
+          />
         </form>
 
         {isKeyboardVisible && <div className="keyboard-buffer"></div>}
@@ -50,4 +65,3 @@ export function ChainEditorView({ isEditing, onCancel, form, mobileInfo, keyboar
     </div>
   );
 }
-

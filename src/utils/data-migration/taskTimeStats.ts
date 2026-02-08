@@ -31,12 +31,18 @@ export async function createTaskTimeStats(): Promise<{
         }
 
         const chainRecords = history.filter(
-          (h) => h.chainId === chainId && h.wasSuccessful && h.actualDuration !== undefined,
+          (h) =>
+            h.chainId === chainId &&
+            h.wasSuccessful &&
+            h.actualDuration !== undefined,
         );
 
         if (chainRecords.length === 0) return;
 
-        const totalTime = chainRecords.reduce((sum, r) => sum + (r.actualDuration || 0), 0);
+        const totalTime = chainRecords.reduce(
+          (sum, r) => sum + (r.actualDuration || 0),
+          0,
+        );
         const totalCompletions = chainRecords.length;
         const lastRecord = chainRecords.sort(
           (a, b) => b.completedAt.getTime() - a.completedAt.getTime(),
@@ -66,4 +72,3 @@ export async function createTaskTimeStats(): Promise<{
 
   return { createdCount, errors };
 }
-

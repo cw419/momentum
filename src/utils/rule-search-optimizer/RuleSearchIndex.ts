@@ -33,7 +33,9 @@ export class RuleSearchIndex {
     rules.forEach((rule, idx) => {
       const nameLower = String(rule.name || '').toLowerCase();
       const pinyinLower = getPinyin(String(rule.name || '')).toLowerCase();
-      const firstLettersLower = getFirstLetters(String(rule.name || '')).toLowerCase();
+      const firstLettersLower = getFirstLetters(
+        String(rule.name || ''),
+      ).toLowerCase();
 
       this.indexedRuleNamesLower[idx] = nameLower;
       this.indexedRulePinyinLower[idx] = pinyinLower;
@@ -160,7 +162,10 @@ export class RuleSearchIndex {
     return candidates;
   }
 
-  private scoreRuleAtIndex(ruleIndex: number, normalizedQuery: string): SearchResult {
+  private scoreRuleAtIndex(
+    ruleIndex: number,
+    normalizedQuery: string,
+  ): SearchResult {
     const rule = this.indexedRules[ruleIndex]!;
 
     const base = scoreRule(rule, normalizedQuery);
@@ -176,17 +181,23 @@ export class RuleSearchIndex {
     if (pinyin === normalizedQuery || firstLetters === normalizedQuery) {
       baseScore = 700;
       matchType = 'exact';
-    } else if (pinyin.startsWith(normalizedQuery) || firstLetters.startsWith(normalizedQuery)) {
+    } else if (
+      pinyin.startsWith(normalizedQuery) ||
+      firstLetters.startsWith(normalizedQuery)
+    ) {
       baseScore = 550;
       matchType = 'prefix';
-    } else if (pinyin.includes(normalizedQuery) || firstLetters.includes(normalizedQuery)) {
+    } else if (
+      pinyin.includes(normalizedQuery) ||
+      firstLetters.includes(normalizedQuery)
+    ) {
       baseScore = 450;
       matchType = 'contains';
     } else {
       const similarity = Math.max(
         calculateSimilarity(pinyin, normalizedQuery),
         calculateSimilarity(firstLetters, normalizedQuery),
-        calculateSimilarity(nameLower, normalizedQuery)
+        calculateSimilarity(nameLower, normalizedQuery),
       );
       if (similarity > 0.3) {
         baseScore = Math.floor(similarity * 300);
@@ -205,4 +216,3 @@ export class RuleSearchIndex {
     };
   }
 }
-

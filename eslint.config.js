@@ -23,7 +23,11 @@ export default tseslint.config(
     ],
   },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended, eslintConfigPrettier],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      eslintConfigPrettier,
+    ],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
@@ -43,11 +47,13 @@ export default tseslint.config(
         'error',
         {
           selector: "TSAsExpression[typeAnnotation.type='TSAnyKeyword']",
-          message: 'Do not use `as any`; use proper types or `unknown` + narrowing.',
+          message:
+            'Do not use `as any`; use proper types or `unknown` + narrowing.',
         },
         {
           selector: "TSTypeAssertion[typeAnnotation.type='TSAnyKeyword']",
-          message: 'Do not use `<any>` type assertions; use proper types or `unknown` + narrowing.',
+          message:
+            'Do not use `<any>` type assertions; use proper types or `unknown` + narrowing.',
         },
       ],
       '@typescript-eslint/no-unused-vars': [
@@ -104,5 +110,5 @@ export default tseslint.config(
     rules: {
       'no-console': 'off',
     },
-  }
+  },
 );

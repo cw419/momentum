@@ -6,7 +6,13 @@ import { StorageProvider } from '../../storage/StorageContext';
 import { err, ok } from '../../domain/result';
 
 vi.mock('../IntroScreen', () => ({
-  IntroScreen: ({ onSignIn, onSignUp }: { onSignIn: () => void; onSignUp: () => void }) => (
+  IntroScreen: ({
+    onSignIn,
+    onSignUp,
+  }: {
+    onSignIn: () => void;
+    onSignUp: () => void;
+  }) => (
     <div data-testid="intro-screen">
       <button type="button" onClick={onSignIn}>
         intro-sign-in
@@ -19,7 +25,13 @@ vi.mock('../IntroScreen', () => ({
 }));
 
 vi.mock('../AuthForm', () => ({
-  AuthForm: ({ initialIsSignUp, onBack }: { initialIsSignUp: boolean; onBack: () => void }) => (
+  AuthForm: ({
+    initialIsSignUp,
+    onBack,
+  }: {
+    initialIsSignUp: boolean;
+    onBack: () => void;
+  }) => (
     <div data-testid="auth-form">
       <span>{initialIsSignUp ? 'signup' : 'signin'}</span>
       <button type="button" onClick={onBack}>
@@ -40,7 +52,7 @@ function renderWrapper(storage: any) {
           <div data-testid="protected-content">protected</div>
         </AuthWrapper>
       </StorageProvider>
-    </I18nProvider>
+    </I18nProvider>,
   );
 }
 
@@ -58,30 +70,38 @@ describe('AuthWrapper', () => {
         () =>
           new Promise(() => {
             // keep pending to assert loading state
-          })
+          }),
       ),
     });
 
-    expect(screen.getByRole('heading', { name: /Authenticating/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Authenticating/i }),
+    ).toBeInTheDocument();
   });
 
   it('navigates intro -> auth form and back, preserving sign-in/sign-up intent', async () => {
     renderWrapper({
       kind: 'supabase',
       onAuthStateChange: vi.fn(() => ok(() => undefined)),
-      waitForAuthentication: vi.fn().mockResolvedValue(ok({ user: null, isAuthenticated: false })),
+      waitForAuthentication: vi
+        .fn()
+        .mockResolvedValue(ok({ user: null, isAuthenticated: false })),
     });
 
     expect(await screen.findByTestId('intro-screen')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'intro-sign-in' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'intro-sign-in' }),
+    );
     expect(screen.getByTestId('auth-form')).toBeInTheDocument();
     expect(screen.getByText('signin')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'auth-back' }));
     expect(screen.getByTestId('intro-screen')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'intro-sign-up' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'intro-sign-up' }),
+    );
     expect(screen.getByText('signup')).toBeInTheDocument();
   });
 
@@ -91,14 +111,18 @@ describe('AuthWrapper', () => {
       onAuthStateChange: vi.fn(() => ok(() => undefined)),
       waitForAuthentication: vi
         .fn()
-        .mockResolvedValue(err({ code: 'AUTH_TIMEOUT', message: 'Timed out waiting for auth' })),
+        .mockResolvedValue(
+          err({ code: 'AUTH_TIMEOUT', message: 'Timed out waiting for auth' }),
+        ),
     });
 
     expect(await screen.findByTestId('intro-screen')).toBeInTheDocument();
   });
 
   it('renders protected children after auth state callback receives a user', async () => {
-    let authCallback: ((event: string, session: { user: { id: string } | null }) => void) | undefined;
+    let authCallback:
+      | ((event: string, session: { user: { id: string } | null }) => void)
+      | undefined;
 
     const onAuthStateChange = vi.fn((callback) => {
       authCallback = callback;
@@ -108,7 +132,9 @@ describe('AuthWrapper', () => {
     renderWrapper({
       kind: 'supabase',
       onAuthStateChange,
-      waitForAuthentication: vi.fn().mockResolvedValue(ok({ user: null, isAuthenticated: false })),
+      waitForAuthentication: vi
+        .fn()
+        .mockResolvedValue(ok({ user: null, isAuthenticated: false })),
     });
 
     await waitFor(() => {

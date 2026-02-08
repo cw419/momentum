@@ -71,10 +71,19 @@ export function useBettingDomain({
           });
         }
         if (isDev) {
-          logger.debug('BETTING', 'Cancelled session deleted (refund handled by trigger)', { sessionId: currentSessionId });
+          logger.debug(
+            'BETTING',
+            'Cancelled session deleted (refund handled by trigger)',
+            { sessionId: currentSessionId },
+          );
         }
       } catch (error) {
-        logger.error('BETTING', '删除取消的会话记录失败', { sessionId: currentSessionId }, toError(error));
+        logger.error(
+          'BETTING',
+          '删除取消的会话记录失败',
+          { sessionId: currentSessionId },
+          toError(error),
+        );
       }
 
       emitPointsChanged();

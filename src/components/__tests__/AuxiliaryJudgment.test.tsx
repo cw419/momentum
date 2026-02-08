@@ -38,7 +38,7 @@ function renderJudgment(overrides: Parameters<typeof createUnitChain>[0] = {}) {
         onJudgmentAllow={onJudgmentAllow}
         onCancel={onCancel}
       />
-    </I18nProvider>
+    </I18nProvider>,
   );
 
   return { onJudgmentFailure, onJudgmentAllow, onCancel };
@@ -79,7 +79,9 @@ describe('AuxiliaryJudgment', () => {
   });
 
   it('handles failure and cancel actions', () => {
-    const { onJudgmentFailure, onCancel } = renderJudgment({ auxiliaryExceptions: [] });
+    const { onJudgmentFailure, onCancel } = renderJudgment({
+      auxiliaryExceptions: [],
+    });
 
     clickButtonContaining('Mark as failed');
     clickButtonContaining('Cancel');

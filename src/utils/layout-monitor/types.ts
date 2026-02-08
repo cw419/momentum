@@ -5,4 +5,3 @@ export interface LayoutIssue {
   description: string;
   suggestedFix?: string;
 }
-

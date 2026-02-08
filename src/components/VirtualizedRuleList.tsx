@@ -3,13 +3,22 @@
  * 支持大量规则的高性能渲染
  */
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { ExceptionRule } from '../types';
 import { SearchResult } from '../utils/ruleSearchOptimizer';
 import { useI18n } from '../i18n';
 import { CreateNewRuleItem } from './virtualized-rule-list/CreateNewRuleItem';
 import { EmptyState } from './virtualized-rule-list/EmptyState';
-import { formatLastUsed, getMatchTypeLabel } from './virtualized-rule-list/formatting';
+import {
+  formatLastUsed,
+  getMatchTypeLabel,
+} from './virtualized-rule-list/formatting';
 import { highlightText } from './virtualized-rule-list/highlightText';
 import { LoadingState } from './virtualized-rule-list/LoadingState';
 import { RuleListItem } from './virtualized-rule-list/RuleListItem';
@@ -40,11 +49,14 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   isLoading = false,
   itemHeight = 50, // 修改默认高度
   containerHeight = 400,
-  overscan = 5
+  overscan = 5,
 }) => {
   const { language, tr } = useI18n();
   const [scrollTop, setScrollTop] = useState(0);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: containerHeight });
+  const [containerSize, setContainerSize] = useState({
+    width: 0,
+    height: containerHeight,
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollElementRef = useRef<HTMLDivElement>(null);
   const showCreateNew = Boolean(onCreateNew && searchQuery);
@@ -52,7 +64,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   // 计算可见项目范围
   const visibleRange = useMemo(() => {
     const totalItems = rules.length + (onCreateNew && searchQuery ? 1 : 0);
-    
+
     if (totalItems === 0) {
       return { start: 0, end: 0, totalItems: 0 };
     }
@@ -65,22 +77,30 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
     return {
       start: adjustedStart,
       end,
-      totalItems
+      totalItems,
     };
-  }, [scrollTop, itemHeight, containerSize.height, rules.length, overscan, onCreateNew, searchQuery]);
+  }, [
+    scrollTop,
+    itemHeight,
+    containerSize.height,
+    rules.length,
+    overscan,
+    onCreateNew,
+    searchQuery,
+  ]);
 
   // 计算虚拟项目
   const virtualItems = useMemo((): VirtualItem[] => {
     const items: VirtualItem[] = [];
-    
+
     for (let i = visibleRange.start; i < visibleRange.end; i++) {
       items.push({
         index: i,
         start: i * itemHeight,
-        end: (i + 1) * itemHeight
+        end: (i + 1) * itemHeight,
       });
     }
-    
+
     return items;
   }, [visibleRange, itemHeight]);
 
@@ -94,14 +114,14 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
       throttle((nextScrollTop: number) => {
         setScrollTop(nextScrollTop);
       }, 16),
-    []
+    [],
   );
 
   const onScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       handleScroll(e.currentTarget.scrollTop);
     },
-    [handleScroll]
+    [handleScroll],
   );
 
   // 容器大小变化处理
@@ -111,13 +131,13 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
         const rect = containerRef.current.getBoundingClientRect();
         setContainerSize({
           width: rect.width,
-          height: rect.height
+          height: rect.height,
         });
       }
     };
 
     updateSize();
-    
+
     const resizeObserver = new ResizeObserver(updateSize);
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
@@ -130,10 +150,13 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
 
   const formatLastUsedLabel = useCallback(
     (date: Date) => formatLastUsed(date, language, tr),
-    [language, tr]
+    [language, tr],
   );
 
-  const matchTypeLabel = useCallback((matchType: string) => getMatchTypeLabel(matchType, tr), [tr]);
+  const matchTypeLabel = useCallback(
+    (matchType: string) => getMatchTypeLabel(matchType, tr),
+    [tr],
+  );
 
   if (isLoading) {
     return (
@@ -146,7 +169,11 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
   if (visibleRange.totalItems === 0) {
     return (
       <div ref={containerRef} style={{ height: containerHeight }}>
-        <EmptyState searchQuery={searchQuery} onCreateNew={onCreateNew} tr={tr} />
+        <EmptyState
+          searchQuery={searchQuery}
+          onCreateNew={onCreateNew}
+          tr={tr}
+        />
       </div>
     );
   }
@@ -159,22 +186,20 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
     >
       <div
         ref={scrollElementRef}
-        className="overflow-auto h-full"
+        className="h-full overflow-auto"
         onScroll={onScroll}
         style={{
           overscrollBehavior: 'contain',
-          scrollBehavior: 'smooth'
+          scrollBehavior: 'smooth',
         }}
       >
         {/* 虚拟滚动容器 */}
-        <div
-          className="relative"
-          style={{ height: totalHeight }}
-        >
+        <div className="relative" style={{ height: totalHeight }}>
           {/* 渲染可见项目 */}
           {virtualItems.map((virtualItem) => {
-            const isCreateNewItem = onCreateNew && searchQuery && virtualItem.index === 0;
-            
+            const isCreateNewItem =
+              onCreateNew && searchQuery && virtualItem.index === 0;
+
             if (isCreateNewItem) {
               return (
                 <div
@@ -184,7 +209,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
                     top: virtualItem.start,
                     left: 0,
                     right: 0,
-                    height: itemHeight
+                    height: itemHeight,
                   }}
                 >
                   {onCreateNew && (
@@ -199,9 +224,12 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
               );
             }
 
-            const ruleIndex = onCreateNew && searchQuery ? virtualItem.index - 1 : virtualItem.index;
+            const ruleIndex =
+              onCreateNew && searchQuery
+                ? virtualItem.index - 1
+                : virtualItem.index;
             const result = rules[ruleIndex];
-            
+
             if (!result) return null;
 
             return (
@@ -212,7 +240,7 @@ export const VirtualizedRuleList: React.FC<VirtualizedRuleListProps> = ({
                   top: virtualItem.start,
                   left: 0,
                   right: 0,
-                  height: itemHeight
+                  height: itemHeight,
                 }}
               >
                 <RuleListItem

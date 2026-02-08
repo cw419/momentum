@@ -12,13 +12,25 @@ export type SupabaseClient = NonNullable<typeof supabase>;
 export interface SupabaseStorageContext {
   getClient(): SupabaseClient;
   getCurrentUser(): Promise<User | null>;
-  waitForAuthentication(maxWaitTime?: number): Promise<{ user: User | null; isAuthenticated: boolean }>;
+  waitForAuthentication(
+    maxWaitTime?: number,
+  ): Promise<{ user: User | null; isAuthenticated: boolean }>;
   isUserAuthenticated(): Promise<boolean>;
 
-  retryOperation<T>(operation: () => Promise<T>, maxRetries?: number, baseDelay?: number): Promise<T>;
-  retryWithAuth<T>(operation: () => Promise<T>, maxRetries?: number, baseDelay?: number): Promise<T>;
+  retryOperation<T>(
+    operation: () => Promise<T>,
+    maxRetries?: number,
+    baseDelay?: number,
+  ): Promise<T>;
+  retryWithAuth<T>(
+    operation: () => Promise<T>,
+    maxRetries?: number,
+    baseDelay?: number,
+  ): Promise<T>;
 
-  verifySchemaColumns(tableName: string, requiredColumns: string[]): Promise<SchemaVerificationResult>;
+  verifySchemaColumns(
+    tableName: string,
+    requiredColumns: string[],
+  ): Promise<SchemaVerificationResult>;
   clearSchemaCache(): void;
 }
-

@@ -58,4 +58,3 @@ export async function updateChainStructure(): Promise<{
 
   return { updatedCount, errors };
 }
-

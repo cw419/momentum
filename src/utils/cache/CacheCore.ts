@@ -55,7 +55,7 @@ export class CacheCore {
     const entry: CacheEntry<T> = {
       data,
       timestamp: Date.now(),
-      ttl: ttl ?? this.config.defaultTTL
+      ttl: ttl ?? this.config.defaultTTL,
     };
 
     this.cache.set(key, entry);
@@ -132,13 +132,13 @@ export class CacheCore {
       hitCount: this.hitCount,
       missCount: this.missCount,
       hitRate: Math.round(hitRate * 100) / 100,
-      memoryUsage
+      memoryUsage,
     };
   }
 
   protected invalidateByPattern(predicate: (key: string) => boolean): void {
     const keysToDelete = Array.from(this.cache.keys()).filter(predicate);
-    keysToDelete.forEach(key => this.cache.delete(key));
+    keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
   protected evictOldest(): void {

@@ -9,6 +9,7 @@
 ## 1. 概述
 
 删除链条后，内存中的状态与数据库状态不同步，导致：
+
 1. 回收箱数据不刷新
 2. 新建链条保存失败（数据库冲突错误）
 3. UI 显示与实际数据不一致
@@ -18,12 +19,14 @@
 ## 2. 影响范围
 
 ### 用户可见症状
+
 - 删除链条后，回收箱计数不更新
 - 删除后立即创建新链条，保存失败
 - 错误信息：`ON CONFLICT DO UPDATE command cannot affect row a second time`
 - 需要刷新页面才能正常操作
 
 ### 影响面
+
 - 频繁编辑链条的用户
 - 用户体验断裂，被迫手动刷新
 
@@ -53,9 +56,9 @@
 // 删除链条的流程（修复前）
 async function deleteChain(chainId: string) {
   // 1. 更新 React state
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
-    chains: prev.chains.filter(c => c.id !== chainId),
+    chains: prev.chains.filter((c) => c.id !== chainId),
   }));
 
   // 2. 写入数据库
@@ -124,9 +127,9 @@ class RealTimeSyncService {
 // App.tsx / useChainsDomain.ts
 async function deleteChain(chainId: string) {
   // 1. 更新 React state
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
-    chains: prev.chains.filter(c => c.id !== chainId),
+    chains: prev.chains.filter((c) => c.id !== chainId),
   }));
 
   // 2. 写入数据库
@@ -140,9 +143,9 @@ async function deleteChain(chainId: string) {
   recycleBinService.refresh();
 
   // ✅ 5. 创建新数组引用触发 useEffect 依赖更新
-  setState(prev => ({
+  setState((prev) => ({
     ...prev,
-    chains: [...prev.chains],  // 新引用
+    chains: [...prev.chains], // 新引用
   }));
 }
 ```
@@ -222,17 +225,18 @@ if (isDev) {
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
-| `0512678` | 主要修复：多层缓存清除机制 |
-| `de3f1d8` | 强制刷新 UI 状态，新数组引用 |
-| `3117d86` | 删除链条后状态同步问题分析 |
+| Commit    | 描述                             |
+| --------- | -------------------------------- |
+| `0512678` | 主要修复：多层缓存清除机制       |
+| `de3f1d8` | 强制刷新 UI 状态，新数组引用     |
+| `3117d86` | 删除链条后状态同步问题分析       |
 | `05c5b4b` | 删除和恢复文件需要刷新页面的问题 |
-| `e0dc270` | 恢复功能的批量操作和状态更新 |
+| `e0dc270` | 恢复功能的批量操作和状态更新     |
 
 ## 7. 经验教训
 
 > **核心教训**: 在多层缓存架构中，**写操作的缓存失效必须是显式的、完整的**。不要假设：
+>
 > 1. React state 更新了，其他层就会自动同步
 > 2. 数据库更新了，缓存就会自动失效
 > 3. 用户刷新页面是可接受的"修复方案"
@@ -255,5 +259,5 @@ if (isDev) {
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

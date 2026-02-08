@@ -20,7 +20,9 @@ vi.mock('../../../../utils/logger', () => ({
   },
 }));
 
-const createMockScheduledSessionRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
+const createMockScheduledSessionRow = (
+  overrides: Partial<Record<string, unknown>> = {},
+) => ({
   chain_id: 'chain-1',
   scheduled_at: '2024-01-15T10:00:00Z',
   expires_at: '2024-01-15T11:00:00Z',
@@ -29,7 +31,9 @@ const createMockScheduledSessionRow = (overrides: Partial<Record<string, unknown
   ...overrides,
 });
 
-const createMockActiveSessionRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
+const createMockActiveSessionRow = (
+  overrides: Partial<Record<string, unknown>> = {},
+) => ({
   id: 'session-1',
   chain_id: 'chain-1',
   started_at: '2024-01-15T10:00:00Z',
@@ -71,7 +75,10 @@ describe('sessions.ts', () => {
 
     it('should return mapped scheduled sessions on success', async () => {
       const mockData = [createMockScheduledSessionRow()];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getScheduledSessions(ctx);
@@ -127,7 +134,9 @@ describe('sessions.ts', () => {
       });
 
       const deleteIn = vi.fn().mockReturnValue({ data: null, error: null });
-      const deleteEq = vi.fn().mockReturnValue({ in: deleteIn, data: null, error: null });
+      const deleteEq = vi
+        .fn()
+        .mockReturnValue({ in: deleteIn, data: null, error: null });
 
       const upsert = vi.fn().mockReturnValue({ data: null, error: null });
 
@@ -153,7 +162,7 @@ describe('sessions.ts', () => {
             user_id: 'test-user-123',
           }),
         ],
-        { onConflict: 'user_id,chain_id' }
+        { onConflict: 'user_id,chain_id' },
       );
     });
 
@@ -167,7 +176,9 @@ describe('sessions.ts', () => {
           return {
             delete: vi.fn().mockImplementation(() => {
               deleteCall = true;
-              return { eq: vi.fn().mockReturnValue({ data: null, error: null }) };
+              return {
+                eq: vi.fn().mockReturnValue({ data: null, error: null }),
+              };
             }),
             upsert: vi.fn().mockImplementation(() => {
               upsertCall = true;
@@ -195,9 +206,13 @@ describe('sessions.ts', () => {
       ];
       const ctx = createMockContext();
 
-      const upsert = vi
-        .fn()
-        .mockReturnValueOnce({ data: null, error: createSupabaseError('42P10', 'no unique or exclusion constraint matching') });
+      const upsert = vi.fn().mockReturnValueOnce({
+        data: null,
+        error: createSupabaseError(
+          '42P10',
+          'no unique or exclusion constraint matching',
+        ),
+      });
 
       const deleteEq = vi.fn().mockReturnValue({ data: null, error: null });
       const insert = vi.fn().mockReturnValue({ data: null, error: null });
@@ -205,7 +220,9 @@ describe('sessions.ts', () => {
       ctx.mockClient.from = vi.fn().mockImplementation((table) => {
         if (table !== 'scheduled_sessions') return createMockQueryBuilder();
         return {
-          select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ data: [], error: null }) }),
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({ data: [], error: null }),
+          }),
           delete: vi.fn().mockReturnValue({ eq: deleteEq }),
           upsert,
           insert,
@@ -216,14 +233,12 @@ describe('sessions.ts', () => {
 
       expect(upsert).toHaveBeenCalled();
       expect(deleteEq).toHaveBeenCalledWith('user_id', 'test-user-123');
-      expect(insert).toHaveBeenCalledWith(
-        [
-          expect.objectContaining({
-            chain_id: 'chain-1',
-            user_id: 'test-user-123',
-          }),
-        ]
-      );
+      expect(insert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          chain_id: 'chain-1',
+          user_id: 'test-user-123',
+        }),
+      ]);
     });
   });
 
@@ -259,7 +274,10 @@ describe('sessions.ts', () => {
 
     it('should return mapped active session on success', async () => {
       const mockData = [createMockActiveSessionRow()];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getActiveSession(ctx);
@@ -281,7 +299,10 @@ describe('sessions.ts', () => {
           total_paused_time: 120,
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getActiveSession(ctx);
@@ -298,7 +319,10 @@ describe('sessions.ts', () => {
           forward_elapsed_time: 600,
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getActiveSession(ctx);
@@ -312,7 +336,10 @@ describe('sessions.ts', () => {
 
       const firstQuery = createMockQueryBuilder({
         data: null,
-        error: createSupabaseError('PGRST204', 'is_forward_timer does not exist'),
+        error: createSupabaseError(
+          'PGRST204',
+          'is_forward_timer does not exist',
+        ),
       });
 
       const basicRow = {
@@ -326,9 +353,15 @@ describe('sessions.ts', () => {
         user_id: 'test-user-123',
       };
 
-      const secondQuery = createMockQueryBuilder({ data: [basicRow], error: null });
+      const secondQuery = createMockQueryBuilder({
+        data: [basicRow],
+        error: null,
+      });
 
-      ctx.mockClient.from = vi.fn().mockReturnValueOnce(firstQuery).mockReturnValueOnce(secondQuery);
+      ctx.mockClient.from = vi
+        .fn()
+        .mockReturnValueOnce(firstQuery)
+        .mockReturnValueOnce(secondQuery);
 
       const result = await getActiveSession(ctx);
 
@@ -375,7 +408,9 @@ describe('sessions.ts', () => {
         }),
       });
 
-      await expect(saveActiveSession(ctx, null)).rejects.toThrow('Delete failed');
+      await expect(saveActiveSession(ctx, null)).rejects.toThrow(
+        'Delete failed',
+      );
     });
 
     it('should upsert active session successfully', async () => {
@@ -433,7 +468,10 @@ describe('sessions.ts', () => {
           callCount++;
           if (callCount === 1) {
             return {
-              error: createSupabaseError('42703', 'is_forward_timer does not exist'),
+              error: createSupabaseError(
+                '42703',
+                'is_forward_timer does not exist',
+              ),
             };
           }
           return { error: null };
@@ -460,12 +498,15 @@ describe('sessions.ts', () => {
       const ctx = createMockContext();
       ctx.mockClient.from = vi.fn().mockImplementation(() => ({
         upsert: vi.fn().mockImplementation(() => ({
-          error: createSupabaseError('42703', 'is_forward_timer does not exist'),
+          error: createSupabaseError(
+            '42703',
+            'is_forward_timer does not exist',
+          ),
         })),
       }));
 
       await expect(saveActiveSession(ctx, session)).rejects.toThrow(
-        'is_forward_timer does not exist'
+        'is_forward_timer does not exist',
       );
     });
 
@@ -486,7 +527,9 @@ describe('sessions.ts', () => {
         }),
       });
 
-      await expect(saveActiveSession(ctx, session)).rejects.toThrow('Upsert failed');
+      await expect(saveActiveSession(ctx, session)).rejects.toThrow(
+        'Upsert failed',
+      );
     });
   });
 });

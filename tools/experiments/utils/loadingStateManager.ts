@@ -34,7 +34,7 @@ export class LoadingStateManager {
       message: options.message,
       progress: options.showProgress ? 0 : undefined,
       startTime: Date.now(),
-      estimatedDuration: options.estimatedDuration
+      estimatedDuration: options.estimatedDuration,
     };
 
     this.states.set(key, state);
@@ -49,7 +49,10 @@ export class LoadingStateManager {
   /**
    * 更新加载状态
    */
-  update(key: string, updates: Partial<Pick<LoadingState, 'message' | 'progress'>>): void {
+  update(
+    key: string,
+    updates: Partial<Pick<LoadingState, 'message' | 'progress'>>,
+  ): void {
     const state = this.states.get(key);
     if (!state || !state.isLoading) return;
 
@@ -62,9 +65,9 @@ export class LoadingStateManager {
    * 设置进度
    */
   setProgress(key: string, progress: number, message?: string): void {
-    this.update(key, { 
+    this.update(key, {
       progress: Math.max(0, Math.min(100, progress)),
-      message: message || this.states.get(key)?.message
+      message: message || this.states.get(key)?.message,
     });
   }
 
@@ -124,7 +127,7 @@ export class LoadingStateManager {
     if (!this.callbacks.has(key)) {
       this.callbacks.set(key, new Set());
     }
-    
+
     this.callbacks.get(key)!.add(callback);
 
     // 如果已有状态，立即通知
@@ -149,9 +152,9 @@ export class LoadingStateManager {
    * 包装异步操作
    */
   async wrap<T>(
-    key: string, 
-    operation: () => Promise<T>, 
-    options: LoadingOptions = {}
+    key: string,
+    operation: () => Promise<T>,
+    options: LoadingOptions = {},
   ): Promise<T> {
     try {
       this.start(key, options);
@@ -170,26 +173,26 @@ export class LoadingStateManager {
   async batchWrap<T>(
     key: string,
     operations: Array<() => Promise<T>>,
-    options: LoadingOptions & { 
+    options: LoadingOptions & {
       onProgress?: (completed: number, total: number) => void;
-    } = {}
+    } = {},
   ): Promise<T[]> {
     const total = operations.length;
     const results: T[] = [];
-    
+
     try {
       this.start(key, { ...options, showProgress: true });
-      
+
       for (let i = 0; i < operations.length; i++) {
         const result = await operations[i]();
         results.push(result);
-        
+
         const progress = ((i + 1) / total) * 100;
         this.setProgress(key, progress);
-        
+
         options.onProgress?.(i + 1, total);
       }
-      
+
       this.finish(key, { minDisplayTime: options.minDisplayTime });
       return results;
     } catch (error) {
@@ -206,7 +209,7 @@ export class LoadingStateManager {
     for (const timerId of this.timers.values()) {
       clearInterval(timerId);
     }
-    
+
     this.states.clear();
     this.callbacks.clear();
     this.timers.clear();
@@ -230,7 +233,7 @@ export class LoadingStateManager {
     const completedState: LoadingState = {
       ...state,
       isLoading: false,
-      progress: 100
+      progress: 100,
     };
 
     this.notifyCallbacks(key, completedState);
@@ -248,7 +251,7 @@ export class LoadingStateManager {
   private notifyCallbacks(key: string, state: LoadingState): void {
     const callbacks = this.callbacks.get(key);
     if (callbacks) {
-      callbacks.forEach(callback => {
+      callbacks.forEach((callback) => {
         try {
           callback(state);
         } catch (error) {
@@ -268,7 +271,7 @@ export class LoadingStateManager {
     const timerId = setInterval(() => {
       elapsed += updateInterval;
       const progress = Math.min(95, (elapsed / estimatedDuration) * 100); // 最多到95%，避免超过100%
-      
+
       const state = this.states.get(key);
       if (!state || !state.isLoading) {
         clearInterval(timerId);
@@ -287,7 +290,11 @@ export class LoadingStateManager {
  * 加载状态装饰器
  */
 export function withLoading(key: string, options: LoadingOptions = {}) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyName: string,
+    descriptor: PropertyDescriptor,
+  ) {
     const method = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
@@ -304,7 +311,7 @@ export function withLoading(key: string, options: LoadingOptions = {}) {
  */
 export function useLoadingState(key: string) {
   const [state, setState] = React.useState<LoadingState | null>(
-    loadingStateManager.getState(key)
+    loadingStateManager.getState(key),
   );
 
   React.useEffect(() => {
@@ -317,7 +324,7 @@ export function useLoadingState(key: string) {
     message: state?.message,
     progress: state?.progress,
     startTime: state?.startTime,
-    estimatedDuration: state?.estimatedDuration
+    estimatedDuration: state?.estimatedDuration,
   };
 }
 

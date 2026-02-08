@@ -22,4 +22,3 @@ export interface QuickHealthCheckResult {
   score: number;
   issues: string[];
 }
-

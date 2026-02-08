@@ -12,7 +12,8 @@ export async function checkValidationService(): Promise<ComponentHealth> {
     let score = 100;
 
     if (sampleRules.length > 0) {
-      const report = await enhancedRuleValidationService.validateRulesIntegrity(sampleRules);
+      const report =
+        await enhancedRuleValidationService.validateRulesIntegrity(sampleRules);
 
       if (report.invalidRules.length > 0) {
         issues.push(`${report.invalidRules.length} 个规则验证失败`);
@@ -41,4 +42,3 @@ export async function checkValidationService(): Promise<ComponentHealth> {
     };
   }
 }
-

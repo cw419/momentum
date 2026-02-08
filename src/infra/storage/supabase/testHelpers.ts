@@ -33,7 +33,7 @@ interface MockQueryBuilder {
 }
 
 export function createMockQueryBuilder(
-  dataOrError: { data?: unknown; error?: unknown } = { data: [], error: null }
+  dataOrError: { data?: unknown; error?: unknown } = { data: [], error: null },
 ): MockQueryBuilder {
   const result = {
     data: dataOrError.data ?? null,
@@ -63,7 +63,9 @@ export function createMockQueryBuilder(
   return builder;
 }
 
-function createMockSupabaseClient(queryBuilder: MockQueryBuilder = createMockQueryBuilder()) {
+function createMockSupabaseClient(
+  queryBuilder: MockQueryBuilder = createMockQueryBuilder(),
+) {
   return {
     from: vi.fn().mockReturnValue(queryBuilder),
     rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -75,14 +77,21 @@ export function createMockContext(
     user?: User | null;
     isAuthenticated?: boolean;
     queryBuilder?: MockQueryBuilder;
-  } = {}
-): SupabaseStorageContext & { mockClient: ReturnType<typeof createMockSupabaseClient> } {
-  const { user = mockUser, isAuthenticated = true, queryBuilder = createMockQueryBuilder() } = options;
+  } = {},
+): SupabaseStorageContext & {
+  mockClient: ReturnType<typeof createMockSupabaseClient>;
+} {
+  const {
+    user = mockUser,
+    isAuthenticated = true,
+    queryBuilder = createMockQueryBuilder(),
+  } = options;
 
   const mockClient = createMockSupabaseClient(queryBuilder);
 
   return {
-    getClient: () => mockClient as unknown as ReturnType<SupabaseStorageContext['getClient']>,
+    getClient: () =>
+      mockClient as unknown as ReturnType<SupabaseStorageContext['getClient']>,
     getCurrentUser: vi.fn().mockResolvedValue(user),
     waitForAuthentication: vi.fn().mockResolvedValue({ user, isAuthenticated }),
     isUserAuthenticated: vi.fn().mockResolvedValue(isAuthenticated),

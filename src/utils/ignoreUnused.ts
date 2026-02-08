@@ -1,2 +1,1 @@
-export function ignoreUnused(..._args: unknown[]): void {
-}
+export function ignoreUnused(..._args: unknown[]): void {}

@@ -22,6 +22,7 @@ import { toast } from '../../utils/toast';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { useI18n } from '../../i18n';
 import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
+import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 
 interface UseGroupDomainParams {
   state: AppState;
@@ -30,7 +31,12 @@ interface UseGroupDomainParams {
   safelySaveChains: SafelySaveChains;
 }
 
-export function useGroupDomain({ state, setState, storage, safelySaveChains }: UseGroupDomainParams) {
+export function useGroupDomain({
+  state,
+  setState,
+  storage,
+  safelySaveChains,
+}: UseGroupDomainParams) {
   const { language, tr } = useI18n();
 
   const handleChainsOperationError = async (
@@ -47,17 +53,22 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       toastPrefixEn: string;
       toastFallbackZh: string;
       toastFallbackEn: string;
-    }
+    },
   ) => {
-    logger.error('APP_SHELL', logMessage, undefined, error as Error);
+    logger.error(
+      'APP_SHELL',
+      logMessage,
+      undefined,
+      normalizeUnknownError(error),
+    );
     const safeDetail = getSafeErrorDetailFromUnknown(error, language);
     toast.error(
       safeDetail
         ? tr(
             `${toastPrefixZh}: ${safeDetail}\n\n请查看控制台了解详细信息，然后重试`,
-            `${toastPrefixEn}: ${safeDetail}\n\nCheck the console for details, then try again.`
+            `${toastPrefixEn}: ${safeDetail}\n\nCheck the console for details, then try again.`,
           )
-        : tr(toastFallbackZh, toastFallbackEn)
+        : tr(toastFallbackZh, toastFallbackEn),
     );
 
     try {
@@ -68,12 +79,25 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
         chainsRevision: prev.chainsRevision + 1,
       }));
     } catch (reloadError) {
-      logger.error('APP_SHELL', '重新加载数据也失败了', undefined, reloadError as Error);
+      logger.error(
+        'APP_SHELL',
+        '重新加载数据也失败了',
+        undefined,
+        normalizeUnknownError(reloadError),
+      );
     }
   };
 
-  const handleImportUnits = async (unitIds: string[], groupId: string, mode: 'move' | 'copy' = 'copy') => {
-    logger.info('APP_SHELL', '开始导入单元到任务群', { unitIds, groupId, mode });
+  const handleImportUnits = async (
+    unitIds: string[],
+    groupId: string,
+    mode: 'move' | 'copy' = 'copy',
+  ) => {
+    logger.info('APP_SHELL', '开始导入单元到任务群', {
+      unitIds,
+      groupId,
+      mode,
+    });
 
     try {
       let updatedChains: Chain[];
@@ -82,7 +106,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
         // 复制模式：创建副本并加入任务群，原单元保持独立
         const copiesToAdd: Chain[] = [];
 
-        state.chains.forEach(chain => {
+        state.chains.forEach((chain) => {
           if (unitIds.includes(chain.id)) {
             const copy: Chain = {
               ...chain,
@@ -104,7 +128,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
         updatedChains = [...state.chains, ...copiesToAdd];
       } else {
         // 移动模式：更新选中单元的 parentId 为目标任务群的 ID
-        updatedChains = state.chains.map(chain => {
+        updatedChains = state.chains.map((chain) => {
           if (unitIds.includes(chain.id)) {
             return { ...chain, parentId: groupId };
           }
@@ -117,7 +141,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       queryOptimizer.onDataChange('chains');
       logger.info('APP_SHELL', '导入数据保存成功，更新UI状态');
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         chains: updatedChains,
         chainsRevision: prev.chainsRevision + 1,
@@ -129,16 +153,20 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
         toastPrefixZh: '导入失败',
         toastPrefixEn: 'Import failed',
         toastFallbackZh: '导入失败，请重试（详情见控制台）',
-        toastFallbackEn: 'Import failed. Check the console for details, then try again.',
+        toastFallbackEn:
+          'Import failed. Check the console for details, then try again.',
       });
     }
   };
 
-  const handleUpdateTaskRepeatCount = async (chainId: string, repeatCount: number) => {
+  const handleUpdateTaskRepeatCount = async (
+    chainId: string,
+    repeatCount: number,
+  ) => {
     logger.debug('APP_SHELL', '开始更新任务重复次数', { chainId, repeatCount });
 
     try {
-      const updatedChains = state.chains.map(chain => {
+      const updatedChains = state.chains.map((chain) => {
         if (chain.id === chainId) {
           return { ...chain, taskRepeatCount: repeatCount };
         }
@@ -150,7 +178,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
       queryOptimizer.onDataChange('chains');
       logger.info('APP_SHELL', '重复次数更新保存成功，更新UI状态');
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         chains: updatedChains,
         chainsRevision: prev.chainsRevision + 1,
@@ -162,17 +190,25 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
         toastPrefixZh: '重复次数更新失败',
         toastPrefixEn: 'Failed to update repeat count',
         toastFallbackZh: '重复次数更新失败，请重试（详情见控制台）',
-        toastFallbackEn: 'Failed to update repeat count. Check the console for details, then try again.',
+        toastFallbackEn:
+          'Failed to update repeat count. Check the console for details, then try again.',
       });
     }
   };
 
-  const handleReorderUnit = async (groupId: string, unitId: string, direction: 'up' | 'down') => {
-    const chainTree = queryOptimizer.memoizedBuildChainTree(state.chains, state.chainsRevision);
-    const groupNode = chainTree.find(node => node.id === groupId);
+  const handleReorderUnit = async (
+    groupId: string,
+    unitId: string,
+    direction: 'up' | 'down',
+  ) => {
+    const chainTree = queryOptimizer.memoizedBuildChainTree(
+      state.chains,
+      state.chainsRevision,
+    );
+    const groupNode = chainTree.find((node) => node.id === groupId);
     if (!groupNode) return;
 
-    const idx = groupNode.children.findIndex(child => child.id === unitId);
+    const idx = groupNode.children.findIndex((child) => child.id === unitId);
     if (idx < 0) return;
 
     const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
@@ -180,7 +216,7 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
 
     const a = groupNode.children[idx];
     const b = groupNode.children[targetIdx];
-    const updated = state.chains.map(ch => {
+    const updated = state.chains.map((ch) => {
       if (ch.id === a.id) return { ...ch, sortOrder: b.sortOrder };
       if (ch.id === b.id) return { ...ch, sortOrder: a.sortOrder };
       return ch;
@@ -188,7 +224,11 @@ export function useGroupDomain({ state, setState, storage, safelySaveChains }: U
 
     await safelySaveChains(updated);
     queryOptimizer.onDataChange('chains');
-    setState(prev => ({ ...prev, chains: updated, chainsRevision: prev.chainsRevision + 1 }));
+    setState((prev) => ({
+      ...prev,
+      chains: updated,
+      chainsRevision: prev.chainsRevision + 1,
+    }));
   };
 
   return { handleImportUnits, handleUpdateTaskRepeatCount, handleReorderUnit };

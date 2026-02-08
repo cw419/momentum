@@ -19,7 +19,10 @@ const mockStorage: Mocked<RecycleBinStorage> = {
   softDeleteChain: vi.fn<[string], Promise<void>>(),
   restoreChain: vi.fn<[string], Promise<void>>(),
   permanentlyDeleteChain: vi.fn<[string], Promise<void>>(),
-  cleanupExpiredDeletedChains: vi.fn<[olderThanDays?: number], Promise<number>>(),
+  cleanupExpiredDeletedChains: vi.fn<
+    [olderThanDays?: number],
+    Promise<number>
+  >(),
 };
 
 describe('RecycleBinService', () => {
@@ -68,9 +71,13 @@ describe('RecycleBinService', () => {
     });
 
     it('should handle errors when getting deleted chains', async () => {
-      mockStorage.getDeletedChains.mockRejectedValue(new Error('Storage error'));
+      mockStorage.getDeletedChains.mockRejectedValue(
+        new Error('Storage error'),
+      );
 
-      await expect(RecycleBinService.getDeletedChains()).rejects.toThrow('获取已删除链条失败');
+      await expect(RecycleBinService.getDeletedChains()).rejects.toThrow(
+        '获取已删除链条失败',
+      );
     });
   });
 
@@ -88,7 +95,9 @@ describe('RecycleBinService', () => {
       const chainId = 'test-chain-id';
       mockStorage.softDeleteChain.mockRejectedValue(new Error('Storage error'));
 
-      await expect(RecycleBinService.moveToRecycleBin(chainId)).rejects.toThrow('移动链条到回收箱失败');
+      await expect(RecycleBinService.moveToRecycleBin(chainId)).rejects.toThrow(
+        '移动链条到回收箱失败',
+      );
     });
   });
 
@@ -106,7 +115,9 @@ describe('RecycleBinService', () => {
       const chainId = 'test-chain-id';
       mockStorage.restoreChain.mockRejectedValue(new Error('Storage error'));
 
-      await expect(RecycleBinService.restoreChain(chainId)).rejects.toThrow('恢复链条失败');
+      await expect(RecycleBinService.restoreChain(chainId)).rejects.toThrow(
+        '恢复链条失败',
+      );
     });
   });
 
@@ -122,9 +133,13 @@ describe('RecycleBinService', () => {
 
     it('should handle errors when permanently deleting chain', async () => {
       const chainId = 'test-chain-id';
-      mockStorage.permanentlyDeleteChain.mockRejectedValue(new Error('Storage error'));
+      mockStorage.permanentlyDeleteChain.mockRejectedValue(
+        new Error('Storage error'),
+      );
 
-      await expect(RecycleBinService.permanentlyDelete(chainId)).rejects.toThrow('永久删除链条失败');
+      await expect(
+        RecycleBinService.permanentlyDelete(chainId),
+      ).rejects.toThrow('永久删除链条失败');
     });
   });
 
@@ -145,7 +160,9 @@ describe('RecycleBinService', () => {
       const chainIds = ['chain1', 'chain2'];
       mockStorage.restoreChain.mockRejectedValue(new Error('Storage error'));
 
-      await expect(RecycleBinService.bulkRestore(chainIds)).rejects.toThrow('批量恢复链条失败');
+      await expect(RecycleBinService.bulkRestore(chainIds)).rejects.toThrow(
+        '批量恢复链条失败',
+      );
     });
   });
 
@@ -164,9 +181,13 @@ describe('RecycleBinService', () => {
 
     it('should handle errors during bulk permanent delete', async () => {
       const chainIds = ['chain1', 'chain2'];
-      mockStorage.permanentlyDeleteChain.mockRejectedValue(new Error('Storage error'));
+      mockStorage.permanentlyDeleteChain.mockRejectedValue(
+        new Error('Storage error'),
+      );
 
-      await expect(RecycleBinService.bulkPermanentDelete(chainIds)).rejects.toThrow('批量永久删除链条失败');
+      await expect(
+        RecycleBinService.bulkPermanentDelete(chainIds),
+      ).rejects.toThrow('批量永久删除链条失败');
     });
   });
 
@@ -190,9 +211,13 @@ describe('RecycleBinService', () => {
     });
 
     it('should handle errors during cleanup', async () => {
-      mockStorage.cleanupExpiredDeletedChains.mockRejectedValue(new Error('Storage error'));
+      mockStorage.cleanupExpiredDeletedChains.mockRejectedValue(
+        new Error('Storage error'),
+      );
 
-      await expect(RecycleBinService.cleanupExpiredChains()).rejects.toThrow('清理过期链条失败');
+      await expect(RecycleBinService.cleanupExpiredChains()).rejects.toThrow(
+        '清理过期链条失败',
+      );
     });
   });
 
@@ -220,7 +245,9 @@ describe('RecycleBinService', () => {
     });
 
     it('should handle errors and return default stats', async () => {
-      mockStorage.getDeletedChains.mockRejectedValue(new Error('Storage error'));
+      mockStorage.getDeletedChains.mockRejectedValue(
+        new Error('Storage error'),
+      );
 
       const result = await RecycleBinService.getRecycleBinStats();
 

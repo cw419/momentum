@@ -9,6 +9,9 @@ describe('domain/result', () => {
 
   it('builds err result with error payload', () => {
     const result = err({ code: 'E_FAIL', message: 'failed' });
-    expect(result).toEqual({ ok: false, error: { code: 'E_FAIL', message: 'failed' } });
+    expect(result).toEqual({
+      ok: false,
+      error: { code: 'E_FAIL', message: 'failed' },
+    });
   });
 });

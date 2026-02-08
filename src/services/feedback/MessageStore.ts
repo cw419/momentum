@@ -9,7 +9,7 @@ import type {
   FeedbackMessage,
   ProgressInfo,
   MessageListener,
-  ProgressListener
+  ProgressListener,
 } from './types';
 
 export class MessageStore {
@@ -58,7 +58,7 @@ export class MessageStore {
 
   getAllMessages(): FeedbackMessage[] {
     return Array.from(this.messages.values()).sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
     );
   }
 
@@ -76,11 +76,16 @@ export class MessageStore {
 
   private notifyMessageListeners(): void {
     const messages = this.getAllMessages();
-    this.messageListeners.forEach(listener => {
+    this.messageListeners.forEach((listener) => {
       try {
         listener(messages);
       } catch (error) {
-        logger.error('USER_FEEDBACK', '消息监听器错误', undefined, toError(error));
+        logger.error(
+          'USER_FEEDBACK',
+          '消息监听器错误',
+          undefined,
+          toError(error),
+        );
       }
     });
   }
@@ -117,11 +122,16 @@ export class MessageStore {
   }
 
   private notifyProgressListeners(): void {
-    this.progressListeners.forEach(listener => {
+    this.progressListeners.forEach((listener) => {
       try {
         listener(this.currentProgress);
       } catch (error) {
-        logger.error('USER_FEEDBACK', '进度监听器错误', undefined, toError(error));
+        logger.error(
+          'USER_FEEDBACK',
+          '进度监听器错误',
+          undefined,
+          toError(error),
+        );
       }
     });
   }

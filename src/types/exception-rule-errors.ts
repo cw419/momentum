@@ -25,15 +25,23 @@ export class ExceptionRuleException extends Error {
   constructor(
     public type: ExceptionRuleError,
     message: string,
-    public details?: unknown
+    public details?: unknown,
   ) {
     super(message);
     this.name = 'ExceptionRuleException';
   }
 }
 
-export type ExceptionRuleExceptionSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type ExceptionRuleExceptionCategory = 'user_error' | 'system_error' | 'data_error' | 'network_error';
+export type ExceptionRuleExceptionSeverity =
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'critical';
+export type ExceptionRuleExceptionCategory =
+  | 'user_error'
+  | 'system_error'
+  | 'data_error'
+  | 'network_error';
 
 export interface EnhancedExceptionRuleExceptionSerialized {
   name: string;
@@ -60,7 +68,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     public suggestedActions?: string[],
     public severity?: ExceptionRuleExceptionSeverity,
     public userMessage?: string,
-    public technicalDetails?: unknown
+    public technicalDetails?: unknown,
   ) {
     super(type, message, context);
     this.name = 'EnhancedExceptionRuleException';
@@ -73,7 +81,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     type: ExceptionRuleError,
     userMessage: string,
     technicalMessage?: string,
-    context?: unknown
+    context?: unknown,
   ): EnhancedExceptionRuleException {
     return new EnhancedExceptionRuleException(
       type,
@@ -83,14 +91,14 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
       [],
       'medium',
       userMessage,
-      { technicalMessage }
+      { technicalMessage },
     );
   }
 
   static createCritical(
     type: ExceptionRuleError,
     message: string,
-    context?: unknown
+    context?: unknown,
   ): EnhancedExceptionRuleException {
     return new EnhancedExceptionRuleException(
       type,
@@ -99,8 +107,11 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
       false,
       [tr('联系技术支持', 'Contact support')],
       'critical',
-      tr('系统遇到严重错误，请联系技术支持', 'A critical error occurred. Please contact support.'),
-      { originalMessage: message }
+      tr(
+        '系统遇到严重错误，请联系技术支持',
+        'A critical error occurred. Please contact support.',
+      ),
+      { originalMessage: message },
     );
   }
 
@@ -108,9 +119,17 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     type: ExceptionRuleError,
     message: string,
     suggestedActions: string[],
-    context?: unknown
+    context?: unknown,
   ): EnhancedExceptionRuleException {
-    return new EnhancedExceptionRuleException(type, message, context, true, suggestedActions, 'medium', message);
+    return new EnhancedExceptionRuleException(
+      type,
+      message,
+      context,
+      true,
+      suggestedActions,
+      'medium',
+      message,
+    );
   }
 
   addSuggestedAction(action: string): this {
@@ -183,7 +202,9 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
     };
   }
 
-  static fromJSON(data: EnhancedExceptionRuleExceptionSerialized): EnhancedExceptionRuleException {
+  static fromJSON(
+    data: EnhancedExceptionRuleExceptionSerialized,
+  ): EnhancedExceptionRuleException {
     const error = new EnhancedExceptionRuleException(
       data.type,
       data.message,
@@ -192,7 +213,7 @@ export class EnhancedExceptionRuleException extends ExceptionRuleException {
       data.suggestedActions,
       data.severity,
       data.userMessage,
-      data.technicalDetails
+      data.technicalDetails,
     );
 
     if (data.stack) {

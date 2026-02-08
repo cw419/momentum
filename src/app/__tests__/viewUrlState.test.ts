@@ -1,6 +1,9 @@
 import type { ActiveSession, Chain } from '../../types';
 import { describe, expect, test } from 'vitest';
-import { parseViewStateFromSearch, serializeViewStateToSearch } from '../viewUrlState';
+import {
+  parseViewStateFromSearch,
+  serializeViewStateToSearch,
+} from '../viewUrlState';
 
 describe('viewUrlState', () => {
   test('serializeViewStateToSearch omits params for dashboard', () => {
@@ -24,13 +27,29 @@ describe('viewUrlState', () => {
   });
 
   test('parseViewStateFromSearch returns dashboard for empty search', () => {
-    const state = parseViewStateFromSearch({ search: '', chains: [], activeSession: null });
-    expect(state).toEqual({ currentView: 'dashboard', viewingChainId: null, editingChain: null });
+    const state = parseViewStateFromSearch({
+      search: '',
+      chains: [],
+      activeSession: null,
+    });
+    expect(state).toEqual({
+      currentView: 'dashboard',
+      viewingChainId: null,
+      editingChain: null,
+    });
   });
 
   test('parseViewStateFromSearch chooses group/detail based on chain type', () => {
-    const groupChain = { id: 'group-1', type: 'group', isTaskGroup: true } as Chain;
-    const unitChain = { id: 'unit-1', type: 'unit', isTaskGroup: false } as Chain;
+    const groupChain = {
+      id: 'group-1',
+      type: 'group',
+      isTaskGroup: true,
+    } as Chain;
+    const unitChain = {
+      id: 'unit-1',
+      type: 'unit',
+      isTaskGroup: false,
+    } as Chain;
 
     const groupState = parseViewStateFromSearch({
       search: '?view=detail&chain=group-1',
@@ -50,7 +69,11 @@ describe('viewUrlState', () => {
   });
 
   test('parseViewStateFromSearch routes task groups to taskgroup-editor when editing', () => {
-    const taskGroup = { id: 'group-1', type: 'group', isTaskGroup: true } as Chain;
+    const taskGroup = {
+      id: 'group-1',
+      type: 'group',
+      isTaskGroup: true,
+    } as Chain;
 
     const state = parseViewStateFromSearch({
       search: '?view=editor&edit=group-1',
@@ -88,14 +111,22 @@ describe('viewUrlState', () => {
       chains: [],
       activeSession: null,
     });
-    expect(invalid).toEqual({ currentView: 'dashboard', viewingChainId: null, editingChain: null });
+    expect(invalid).toEqual({
+      currentView: 'dashboard',
+      viewingChainId: null,
+      editingChain: null,
+    });
 
     const rsip = parseViewStateFromSearch({
       search: '?view=rsip',
       chains: [],
       activeSession: null,
     });
-    expect(rsip).toEqual({ currentView: 'rsip', viewingChainId: null, editingChain: null });
+    expect(rsip).toEqual({
+      currentView: 'rsip',
+      viewingChainId: null,
+      editingChain: null,
+    });
   });
 
   test('parseViewStateFromSearch reads editor parent and rejects missing edit chain', () => {

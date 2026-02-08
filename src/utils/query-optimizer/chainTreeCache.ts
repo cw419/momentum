@@ -11,7 +11,7 @@ export class ChainTreeCache {
 
   constructor(
     private readonly cache: CacheMap,
-    private readonly getCacheTtlMs: () => number
+    private readonly getCacheTtlMs: () => number,
   ) {}
 
   clear(): void {
@@ -26,15 +26,19 @@ export class ChainTreeCache {
       const cached = getCachedData<ChainTreeNode[]>(
         this.cache,
         this.getCacheTtlMs(),
-        this.treeCacheKey
+        this.treeCacheKey,
       );
       if (cached && this.lastChainsRevision === revision) {
         reactPerformanceMonitor.trackCacheHit();
-        performanceLogger.debug('[QUERY_OPTIMIZER] Using cached chain tree (revision match)');
+        performanceLogger.debug(
+          '[QUERY_OPTIMIZER] Using cached chain tree (revision match)',
+        );
         return cached;
       }
 
-      performanceLogger.debug('[QUERY_OPTIMIZER] Rebuilding chain tree (revision changed or cache expired)');
+      performanceLogger.debug(
+        '[QUERY_OPTIMIZER] Rebuilding chain tree (revision changed or cache expired)',
+      );
       reactPerformanceMonitor.trackCacheMiss();
 
       return this.buildChainTreeWithMonitoring(chains, (tree) => {
@@ -49,11 +53,13 @@ export class ChainTreeCache {
       const cached = getCachedData<ChainTreeNode[]>(
         this.cache,
         this.getCacheTtlMs(),
-        this.treeCacheKey
+        this.treeCacheKey,
       );
       if (cached) {
         reactPerformanceMonitor.trackCacheHit();
-        performanceLogger.debug('[QUERY_OPTIMIZER] Using cached chain tree (hash match)');
+        performanceLogger.debug(
+          '[QUERY_OPTIMIZER] Using cached chain tree (hash match)',
+        );
         return cached;
       }
     }
@@ -62,28 +68,34 @@ export class ChainTreeCache {
     const cachedStructuralHash = getCachedData<string>(
       this.cache,
       this.getCacheTtlMs(),
-      `${this.treeCacheKey}_structural`
+      `${this.treeCacheKey}_structural`,
     );
 
     if (structuralHash === cachedStructuralHash) {
       performanceLogger.debug(
-        '[QUERY_OPTIMIZER] Structural hash unchanged, could optimize with incremental update'
+        '[QUERY_OPTIMIZER] Structural hash unchanged, could optimize with incremental update',
       );
     }
 
-    performanceLogger.debug('[QUERY_OPTIMIZER] Rebuilding chain tree (hash path)');
+    performanceLogger.debug(
+      '[QUERY_OPTIMIZER] Rebuilding chain tree (hash path)',
+    );
     reactPerformanceMonitor.trackCacheMiss();
 
     return this.buildChainTreeWithMonitoring(chains, (tree) => {
       setCachedData(this.cache, this.treeCacheKey, tree);
-      setCachedData(this.cache, `${this.treeCacheKey}_structural`, structuralHash);
+      setCachedData(
+        this.cache,
+        `${this.treeCacheKey}_structural`,
+        structuralHash,
+      );
       this.lastChainHash = currentHash;
     });
   }
 
   private buildChainTreeWithMonitoring(
     chains: Chain[],
-    onCache: (tree: ChainTreeNode[]) => void
+    onCache: (tree: ChainTreeNode[]) => void,
   ): ChainTreeNode[] {
     return performanceLogger.time('buildChainTree-full', () => {
       const startTime = performance.now();
@@ -94,7 +106,7 @@ export class ChainTreeCache {
       onCache(tree);
 
       performanceLogger.debug(
-        `[QUERY_OPTIMIZER] Tree built with ${tree.length} root nodes in ${buildTime.toFixed(2)}ms`
+        `[QUERY_OPTIMIZER] Tree built with ${tree.length} root nodes in ${buildTime.toFixed(2)}ms`,
       );
 
       return tree;
@@ -105,7 +117,7 @@ export class ChainTreeCache {
     return chains
       .map(
         (c) =>
-          `${c.id}-${c.parentId || 'ROOT'}-${c.name}-${c.sortOrder}-${c.type}-${c.currentStreak}-${c.totalCompletions}`
+          `${c.id}-${c.parentId || 'ROOT'}-${c.name}-${c.sortOrder}-${c.type}-${c.currentStreak}-${c.totalCompletions}`,
       )
       .sort()
       .join('|');

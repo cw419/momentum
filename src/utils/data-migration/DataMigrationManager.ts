@@ -49,4 +49,3 @@ export class DataMigrationManager {
 
   generateMigrationReport = generateMigrationReport;
 }
-

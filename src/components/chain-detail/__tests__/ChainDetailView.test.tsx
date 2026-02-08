@@ -34,7 +34,13 @@ vi.mock('../../chain-detail', () => ({
   ChainDetailExceptions: () => <div>mock-exceptions</div>,
   ChainDetailDescription: () => <div>mock-description</div>,
   ChainDetailHistory: () => <div>mock-history</div>,
-  DeleteConfirmModal: ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => (
+  DeleteConfirmModal: ({
+    onConfirm,
+    onCancel,
+  }: {
+    onConfirm: () => void;
+    onCancel: () => void;
+  }) => (
     <div>
       <button type="button" onClick={onConfirm}>
         confirm-delete
@@ -46,7 +52,9 @@ vi.mock('../../chain-detail', () => ({
   ),
 }));
 
-function createProps(overrides: Partial<ComponentProps<typeof ChainDetailView>> = {}) {
+function createProps(
+  overrides: Partial<ComponentProps<typeof ChainDetailView>> = {},
+) {
   const chain = createUnitChain({
     id: 'chain-1',
     name: 'Reading',

@@ -18,15 +18,20 @@ export function formatDeletedTime(params: {
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
   if (diffDays > 0) {
-    return language === 'zh' ? `${diffDays}天前` : `${diffDays} ${pluralizeEn(diffDays, 'day')} ago`;
+    return language === 'zh'
+      ? `${diffDays}天前`
+      : `${diffDays} ${pluralizeEn(diffDays, 'day')} ago`;
   }
   if (diffHours > 0) {
-    return language === 'zh' ? `${diffHours}小时前` : `${diffHours} ${pluralizeEn(diffHours, 'hour')} ago`;
+    return language === 'zh'
+      ? `${diffHours}小时前`
+      : `${diffHours} ${pluralizeEn(diffHours, 'hour')} ago`;
   }
   if (diffMinutes > 0) {
-    return language === 'zh' ? `${diffMinutes}分钟前` : `${diffMinutes} min ago`;
+    return language === 'zh'
+      ? `${diffMinutes}分钟前`
+      : `${diffMinutes} min ago`;
   }
 
   return tr('刚刚', 'just now');
 }
-

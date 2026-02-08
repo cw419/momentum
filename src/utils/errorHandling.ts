@@ -1,6 +1,11 @@
 function stringifyUnknown(value: unknown): string {
   if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') return String(value);
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint'
+  )
+    return String(value);
   if (value === null || value === undefined) return String(value);
 
   try {
@@ -10,7 +15,10 @@ function stringifyUnknown(value: unknown): string {
   }
 }
 
-export function toError(value: unknown, fallbackMessage: string = 'Unknown error'): Error {
+export function toError(
+  value: unknown,
+  fallbackMessage: string = 'Unknown error',
+): Error {
   if (value instanceof Error) return value;
 
   const message = stringifyUnknown(value).trim();

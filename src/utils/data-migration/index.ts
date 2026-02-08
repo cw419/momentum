@@ -12,4 +12,3 @@ if (typeof window !== 'undefined' && isDev) {
   window.migrateTimerData = migrateTimerData;
   window.dataMigrationManager = dataMigrationManager;
 }
-

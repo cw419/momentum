@@ -46,14 +46,15 @@ export class TimerPerformanceTest {
       forwardTimerManager.startTimer(sessionId);
 
       // 等待指定时间
-      await new Promise(resolve => setTimeout(resolve, expectedDuration));
+      await new Promise((resolve) => setTimeout(resolve, expectedDuration));
 
       const actualElapsed = forwardTimerManager.getCurrentElapsed(sessionId);
       const tolerance = 100; // 100ms容差
 
       forwardTimerManager.clearTimer(sessionId);
 
-      const isAccurate = Math.abs(actualElapsed * 1000 - expectedDuration) <= tolerance;
+      const isAccurate =
+        Math.abs(actualElapsed * 1000 - expectedDuration) <= tolerance;
 
       this.results.push({
         testName,
@@ -62,15 +63,15 @@ export class TimerPerformanceTest {
         details: {
           expected: expectedDuration / 1000,
           actual: actualElapsed,
-          difference: Math.abs(actualElapsed * 1000 - expectedDuration)
-        }
+          difference: Math.abs(actualElapsed * 1000 - expectedDuration),
+        },
       });
     } catch (error) {
       this.results.push({
         testName,
         success: false,
         duration: performance.now() - startTime,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -94,7 +95,7 @@ export class TimerPerformanceTest {
       }
 
       // 等待1秒
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // 检查所有计时器
       let allAccurate = true;
@@ -103,12 +104,12 @@ export class TimerPerformanceTest {
       for (const sessionId of sessionIds) {
         const elapsed = forwardTimerManager.getCurrentElapsed(sessionId);
         results.push(elapsed);
-        
+
         // 允许100ms误差
         if (Math.abs(elapsed - 1) > 0.1) {
           allAccurate = false;
         }
-        
+
         forwardTimerManager.clearTimer(sessionId);
       }
 
@@ -119,15 +120,15 @@ export class TimerPerformanceTest {
         details: {
           timerCount,
           results,
-          averageElapsed: results.reduce((a, b) => a + b, 0) / results.length
-        }
+          averageElapsed: results.reduce((a, b) => a + b, 0) / results.length,
+        },
       });
     } catch (error) {
       this.results.push({
         testName,
         success: false,
         duration: performance.now() - startTime,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -141,16 +142,16 @@ export class TimerPerformanceTest {
 
     try {
       const sessionId = 'persistence-test';
-      
+
       // 启动计时器
       forwardTimerManager.startTimer(sessionId);
-      
+
       // 等待一小段时间
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // 测试恢复
       const restored = forwardTimerManager.restoreTimerState(sessionId);
-      
+
       // 清理
       forwardTimerManager.clearTimer(sessionId);
 
@@ -159,15 +160,15 @@ export class TimerPerformanceTest {
         success: true, // 持久化功能存在即为成功
         duration: performance.now() - startTime,
         details: {
-          restored
-        }
+          restored,
+        },
       });
     } catch (error) {
       this.results.push({
         testName,
         success: false,
         duration: performance.now() - startTime,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -207,15 +208,15 @@ export class TimerPerformanceTest {
           updateDuration,
           readDuration,
           avgUpdateTime: updateDuration / iterations,
-          avgReadTime: readDuration / iterations
-        }
+          avgReadTime: readDuration / iterations,
+        },
       });
     } catch (error) {
       this.results.push({
         testName,
         success: false,
         duration: performance.now() - startTime,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -229,7 +230,7 @@ export class TimerPerformanceTest {
 
     try {
       const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
-      
+
       // 创建大量计时器
       const timerCount = 50;
       const sessionIds: string[] = [];
@@ -264,15 +265,15 @@ export class TimerPerformanceTest {
           peakMemory,
           finalMemory,
           memoryIncrease: peakMemory - initialMemory,
-          memoryRecovered: peakMemory - finalMemory
-        }
+          memoryRecovered: peakMemory - finalMemory,
+        },
       });
     } catch (error) {
       this.results.push({
         testName,
         success: false,
         duration: performance.now() - startTime,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -282,7 +283,7 @@ export class TimerPerformanceTest {
    */
   generateReport(): string {
     const totalTests = this.results.length;
-    const passedTests = this.results.filter(r => r.success).length;
+    const passedTests = this.results.filter((r) => r.success).length;
     const failedTests = totalTests - passedTests;
 
     let report = `

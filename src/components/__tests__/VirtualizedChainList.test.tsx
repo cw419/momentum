@@ -11,14 +11,18 @@ const devFlag = vi.hoisted(() => ({ value: false }));
 vi.mock('../ChainCard', () => ({
   ChainCard: (props: { chain: { id: string } }) => {
     chainCardRenderSpy(props);
-    return <div data-testid={`chain-card-${props.chain.id}`}>{props.chain.id}</div>;
+    return (
+      <div data-testid={`chain-card-${props.chain.id}`}>{props.chain.id}</div>
+    );
   },
 }));
 
 vi.mock('../GroupCard', () => ({
   GroupCard: (props: { group: { id: string } }) => {
     groupCardRenderSpy(props);
-    return <div data-testid={`group-card-${props.group.id}`}>{props.group.id}</div>;
+    return (
+      <div data-testid={`group-card-${props.group.id}`}>{props.group.id}</div>
+    );
   },
 }));
 
@@ -39,7 +43,10 @@ vi.mock('../../i18n', () => ({
   }),
 }));
 
-function createChainNode(id: string, type: ChainTreeNode['type']): ChainTreeNode {
+function createChainNode(
+  id: string,
+  type: ChainTreeNode['type'],
+): ChainTreeNode {
   return {
     id,
     parentId: undefined,
@@ -81,7 +88,7 @@ function renderList(args: {
       onCancelScheduledSession={vi.fn()}
       onCompleteBooking={vi.fn()}
       onDelete={vi.fn()}
-    />
+    />,
   );
 }
 
@@ -100,7 +107,10 @@ describe('VirtualizedChainList', () => {
       value: 1400,
     });
 
-    clientHeightGetter = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
+    clientHeightGetter = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'clientHeight',
+    );
     Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
       configurable: true,
       get() {
@@ -111,7 +121,11 @@ describe('VirtualizedChainList', () => {
 
   afterEach(() => {
     if (clientHeightGetter) {
-      Object.defineProperty(HTMLElement.prototype, 'clientHeight', clientHeightGetter);
+      Object.defineProperty(
+        HTMLElement.prototype,
+        'clientHeight',
+        clientHeightGetter,
+      );
     }
   });
 
@@ -119,10 +133,28 @@ describe('VirtualizedChainList', () => {
     const group = createChainNode('group-1', 'group');
     const unit = createChainNode('unit-1', 'unit');
     const scheduledById = new Map<string, ScheduledSession>([
-      ['group-1', { chainId: 'group-1', scheduledAt: new Date(), expiresAt: new Date(), auxiliarySignal: 'a' }],
-      ['unit-1', { chainId: 'unit-1', scheduledAt: new Date(), expiresAt: new Date(), auxiliarySignal: 'b' }],
+      [
+        'group-1',
+        {
+          chainId: 'group-1',
+          scheduledAt: new Date(),
+          expiresAt: new Date(),
+          auxiliarySignal: 'a',
+        },
+      ],
+      [
+        'unit-1',
+        {
+          chainId: 'unit-1',
+          scheduledAt: new Date(),
+          expiresAt: new Date(),
+          auxiliarySignal: 'b',
+        },
+      ],
     ]);
-    const getScheduledSession = vi.fn((chainId: string) => scheduledById.get(chainId));
+    const getScheduledSession = vi.fn((chainId: string) =>
+      scheduledById.get(chainId),
+    );
 
     getNextUnitInGroupMock.mockReturnValue(undefined);
     renderList({
@@ -130,20 +162,22 @@ describe('VirtualizedChainList', () => {
       getScheduledSession,
     });
 
-    expect(screen.getByRole('list', { name: 'Task chains list' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('list', { name: 'Task chains list' }),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Virtual:/)).not.toBeInTheDocument();
 
     expect(groupCardRenderSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         group: expect.objectContaining({ id: 'group-1' }),
         scheduledSession: expect.objectContaining({ chainId: 'group-1' }),
-      })
+      }),
     );
     expect(chainCardRenderSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         chain: expect.objectContaining({ id: 'unit-1' }),
         scheduledSession: expect.objectContaining({ chainId: 'unit-1' }),
-      })
+      }),
     );
 
     expect(getScheduledSession).toHaveBeenCalledWith('group-1');
@@ -153,7 +187,9 @@ describe('VirtualizedChainList', () => {
   it('renders virtual list for large sets, uses next unit id for groups, and handles scroll updates', async () => {
     devFlag.value = true;
     const group = createChainNode('group-a', 'group');
-    const units = Array.from({ length: 24 }, (_, idx) => createChainNode(`unit-${idx}`, 'unit'));
+    const units = Array.from({ length: 24 }, (_, idx) =>
+      createChainNode(`unit-${idx}`, 'unit'),
+    );
     const all = [group, ...units];
 
     getNextUnitInGroupMock.mockImplementation((node: { id: string }) => {
@@ -162,8 +198,13 @@ describe('VirtualizedChainList', () => {
     });
     const getScheduledSession = vi.fn((chainId: string) =>
       chainId === 'unit-next'
-        ? ({ chainId, scheduledAt: new Date(), expiresAt: new Date(), auxiliarySignal: 'x' } as ScheduledSession)
-        : undefined
+        ? ({
+            chainId,
+            scheduledAt: new Date(),
+            expiresAt: new Date(),
+            auxiliarySignal: 'x',
+          } as ScheduledSession)
+        : undefined,
     );
 
     const { container } = renderList({
@@ -176,19 +217,25 @@ describe('VirtualizedChainList', () => {
     expect(screen.getByText(/Virtual:/)).toBeInTheDocument();
     expect(getScheduledSession).toHaveBeenCalledWith('unit-next');
 
-    const before = container.querySelectorAll('[data-testid^="chain-card-"],[data-testid^="group-card-"]').length;
+    const before = container.querySelectorAll(
+      '[data-testid^="chain-card-"],[data-testid^="group-card-"]',
+    ).length;
     expect(before).toBeGreaterThan(0);
     expect(before).toBeLessThan(all.length);
 
     fireEvent.scroll(list, { target: { scrollTop: 560 } });
     await waitFor(() => {
-      const transformedLayer = container.querySelector('div.absolute.top-0.left-0.right-0');
+      const transformedLayer = container.querySelector(
+        'div.absolute.top-0.left-0.right-0',
+      );
       expect(transformedLayer).toHaveStyle({ transform: 'translateY(560px)' });
     });
   });
 
   it('updates visible window when viewport width changes across breakpoints', async () => {
-    const chains = Array.from({ length: 20 }, (_, idx) => createChainNode(`unit-r-${idx}`, 'unit'));
+    const chains = Array.from({ length: 20 }, (_, idx) =>
+      createChainNode(`unit-r-${idx}`, 'unit'),
+    );
     getNextUnitInGroupMock.mockReturnValue(undefined);
 
     Object.defineProperty(window, 'innerWidth', {
@@ -200,7 +247,9 @@ describe('VirtualizedChainList', () => {
     expect(screen.queryByText(/Virtual:/)).not.toBeInTheDocument();
 
     const countRendered = () =>
-      container.querySelectorAll('[data-testid^="chain-card-"],[data-testid^="group-card-"]').length;
+      container.querySelectorAll(
+        '[data-testid^="chain-card-"],[data-testid^="group-card-"]',
+      ).length;
 
     const initialCount = countRendered();
 

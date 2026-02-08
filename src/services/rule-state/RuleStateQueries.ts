@@ -57,7 +57,7 @@ export class RuleStateQueries {
           return {
             isValid: true,
             isTemporary: true,
-            realId: undefined
+            realId: undefined,
           };
         }
 
@@ -66,14 +66,14 @@ export class RuleStateQueries {
           return {
             isValid: true,
             isTemporary: true,
-            realId
+            realId,
           };
         }
 
         return {
           isValid: false,
           isTemporary: true,
-          error: '临时规则不存在或已过期'
+          error: '临时规则不存在或已过期',
         };
       }
 
@@ -82,13 +82,13 @@ export class RuleStateQueries {
         isValid: rule !== null,
         isTemporary: false,
         realId: ruleId,
-        error: rule ? undefined : '规则不存在'
+        error: rule ? undefined : '规则不存在',
       };
     } catch (error) {
       return {
         isValid: false,
         isTemporary: false,
-        error: getErrorMessage(error)
+        error: getErrorMessage(error),
       };
     }
   }
@@ -101,7 +101,7 @@ export class RuleStateQueries {
         this.store.trackRuleState(rule.id, 'active');
       }
 
-      const existingIds = new Set(allRules.map(r => r.id));
+      const existingIds = new Set(allRules.map((r) => r.id));
       this.store.syncStates(existingIds);
     } catch (error) {
       const err = toError(error);

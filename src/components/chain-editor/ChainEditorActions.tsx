@@ -14,7 +14,12 @@ interface ChainEditorActionsProps {
   mobileInfo: MobileInfo;
 }
 
-export function ChainEditorActions({ isEditing, onCancel, form, mobileInfo }: ChainEditorActionsProps) {
+export function ChainEditorActions({
+  isEditing,
+  onCancel,
+  form,
+  mobileInfo,
+}: ChainEditorActionsProps) {
   const { tr } = useI18n();
 
   let saveButtonLabel: string;
@@ -27,7 +32,9 @@ export function ChainEditorActions({ isEditing, onCancel, form, mobileInfo }: Ch
   }
 
   const containerClassName = `action-buttons flex ${
-    mobileInfo.isMobile ? 'flex-col space-y-4' : 'flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6'
+    mobileInfo.isMobile
+      ? 'flex-col space-y-4'
+      : 'flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6'
   } animate-scale-in pt-4`;
 
   const cancelButtonClassName = `mobile-touch-target flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-900 dark:text-slate-100 px-8 py-4 rounded-2xl font-medium transition duration-300 flex items-center justify-center space-x-3 ${
@@ -44,12 +51,20 @@ export function ChainEditorActions({ isEditing, onCancel, form, mobileInfo }: Ch
 
   return (
     <div className={containerClassName}>
-      <button type="button" onClick={onCancel} className={cancelButtonClassName}>
+      <button
+        type="button"
+        onClick={onCancel}
+        className={cancelButtonClassName}
+      >
         <span>{tr('取消', 'Cancel')}</span>
       </button>
 
       {isEditing && (
-        <button type="submit" onClick={() => form.setIsCopyMode(true)} className={copyButtonClassName}>
+        <button
+          type="submit"
+          onClick={() => form.setIsCopyMode(true)}
+          className={copyButtonClassName}
+        >
           <Copy size={20} />
           <span>{tr('另存为副本', 'Save as copy')}</span>
         </button>

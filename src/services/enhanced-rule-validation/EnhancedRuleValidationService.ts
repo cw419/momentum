@@ -2,17 +2,28 @@ import { ExceptionRuleError, type ExceptionRule } from '../../types';
 import { exceptionRuleStorage } from '../ExceptionRuleStorage';
 import { getErrorMessage } from '../../utils/errorMessage';
 import { ignoreUnused } from '../../utils/ignoreUnused';
-import { getCachedPreValidation, setCachedPreValidation, cleanupExpiredCache, clearValidationCache } from './cache';
+import {
+  getCachedPreValidation,
+  setCachedPreValidation,
+  cleanupExpiredCache,
+  clearValidationCache,
+} from './cache';
 import type { ActionType, RuleValidationResult } from './types';
 import { validateRulesIntegrity } from './validators/integrity';
 import { validateRuleTypeForAction } from './validators/typeMatch';
 
 class EnhancedRuleValidationService {
-  validateRuleTypeForAction(rule: ExceptionRule, actionType: ActionType): RuleValidationResult {
+  validateRuleTypeForAction(
+    rule: ExceptionRule,
+    actionType: ActionType,
+  ): RuleValidationResult {
     return validateRuleTypeForAction(rule, actionType);
   }
 
-  async preValidateRuleUsage(ruleId: string, actionType: ActionType): Promise<RuleValidationResult> {
+  async preValidateRuleUsage(
+    ruleId: string,
+    actionType: ActionType,
+  ): Promise<RuleValidationResult> {
     const cacheKey = `prevalidate_${ruleId}_${actionType}`;
 
     const cached = getCachedPreValidation(cacheKey);
@@ -91,5 +102,5 @@ class EnhancedRuleValidationService {
   }
 }
 
-export const enhancedRuleValidationService = new EnhancedRuleValidationService();
-
+export const enhancedRuleValidationService =
+  new EnhancedRuleValidationService();

@@ -3,8 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMobileOptimization } from '../useMobileOptimization';
 
 function setViewport(width: number, height: number) {
-  Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: width });
-  Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: height });
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    writable: true,
+    value: width,
+  });
+  Object.defineProperty(window, 'innerHeight', {
+    configurable: true,
+    writable: true,
+    value: height,
+  });
 }
 
 describe('useMobileOptimization', () => {
@@ -15,7 +23,10 @@ describe('useMobileOptimization', () => {
   });
 
   afterEach(() => {
-    Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined });
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: undefined,
+    });
   });
 
   it('detects desktop/mobile orientation and updates body classes', async () => {
@@ -46,10 +57,15 @@ describe('useMobileOptimization', () => {
     const listeners = new Map<string, () => void>();
     const visualViewport = {
       height: 900,
-      addEventListener: vi.fn((event: string, cb: () => void) => listeners.set(event, cb)),
+      addEventListener: vi.fn((event: string, cb: () => void) =>
+        listeners.set(event, cb),
+      ),
       removeEventListener: vi.fn((event: string) => listeners.delete(event)),
     };
-    Object.defineProperty(window, 'visualViewport', { configurable: true, value: visualViewport });
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: visualViewport,
+    });
 
     setViewport(1000, 1000);
     const { result } = renderHook(() => useMobileOptimization());
@@ -85,17 +101,27 @@ describe('useMobileOptimization', () => {
     const { unmount } = renderHook(() => useMobileOptimization());
 
     await waitFor(() => {
-      expect(meta.getAttribute('content')).toBe('width=device-width, initial-scale=1, viewport-fit=cover');
-      expect(document.documentElement.style.getPropertyValue('--vh')).not.toBe('');
+      expect(meta.getAttribute('content')).toBe(
+        'width=device-width, initial-scale=1, viewport-fit=cover',
+      );
+      expect(document.documentElement.style.getPropertyValue('--vh')).not.toBe(
+        '',
+      );
     });
 
     unmount();
-    Object.defineProperty(navigator, 'userAgent', { configurable: true, value: originalUserAgent });
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: originalUserAgent,
+    });
     document.head.removeChild(meta);
   });
 
   it('marks touch devices and removes body classes on unmount', async () => {
-    Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 2 });
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 2,
+    });
     setViewport(390, 844);
 
     const { result, unmount } = renderHook(() => useMobileOptimization());

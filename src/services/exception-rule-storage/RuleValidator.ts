@@ -7,7 +7,7 @@ import {
   ExceptionRule,
   ExceptionRuleError,
   ExceptionRuleException,
-  ExceptionRuleType
+  ExceptionRuleType,
 } from '../../types';
 import { logger } from '../../utils/logger';
 import { isDev } from '../../utils/env';
@@ -16,7 +16,9 @@ import { isDev } from '../../utils/env';
  * 规则创建时的输入类型
  */
 export type ExceptionRuleCreateInput = Pick<ExceptionRule, 'name' | 'type'> &
-  Partial<Pick<ExceptionRule, 'description' | 'chainId' | 'scope' | 'isArchived'>>;
+  Partial<
+    Pick<ExceptionRule, 'description' | 'chainId' | 'scope' | 'isArchived'>
+  >;
 
 /**
  * 规范化后的规则输入
@@ -39,7 +41,10 @@ export class RuleValidator {
    * @param rule 规则数据
    * @param isCreating 是否为创建模式
    */
-  validateRule(rule: Partial<ExceptionRule>, isCreating: boolean = false): void {
+  validateRule(
+    rule: Partial<ExceptionRule>,
+    isCreating: boolean = false,
+  ): void {
     if (isDev) {
       logger.debug('RULE_VALIDATOR', 'validateRule called', {
         isCreating,
@@ -70,20 +75,20 @@ export class RuleValidator {
       if (name.trim().length === 0) {
         throw new ExceptionRuleException(
           ExceptionRuleError.VALIDATION_ERROR,
-          '规则名称不能为空'
+          '规则名称不能为空',
         );
       }
 
       if (name.length > 100) {
         throw new ExceptionRuleException(
           ExceptionRuleError.VALIDATION_ERROR,
-          '规则名称不能超过100个字符'
+          '规则名称不能超过100个字符',
         );
       }
     } else if (isCreating) {
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
-        '规则名称不能为空'
+        '规则名称不能为空',
       );
     }
   }
@@ -91,7 +96,10 @@ export class RuleValidator {
   /**
    * 验证规则类型
    */
-  private validateType(rule: Partial<ExceptionRule>, isCreating: boolean): void {
+  private validateType(
+    rule: Partial<ExceptionRule>,
+    isCreating: boolean,
+  ): void {
     if (isCreating && !rule.type) {
       logger.error('RULE_VALIDATOR', '规则类型验证失败', {
         isCreating,
@@ -104,14 +112,17 @@ export class RuleValidator {
       });
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
-        `规则类型不能为空。接收到的类型: ${rule.type} (${typeof rule.type})`
+        `规则类型不能为空。接收到的类型: ${rule.type} (${typeof rule.type})`,
       );
     }
 
-    if (rule.type !== undefined && !Object.values(ExceptionRuleType).includes(rule.type)) {
+    if (
+      rule.type !== undefined &&
+      !Object.values(ExceptionRuleType).includes(rule.type)
+    ) {
       throw new ExceptionRuleException(
         ExceptionRuleError.INVALID_RULE_TYPE,
-        `无效的规则类型: ${rule.type}`
+        `无效的规则类型: ${rule.type}`,
       );
     }
   }
@@ -123,7 +134,7 @@ export class RuleValidator {
     if (description && description.length > 500) {
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
-        '规则描述不能超过500个字符'
+        '规则描述不能超过500个字符',
       );
     }
   }
@@ -131,26 +142,37 @@ export class RuleValidator {
   /**
    * 验证创建时的作用域设置
    */
-  private inferScope(scope: ExceptionRule['scope'] | undefined, chainId: string | undefined): ExceptionRule['scope'] {
+  private inferScope(
+    scope: ExceptionRule['scope'] | undefined,
+    chainId: string | undefined,
+  ): ExceptionRule['scope'] {
     if (scope === 'chain' || scope === 'global') return scope;
-    if (typeof chainId === 'string' && chainId.trim().length > 0) return 'chain';
+    if (typeof chainId === 'string' && chainId.trim().length > 0)
+      return 'chain';
     return 'global';
   }
 
   private validateScopeForCreation(rule: Partial<ExceptionRule>): void {
-    if (rule.scope !== undefined && rule.scope !== 'chain' && rule.scope !== 'global') {
+    if (
+      rule.scope !== undefined &&
+      rule.scope !== 'chain' &&
+      rule.scope !== 'global'
+    ) {
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
-        '规则作用域必须为 "chain" 或 "global"'
+        '规则作用域必须为 "chain" 或 "global"',
       );
     }
 
     const inferredScope = this.inferScope(rule.scope, rule.chainId);
 
-    if (inferredScope === 'chain' && (!rule.chainId || rule.chainId.trim().length === 0)) {
+    if (
+      inferredScope === 'chain' &&
+      (!rule.chainId || rule.chainId.trim().length === 0)
+    ) {
       throw new ExceptionRuleException(
         ExceptionRuleError.VALIDATION_ERROR,
-        '链专属规则必须指定 chainId'
+        '链专属规则必须指定 chainId',
       );
     }
   }
@@ -182,9 +204,9 @@ export class RuleValidator {
   checkDuplicateName(
     existingRules: ExceptionRule[],
     normalizedRule: NormalizedRuleInput,
-    excludeId?: string
+    excludeId?: string,
   ): boolean {
-    return existingRules.some(r => {
+    return existingRules.some((r) => {
       if (r.name !== normalizedRule.name || !r.isActive) return false;
       if (excludeId && r.id === excludeId) return false;
 

@@ -41,7 +41,7 @@ function renderControls(options: {
         elapsedPauseTime={130}
         {...callbacks}
       />
-    </I18nProvider>
+    </I18nProvider>,
   );
 
   return callbacks;
@@ -49,7 +49,10 @@ function renderControls(options: {
 
 describe('FocusModeControls', () => {
   it('shows pause + complete for durationless chains without minimum duration', () => {
-    const callbacks = renderControls({ isDurationless: true, hasReachedMinimum: false });
+    const callbacks = renderControls({
+      isDurationless: true,
+      hasReachedMinimum: false,
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
     fireEvent.click(screen.getByRole('button', { name: 'Complete' }));
@@ -84,7 +87,7 @@ describe('FocusModeControls', () => {
           onResumeNow={vi.fn()}
           onCancelAutoResume={vi.fn()}
         />
-      </I18nProvider>
+      </I18nProvider>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete early' }));
@@ -97,7 +100,9 @@ describe('FocusModeControls', () => {
       autoResumeAt: Date.now() + 75_000,
     });
 
-    expect(screen.getByText('Paused. Auto-resume in 1m 15s')).toBeInTheDocument();
+    expect(
+      screen.getByText('Paused. Auto-resume in 1m 15s'),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel auto-resume' }));
@@ -113,7 +118,9 @@ describe('FocusModeControls', () => {
     });
 
     expect(screen.getByText('Paused for 2m 10s')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Cancel auto-resume' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Cancel auto-resume' }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows non-durationless button labels', () => {

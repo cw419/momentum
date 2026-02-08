@@ -11,39 +11,40 @@ enum LogLevel {
   ERROR = 3,
 }
 
+function isObjectLike(value: unknown): value is object {
+  return value !== null && typeof value === 'object';
+}
+
 function safeStringify(value: unknown, space?: number): string {
   const seen = new WeakSet<object>();
+  const replacer = (_key: string, val: unknown): unknown => {
+    if (typeof val === 'bigint') {
+      return val.toString();
+    }
+    if (typeof val === 'function') {
+      const nameSuffix = val.name ? `: ${val.name}` : '';
+      return `[Function${nameSuffix}]`;
+    }
+    if (typeof val === 'symbol') {
+      return val.toString();
+    }
+    if (val instanceof Error) {
+      return { name: val.name, message: val.message, stack: val.stack };
+    }
+    if (typeof HTMLElement !== 'undefined' && val instanceof HTMLElement) {
+      return { tagName: val.tagName, id: val.id, className: val.className };
+    }
+    if (isObjectLike(val)) {
+      if (seen.has(val)) {
+        return '[Circular]';
+      }
+      seen.add(val);
+    }
+    return val;
+  };
 
   try {
-    return JSON.stringify(
-      value,
-      (_key, val) => {
-        if (typeof val === 'bigint') {
-          return val.toString();
-        }
-        if (typeof val === 'function') {
-          const nameSuffix = val.name ? `: ${val.name}` : '';
-          return `[Function${nameSuffix}]`;
-        }
-        if (typeof val === 'symbol') {
-          return val.toString();
-        }
-        if (val instanceof Error) {
-          return { name: val.name, message: val.message, stack: val.stack };
-        }
-        if (typeof HTMLElement !== 'undefined' && val instanceof HTMLElement) {
-          return { tagName: val.tagName, id: val.id, className: val.className };
-        }
-        if (val && typeof val === 'object') {
-          if (seen.has(val as object)) {
-            return '[Circular]';
-          }
-          seen.add(val as object);
-        }
-        return val;
-      },
-      space
-    );
+    return JSON.stringify(value, replacer, space);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return `[Unserializable: ${message}]`;
@@ -87,7 +88,7 @@ class Logger {
     category: string,
     message: string,
     context?: Record<string, unknown>,
-    error?: Error
+    error?: Error,
   ): LogEntry {
     return {
       timestamp: new Date().toISOString(),
@@ -101,7 +102,7 @@ class Logger {
 
   private addLog(entry: LogEntry) {
     this.logs.push(entry);
-    
+
     // Keep only the most recent logs
     if (this.logs.length > this.maxLogs) {
       this.logs = this.logs.slice(-this.maxLogs);
@@ -113,7 +114,9 @@ class Logger {
     }
 
     // Console output with appropriate method
-    const contextStr = entry.context ? ` | Context: ${safeStringify(entry.context)}` : '';
+    const contextStr = entry.context
+      ? ` | Context: ${safeStringify(entry.context)}`
+      : '';
     const errorStr = entry.error ? ` | Error: ${entry.error.message}` : '';
     const fullMessage = `[${entry.category}] ${entry.message}${contextStr}${errorStr}`;
 
@@ -135,30 +138,53 @@ class Logger {
 
   debug(category: string, message: string, context?: Record<string, unknown>) {
     if (this.shouldLog(LogLevel.DEBUG)) {
-      this.addLog(this.createLogEntry(LogLevel.DEBUG, category, message, context));
+      this.addLog(
+        this.createLogEntry(LogLevel.DEBUG, category, message, context),
+      );
     }
   }
 
   info(category: string, message: string, context?: Record<string, unknown>) {
     if (this.shouldLog(LogLevel.INFO)) {
-      this.addLog(this.createLogEntry(LogLevel.INFO, category, message, context));
+      this.addLog(
+        this.createLogEntry(LogLevel.INFO, category, message, context),
+      );
     }
   }
 
-  warn(category: string, message: string, context?: Record<string, unknown>, error?: Error) {
+  warn(
+    category: string,
+    message: string,
+    context?: Record<string, unknown>,
+    error?: Error,
+  ) {
     if (this.shouldLog(LogLevel.WARN)) {
-      this.addLog(this.createLogEntry(LogLevel.WARN, category, message, context, error));
+      this.addLog(
+        this.createLogEntry(LogLevel.WARN, category, message, context, error),
+      );
     }
   }
 
-  error(category: string, message: string, context?: Record<string, unknown>, error?: Error) {
+  error(
+    category: string,
+    message: string,
+    context?: Record<string, unknown>,
+    error?: Error,
+  ) {
     if (this.shouldLog(LogLevel.ERROR)) {
-      this.addLog(this.createLogEntry(LogLevel.ERROR, category, message, context, error));
+      this.addLog(
+        this.createLogEntry(LogLevel.ERROR, category, message, context, error),
+      );
     }
   }
 
   // Specialized logging methods for common operations
-  dbOperation(operation: string, success: boolean, context?: Record<string, unknown>, error?: Error) {
+  dbOperation(
+    operation: string,
+    success: boolean,
+    context?: Record<string, unknown>,
+    error?: Error,
+  ) {
     const message = `Database operation ${operation} ${success ? 'success' : 'failed'}`;
     if (success) {
       this.info('DATABASE', message, context);
@@ -167,7 +193,13 @@ class Logger {
     }
   }
 
-  chainOperation(operation: string, chainId: string, success: boolean, context?: Record<string, unknown>, error?: Error) {
+  chainOperation(
+    operation: string,
+    chainId: string,
+    success: boolean,
+    context?: Record<string, unknown>,
+    error?: Error,
+  ) {
     const message = `Chain operation ${operation} (${chainId}) ${success ? 'success' : 'failed'}`;
     if (success) {
       this.info('CHAIN', message, context);
@@ -180,7 +212,11 @@ class Logger {
     this.info('USER', `User action: ${action}`, context);
   }
 
-  performance(operation: string, duration: number, context?: Record<string, unknown>) {
+  performance(
+    operation: string,
+    duration: number,
+    context?: Record<string, unknown>,
+  ) {
     this.debug('PERFORMANCE', `${operation} took ${duration}ms`, context);
   }
 
@@ -189,11 +225,11 @@ class Logger {
     let filteredLogs = this.logs;
 
     if (level !== undefined) {
-      filteredLogs = filteredLogs.filter(log => log.level >= level);
+      filteredLogs = filteredLogs.filter((log) => log.level >= level);
     }
 
     if (category) {
-      filteredLogs = filteredLogs.filter(log => log.category === category);
+      filteredLogs = filteredLogs.filter((log) => log.category === category);
     }
 
     if (limit) {

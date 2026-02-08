@@ -23,37 +23,62 @@ import { isDev } from '../../utils/env';
 
 export function useSafeSaveChains(storage: MomentumStorage) {
   return useCallback(
-    async function safelySaveChains(updatedActiveChains: Chain[], retryCount: number = 0): Promise<void> {
+    async function safelySaveChains(
+      updatedActiveChains: Chain[],
+      retryCount: number = 0,
+    ): Promise<void> {
       const maxRetries = 3;
       try {
         if (isDev) {
-          logger.debug('SAFE_SAVE', 'Starting safe save operation for chains', { attempt: retryCount + 1 });
+          logger.debug('SAFE_SAVE', 'Starting safe save operation for chains', {
+            attempt: retryCount + 1,
+          });
         }
 
         const allExistingChains = await storage.getChains();
-        const deletedChains = allExistingChains.filter(chain => chain.deletedAt != null);
+        const deletedChains = allExistingChains.filter(
+          (chain) => chain.deletedAt != null,
+        );
 
         const allUpdatedChains = [...updatedActiveChains, ...deletedChains];
 
         await realTimeSyncService.saveWithSync(storage, allUpdatedChains);
 
         if (isDev) {
-          logger.debug('SAFE_SAVE', 'Safe save completed successfully with enhanced synchronization');
+          logger.debug(
+            'SAFE_SAVE',
+            'Safe save completed successfully with enhanced synchronization',
+          );
         }
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.error('SAFE_SAVE', 'Safe save failed', { attempt: retryCount + 1 }, err);
+        logger.error(
+          'SAFE_SAVE',
+          'Safe save failed',
+          { attempt: retryCount + 1 },
+          err,
+        );
 
         const message = err.message.toLowerCase();
-        const nonRetryableClientErrors = ['converting circular structure to json', 'do not know how to serialize a bigint'];
-        if (nonRetryableClientErrors.some(fragment => message.includes(fragment))) {
+        const nonRetryableClientErrors = [
+          'converting circular structure to json',
+          'do not know how to serialize a bigint',
+        ];
+        if (
+          nonRetryableClientErrors.some((fragment) =>
+            message.includes(fragment),
+          )
+        ) {
           throw err;
         }
 
         if (retryCount < maxRetries) {
           const retryDelay = Math.pow(2, retryCount) * 1000;
           if (isDev) {
-            logger.debug('SAFE_SAVE', 'Retrying safe save', { retryDelayMs: retryDelay, nextAttempt: retryCount + 2 });
+            logger.debug('SAFE_SAVE', 'Retrying safe save', {
+              retryDelayMs: retryDelay,
+              nextAttempt: retryCount + 2,
+            });
           }
 
           await realTimeSyncService.clearAllCaches(storage);
@@ -73,6 +98,6 @@ export function useSafeSaveChains(storage: MomentumStorage) {
         throw error;
       }
     },
-    [storage]
+    [storage],
   );
 }

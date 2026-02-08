@@ -10,7 +10,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: [
       'src/**/*.{test,spec}.{js,ts,jsx,tsx}',
-      'src/**/__tests__/**/*.{js,ts,jsx,tsx}'
+      'src/**/__tests__/**/*.{js,ts,jsx,tsx}',
     ],
     exclude: [
       '**/node_modules/**',
@@ -23,7 +23,7 @@ export default defineConfig({
       '**/__tests__/**/*.db.*',
       '**/__tests__/**/*.performance.*',
       '**/__tests__/**/*-performance.*',
-      '**/__tests__/**/helpers.ts'
+      '**/__tests__/**/helpers.ts',
     ],
     coverage: {
       provider: 'v8',
@@ -32,15 +32,15 @@ export default defineConfig({
         statements: 84,
         branches: 75,
         functions: 83,
-        lines: 84
+        lines: 84,
       },
       exclude: [
         'node_modules/',
         'src/test/',
         '**/*.d.ts',
         '**/*.config.*',
-        '**/coverage/**'
-      ]
-    }
-  }
+        '**/coverage/**',
+      ],
+    },
+  },
 });

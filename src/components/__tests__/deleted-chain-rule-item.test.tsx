@@ -3,7 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '../../i18n';
 import { DeletedChainCard } from '../DeletedChainCard';
 import RuleItem from '../RuleItem';
-import { ExceptionRuleType, type DeletedChain, type ExceptionRule } from '../../types';
+import {
+  ExceptionRuleType,
+  type DeletedChain,
+  type ExceptionRule,
+} from '../../types';
 import { createUnitChain } from '../../test/factories/chainFactory';
 
 function renderWithI18n(ui: JSX.Element) {
@@ -11,7 +15,9 @@ function renderWithI18n(ui: JSX.Element) {
   return render(<I18nProvider>{ui}</I18nProvider>);
 }
 
-function createDeletedChain(overrides: Partial<DeletedChain> = {}): DeletedChain {
+function createDeletedChain(
+  overrides: Partial<DeletedChain> = {},
+): DeletedChain {
   const base = createUnitChain({
     id: 'chain-1',
     name: 'Morning Deep Work',
@@ -59,7 +65,7 @@ describe('DeletedChainCard and RuleItem', () => {
           onRestore={vi.fn()}
           onPermanentDelete={vi.fn()}
           deletedTimeText="3 days ago"
-        />
+        />,
       );
 
       const card = screen.getByRole('button', { pressed: false });
@@ -86,7 +92,7 @@ describe('DeletedChainCard and RuleItem', () => {
           onRestore={onRestore}
           onPermanentDelete={onPermanentDelete}
           deletedTimeText="3 days ago"
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
@@ -108,10 +114,12 @@ describe('DeletedChainCard and RuleItem', () => {
           onEdit={vi.fn()}
           onDelete={vi.fn()}
           onSelect={onSelect}
-        />
+        />,
       );
 
-      const card = screen.getByText('Urgent interruption').closest('[role="button"]');
+      const card = screen
+        .getByText('Urgent interruption')
+        .closest('[role="button"]');
       expect(card).not.toBeNull();
       if (!card) throw new Error('Rule card not found');
       fireEvent.click(card);
@@ -119,7 +127,9 @@ describe('DeletedChainCard and RuleItem', () => {
       fireEvent.keyDown(card, { key: ' ' });
 
       expect(onSelect).toHaveBeenCalledTimes(3);
-      expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'rule-1' }));
+      expect(onSelect).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'rule-1' }),
+      );
     });
 
     it('executes edit/delete callbacks and does not trigger select', () => {
@@ -134,7 +144,7 @@ describe('DeletedChainCard and RuleItem', () => {
           onEdit={onEdit}
           onDelete={onDelete}
           onSelect={onSelect}
-        />
+        />,
       );
 
       const actionButtons = container.querySelectorAll('button.touch-target');
@@ -143,8 +153,12 @@ describe('DeletedChainCard and RuleItem', () => {
       fireEvent.click(actionButtons[0]);
       fireEvent.click(actionButtons[1]);
 
-      expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: 'rule-1' }));
-      expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'rule-1' }));
+      expect(onEdit).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'rule-1' }),
+      );
+      expect(onDelete).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'rule-1' }),
+      );
       expect(onSelect).not.toHaveBeenCalled();
       expect(screen.getByText('Used 2 times')).toBeInTheDocument();
       expect(document.querySelector('.animate-spin')).toBeInTheDocument();
@@ -153,11 +167,15 @@ describe('DeletedChainCard and RuleItem', () => {
     it('formats relative last-used labels and singular usage text', () => {
       renderWithI18n(
         <RuleItem
-          rule={createRule({ lastUsedAt: new Date('2026-02-06T08:00:00.000Z'), usageCount: 1, type: ExceptionRuleType.EARLY_COMPLETION_ONLY })}
+          rule={createRule({
+            lastUsedAt: new Date('2026-02-06T08:00:00.000Z'),
+            usageCount: 1,
+            type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
+          })}
           isOptimistic={false}
           onEdit={vi.fn()}
           onDelete={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.getByText('Used 1 time')).toBeInTheDocument();

@@ -7,7 +7,7 @@ import {
   ExceptionRule,
   RuleUsageRecord,
   ExceptionRuleError,
-  ExceptionRuleException
+  ExceptionRuleException,
 } from '../../types';
 import { localPreferences } from '../../utils/localPreferences';
 import { randomId } from '../../utils/random';
@@ -15,7 +15,10 @@ import { randomId } from '../../utils/random';
 /**
  * 序列化的规则格式（存储时使用）
  */
-interface SerializedRule extends Omit<ExceptionRule, 'createdAt' | 'lastUsedAt'> {
+interface SerializedRule extends Omit<
+  ExceptionRule,
+  'createdAt' | 'lastUsedAt'
+> {
   createdAt: string;
   lastUsedAt?: string | null;
 }
@@ -52,7 +55,7 @@ export class RulePersistence {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '保存规则失败',
-        error
+        error,
       );
     }
   }
@@ -65,7 +68,7 @@ export class RulePersistence {
     if (!data) return [];
 
     const records = JSON.parse(data) as SerializedUsageRecord[];
-    return records.map(record => this.deserializeUsageRecord(record));
+    return records.map((record) => this.deserializeUsageRecord(record));
   }
 
   /**
@@ -78,7 +81,7 @@ export class RulePersistence {
       throw new ExceptionRuleException(
         ExceptionRuleError.STORAGE_ERROR,
         '保存使用记录失败',
-        error
+        error,
       );
     }
   }
@@ -120,10 +123,12 @@ export class RulePersistence {
   /**
    * 反序列化使用记录
    */
-  private deserializeUsageRecord(record: SerializedUsageRecord): RuleUsageRecord {
+  private deserializeUsageRecord(
+    record: SerializedUsageRecord,
+  ): RuleUsageRecord {
     return {
       ...record,
-      usedAt: new Date(record.usedAt)
+      usedAt: new Date(record.usedAt),
     };
   }
 }

@@ -3,7 +3,7 @@ import type { SupabaseStorageContext } from '../types';
 
 export async function cleanupExpiredDeletedChains(
   ctx: SupabaseStorageContext,
-  olderThanDays: number = 30
+  olderThanDays: number = 30,
 ): Promise<number> {
   const user = await ctx.getCurrentUser();
   if (!user) return 0;
@@ -21,7 +21,10 @@ export async function cleanupExpiredDeletedChains(
       .lt('deleted_at', cutoffDate.toISOString());
 
     if (selectError) {
-      if (selectError.code === '42703' || selectError.message?.includes('deleted_at does not exist')) {
+      if (
+        selectError.code === '42703' ||
+        selectError.message?.includes('deleted_at does not exist')
+      ) {
         return 0;
       }
       throw new Error(`Failed to find expired chains: ${selectError.message}`);
@@ -34,12 +37,14 @@ export async function cleanupExpiredDeletedChains(
       .delete()
       .in(
         'id',
-        expiredChains.map((c) => c.id)
+        expiredChains.map((c) => c.id),
       )
       .eq('user_id', user.id);
 
     if (deleteError) {
-      throw new Error(`Failed to cleanup expired chains: ${deleteError.message}`);
+      throw new Error(
+        `Failed to cleanup expired chains: ${deleteError.message}`,
+      );
     }
 
     return expiredChains.length;
@@ -51,4 +56,3 @@ export async function cleanupExpiredDeletedChains(
     throw errorObj;
   }
 }
-

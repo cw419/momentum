@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
-import { parseViewStateFromSearch, serializeViewStateToSearch } from '../viewUrlState';
+import {
+  parseViewStateFromSearch,
+  serializeViewStateToSearch,
+} from '../viewUrlState';
 
 interface UseViewUrlSyncParams {
   state: AppState;
@@ -61,9 +64,15 @@ export function useViewUrlSync({
       activeSession: stateRef.current.activeSession,
     });
 
-    const hasViewParam = new URLSearchParams(window.location.search).has('view');
+    const hasViewParam = new URLSearchParams(window.location.search).has(
+      'view',
+    );
     if (hasViewParam && next.currentView === 'dashboard') {
-      window.history.replaceState(null, '', `${window.location.pathname}${window.location.hash}`);
+      window.history.replaceState(
+        null,
+        '',
+        `${window.location.pathname}${window.location.hash}`,
+      );
     }
 
     applyViewStateFromUrl(next);

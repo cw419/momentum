@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { ExceptionRuleError, ExceptionRuleType, type ExceptionRule } from '../../../../types';
+import {
+  ExceptionRuleError,
+  ExceptionRuleType,
+  type ExceptionRule,
+} from '../../../../types';
 import type { ActionType } from '../../types';
 import { validateRuleTypeForAction } from '../typeMatch';
 
@@ -18,14 +22,20 @@ function createRule(overrides: Partial<ExceptionRule> = {}): ExceptionRule {
 
 describe('validateRuleTypeForAction', () => {
   it('returns RULE_NOT_FOUND when rule is missing', () => {
-    const result = validateRuleTypeForAction(null as unknown as ExceptionRule, 'pause');
+    const result = validateRuleTypeForAction(
+      null as unknown as ExceptionRule,
+      'pause',
+    );
 
     expect(result.isValid).toBe(false);
     expect(result.errorType).toBe(ExceptionRuleError.RULE_NOT_FOUND);
   });
 
   it('returns INVALID_RULE_TYPE when rule type is missing', () => {
-    const result = validateRuleTypeForAction(createRule({ type: '' as never }), 'pause');
+    const result = validateRuleTypeForAction(
+      createRule({ type: '' as never }),
+      'pause',
+    );
 
     expect(result.isValid).toBe(false);
     expect(result.errorType).toBe(ExceptionRuleError.INVALID_RULE_TYPE);
@@ -36,12 +46,15 @@ describe('validateRuleTypeForAction', () => {
         type: 'fix_data',
         label: '修复规则类型',
         description: '为规则设置正确的类型',
-      })
+      }),
     );
   });
 
   it('returns INVALID_RULE_TYPE when rule type is not in enum', () => {
-    const result = validateRuleTypeForAction(createRule({ type: 'bad-type' as never }), 'pause');
+    const result = validateRuleTypeForAction(
+      createRule({ type: 'bad-type' as never }),
+      'pause',
+    );
 
     expect(result.isValid).toBe(false);
     expect(result.errorType).toBe(ExceptionRuleError.INVALID_RULE_TYPE);
@@ -52,12 +65,15 @@ describe('validateRuleTypeForAction', () => {
           ExceptionRuleType.PAUSE_ONLY,
           ExceptionRuleType.EARLY_COMPLETION_ONLY,
         ]),
-      })
+      }),
     );
   });
 
   it('returns VALIDATION_ERROR for invalid action type', () => {
-    const result = validateRuleTypeForAction(createRule(), 'invalid' as ActionType);
+    const result = validateRuleTypeForAction(
+      createRule(),
+      'invalid' as ActionType,
+    );
 
     expect(result.isValid).toBe(false);
     expect(result.errorType).toBe(ExceptionRuleError.VALIDATION_ERROR);
@@ -65,33 +81,35 @@ describe('validateRuleTypeForAction', () => {
     expect(result.debugInfo).toEqual(
       expect.objectContaining({
         validActions: ['pause', 'early_completion'],
-      })
+      }),
     );
   });
 
   it('returns mismatch result and executable suggested actions for non-matching type', async () => {
     const result = validateRuleTypeForAction(
       createRule({ type: ExceptionRuleType.PAUSE_ONLY }),
-      'early_completion'
+      'early_completion',
     );
 
     expect(result.isValid).toBe(false);
     expect(result.errorType).toBe(ExceptionRuleError.RULE_TYPE_MISMATCH);
     expect(result.suggestedActions).toHaveLength(2);
-    expect(result.errorMessage).toBe('规则 "Test rule" 是暂停类型，不能用于提前完成操作');
+    expect(result.errorMessage).toBe(
+      '规则 "Test rule" 是暂停类型，不能用于提前完成操作',
+    );
     expect(result.suggestedActions?.[0]).toEqual(
       expect.objectContaining({
         type: 'create_new',
         label: '创建提前完成规则',
         description: '创建一个新的提前完成类型规则',
-      })
+      }),
     );
     expect(result.suggestedActions?.[1]).toEqual(
       expect.objectContaining({
         type: 'use_existing',
         label: '选择提前完成规则',
         description: '从现有的提前完成规则中选择',
-      })
+      }),
     );
 
     for (const action of result.suggestedActions ?? []) {
@@ -102,12 +120,14 @@ describe('validateRuleTypeForAction', () => {
   it('returns pause-side mismatch message and actions when early-completion rule is used for pause', () => {
     const result = validateRuleTypeForAction(
       createRule({ type: ExceptionRuleType.EARLY_COMPLETION_ONLY }),
-      'pause'
+      'pause',
     );
 
     expect(result.isValid).toBe(false);
     expect(result.errorType).toBe(ExceptionRuleError.RULE_TYPE_MISMATCH);
-    expect(result.errorMessage).toBe('规则 "Test rule" 是提前完成类型，不能用于暂停操作');
+    expect(result.errorMessage).toBe(
+      '规则 "Test rule" 是提前完成类型，不能用于暂停操作',
+    );
     expect(result.suggestedActions).toEqual([
       expect.objectContaining({
         type: 'create_new',
@@ -124,35 +144,35 @@ describe('validateRuleTypeForAction', () => {
       expect.objectContaining({
         ruleTypeName: '提前完成',
         actionName: '暂停',
-      })
+      }),
     );
   });
 
   it('returns valid result when rule type matches action', () => {
     const result = validateRuleTypeForAction(
       createRule({ type: ExceptionRuleType.EARLY_COMPLETION_ONLY }),
-      'early_completion'
+      'early_completion',
     );
 
     expect(result).toEqual(
       expect.objectContaining({
         isValid: true,
         debugInfo: expect.objectContaining({ match: true }),
-      })
+      }),
     );
   });
 
   it('returns valid result for pause action with pause-only rule', () => {
     const result = validateRuleTypeForAction(
       createRule({ type: ExceptionRuleType.PAUSE_ONLY }),
-      'pause'
+      'pause',
     );
 
     expect(result).toEqual(
       expect.objectContaining({
         isValid: true,
         debugInfo: expect.objectContaining({ match: true }),
-      })
+      }),
     );
   });
 

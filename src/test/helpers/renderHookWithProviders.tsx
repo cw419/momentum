@@ -12,7 +12,7 @@ interface RenderHookWithProvidersOptions {
 
 export function renderHookWithProviders<Result, Props>(
   hook: (props: Props) => Result,
-  options: RenderHookWithProvidersOptions = {}
+  options: RenderHookWithProvidersOptions = {},
 ) {
   const { storage = createLocalStorageMock(), language = 'en' } = options;
   localStorage.setItem('language', language);

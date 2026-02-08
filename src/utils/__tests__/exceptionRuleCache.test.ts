@@ -16,7 +16,7 @@ describe('ExceptionRuleCache', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 5,
-        isActive: true
+        isActive: true,
       },
       {
         id: '2',
@@ -26,7 +26,7 @@ describe('ExceptionRuleCache', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 3,
-        isActive: true
+        isActive: true,
       },
       {
         id: '3',
@@ -36,8 +36,8 @@ describe('ExceptionRuleCache', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 8,
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
   });
 
@@ -47,12 +47,12 @@ describe('ExceptionRuleCache', () => {
 
   describe('chain-specific rules', () => {
     it('should cache and retrieve chain rules', () => {
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
 
       const retrieved = cache.getChainRules('chain1');
       expect(retrieved).toHaveLength(2);
-      expect(retrieved?.every(r => r.chainId === 'chain1')).toBe(true);
+      expect(retrieved?.every((r) => r.chainId === 'chain1')).toBe(true);
     });
 
     it('should filter out non-chain-specific rules', () => {
@@ -66,15 +66,17 @@ describe('ExceptionRuleCache', () => {
           type: ExceptionRuleType.PAUSE_ONLY,
           createdAt: new Date(),
           usageCount: 1,
-          isActive: true
-        } as any
+          isActive: true,
+        } as any,
       ];
 
       cache.setChainRules('chain1', mixedRules);
       const retrieved = cache.getChainRules('chain1');
-      
-      expect(retrieved?.every(r => r.chainId === 'chain1' && r.scope === 'chain')).toBe(true);
-      expect(retrieved?.find(r => r.name === 'Global Rule')).toBeUndefined();
+
+      expect(
+        retrieved?.every((r) => r.chainId === 'chain1' && r.scope === 'chain'),
+      ).toBe(true);
+      expect(retrieved?.find((r) => r.name === 'Global Rule')).toBeUndefined();
     });
 
     it('should return null for non-existent chain', () => {
@@ -88,7 +90,7 @@ describe('ExceptionRuleCache', () => {
       const subscriber = vi.fn();
       const unsubscribe = cache.subscribe(subscriber);
 
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
 
       expect(subscriber).toHaveBeenCalledWith('chain1', chain1Rules);
@@ -109,20 +111,20 @@ describe('ExceptionRuleCache', () => {
 
       vi.mocked(console.error).mockClear();
 
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
 
       expect(errorSubscriber).toHaveBeenCalled();
       expect(normalSubscriber).toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Subscriber notification failed')
+        expect.stringContaining('Subscriber notification failed'),
       );
     });
   });
 
   describe('rule management', () => {
     beforeEach(() => {
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
     });
 
@@ -135,14 +137,14 @@ describe('ExceptionRuleCache', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       };
 
       cache.addRuleToChain('chain1', newRule);
       const rules = cache.getChainRules('chain1');
-      
+
       expect(rules).toHaveLength(3);
-      expect(rules?.find(r => r.id === '4')).toBeDefined();
+      expect(rules?.find((r) => r.id === '4')).toBeDefined();
     });
 
     it('should not add non-chain-specific rule', () => {
@@ -154,39 +156,41 @@ describe('ExceptionRuleCache', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       } as any;
 
       vi.mocked(console.warn).mockClear();
-      
+
       cache.addRuleToChain('chain1', globalRule);
       const rules = cache.getChainRules('chain1');
-      
+
       expect(rules).toHaveLength(2); // Should remain unchanged
       expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Attempting to add non-chain-specific rule to chain cache')
+        expect.stringContaining(
+          'Attempting to add non-chain-specific rule to chain cache',
+        ),
       );
     });
 
     it('should remove rule from chain', () => {
       cache.removeRuleFromChain('chain1', '1');
       const rules = cache.getChainRules('chain1');
-      
+
       expect(rules).toHaveLength(1);
-      expect(rules?.find(r => r.id === '1')).toBeUndefined();
+      expect(rules?.find((r) => r.id === '1')).toBeUndefined();
     });
 
     it('should update rule in chain', () => {
       const updatedRule: ExceptionRule = {
         ...mockRules[0],
         name: '上厕所 (更新)',
-        usageCount: 10
+        usageCount: 10,
       };
 
       cache.updateRuleInChain('chain1', updatedRule);
       const rules = cache.getChainRules('chain1');
-      const rule = rules?.find(r => r.id === '1');
-      
+      const rule = rules?.find((r) => r.id === '1');
+
       expect(rule?.name).toBe('上厕所 (更新)');
       expect(rule?.usageCount).toBe(10);
     });
@@ -194,7 +198,7 @@ describe('ExceptionRuleCache', () => {
 
   describe('search caching', () => {
     beforeEach(() => {
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
     });
 
@@ -218,13 +222,13 @@ describe('ExceptionRuleCache', () => {
           type: ExceptionRuleType.PAUSE_ONLY,
           createdAt: new Date(),
           usageCount: 1,
-          isActive: true
-        } as any
+          isActive: true,
+        } as any,
       ];
 
       cache.setChainSearchResults('chain1', 'test', mixedResults);
       const retrieved = cache.getChainSearchResults('chain1', 'test');
-      
+
       expect(retrieved).toHaveLength(1);
       expect(retrieved?.[0].chainId).toBe('chain1');
     });
@@ -240,20 +244,23 @@ describe('ExceptionRuleCache', () => {
 
   describe('cache management', () => {
     it('should clear chain-specific cache', () => {
-      cache.setChainRules('chain1', mockRules.filter(r => r.chainId === 'chain1'));
+      cache.setChainRules(
+        'chain1',
+        mockRules.filter((r) => r.chainId === 'chain1'),
+      );
       cache.setChainSearchResults('chain1', 'test', [mockRules[0]]);
-      
+
       expect(cache.getChainRules('chain1')).toBeDefined();
       expect(cache.getChainSearchResults('chain1', 'test')).toBeDefined();
 
       cache.clearChainCache('chain1');
-      
+
       expect(cache.getChainRules('chain1')).toBeNull();
       expect(cache.getChainSearchResults('chain1', 'test')).toBeNull();
     });
 
     it('should provide chain cache statistics', () => {
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
 
       const stats = cache.getChainCacheStats('chain1');
@@ -272,7 +279,9 @@ describe('ExceptionRuleCache', () => {
 
   describe('preloading', () => {
     it('should preload chain data', async () => {
-      const loadFunction = vi.fn().mockResolvedValue(mockRules.filter(r => r.chainId === 'chain1'));
+      const loadFunction = vi
+        .fn()
+        .mockResolvedValue(mockRules.filter((r) => r.chainId === 'chain1'));
 
       await cache.preloadChainData('chain1', loadFunction);
 
@@ -281,7 +290,7 @@ describe('ExceptionRuleCache', () => {
     });
 
     it('should not reload if data already cached', async () => {
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules);
 
       const loadFunction = vi.fn();
@@ -297,20 +306,20 @@ describe('ExceptionRuleCache', () => {
       await cache.preloadChainData('chain1', loadFunction);
 
       expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('预加载链 chain1 数据失败')
+        expect.stringContaining('预加载链 chain1 数据失败'),
       );
     });
   });
 
   describe('TTL and expiration', () => {
     it('should respect custom TTL for chain rules', () => {
-      const chain1Rules = mockRules.filter(r => r.chainId === 'chain1');
+      const chain1Rules = mockRules.filter((r) => r.chainId === 'chain1');
       cache.setChainRules('chain1', chain1Rules, 100); // 100ms TTL
 
       expect(cache.getChainRules('chain1')).toBeDefined();
 
       // Wait for expiration
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           expect(cache.getChainRules('chain1')).toBeNull();
           resolve(undefined);

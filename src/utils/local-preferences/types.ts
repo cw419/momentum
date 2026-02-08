@@ -21,4 +21,3 @@ export interface TimerPersistData {
   isPaused: boolean;
   timestamp: number;
 }
-

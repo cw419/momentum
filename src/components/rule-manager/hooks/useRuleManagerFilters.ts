@@ -33,7 +33,9 @@ export function useRuleManagerFilters(args: {
   const { rules, initialFilter } = args;
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<ExceptionRuleType | 'all'>(initialFilter || 'all');
+  const [typeFilter, setTypeFilter] = useState<ExceptionRuleType | 'all'>(
+    initialFilter || 'all',
+  );
   const [sortBy, setSortBy] = useState<SortBy>('usage');
 
   const filteredRules = useMemo(() => {
@@ -48,7 +50,7 @@ export function useRuleManagerFilters(args: {
       filtered = filtered.filter(
         (rule) =>
           rule.name.toLowerCase().includes(query) ||
-          rule.description?.toLowerCase().includes(query) === true
+          rule.description?.toLowerCase().includes(query) === true,
       );
     }
 
@@ -65,4 +67,3 @@ export function useRuleManagerFilters(args: {
     filteredRules,
   };
 }
-

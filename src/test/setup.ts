@@ -23,23 +23,23 @@ const localStorageMock = (() => {
     },
     clear: () => {
       store = {};
-    }
+    },
   };
 })();
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
 // Mock sessionStorage
 Object.defineProperty(window, 'sessionStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -67,7 +67,8 @@ class MockIntersectionObserver {
   disconnect = vi.fn();
   constructor(_callback: IntersectionObserverCallback) {}
 }
-global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+global.IntersectionObserver =
+  MockIntersectionObserver as unknown as typeof IntersectionObserver;
 
 // Auto-cleanup after each test
 afterEach(() => {

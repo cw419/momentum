@@ -10,18 +10,18 @@ export const ChainDetailHeader: React.FC<HeaderProps> = ({
   onEdit,
   onDeleteClick,
 }) => (
-  <header className="flex items-center justify-between mb-12 animate-fade-in">
+  <header className="mb-12 flex animate-fade-in items-center justify-between">
     <div className="flex items-center space-x-4">
       <BackButton
         onClick={onBack}
         label={tr('返回', 'Back')}
-        className="p-3 text-gray-400 hover:text-[#161615] dark:hover:text-slate-200 transition-colors rounded-2xl hover:bg-white/50 dark:hover:bg-slate-700/50"
+        className="rounded-2xl p-3 text-gray-400 transition-colors hover:bg-white/50 hover:text-[#161615] dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
       />
       <div>
-        <h1 className="text-4xl md:text-5xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-2">
+        <h1 className="mb-2 font-chinese text-4xl font-bold text-[#161615] dark:text-slate-100 md:text-5xl">
           {chainName}
         </h1>
-        <p className="text-sm font-mono text-gray-500 tracking-wider uppercase">
+        <p className="font-mono text-sm uppercase tracking-wider text-gray-500">
           {tr('链条详情', 'CHAIN DETAILS')}
         </p>
       </div>
@@ -29,14 +29,14 @@ export const ChainDetailHeader: React.FC<HeaderProps> = ({
     <div className="flex space-x-3">
       <button
         onClick={onEdit}
-        className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg font-chinese"
+        className="flex items-center space-x-2 rounded-2xl bg-primary-500 px-6 py-3 font-chinese font-medium text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-primary-600"
       >
         <Edit size={16} />
         <span>{tr('编辑链条', 'Edit')}</span>
       </button>
       <button
         onClick={onDeleteClick}
-        className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-2xl font-medium transition duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg font-chinese"
+        className="flex items-center space-x-2 rounded-2xl bg-red-500 px-6 py-3 font-chinese font-medium text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-red-600"
       >
         <Trash2 size={16} />
         <span>{tr('删除', 'Delete')}</span>

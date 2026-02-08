@@ -6,25 +6,31 @@ interface ChainEditorHeaderProps {
   onCancel: () => void;
 }
 
-export function ChainEditorHeader({ isEditing, onCancel }: ChainEditorHeaderProps) {
+export function ChainEditorHeader({
+  isEditing,
+  onCancel,
+}: ChainEditorHeaderProps) {
   const { tr } = useI18n();
 
   return (
-    <header className="flex items-center space-x-4 mb-12 animate-fade-in">
+    <header className="mb-12 flex animate-fade-in items-center space-x-4">
       <BackButton
         onClick={onCancel}
         label={tr('返回', 'Back')}
-        className="p-3 text-gray-400 hover:text-[#161615] transition-colors rounded-2xl hover:bg-white/50"
+        className="rounded-2xl p-3 text-gray-400 transition-colors hover:bg-white/50 hover:text-[#161615]"
       />
       <div>
-        <h1 className="text-4xl md:text-5xl font-bold font-chinese text-[#161615] dark:text-slate-100 mb-2">
-          {isEditing ? tr('编辑链条', 'Edit chain') : tr('创建新链条', 'Create a new chain')}
+        <h1 className="mb-2 font-chinese text-4xl font-bold text-[#161615] dark:text-slate-100 md:text-5xl">
+          {isEditing
+            ? tr('编辑链条', 'Edit chain')
+            : tr('创建新链条', 'Create a new chain')}
         </h1>
-        <p className="text-sm font-mono text-gray-500 tracking-wider uppercase">
-          {isEditing ? tr('编辑链条', 'EDIT CHAIN') : tr('创建链条', 'CREATE CHAIN')}
+        <p className="font-mono text-sm uppercase tracking-wider text-gray-500">
+          {isEditing
+            ? tr('编辑链条', 'EDIT CHAIN')
+            : tr('创建链条', 'CREATE CHAIN')}
         </p>
       </div>
     </header>
   );
 }
-

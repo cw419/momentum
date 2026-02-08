@@ -25,7 +25,10 @@ describe('InteractiveFeedback', () => {
     };
 
     const feedback = new InteractiveFeedback(store as any, presenter as any);
-    const options = [createRecoveryAction('retry', 'Retry'), createRecoveryAction('reset', 'Reset')];
+    const options = [
+      createRecoveryAction('retry', 'Retry'),
+      createRecoveryAction('reset', 'Reset'),
+    ];
 
     const pending = feedback.showRecoveryOptions(options);
 
@@ -40,19 +43,29 @@ describe('InteractiveFeedback', () => {
   it('showConfirmation resolves true for confirm and false for cancel', async () => {
     const addedMessages: any[] = [];
     const store = {
-      generateMessageId: vi.fn()
+      generateMessageId: vi
+        .fn()
         .mockReturnValueOnce('confirm-1')
         .mockReturnValueOnce('confirm-2'),
       addMessage: vi.fn((message) => addedMessages.push(message)),
       removeMessage: vi.fn(),
     };
-    const feedback = new InteractiveFeedback(store as any, { showInfo: vi.fn() } as any);
+    const feedback = new InteractiveFeedback(
+      store as any,
+      { showInfo: vi.fn() } as any,
+    );
 
-    const firstPending = feedback.showConfirmation('Confirm title', 'Confirm message');
+    const firstPending = feedback.showConfirmation(
+      'Confirm title',
+      'Confirm message',
+    );
     await addedMessages[0].actions[0].handler();
     const firstResult = await firstPending;
 
-    const secondPending = feedback.showConfirmation('Confirm title', 'Confirm message');
+    const secondPending = feedback.showConfirmation(
+      'Confirm title',
+      'Confirm message',
+    );
     await addedMessages[1].actions[1].handler();
     const secondResult = await secondPending;
 
@@ -74,13 +87,20 @@ describe('InteractiveFeedback', () => {
     };
     const feedback = new InteractiveFeedback(store as any, presenter as any);
 
-    const id = feedback.showBatchOperationFeedback('Import', 5, 3, 2, ['error A', 'error B']);
+    const id = feedback.showBatchOperationFeedback('Import', 5, 3, 2, [
+      'error A',
+      'error B',
+    ]);
 
     expect(id).toBe('batch-1');
     expect(addedMessages[0]?.type).toBe('warning');
     expect(addedMessages[0]?.actions?.length).toBe(1);
 
     addedMessages[0].actions[0].handler();
-    expect(presenter.showInfo).toHaveBeenCalledWith('Error details', 'error A\nerror B', false);
+    expect(presenter.showInfo).toHaveBeenCalledWith(
+      'Error details',
+      'error A\nerror B',
+      false,
+    );
   });
 });

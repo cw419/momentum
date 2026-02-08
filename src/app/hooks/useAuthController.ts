@@ -56,7 +56,7 @@ export function useAuthController({
         'AUTH_CONTROLLER',
         'Failed to subscribe to auth state changes',
         { message: unsubscribeResult.error.message },
-        toError(unsubscribeResult.error)
+        toError(unsubscribeResult.error),
       );
       return;
     }

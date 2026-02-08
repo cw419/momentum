@@ -15,9 +15,13 @@ export async function getChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
   const client = ctx.getClient();
 
   const fetchChains = async () => {
-    const { data, error } = await client.from('chains').select('*').eq('user_id', user.id).order('created_at', {
-      ascending: false,
-    });
+    const { data, error } = await client
+      .from('chains')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', {
+        ascending: false,
+      });
 
     if (error) {
       logger.error('SUPABASE_STORAGE', 'Failed to get chains data', {
@@ -28,7 +32,11 @@ export async function getChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
         userId: user.id,
       });
 
-      if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+      if (
+        error.code === 'PGRST116' ||
+        error.message?.includes('relation') ||
+        error.message?.includes('does not exist')
+      ) {
         return [];
       }
 
@@ -45,12 +53,16 @@ export async function getChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
     return await ctx.retryOperation(fetchChains, 2, 100);
   } catch (error) {
     const errorObj = toError(error);
-    logger.warn('SUPABASE_STORAGE', 'getChains failed; returning empty array', { message: errorObj.message });
+    logger.warn('SUPABASE_STORAGE', 'getChains failed; returning empty array', {
+      message: errorObj.message,
+    });
     return [];
   }
 }
 
-export async function getActiveChains(ctx: SupabaseStorageContext): Promise<Chain[]> {
+export async function getActiveChains(
+  ctx: SupabaseStorageContext,
+): Promise<Chain[]> {
   const user = await ctx.getCurrentUser();
   if (!user) return [];
 
@@ -70,7 +82,11 @@ export async function getActiveChains(ctx: SupabaseStorageContext): Promise<Chai
         return allChains.filter((chain) => chain.deletedAt == null);
       }
 
-      if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+      if (
+        error.code === 'PGRST116' ||
+        error.message?.includes('relation') ||
+        error.message?.includes('does not exist')
+      ) {
         return [];
       }
 
@@ -83,14 +99,20 @@ export async function getActiveChains(ctx: SupabaseStorageContext): Promise<Chai
   try {
     return await ctx.retryOperation(fetchActiveChains, 2, 100);
   } catch (error) {
-    logger.warn('SUPABASE_STORAGE', 'getActiveChains failed; returning empty array', {
-      message: toError(error).message,
-    });
+    logger.warn(
+      'SUPABASE_STORAGE',
+      'getActiveChains failed; returning empty array',
+      {
+        message: toError(error).message,
+      },
+    );
     return [];
   }
 }
 
-export async function getDeletedChains(ctx: SupabaseStorageContext): Promise<DeletedChain[]> {
+export async function getDeletedChains(
+  ctx: SupabaseStorageContext,
+): Promise<DeletedChain[]> {
   try {
     const user = await ctx.getCurrentUser();
     if (!user) return [];
@@ -107,13 +129,19 @@ export async function getDeletedChains(ctx: SupabaseStorageContext): Promise<Del
       if (error) {
         if (isMissingDeletedAtColumnError(error)) {
           const allChains = await getChains(ctx);
-          const deletedChains = allChains.filter((chain) => chain.deletedAt != null);
+          const deletedChains = allChains.filter(
+            (chain) => chain.deletedAt != null,
+          );
           return deletedChains
             .map((chain) => ({ ...chain, deletedAt: chain.deletedAt! }))
             .sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime());
         }
 
-        if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+        if (
+          error.code === 'PGRST116' ||
+          error.message?.includes('relation') ||
+          error.message?.includes('does not exist')
+        ) {
           return [];
         }
 
@@ -123,7 +151,10 @@ export async function getDeletedChains(ctx: SupabaseStorageContext): Promise<Del
       const chains = (data || []).map(mapChainRowToChain);
       return chains
         .filter((chain) => chain.deletedAt != null)
-        .map((chain) => ({ ...chain, deletedAt: chain.deletedAt! })) as DeletedChain[];
+        .map((chain) => ({
+          ...chain,
+          deletedAt: chain.deletedAt!,
+        })) as DeletedChain[];
     };
 
     return await ctx.retryOperation(fetchDeletedChains, 2, 100);
@@ -132,4 +163,3 @@ export async function getDeletedChains(ctx: SupabaseStorageContext): Promise<Del
     return [];
   }
 }
-

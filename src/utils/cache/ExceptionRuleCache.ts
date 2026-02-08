@@ -10,7 +10,9 @@ import { CACHE_TTL } from '../../constants/cache';
 import { CacheCore } from './CacheCore';
 
 export class ExceptionRuleCache extends CacheCore {
-  private subscribers = new Set<(chainId: string, rules: ExceptionRule[]) => void>();
+  private subscribers = new Set<
+    (chainId: string, rules: ExceptionRule[]) => void
+  >();
 
   constructor() {
     super();
@@ -28,13 +30,18 @@ export class ExceptionRuleCache extends CacheCore {
     return this.get<T>(this.getNamespacedKey(namespace, key));
   }
 
-  setNamespaced<T>(namespace: string, key: string, data: T, ttl?: number): void {
+  setNamespaced<T>(
+    namespace: string,
+    key: string,
+    data: T,
+    ttl?: number,
+  ): void {
     this.set(this.getNamespacedKey(namespace, key), data, ttl);
   }
 
   invalidateNamespace(namespace: string): void {
     const prefix = this.getNamespacePrefix(namespace);
-    this.invalidateByPattern(key => key.startsWith(prefix));
+    this.invalidateByPattern((key) => key.startsWith(prefix));
   }
 
   getChainRules(chainId: string): ExceptionRule[] | null {
@@ -42,8 +49,8 @@ export class ExceptionRuleCache extends CacheCore {
   }
 
   setChainRules(chainId: string, rules: ExceptionRule[], ttl?: number): void {
-    const chainSpecificRules = rules.filter(rule =>
-      rule.chainId === chainId && rule.scope === 'chain'
+    const chainSpecificRules = rules.filter(
+      (rule) => rule.chainId === chainId && rule.scope === 'chain',
     );
     this.set(`chain_rules_${chainId}`, chainSpecificRules, ttl);
     this.notifySubscribers(chainId, chainSpecificRules);
@@ -65,12 +72,20 @@ export class ExceptionRuleCache extends CacheCore {
     this.set(`usage_${key}`, records, ttl);
   }
 
-  getSearchResults(query: string, actionType?: ExceptionRuleType): ExceptionRule[] | null {
+  getSearchResults(
+    query: string,
+    actionType?: ExceptionRuleType,
+  ): ExceptionRule[] | null {
     const key = `search_${query}_${actionType || 'all'}`;
     return this.get<ExceptionRule[]>(key);
   }
 
-  setSearchResults(query: string, results: ExceptionRule[], actionType?: ExceptionRuleType, ttl?: number): void {
+  setSearchResults(
+    query: string,
+    results: ExceptionRule[],
+    actionType?: ExceptionRuleType,
+    ttl?: number,
+  ): void {
     const key = `search_${query}_${actionType || 'all'}`;
     this.set(key, results, ttl || CACHE_TTL.SEARCH_RESULTS);
   }
@@ -90,29 +105,37 @@ export class ExceptionRuleCache extends CacheCore {
   }
 
   invalidateRelated(ruleId: string): void {
-    this.invalidateByPattern(key =>
-      key.includes(ruleId) ||
-      key.startsWith('all_rules') ||
-      key.startsWith('search_') ||
-      key.startsWith('stats_')
+    this.invalidateByPattern(
+      (key) =>
+        key.includes(ruleId) ||
+        key.startsWith('all_rules') ||
+        key.startsWith('search_') ||
+        key.startsWith('stats_'),
     );
   }
 
   invalidateSearchCache(): void {
-    this.invalidateByPattern(key => key.startsWith('search_'));
+    this.invalidateByPattern((key) => key.startsWith('search_'));
   }
 
-  subscribe(callback: (chainId: string, rules: ExceptionRule[]) => void): () => void {
+  subscribe(
+    callback: (chainId: string, rules: ExceptionRule[]) => void,
+  ): () => void {
     this.subscribers.add(callback);
     return () => this.subscribers.delete(callback);
   }
 
   private notifySubscribers(chainId: string, rules: ExceptionRule[]): void {
-    this.subscribers.forEach(callback => {
+    this.subscribers.forEach((callback) => {
       try {
         callback(chainId, rules);
       } catch (error) {
-        logger.error('EXCEPTION_RULE_CACHE', 'Subscriber notification failed', undefined, toError(error));
+        logger.error(
+          'EXCEPTION_RULE_CACHE',
+          'Subscriber notification failed',
+          undefined,
+          toError(error),
+        );
       }
     });
   }
@@ -126,12 +149,16 @@ export class ExceptionRuleCache extends CacheCore {
     const existingRules = this.getChainRules(chainId) || [];
 
     if (rule.chainId !== chainId || rule.scope !== 'chain') {
-      logger.warn('EXCEPTION_RULE_CACHE', 'Attempting to add non-chain-specific rule to chain cache', {
-        chainId,
-        ruleId: rule.id,
-        ruleChainId: rule.chainId,
-        ruleScope: rule.scope,
-      });
+      logger.warn(
+        'EXCEPTION_RULE_CACHE',
+        'Attempting to add non-chain-specific rule to chain cache',
+        {
+          chainId,
+          ruleId: rule.id,
+          ruleChainId: rule.chainId,
+          ruleScope: rule.scope,
+        },
+      );
       return;
     }
 
@@ -141,13 +168,15 @@ export class ExceptionRuleCache extends CacheCore {
 
   removeRuleFromChain(chainId: string, ruleId: string): void {
     const existingRules = this.getChainRules(chainId) || [];
-    const updatedRules = existingRules.filter(rule => rule.id !== ruleId);
+    const updatedRules = existingRules.filter((rule) => rule.id !== ruleId);
     this.setChainRules(chainId, updatedRules);
   }
 
   updateRuleInChain(chainId: string, updatedRule: ExceptionRule): void {
     const existingRules = this.getChainRules(chainId) || [];
-    const ruleIndex = existingRules.findIndex(rule => rule.id === updatedRule.id);
+    const ruleIndex = existingRules.findIndex(
+      (rule) => rule.id === updatedRule.id,
+    );
 
     if (ruleIndex !== -1) {
       existingRules[ruleIndex] = updatedRule;
@@ -156,14 +185,20 @@ export class ExceptionRuleCache extends CacheCore {
   }
 
   clearChainCache(chainId: string): void {
-    this.invalidateByPattern(key => key.includes(chainId));
+    this.invalidateByPattern((key) => key.includes(chainId));
   }
 
   private invalidateChainSearchCache(chainId: string): void {
-    this.invalidateByPattern(key => key.startsWith('search_') && key.includes(chainId));
+    this.invalidateByPattern(
+      (key) => key.startsWith('search_') && key.includes(chainId),
+    );
   }
 
-  getChainSearchResults(chainId: string, query: string, actionType?: ExceptionRuleType): ExceptionRule[] | null {
+  getChainSearchResults(
+    chainId: string,
+    query: string,
+    actionType?: ExceptionRuleType,
+  ): ExceptionRule[] | null {
     const key = `search_${chainId}_${query}_${actionType || 'all'}`;
     return this.get<ExceptionRule[]>(key);
   }
@@ -173,18 +208,18 @@ export class ExceptionRuleCache extends CacheCore {
     query: string,
     results: ExceptionRule[],
     actionType?: ExceptionRuleType,
-    ttl?: number
+    ttl?: number,
   ): void {
     const key = `search_${chainId}_${query}_${actionType || 'all'}`;
-    const chainSpecificResults = results.filter(rule =>
-      rule.chainId === chainId && rule.scope === 'chain'
+    const chainSpecificResults = results.filter(
+      (rule) => rule.chainId === chainId && rule.scope === 'chain',
     );
     this.set(key, chainSpecificResults, ttl || CACHE_TTL.SEARCH_RESULTS);
   }
 
   async preloadChainData(
     chainId: string,
-    loadFunction: (chainId: string) => Promise<ExceptionRule[]>
+    loadFunction: (chainId: string) => Promise<ExceptionRule[]>,
   ): Promise<void> {
     try {
       if (this.getChainRules(chainId)) {
@@ -196,7 +231,12 @@ export class ExceptionRuleCache extends CacheCore {
         this.setRule(rule);
       }
     } catch (error) {
-      logger.warn('EXCEPTION_RULE_CACHE', `预加载链 ${chainId} 数据失败`, undefined, toError(error));
+      logger.warn(
+        'EXCEPTION_RULE_CACHE',
+        `预加载链 ${chainId} 数据失败`,
+        undefined,
+        toError(error),
+      );
     }
   }
 
@@ -213,7 +253,7 @@ export class ExceptionRuleCache extends CacheCore {
     return {
       rulesCount,
       cacheHit: !!entry,
-      lastUpdated: entry?.timestamp || null
+      lastUpdated: entry?.timestamp || null,
     };
   }
 

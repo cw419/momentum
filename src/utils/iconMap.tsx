@@ -1,7 +1,24 @@
 import type { LucideIcon } from 'lucide-react';
-import { Link, Layers, Zap, Search, Crown, Wrench, Dumbbell, Utensils } from 'lucide-react';
+import {
+  Link,
+  Layers,
+  Zap,
+  Search,
+  Crown,
+  Wrench,
+  Dumbbell,
+  Utensils,
+} from 'lucide-react';
 
-export type IconName = 'link' | 'layers' | 'zap' | 'search' | 'crown' | 'wrench' | 'dumbbell' | 'utensils';
+export type IconName =
+  | 'link'
+  | 'layers'
+  | 'zap'
+  | 'search'
+  | 'crown'
+  | 'wrench'
+  | 'dumbbell'
+  | 'utensils';
 
 const iconComponents: Record<IconName, LucideIcon> = {
   link: Link,

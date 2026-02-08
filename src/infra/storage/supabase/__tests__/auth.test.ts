@@ -38,18 +38,22 @@ async function loadAuthModule(options: LoadAuthOptions = {}) {
 
   const supabaseGetCurrentUser = vi.fn().mockResolvedValue(user);
   const supabaseWaitForAuthentication = vi.fn().mockResolvedValue(waitResult);
-  const supabaseIsUserAuthenticated = vi.fn().mockResolvedValue(options.isAuthenticated ?? true);
+  const supabaseIsUserAuthenticated = vi
+    .fn()
+    .mockResolvedValue(options.isAuthenticated ?? true);
   const supabaseSignUp = vi.fn().mockResolvedValue(signUpResult);
   const supabaseSignIn = vi.fn().mockResolvedValue(signInResult);
   const supabaseSignOut = vi.fn().mockResolvedValue(signOutResult);
 
   const unsubscribe = vi.fn();
-  const onAuthStateChange = vi.fn((callback: (event: string, session: { user: User | null }) => void) => {
-    if (options.emitAuthEvent !== false) {
-      callback('SIGNED_IN', { user });
-    }
-    return { data: { subscription: { unsubscribe } } };
-  });
+  const onAuthStateChange = vi.fn(
+    (callback: (event: string, session: { user: User | null }) => void) => {
+      if (options.emitAuthEvent !== false) {
+        callback('SIGNED_IN', { user });
+      }
+      return { data: { subscription: { unsubscribe } } };
+    },
+  );
 
   const defaultSupabase = {
     auth: {
@@ -58,7 +62,10 @@ async function loadAuthModule(options: LoadAuthOptions = {}) {
   };
 
   vi.doMock('../../../../lib/supabase', () => ({
-    supabase: options.supabaseValue === undefined ? defaultSupabase : options.supabaseValue,
+    supabase:
+      options.supabaseValue === undefined
+        ? defaultSupabase
+        : options.supabaseValue,
     getCurrentUser: supabaseGetCurrentUser,
     waitForAuthentication: supabaseWaitForAuthentication,
     isUserAuthenticated: supabaseIsUserAuthenticated,
@@ -188,9 +195,18 @@ describe('supabase/auth', () => {
   it('returns ok on successful signIn/signUp/signOut', async () => {
     const { mod, mocks } = await loadAuthModule();
 
-    await expect(mod.signIn('a@example.com', 'pw')).resolves.toEqual({ ok: true, value: undefined });
-    await expect(mod.signUp('a@example.com', 'pw')).resolves.toEqual({ ok: true, value: undefined });
-    await expect(mod.signOut()).resolves.toEqual({ ok: true, value: undefined });
+    await expect(mod.signIn('a@example.com', 'pw')).resolves.toEqual({
+      ok: true,
+      value: undefined,
+    });
+    await expect(mod.signUp('a@example.com', 'pw')).resolves.toEqual({
+      ok: true,
+      value: undefined,
+    });
+    await expect(mod.signOut()).resolves.toEqual({
+      ok: true,
+      value: undefined,
+    });
 
     expect(mocks.supabaseSignIn).toHaveBeenCalledWith('a@example.com', 'pw');
     expect(mocks.supabaseSignUp).toHaveBeenCalledWith('a@example.com', 'pw');
@@ -219,8 +235,11 @@ describe('supabase/auth', () => {
     expect(callback).toHaveBeenCalledWith(
       'SIGNED_IN',
       expect.objectContaining({
-        user: expect.objectContaining({ id: 'user-1', email: 'user@example.com' }),
-      })
+        user: expect.objectContaining({
+          id: 'user-1',
+          email: 'user@example.com',
+        }),
+      }),
     );
 
     if (subscription.ok) {

@@ -56,11 +56,15 @@ export function usePeriodicCleanup({
           'PERIODIC_CLEANUP',
           'Failed to persist group expiry cleanup',
           undefined,
-          toError(error)
+          toError(error),
         );
       });
 
-      setState((prev) => ({ ...prev, chains: updatedChains, chainsRevision: prev.chainsRevision + 1 }));
+      setState((prev) => ({
+        ...prev,
+        chains: updatedChains,
+        chainsRevision: prev.chainsRevision + 1,
+      }));
     };
 
     const interval = setInterval(checkExpiredGroups, 60000);
@@ -74,12 +78,12 @@ export function usePeriodicCleanup({
       const current = stateRef.current;
 
       const expiredSessions = current.scheduledSessions.filter((session) =>
-        isSessionExpired(session.expiresAt)
+        isSessionExpired(session.expiresAt),
       );
       if (expiredSessions.length === 0) return;
 
       const activeScheduledSessions = current.scheduledSessions.filter(
-        (session) => !isSessionExpired(session.expiresAt)
+        (session) => !isSessionExpired(session.expiresAt),
       );
 
       soundManager.playTimerFinished();
@@ -98,11 +102,14 @@ export function usePeriodicCleanup({
           'PERIODIC_CLEANUP',
           'Failed to persist scheduled session cleanup',
           undefined,
-          toError(error)
+          toError(error),
         );
       });
 
-      setState((prev) => ({ ...prev, scheduledSessions: activeScheduledSessions }));
+      setState((prev) => ({
+        ...prev,
+        scheduledSessions: activeScheduledSessions,
+      }));
     }, 10000);
 
     return () => clearInterval(interval);

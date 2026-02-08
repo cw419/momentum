@@ -1,7 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
+const require = createRequire(import.meta.url);
 const repoRoot = process.cwd();
 const reportsDir = path.join(repoRoot, 'reports', 'quality');
 const reportPath = path.join(repoRoot, 'coverage', 'vitest-ci-report.json');
@@ -17,6 +19,20 @@ const EXEMPT_FILES = new Set(envExemptFiles);
 
 await fs.mkdir(reportsDir, { recursive: true });
 
+function resolvePackageBin(packageName, binName) {
+  const packageJsonPath = require.resolve(`${packageName}/package.json`);
+  const packageJson = require(packageJsonPath);
+  const binField = packageJson.bin;
+  const relativeBin =
+    typeof binField === 'string' ? binField : binField?.[binName];
+  if (!relativeBin) {
+    throw new Error(
+      `Unable to resolve bin "${binName}" from package "${packageName}"`,
+    );
+  }
+  return path.resolve(path.dirname(packageJsonPath), relativeBin);
+}
+
 async function ensureVitestReport(refreshReport) {
   if (!refreshReport) {
     try {
@@ -30,18 +46,32 @@ async function ensureVitestReport(refreshReport) {
   const coverageDir = path.join(repoRoot, 'coverage');
   await fs.mkdir(coverageDir, { recursive: true });
 
+  const vitestBin = resolvePackageBin('vitest', 'vitest');
   const run = spawnSync(
-    'npx',
-    ['vitest', 'run', '--config', 'vitest.ci.config.ts', '--reporter=json', '--outputFile', 'coverage/vitest-ci-report.json'],
+    process.execPath,
+    [
+      vitestBin,
+      'run',
+      '--config',
+      'vitest.ci.config.ts',
+      '--reporter=json',
+      '--outputFile',
+      'coverage/vitest-ci-report.json',
+    ],
     {
       cwd: repoRoot,
       stdio: 'inherit',
-      shell: true,
-    }
+    },
   );
 
+  if (run.error) {
+    throw new Error(`Failed to generate Vitest report (${run.error.message})`);
+  }
+
   if ((run.status ?? 1) !== 0) {
-    throw new Error(`Failed to generate Vitest report (exit ${run.status ?? 'unknown'})`);
+    throw new Error(
+      `Failed to generate Vitest report (exit ${run.status ?? 'unknown'})`,
+    );
   }
 }
 
@@ -50,11 +80,17 @@ function normalizePath(fileName) {
 }
 
 function getFileDurationMs(suite) {
-  if (typeof suite.startTime === 'number' && typeof suite.endTime === 'number') {
+  if (
+    typeof suite.startTime === 'number' &&
+    typeof suite.endTime === 'number'
+  ) {
     return Math.max(0, suite.endTime - suite.startTime);
   }
 
-  return (suite.assertionResults ?? []).reduce((sum, testCase) => sum + (testCase.duration ?? 0), 0);
+  return (suite.assertionResults ?? []).reduce(
+    (sum, testCase) => sum + (testCase.duration ?? 0),
+    0,
+  );
 }
 
 const shouldRefreshReport = process.argv.includes('--refresh');
@@ -66,7 +102,9 @@ const caseViolations = [];
 const fileDurations = [];
 
 for (const suite of report.testResults ?? []) {
-  const fileName = normalizePath(path.relative(repoRoot, suite.name ?? '') || suite.name || 'unknown');
+  const fileName = normalizePath(
+    path.relative(repoRoot, suite.name ?? '') || suite.name || 'unknown',
+  );
   const fileDurationMs = Number(getFileDurationMs(suite).toFixed(2));
   const isExempt = EXEMPT_FILES.has(fileName);
 
@@ -77,7 +115,11 @@ for (const suite of report.testResults ?? []) {
   });
 
   if (!isExempt && fileDurationMs > FILE_BUDGET_MS) {
-    fileViolations.push({ file: fileName, durationMs: fileDurationMs, budgetMs: FILE_BUDGET_MS });
+    fileViolations.push({
+      file: fileName,
+      durationMs: fileDurationMs,
+      budgetMs: FILE_BUDGET_MS,
+    });
   }
 
   for (const assertion of suite.assertionResults ?? []) {
@@ -118,17 +160,25 @@ await fs.writeFile(outPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
 
 if (fileViolations.length || caseViolations.length) {
   console.error(
-    `[test-runtime-budget] budget violations: files=${fileViolations.length}, test-cases=${caseViolations.length}`
+    `[test-runtime-budget] budget violations: files=${fileViolations.length}, test-cases=${caseViolations.length}`,
   );
   for (const violation of fileViolations.slice(0, 20)) {
-    console.error(`- file ${violation.file}: ${violation.durationMs}ms > ${violation.budgetMs}ms`);
+    console.error(
+      `- file ${violation.file}: ${violation.durationMs}ms > ${violation.budgetMs}ms`,
+    );
   }
   for (const violation of caseViolations.slice(0, 20)) {
-    console.error(`- test ${violation.file} :: ${violation.testName}: ${violation.durationMs}ms > ${violation.budgetMs}ms`);
+    console.error(
+      `- test ${violation.file} :: ${violation.testName}: ${violation.durationMs}ms > ${violation.budgetMs}ms`,
+    );
   }
-  console.error(`[test-runtime-budget] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`);
+  console.error(
+    `[test-runtime-budget] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`,
+  );
   process.exit(1);
 }
 
 console.log('[test-runtime-budget] all runtime budgets satisfied.');
-console.log(`[test-runtime-budget] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`);
+console.log(
+  `[test-runtime-budget] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`,
+);

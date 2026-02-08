@@ -26,7 +26,10 @@ function parseViewParam(rawView: string | null): ViewState | null {
   return rawView as ViewState;
 }
 
-function parseDetailOrGroupView(params: URLSearchParams, chains: Chain[]): UrlSyncedViewState {
+function parseDetailOrGroupView(
+  params: URLSearchParams,
+  chains: Chain[],
+): UrlSyncedViewState {
   const chainId = params.get('chain');
   if (!chainId) return dashboardState();
 
@@ -43,7 +46,7 @@ function parseDetailOrGroupView(params: URLSearchParams, chains: Chain[]): UrlSy
 function parseEditorView(
   params: URLSearchParams,
   view: 'editor' | 'taskgroup-editor',
-  chains: Chain[]
+  chains: Chain[],
 ): UrlSyncedViewState {
   const editChainId = params.get('edit');
   if (editChainId) {
@@ -78,7 +81,10 @@ export function serializeViewStateToSearch(state: {
     params.set('view', state.currentView);
   }
 
-  if ((state.currentView === 'detail' || state.currentView === 'group') && state.viewingChainId) {
+  if (
+    (state.currentView === 'detail' || state.currentView === 'group') &&
+    state.viewingChainId
+  ) {
     params.set('chain', state.viewingChainId);
   }
 
@@ -86,7 +92,10 @@ export function serializeViewStateToSearch(state: {
     params.set('chain', state.activeSessionChainId);
   }
 
-  if (state.currentView === 'editor' || state.currentView === 'taskgroup-editor') {
+  if (
+    state.currentView === 'editor' ||
+    state.currentView === 'taskgroup-editor'
+  ) {
     if (state.editingChainId) {
       params.set('edit', state.editingChainId);
     } else if (state.viewingChainId) {
@@ -112,7 +121,9 @@ export function parseViewStateFromSearch(input: {
   }
 
   if (view === 'focus') {
-    return input.activeSession ? { currentView: 'focus', viewingChainId: null, editingChain: null } : dashboardState();
+    return input.activeSession
+      ? { currentView: 'focus', viewingChainId: null, editingChain: null }
+      : dashboardState();
   }
 
   if (view === 'detail' || view === 'group') {

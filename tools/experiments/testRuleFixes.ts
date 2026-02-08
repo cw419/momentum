@@ -14,7 +14,7 @@ export async function testRuleFixes() {
     const testRule = await exceptionRuleManager.createRule(
       `测试规则_${Date.now()}`,
       ExceptionRuleType.PAUSE_ONLY,
-      '这是一个测试规则'
+      '这是一个测试规则',
     );
     console.log('✅ 规则创建成功:', testRule.rule.name);
 
@@ -26,13 +26,13 @@ export async function testRuleFixes() {
       chainName: '测试链',
       startedAt: new Date(),
       elapsedTime: 300,
-      isDurationless: false
+      isDurationless: false,
     };
 
     const useResult = await exceptionRuleManager.useRule(
       testRule.rule.id,
       sessionContext,
-      'pause'
+      'pause',
     );
     console.log('✅ 规则使用成功:', useResult.rule.name);
 
@@ -41,7 +41,7 @@ export async function testRuleFixes() {
     try {
       await exceptionRuleManager.createRule(
         testRule.rule.name, // 使用相同名称
-        ExceptionRuleType.EARLY_COMPLETION_ONLY
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
       );
       console.log('❌ 重复检查失败 - 应该抛出错误');
     } catch (error) {
@@ -54,7 +54,6 @@ export async function testRuleFixes() {
 
     console.log('🎉 所有测试通过！');
     return true;
-
   } catch (error) {
     console.error('❌ 测试失败:', error);
     return false;

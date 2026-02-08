@@ -22,7 +22,10 @@ export function getCanvasState(): CanvasState | null {
 
 export function setCanvasState(state: CanvasState): void {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEYS.RSIP_CANVAS_STATE, JSON.stringify(state));
+    localStorage.setItem(
+      LOCAL_STORAGE_KEYS.RSIP_CANVAS_STATE,
+      JSON.stringify(state),
+    );
   } catch {
     // ignore quota errors
   }
@@ -35,4 +38,3 @@ export function clearCanvasState(): void {
     // ignore errors
   }
 }
-

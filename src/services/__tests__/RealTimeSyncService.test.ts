@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 
-function createStorageMock(overrides: Partial<MomentumStorage> = {}): MomentumStorage {
+function createStorageMock(
+  overrides: Partial<MomentumStorage> = {},
+): MomentumStorage {
   return {
     kind: 'supabase',
     getChains: vi.fn().mockResolvedValue([]),
@@ -30,7 +32,10 @@ function createStorageMock(overrides: Partial<MomentumStorage> = {}): MomentumSt
     migrateCompletionHistoryForTiming: vi.fn().mockResolvedValue(undefined),
     clearCache: vi.fn(),
     getCurrentUser: vi.fn().mockResolvedValue({ ok: true, value: null }),
-    waitForAuthentication: vi.fn().mockResolvedValue({ ok: true, value: { user: null, isAuthenticated: false } }),
+    waitForAuthentication: vi.fn().mockResolvedValue({
+      ok: true,
+      value: { user: null, isAuthenticated: false },
+    }),
     isUserAuthenticated: vi.fn().mockResolvedValue({ ok: true, value: false }),
     signUp: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
     signIn: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
@@ -38,9 +43,15 @@ function createStorageMock(overrides: Partial<MomentumStorage> = {}): MomentumSt
     onAuthStateChange: vi.fn().mockReturnValue({ ok: true, value: vi.fn() }),
     getGamblingSettings: vi.fn().mockResolvedValue({ ok: true, value: {} }),
     toggleGamblingMode: vi.fn().mockResolvedValue({ ok: true, value: {} }),
-    isGamblingModeEnabled: vi.fn().mockResolvedValue({ ok: true, value: false }),
-    createBettingSession: vi.fn().mockResolvedValue({ ok: true, value: 'session-1' }),
-    deleteBettingSession: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
+    isGamblingModeEnabled: vi
+      .fn()
+      .mockResolvedValue({ ok: true, value: false }),
+    createBettingSession: vi
+      .fn()
+      .mockResolvedValue({ ok: true, value: 'session-1' }),
+    deleteBettingSession: vi
+      .fn()
+      .mockResolvedValue({ ok: true, value: undefined }),
     completeTaskWithBetting: vi.fn().mockResolvedValue({ ok: true, value: {} }),
     placeBet: vi.fn().mockResolvedValue({ ok: true, value: { success: true } }),
     getUserAvailablePoints: vi.fn().mockResolvedValue({ ok: true, value: 0 }),
@@ -181,10 +192,14 @@ describe('RealTimeSyncService', () => {
     const callback = vi.fn();
     service.subscribe('chains', callback);
 
-    await expect(service.deleteWithSync(storage, 'chain-10')).resolves.toEqual([{ id: 'chain-10' }]);
+    await expect(service.deleteWithSync(storage, 'chain-10')).resolves.toEqual([
+      { id: 'chain-10' },
+    ]);
     expect(storage.softDeleteChain).toHaveBeenCalledWith('chain-10');
 
-    await expect(service.saveWithSync(storage, [{ id: 'chain-10' }] as never)).resolves.toEqual([{ id: 'chain-10' }]);
+    await expect(
+      service.saveWithSync(storage, [{ id: 'chain-10' }] as never),
+    ).resolves.toEqual([{ id: 'chain-10' }]);
     expect(storage.saveChains).toHaveBeenCalledWith([{ id: 'chain-10' }]);
     expect(callback).toHaveBeenCalledTimes(2);
   });
@@ -199,7 +214,10 @@ describe('RealTimeSyncService', () => {
       getActiveChains: vi.fn().mockResolvedValue([{ id: 'chain-ok' }]),
     });
 
-    const result = await service.restoreWithSync(storage, ['chain-ok', 'chain-bad']);
+    const result = await service.restoreWithSync(storage, [
+      'chain-ok',
+      'chain-bad',
+    ]);
     expect(result).toEqual([{ id: 'chain-ok' }]);
     expect(storage.restoreChain).toHaveBeenCalledTimes(2);
     expect(loggerMock.warn).toHaveBeenCalled();
@@ -212,7 +230,9 @@ describe('RealTimeSyncService', () => {
       getActiveChains: vi.fn().mockResolvedValue([]),
     });
 
-    await expect(service.restoreWithSync(storage, ['a', 'b'])).rejects.toThrow('All restore operations failed');
+    await expect(service.restoreWithSync(storage, ['a', 'b'])).rejects.toThrow(
+      'All restore operations failed',
+    );
   });
 
   it('permanentDeleteWithSync processes all ids then refreshes', async () => {

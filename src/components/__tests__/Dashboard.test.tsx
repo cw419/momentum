@@ -15,10 +15,9 @@ describe('Dashboard', () => {
     const chain = createUnitChain({ id: 'chain-1', name: 'Primary Chain' });
     const storage = {
       kind: 'local',
-      getDeletedChains: vi.fn().mockResolvedValue([
-        { id: 'deleted-1' },
-        { id: 'deleted-2' },
-      ]),
+      getDeletedChains: vi
+        .fn()
+        .mockResolvedValue([{ id: 'deleted-1' }, { id: 'deleted-2' }]),
     };
 
     render(
@@ -42,10 +41,12 @@ describe('Dashboard', () => {
             onPermanentDeleteChains={vi.fn()}
           />
         </StorageProvider>
-      </I18nProvider>
+      </I18nProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Recycle bin' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Recycle bin' }),
+    ).toBeInTheDocument();
 
     await waitFor(() => {
       expect(storage.getDeletedChains).toHaveBeenCalledTimes(1);
@@ -81,13 +82,15 @@ describe('Dashboard', () => {
             onPermanentDeleteChains={vi.fn()}
           />
         </StorageProvider>
-      </I18nProvider>
+      </I18nProvider>,
     );
 
     await waitFor(() => {
       expect(storage.getDeletedChains).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByRole('button', { name: 'Recycle bin' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Recycle bin' }),
+    ).toBeInTheDocument();
   });
 });

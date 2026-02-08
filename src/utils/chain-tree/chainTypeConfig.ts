@@ -6,17 +6,44 @@ import type { IconName } from '../iconMap';
  */
 export const getChainTypeConfig = (
   type: Chain['type'],
-  language: 'en' | 'zh' = 'en'
+  language: 'en' | 'zh' = 'en',
 ): { icon: IconName; color: string; bgColor: string; name: string } => {
-  const configs: Record<Chain['type'], { icon: IconName; color: string; bgColor: string }> = {
+  const configs: Record<
+    Chain['type'],
+    { icon: IconName; color: string; bgColor: string }
+  > = {
     unit: { icon: 'link', color: 'text-gray-500', bgColor: 'bg-gray-500/10' },
-    group: { icon: 'layers', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+    group: {
+      icon: 'layers',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
+    },
     assault: { icon: 'zap', color: 'text-red-500', bgColor: 'bg-red-500/10' },
-    recon: { icon: 'search', color: 'text-green-500', bgColor: 'bg-green-500/10' },
-    command: { icon: 'crown', color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-    special_ops: { icon: 'wrench', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
-    engineering: { icon: 'dumbbell', color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
-    quartermaster: { icon: 'utensils', color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
+    recon: {
+      icon: 'search',
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
+    },
+    command: {
+      icon: 'crown',
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500/10',
+    },
+    special_ops: {
+      icon: 'wrench',
+      color: 'text-yellow-500',
+      bgColor: 'bg-yellow-500/10',
+    },
+    engineering: {
+      icon: 'dumbbell',
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-500/10',
+    },
+    quartermaster: {
+      icon: 'utensils',
+      color: 'text-pink-500',
+      bgColor: 'bg-pink-500/10',
+    },
   };
 
   const names: Record<'en' | 'zh', Record<Chain['type'], string>> = {
@@ -43,8 +70,8 @@ export const getChainTypeConfig = (
   };
 
   const resolvedConfig = configs[type] || configs.unit;
-  const resolvedName = names[language]?.[type] || names[language]?.unit || names.en.unit;
+  const resolvedName =
+    names[language]?.[type] || names[language]?.unit || names.en.unit;
 
   return { ...resolvedConfig, name: resolvedName };
 };
-

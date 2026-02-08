@@ -1,6 +1,6 @@
 /**
  * 响应时间监控器
- * 
+ *
  * 提供全面的应用性能监控，包括：
  * - 页面加载时间监控
  * - API请求响应时间
@@ -96,29 +96,29 @@ class ResponseTimeMonitor {
       enableRenderingMonitoring: true,
       sampleRate: 1.0,
       maxHistorySize: 1000,
-      reportingInterval: 60000 // 1分钟
+      reportingInterval: 60000, // 1分钟
     };
 
     this.thresholds = {
       navigation: {
-        firstContentfulPaint: 1800,  // 1.8秒
+        firstContentfulPaint: 1800, // 1.8秒
         largestContentfulPaint: 2500, // 2.5秒
-        cumulativeLayoutShift: 0.1,   // 0.1
-        firstInputDelay: 100          // 100毫秒
+        cumulativeLayoutShift: 0.1, // 0.1
+        firstInputDelay: 100, // 100毫秒
       },
       api: {
-        fast: 500,      // 500ms以下为快速
+        fast: 500, // 500ms以下为快速
         acceptable: 2000, // 2秒以下为可接受
-        slow: 5000      // 5秒以上为慢速
+        slow: 5000, // 5秒以上为慢速
       },
       interaction: {
-        fast: 50,       // 50ms以下为快速响应
-        acceptable: 200 // 200ms以下为可接受
+        fast: 50, // 50ms以下为快速响应
+        acceptable: 200, // 200ms以下为可接受
       },
       rendering: {
         targetFPS: 60,
-        warningFPS: 30
-      }
+        warningFPS: 30,
+      },
     };
 
     this.initializeMonitoring();
@@ -178,7 +178,7 @@ class ResponseTimeMonitor {
           value: performance.now(),
           timestamp: Date.now(),
           category: 'navigation',
-          metadata: { visible: true }
+          metadata: { visible: true },
         });
       }
     });
@@ -197,10 +197,14 @@ class ResponseTimeMonitor {
             value: entry.startTime,
             timestamp: Date.now(),
             category: 'navigation',
-            metadata: { 
+            metadata: {
               threshold: this.thresholds.navigation.firstContentfulPaint,
-              status: entry.startTime <= this.thresholds.navigation.firstContentfulPaint ? 'good' : 'poor'
-            }
+              status:
+                entry.startTime <=
+                this.thresholds.navigation.firstContentfulPaint
+                  ? 'good'
+                  : 'poor',
+            },
           });
         }
       }
@@ -215,10 +219,15 @@ class ResponseTimeMonitor {
           timestamp: Date.now(),
           category: 'navigation',
           metadata: {
-            element: (entry as LargestContentfulPaint).element?.tagName || 'unknown',
+            element:
+              (entry as LargestContentfulPaint).element?.tagName || 'unknown',
             threshold: this.thresholds.navigation.largestContentfulPaint,
-            status: entry.startTime <= this.thresholds.navigation.largestContentfulPaint ? 'good' : 'poor'
-          }
+            status:
+              entry.startTime <=
+              this.thresholds.navigation.largestContentfulPaint
+                ? 'good'
+                : 'poor',
+          },
         });
       }
     });
@@ -243,8 +252,12 @@ class ResponseTimeMonitor {
           category: 'navigation',
           metadata: {
             threshold: this.thresholds.navigation.cumulativeLayoutShift,
-            status: cumulativeScore <= this.thresholds.navigation.cumulativeLayoutShift ? 'good' : 'poor'
-          }
+            status:
+              cumulativeScore <=
+              this.thresholds.navigation.cumulativeLayoutShift
+                ? 'good'
+                : 'poor',
+          },
         });
       }
     });
@@ -256,11 +269,11 @@ class ResponseTimeMonitor {
   private measureFirstInputDelay(): void {
     let firstInputTime: number | null = null;
     const inputEvents = ['click', 'keydown', 'touchstart'] as const;
-    
+
     const onFirstInput = (event: Event) => {
       if (firstInputTime === null) {
         firstInputTime = performance.now();
-        
+
         // 使用requestIdleCallback来测量处理时间
         if ('requestIdleCallback' in window) {
           requestIdleCallback(() => {
@@ -273,10 +286,13 @@ class ResponseTimeMonitor {
               metadata: {
                 eventType: event.type,
                 threshold: this.thresholds.navigation.firstInputDelay,
-                status: processingTime <= this.thresholds.navigation.firstInputDelay ? 'good' : 'poor'
-              }
+                status:
+                  processingTime <= this.thresholds.navigation.firstInputDelay
+                    ? 'good'
+                    : 'poor',
+              },
             });
-            
+
             // 移除监听器
             inputEvents.forEach((eventType) => {
               document.removeEventListener(eventType, onFirstInput, true);
@@ -287,7 +303,11 @@ class ResponseTimeMonitor {
     };
 
     inputEvents.forEach((eventType) => {
-      document.addEventListener(eventType, onFirstInput, { capture: true, passive: true, once: true });
+      document.addEventListener(eventType, onFirstInput, {
+        capture: true,
+        passive: true,
+        once: true,
+      });
     });
   }
 
@@ -296,25 +316,35 @@ class ResponseTimeMonitor {
    */
   private initializeInteractionMonitoring(): void {
     // 监控点击响应时间
-    document.addEventListener('click', this.measureInteractionTime.bind(this, 'click'));
-    
+    document.addEventListener(
+      'click',
+      this.measureInteractionTime.bind(this, 'click'),
+    );
+
     // 监控键盘响应时间
-    document.addEventListener('keydown', this.measureInteractionTime.bind(this, 'keydown'));
-    
+    document.addEventListener(
+      'keydown',
+      this.measureInteractionTime.bind(this, 'keydown'),
+    );
+
     // 监控滚动性能
     let scrollTimeout: NodeJS.Timeout;
-    document.addEventListener('scroll', () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        this.recordMetric({
-          name: 'scroll_performance',
-          value: performance.now(),
-          timestamp: Date.now(),
-          category: 'interaction',
-          metadata: { scrollY: window.scrollY }
-        });
-      }, 100);
-    }, { passive: true });
+    document.addEventListener(
+      'scroll',
+      () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          this.recordMetric({
+            name: 'scroll_performance',
+            value: performance.now(),
+            timestamp: Date.now(),
+            category: 'interaction',
+            metadata: { scrollY: window.scrollY },
+          });
+        }, 100);
+      },
+      { passive: true },
+    );
   }
 
   /**
@@ -324,10 +354,10 @@ class ResponseTimeMonitor {
     if (Math.random() > this.config.sampleRate) return;
 
     const startTime = performance.now();
-    
+
     requestAnimationFrame(() => {
       const responseTime = performance.now() - startTime;
-      
+
       let status = 'good';
       if (responseTime > this.thresholds.interaction.acceptable) {
         status = 'poor';
@@ -343,8 +373,8 @@ class ResponseTimeMonitor {
         metadata: {
           eventType,
           target: (event.target as Element)?.tagName || 'unknown',
-          status
-        }
+          status,
+        },
       });
     });
   }
@@ -360,12 +390,12 @@ class ResponseTimeMonitor {
     const measureFPS = () => {
       const currentTime = performance.now();
       frameCount++;
-      
+
       if (currentTime - lastTime >= 1000) {
         fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
         frameCount = 0;
         lastTime = currentTime;
-        
+
         let status = 'good';
         if (fps < this.thresholds.rendering.warningFPS) {
           status = 'poor';
@@ -378,10 +408,10 @@ class ResponseTimeMonitor {
           value: fps,
           timestamp: Date.now(),
           category: 'rendering',
-          metadata: { status }
+          metadata: { status },
         });
       }
-      
+
       requestAnimationFrame(measureFPS);
     };
 
@@ -391,16 +421,22 @@ class ResponseTimeMonitor {
   /**
    * 创建性能观察器
    */
-  private createPerformanceObserver(type: string, callback: (entries: PerformanceEntry[]) => void): void {
+  private createPerformanceObserver(
+    type: string,
+    callback: (entries: PerformanceEntry[]) => void,
+  ): void {
     try {
       const observer = new PerformanceObserver((list) => {
         callback(list.getEntries());
       });
-      
+
       observer.observe({ entryTypes: [type] });
       this.observers.push(observer);
     } catch (error) {
-      console.warn(`[ResponseTimeMonitor] Failed to create observer for ${type}:`, error);
+      console.warn(
+        `[ResponseTimeMonitor] Failed to create observer for ${type}:`,
+        error,
+      );
     }
   }
 
@@ -420,19 +456,20 @@ class ResponseTimeMonitor {
       value: loadTime,
       timestamp: Date.now(),
       category: 'navigation',
-      metadata: { 
+      metadata: {
         navigationType: navigation.type,
-        redirectCount: navigation.redirectCount
-      }
+        redirectCount: navigation.redirectCount,
+      },
     });
 
     // DOM内容加载时间
-    const domContentLoadedTime = timing.domContentLoadedEventEnd - timing.navigationStart;
+    const domContentLoadedTime =
+      timing.domContentLoadedEventEnd - timing.navigationStart;
     this.recordMetric({
       name: 'dom_content_loaded_time',
       value: domContentLoadedTime,
       timestamp: Date.now(),
-      category: 'navigation'
+      category: 'navigation',
     });
 
     // DNS查询时间
@@ -442,7 +479,7 @@ class ResponseTimeMonitor {
         name: 'dns_lookup_time',
         value: dnsTime,
         timestamp: Date.now(),
-        category: 'navigation'
+        category: 'navigation',
       });
     }
 
@@ -453,7 +490,7 @@ class ResponseTimeMonitor {
         name: 'tcp_connection_time',
         value: tcpTime,
         timestamp: Date.now(),
-        category: 'navigation'
+        category: 'navigation',
       });
     }
   }
@@ -464,14 +501,14 @@ class ResponseTimeMonitor {
   measureAPIRequest<T>(
     name: string,
     requestFn: () => Promise<T>,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<T> {
     const startTime = performance.now();
-    
+
     return requestFn()
-      .then(result => {
+      .then((result) => {
         const responseTime = performance.now() - startTime;
-        
+
         let status = 'fast';
         if (responseTime > this.thresholds.api.slow) {
           status = 'slow';
@@ -487,15 +524,15 @@ class ResponseTimeMonitor {
           metadata: {
             ...metadata,
             status,
-            success: true
-          }
+            success: true,
+          },
         });
 
         return result;
       })
-      .catch(error => {
+      .catch((error) => {
         const responseTime = performance.now() - startTime;
-        
+
         this.recordMetric({
           name: `api_${name}`,
           value: responseTime,
@@ -505,8 +542,8 @@ class ResponseTimeMonitor {
             ...metadata,
             status: 'error',
             success: false,
-            error: error.message
-          }
+            error: error.message,
+          },
         });
 
         throw error;
@@ -516,13 +553,17 @@ class ResponseTimeMonitor {
   /**
    * 记录自定义指标
    */
-  recordCustomMetric(name: string, value: number, metadata?: Record<string, any>): void {
+  recordCustomMetric(
+    name: string,
+    value: number,
+    metadata?: Record<string, any>,
+  ): void {
     this.recordMetric({
       name,
       value,
       timestamp: Date.now(),
       category: 'custom',
-      metadata
+      metadata,
     });
   }
 
@@ -554,36 +595,41 @@ class ResponseTimeMonitor {
   /**
    * 生成性能报告
    */
-  generatePerformanceReport(timeRange?: { start: number; end: number }): PerformanceReport {
+  generatePerformanceReport(timeRange?: {
+    start: number;
+    end: number;
+  }): PerformanceReport {
     const now = Date.now();
     const period = timeRange || {
       start: now - this.config.reportingInterval,
       end: now,
-      duration: this.config.reportingInterval
+      duration: this.config.reportingInterval,
     };
 
     // 筛选时间范围内的指标
-    const filteredMetrics = this.metrics.filter(metric => 
-      metric.timestamp >= period.start && metric.timestamp <= period.end
+    const filteredMetrics = this.metrics.filter(
+      (metric) =>
+        metric.timestamp >= period.start && metric.timestamp <= period.end,
     );
 
     // 按类别分组
     const metricsByCategory = {
-      navigation: filteredMetrics.filter(m => m.category === 'navigation'),
-      api: filteredMetrics.filter(m => m.category === 'api'),
-      interaction: filteredMetrics.filter(m => m.category === 'interaction'),
-      rendering: filteredMetrics.filter(m => m.category === 'rendering'),
-      custom: filteredMetrics.filter(m => m.category === 'custom')
+      navigation: filteredMetrics.filter((m) => m.category === 'navigation'),
+      api: filteredMetrics.filter((m) => m.category === 'api'),
+      interaction: filteredMetrics.filter((m) => m.category === 'interaction'),
+      rendering: filteredMetrics.filter((m) => m.category === 'rendering'),
+      custom: filteredMetrics.filter((m) => m.category === 'custom'),
     };
 
     // 计算摘要统计
     const totalMetrics = filteredMetrics.length;
-    const averageResponseTime = totalMetrics > 0 
-      ? filteredMetrics.reduce((sum, m) => sum + m.value, 0) / totalMetrics 
-      : 0;
-    
-    const slowQueries = metricsByCategory.api.filter(m => 
-      m.value > this.thresholds.api.acceptable
+    const averageResponseTime =
+      totalMetrics > 0
+        ? filteredMetrics.reduce((sum, m) => sum + m.value, 0) / totalMetrics
+        : 0;
+
+    const slowQueries = metricsByCategory.api.filter(
+      (m) => m.value > this.thresholds.api.acceptable,
     ).length;
 
     // 计算性能分数 (0-100)
@@ -591,55 +637,68 @@ class ResponseTimeMonitor {
 
     // 识别问题和建议
     const issues = this.identifyPerformanceIssues(metricsByCategory);
-    const recommendations = this.generateRecommendations(metricsByCategory, issues);
+    const recommendations = this.generateRecommendations(
+      metricsByCategory,
+      issues,
+    );
 
     return {
       period: {
         start: period.start,
         end: period.end,
-        duration: period.end - period.start
+        duration: period.end - period.start,
       },
       metrics: metricsByCategory,
       summary: {
         totalMetrics,
         averageResponseTime,
         slowQueries,
-        performanceScore
+        performanceScore,
       },
       issues,
-      recommendations
+      recommendations,
     };
   }
 
   /**
    * 计算性能分数
    */
-  private calculatePerformanceScore(metrics: Record<string, PerformanceMetric[]>): number {
+  private calculatePerformanceScore(
+    metrics: Record<string, PerformanceMetric[]>,
+  ): number {
     let score = 100;
-    
+
     // Web Vitals评分
-    const fcp = metrics.navigation.find(m => m.name === 'first_contentful_paint');
+    const fcp = metrics.navigation.find(
+      (m) => m.name === 'first_contentful_paint',
+    );
     if (fcp && fcp.value > this.thresholds.navigation.firstContentfulPaint) {
       score -= 15;
     }
 
-    const lcp = metrics.navigation.find(m => m.name === 'largest_contentful_paint');
+    const lcp = metrics.navigation.find(
+      (m) => m.name === 'largest_contentful_paint',
+    );
     if (lcp && lcp.value > this.thresholds.navigation.largestContentfulPaint) {
       score -= 20;
     }
 
-    const cls = metrics.navigation.find(m => m.name === 'cumulative_layout_shift');
+    const cls = metrics.navigation.find(
+      (m) => m.name === 'cumulative_layout_shift',
+    );
     if (cls && cls.value > this.thresholds.navigation.cumulativeLayoutShift) {
       score -= 15;
     }
 
-    const fid = metrics.interaction.find(m => m.name === 'first_input_delay');
+    const fid = metrics.interaction.find((m) => m.name === 'first_input_delay');
     if (fid && fid.value > this.thresholds.navigation.firstInputDelay) {
       score -= 10;
     }
 
     // API性能评分
-    const slowApiCalls = metrics.api.filter(m => m.value > this.thresholds.api.acceptable).length;
+    const slowApiCalls = metrics.api.filter(
+      (m) => m.value > this.thresholds.api.acceptable,
+    ).length;
     const totalApiCalls = metrics.api.length;
     if (totalApiCalls > 0) {
       const slowRatio = slowApiCalls / totalApiCalls;
@@ -647,8 +706,10 @@ class ResponseTimeMonitor {
     }
 
     // 渲染性能评分
-    const lowFPSMetrics = metrics.rendering.filter(m => 
-      m.name === 'rendering_fps' && m.value < this.thresholds.rendering.warningFPS
+    const lowFPSMetrics = metrics.rendering.filter(
+      (m) =>
+        m.name === 'rendering_fps' &&
+        m.value < this.thresholds.rendering.warningFPS,
     );
     if (lowFPSMetrics.length > 0) {
       score -= 10;
@@ -660,32 +721,42 @@ class ResponseTimeMonitor {
   /**
    * 识别性能问题
    */
-  private identifyPerformanceIssues(metrics: Record<string, PerformanceMetric[]>): string[] {
+  private identifyPerformanceIssues(
+    metrics: Record<string, PerformanceMetric[]>,
+  ): string[] {
     const issues: string[] = [];
 
     // 页面加载问题
-    const loadTime = metrics.navigation.find(m => m.name === 'page_load_time');
+    const loadTime = metrics.navigation.find(
+      (m) => m.name === 'page_load_time',
+    );
     if (loadTime && loadTime.value > 3000) {
       issues.push(`页面加载时间过长: ${(loadTime.value / 1000).toFixed(2)}秒`);
     }
 
     // API响应问题
-    const slowAPIs = metrics.api.filter(m => m.value > this.thresholds.api.slow);
+    const slowAPIs = metrics.api.filter(
+      (m) => m.value > this.thresholds.api.slow,
+    );
     if (slowAPIs.length > 0) {
       issues.push(`检测到 ${slowAPIs.length} 个慢速API请求`);
     }
 
     // 渲染性能问题
-    const lowFPS = metrics.rendering.filter(m => 
-      m.name === 'rendering_fps' && m.value < this.thresholds.rendering.warningFPS
+    const lowFPS = metrics.rendering.filter(
+      (m) =>
+        m.name === 'rendering_fps' &&
+        m.value < this.thresholds.rendering.warningFPS,
     );
     if (lowFPS.length > 0) {
-      issues.push(`检测到渲染帧率低于 ${this.thresholds.rendering.warningFPS} FPS`);
+      issues.push(
+        `检测到渲染帧率低于 ${this.thresholds.rendering.warningFPS} FPS`,
+      );
     }
 
     // 交互延迟问题
-    const slowInteractions = metrics.interaction.filter(m => 
-      m.value > this.thresholds.interaction.acceptable
+    const slowInteractions = metrics.interaction.filter(
+      (m) => m.value > this.thresholds.interaction.acceptable,
     );
     if (slowInteractions.length > 0) {
       issues.push(`检测到 ${slowInteractions.length} 个缓慢的用户交互`);
@@ -698,28 +769,28 @@ class ResponseTimeMonitor {
    * 生成优化建议
    */
   private generateRecommendations(
-    metrics: Record<string, PerformanceMetric[]>, 
-    issues: string[]
+    metrics: Record<string, PerformanceMetric[]>,
+    issues: string[],
   ): string[] {
     void metrics;
     const recommendations: string[] = [];
 
-    if (issues.some(issue => issue.includes('页面加载'))) {
+    if (issues.some((issue) => issue.includes('页面加载'))) {
       recommendations.push('优化图片和资源加载，考虑使用CDN');
       recommendations.push('启用浏览器缓存和资源压缩');
     }
 
-    if (issues.some(issue => issue.includes('API'))) {
+    if (issues.some((issue) => issue.includes('API'))) {
       recommendations.push('优化数据库查询和API响应时间');
       recommendations.push('考虑使用缓存策略减少API调用');
     }
 
-    if (issues.some(issue => issue.includes('帧率'))) {
+    if (issues.some((issue) => issue.includes('帧率'))) {
       recommendations.push('优化动画和渲染逻辑');
       recommendations.push('减少DOM操作和重绘次数');
     }
 
-    if (issues.some(issue => issue.includes('交互'))) {
+    if (issues.some((issue) => issue.includes('交互'))) {
       recommendations.push('优化事件处理函数的执行效率');
       recommendations.push('使用防抖和节流技术优化高频事件');
     }
@@ -742,17 +813,20 @@ class ResponseTimeMonitor {
     if (process.env.NODE_ENV === 'development') {
       console.group('[ResponseTimeMonitor] Performance Report');
       console.log('Performance Score:', report.summary.performanceScore);
-      console.log('Average Response Time:', report.summary.averageResponseTime.toFixed(2) + 'ms');
+      console.log(
+        'Average Response Time:',
+        report.summary.averageResponseTime.toFixed(2) + 'ms',
+      );
       console.log('Slow Queries:', report.summary.slowQueries);
-      
+
       if (report.issues.length > 0) {
         console.warn('Issues:', report.issues);
       }
-      
+
       if (report.recommendations.length > 0) {
         console.info('Recommendations:', report.recommendations);
       }
-      
+
       console.groupEnd();
     }
 
@@ -769,9 +843,11 @@ class ResponseTimeMonitor {
   /**
    * 获取指标历史
    */
-  getMetricsHistory(category?: PerformanceMetric['category']): PerformanceMetric[] {
+  getMetricsHistory(
+    category?: PerformanceMetric['category'],
+  ): PerformanceMetric[] {
     if (category) {
-      return this.metrics.filter(m => m.category === category);
+      return this.metrics.filter((m) => m.category === category);
     }
     return [...this.metrics];
   }
@@ -788,7 +864,7 @@ class ResponseTimeMonitor {
    */
   updateConfig(newConfig: Partial<PerformanceConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    
+
     // 重启报告定时器
     if (this.reportingTimer) {
       clearInterval(this.reportingTimer);
@@ -828,7 +904,7 @@ class ResponseTimeMonitor {
     }
 
     // 断开所有观察器
-    this.observers.forEach(observer => observer.disconnect());
+    this.observers.forEach((observer) => observer.disconnect());
     this.observers = [];
 
     // 清除指标

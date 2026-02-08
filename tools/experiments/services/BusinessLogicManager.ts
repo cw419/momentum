@@ -1,6 +1,6 @@
 /**
  * 智能业务逻辑管理器
- * 
+ *
  * 实现高级业务逻辑优化，包括：
  * - 业务规则引擎
  * - 智能决策系统
@@ -113,57 +113,65 @@ class BusinessLogicManager {
         },
         action: async (context) => {
           try {
-            const deletedCount = await optimizedRecycleBinService.cleanupExpiredChains(30);
+            const deletedCount =
+              await optimizedRecycleBinService.cleanupExpiredChains(30);
             return {
               success: true,
               message: `自动清理了 ${deletedCount} 条过期链条`,
-              metrics: { deletedCount }
+              metrics: { deletedCount },
             };
           } catch (error) {
             return {
               success: false,
-              message: '自动清理失败: ' + (error instanceof Error ? error.message : '未知错误')
+              message:
+                '自动清理失败: ' +
+                (error instanceof Error ? error.message : '未知错误'),
             };
           }
         },
         priority: 3,
         enabled: true,
-        executionCount: 0
+        executionCount: 0,
       },
 
       {
         id: 'productivity_optimization',
         name: '生产力优化建议',
         condition: (context) => {
-          return context.userStats.completionRate < 0.7 && context.userStats.activeChains > 5;
+          return (
+            context.userStats.completionRate < 0.7 &&
+            context.userStats.activeChains > 5
+          );
         },
         action: async (context) => {
           const suggestions = [
             '考虑减少同时进行的任务数量',
             '尝试专注于2-3个最重要的任务',
-            '设置更实际的完成时间目标'
+            '设置更实际的完成时间目标',
           ];
-          
+
           return {
             success: true,
             message: '生成生产力优化建议',
             suggestions,
-            metrics: { 
+            metrics: {
               completionRate: context.userStats.completionRate,
-              activeChains: context.userStats.activeChains
-            }
+              activeChains: context.userStats.activeChains,
+            },
           };
         },
         priority: 2,
         enabled: true,
-        executionCount: 0
+        executionCount: 0,
       },
 
       {
         id: 'streak_maintenance',
         name: '连胜维护提醒',
         condition: (context) => {
-          const lastActivityHours = (Date.now() - context.userStats.lastActivityDate.getTime()) / (1000 * 60 * 60);
+          const lastActivityHours =
+            (Date.now() - context.userStats.lastActivityDate.getTime()) /
+            (1000 * 60 * 60);
           return context.userStats.streakCount > 0 && lastActivityHours > 18;
         },
         action: async (context) => {
@@ -172,47 +180,51 @@ class BusinessLogicManager {
             message: '提醒用户维护连胜',
             suggestions: [
               '你有一个很好的连胜记录，考虑完成一个简单任务来维护它',
-              '保持连胜能提高长期的动机和习惯形成'
+              '保持连胜能提高长期的动机和习惯形成',
             ],
             metrics: {
               streakCount: context.userStats.streakCount,
-              hoursSinceLastActivity: (Date.now() - context.userStats.lastActivityDate.getTime()) / (1000 * 60 * 60)
-            }
+              hoursSinceLastActivity:
+                (Date.now() - context.userStats.lastActivityDate.getTime()) /
+                (1000 * 60 * 60),
+            },
           };
         },
         priority: 1,
         enabled: true,
-        executionCount: 0
+        executionCount: 0,
       },
 
       {
         id: 'session_optimization',
         name: '会话时长优化',
         condition: (context) => {
-          return context.sessionDuration > 120 && context.activeSessions.length === 0;
+          return (
+            context.sessionDuration > 120 && context.activeSessions.length === 0
+          );
         },
         action: async (context) => {
           // 分析最佳会话时长
           const optimalDuration = this.calculateOptimalSessionDuration(context);
-          
+
           return {
             success: true,
             message: '会话时长优化建议',
             suggestions: [
               `建议的最佳会话时长为 ${optimalDuration} 分钟`,
               '考虑使用番茄工作法来提高专注度',
-              '定期休息有助于保持高效率'
+              '定期休息有助于保持高效率',
             ],
-            metrics: { 
+            metrics: {
               currentSession: context.sessionDuration,
               optimalDuration,
-              efficiency: context.userStats.productivityScore
-            }
+              efficiency: context.userStats.productivityScore,
+            },
           };
         },
         priority: 2,
         enabled: true,
-        executionCount: 0
+        executionCount: 0,
       },
 
       {
@@ -223,7 +235,7 @@ class BusinessLogicManager {
         },
         action: async (context) => {
           const habitPatterns = this.analyzeHabitPatterns(context);
-          
+
           return {
             success: true,
             message: '习惯形成分析',
@@ -232,14 +244,14 @@ class BusinessLogicManager {
             metrics: {
               consistencyScore: habitPatterns.consistencyScore,
               formingHabits: habitPatterns.formingHabits.length,
-              strongHabits: habitPatterns.strongHabits.length
-            }
+              strongHabits: habitPatterns.strongHabits.length,
+            },
           };
         },
         priority: 1,
         enabled: true,
-        executionCount: 0
-      }
+        executionCount: 0,
+      },
     ];
 
     this.businessRules = defaultRules;
@@ -260,7 +272,7 @@ class BusinessLogicManager {
           await this.calculateDailyStatistics(context.userId);
         },
         enabled: true,
-        runCount: 0
+        runCount: 0,
       },
 
       {
@@ -269,10 +281,13 @@ class BusinessLogicManager {
         trigger: 'schedule',
         schedule: '0 */6 * * *', // 每6小时
         action: async (context) => {
-          await serviceOrchestrator.intelligentPreloadUserData(context.userId, 'background');
+          await serviceOrchestrator.intelligentPreloadUserData(
+            context.userId,
+            'background',
+          );
         },
         enabled: true,
-        runCount: 0
+        runCount: 0,
       },
 
       {
@@ -286,8 +301,8 @@ class BusinessLogicManager {
           await this.optimizeUserDataPerformance(context.userId);
         },
         enabled: true,
-        runCount: 0
-      }
+        runCount: 0,
+      },
     ];
 
     this.automationTasks = defaultTasks;
@@ -298,19 +313,28 @@ class BusinessLogicManager {
    */
   private startBackgroundProcessing(): void {
     // 每5分钟执行业务规则检查
-    setInterval(() => {
-      this.processBusinessRulesForActiveUsers();
-    }, 5 * 60 * 1000);
+    setInterval(
+      () => {
+        this.processBusinessRulesForActiveUsers();
+      },
+      5 * 60 * 1000,
+    );
 
     // 每小时执行自动化任务检查
-    setInterval(() => {
-      this.processAutomationTasks();
-    }, 60 * 60 * 1000);
+    setInterval(
+      () => {
+        this.processAutomationTasks();
+      },
+      60 * 60 * 1000,
+    );
 
     // 每10分钟收集指标
-    setInterval(() => {
-      this.collectBusinessMetrics();
-    }, 10 * 60 * 1000);
+    setInterval(
+      () => {
+        this.collectBusinessMetrics();
+      },
+      10 * 60 * 1000,
+    );
   }
 
   /**
@@ -324,16 +348,19 @@ class BusinessLogicManager {
   }> {
     try {
       const context = await this.buildBusinessContext(userId);
-      
+
       // 执行业务规则
       const ruleResults = await this.executeBusinessRules(context);
-      
+
       // 生成业务洞察
       const insights = await this.generateBusinessInsights(context);
-      
+
       // 收集推荐
-      const recommendations = this.aggregateRecommendations(ruleResults, insights);
-      
+      const recommendations = this.aggregateRecommendations(
+        ruleResults,
+        insights,
+      );
+
       // 执行符合条件的自动化任务
       const automationResults = await this.executeAutomationTasks(context);
 
@@ -341,15 +368,18 @@ class BusinessLogicManager {
         rulesExecuted: ruleResults.length,
         insights,
         recommendations,
-        automationResults
+        automationResults,
       };
     } catch (error) {
-      logger.error('[BusinessLogicManager] 用户业务逻辑处理失败:', { userId, error });
+      logger.error('[BusinessLogicManager] 用户业务逻辑处理失败:', {
+        userId,
+        error,
+      });
       return {
         rulesExecuted: 0,
         insights: [],
         recommendations: [],
-        automationResults: []
+        automationResults: [],
       };
     }
   }
@@ -361,13 +391,19 @@ class BusinessLogicManager {
     const [chains, activeSessions, recentCompletions] = await Promise.all([
       highPerformanceDataAccess.getChains(userId),
       highPerformanceDataAccess.getActiveSessions(userId),
-      this.getRecentCompletions(userId, 20)
+      this.getRecentCompletions(userId, 20),
     ]);
 
-    const userStats = await this.calculateUserStatistics(userId, chains, recentCompletions);
+    const userStats = await this.calculateUserStatistics(
+      userId,
+      chains,
+      recentCompletions,
+    );
     const timeOfDay = this.getTimeOfDay();
-    const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    
+    const dayOfWeek = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+    });
+
     return {
       userId,
       currentChains: chains,
@@ -376,7 +412,7 @@ class BusinessLogicManager {
       userStats,
       timeOfDay,
       dayOfWeek,
-      sessionDuration: this.calculateCurrentSessionDuration(activeSessions)
+      sessionDuration: this.calculateCurrentSessionDuration(activeSessions),
     };
   }
 
@@ -384,66 +420,83 @@ class BusinessLogicManager {
    * 计算用户统计信息
    */
   private async calculateUserStatistics(
-    userId: string, 
-    chains: Chain[], 
-    completions: CompletionHistory[]
+    userId: string,
+    chains: Chain[],
+    completions: CompletionHistory[],
   ): Promise<UserStatistics> {
     const cacheKey = `user_stats:${userId}`;
-    
+
     try {
-      return await smartCache.get(cacheKey, async () => {
-        const activeChains = chains.filter(c => !c.deletedAt);
-        const completedSessions = completions.filter(c => c.wasSuccessful);
-        
-        const totalCompletions = completedSessions.length;
-        const totalSessions = completions.length;
-        const completionRate = totalSessions > 0 ? totalCompletions / totalSessions : 0;
-        
-        const averageSessionTime = completions.reduce((sum, c) => sum + c.duration, 0) / Math.max(completions.length, 1);
-        
-        // 计算最长连胜
-        const streakCount = this.calculateCurrentStreak(chains);
-        
-        // 获取最后活动日期
-        const lastActivityDate = completions.length > 0 
-          ? new Date(Math.max(...completions.map(c => c.completedAt.getTime())))
-          : new Date();
+      return (
+        (await smartCache.get(
+          cacheKey,
+          async () => {
+            const activeChains = chains.filter((c) => !c.deletedAt);
+            const completedSessions = completions.filter(
+              (c) => c.wasSuccessful,
+            );
 
-        // 分析偏好时间段
-        const preferredTimeSlots = this.analyzePreferredTimeSlots(completions);
-        
-        // 计算生产力评分
-        const productivityScore = this.calculateProductivityScore({
-          completionRate,
-          streakCount,
-          averageSessionTime,
-          consistency: this.calculateConsistency(completions)
-        });
+            const totalCompletions = completedSessions.length;
+            const totalSessions = completions.length;
+            const completionRate =
+              totalSessions > 0 ? totalCompletions / totalSessions : 0;
 
-        return {
-          totalChains: chains.length,
-          activeChains: activeChains.length,
-          completionRate,
-          averageSessionTime,
-          streakCount,
-          lastActivityDate,
-          preferredTimeSlots,
-          productivityScore
-        };
-      }, {
-        ttl: 10 * 60 * 1000, // 10分钟缓存
-        priority: 'normal',
-        tags: [`user:${userId}`, 'stats']
-      }) || {
-        totalChains: 0,
-        activeChains: 0,
-        completionRate: 0,
-        averageSessionTime: 0,
-        streakCount: 0,
-        lastActivityDate: new Date(),
-        preferredTimeSlots: [],
-        productivityScore: 0
-      };
+            const averageSessionTime =
+              completions.reduce((sum, c) => sum + c.duration, 0) /
+              Math.max(completions.length, 1);
+
+            // 计算最长连胜
+            const streakCount = this.calculateCurrentStreak(chains);
+
+            // 获取最后活动日期
+            const lastActivityDate =
+              completions.length > 0
+                ? new Date(
+                    Math.max(
+                      ...completions.map((c) => c.completedAt.getTime()),
+                    ),
+                  )
+                : new Date();
+
+            // 分析偏好时间段
+            const preferredTimeSlots =
+              this.analyzePreferredTimeSlots(completions);
+
+            // 计算生产力评分
+            const productivityScore = this.calculateProductivityScore({
+              completionRate,
+              streakCount,
+              averageSessionTime,
+              consistency: this.calculateConsistency(completions),
+            });
+
+            return {
+              totalChains: chains.length,
+              activeChains: activeChains.length,
+              completionRate,
+              averageSessionTime,
+              streakCount,
+              lastActivityDate,
+              preferredTimeSlots,
+              productivityScore,
+            };
+          },
+          {
+            ttl: 10 * 60 * 1000, // 10分钟缓存
+            priority: 'normal',
+            tags: [`user:${userId}`, 'stats'],
+          },
+        )) || {
+          totalChains: 0,
+          activeChains: 0,
+          completionRate: 0,
+          averageSessionTime: 0,
+          streakCount: 0,
+          lastActivityDate: new Date(),
+          preferredTimeSlots: [],
+          productivityScore: 0,
+        }
+      );
     } catch (error) {
       logger.error('[BusinessLogicManager] 计算用户统计失败:', error);
       return {
@@ -454,7 +507,7 @@ class BusinessLogicManager {
         streakCount: 0,
         lastActivityDate: new Date(),
         preferredTimeSlots: [],
-        productivityScore: 0
+        productivityScore: 0,
       };
     }
   }
@@ -462,12 +515,14 @@ class BusinessLogicManager {
   /**
    * 执行业务规则
    */
-  private async executeBusinessRules(context: BusinessContext): Promise<BusinessActionResult[]> {
+  private async executeBusinessRules(
+    context: BusinessContext,
+  ): Promise<BusinessActionResult[]> {
     const results: BusinessActionResult[] = [];
-    
+
     // 按优先级排序规则
     const sortedRules = [...this.businessRules]
-      .filter(rule => rule.enabled)
+      .filter((rule) => rule.enabled)
       .sort((a, b) => a.priority - b.priority);
 
     for (const rule of sortedRules) {
@@ -476,17 +531,17 @@ class BusinessLogicManager {
           const result = await rule.action(context);
           results.push({
             ...result,
-            data: { ruleId: rule.id, ruleName: rule.name, ...result.data }
+            data: { ruleId: rule.id, ruleName: rule.name, ...result.data },
           });
-          
+
           // 更新规则执行统计
           rule.executionCount++;
           rule.lastExecuted = new Date();
         }
       } catch (error) {
-        logger.error('[BusinessLogicManager] 业务规则执行失败:', { 
-          ruleId: rule.id, 
-          error: error instanceof Error ? error.message : error 
+        logger.error('[BusinessLogicManager] 业务规则执行失败:', {
+          ruleId: rule.id,
+          error: error instanceof Error ? error.message : error,
         });
       }
     }
@@ -497,9 +552,11 @@ class BusinessLogicManager {
   /**
    * 生成业务洞察
    */
-  private async generateBusinessInsights(context: BusinessContext): Promise<BusinessInsight[]> {
+  private async generateBusinessInsights(
+    context: BusinessContext,
+  ): Promise<BusinessInsight[]> {
     const insights: BusinessInsight[] = [];
-    
+
     // 生产力分析
     if (context.userStats.productivityScore < 70) {
       insights.push({
@@ -511,12 +568,12 @@ class BusinessLogicManager {
         recommendations: [
           '尝试减少同时进行的任务数量',
           '设置更合理的时间预期',
-          '建立固定的工作节奏'
+          '建立固定的工作节奏',
         ],
         metrics: {
           currentScore: context.userStats.productivityScore,
-          potentialImprovement: 100 - context.userStats.productivityScore
-        }
+          potentialImprovement: 100 - context.userStats.productivityScore,
+        },
       });
     }
 
@@ -532,8 +589,8 @@ class BusinessLogicManager {
         recommendations: habitAnalysis.recommendations,
         metrics: {
           formingHabits: habitAnalysis.formingHabits.length,
-          consistencyScore: habitAnalysis.consistencyScore
-        }
+          consistencyScore: habitAnalysis.consistencyScore,
+        },
       });
     }
 
@@ -547,7 +604,7 @@ class BusinessLogicManager {
         priority: 'medium',
         actionable: true,
         recommendations: timeAnalysis.recommendations,
-        metrics: timeAnalysis.metrics
+        metrics: timeAnalysis.metrics,
       });
     }
 
@@ -562,12 +619,12 @@ class BusinessLogicManager {
         recommendations: [
           '重新评估任务的难度和时间预期',
           '考虑将大任务分解为更小的步骤',
-          '设置更容易达成的初始目标'
+          '设置更容易达成的初始目标',
         ],
         metrics: {
           completionRate: context.userStats.completionRate,
-          recommendedTarget: 0.7
-        }
+          recommendedTarget: 0.7,
+        },
       });
     }
 
@@ -577,69 +634,76 @@ class BusinessLogicManager {
   /**
    * 聚合推荐建议
    */
-  private aggregateRecommendations(ruleResults: BusinessActionResult[], insights: BusinessInsight[]): string[] {
+  private aggregateRecommendations(
+    ruleResults: BusinessActionResult[],
+    insights: BusinessInsight[],
+  ): string[] {
     const recommendations = new Set<string>();
-    
+
     // 从规则结果收集建议
-    ruleResults.forEach(result => {
+    ruleResults.forEach((result) => {
       if (result.suggestions) {
-        result.suggestions.forEach(suggestion => recommendations.add(suggestion));
+        result.suggestions.forEach((suggestion) =>
+          recommendations.add(suggestion),
+        );
       }
     });
-    
+
     // 从洞察收集建议
-    insights.forEach(insight => {
-      insight.recommendations.forEach(rec => recommendations.add(rec));
+    insights.forEach((insight) => {
+      insight.recommendations.forEach((rec) => recommendations.add(rec));
     });
-    
+
     return Array.from(recommendations);
   }
 
   /**
    * 执行自动化任务
    */
-  private async executeAutomationTasks(context: BusinessContext): Promise<any[]> {
+  private async executeAutomationTasks(
+    context: BusinessContext,
+  ): Promise<any[]> {
     const results: any[] = [];
-    
-    for (const task of this.automationTasks.filter(t => t.enabled)) {
+
+    for (const task of this.automationTasks.filter((t) => t.enabled)) {
       try {
         let shouldExecute = false;
-        
+
         if (task.trigger === 'condition' && task.condition) {
           shouldExecute = task.condition(context);
         } else if (task.trigger === 'schedule' && task.schedule) {
           // 简化的调度检查（实际项目中应该使用cron库）
           shouldExecute = this.shouldExecuteScheduledTask(task);
         }
-        
+
         if (shouldExecute) {
           await task.action(context);
           task.runCount++;
           task.lastRun = new Date();
-          
+
           results.push({
             taskId: task.id,
             taskName: task.name,
             executedAt: new Date(),
-            success: true
+            success: true,
           });
         }
       } catch (error) {
         logger.error('[BusinessLogicManager] 自动化任务执行失败:', {
           taskId: task.id,
-          error: error instanceof Error ? error.message : error
+          error: error instanceof Error ? error.message : error,
         });
-        
+
         results.push({
           taskId: task.id,
           taskName: task.name,
           executedAt: new Date(),
           success: false,
-          error: error instanceof Error ? error.message : '未知错误'
+          error: error instanceof Error ? error.message : '未知错误',
         });
       }
     }
-    
+
     return results;
   }
 
@@ -647,12 +711,15 @@ class BusinessLogicManager {
    * 工具方法：计算最佳会话时长
    */
   private calculateOptimalSessionDuration(context: BusinessContext): number {
-    const completions = context.recentCompletions.filter(c => c.wasSuccessful);
+    const completions = context.recentCompletions.filter(
+      (c) => c.wasSuccessful,
+    );
     if (completions.length === 0) return 25; // 默认25分钟
-    
-    const durations = completions.map(c => c.duration);
-    const averageDuration = durations.reduce((sum, d) => sum + d, 0) / durations.length;
-    
+
+    const durations = completions.map((c) => c.duration);
+    const averageDuration =
+      durations.reduce((sum, d) => sum + d, 0) / durations.length;
+
     // 基于成功完成的任务调整建议时长
     return Math.min(Math.max(Math.round(averageDuration * 0.9), 15), 60);
   }
@@ -668,48 +735,57 @@ class BusinessLogicManager {
   } {
     const completions = context.recentCompletions;
     const chainCompletions = new Map<string, CompletionHistory[]>();
-    
+
     // 按链条分组完成记录
-    completions.forEach(completion => {
+    completions.forEach((completion) => {
       if (!chainCompletions.has(completion.chainId)) {
         chainCompletions.set(completion.chainId, []);
       }
       chainCompletions.get(completion.chainId)!.push(completion);
     });
-    
+
     const formingHabits: string[] = [];
     const strongHabits: string[] = [];
     let totalConsistency = 0;
-    
+
     for (const [chainId, chainCompletions] of chainCompletions.entries()) {
-      const successfulCompletions = chainCompletions.filter(c => c.wasSuccessful);
-      const consistencyRate = successfulCompletions.length / chainCompletions.length;
-      
+      const successfulCompletions = chainCompletions.filter(
+        (c) => c.wasSuccessful,
+      );
+      const consistencyRate =
+        successfulCompletions.length / chainCompletions.length;
+
       if (consistencyRate >= 0.8 && chainCompletions.length >= 10) {
         strongHabits.push(chainId);
       } else if (consistencyRate >= 0.6 && chainCompletions.length >= 5) {
         formingHabits.push(chainId);
       }
-      
+
       totalConsistency += consistencyRate;
     }
-    
-    const consistencyScore = chainCompletions.size > 0 ? 
-      (totalConsistency / chainCompletions.size) * 100 : 0;
-    
+
+    const consistencyScore =
+      chainCompletions.size > 0
+        ? (totalConsistency / chainCompletions.size) * 100
+        : 0;
+
     const recommendations: string[] = [];
     if (formingHabits.length > 0) {
-      recommendations.push(`你正在形成 ${formingHabits.length} 个习惯，保持一致性是关键`);
+      recommendations.push(
+        `你正在形成 ${formingHabits.length} 个习惯，保持一致性是关键`,
+      );
     }
     if (strongHabits.length > 0) {
-      recommendations.push(`你已经建立了 ${strongHabits.length} 个稳定的习惯，很棒！`);
+      recommendations.push(
+        `你已经建立了 ${strongHabits.length} 个稳定的习惯，很棒！`,
+      );
     }
-    
+
     return {
       formingHabits,
       strongHabits,
       consistencyScore,
-      recommendations
+      recommendations,
     };
   }
 
@@ -723,20 +799,21 @@ class BusinessLogicManager {
     metrics: any;
   } {
     const { userStats, recentCompletions } = context;
-    const hasOptimizationOpportunity = userStats.averageSessionTime > 90 || userStats.averageSessionTime < 10;
-    
+    const hasOptimizationOpportunity =
+      userStats.averageSessionTime > 90 || userStats.averageSessionTime < 10;
+
     if (!hasOptimizationOpportunity) {
       return {
         hasOptimizationOpportunity: false,
         description: '',
         recommendations: [],
-        metrics: {}
+        metrics: {},
       };
     }
-    
+
     let description = '';
     const recommendations: string[] = [];
-    
+
     if (userStats.averageSessionTime > 90) {
       description = '你的平均会话时间较长，可能影响专注度';
       recommendations.push('尝试将长任务分解为更短的工作块');
@@ -746,15 +823,15 @@ class BusinessLogicManager {
       recommendations.push('尝试延长单次专注时间到20-30分钟');
       recommendations.push('减少任务切换的频率');
     }
-    
+
     return {
       hasOptimizationOpportunity: true,
       description,
       recommendations,
       metrics: {
         averageSessionTime: userStats.averageSessionTime,
-        recommendedRange: [20, 60]
-      }
+        recommendedRange: [20, 60],
+      },
     };
   }
 
@@ -772,12 +849,15 @@ class BusinessLogicManager {
   /**
    * 工具方法：计算当前会话时长
    */
-  private calculateCurrentSessionDuration(activeSessions: ActiveSession[]): number {
+  private calculateCurrentSessionDuration(
+    activeSessions: ActiveSession[],
+  ): number {
     if (activeSessions.length === 0) return 0;
-    
+
     const now = new Date();
     return activeSessions.reduce((total, session) => {
-      const sessionDuration = (now.getTime() - session.startedAt.getTime()) / (1000 * 60);
+      const sessionDuration =
+        (now.getTime() - session.startedAt.getTime()) / (1000 * 60);
       return total + sessionDuration;
     }, 0);
   }
@@ -794,17 +874,19 @@ class BusinessLogicManager {
   /**
    * 工具方法：分析偏好时间段
    */
-  private analyzePreferredTimeSlots(completions: CompletionHistory[]): string[] {
+  private analyzePreferredTimeSlots(
+    completions: CompletionHistory[],
+  ): string[] {
     const hourCounts = new Map<number, number>();
-    
-    completions.forEach(completion => {
+
+    completions.forEach((completion) => {
       const hour = completion.completedAt.getHours();
       hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
     });
-    
+
     // 找出完成任务最多的时间段
     const sortedHours = Array.from(hourCounts.entries())
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([hour]) => {
         if (hour >= 5 && hour < 12) return 'morning';
@@ -812,7 +894,7 @@ class BusinessLogicManager {
         if (hour >= 17 && hour < 22) return 'evening';
         return 'night';
       });
-    
+
     return Array.from(new Set(sortedHours));
   }
 
@@ -825,22 +907,27 @@ class BusinessLogicManager {
     averageSessionTime: number;
     consistency: number;
   }): number {
-    const { completionRate, streakCount, averageSessionTime, consistency } = factors;
-    
+    const { completionRate, streakCount, averageSessionTime, consistency } =
+      factors;
+
     // 完成率权重 40%
     const completionScore = completionRate * 40;
-    
+
     // 连胜权重 20%
     const streakScore = Math.min(streakCount / 10, 1) * 20;
-    
+
     // 会话时长权重 20%（最佳范围20-60分钟）
-    const sessionScore = averageSessionTime >= 20 && averageSessionTime <= 60 ? 20 : 
-      Math.max(0, 20 - Math.abs(averageSessionTime - 40) / 2);
-    
+    const sessionScore =
+      averageSessionTime >= 20 && averageSessionTime <= 60
+        ? 20
+        : Math.max(0, 20 - Math.abs(averageSessionTime - 40) / 2);
+
     // 一致性权重 20%
     const consistencyScore = consistency * 20;
-    
-    return Math.round(completionScore + streakScore + sessionScore + consistencyScore);
+
+    return Math.round(
+      completionScore + streakScore + sessionScore + consistencyScore,
+    );
   }
 
   /**
@@ -848,27 +935,37 @@ class BusinessLogicManager {
    */
   private calculateConsistency(completions: CompletionHistory[]): number {
     if (completions.length < 2) return 0;
-    
+
     // 计算完成时间间隔的标准差
     const intervals = [];
     for (let i = 1; i < completions.length; i++) {
-      const interval = completions[i].completedAt.getTime() - completions[i-1].completedAt.getTime();
+      const interval =
+        completions[i].completedAt.getTime() -
+        completions[i - 1].completedAt.getTime();
       intervals.push(interval);
     }
-    
-    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-    const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
+
+    const avgInterval =
+      intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+    const variance =
+      intervals.reduce(
+        (sum, interval) => sum + Math.pow(interval - avgInterval, 2),
+        0,
+      ) / intervals.length;
     const standardDeviation = Math.sqrt(variance);
-    
+
     // 标准差越小，一致性越高
-    const consistencyScore = Math.max(0, 1 - (standardDeviation / avgInterval));
+    const consistencyScore = Math.max(0, 1 - standardDeviation / avgInterval);
     return Math.min(consistencyScore, 1);
   }
 
   /**
    * 辅助方法：获取最近完成记录
    */
-  private async getRecentCompletions(userId: string, limit: number): Promise<CompletionHistory[]> {
+  private async getRecentCompletions(
+    userId: string,
+    limit: number,
+  ): Promise<CompletionHistory[]> {
     // 这里应该调用相应的数据访问方法
     // 由于原始代码结构限制，这里返回空数组作为占位符
     return [];
@@ -923,7 +1020,7 @@ class BusinessLogicManager {
    */
   private updateRuleEngine(): void {
     this.ruleEngine.clear();
-    this.businessRules.forEach(rule => {
+    this.businessRules.forEach((rule) => {
       this.ruleEngine.set(rule.id, rule);
     });
   }
@@ -943,13 +1040,13 @@ class BusinessLogicManager {
   } {
     return {
       totalRules: this.businessRules.length,
-      enabledRules: this.businessRules.filter(r => r.enabled).length,
-      executionStats: this.businessRules.map(rule => ({
+      enabledRules: this.businessRules.filter((r) => r.enabled).length,
+      executionStats: this.businessRules.map((rule) => ({
         ruleId: rule.id,
         ruleName: rule.name,
         executionCount: rule.executionCount,
-        lastExecuted: rule.lastExecuted
-      }))
+        lastExecuted: rule.lastExecuted,
+      })),
     };
   }
 
@@ -959,12 +1056,12 @@ class BusinessLogicManager {
   addBusinessRule(rule: Omit<BusinessRule, 'executionCount'>): void {
     const newRule: BusinessRule = {
       ...rule,
-      executionCount: 0
+      executionCount: 0,
     };
-    
+
     this.businessRules.push(newRule);
     this.updateRuleEngine();
-    
+
     logger.info(`[BusinessLogicManager] 添加业务规则: ${rule.name}`);
   }
 
@@ -975,7 +1072,9 @@ class BusinessLogicManager {
     const rule = this.ruleEngine.get(ruleId);
     if (rule) {
       rule.enabled = enabled;
-      logger.info(`[BusinessLogicManager] 规则 ${ruleId} ${enabled ? '启用' : '禁用'}`);
+      logger.info(
+        `[BusinessLogicManager] 规则 ${ruleId} ${enabled ? '启用' : '禁用'}`,
+      );
       return true;
     }
     return false;
@@ -984,18 +1083,27 @@ class BusinessLogicManager {
   /**
    * 获取用户洞察历史
    */
-  async getUserInsightHistory(userId: string, days: number = 7): Promise<BusinessInsight[]> {
+  async getUserInsightHistory(
+    userId: string,
+    days: number = 7,
+  ): Promise<BusinessInsight[]> {
     const cacheKey = `insight_history:${userId}:${days}`;
-    
-    return await smartCache.get(cacheKey, async () => {
-      // 这里应该从存储中获取历史洞察数据
-      // 简化实现返回空数组
-      return [];
-    }, {
-      ttl: 60 * 60 * 1000, // 1小时缓存
-      priority: 'low',
-      tags: [`user:${userId}`, 'insights']
-    }) || [];
+
+    return (
+      (await smartCache.get(
+        cacheKey,
+        async () => {
+          // 这里应该从存储中获取历史洞察数据
+          // 简化实现返回空数组
+          return [];
+        },
+        {
+          ttl: 60 * 60 * 1000, // 1小时缓存
+          priority: 'low',
+          tags: [`user:${userId}`, 'insights'],
+        },
+      )) || []
+    );
   }
 
   /**
@@ -1007,7 +1115,7 @@ class BusinessLogicManager {
     this.ruleEngine.clear();
     this.insightCache.clear();
     this.metricsCollector.clear();
-    
+
     logger.info('[BusinessLogicManager] 资源清理完成');
   }
 }

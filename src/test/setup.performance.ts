@@ -5,12 +5,16 @@ import { vi } from 'vitest';
 export const performanceUtils = {
   // Memory usage tracking
   getMemoryUsage() {
-    if (typeof window !== 'undefined' && 'performance' in window && 'memory' in window.performance) {
+    if (
+      typeof window !== 'undefined' &&
+      'performance' in window &&
+      'memory' in window.performance
+    ) {
       const memory = (window.performance as any).memory;
       return {
         used: memory.usedJSHeapSize,
         total: memory.totalJSHeapSize,
-        limit: memory.jsHeapSizeLimit
+        limit: memory.jsHeapSizeLimit,
       };
     }
     return { used: 0, total: 0, limit: 0 };
@@ -23,7 +27,7 @@ export const performanceUtils = {
     const end = performance.now();
     return {
       result,
-      duration: end - start
+      duration: end - start,
     };
   },
 
@@ -33,7 +37,7 @@ export const performanceUtils = {
     const end = performance.now();
     return {
       result,
-      duration: end - start
+      duration: end - start,
     };
   },
 
@@ -51,31 +55,33 @@ export const performanceUtils = {
   async runConcurrentOperations<T>(
     operation: () => Promise<T>,
     concurrency: number,
-    iterations: number = 1
+    iterations: number = 1,
   ) {
     const results = [];
     const start = performance.now();
 
     for (let i = 0; i < iterations; i++) {
-      const batch = Array(concurrency).fill(null).map(() => operation());
+      const batch = Array(concurrency)
+        .fill(null)
+        .map(() => operation());
       const batchResults = await Promise.all(batch);
       results.push(...batchResults);
     }
 
     const end = performance.now();
-    
+
     return {
       results,
       totalTime: end - start,
       averageTime: (end - start) / (concurrency * iterations),
-      operationsPerSecond: (concurrency * iterations) / ((end - start) / 1000)
+      operationsPerSecond: (concurrency * iterations) / ((end - start) / 1000),
     };
   },
 
   // Memory leak detection
   createMemoryLeakDetector() {
     let initialMemory = this.getMemoryUsage();
-    
+
     return {
       reset: () => {
         initialMemory = this.getMemoryUsage();
@@ -87,11 +93,11 @@ export const performanceUtils = {
           growth,
           isLeaking: growth > threshold,
           current: currentMemory,
-          initial: initialMemory
+          initial: initialMemory,
         };
-      }
+      },
     };
-  }
+  },
 };
 
 // Mock high-resolution timer for consistent performance tests
@@ -109,8 +115,8 @@ Object.defineProperty(global, 'performance', {
     mark: vi.fn(),
     measure: vi.fn(),
     getEntriesByType: vi.fn(() => []),
-    getEntriesByName: vi.fn(() => [])
-  }
+    getEntriesByName: vi.fn(() => []),
+  },
 });
 
 // Setup performance monitoring

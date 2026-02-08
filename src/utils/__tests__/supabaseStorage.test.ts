@@ -1,6 +1,11 @@
 import { SupabaseStorage } from '../supabaseStorage';
 import { Chain } from '../../types';
-import { getCurrentUser, isUserAuthenticated, supabase, waitForAuthentication } from '../../lib/supabase';
+import {
+  getCurrentUser,
+  isUserAuthenticated,
+  supabase,
+  waitForAuthentication,
+} from '../../lib/supabase';
 
 // Mock Supabase
 vi.mock('../../lib/supabase', () => ({
@@ -8,7 +13,9 @@ vi.mock('../../lib/supabase', () => ({
     from: vi.fn(),
   },
   getCurrentUser: vi.fn(() => Promise.resolve({ id: 'test-user-id' })),
-  waitForAuthentication: vi.fn(() => Promise.resolve({ user: { id: 'test-user-id' }, isAuthenticated: true })),
+  waitForAuthentication: vi.fn(() =>
+    Promise.resolve({ user: { id: 'test-user-id' }, isAuthenticated: true }),
+  ),
   isUserAuthenticated: vi.fn(() => Promise.resolve(true)),
 }));
 
@@ -51,7 +58,10 @@ describe('SupabaseStorage', () => {
     mockSupabase.from.mockReset();
 
     (getCurrentUser as any).mockResolvedValue({ id: 'test-user-id' });
-    (waitForAuthentication as any).mockResolvedValue({ user: { id: 'test-user-id' }, isAuthenticated: true });
+    (waitForAuthentication as any).mockResolvedValue({
+      user: { id: 'test-user-id' },
+      isAuthenticated: true,
+    });
     (isUserAuthenticated as any).mockResolvedValue(true);
 
     mockSupabase.from.mockImplementation(() => ({
@@ -97,10 +107,10 @@ describe('SupabaseStorage', () => {
           eq: () => ({
             order: () => ({
               data: null,
-              error: { code: 'PGRST116', message: 'Table does not exist' }
-            })
-          })
-        })
+              error: { code: 'PGRST116', message: 'Table does not exist' },
+            }),
+          }),
+        }),
       });
 
       const result = await storage.getChains();
@@ -108,38 +118,40 @@ describe('SupabaseStorage', () => {
     });
 
     it('should return transformed chain data on success', async () => {
-      const mockData = [{
-        id: 'chain1',
-        name: 'Test Chain',
-        parent_id: null,
-        type: 'unit',
-        sort_order: 1,
-        trigger: 'Test',
-        duration: 30,
-        description: 'Test desc',
-        current_streak: 0,
-        auxiliary_streak: 0,
-        total_completions: 0,
-        total_failures: 0,
-        auxiliary_failures: 0,
-        exceptions: [],
-        auxiliary_exceptions: [],
-        auxiliary_signal: 'Signal',
-        auxiliary_duration: 15,
-        auxiliary_completion_trigger: 'Complete',
-        created_at: '2023-01-01T00:00:00Z',
-        last_completed_at: null,
-      }];
+      const mockData = [
+        {
+          id: 'chain1',
+          name: 'Test Chain',
+          parent_id: null,
+          type: 'unit',
+          sort_order: 1,
+          trigger: 'Test',
+          duration: 30,
+          description: 'Test desc',
+          current_streak: 0,
+          auxiliary_streak: 0,
+          total_completions: 0,
+          total_failures: 0,
+          auxiliary_failures: 0,
+          exceptions: [],
+          auxiliary_exceptions: [],
+          auxiliary_signal: 'Signal',
+          auxiliary_duration: 15,
+          auxiliary_completion_trigger: 'Complete',
+          created_at: '2023-01-01T00:00:00Z',
+          last_completed_at: null,
+        },
+      ];
 
       mockSupabase.from.mockReturnValueOnce({
         select: () => ({
           eq: () => ({
             order: () => ({
               data: mockData,
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       const result = await storage.getChains();
@@ -151,10 +163,15 @@ describe('SupabaseStorage', () => {
 
   describe('saveChains', () => {
     it('should throw error when user is not authenticated', async () => {
-      (waitForAuthentication as any).mockResolvedValueOnce({ user: null, isAuthenticated: false });
+      (waitForAuthentication as any).mockResolvedValueOnce({
+        user: null,
+        isAuthenticated: false,
+      });
 
       const chains = [createMockChain()];
-      await expect(storage.saveChains(chains)).rejects.toThrow('User authentication failed or timed out');
+      await expect(storage.saveChains(chains)).rejects.toThrow(
+        'User authentication failed or timed out',
+      );
     });
 
     it('should handle missing columns gracefully with fallback', async () => {
@@ -175,7 +192,10 @@ describe('SupabaseStorage', () => {
           upsert: () => ({
             select: () => ({
               data: null,
-              error: { code: 'PGRST204', message: "Could not find the 'group_expires_at' column" },
+              error: {
+                code: 'PGRST204',
+                message: "Could not find the 'group_expires_at' column",
+              },
             }),
           }),
         })
@@ -261,7 +281,9 @@ describe('SupabaseStorage', () => {
 
   describe('verifySchemaColumns', () => {
     it('should skip schema verification and return conservative result', async () => {
-      const result = await storage.verifySchemaColumns('test_table', ['column1']);
+      const result = await storage.verifySchemaColumns('test_table', [
+        'column1',
+      ]);
 
       expect(result.hasAllColumns).toBe(true);
       expect(result.missingColumns).toEqual([]);
@@ -270,8 +292,12 @@ describe('SupabaseStorage', () => {
     });
 
     it('should cache schema verification results within session', async () => {
-      const result1 = await storage.verifySchemaColumns('test_table', ['column1']);
-      const result2 = await storage.verifySchemaColumns('test_table', ['column1']);
+      const result1 = await storage.verifySchemaColumns('test_table', [
+        'column1',
+      ]);
+      const result2 = await storage.verifySchemaColumns('test_table', [
+        'column1',
+      ]);
 
       expect(result2).toEqual(result1);
     });

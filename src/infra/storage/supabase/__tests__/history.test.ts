@@ -15,7 +15,9 @@ vi.mock('../../../../utils/logger', () => ({
   },
 }));
 
-const createMockHistoryRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
+const createMockHistoryRow = (
+  overrides: Partial<Record<string, unknown>> = {},
+) => ({
   id: 'history-1',
   chain_id: 'chain-1',
   completed_at: '2024-01-15T10:00:00Z',
@@ -67,7 +69,10 @@ describe('history.ts', () => {
 
     it('should return mapped completion history on success', async () => {
       const mockData = [createMockHistoryRow()];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getCompletionHistory(ctx);
@@ -90,7 +95,10 @@ describe('history.ts', () => {
           reason_for_failure: 'Got distracted',
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getCompletionHistory(ctx);
@@ -106,7 +114,10 @@ describe('history.ts', () => {
           actual_duration: 45,
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getCompletionHistory(ctx);
@@ -122,7 +133,10 @@ describe('history.ts', () => {
           duration: 30,
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getCompletionHistory(ctx);
@@ -138,7 +152,10 @@ describe('history.ts', () => {
           notes: null,
         }),
       ];
-      const queryBuilder = createMockQueryBuilder({ data: mockData, error: null });
+      const queryBuilder = createMockQueryBuilder({
+        data: mockData,
+        error: null,
+      });
       const ctx = createMockContext({ queryBuilder });
 
       const result = await getCompletionHistory(ctx);
@@ -180,11 +197,13 @@ describe('history.ts', () => {
       let upsertOptions: unknown = null;
 
       ctx.mockClient.from = vi.fn().mockReturnValue({
-        upsert: vi.fn().mockImplementation((data: unknown[], options: unknown) => {
-          upsertedData = data;
-          upsertOptions = options;
-          return { data: null, error: null };
-        }),
+        upsert: vi
+          .fn()
+          .mockImplementation((data: unknown[], options: unknown) => {
+            upsertedData = data;
+            upsertOptions = options;
+            return { data: null, error: null };
+          }),
       });
 
       const history: CompletionHistory[] = [
@@ -203,7 +222,10 @@ describe('history.ts', () => {
 
       await saveCompletionHistory(ctx, history);
 
-      expect(upsertOptions).toEqual({ onConflict: 'user_id,chain_id,completed_at', ignoreDuplicates: true });
+      expect(upsertOptions).toEqual({
+        onConflict: 'user_id,chain_id,completed_at',
+        ignoreDuplicates: true,
+      });
       expect(upsertedData).toHaveLength(1);
       const record = upsertedData[0] as Record<string, unknown>;
       expect(record.chain_id).toBe('chain-1');
@@ -225,7 +247,13 @@ describe('history.ts', () => {
         upsert: vi.fn().mockImplementation((data: unknown[]) => {
           callCount++;
           if (callCount === 1) {
-            return { data: null, error: createSupabaseError('42703', 'actual_duration does not exist') };
+            return {
+              data: null,
+              error: createSupabaseError(
+                '42703',
+                'actual_duration does not exist',
+              ),
+            };
           }
           secondCallRow = data[0] as Record<string, unknown>;
           return { data: null, error: null };
@@ -254,7 +282,13 @@ describe('history.ts', () => {
     it('should fall back to legacy insert when unique index is missing', async () => {
       const ctx = createMockContext();
       let insertCalled = false;
-      const upsert = vi.fn().mockReturnValue({ data: null, error: createSupabaseError('42P10', 'no unique or exclusion constraint matching') });
+      const upsert = vi.fn().mockReturnValue({
+        data: null,
+        error: createSupabaseError(
+          '42P10',
+          'no unique or exclusion constraint matching',
+        ),
+      });
       const selectEq = vi.fn().mockReturnValue({ data: [], error: null });
       const insert = vi.fn().mockImplementation(() => {
         insertCalled = true;

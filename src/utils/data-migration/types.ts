@@ -8,4 +8,3 @@ export interface MigrationResult {
     chainsUpdated: number;
   };
 }
-

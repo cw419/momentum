@@ -1,5 +1,9 @@
 import type { PetStage } from '../../types/pet';
-import { getLevelProgress, getXpForLevel, getStageName } from '../../utils/petLogic';
+import {
+  getLevelProgress,
+  getXpForLevel,
+  getStageName,
+} from '../../utils/petLogic';
 import { useI18n } from '../../i18n';
 
 interface PetStatsBarProps {
@@ -20,7 +24,14 @@ interface StatBarProps {
   inverted?: boolean; // For hunger, lower is better
 }
 
-function StatBar({ label, value, maxValue = 100, colorClass, icon, inverted }: StatBarProps) {
+function StatBar({
+  label,
+  value,
+  maxValue = 100,
+  colorClass,
+  icon,
+  inverted,
+}: StatBarProps) {
   const displayValue = inverted ? maxValue - value : value;
   const percentage = (displayValue / maxValue) * 100;
 
@@ -29,27 +40,34 @@ function StatBar({ label, value, maxValue = 100, colorClass, icon, inverted }: S
       <span className="text-sm" title={label}>
         {icon}
       </span>
-      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
         <div
           className={`h-full ${colorClass} transition-[width] duration-300`}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+      <span className="w-8 text-right text-xs text-gray-500 dark:text-gray-400">
         {Math.round(displayValue)}
       </span>
     </div>
   );
 }
 
-export function PetStatsBar({ hunger, happiness, health, level, experience, stage }: PetStatsBarProps) {
+export function PetStatsBar({
+  hunger,
+  happiness,
+  health,
+  level,
+  experience,
+  stage,
+}: PetStatsBarProps) {
   const { language } = useI18n();
   const levelProgress = getLevelProgress({ level, experience });
   const xpRequired = getXpForLevel(level);
   const stageName = getStageName(stage, language);
 
   return (
-    <div className="space-y-2 mt-3">
+    <div className="mt-3 space-y-2">
       {/* Level and Stage */}
       <div className="flex items-center justify-between text-xs">
         <span className="font-medium text-gray-700 dark:text-gray-300">
@@ -61,7 +79,7 @@ export function PetStatsBar({ hunger, happiness, health, level, experience, stag
       </div>
 
       {/* XP Progress */}
-      <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
         <div
           className="h-full bg-gradient-to-r from-purple-400 to-purple-600 transition-[width] duration-300"
           style={{ width: `${levelProgress}%` }}

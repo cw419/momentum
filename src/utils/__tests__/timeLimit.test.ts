@@ -42,7 +42,10 @@ describe('timeLimit', () => {
     it('returns false when chain is not an active timed group', () => {
       const unit = createGroupChain({ type: 'unit' as Chain['type'] });
       const noLimit = createGroupChain({ timeLimitHours: undefined });
-      const noStart = createGroupChain({ timeLimitHours: 1, groupStartedAt: undefined });
+      const noStart = createGroupChain({
+        timeLimitHours: 1,
+        groupStartedAt: undefined,
+      });
 
       expect(isGroupExpired(unit)).toBe(false);
       expect(isGroupExpired(noLimit)).toBe(false);
@@ -88,8 +91,12 @@ describe('timeLimit', () => {
       const chain = createGroupChain({ timeLimitHours: 2 });
       const result = startGroupTimer(chain);
 
-      expect(result.groupStartedAt?.toISOString()).toBe('2026-02-06T10:00:00.000Z');
-      expect(result.groupExpiresAt?.toISOString()).toBe('2026-02-06T12:00:00.000Z');
+      expect(result.groupStartedAt?.toISOString()).toBe(
+        '2026-02-06T10:00:00.000Z',
+      );
+      expect(result.groupExpiresAt?.toISOString()).toBe(
+        '2026-02-06T12:00:00.000Z',
+      );
     });
   });
 
@@ -118,7 +125,10 @@ describe('timeLimit', () => {
 
   describe('getGroupTimeStatus', () => {
     it('returns no-limit status for untimed chains', () => {
-      const chain = createGroupChain({ timeLimitHours: undefined, groupStartedAt: undefined });
+      const chain = createGroupChain({
+        timeLimitHours: undefined,
+        groupStartedAt: undefined,
+      });
 
       expect(getGroupTimeStatus(chain, 'en')).toEqual({
         isExpired: false,
@@ -157,7 +167,9 @@ describe('timeLimit', () => {
         groupExpiresAt: new Date('2026-02-06T10:00:20.000Z'),
       });
 
-      expect(getGroupTimeStatus(minuteSecond, 'en').formattedTime).toBe('1m 5s');
+      expect(getGroupTimeStatus(minuteSecond, 'en').formattedTime).toBe(
+        '1m 5s',
+      );
       expect(getGroupTimeStatus(secondOnly, 'en').formattedTime).toBe('20s');
     });
 

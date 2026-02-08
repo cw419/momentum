@@ -19,7 +19,12 @@ export function setTimerState(sessionId: string, data: TimerPersistData): void {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.warn('LOCAL_PREFERENCES', 'Failed to persist timer state', { sessionId }, err);
+    logger.warn(
+      'LOCAL_PREFERENCES',
+      'Failed to persist timer state',
+      { sessionId },
+      err,
+    );
   }
 }
 
@@ -29,7 +34,12 @@ export function clearTimerState(sessionId: string): void {
     localStorage.removeItem(key);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.warn('LOCAL_PREFERENCES', 'Failed to remove timer state', { sessionId }, err);
+    logger.warn(
+      'LOCAL_PREFERENCES',
+      'Failed to remove timer state',
+      { sessionId },
+      err,
+    );
   }
 }
 
@@ -39,7 +49,10 @@ export function getAllTimerKeys(): string[] {
     const storage = localStorage as unknown;
     const storageLike = storage as Partial<Storage>;
 
-    if (typeof storageLike.length === 'number' && typeof storageLike.key === 'function') {
+    if (
+      typeof storageLike.length === 'number' &&
+      typeof storageLike.key === 'function'
+    ) {
       for (let i = 0; i < storageLike.length; i++) {
         const key = storageLike.key(i);
         if (key && key.startsWith(LOCAL_STORAGE_KEYS.TIMER_PREFIX)) {
@@ -48,7 +61,11 @@ export function getAllTimerKeys(): string[] {
       }
     } else if (storage && typeof storage === 'object') {
       const allKeys = Object.keys(storage as Record<string, unknown>);
-      keys.push(...allKeys.filter((key) => key.startsWith(LOCAL_STORAGE_KEYS.TIMER_PREFIX)));
+      keys.push(
+        ...allKeys.filter((key) =>
+          key.startsWith(LOCAL_STORAGE_KEYS.TIMER_PREFIX),
+        ),
+      );
     }
 
     return keys;
@@ -57,7 +74,9 @@ export function getAllTimerKeys(): string[] {
   }
 }
 
-export function cleanupExpiredTimers(maxAgeMs: number = 24 * 60 * 60 * 1000): void {
+export function cleanupExpiredTimers(
+  maxAgeMs: number = 24 * 60 * 60 * 1000,
+): void {
   try {
     const keys = getAllTimerKeys();
     const now = Date.now();
@@ -77,7 +96,11 @@ export function cleanupExpiredTimers(maxAgeMs: number = 24 * 60 * 60 * 1000): vo
     });
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.warn('LOCAL_PREFERENCES', 'Failed to cleanup expired timers', undefined, err);
+    logger.warn(
+      'LOCAL_PREFERENCES',
+      'Failed to cleanup expired timers',
+      undefined,
+      err,
+    );
   }
 }
-

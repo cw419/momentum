@@ -1,7 +1,12 @@
 import { logger } from '../../utils/logger';
 import { isDev } from '../../utils/env';
 import { randomId } from '../../utils/random';
-import type { IdMapping, PendingRuleCreation, RuleState, RuleStatus } from './types';
+import type {
+  IdMapping,
+  PendingRuleCreation,
+  RuleState,
+  RuleStatus,
+} from './types';
 
 export class RuleStateStore {
   private states = new Map<string, RuleState>();
@@ -18,7 +23,11 @@ export class RuleStateStore {
     return randomId('rule');
   }
 
-  trackRuleState(ruleId: string, status: RuleStatus, temporaryId?: string): void {
+  trackRuleState(
+    ruleId: string,
+    status: RuleStatus,
+    temporaryId?: string,
+  ): void {
     const now = new Date();
     const existingState = this.states.get(ruleId);
 
@@ -30,7 +39,7 @@ export class RuleStateStore {
       updatedAt: now,
       lastValidated: existingState?.lastValidated,
       validationErrors: existingState?.validationErrors,
-      realId: existingState?.realId
+      realId: existingState?.realId,
     };
 
     this.states.set(ruleId, state);
@@ -40,7 +49,12 @@ export class RuleStateStore {
     }
 
     if (isDev) {
-      logger.debug('RULE_STATE', 'Rule state updated', { ruleId, status, temporaryId, state });
+      logger.debug('RULE_STATE', 'Rule state updated', {
+        ruleId,
+        status,
+        temporaryId,
+        state,
+      });
     }
   }
 
@@ -56,7 +70,7 @@ export class RuleStateStore {
     return {
       states: new Map(this.states),
       pendingCreations: new Map(this.pendingCreations),
-      idMappings: new Map(this.idMappings)
+      idMappings: new Map(this.idMappings),
     };
   }
 
@@ -87,7 +101,7 @@ export class RuleStateStore {
     const mapping: IdMapping = {
       temporaryId,
       realId,
-      mappedAt: new Date()
+      mappedAt: new Date(),
     };
     this.idMappings.set(temporaryId, mapping);
   }
@@ -166,4 +180,3 @@ export class RuleStateStore {
     }
   }
 }
-

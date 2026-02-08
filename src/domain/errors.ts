@@ -13,13 +13,19 @@ export interface AppError {
   cause?: unknown;
 }
 
-export function toAppError(error: unknown, fallbackMessage: string = 'Unknown error'): AppError {
+export function toAppError(
+  error: unknown,
+  fallbackMessage: string = 'Unknown error',
+): AppError {
   if (error instanceof Error) {
-    return { code: 'UNKNOWN', message: error.message || fallbackMessage, cause: error };
+    return {
+      code: 'UNKNOWN',
+      message: error.message || fallbackMessage,
+      cause: error,
+    };
   }
   if (typeof error === 'string') {
     return { code: 'UNKNOWN', message: error || fallbackMessage, cause: error };
   }
   return { code: 'UNKNOWN', message: fallbackMessage, cause: error };
 }
-

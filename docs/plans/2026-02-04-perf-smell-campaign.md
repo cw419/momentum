@@ -3,6 +3,7 @@
 > 本文目标：用现有“静态分析 + 报告产物”工具链，把性能优化与屎山/坏味道治理变成可量化、可回归、可分 PR 推进的工程战役。
 >
 > 约束：
+>
 > - 保持“本地少阻塞”：不引入 pre-commit hooks；所有动作通过显式 `npm run ...` 命令。
 > - CI 现有 Hard gate（lint/typecheck/tests/type-coverage）保持不变；新增 Lighthouse/DevTools 仅做“基线与复测”，不做门禁。
 
@@ -54,9 +55,9 @@
 
 ### 3.1 PR 模板（必须包含）
 
-1) 本 PR 解决的“热点项”（来自哪个报告：SonarJS/Madge/Knip/JSCPD/Lighthouse/DevTools）  
-2) **优化前后对比**（至少一个量化对比）  
-3) 风险评估 + 回滚策略（如何确认行为不变）
+1. 本 PR 解决的“热点项”（来自哪个报告：SonarJS/Madge/Knip/JSCPD/Lighthouse/DevTools）
+2. **优化前后对比**（至少一个量化对比）
+3. 风险评估 + 回滚策略（如何确认行为不变）
 
 ### 3.2 PR 验证命令（最小集）
 
@@ -152,6 +153,7 @@
 | Mobile  | 95 / 94 / 100 / 100        | 2194ms / 2583ms / 0ms / 0       |
 
 报告文件：
+
 - `reports/lighthouse/2026-02-04_desktop_run1.json`
 - `reports/lighthouse/2026-02-04_desktop_run2.json`
 - `reports/lighthouse/2026-02-04_desktop_run3.json`
@@ -162,6 +164,7 @@
 **DevTools trace（已采集 ✅，见附录 B）**
 
 > 采集备注（Codex DevTools MCP）：
+>
 > - 为避免 Supabase 登录阻塞：采集时使用 local-storage 模式（临时启用 `.env.local`，清空 `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`）；采集完成后已改名为 `.env.local.disabled`。
 > - PWA Service Worker 可能导致 stale assets：采集前先 unregister + 清 caches，并用 `ignoreCache: true` reload。
 > - `performance_stop_trace` 默认保存到 VS Code 安装目录，需要 `Move-Item` 到 `reports/devtools/traces/`（MCP 当前不支持直接落到仓库目录）。
@@ -184,6 +187,7 @@
   - Script hotspots（Top 3 by total time）：`vendor-react-VlY-ZC0_.js` 515.0ms / `FocusMode-D92FVa7M.js` 41.8ms / `app-utils-BlAh7-Ou.js` 29.0ms
 
 PR#1 checklist：
+
 - [x] `quality:smell-audit` 摘要（Knip/ts-prune/depcheck/Madge/SonarJS）
 - [x] `stats.html` / dist Top chunks（Top 10）
 - [x] Lighthouse（Desktop/Mobile 各 3 次取中位数）
@@ -270,6 +274,7 @@ PR#1 checklist：
 #### 最终对比（Baseline → PR#4 → PR#11）
 
 > 口径：
+>
 > - Lighthouse：Desktop/Mobile 各跑 3 次取中位数（见 `reports/lighthouse/`）
 > - Bundle：`dist/assets` 复算 gzip/br（gzip level=9；br q=11）
 > - DevTools trace：local-storage mode + 固定 seed（见下方 trace 文件）
@@ -322,16 +327,16 @@ PR#11 DevTools traces（local-storage mode）：
 
 **固定命令**
 
-1) 启动：
+1. 启动：
 
 - `npm run build`
 - `npm run preview -- --host 127.0.0.1 --port 4173 --strictPort`
 
-2) Desktop（示例 run1；run2/run3 改文件名）：
+2. Desktop（示例 run1；run2/run3 改文件名）：
 
 - `npx lighthouse http://127.0.0.1:4173/ --preset=desktop --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=reports/lighthouse/YYYY-MM-DD_desktop_run1.json --chrome-flags="--headless=new"`
 
-3) Mobile：
+3. Mobile：
 
 - `npx lighthouse http://127.0.0.1:4173/ --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=reports/lighthouse/YYYY-MM-DD_mobile_run1.json --chrome-flags="--headless=new"`
 
@@ -347,9 +352,9 @@ PR#11 DevTools traces（local-storage mode）：
 
 ### B1. 场景定义（每次复测必须覆盖）
 
-1) **冷启动首屏**：`/` Dashboard 首次加载
-2) **树构建路径**：进入 GroupView 或 ChainDetail（触发 `memoizedBuildChainTree`）
-3) **规则搜索交互**：打开规则选择/搜索（触发 RuleSearchOptimizer）
+1. **冷启动首屏**：`/` Dashboard 首次加载
+2. **树构建路径**：进入 GroupView 或 ChainDetail（触发 `memoizedBuildChainTree`）
+3. **规则搜索交互**：打开规则选择/搜索（触发 RuleSearchOptimizer）
 
 ### B2. Codex 自动采集（MCP 操作步骤固定）
 

@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, RSIPMeta, RSIPNode } from '../../../types';
 import { useRsipDomain } from '../useRsipDomain';
-import { createAppState, createLocalStorageMock } from '../../../test/factories';
+import {
+  createAppState,
+  createLocalStorageMock,
+} from '../../../test/factories';
 import { logger } from '../../../utils/logger';
 
 vi.mock('../../../utils/logger', () => ({
@@ -18,7 +21,10 @@ function createBaseState(): AppState {
 function createStateContainer(initialState: AppState) {
   let state = initialState;
   const setState: Dispatch<SetStateAction<AppState>> = (update) => {
-    state = typeof update === 'function' ? (update as (prev: AppState) => AppState)(state) : update;
+    state =
+      typeof update === 'function'
+        ? (update as (prev: AppState) => AppState)(state)
+        : update;
   };
   return {
     getState: () => state,
@@ -90,7 +96,7 @@ describe('useRsipDomain', () => {
       'RSIP',
       'Failed to save RSIP nodes',
       { nodeCount: 1 },
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
@@ -109,11 +115,19 @@ describe('useRsipDomain', () => {
     const meta: RSIPMeta = { allowMultiplePerDay: false, treeOpenStreak: 2 };
     await expect(domain.saveMeta(meta)).resolves.toBeUndefined();
     expect(stateRef.getState().rsipMeta).toEqual(meta);
-    expect(logger.error).toHaveBeenCalledWith('RSIP', 'Failed to save RSIP meta', { meta }, expect.any(Error));
+    expect(logger.error).toHaveBeenCalledWith(
+      'RSIP',
+      'Failed to save RSIP meta',
+      { meta },
+      expect.any(Error),
+    );
   });
 
   it('should provide strict/free mode helpers and opened-today check', () => {
-    const domain = useRsipDomain({ setState: vi.fn(), storage: createLocalStorageMock() });
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+    });
     const strictMeta: RSIPMeta = { allowMultiplePerDay: false };
     const freeMeta: RSIPMeta = { allowMultiplePerDay: true };
 
@@ -168,9 +182,16 @@ describe('useRsipDomain', () => {
       totalExecutions: 9,
     });
 
-    const updated = await domain.markExecuted('exec-target', [target, untouched]);
-    expect(updated.find((node) => node.id === 'exec-target')?.consecutiveExecutions).toBe(2);
-    expect(updated.find((node) => node.id === 'exec-untouched')).toEqual(untouched);
+    const updated = await domain.markExecuted('exec-target', [
+      target,
+      untouched,
+    ]);
+    expect(
+      updated.find((node) => node.id === 'exec-target')?.consecutiveExecutions,
+    ).toBe(2);
+    expect(updated.find((node) => node.id === 'exec-untouched')).toEqual(
+      untouched,
+    );
   });
 
   it('should not transition stability phase before threshold and should not transition E0 directly to E2', async () => {
@@ -201,7 +222,9 @@ describe('useRsipDomain', () => {
     const updatedE0 = await domain.markExecuted('e0-below', [e0BelowThreshold]);
     expect(updatedE0[0].stabilityPhase).toBe('E0');
 
-    const updatedE0High = await domain.markExecuted('e0-high', [e0HighExecutions]);
+    const updatedE0High = await domain.markExecuted('e0-high', [
+      e0HighExecutions,
+    ]);
     expect(updatedE0High[0].stabilityPhase).toBe('E1');
 
     const updatedE1 = await domain.markExecuted('e1-below', [e1BelowThreshold]);
@@ -305,7 +328,12 @@ describe('useRsipDomain', () => {
     const grandChild = createNode({ id: 'grand', parentId: child.id });
     const keep = createNode({ id: 'keep' });
 
-    const updated = await domain.markViolated(root.id, [root, child, grandChild, keep]);
+    const updated = await domain.markViolated(root.id, [
+      root,
+      child,
+      grandChild,
+      keep,
+    ]);
     expect(updated).toEqual([keep]);
   });
 
@@ -338,7 +366,9 @@ describe('useRsipDomain', () => {
     });
     const domain = useRsipDomain({ setState: vi.fn(), storage });
 
-    const initialized = await domain.recordTreeOpened({ allowMultiplePerDay: false });
+    const initialized = await domain.recordTreeOpened({
+      allowMultiplePerDay: false,
+    });
     expect(initialized.treeOpenStreak).toBe(1);
 
     const sameDay = await domain.recordTreeOpened({
@@ -350,11 +380,26 @@ describe('useRsipDomain', () => {
   });
 
   it('should calculate constraint power and phase distribution', () => {
-    const domain = useRsipDomain({ setState: vi.fn(), storage: createLocalStorageMock() });
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+    });
     const root = createNode({ id: 'cp-root', stabilityPhase: 'E2' });
-    const child1 = createNode({ id: 'cp-child-1', parentId: root.id, stabilityPhase: 'E1' });
-    const child2 = createNode({ id: 'cp-child-2', parentId: root.id, stabilityPhase: 'E0' });
-    const child3 = createNode({ id: 'cp-child-3', parentId: root.id, stabilityPhase: undefined });
+    const child1 = createNode({
+      id: 'cp-child-1',
+      parentId: root.id,
+      stabilityPhase: 'E1',
+    });
+    const child2 = createNode({
+      id: 'cp-child-2',
+      parentId: root.id,
+      stabilityPhase: 'E0',
+    });
+    const child3 = createNode({
+      id: 'cp-child-3',
+      parentId: root.id,
+      stabilityPhase: undefined,
+    });
     const nodes = [root, child1, child2, child3];
 
     expect(domain.calculateConstraintPower('missing', nodes)).toEqual({
@@ -374,7 +419,10 @@ describe('useRsipDomain', () => {
   });
 
   it('should report hasOpenedToday false for stale dates', () => {
-    const domain = useRsipDomain({ setState: vi.fn(), storage: createLocalStorageMock() });
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+    });
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 

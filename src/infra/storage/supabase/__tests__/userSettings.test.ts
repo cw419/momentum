@@ -4,10 +4,7 @@ import {
   isGamblingModeEnabled,
   toggleGamblingMode,
 } from '../userSettings';
-import {
-  createMockContext,
-  createSupabaseError,
-} from '../testHelpers';
+import { createMockContext, createSupabaseError } from '../testHelpers';
 
 vi.mock('../../../../utils/logger', () => ({
   logger: {

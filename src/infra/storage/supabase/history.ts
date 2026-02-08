@@ -2,8 +2,10 @@ import type { CompletionHistory } from '../../../types';
 import type { SupabaseClient, SupabaseStorageContext } from './types';
 import type { Database } from '../../../lib/database.types';
 
-type CompletionHistoryRow = Database['public']['Tables']['completion_history']['Row'];
-type CompletionHistoryInsert = Database['public']['Tables']['completion_history']['Insert'];
+type CompletionHistoryRow =
+  Database['public']['Tables']['completion_history']['Row'];
+type CompletionHistoryInsert =
+  Database['public']['Tables']['completion_history']['Insert'];
 
 type CompletionHistorySelectRow = Pick<
   CompletionHistoryRow,
@@ -32,11 +34,21 @@ type CompletionHistoryBasicRow = Pick<
 const COMPLETION_HISTORY_CONFLICT_TARGET = 'user_id,chain_id,completed_at';
 const COMPLETION_HISTORY_CHUNK_SIZE = 500;
 
-function isMissingUniqueConstraint(error: { code?: string; message?: string }): boolean {
-  return error.code === '42P10' || error.message?.includes('no unique or exclusion constraint matching') === true;
+function isMissingUniqueConstraint(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  return (
+    error.code === '42P10' ||
+    error.message?.includes('no unique or exclusion constraint matching') ===
+      true
+  );
 }
 
-function isMissingTimingColumns(error: { code?: string; message?: string }): boolean {
+function isMissingTimingColumns(error: {
+  code?: string;
+  message?: string;
+}): boolean {
   return (
     error.code === '42703' ||
     error.code === 'PGRST204' ||
@@ -45,7 +57,9 @@ function isMissingTimingColumns(error: { code?: string; message?: string }): boo
   );
 }
 
-function mapCompletionHistory(history: CompletionHistorySelectRow): CompletionHistory {
+function mapCompletionHistory(
+  history: CompletionHistorySelectRow,
+): CompletionHistory {
   return {
     chainId: history.chain_id,
     completedAt: new Date(history.completed_at),
@@ -59,7 +73,9 @@ function mapCompletionHistory(history: CompletionHistorySelectRow): CompletionHi
   };
 }
 
-function mapBasicCompletionHistory(history: CompletionHistoryBasicRow): CompletionHistory {
+function mapBasicCompletionHistory(
+  history: CompletionHistoryBasicRow,
+): CompletionHistory {
   return {
     chainId: history.chain_id,
     completedAt: new Date(history.completed_at),
@@ -82,7 +98,10 @@ function chunk<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
-function toRowsWithNewFields(userId: string, items: CompletionHistory[]): CompletionHistoryInsert[] {
+function toRowsWithNewFields(
+  userId: string,
+  items: CompletionHistory[],
+): CompletionHistoryInsert[] {
   return items.map((history) => ({
     chain_id: history.chainId,
     completed_at: history.completedAt.toISOString(),
@@ -97,7 +116,10 @@ function toRowsWithNewFields(userId: string, items: CompletionHistory[]): Comple
   }));
 }
 
-function toRowsBasic(userId: string, items: CompletionHistory[]): CompletionHistoryInsert[] {
+function toRowsBasic(
+  userId: string,
+  items: CompletionHistory[],
+): CompletionHistoryInsert[] {
   return items.map((history) => ({
     chain_id: history.chainId,
     completed_at: history.completedAt.toISOString(),
@@ -110,17 +132,23 @@ function toRowsBasic(userId: string, items: CompletionHistory[]): CompletionHist
   }));
 }
 
-async function insertCompletionHistoryLegacy(client: SupabaseClient, userId: string, history: CompletionHistory[]): Promise<void> {
+async function insertCompletionHistoryLegacy(
+  client: SupabaseClient,
+  userId: string,
+  history: CompletionHistory[],
+): Promise<void> {
   const { data: existingHistory } = await client
     .from('completion_history')
     .select('chain_id, completed_at')
     .eq('user_id', userId);
 
   const existingKeys = new Set(
-    (existingHistory || []).map((item: { chain_id: string; completed_at: string }) => {
-      const normalizedTime = new Date(item.completed_at).getTime();
-      return `${item.chain_id}-${normalizedTime}`;
-    })
+    (existingHistory || []).map(
+      (item: { chain_id: string; completed_at: string }) => {
+        const normalizedTime = new Date(item.completed_at).getTime();
+        return `${item.chain_id}-${normalizedTime}`;
+      },
+    ),
   );
 
   const newHistory = history.filter((item) => {
@@ -131,13 +159,19 @@ async function insertCompletionHistoryLegacy(client: SupabaseClient, userId: str
 
   if (newHistory.length === 0) return;
 
-  const legacyResult = await client.from('completion_history').insert(toRowsWithNewFields(userId, newHistory));
+  const legacyResult = await client
+    .from('completion_history')
+    .insert(toRowsWithNewFields(userId, newHistory));
   if (legacyResult.error && isMissingTimingColumns(legacyResult.error)) {
-    await client.from('completion_history').insert(toRowsBasic(userId, newHistory));
+    await client
+      .from('completion_history')
+      .insert(toRowsBasic(userId, newHistory));
   }
 }
 
-export async function getCompletionHistory(ctx: SupabaseStorageContext): Promise<CompletionHistory[]> {
+export async function getCompletionHistory(
+  ctx: SupabaseStorageContext,
+): Promise<CompletionHistory[]> {
   const user = await ctx.getCurrentUser();
   if (!user) return [];
 
@@ -168,10 +202,15 @@ export async function getCompletionHistory(ctx: SupabaseStorageContext): Promise
 
   if (basicError || !basicData) return [];
 
-  return (basicData as CompletionHistoryBasicRow[]).map(mapBasicCompletionHistory);
+  return (basicData as CompletionHistoryBasicRow[]).map(
+    mapBasicCompletionHistory,
+  );
 }
 
-export async function saveCompletionHistory(ctx: SupabaseStorageContext, history: CompletionHistory[]): Promise<void> {
+export async function saveCompletionHistory(
+  ctx: SupabaseStorageContext,
+  history: CompletionHistory[],
+): Promise<void> {
   const user = await ctx.getCurrentUser();
   if (!user) return;
   if (history.length === 0) return;
@@ -183,10 +222,13 @@ export async function saveCompletionHistory(ctx: SupabaseStorageContext, history
 
   for (const currentChunk of chunk(history, COMPLETION_HISTORY_CHUNK_SIZE)) {
     const rows =
-      mode === 'new' ? toRowsWithNewFields(user.id, currentChunk) : toRowsBasic(user.id, currentChunk);
-    let { error } = await client
-      .from('completion_history')
-      .upsert(rows, { onConflict: COMPLETION_HISTORY_CONFLICT_TARGET, ignoreDuplicates: true });
+      mode === 'new'
+        ? toRowsWithNewFields(user.id, currentChunk)
+        : toRowsBasic(user.id, currentChunk);
+    let { error } = await client.from('completion_history').upsert(rows, {
+      onConflict: COMPLETION_HISTORY_CONFLICT_TARGET,
+      ignoreDuplicates: true,
+    });
 
     if (!error) continue;
 
@@ -211,4 +253,3 @@ export async function saveCompletionHistory(ctx: SupabaseStorageContext, history
     return;
   }
 }
-

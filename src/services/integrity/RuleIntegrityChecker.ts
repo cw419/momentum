@@ -25,7 +25,7 @@ class RuleIntegrityChecker {
             rule.id = this.generateUniqueId();
             await this.updateRuleInStorage(rule);
           },
-          details: { rule }
+          details: { rule },
         });
         continue;
       }
@@ -49,18 +49,18 @@ class RuleIntegrityChecker {
             await this.updateRuleInStorage(rule);
             await this.updateUsageRecordsRuleId(oldId, rule.id);
           },
-          details: { rule, oldId: rule.id }
+          details: { rule, oldId: rule.id },
         });
       }
     }
 
     for (const duplicateId of duplicateIds) {
-      const duplicateRules = rules.filter(r => r.id === duplicateId);
+      const duplicateRules = rules.filter((r) => r.id === duplicateId);
       issues.push({
         type: 'missing_id',
         severity: 'critical',
         description: `发现重复的规则ID: ${duplicateId}`,
-        affectedItems: duplicateRules.map(r => r.name),
+        affectedItems: duplicateRules.map((r) => r.name),
         autoFixable: true,
         fixAction: async () => {
           for (let i = 1; i < duplicateRules.length; i++) {
@@ -71,7 +71,7 @@ class RuleIntegrityChecker {
             await this.updateUsageRecordsRuleId(oldId, rule.id);
           }
         },
-        details: { duplicateId, rules: duplicateRules }
+        details: { duplicateId, rules: duplicateRules },
       });
     }
 
@@ -82,7 +82,7 @@ class RuleIntegrityChecker {
     const issues: IntegrityIssue[] = [];
     const nameGroups = new Map<string, ExceptionRule[]>();
 
-    for (const rule of rules.filter(r => r.isActive)) {
+    for (const rule of rules.filter((r) => r.isActive)) {
       const normalizedName = rule.name.toLowerCase().trim();
       if (!nameGroups.has(normalizedName)) {
         nameGroups.set(normalizedName, []);
@@ -96,7 +96,7 @@ class RuleIntegrityChecker {
           type: 'duplicate_name',
           severity: 'warning',
           description: `发现重复的规则名称: "${rulesWithSameName[0].name}"`,
-          affectedItems: rulesWithSameName.map(r => r.id),
+          affectedItems: rulesWithSameName.map((r) => r.id),
           autoFixable: true,
           fixAction: async () => {
             for (let i = 1; i < rulesWithSameName.length; i++) {
@@ -105,7 +105,7 @@ class RuleIntegrityChecker {
               await this.updateRuleInStorage(rule);
             }
           },
-          details: { originalName: name, rules: rulesWithSameName }
+          details: { originalName: name, rules: rulesWithSameName },
         });
       }
     }
@@ -124,7 +124,7 @@ class RuleIntegrityChecker {
           description: `规则 ID ${rule.id} 缺少名称`,
           affectedItems: [rule.id],
           autoFixable: false,
-          details: { rule }
+          details: { rule },
         });
       }
 
@@ -139,7 +139,7 @@ class RuleIntegrityChecker {
             rule.type = ExceptionRuleType.PAUSE_ONLY;
             await this.updateRuleInStorage(rule);
           },
-          details: { rule }
+          details: { rule },
         });
       } else if (!Object.values(ExceptionRuleType).includes(rule.type)) {
         issues.push({
@@ -152,7 +152,7 @@ class RuleIntegrityChecker {
             rule.type = ExceptionRuleType.PAUSE_ONLY;
             await this.updateRuleInStorage(rule);
           },
-          details: { rule, invalidType: rule.type }
+          details: { rule, invalidType: rule.type },
         });
       }
 
@@ -167,7 +167,7 @@ class RuleIntegrityChecker {
             rule.createdAt = new Date();
             await this.updateRuleInStorage(rule);
           },
-          details: { rule }
+          details: { rule },
         });
       }
 
@@ -182,7 +182,7 @@ class RuleIntegrityChecker {
             rule.usageCount = 0;
             await this.updateRuleInStorage(rule);
           },
-          details: { rule, invalidCount: rule.usageCount }
+          details: { rule, invalidCount: rule.usageCount },
         });
       }
     }
@@ -202,10 +202,16 @@ class RuleIntegrityChecker {
     await exceptionRuleStorage.updateRule(rule.id, rule);
   }
 
-  private async updateUsageRecordsRuleId(oldId: string, newId: string): Promise<void> {
+  private async updateUsageRecordsRuleId(
+    oldId: string,
+    newId: string,
+  ): Promise<void> {
     const records = await exceptionRuleStorage.getUsageRecords();
-    for (const record of records.filter(r => r.ruleId === oldId)) {
-      await exceptionRuleStorage.updateUsageRecord({ ...record, ruleId: newId });
+    for (const record of records.filter((r) => r.ruleId === oldId)) {
+      await exceptionRuleStorage.updateUsageRecord({
+        ...record,
+        ruleId: newId,
+      });
     }
   }
 }

@@ -2,10 +2,18 @@ import type { Language } from '../../../i18n';
 import { logger } from '../../../utils/logger';
 import { toast } from '../../../utils/toast';
 import { getSafeErrorDetailFromUnknown } from '../../../utils/errorMessage';
-import type { AsyncOrSyncVoid, ConfirmDialogState, OperationResult } from '../types';
+import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
+import type {
+  AsyncOrSyncVoid,
+  ConfirmDialogState,
+  OperationResult,
+} from '../types';
 
 function isPartialRestoreFailureMessage(message: string) {
-  return message.includes('Partial restore failure') || message.includes('部分链条恢复可能失败');
+  return (
+    message.includes('Partial restore failure') ||
+    message.includes('部分链条恢复可能失败')
+  );
 }
 
 async function performRestoreOperation(params: {
@@ -32,7 +40,8 @@ async function performRestoreOperation(params: {
     logger.debug('RECYCLE_BIN', 'Restore completed', result.details);
     return result;
   } catch (error) {
-    const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
+    const rawErrorMessage =
+      error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
     const safeDetail = getSafeErrorDetailFromUnknown(error, language);
 
     const defaultMessage = safeDetail
@@ -47,7 +56,12 @@ async function performRestoreOperation(params: {
       message: defaultMessage,
       details: { error: rawErrorMessage, chainIds },
     };
-    logger.error('RECYCLE_BIN', 'Restore operation failed', result.details, error as Error);
+    logger.error(
+      'RECYCLE_BIN',
+      'Restore operation failed',
+      result.details,
+      normalizeUnknownError(error),
+    );
 
     if (isPartialRestoreFailureMessage(rawErrorMessage)) {
       result.message = tr(
@@ -87,11 +101,15 @@ async function performPermanentDeleteOperation(params: {
     logger.debug('RECYCLE_BIN', 'Permanent delete completed', result.details);
     return result;
   } catch (error) {
-    const rawErrorMessage = error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
+    const rawErrorMessage =
+      error instanceof Error ? error.message : tr('未知错误', 'Unknown error');
     const safeDetail = getSafeErrorDetailFromUnknown(error, language);
 
     const message = safeDetail
-      ? tr(`永久删除失败: ${safeDetail}`, `Permanent delete failed: ${safeDetail}`)
+      ? tr(
+          `永久删除失败: ${safeDetail}`,
+          `Permanent delete failed: ${safeDetail}`,
+        )
       : tr(
           '永久删除失败，请重试（详情见控制台）',
           'Permanent delete failed. Check the console for details, then try again.',
@@ -102,7 +120,12 @@ async function performPermanentDeleteOperation(params: {
       message,
       details: { error: rawErrorMessage, chainIds },
     };
-    logger.error('RECYCLE_BIN', 'Permanent delete operation failed', result.details, error as Error);
+    logger.error(
+      'RECYCLE_BIN',
+      'Permanent delete operation failed',
+      result.details,
+      normalizeUnknownError(error),
+    );
     toast.error(message);
     return result;
   }
@@ -118,7 +141,12 @@ export async function performRecycleBinOperation(params: {
   const { dialog, onRestore, onPermanentDelete, language, tr } = params;
 
   if (dialog.type === 'restore') {
-    return performRestoreOperation({ chainIds: dialog.chainIds, onRestore, language, tr });
+    return performRestoreOperation({
+      chainIds: dialog.chainIds,
+      onRestore,
+      language,
+      tr,
+    });
   }
 
   return performPermanentDeleteOperation({
@@ -128,4 +156,3 @@ export async function performRecycleBinOperation(params: {
     tr,
   });
 }
-

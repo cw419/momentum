@@ -39,7 +39,7 @@ export function FocusModeControls({
             <>
               <button
                 onClick={onPauseClick}
-                className="px-6 py-3 rounded-2xl bg-yellow-500/90 hover:bg-yellow-500 text-white font-chinese transition duration-300 flex items-center space-x-2"
+                className="flex items-center space-x-2 rounded-2xl bg-yellow-500/90 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-yellow-500"
               >
                 <Settings size={16} />
                 <span>{tr('暂停', 'Pause')}</span>
@@ -47,7 +47,7 @@ export function FocusModeControls({
               {(!chain.minimumDuration || chain.minimumDuration === 0) && (
                 <button
                   onClick={onEarlyCompleteClick}
-                  className="px-8 py-4 rounded-3xl bg-green-600 hover:bg-green-700 text-white font-chinese transition duration-300 shadow-lg flex items-center space-x-2"
+                  className="flex items-center space-x-2 rounded-3xl bg-green-600 px-8 py-4 font-chinese text-white shadow-lg transition duration-300 hover:bg-green-700"
                 >
                   <CheckCircle size={20} />
                   <span>{tr('完成任务', 'Complete')}</span>
@@ -59,7 +59,7 @@ export function FocusModeControls({
                   {!hasReachedMinimum ? (
                     <button
                       onClick={onEarlyCompleteClick}
-                      className="px-6 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-chinese transition duration-300 flex items-center space-x-2"
+                      className="flex items-center space-x-2 rounded-2xl bg-orange-500 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-orange-600"
                     >
                       <CheckCircle size={16} />
                       <span>{tr('提前完成', 'Complete early')}</span>
@@ -67,7 +67,7 @@ export function FocusModeControls({
                   ) : (
                     <button
                       onClick={onEarlyCompleteClick}
-                      className="px-8 py-4 rounded-3xl bg-green-600 hover:bg-green-700 text-white font-chinese transition duration-300 shadow-lg flex items-center space-x-2"
+                      className="flex items-center space-x-2 rounded-3xl bg-green-600 px-8 py-4 font-chinese text-white shadow-lg transition duration-300 hover:bg-green-700"
                     >
                       <CheckCircle size={20} />
                       <span>{tr('完成任务', 'Complete')}</span>
@@ -80,14 +80,14 @@ export function FocusModeControls({
             <>
               <button
                 onClick={onPauseClick}
-                className="px-6 py-3 rounded-2xl bg-yellow-500/90 hover:bg-yellow-500 text-white font-chinese transition duration-300 flex items-center space-x-2"
+                className="flex items-center space-x-2 rounded-2xl bg-yellow-500/90 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-yellow-500"
               >
                 <Settings size={16} />
                 <span>{tr('暂停', 'Pause')}</span>
               </button>
               <button
                 onClick={onEarlyCompleteClick}
-                className="px-6 py-3 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-chinese transition duration-300 flex items-center space-x-2"
+                className="flex items-center space-x-2 rounded-2xl bg-green-600 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-green-700"
               >
                 <CheckCircle size={16} />
                 <span>{tr('提前完成', 'Complete early')}</span>
@@ -99,28 +99,28 @@ export function FocusModeControls({
 
       {session.isPaused && (
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="text-gray-700 dark:text-gray-300 font-chinese">
+          <div className="font-chinese text-gray-700 dark:text-gray-300">
             {autoResumeAt
               ? tr(
-                `已暂停，将于 ${Math.floor(resumeCountdown / 60)}分${resumeCountdown % 60}秒 内自动继续`,
-                `Paused. Auto-resume in ${Math.floor(resumeCountdown / 60)}m ${resumeCountdown % 60}s`
-              )
+                  `已暂停，将于 ${Math.floor(resumeCountdown / 60)}分${resumeCountdown % 60}秒 内自动继续`,
+                  `Paused. Auto-resume in ${Math.floor(resumeCountdown / 60)}m ${resumeCountdown % 60}s`,
+                )
               : tr(
-                `已暂停 ${Math.floor(elapsedPauseTime / 60)}分${elapsedPauseTime % 60}秒`,
-                `Paused for ${Math.floor(elapsedPauseTime / 60)}m ${elapsedPauseTime % 60}s`
-              )}
+                  `已暂停 ${Math.floor(elapsedPauseTime / 60)}分${elapsedPauseTime % 60}秒`,
+                  `Paused for ${Math.floor(elapsedPauseTime / 60)}m ${elapsedPauseTime % 60}s`,
+                )}
           </div>
           <div className="flex items-center justify-center space-x-4">
             <button
               onClick={onResumeNow}
-              className="px-6 py-3 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-chinese transition duration-300"
+              className="rounded-2xl bg-green-600 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-green-700"
             >
               {tr('继续', 'Resume')}
             </button>
             {autoResumeAt && (
               <button
                 onClick={onCancelAutoResume}
-                className="px-6 py-3 rounded-2xl bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-900 dark:text-white font-chinese transition duration-300"
+                className="rounded-2xl bg-gray-200 px-6 py-3 font-chinese text-gray-900 transition duration-300 hover:bg-gray-300 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500"
               >
                 {tr('取消自动继续', 'Cancel auto-resume')}
               </button>
@@ -131,4 +131,3 @@ export function FocusModeControls({
     </>
   );
 }
-

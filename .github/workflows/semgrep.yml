@@ -2,7 +2,7 @@ name: Semgrep (Soft)
 
 on:
   push:
-    branches: ["**"]
+    branches: ['**']
   pull_request:
 
 permissions:
@@ -20,4 +20,3 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: auto
-

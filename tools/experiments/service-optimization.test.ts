@@ -81,7 +81,8 @@ describe('Service Layer Optimization Tests', () => {
 
   it('should provide backward compatibility', async () => {
     // Test that the new high-performance data access is available as supabaseStorage
-    const { supabaseStorage } = await import('./utils/highPerformanceDataAccess');
+    const { supabaseStorage } =
+      await import('./utils/highPerformanceDataAccess');
     expect(supabaseStorage).toBeDefined();
     expect(typeof supabaseStorage.getChains).toBe('function');
     expect(typeof supabaseStorage.createChain).toBe('function');
@@ -89,33 +90,47 @@ describe('Service Layer Optimization Tests', () => {
   });
 
   it('should have performance monitoring capabilities', async () => {
-    const { optimizedRecycleBinService } = await import('./services/OptimizedRecycleBinService');
-    const { serviceOrchestrator } = await import('./services/ServiceOrchestrator');
-    const { businessLogicManager } = await import('./services/BusinessLogicManager');
-    const { highPerformanceDataAccess } = await import('./utils/highPerformanceDataAccess');
+    const { optimizedRecycleBinService } =
+      await import('./services/OptimizedRecycleBinService');
+    const { serviceOrchestrator } =
+      await import('./services/ServiceOrchestrator');
+    const { businessLogicManager } =
+      await import('./services/BusinessLogicManager');
+    const { highPerformanceDataAccess } =
+      await import('./utils/highPerformanceDataAccess');
     const { smartCache } = await import('./utils/smartCacheSystem');
 
     // All services should have performance monitoring methods
-    expect(typeof optimizedRecycleBinService.getPerformanceMetrics).toBe('function');
-    expect(typeof highPerformanceDataAccess.getPerformanceMetrics).toBe('function');
+    expect(typeof optimizedRecycleBinService.getPerformanceMetrics).toBe(
+      'function',
+    );
+    expect(typeof highPerformanceDataAccess.getPerformanceMetrics).toBe(
+      'function',
+    );
     expect(typeof smartCache.getMetrics).toBe('function');
     expect(typeof businessLogicManager.getBusinessRuleStats).toBe('function');
   });
 
   it('should have comprehensive optimization capabilities', async () => {
     // Test all optimization systems are available
-    const { highPerformanceDataAccess } = await import('./utils/highPerformanceDataAccess');
+    const { highPerformanceDataAccess } =
+      await import('./utils/highPerformanceDataAccess');
     const { smartCache } = await import('./utils/smartCacheSystem');
-    const { BatchOperationsManager } = await import('./utils/BatchOperationsManager');
+    const { BatchOperationsManager } =
+      await import('./utils/BatchOperationsManager');
     const { LazyLoadingManager } = await import('./utils/LazyLoadingManager');
     const { memoryOptimizer } = await import('./utils/memoryOptimizer');
     const { resourceManager } = await import('./utils/resourceManager');
     const { responseTimeMonitor } = await import('./utils/responseTimeMonitor');
-    
+
     // Verify all optimization systems have proper interfaces
-    expect(typeof highPerformanceDataAccess.getPerformanceMetrics).toBe('function');
+    expect(typeof highPerformanceDataAccess.getPerformanceMetrics).toBe(
+      'function',
+    );
     expect(typeof smartCache.getMetrics).toBe('function');
-    expect(typeof BatchOperationsManager.getInstance().getMetrics).toBe('function');
+    expect(typeof BatchOperationsManager.getInstance().getMetrics).toBe(
+      'function',
+    );
     expect(typeof LazyLoadingManager.getInstance().getStats).toBe('function');
     expect(typeof memoryOptimizer.getMemoryReport).toBe('function');
     expect(typeof resourceManager.getResourceReport).toBe('function');
@@ -123,28 +138,38 @@ describe('Service Layer Optimization Tests', () => {
   });
 
   it('should have integrated batch and lazy loading capabilities', async () => {
-    const { serviceOrchestrator } = await import('./services/ServiceOrchestrator');
-    
+    const { serviceOrchestrator } =
+      await import('./services/ServiceOrchestrator');
+
     // Test integrated batch processing functionality
     expect(typeof serviceOrchestrator.executeBatchOperations).toBe('function');
-    
+
     // Test integrated intelligent preloading functionality
-    expect(typeof serviceOrchestrator.intelligentPreloadUserData).toBe('function');
-    
+    expect(typeof serviceOrchestrator.intelligentPreloadUserData).toBe(
+      'function',
+    );
+
     // Test comprehensive health status functionality
-    expect(typeof serviceOrchestrator.getComprehensiveHealthStatus).toBe('function');
+    expect(typeof serviceOrchestrator.getComprehensiveHealthStatus).toBe(
+      'function',
+    );
   });
 
   it('should have proper method signatures for core operations', async () => {
-    const { optimizedRecycleBinService } = await import('./services/OptimizedRecycleBinService');
+    const { optimizedRecycleBinService } =
+      await import('./services/OptimizedRecycleBinService');
 
     // Test method signatures exist
     expect(typeof optimizedRecycleBinService.getDeletedChains).toBe('function');
     expect(typeof optimizedRecycleBinService.moveToRecycleBin).toBe('function');
     expect(typeof optimizedRecycleBinService.restoreChain).toBe('function');
     expect(typeof optimizedRecycleBinService.bulkRestore).toBe('function');
-    expect(typeof optimizedRecycleBinService.bulkPermanentDelete).toBe('function');
-    expect(typeof optimizedRecycleBinService.getRecycleBinStats).toBe('function');
+    expect(typeof optimizedRecycleBinService.bulkPermanentDelete).toBe(
+      'function',
+    );
+    expect(typeof optimizedRecycleBinService.getRecycleBinStats).toBe(
+      'function',
+    );
     expect(typeof optimizedRecycleBinService.getHealthStatus).toBe('function');
   });
 });

@@ -9,13 +9,18 @@ import { ExceptionRule, ExceptionRuleType } from '../../types';
 
 export type RuleActionType = 'pause' | 'early_completion';
 
-export function getRuleTypeForAction(actionType: RuleActionType): ExceptionRuleType {
+export function getRuleTypeForAction(
+  actionType: RuleActionType,
+): ExceptionRuleType {
   return actionType === 'pause'
     ? ExceptionRuleType.PAUSE_ONLY
     : ExceptionRuleType.EARLY_COMPLETION_ONLY;
 }
 
-export function doesRuleTypeMatchAction(ruleType: ExceptionRuleType, actionType: RuleActionType): boolean {
+export function doesRuleTypeMatchAction(
+  ruleType: ExceptionRuleType,
+  actionType: RuleActionType,
+): boolean {
   switch (actionType) {
     case 'pause':
       return ruleType === ExceptionRuleType.PAUSE_ONLY;
@@ -24,7 +29,10 @@ export function doesRuleTypeMatchAction(ruleType: ExceptionRuleType, actionType:
   }
 }
 
-export function validateRuleTypeForAction(rule: ExceptionRule, actionType: RuleActionType): boolean {
+export function validateRuleTypeForAction(
+  rule: ExceptionRule,
+  actionType: RuleActionType,
+): boolean {
   if (!rule.type) return false;
   return doesRuleTypeMatchAction(rule.type, actionType);
 }
@@ -55,7 +63,8 @@ export function isValidRuleType(type: string): type is ExceptionRuleType {
   return Object.values(ExceptionRuleType).includes(type as ExceptionRuleType);
 }
 
-export function isValidActionType(actionType: string): actionType is RuleActionType {
+export function isValidActionType(
+  actionType: string,
+): actionType is RuleActionType {
   return actionType === 'pause' || actionType === 'early_completion';
 }
-

@@ -95,7 +95,9 @@ describe('ChainCardView behavior', () => {
     const { props, onViewDetail, onStartChain, onScheduleChain } = makeProps();
     render(<ChainCardView {...props} />);
 
-    const cardButton = screen.getByRole('button', { name: 'View details: Demo chain' });
+    const cardButton = screen.getByRole('button', {
+      name: 'View details: Demo chain',
+    });
     fireEvent.click(cardButton);
     fireEvent.keyDown(cardButton, { key: 'Enter' });
     fireEvent.keyDown(cardButton, { key: ' ' });
@@ -133,10 +135,14 @@ describe('ChainCardView behavior', () => {
     });
     render(<ChainCardView {...props} />);
 
-    expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Schedule' }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete booking' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Interrupt / Adjudicate' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Interrupt / Adjudicate' }),
+    );
     expect(onCompleteBooking).toHaveBeenCalledTimes(1);
     expect(onCancelScheduledSession).toHaveBeenCalledTimes(1);
   });
@@ -180,7 +186,9 @@ describe('ChainCardView behavior', () => {
     const { props, onViewDetail } = makeProps();
     render(<ChainCardView {...props} />);
 
-    const cardButton = screen.getByRole('button', { name: 'View details: Demo chain' });
+    const cardButton = screen.getByRole('button', {
+      name: 'View details: Demo chain',
+    });
     const title = screen.getByText('Demo chain');
 
     fireEvent.keyDown(title, { key: 'Enter' });

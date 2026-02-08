@@ -23,9 +23,19 @@ async function loadDetector(isDev: boolean) {
   };
 }
 
-function setDimensions(el: HTMLElement, clientWidth: number, scrollWidth: number) {
-  Object.defineProperty(el, 'clientWidth', { configurable: true, value: clientWidth });
-  Object.defineProperty(el, 'scrollWidth', { configurable: true, value: scrollWidth });
+function setDimensions(
+  el: HTMLElement,
+  clientWidth: number,
+  scrollWidth: number,
+) {
+  Object.defineProperty(el, 'clientWidth', {
+    configurable: true,
+    value: clientWidth,
+  });
+  Object.defineProperty(el, 'scrollWidth', {
+    configurable: true,
+    value: scrollWidth,
+  });
 }
 
 describe('LayoutIssueDetector', () => {
@@ -38,10 +48,16 @@ describe('LayoutIssueDetector', () => {
     const { LayoutIssueDetector, logger } = await loadDetector(true);
     const detector = new LayoutIssueDetector(true);
 
-    detector.handleLayoutShift({ hadRecentInput: true, value: 0.5 } as LayoutShift);
+    detector.handleLayoutShift({
+      hadRecentInput: true,
+      value: 0.5,
+    } as LayoutShift);
     expect(detector.getStabilityReport().totalIssues).toBe(0);
 
-    detector.handleLayoutShift({ hadRecentInput: false, value: 0.3 } as LayoutShift);
+    detector.handleLayoutShift({
+      hadRecentInput: false,
+      value: 0.3,
+    } as LayoutShift);
 
     const report = detector.getStabilityReport();
     expect(report.totalIssues).toBe(1);
@@ -63,13 +79,15 @@ describe('LayoutIssueDetector', () => {
     setDimensions(container, 200, 260);
     setDimensions(child, 100, 140);
 
-    const styleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation(() => {
-      return {
-        width: 'auto',
-        flexGrow: '1',
-        position: 'static',
-      } as CSSStyleDeclaration;
-    });
+    const styleSpy = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockImplementation(() => {
+        return {
+          width: 'auto',
+          flexGrow: '1',
+          position: 'static',
+        } as CSSStyleDeclaration;
+      });
 
     detector.performInitialCheck(container);
     const report = detector.getStabilityReport();
@@ -96,21 +114,27 @@ describe('LayoutIssueDetector', () => {
 
     document.body.appendChild(container);
 
-    const styleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation(() => {
-      return {
-        position: 'static',
-        width: 'auto',
-        flexGrow: '0',
-      } as CSSStyleDeclaration;
-    });
+    const styleSpy = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockImplementation(() => {
+        return {
+          position: 'static',
+          width: 'auto',
+          flexGrow: '0',
+        } as CSSStyleDeclaration;
+      });
 
     detector.applyStabilityFixes(container);
 
     const ruleItem = container.querySelector('.rule-item') as HTMLElement;
     const ruleList = container.querySelector('.rule-list') as HTMLElement;
     const tooltip = container.querySelector('.tooltip') as HTMLElement;
-    const scrollContainer = container.querySelector('[data-scroll-container]') as HTMLElement;
-    const dynamicContainer = container.querySelector('[data-dynamic-content]') as HTMLElement;
+    const scrollContainer = container.querySelector(
+      '[data-scroll-container]',
+    ) as HTMLElement;
+    const dynamicContainer = container.querySelector(
+      '[data-dynamic-content]',
+    ) as HTMLElement;
 
     expect(ruleItem.style.minHeight).toBe('60px');
     expect(ruleList.style.maxHeight).toBe('400px');

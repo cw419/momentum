@@ -7,7 +7,7 @@ const renderIntro = () => {
   return render(
     <I18nProvider>
       <IntroScreen onSignIn={() => {}} onSignUp={() => {}} />
-    </I18nProvider>
+    </I18nProvider>,
   );
 };
 
@@ -30,7 +30,9 @@ describe('IntroScreen language toggle', () => {
     });
 
     expect(window.localStorage.getItem('language')).toBe('zh');
-    expect(screen.queryByRole('button', { name: 'Sign In' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Sign In' }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(enToggle);
 
@@ -42,4 +44,3 @@ describe('IntroScreen language toggle', () => {
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument();
   });
 });
-

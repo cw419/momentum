@@ -45,7 +45,10 @@ export interface RecoveryStrategy {
   errorType: ExceptionRuleError;
   strategy: 'auto_fix' | 'user_choice' | 'fallback' | 'reset';
   priority: number;
-  handler: (error: ExceptionRuleException, context: RecoveryContext) => Promise<RecoveryResult>;
+  handler: (
+    error: ExceptionRuleException,
+    context: RecoveryContext,
+  ) => Promise<RecoveryResult>;
 }
 
 /**

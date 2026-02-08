@@ -35,15 +35,12 @@ const phaseConfig: Record<
 
 export function RSIPPhaseBadge({ phase, size = 'md' }: RSIPPhaseBadgeProps) {
   const config = phaseConfig[phase];
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs gap-1' : 'px-2.5 py-1 text-xs gap-1.5';
+  const sizeClasses =
+    size === 'sm' ? 'px-2 py-0.5 text-xs gap-1' : 'px-2.5 py-1 text-xs gap-1.5';
 
   return (
     <span
-      className={`
-        inline-flex items-center rounded-full font-medium flex-shrink-0 whitespace-nowrap border
-        ${config.className}
-        ${sizeClasses}
-      `}
+      className={`inline-flex flex-shrink-0 items-center whitespace-nowrap rounded-full border font-medium ${config.className} ${sizeClasses} `}
     >
       <span aria-hidden>{config.icon}</span>
       <span>{config.label}</span>

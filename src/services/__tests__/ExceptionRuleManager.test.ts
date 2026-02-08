@@ -3,7 +3,11 @@
  */
 
 import { ExceptionRuleManager } from '../ExceptionRuleManager';
-import { ExceptionRuleType, SessionContext, ExceptionRuleException } from '../../types';
+import {
+  ExceptionRuleType,
+  SessionContext,
+  ExceptionRuleException,
+} from '../../types';
 
 describe('ExceptionRuleManager', () => {
   let manager: ExceptionRuleManager;
@@ -14,7 +18,9 @@ describe('ExceptionRuleManager', () => {
     manager = new ExceptionRuleManager();
   });
 
-  const createMockSessionContext = (overrides: Partial<SessionContext> = {}): SessionContext => ({
+  const createMockSessionContext = (
+    overrides: Partial<SessionContext> = {},
+  ): SessionContext => ({
     sessionId: 'session_1',
     chainId: 'chain_1',
     chainName: '测试任务',
@@ -22,7 +28,7 @@ describe('ExceptionRuleManager', () => {
     elapsedTime: 300,
     remainingTime: 600,
     isDurationless: false,
-    ...overrides
+    ...overrides,
   });
 
   describe('规则创建和管理', () => {
@@ -30,7 +36,7 @@ describe('ExceptionRuleManager', () => {
       const result = await manager.createRule(
         '上厕所',
         ExceptionRuleType.PAUSE_ONLY,
-        '生理需求'
+        '生理需求',
       );
 
       expect(result.rule.name).toBe('上厕所');
@@ -42,25 +48,32 @@ describe('ExceptionRuleManager', () => {
     test('创建重复规则应该抛出异常', async () => {
       await manager.createRule('上厕所', ExceptionRuleType.PAUSE_ONLY);
 
-      await expect(manager.createRule('上厕所', ExceptionRuleType.EARLY_COMPLETION_ONLY))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        manager.createRule('上厕所', ExceptionRuleType.EARLY_COMPLETION_ONLY),
+      ).rejects.toThrow(ExceptionRuleException);
     });
 
     test('创建相似规则应该返回警告', async () => {
       await manager.createRule('上厕所', ExceptionRuleType.PAUSE_ONLY);
-      
-      const result = await manager.createRule('去厕所', ExceptionRuleType.PAUSE_ONLY);
-      
+
+      const result = await manager.createRule(
+        '去厕所',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+
       expect(result.warnings.length).toBeGreaterThan(0);
       expect(result.warnings[0]).toContain('相似规则');
     });
 
     test('应该能够更新规则', async () => {
-      const createResult = await manager.createRule('原始规则', ExceptionRuleType.PAUSE_ONLY);
-      
+      const createResult = await manager.createRule(
+        '原始规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+
       const updateResult = await manager.updateRule(createResult.rule.id, {
         name: '更新后的规则',
-        description: '新的描述'
+        description: '新的描述',
       });
 
       expect(updateResult.rule.name).toBe('更新后的规则');
@@ -68,19 +81,25 @@ describe('ExceptionRuleManager', () => {
     });
 
     test('应该能够删除规则', async () => {
-      const createResult = await manager.createRule('待删除规则', ExceptionRuleType.PAUSE_ONLY);
-      
+      const createResult = await manager.createRule(
+        '待删除规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+
       await manager.deleteRule(createResult.rule.id);
-      
+
       const rule = await manager.getRuleById(createResult.rule.id);
       expect(rule?.isActive).toBe(false);
     });
 
     test('应该能够获取规则详情', async () => {
-      const createResult = await manager.createRule('测试规则', ExceptionRuleType.PAUSE_ONLY);
-      
+      const createResult = await manager.createRule(
+        '测试规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+
       const rule = await manager.getRuleById(createResult.rule.id);
-      
+
       expect(rule).not.toBeNull();
       expect(rule!.name).toBe('测试规则');
     });
@@ -90,12 +109,19 @@ describe('ExceptionRuleManager', () => {
     beforeEach(async () => {
       await manager.createRule('暂停规则1', ExceptionRuleType.PAUSE_ONLY);
       await manager.createRule('暂停规则2', ExceptionRuleType.PAUSE_ONLY);
-      await manager.createRule('完成规则1', ExceptionRuleType.EARLY_COMPLETION_ONLY);
+      await manager.createRule(
+        '完成规则1',
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      );
     });
 
     test('应该能够按类型获取规则', async () => {
-      const pauseRules = await manager.getRulesByType(ExceptionRuleType.PAUSE_ONLY);
-      const completionRules = await manager.getRulesByType(ExceptionRuleType.EARLY_COMPLETION_ONLY);
+      const pauseRules = await manager.getRulesByType(
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      const completionRules = await manager.getRulesByType(
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      );
 
       expect(pauseRules).toHaveLength(2);
       expect(completionRules).toHaveLength(1);
@@ -103,17 +129,27 @@ describe('ExceptionRuleManager', () => {
 
     test('应该能够获取适用于指定操作的规则', async () => {
       const pauseRules = await manager.getRulesForAction('pause');
-      const completionRules = await manager.getRulesForAction('early_completion');
+      const completionRules =
+        await manager.getRulesForAction('early_completion');
 
       expect(pauseRules).toHaveLength(2);
       expect(completionRules).toHaveLength(1);
     });
 
     test('应该能够验证规则是否适用于操作', async () => {
-      const pauseRule = await manager.createRule('暂停规则', ExceptionRuleType.PAUSE_ONLY);
-      
-      const isValidForPause = await manager.validateRuleForAction(pauseRule.rule.id, 'pause');
-      const isValidForCompletion = await manager.validateRuleForAction(pauseRule.rule.id, 'early_completion');
+      const pauseRule = await manager.createRule(
+        '暂停规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+
+      const isValidForPause = await manager.validateRuleForAction(
+        pauseRule.rule.id,
+        'pause',
+      );
+      const isValidForCompletion = await manager.validateRuleForAction(
+        pauseRule.rule.id,
+        'early_completion',
+      );
 
       expect(isValidForPause).toBe(true);
       expect(isValidForCompletion).toBe(false);
@@ -122,22 +158,31 @@ describe('ExceptionRuleManager', () => {
     test('应该能够搜索规则', async () => {
       const results = await manager.searchRules('暂停');
       expect(results).toHaveLength(2);
-      expect(results.every(r => r.name.includes('暂停'))).toBe(true);
+      expect(results.every((r) => r.name.includes('暂停'))).toBe(true);
     });
 
     test('应该能够按操作类型搜索规则', async () => {
       const results = await manager.searchRules('', undefined, 'pause');
       expect(results).toHaveLength(2);
-      expect(results.every(r => r.type === ExceptionRuleType.PAUSE_ONLY)).toBe(true);
+      expect(
+        results.every((r) => r.type === ExceptionRuleType.PAUSE_ONLY),
+      ).toBe(true);
     });
   });
 
   describe('规则使用和统计', () => {
     test('应该能够使用规则并记录统计', async () => {
-      const createResult = await manager.createRule('测试规则', ExceptionRuleType.PAUSE_ONLY);
+      const createResult = await manager.createRule(
+        '测试规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       const sessionContext = createMockSessionContext();
 
-      const useResult = await manager.useRule(createResult.rule.id, sessionContext, 'pause');
+      const useResult = await manager.useRule(
+        createResult.rule.id,
+        sessionContext,
+        'pause',
+      );
 
       expect(useResult.record.ruleId).toBe(createResult.rule.id);
       expect(useResult.record.actionType).toBe('pause');
@@ -145,15 +190,26 @@ describe('ExceptionRuleManager', () => {
     });
 
     test('使用不匹配类型的规则应该抛出异常', async () => {
-      const createResult = await manager.createRule('暂停规则', ExceptionRuleType.PAUSE_ONLY);
+      const createResult = await manager.createRule(
+        '暂停规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       const sessionContext = createMockSessionContext();
 
-      await expect(manager.useRule(createResult.rule.id, sessionContext, 'early_completion'))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        manager.useRule(
+          createResult.rule.id,
+          sessionContext,
+          'early_completion',
+        ),
+      ).rejects.toThrow(ExceptionRuleException);
     });
 
     test('应该能够获取规则统计信息', async () => {
-      const createResult = await manager.createRule('测试规则', ExceptionRuleType.PAUSE_ONLY);
+      const createResult = await manager.createRule(
+        '测试规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       const sessionContext = createMockSessionContext();
 
       await manager.useRule(createResult.rule.id, sessionContext, 'pause');
@@ -167,12 +223,22 @@ describe('ExceptionRuleManager', () => {
     });
 
     test('应该能够获取整体统计信息', async () => {
-      const pauseRule = await manager.createRule('暂停规则', ExceptionRuleType.PAUSE_ONLY);
-      const completionRule = await manager.createRule('完成规则', ExceptionRuleType.EARLY_COMPLETION_ONLY);
+      const pauseRule = await manager.createRule(
+        '暂停规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      const completionRule = await manager.createRule(
+        '完成规则',
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      );
       const sessionContext = createMockSessionContext();
 
       await manager.useRule(pauseRule.rule.id, sessionContext, 'pause');
-      await manager.useRule(completionRule.rule.id, sessionContext, 'early_completion');
+      await manager.useRule(
+        completionRule.rule.id,
+        sessionContext,
+        'early_completion',
+      );
 
       const stats = await manager.getOverallStats();
 
@@ -183,8 +249,14 @@ describe('ExceptionRuleManager', () => {
     });
 
     test('应该能够获取使用建议', async () => {
-      const rule1 = await manager.createRule('高频规则', ExceptionRuleType.PAUSE_ONLY);
-      const rule2 = await manager.createRule('低频规则', ExceptionRuleType.PAUSE_ONLY);
+      const rule1 = await manager.createRule(
+        '高频规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
+      const rule2 = await manager.createRule(
+        '低频规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       const sessionContext = createMockSessionContext();
 
       // 使用规则1多次
@@ -224,12 +296,26 @@ describe('ExceptionRuleManager', () => {
   describe('批量操作', () => {
     test('应该能够批量导入规则', async () => {
       const rulesToImport = [
-        { name: '规则1', type: ExceptionRuleType.PAUSE_ONLY, description: '描述1' },
-        { name: '规则2', type: ExceptionRuleType.EARLY_COMPLETION_ONLY, description: '描述2' },
-        { name: '规则1', type: ExceptionRuleType.PAUSE_ONLY, description: '重复规则' } // 重复
+        {
+          name: '规则1',
+          type: ExceptionRuleType.PAUSE_ONLY,
+          description: '描述1',
+        },
+        {
+          name: '规则2',
+          type: ExceptionRuleType.EARLY_COMPLETION_ONLY,
+          description: '描述2',
+        },
+        {
+          name: '规则1',
+          type: ExceptionRuleType.PAUSE_ONLY,
+          description: '重复规则',
+        }, // 重复
       ];
 
-      const result = await manager.importRules(rulesToImport, { skipDuplicates: true });
+      const result = await manager.importRules(rulesToImport, {
+        skipDuplicates: true,
+      });
 
       expect(result.imported).toHaveLength(2);
       expect(result.skipped).toHaveLength(1);
@@ -255,7 +341,10 @@ describe('ExceptionRuleManager', () => {
     test('应该能够获取规则类型统计', async () => {
       await manager.createRule('暂停规则1', ExceptionRuleType.PAUSE_ONLY);
       await manager.createRule('暂停规则2', ExceptionRuleType.PAUSE_ONLY);
-      await manager.createRule('完成规则1', ExceptionRuleType.EARLY_COMPLETION_ONLY);
+      await manager.createRule(
+        '完成规则1',
+        ExceptionRuleType.EARLY_COMPLETION_ONLY,
+      );
 
       const stats = await manager.getRuleTypeStats();
 
@@ -274,13 +363,16 @@ describe('ExceptionRuleManager', () => {
     });
 
     test('应该能够清理数据', async () => {
-      const rule = await manager.createRule('测试规则', ExceptionRuleType.PAUSE_ONLY);
+      const rule = await manager.createRule(
+        '测试规则',
+        ExceptionRuleType.PAUSE_ONLY,
+      );
       const sessionContext = createMockSessionContext();
       await manager.useRule(rule.rule.id, sessionContext, 'pause');
 
       const cleanupResult = await manager.cleanupData({
         removeExpiredRecords: true,
-        retentionDays: 30
+        retentionDays: 30,
       });
 
       expect(cleanupResult.cleanedAt).toBeInstanceOf(Date);
@@ -315,20 +407,23 @@ describe('ExceptionRuleManager', () => {
 
   describe('错误处理', () => {
     test('获取不存在规则的统计应该抛出异常', async () => {
-      await expect(manager.getRuleStats('non_existent_id'))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(manager.getRuleStats('non_existent_id')).rejects.toThrow(
+        ExceptionRuleException,
+      );
     });
 
     test('使用不存在的规则应该抛出异常', async () => {
       const sessionContext = createMockSessionContext();
-      
-      await expect(manager.useRule('non_existent_id', sessionContext, 'pause'))
-        .rejects.toThrow(ExceptionRuleException);
+
+      await expect(
+        manager.useRule('non_existent_id', sessionContext, 'pause'),
+      ).rejects.toThrow(ExceptionRuleException);
     });
 
     test('更新不存在的规则应该抛出异常', async () => {
-      await expect(manager.updateRule('non_existent_id', { name: '新名称' }))
-        .rejects.toThrow(ExceptionRuleException);
+      await expect(
+        manager.updateRule('non_existent_id', { name: '新名称' }),
+      ).rejects.toThrow(ExceptionRuleException);
     });
   });
 });

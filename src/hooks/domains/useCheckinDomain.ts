@@ -17,7 +17,11 @@ import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
 import { useI18n } from '../../i18n';
-import { getSafeErrorDetail, getSafeErrorDetailFromUnknown, toError } from '../../utils/errorMessage';
+import {
+  getSafeErrorDetail,
+  getSafeErrorDetailFromUnknown,
+  toError,
+} from '../../utils/errorMessage';
 import { POINTS_CHANGED_EVENT } from '../../utils/pointsEvents';
 
 export function useCheckinDomain() {
@@ -57,7 +61,7 @@ export function useCheckinDomain() {
   }, []);
 
   const toggleCollapsed = useCallback(() => {
-    setIsCollapsed(prev => !prev);
+    setIsCollapsed((prev) => !prev);
   }, []);
 
   const loadStats = useCallback(async () => {
@@ -73,7 +77,13 @@ export function useCheckinDomain() {
       const result = await storage.getUserCheckinStats();
       if (!result.ok) {
         const safeDetail = getSafeErrorDetail(result.error.message, language);
-        setError(safeDetail ?? tr('加载签到数据失败，请重试（详情见控制台）', 'Failed to load check-in data. Check the console for details, then try again.'));
+        setError(
+          safeDetail ??
+            tr(
+              '加载签到数据失败，请重试（详情见控制台）',
+              'Failed to load check-in data. Check the console for details, then try again.',
+            ),
+        );
         setStats(null);
         return;
       }
@@ -81,7 +91,13 @@ export function useCheckinDomain() {
     } catch (err) {
       logger.error('CHECKIN', '加载签到统计失败', undefined, toError(err));
       const safeDetail = getSafeErrorDetailFromUnknown(err, language);
-      setError(safeDetail ?? tr('加载签到数据失败，请重试（详情见控制台）', 'Failed to load check-in data. Check the console for details, then try again.'));
+      setError(
+        safeDetail ??
+          tr(
+            '加载签到数据失败，请重试（详情见控制台）',
+            'Failed to load check-in data. Check the console for details, then try again.',
+          ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +106,11 @@ export function useCheckinDomain() {
   const handleCheckin = useCallback(async () => {
     // Use refs to get latest values without causing callback recreation
     const currentStats = statsRef.current;
-    if (!currentStats || currentStats.has_checked_in_today || isCheckingInRef.current) {
+    if (
+      !currentStats ||
+      currentStats.has_checked_in_today ||
+      isCheckingInRef.current
+    ) {
       return;
     }
 
@@ -101,42 +121,64 @@ export function useCheckinDomain() {
 
       const op = await storage.performDailyCheckin();
       if (!op.ok) {
-        const safeDetail = getSafeErrorDetail(op.error.message, languageRef.current);
-        setError(safeDetail ?? trRef.current('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
+        const safeDetail = getSafeErrorDetail(
+          op.error.message,
+          languageRef.current,
+        );
+        setError(
+          safeDetail ??
+            trRef.current(
+              '签到失败，请重试（详情见控制台）',
+              'Check-in failed. Check the console for details, then try again.',
+            ),
+        );
         return;
       }
 
       const result: CheckinResult = op.value;
 
       if (result.success) {
-        setStats(prev =>
+        setStats((prev) =>
           prev
             ? {
                 ...prev,
-                total_points: result.total_points || prev.total_points + result.points_earned,
+                total_points:
+                  result.total_points ||
+                  prev.total_points + result.points_earned,
                 total_checkins: prev.total_checkins + 1,
                 current_streak: result.consecutive_days,
                 has_checked_in_today: true,
                 last_checkin_date: result.checkin_date,
               }
-            : null
+            : null,
         );
 
         setSuccessMessage(
           trRef.current(
             `签到成功！获得${result.points_earned} 积分，连续签到${result.consecutive_days} 天`,
-            `Checked in! Earned ${result.points_earned} points. Streak: ${result.consecutive_days} days.`
-          )
+            `Checked in! Earned ${result.points_earned} points. Streak: ${result.consecutive_days} days.`,
+          ),
         );
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        const safeDetail = result.message ? getSafeErrorDetail(result.message, languageRef.current) : null;
+        const safeDetail = result.message
+          ? getSafeErrorDetail(result.message, languageRef.current)
+          : null;
         setError(safeDetail ?? trRef.current('签到失败', 'Check-in failed'));
       }
     } catch (err) {
       logger.error('CHECKIN', '签到失败', undefined, toError(err));
-      const safeDetail = getSafeErrorDetailFromUnknown(err, languageRef.current);
-      setError(safeDetail ?? trRef.current('签到失败，请重试（详情见控制台）', 'Check-in failed. Check the console for details, then try again.'));
+      const safeDetail = getSafeErrorDetailFromUnknown(
+        err,
+        languageRef.current,
+      );
+      setError(
+        safeDetail ??
+          trRef.current(
+            '签到失败，请重试（详情见控制台）',
+            'Check-in failed. Check the console for details, then try again.',
+          ),
+      );
     } finally {
       setIsCheckingIn(false);
     }

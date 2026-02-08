@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { ConfirmationDialog } from '../ConfirmationDialog';
 import { ToastViewport } from '../ToastViewport';
 import { UserFeedbackDisplay } from '../UserFeedbackDisplay';
@@ -29,7 +35,7 @@ describe('Feedback components', () => {
           cancelText="Cancel"
           onConfirm={vi.fn()}
           onCancel={vi.fn()}
-        />
+        />,
       );
 
       expect(container).toBeEmptyDOMElement();
@@ -49,7 +55,7 @@ describe('Feedback components', () => {
           cancelText="Cancel"
           onConfirm={onConfirm}
           onCancel={onCancel}
-        />
+        />,
       );
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -76,9 +82,12 @@ describe('Feedback components', () => {
       expect(screen.getByText('Saved')).toBeInTheDocument();
       expect(screen.getByRole('status')).toBeInTheDocument();
 
-      await waitFor(() => {
-        expect(screen.queryByText('Saved')).not.toBeInTheDocument();
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          expect(screen.queryByText('Saved')).not.toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
     });
 
     it('allows manual dismissal and limits list to latest five toasts', async () => {
@@ -91,10 +100,17 @@ describe('Feedback components', () => {
       expect(screen.getByText('Critical failure')).toBeInTheDocument();
       expect(screen.getByRole('alert')).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Close notification' }));
-      await waitFor(() => {
-        expect(screen.queryByText('Critical failure')).not.toBeInTheDocument();
-      }, { timeout: 2000 });
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Close notification' }),
+      );
+      await waitFor(
+        () => {
+          expect(
+            screen.queryByText('Critical failure'),
+          ).not.toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
     });
 
     it('keeps only the latest five toasts', async () => {
@@ -108,7 +124,9 @@ describe('Feedback components', () => {
 
       expect(screen.getByText('message-5')).toBeInTheDocument();
       expect(screen.queryByText('message-0')).not.toBeInTheDocument();
-      expect(screen.getAllByRole('button', { name: 'Close notification' })).toHaveLength(5);
+      expect(
+        screen.getAllByRole('button', { name: 'Close notification' }),
+      ).toHaveLength(5);
     });
   });
 
@@ -131,14 +149,18 @@ describe('Feedback components', () => {
       fireEvent.click(closeButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('Saved successfully')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText('Saved successfully'),
+        ).not.toBeInTheDocument();
       });
     });
 
     it('executes action handlers and logs errors from failed actions', async () => {
       const actionOk = vi.fn().mockResolvedValue(undefined);
       const actionFail = vi.fn().mockRejectedValue(new Error('boom'));
-      const loggerSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+      const loggerSpy = vi
+        .spyOn(logger, 'error')
+        .mockImplementation(() => undefined);
 
       render(<UserFeedbackDisplay />);
 

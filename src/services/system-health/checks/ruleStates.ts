@@ -13,7 +13,9 @@ export async function checkRuleStates(): Promise<ComponentHealth> {
       score -= 20;
     }
 
-    const errorStates = Array.from(states.states.values()).filter((s) => s.status === 'error');
+    const errorStates = Array.from(states.states.values()).filter(
+      (s) => s.status === 'error',
+    );
     if (errorStates.length > 0) {
       issues.push(`${errorStates.length} 个规则处于错误状态`);
       score -= errorStates.length * 10;
@@ -42,4 +44,3 @@ export async function checkRuleStates(): Promise<ComponentHealth> {
     };
   }
 }
-

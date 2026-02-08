@@ -15,7 +15,10 @@ export function reportMetrics(metrics: PerformanceMetrics) {
 
   performanceLogger.group('📊 ChainEditor 性能报告', () => {
     performanceLogger.log('渲染时间:', metrics.renderTime.toFixed(2) + 'ms');
-    performanceLogger.log('最大交互时间:', metrics.interactionTime.toFixed(2) + 'ms');
+    performanceLogger.log(
+      '最大交互时间:',
+      metrics.interactionTime.toFixed(2) + 'ms',
+    );
     performanceLogger.log('累积布局偏移:', metrics.layoutShifts.toFixed(4));
     performanceLogger.log('当前FPS:', metrics.fps);
     if (memoryUsage) {
@@ -26,7 +29,10 @@ export function reportMetrics(metrics: PerformanceMetrics) {
   return { ...metrics };
 }
 
-export function checkPerformance(metrics: PerformanceMetrics): { passed: boolean; issues: string[] } {
+export function checkPerformance(metrics: PerformanceMetrics): {
+  passed: boolean;
+  issues: string[];
+} {
   const issues: string[] = [];
 
   if (metrics.interactionTime > 100) {

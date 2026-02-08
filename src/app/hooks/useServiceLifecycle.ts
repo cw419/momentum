@@ -29,10 +29,12 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
 
     let devCleanup: (() => void) | undefined;
     if (isDev) {
-      import('../../utils/performanceMonitor').then((performanceMonitorModule) => {
-        performanceMonitorModule.performanceMonitor.start();
-        devCleanup = () => performanceMonitorModule.performanceMonitor.stop();
-      });
+      import('../../utils/performanceMonitor').then(
+        (performanceMonitorModule) => {
+          performanceMonitorModule.performanceMonitor.start();
+          devCleanup = () => performanceMonitorModule.performanceMonitor.stop();
+        },
+      );
     }
 
     const initializeNonCritical = () => {
@@ -41,7 +43,7 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
           if (!result.success) {
             logger.error(
               'SERVICE_LIFECYCLE',
-              `Rule system initialization failed: ${result.message}`
+              `Rule system initialization failed: ${result.message}`,
             );
           }
         })
@@ -50,7 +52,7 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
             'SERVICE_LIFECYCLE',
             'Rule system initialization error',
             undefined,
-            toError(error)
+            toError(error),
           );
         });
 
@@ -59,10 +61,7 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
 
     const requestIdleCallbackFn = window.requestIdleCallback;
     if (typeof requestIdleCallbackFn === 'function') {
-      requestIdleCallbackFn(
-        () => initializeNonCritical(),
-        { timeout: 2000 }
-      );
+      requestIdleCallbackFn(() => initializeNonCritical(), { timeout: 2000 });
     } else {
       setTimeout(initializeNonCritical, 100);
     }

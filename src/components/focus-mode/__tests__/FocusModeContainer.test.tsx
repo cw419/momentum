@@ -58,8 +58,12 @@ vi.mock('../FocusModeView', () => ({
     onResumeNow: () => void;
   }) => (
     <div>
-      <div data-testid="completion-open">{String(props.showCompletionDialog)}</div>
-      <div data-testid="interrupt-open">{String(props.showInterruptDialog)}</div>
+      <div data-testid="completion-open">
+        {String(props.showCompletionDialog)}
+      </div>
+      <div data-testid="interrupt-open">
+        {String(props.showInterruptDialog)}
+      </div>
       <button onClick={props.onEarlyCompleteClick}>early-complete</button>
       <button onClick={props.onInterruptClick}>open-interrupt</button>
       <button onClick={props.onConfirmInterrupt}>confirm-interrupt</button>
@@ -145,7 +149,7 @@ describe('FocusModeContainer', () => {
         onInterrupt={onInterrupt}
         onPause={vi.fn()}
         onResume={onResume}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('early-complete'));
@@ -172,7 +176,7 @@ describe('FocusModeContainer', () => {
         onInterrupt={vi.fn()}
         onPause={vi.fn()}
         onResume={vi.fn()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('early-complete'));

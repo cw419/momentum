@@ -17,7 +17,10 @@ export function isMissingDeletedAtColumnError(error: unknown): boolean {
   );
 }
 
-export function findChainAndChildren(chainId: string, allChains: Chain[]): Chain[] {
+export function findChainAndChildren(
+  chainId: string,
+  allChains: Chain[],
+): Chain[] {
   // 预构建 Map 查找表，将 O(n²) 降为 O(n)
   const chainById = new Map(allChains.map((c) => [c.id, c]));
   const childrenByParentId = new Map<string, Chain[]>();
@@ -47,4 +50,3 @@ export function findChainAndChildren(chainId: string, allChains: Chain[]): Chain
   findRecursive(chainId);
   return result;
 }
-

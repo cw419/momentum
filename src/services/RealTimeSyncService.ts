@@ -16,7 +16,7 @@ class RealTimeSyncService {
   private lastSyncTimestamp = Date.now();
   private isEnabled = true;
   private storage: MomentumStorage | null = null;
-  
+
   setStorage(storage: MomentumStorage | null): void {
     this.storage = storage;
     logger.debug('REALTIME_SYNC', 'Default storage updated', {
@@ -30,18 +30,24 @@ class RealTimeSyncService {
    */
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    logger.info('REALTIME_SYNC', `${enabled ? 'Enabled' : 'Disabled'} real-time synchronization`);
+    logger.info(
+      'REALTIME_SYNC',
+      `${enabled ? 'Enabled' : 'Disabled'} real-time synchronization`,
+    );
   }
-  
+
   /**
    * Subscribe to data changes for a specific data type
    */
-  subscribe(dataType: RealTimeSyncDataType, callback: (data: unknown) => void): () => void {
+  subscribe(
+    dataType: RealTimeSyncDataType,
+    callback: (data: unknown) => void,
+  ): () => void {
     if (!this.syncCallbacks.has(dataType)) {
       this.syncCallbacks.set(dataType, []);
     }
     this.syncCallbacks.get(dataType)!.push(callback);
-    
+
     // Return unsubscribe function
     return () => {
       const callbacks = this.syncCallbacks.get(dataType);
@@ -53,27 +59,34 @@ class RealTimeSyncService {
       }
     };
   }
-  
+
   /**
    * Notify all subscribers of data changes with fresh data
    */
-  private async notifySubscribers(dataType: RealTimeSyncDataType, freshData?: unknown): Promise<void> {
+  private async notifySubscribers(
+    dataType: RealTimeSyncDataType,
+    freshData?: unknown,
+  ): Promise<void> {
     if (!this.isEnabled) return;
-    
+
     const callbacks = this.syncCallbacks.get(dataType);
     if (!callbacks || callbacks.length === 0) return;
-    
+
     try {
       let data = freshData;
-      
+
       // Fetch fresh data if not provided
       if (!data) {
         const storage = this.storage;
         if (!storage) {
-          logger.warn('REALTIME_SYNC', 'No storage configured; skipping refresh', { dataType });
+          logger.warn(
+            'REALTIME_SYNC',
+            'No storage configured; skipping refresh',
+            { dataType },
+          );
           return;
         }
-        
+
         switch (dataType) {
           case 'chains':
             data = await storage.getActiveChains();
@@ -86,58 +99,74 @@ class RealTimeSyncService {
             break;
         }
       }
-      
+
       // Notify all subscribers
-      callbacks.forEach(callback => {
+      callbacks.forEach((callback) => {
         try {
           callback(data);
         } catch (error) {
-          logger.error('REALTIME_SYNC', 'Error in subscriber callback', { dataType }, toError(error));
+          logger.error(
+            'REALTIME_SYNC',
+            'Error in subscriber callback',
+            { dataType },
+            toError(error),
+          );
         }
       });
 
-      logger.debug('REALTIME_SYNC', 'Notified subscribers', { dataType, subscriberCount: callbacks.length });
+      logger.debug('REALTIME_SYNC', 'Notified subscribers', {
+        dataType,
+        subscriberCount: callbacks.length,
+      });
     } catch (error) {
-      logger.error('REALTIME_SYNC', 'Failed to fetch fresh data', { dataType }, toError(error));
+      logger.error(
+        'REALTIME_SYNC',
+        'Failed to fetch fresh data',
+        { dataType },
+        toError(error),
+      );
     }
   }
-  
+
   /**
    * Trigger synchronization after a database operation
    */
   async syncAfterOperation(
     dataType: RealTimeSyncDataType,
     operationType: RealTimeSyncOperationType,
-    freshData?: unknown
+    freshData?: unknown,
   ): Promise<void> {
     if (!this.isEnabled) return;
-    
-    logger.debug('REALTIME_SYNC', 'Syncing after operation', { dataType, operationType });
-    
+
+    logger.debug('REALTIME_SYNC', 'Syncing after operation', {
+      dataType,
+      operationType,
+    });
+
     // Notify subscribers with fresh data
     await this.notifySubscribers(dataType, freshData);
-    
+
     this.lastSyncTimestamp = Date.now();
   }
-  
+
   /**
    * Force a complete data refresh for all subscribers
    */
   async forceRefresh(): Promise<void> {
     if (!this.isEnabled) return;
-    
+
     logger.debug('REALTIME_SYNC', 'Forcing complete data refresh');
-    
+
     // Notify all subscribers to refresh their data
     await Promise.all([
       this.notifySubscribers('chains'),
-      this.notifySubscribers('sessions'), 
-      this.notifySubscribers('history')
+      this.notifySubscribers('sessions'),
+      this.notifySubscribers('history'),
     ]);
-    
+
     this.lastSyncTimestamp = Date.now();
   }
-  
+
   /**
    * Clear all cache layers immediately - critical for delete operations
    */
@@ -148,29 +177,40 @@ class RealTimeSyncService {
       try {
         storage.clearCache();
       } catch (error) {
-        logger.warn('REALTIME_SYNC', 'Failed to clear storage cache', undefined, toError(error));
+        logger.warn(
+          'REALTIME_SYNC',
+          'Failed to clear storage cache',
+          undefined,
+          toError(error),
+        );
       }
     }
 
     this.lastSyncTimestamp = Date.now();
   }
-  
+
   /**
    * Get sync statistics
    */
   getStats() {
     return {
-      subscriberCount: Array.from(this.syncCallbacks.values()).reduce((total, callbacks) => total + callbacks.length, 0),
+      subscriberCount: Array.from(this.syncCallbacks.values()).reduce(
+        (total, callbacks) => total + callbacks.length,
+        0,
+      ),
       dataTypes: Array.from(this.syncCallbacks.keys()),
       lastSyncTimestamp: this.lastSyncTimestamp,
-      isEnabled: this.isEnabled
+      isEnabled: this.isEnabled,
     };
   }
-  
+
   /**
    * Enhanced delete operation with real-time sync
    */
-  async deleteWithSync(storage: MomentumStorage, chainId: string): Promise<Chain[]> {
+  async deleteWithSync(
+    storage: MomentumStorage,
+    chainId: string,
+  ): Promise<Chain[]> {
     logger.info('REALTIME_SYNC', 'Starting delete operation', { chainId });
 
     // Perform database operation
@@ -178,22 +218,25 @@ class RealTimeSyncService {
 
     // Get fresh data with forced cache bypass
     const freshChains = await storage.getActiveChains();
-    
+
     // Trigger real-time sync with additional cache clearing
     await this.syncAfterOperation('chains', 'delete', freshChains);
-    
+
     return freshChains;
   }
-  
+
   /**
    * Enhanced restore operation with real-time sync
    */
-  async restoreWithSync(storage: MomentumStorage, chainIds: string[]): Promise<Chain[]> {
+  async restoreWithSync(
+    storage: MomentumStorage,
+    chainIds: string[],
+  ): Promise<Chain[]> {
     logger.info('REALTIME_SYNC', 'Starting restore operation', { chainIds });
-    
+
     const results = {
       successful: [] as string[],
-      failed: [] as { id: string; error: string }[]
+      failed: [] as { id: string; error: string }[],
     };
 
     // ENHANCED: Process each chain individually with better error handling
@@ -202,21 +245,30 @@ class RealTimeSyncService {
         logger.debug('REALTIME_SYNC', 'Restoring chain', { chainId });
         await storage.restoreChain(chainId);
         results.successful.push(chainId);
-        logger.debug('REALTIME_SYNC', 'Successfully restored chain', { chainId });
+        logger.debug('REALTIME_SYNC', 'Successfully restored chain', {
+          chainId,
+        });
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         results.failed.push({ id: chainId, error: errorMessage });
-        logger.warn('REALTIME_SYNC', 'Failed to restore chain', { chainId, errorMessage });
+        logger.warn('REALTIME_SYNC', 'Failed to restore chain', {
+          chainId,
+          errorMessage,
+        });
       }
     }
 
     // Get fresh data immediately with forced cache bypass
-    logger.debug('REALTIME_SYNC', 'Fetching fresh chains after restore operation');
+    logger.debug(
+      'REALTIME_SYNC',
+      'Fetching fresh chains after restore operation',
+    );
     const freshChains = await storage.getActiveChains();
-    
+
     // Trigger real-time sync with fresh data
     await this.syncAfterOperation('chains', 'restore', freshChains);
-    
+
     // Log operation summary
     logger.info('REALTIME_SYNC', 'Restore operation completed', {
       total: chainIds.length,
@@ -227,9 +279,11 @@ class RealTimeSyncService {
 
     // Throw error if all operations failed
     if (results.failed.length === chainIds.length) {
-      throw new Error(`All restore operations failed: ${results.failed.map(f => f.error).join('; ')}`);
+      throw new Error(
+        `All restore operations failed: ${results.failed.map((f) => f.error).join('; ')}`,
+      );
     }
-    
+
     // Log partial failures but don't throw error
     if (results.failed.length > 0) {
       logger.warn('REALTIME_SYNC', 'Partial restore failure', {
@@ -238,16 +292,21 @@ class RealTimeSyncService {
         failures: results.failed,
       });
     }
-    
+
     return freshChains;
   }
-  
+
   /**
    * Enhanced permanent delete operation with real-time sync
    */
-  async permanentDeleteWithSync(storage: MomentumStorage, chainIds: string[]): Promise<Chain[]> {
-    logger.info('REALTIME_SYNC', 'Starting permanent delete operation', { chainIds });
-    
+  async permanentDeleteWithSync(
+    storage: MomentumStorage,
+    chainIds: string[],
+  ): Promise<Chain[]> {
+    logger.info('REALTIME_SYNC', 'Starting permanent delete operation', {
+      chainIds,
+    });
+
     // Perform database operations
     for (const chainId of chainIds) {
       await storage.permanentlyDeleteChain(chainId);
@@ -255,28 +314,33 @@ class RealTimeSyncService {
 
     // Get fresh data immediately
     const freshChains = await storage.getActiveChains();
-    
+
     // Trigger real-time sync
     await this.syncAfterOperation('chains', 'delete', freshChains);
-    
+
     return freshChains;
   }
-  
+
   /**
    * Enhanced save operation with real-time sync
    */
-  async saveWithSync(storage: MomentumStorage, chains: Chain[]): Promise<Chain[]> {
-    logger.debug('REALTIME_SYNC', 'Starting save operation', { chainCount: chains.length });
+  async saveWithSync(
+    storage: MomentumStorage,
+    chains: Chain[],
+  ): Promise<Chain[]> {
+    logger.debug('REALTIME_SYNC', 'Starting save operation', {
+      chainCount: chains.length,
+    });
 
     // Perform database operation
     await storage.saveChains(chains);
 
     // Get fresh active chains
     const freshChains = await storage.getActiveChains();
-    
+
     // Trigger real-time sync
     await this.syncAfterOperation('chains', 'update', freshChains);
-    
+
     return freshChains;
   }
 }

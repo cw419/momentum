@@ -1,6 +1,10 @@
 import { CheckCircle, Clock, X } from 'lucide-react';
 import type { ActionType } from '../types';
-import { getActionBgClass, getActionColorClass, getActionDisplayName } from '../utils';
+import {
+  getActionBgClass,
+  getActionColorClass,
+  getActionDisplayName,
+} from '../utils';
 
 export function DialogHeader({
   actionType,
@@ -18,9 +22,11 @@ export function DialogHeader({
   const actionLabel = getActionDisplayName(actionType, tr);
 
   return (
-    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+    <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700">
       <div className="flex items-center space-x-3">
-        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${actionBg}`}>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-2xl ${actionBg}`}
+        >
           {actionType === 'pause' ? (
             <Clock className={actionColor} size={20} />
           ) : (
@@ -29,10 +35,14 @@ export function DialogHeader({
         </div>
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            <span id="rule-selection-dialog-title">{tr('选择例外规则', 'Choose exception rule')}</span>
+            <span id="rule-selection-dialog-title">
+              {tr('选择例外规则', 'Choose exception rule')}
+            </span>
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {language === 'zh' ? `为${actionLabel}操作选择适用的规则` : `Choose a rule for ${actionLabel}`}
+            {language === 'zh'
+              ? `为${actionLabel}操作选择适用的规则`
+              : `Choose a rule for ${actionLabel}`}
           </p>
         </div>
       </div>
@@ -40,7 +50,7 @@ export function DialogHeader({
       <button
         onClick={onCancel}
         aria-label={tr('关闭对话框', 'Close dialog')}
-        className="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors"
+        className="rounded-xl bg-gray-100 p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
       >
         <X size={20} />
       </button>

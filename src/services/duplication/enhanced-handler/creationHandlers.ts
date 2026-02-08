@@ -9,7 +9,7 @@ import { generateNameSuggestions } from './suggestionHelpers';
 export async function createRuleIfNoConflict(
   name: string,
   type: ExceptionRuleType,
-  description?: string
+  description?: string,
 ): Promise<{
   rule: ExceptionRule;
   action: string;
@@ -22,8 +22,8 @@ export async function createRuleIfNoConflict(
     warnings.push(
       tr(
         '这是一个常见的规则模式，建议检查是否已有类似规则',
-        'This is a common rule pattern; consider checking for existing similar rules'
-      )
+        'This is a common rule pattern; consider checking for existing similar rules',
+      ),
     );
   }
 
@@ -33,31 +33,33 @@ export async function createRuleIfNoConflict(
     description: description?.trim(),
     scope: 'global',
     chainId: undefined,
-    isArchived: false
+    isArchived: false,
   });
 
   return {
     rule,
     action: 'created_new',
-    warnings
+    warnings,
   };
 }
 
 export async function handleUseExisting(
   existingRules: ExceptionRule[],
-  requestedType: ExceptionRuleType
+  requestedType: ExceptionRuleType,
 ): Promise<{
   rule: ExceptionRule;
   action: string;
   warnings: string[];
 }> {
-  const matchingRule = existingRules.find(rule => rule.type === requestedType);
+  const matchingRule = existingRules.find(
+    (rule) => rule.type === requestedType,
+  );
 
   if (matchingRule) {
     return {
       rule: matchingRule,
       action: 'used_existing',
-      warnings: []
+      warnings: [],
     };
   }
 
@@ -65,34 +67,37 @@ export async function handleUseExisting(
   const warnings = [
     tr(
       `使用的规则类型 (${rule.type}) 与请求的类型 (${requestedType}) 不匹配`,
-      `Rule type (${rule.type}) does not match requested type (${requestedType})`
-    )
+      `Rule type (${rule.type}) does not match requested type (${requestedType})`,
+    ),
   ];
 
   return {
     rule,
     action: 'used_existing_different_type',
-    warnings
+    warnings,
   };
 }
 
 export async function handleModifyName(
   baseName: string,
   type: ExceptionRuleType,
-  description?: string
+  description?: string,
 ): Promise<{
   rule: ExceptionRule;
   action: string;
   warnings: string[];
 }> {
   const allRules = await exceptionRuleStorage.getRules();
-  const existingNames = allRules.map(r => r.name);
+  const existingNames = allRules.map((r) => r.name);
   const suggestions = generateNameSuggestions(baseName, existingNames);
 
   if (suggestions.length === 0) {
     throw new ExceptionRuleException(
       ExceptionRuleError.DUPLICATE_RULE_NAME,
-      tr('无法生成可用的名称建议', 'Unable to generate a usable name suggestion')
+      tr(
+        '无法生成可用的名称建议',
+        'Unable to generate a usable name suggestion',
+      ),
     );
   }
 
@@ -103,13 +108,13 @@ export async function handleModifyName(
     description,
     scope: 'global',
     chainId: undefined,
-    isArchived: false
+    isArchived: false,
   });
 
   return {
     rule,
     action: 'created_with_modified_name',
-    warnings: [tr(`名称已修改为 "${newName}"`, `Name changed to "${newName}"`)]
+    warnings: [tr(`名称已修改为 "${newName}"`, `Name changed to "${newName}"`)],
   };
 }
 
@@ -117,7 +122,7 @@ export async function handleCreateAnyway(
   name: string,
   type: ExceptionRuleType,
   description: string | undefined,
-  checkResult: DuplicationCheckResult
+  checkResult: DuplicationCheckResult,
 ): Promise<{
   rule: ExceptionRule;
   action: string;
@@ -129,23 +134,25 @@ export async function handleCreateAnyway(
     description: description?.trim(),
     scope: 'global',
     chainId: undefined,
-    isArchived: false
+    isArchived: false,
   });
 
   const warnings: string[] = [];
   if (checkResult.conflictType === 'similar') {
-    const similarNames = checkResult.existingRules.map(r => r.name).join('", "');
+    const similarNames = checkResult.existingRules
+      .map((r) => r.name)
+      .join('", "');
     warnings.push(
       tr(
         `发现相似规则: "${similarNames}"`,
-        `Similar rules found: "${similarNames}"`
-      )
+        `Similar rules found: "${similarNames}"`,
+      ),
     );
   }
 
   return {
     rule,
     action: 'created_despite_similarity',
-    warnings
+    warnings,
   };
 }

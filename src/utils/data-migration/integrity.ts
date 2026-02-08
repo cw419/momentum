@@ -1,7 +1,10 @@
 import { storage } from '../storage';
 import { getErrorMessage } from '../errorMessage';
 
-export async function validateDataIntegrity(): Promise<{ isValid: boolean; issues: string[] }> {
+export async function validateDataIntegrity(): Promise<{
+  isValid: boolean;
+  issues: string[];
+}> {
   const issues: string[] = [];
 
   try {
@@ -52,4 +55,3 @@ export async function validateDataIntegrity(): Promise<{ isValid: boolean; issue
     issues,
   };
 }
-

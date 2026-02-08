@@ -37,7 +37,9 @@ describe('MigrationHelper', () => {
     mockState.supabaseValue = null;
     const helper = new MigrationHelper();
 
-    expect(await helper.isMigrationApplied('20250730021823_winter_flame')).toBe(false);
+    expect(await helper.isMigrationApplied('20250730021823_winter_flame')).toBe(
+      false,
+    );
   });
 
   it('checks migration conditions by expected schema columns/tables', async () => {
@@ -51,7 +53,7 @@ describe('MigrationHelper', () => {
           'time_limit_hours',
           'group_started_at',
           'group_expires_at',
-          'is_durationless'
+          'is_durationless',
         );
       }
       if (tableName === 'rsip_nodes') return makeTable('id');
@@ -61,12 +63,24 @@ describe('MigrationHelper', () => {
 
     const helper = new MigrationHelper();
 
-    expect(await helper.isMigrationApplied('20250730021823_winter_flame')).toBe(true);
-    expect(await helper.isMigrationApplied('20250801160754_peaceful_palace')).toBe(true);
-    expect(await helper.isMigrationApplied('20250801161456_fading_sunset')).toBe(true);
-    expect(await helper.isMigrationApplied('20250808000000_add_group_time_limit')).toBe(true);
-    expect(await helper.isMigrationApplied('20250808001000_add_durationless_flag')).toBe(true);
-    expect(await helper.isMigrationApplied('20250810000000_add_rsip_tables')).toBe(true);
+    expect(await helper.isMigrationApplied('20250730021823_winter_flame')).toBe(
+      true,
+    );
+    expect(
+      await helper.isMigrationApplied('20250801160754_peaceful_palace'),
+    ).toBe(true);
+    expect(
+      await helper.isMigrationApplied('20250801161456_fading_sunset'),
+    ).toBe(true);
+    expect(
+      await helper.isMigrationApplied('20250808000000_add_group_time_limit'),
+    ).toBe(true);
+    expect(
+      await helper.isMigrationApplied('20250808001000_add_durationless_flag'),
+    ).toBe(true);
+    expect(
+      await helper.isMigrationApplied('20250810000000_add_rsip_tables'),
+    ).toBe(true);
     expect(await helper.isMigrationApplied('unknown-migration')).toBe(false);
   });
 
@@ -75,7 +89,9 @@ describe('MigrationHelper', () => {
     mockState.getTableInfo.mockRejectedValue(new Error('schema failure'));
 
     const helper = new MigrationHelper();
-    const applied = await helper.isMigrationApplied('20250730021823_winter_flame');
+    const applied = await helper.isMigrationApplied(
+      '20250730021823_winter_flame',
+    );
 
     expect(applied).toBe(false);
     expect(mockState.loggerError).toHaveBeenCalled();

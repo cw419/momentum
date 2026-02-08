@@ -23,7 +23,7 @@ describe('Cache System Integration', () => {
           type: ExceptionRuleType.PAUSE_ONLY,
           createdAt: new Date(),
           usageCount: 5,
-          isActive: true
+          isActive: true,
         },
         {
           id: '2',
@@ -33,8 +33,8 @@ describe('Cache System Integration', () => {
           type: ExceptionRuleType.PAUSE_ONLY,
           createdAt: new Date(),
           usageCount: 3,
-          isActive: true
-        }
+          isActive: true,
+        },
       ];
     });
 
@@ -113,7 +113,7 @@ describe('Cache System Integration', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       };
 
       // Simulate session operations
@@ -154,7 +154,7 @@ describe('Cache System Integration', () => {
         type: ExceptionRuleType.PAUSE_ONLY,
         createdAt: new Date(),
         usageCount: 0,
-        isActive: true
+        isActive: true,
       };
 
       cache.setChainRules('chain1', [rule]);

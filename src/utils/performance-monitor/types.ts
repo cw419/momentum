@@ -27,4 +27,3 @@ export type FpsCounter = {
   fps: number;
   lastWarnTime: number;
 };
-

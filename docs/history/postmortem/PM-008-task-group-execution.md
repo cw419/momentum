@@ -9,6 +9,7 @@
 ## 1. 概述
 
 任务群（Group Chain）功能存在多个相关 Bug：
+
 1. 任务群只能执行两个子任务就停止
 2. 任务群没有可执行的子任务
 3. 任务群无法重复执行
@@ -18,11 +19,13 @@
 ## 2. 影响范围
 
 ### 用户可见症状
+
 - 创建了包含 5 个子任务的任务群，只能执行 2 个
 - 点击"开始任务群"提示"没有可执行的子任务"
 - 完成任务群后无法再次执行
 
 ### 影响面
+
 - 使用任务群功能的核心用户
 - 项目的核心功能（CTDP 方法论的关键特性）
 
@@ -32,15 +35,18 @@
 
 ```typescript
 // chainTree.ts - 修复前
-function getNextExecutableTask(group: GroupChain, chains: Chain[]): Chain | null {
-  const children = chains.filter(c => c.parentId === group.id);
+function getNextExecutableTask(
+  group: GroupChain,
+  chains: Chain[],
+): Chain | null {
+  const children = chains.filter((c) => c.parentId === group.id);
 
   // ❌ 只检查了第一个子任务的状态
   for (const child of children) {
     if (!child.completed) {
       return child;
     }
-    break;  // ❌ 错误的 break，第一次循环后就退出
+    break; // ❌ 错误的 break，第一次循环后就退出
   }
 
   return null;
@@ -53,7 +59,7 @@ function getNextExecutableTask(group: GroupChain, chains: Chain[]): Chain | null
 // 问题：子任务查找使用了错误的父级引用
 function findChildren(parentId: string, chains: Chain[]): Chain[] {
   // ❌ parentId 可能是 undefined 而非 null
-  return chains.filter(c => c.parentId === parentId);
+  return chains.filter((c) => c.parentId === parentId);
 }
 
 // 实际数据中：
@@ -67,7 +73,7 @@ function findChildren(parentId: string, chains: Chain[]): Chain[] {
 ```typescript
 // App.tsx - 修复前
 const handleStartGroupTask = (groupId: string) => {
-  const group = chains.find(c => c.id === groupId);
+  const group = chains.find((c) => c.id === groupId);
 
   // ❌ 没有重置子任务的完成状态
   if (group?.type === 'group') {
@@ -80,7 +86,7 @@ const handleStartGroupTask = (groupId: string) => {
 
 ```typescript
 // 修复前：状态更新可能丢失
-setState(prev => {
+setState((prev) => {
   const updated = { ...prev };
   // ❌ 多层嵌套更新可能不触发重渲染
   updated.chains[0].children[0].completed = true;
@@ -94,7 +100,10 @@ setState(prev => {
 
 ```typescript
 // chainTree.ts - 修复后
-function getNextExecutableTask(group: GroupChain, chains: Chain[]): Chain | null {
+function getNextExecutableTask(
+  group: GroupChain,
+  chains: Chain[],
+): Chain | null {
   const children = getChildChains(group.id, chains);
 
   // ✅ 正确遍历所有子任务
@@ -105,7 +114,7 @@ function getNextExecutableTask(group: GroupChain, chains: Chain[]): Chain | null
     // ✅ 移除错误的 break，继续检查下一个
   }
 
-  return null;  // 所有子任务都已完成
+  return null; // 所有子任务都已完成
 }
 ```
 
@@ -114,7 +123,7 @@ function getNextExecutableTask(group: GroupChain, chains: Chain[]): Chain | null
 ```typescript
 // chainTree.ts
 function getChildChains(parentId: string, chains: Chain[]): Chain[] {
-  return chains.filter(c => {
+  return chains.filter((c) => {
     // ✅ 同时处理 undefined 和 null
     const childParentId = c.parentId ?? null;
     const targetParentId = parentId ?? null;
@@ -128,9 +137,9 @@ function getChildChains(parentId: string, chains: Chain[]): Chain[] {
 ```typescript
 // App.tsx / useChainsDomain.ts - 修复后
 const handleStartGroupTask = (groupId: string) => {
-  setState(prev => {
+  setState((prev) => {
     // ✅ 重置所有子任务的完成状态
-    const resetChains = prev.chains.map(chain => {
+    const resetChains = prev.chains.map((chain) => {
       if (chain.parentId === groupId) {
         return { ...chain, completed: false };
       }
@@ -148,12 +157,12 @@ const handleStartGroupTask = (groupId: string) => {
 
 ```typescript
 // 正确的不可变更新
-setState(prev => ({
+setState((prev) => ({
   ...prev,
-  chains: prev.chains.map(chain =>
+  chains: prev.chains.map((chain) =>
     chain.id === targetId
-      ? { ...chain, completed: true }  // ✅ 创建新对象
-      : chain
+      ? { ...chain, completed: true } // ✅ 创建新对象
+      : chain,
   ),
 }));
 ```
@@ -205,7 +214,7 @@ describe('Task Group Execution', () => {
       executedCount++;
     }
 
-    expect(executedCount).toBe(3);  // ✅ 应该执行所有 3 个任务
+    expect(executedCount).toBe(3); // ✅ 应该执行所有 3 个任务
   });
 
   it('should allow re-execution after reset', () => {
@@ -221,7 +230,7 @@ describe('Task Group Execution', () => {
 
     // 第二次执行
     const next = getNextExecutableTask(group, children);
-    expect(next).not.toBeNull();  // ✅ 重置后应该可以再次执行
+    expect(next).not.toBeNull(); // ✅ 重置后应该可以再次执行
   });
 });
 ```
@@ -239,24 +248,25 @@ describe('Edge Cases', () => {
   it('should handle undefined parentId', () => {
     const children = [{ id: '1', parentId: undefined }];
     const result = getChildChains(null, children);
-    expect(result).toHaveLength(1);  // undefined 应该匹配 null
+    expect(result).toHaveLength(1); // undefined 应该匹配 null
   });
 });
 ```
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
+| Commit    | 描述                                   |
+| --------- | -------------------------------------- |
 | `a7b193f` | 继续修复任务群只能执行两个子任务的问题 |
-| `f7c0a81` | 继续修复不能重复执行任务群的问题 |
-| `a7a5711` | 修复不能重复执行任务群的问题 |
-| `0e133b3` | 修复任务群没有子任务可执行的问题 |
-| `9f096ae` | 修复任务群只能完成两个子任务的问题 |
+| `f7c0a81` | 继续修复不能重复执行任务群的问题       |
+| `a7a5711` | 修复不能重复执行任务群的问题           |
+| `0e133b3` | 修复任务群没有子任务可执行的问题       |
+| `9f096ae` | 修复任务群只能完成两个子任务的问题     |
 
 ## 7. 经验教训
 
 > **核心教训**: 看似简单的循环和条件判断也可能隐藏 Bug：
+>
 > 1. **循环控制流**：`break` 和 `continue` 的位置影响巨大
 > 2. **相等性比较**：`null` vs `undefined` vs `''` 是不同的
 > 3. **状态不可变**：React 依赖引用变化来触发重渲染
@@ -291,5 +301,5 @@ function getNextExecutableTask(group, chains) {
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

@@ -57,7 +57,12 @@ describe('system health checks', () => {
 
   it('checks data integrity with score deduction and metrics', async () => {
     dataIntegrityCheckerMock.checkRuleDataIntegrity.mockResolvedValueOnce({
-      summary: { totalIssues: 3, criticalIssues: 1, warningIssues: 2, autoFixableIssues: 1 },
+      summary: {
+        totalIssues: 3,
+        criticalIssues: 1,
+        warningIssues: 2,
+        autoFixableIssues: 1,
+      },
     });
 
     const result = await checkDataIntegrity();
@@ -72,7 +77,9 @@ describe('system health checks', () => {
   });
 
   it('returns critical data integrity result when checker throws', async () => {
-    dataIntegrityCheckerMock.checkRuleDataIntegrity.mockRejectedValueOnce(new Error('boom'));
+    dataIntegrityCheckerMock.checkRuleDataIntegrity.mockRejectedValueOnce(
+      new Error('boom'),
+    );
     const result = await checkDataIntegrity();
     expect(result.status).toBe('critical');
     expect(result.score).toBe(0);
@@ -100,9 +107,11 @@ describe('system health checks', () => {
   });
 
   it('returns critical error-handling result when stats lookup throws', async () => {
-    errorClassificationServiceMock.getErrorStatistics.mockImplementationOnce(() => {
-      throw new Error('stats-error');
-    });
+    errorClassificationServiceMock.getErrorStatistics.mockImplementationOnce(
+      () => {
+        throw new Error('stats-error');
+      },
+    );
     const result = await checkErrorHandling();
     expect(result.status).toBe('critical');
     expect(result.score).toBe(0);
@@ -148,7 +157,10 @@ describe('system health checks', () => {
       { id: 'r3', isActive: false },
       { id: 'r4', isActive: false },
     ]);
-    exceptionRuleStorageMock.getUsageRecords.mockResolvedValueOnce([{ id: 'u1' }, { id: 'u2' }]);
+    exceptionRuleStorageMock.getUsageRecords.mockResolvedValueOnce([
+      { id: 'u1' },
+      { id: 'u2' },
+    ]);
 
     const result = await checkStorage();
     expect(result.status).toBe('healthy');
@@ -173,7 +185,9 @@ describe('system health checks', () => {
   });
 
   it('returns critical storage result when storage query throws', async () => {
-    exceptionRuleStorageMock.getRules.mockRejectedValueOnce(new Error('storage-error'));
+    exceptionRuleStorageMock.getRules.mockRejectedValueOnce(
+      new Error('storage-error'),
+    );
     const result = await checkStorage();
     expect(result.status).toBe('critical');
     expect(result.score).toBe(0);
@@ -181,10 +195,15 @@ describe('system health checks', () => {
   });
 
   it('checks validation service and penalizes invalid sample rules', async () => {
-    exceptionRuleStorageMock.getRules.mockResolvedValueOnce([{ id: 'r1' }, { id: 'r2' }]);
-    enhancedRuleValidationServiceMock.validateRulesIntegrity.mockResolvedValueOnce({
-      invalidRules: [{ id: 'r2' }],
-    });
+    exceptionRuleStorageMock.getRules.mockResolvedValueOnce([
+      { id: 'r1' },
+      { id: 'r2' },
+    ]);
+    enhancedRuleValidationServiceMock.validateRulesIntegrity.mockResolvedValueOnce(
+      {
+        invalidRules: [{ id: 'r2' }],
+      },
+    );
 
     const result = await checkValidationService();
     expect(result.status).toBe('warning');
@@ -200,7 +219,9 @@ describe('system health checks', () => {
     exceptionRuleStorageMock.getRules.mockResolvedValueOnce([]);
     const result = await checkValidationService();
 
-    expect(enhancedRuleValidationServiceMock.validateRulesIntegrity).not.toHaveBeenCalled();
+    expect(
+      enhancedRuleValidationServiceMock.validateRulesIntegrity,
+    ).not.toHaveBeenCalled();
     expect(result.status).toBe('healthy');
     expect(result.score).toBe(100);
     expect(result.metrics).toMatchObject({
@@ -210,7 +231,9 @@ describe('system health checks', () => {
   });
 
   it('returns critical validation result when validation service throws', async () => {
-    exceptionRuleStorageMock.getRules.mockRejectedValueOnce(new Error('validation-error'));
+    exceptionRuleStorageMock.getRules.mockRejectedValueOnce(
+      new Error('validation-error'),
+    );
     const result = await checkValidationService();
     expect(result.status).toBe('critical');
     expect(result.score).toBe(0);
@@ -225,10 +248,27 @@ describe('system health recommendations and summary', () => {
 
   it('generates de-duplicated recommendations from component health', async () => {
     dataIntegrityCheckerMock.checkRuleDataIntegrity.mockResolvedValue({
-      summary: { totalIssues: 2, criticalIssues: 1, warningIssues: 1, autoFixableIssues: 1 },
+      summary: {
+        totalIssues: 2,
+        criticalIssues: 1,
+        warningIssues: 1,
+        autoFixableIssues: 1,
+      },
     });
     ruleStateManagerMock.getAllStates.mockReturnValue({
-      pendingCreations: new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']),
+      pendingCreations: new Set([
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'i',
+        'j',
+        'k',
+      ]),
       states: new Map([['state-1', { status: 'error' }]]),
       idMappings: new Set(['m']),
     });
@@ -244,8 +284,20 @@ describe('system health recommendations and summary', () => {
       await checkDataIntegrity(),
       await checkRuleStates(),
       await checkErrorHandling(),
-      { name: 'misc', status: 'critical', score: 10, issues: ['x'], metrics: {} as Record<string, unknown> },
-      { name: 'misc', status: 'critical', score: 10, issues: ['x'], metrics: {} as Record<string, unknown> },
+      {
+        name: 'misc',
+        status: 'critical',
+        score: 10,
+        issues: ['x'],
+        metrics: {} as Record<string, unknown>,
+      },
+      {
+        name: 'misc',
+        status: 'critical',
+        score: 10,
+        issues: ['x'],
+        metrics: {} as Record<string, unknown>,
+      },
     ];
 
     const recommendations = generateRecommendations(components);

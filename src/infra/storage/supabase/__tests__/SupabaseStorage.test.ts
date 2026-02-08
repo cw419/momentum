@@ -12,8 +12,12 @@ const supabaseLibMocks = vi.hoisted(() => ({
 }));
 
 const retryMocks = vi.hoisted(() => ({
-  retryOperation: vi.fn(async (operation: () => Promise<unknown>) => operation()),
-  retryWithAuth: vi.fn(async (_deps: unknown, operation: () => Promise<unknown>) => operation()),
+  retryOperation: vi.fn(async (operation: () => Promise<unknown>) =>
+    operation(),
+  ),
+  retryWithAuth: vi.fn(
+    async (_deps: unknown, operation: () => Promise<unknown>) => operation(),
+  ),
 }));
 
 const chainsApiMocks = vi.hoisted(() => ({
@@ -106,7 +110,10 @@ vi.mock('../auth', () => authApiMocks);
 vi.mock('../userSettings', () => userSettingsApiMocks);
 vi.mock('../betting', () => bettingApiMocks);
 vi.mock('../checkin', () => checkinApiMocks);
-vi.mock('../../../../utils/completionHistoryTimingMigration', () => migrationMocks);
+vi.mock(
+  '../../../../utils/completionHistoryTimingMigration',
+  () => migrationMocks,
+);
 vi.mock('../../../../utils/storage', () => storageUtilsMocks);
 
 import { SupabaseStorage } from '../SupabaseStorage';
@@ -154,28 +161,70 @@ describe('supabase/SupabaseStorage', () => {
     taskTimeApiMocks.getTaskAverageTime.mockResolvedValue(null);
 
     authApiMocks.getCurrentUser.mockResolvedValue({ ok: true, value: null });
-    authApiMocks.waitForAuthentication.mockResolvedValue({ ok: true, value: { user: null, isAuthenticated: false } });
-    authApiMocks.isUserAuthenticated.mockResolvedValue({ ok: true, value: false });
+    authApiMocks.waitForAuthentication.mockResolvedValue({
+      ok: true,
+      value: { user: null, isAuthenticated: false },
+    });
+    authApiMocks.isUserAuthenticated.mockResolvedValue({
+      ok: true,
+      value: false,
+    });
     authApiMocks.signUp.mockResolvedValue({ ok: true, value: undefined });
     authApiMocks.signIn.mockResolvedValue({ ok: true, value: undefined });
     authApiMocks.signOut.mockResolvedValue({ ok: true, value: undefined });
-    authApiMocks.onAuthStateChange.mockReturnValue({ ok: true, value: vi.fn() });
+    authApiMocks.onAuthStateChange.mockReturnValue({
+      ok: true,
+      value: vi.fn(),
+    });
 
-    userSettingsApiMocks.getGamblingSettings.mockResolvedValue({ ok: true, value: {} });
-    userSettingsApiMocks.toggleGamblingMode.mockResolvedValue({ ok: true, value: {} });
-    userSettingsApiMocks.isGamblingModeEnabled.mockResolvedValue({ ok: true, value: false });
+    userSettingsApiMocks.getGamblingSettings.mockResolvedValue({
+      ok: true,
+      value: {},
+    });
+    userSettingsApiMocks.toggleGamblingMode.mockResolvedValue({
+      ok: true,
+      value: {},
+    });
+    userSettingsApiMocks.isGamblingModeEnabled.mockResolvedValue({
+      ok: true,
+      value: false,
+    });
 
-    bettingApiMocks.createBettingSession.mockResolvedValue({ ok: true, value: 'session-1' });
-    bettingApiMocks.deleteBettingSession.mockResolvedValue({ ok: true, value: undefined });
-    bettingApiMocks.completeTaskWithBetting.mockResolvedValue({ ok: true, value: {} });
-    bettingApiMocks.placeBet.mockResolvedValue({ ok: true, value: { success: true } });
-    bettingApiMocks.getUserAvailablePoints.mockResolvedValue({ ok: true, value: 0 });
+    bettingApiMocks.createBettingSession.mockResolvedValue({
+      ok: true,
+      value: 'session-1',
+    });
+    bettingApiMocks.deleteBettingSession.mockResolvedValue({
+      ok: true,
+      value: undefined,
+    });
+    bettingApiMocks.completeTaskWithBetting.mockResolvedValue({
+      ok: true,
+      value: {},
+    });
+    bettingApiMocks.placeBet.mockResolvedValue({
+      ok: true,
+      value: { success: true },
+    });
+    bettingApiMocks.getUserAvailablePoints.mockResolvedValue({
+      ok: true,
+      value: 0,
+    });
     bettingApiMocks.getTodayBetAmount.mockResolvedValue({ ok: true, value: 0 });
 
-    checkinApiMocks.performDailyCheckin.mockResolvedValue({ ok: true, value: {} });
-    checkinApiMocks.getUserCheckinStats.mockResolvedValue({ ok: true, value: {} });
+    checkinApiMocks.performDailyCheckin.mockResolvedValue({
+      ok: true,
+      value: {},
+    });
+    checkinApiMocks.getUserCheckinStats.mockResolvedValue({
+      ok: true,
+      value: {},
+    });
 
-    migrationMocks.migrateCompletionHistoryForTiming.mockReturnValue({ updatedHistory: [], hasChanges: false });
+    migrationMocks.migrateCompletionHistoryForTiming.mockReturnValue({
+      updatedHistory: [],
+      hasChanges: false,
+    });
     storageUtilsMocks.storage.getPetState.mockResolvedValue(null);
     storageUtilsMocks.storage.savePetState.mockResolvedValue(undefined);
   });
@@ -231,18 +280,30 @@ describe('supabase/SupabaseStorage', () => {
   it('wires retryOperation and retryWithAuth through SupabaseStorage context', async () => {
     const storage = new SupabaseStorage();
 
-    chainsApiMocks.getChains.mockImplementation(async (ctx: { retryOperation: (...args: unknown[]) => Promise<unknown> }) => {
-      await ctx.retryOperation(async () => ['ok'], 4, 20);
-      return [];
-    });
-    chainsApiMocks.saveChains.mockImplementation(async (ctx: { retryWithAuth: (...args: unknown[]) => Promise<unknown> }) => {
-      await ctx.retryWithAuth(async () => undefined, 2, 30);
-    });
+    chainsApiMocks.getChains.mockImplementation(
+      async (ctx: {
+        retryOperation: (...args: unknown[]) => Promise<unknown>;
+      }) => {
+        await ctx.retryOperation(async () => ['ok'], 4, 20);
+        return [];
+      },
+    );
+    chainsApiMocks.saveChains.mockImplementation(
+      async (ctx: {
+        retryWithAuth: (...args: unknown[]) => Promise<unknown>;
+      }) => {
+        await ctx.retryWithAuth(async () => undefined, 2, 30);
+      },
+    );
 
     await storage.getChains();
     await storage.saveChains([]);
 
-    expect(retryMocks.retryOperation).toHaveBeenCalledWith(expect.any(Function), 4, 20);
+    expect(retryMocks.retryOperation).toHaveBeenCalledWith(
+      expect.any(Function),
+      4,
+      20,
+    );
     expect(retryMocks.retryWithAuth).toHaveBeenCalledWith(
       expect.objectContaining({
         isUserAuthenticated: expect.any(Function),
@@ -250,7 +311,7 @@ describe('supabase/SupabaseStorage', () => {
       }),
       expect.any(Function),
       2,
-      30
+      30,
     );
   });
 
@@ -265,7 +326,10 @@ describe('supabase/SupabaseStorage', () => {
     });
 
     await storage.migrateCompletionHistoryForTiming();
-    expect(historyApiMocks.saveCompletionHistory).toHaveBeenCalledWith(expect.any(Object), [{ id: 'h2' }]);
+    expect(historyApiMocks.saveCompletionHistory).toHaveBeenCalledWith(
+      expect.any(Object),
+      [{ id: 'h2' }],
+    );
 
     historyApiMocks.saveCompletionHistory.mockClear();
     migrationMocks.migrateCompletionHistoryForTiming.mockReturnValue({
@@ -279,9 +343,13 @@ describe('supabase/SupabaseStorage', () => {
 
   it('swallows migration errors to avoid breaking callers', async () => {
     const storage = new SupabaseStorage();
-    historyApiMocks.getCompletionHistory.mockRejectedValueOnce(new Error('read failed'));
+    historyApiMocks.getCompletionHistory.mockRejectedValueOnce(
+      new Error('read failed'),
+    );
 
-    await expect(storage.migrateCompletionHistoryForTiming()).resolves.toBeUndefined();
+    await expect(
+      storage.migrateCompletionHistoryForTiming(),
+    ).resolves.toBeUndefined();
   });
 
   it('proxies auth, user settings, betting, and checkin calls to API modules', async () => {
@@ -312,9 +380,17 @@ describe('supabase/SupabaseStorage', () => {
     expect(authApiMocks.getCurrentUser).toHaveBeenCalledTimes(1);
     expect(authApiMocks.waitForAuthentication).toHaveBeenCalledWith(123);
     expect(authApiMocks.signIn).toHaveBeenCalledWith('a@example.com', 'pw');
-    expect(userSettingsApiMocks.toggleGamblingMode).toHaveBeenCalledWith(expect.any(Object));
-    expect(bettingApiMocks.createBettingSession).toHaveBeenCalledWith(expect.any(Object), 'chain-1', 45);
-    expect(checkinApiMocks.performDailyCheckin).toHaveBeenCalledWith(expect.any(Object));
+    expect(userSettingsApiMocks.toggleGamblingMode).toHaveBeenCalledWith(
+      expect.any(Object),
+    );
+    expect(bettingApiMocks.createBettingSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      'chain-1',
+      45,
+    );
+    expect(checkinApiMocks.performDailyCheckin).toHaveBeenCalledWith(
+      expect.any(Object),
+    );
   });
 
   it('uses storage utility for pet read/write', async () => {

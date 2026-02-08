@@ -24,7 +24,11 @@ export default tseslint.config(
     ],
   },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended, eslintConfigPrettier],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      eslintConfigPrettier,
+    ],
     files: ['vite.config.ts', 'vitest*.config.ts'],
     languageOptions: {
       ecmaVersion: 2020,
@@ -51,7 +55,11 @@ export default tseslint.config(
     },
   },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended, eslintConfigPrettier],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      eslintConfigPrettier,
+    ],
     files: ['src/**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
@@ -76,5 +84,5 @@ export default tseslint.config(
         },
       ],
     },
-  }
+  },
 );

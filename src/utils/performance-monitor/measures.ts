@@ -37,7 +37,14 @@ export function measureInteraction<T>(args: {
   interactionFn: () => T;
   addToBuffer: (entry: PerformanceBufferEntry) => void;
 }): T {
-  const { reportingEnabled, backgroundMode, metrics, interactionName, interactionFn, addToBuffer } = args;
+  const {
+    reportingEnabled,
+    backgroundMode,
+    metrics,
+    interactionName,
+    interactionFn,
+    addToBuffer,
+  } = args;
 
   const startTime = reportingEnabled ? performance.now() : 0;
   const result = interactionFn();
@@ -48,7 +55,11 @@ export function measureInteraction<T>(args: {
     metrics.interactionTime = Math.max(metrics.interactionTime, duration);
 
     if (duration > 100 && !backgroundMode) {
-      performanceLogger.warn('🐌 交互响应较慢:', interactionName, duration + 'ms');
+      performanceLogger.warn(
+        '🐌 交互响应较慢:',
+        interactionName,
+        duration + 'ms',
+      );
     } else if (duration > 100) {
       addToBuffer({
         type: 'slow-interaction',
@@ -61,4 +72,3 @@ export function measureInteraction<T>(args: {
 
   return result;
 }
-

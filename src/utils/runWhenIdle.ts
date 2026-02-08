@@ -1,4 +1,7 @@
-export function runWhenIdle(callback: () => void, timeoutMs: number = 2000): void {
+export function runWhenIdle(
+  callback: () => void,
+  timeoutMs: number = 2000,
+): void {
   const requestIdleCallbackFn = window.requestIdleCallback;
   if (typeof requestIdleCallbackFn === 'function') {
     requestIdleCallbackFn(callback, { timeout: timeoutMs });
@@ -7,4 +10,3 @@ export function runWhenIdle(callback: () => void, timeoutMs: number = 2000): voi
 
   setTimeout(callback, 0);
 }
-

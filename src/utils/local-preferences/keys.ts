@@ -15,4 +15,3 @@ export const LOCAL_STORAGE_KEYS = {
   EXCEPTION_RULES_MIGRATION: 'momentum_exception_rules_migration',
   TASK_TIME_STATS: 'momentum_task_time_stats',
 } as const;
-

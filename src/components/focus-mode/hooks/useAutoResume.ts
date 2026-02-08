@@ -28,36 +28,42 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     setResumeCountdown(0);
   }, [session.chainId]);
 
-  const setupAutoResumeTimer = useCallback((resumeTime: number) => {
-    if (resumeTimeoutRef.current) {
-      window.clearTimeout(resumeTimeoutRef.current);
-    }
+  const setupAutoResumeTimer = useCallback(
+    (resumeTime: number) => {
+      if (resumeTimeoutRef.current) {
+        window.clearTimeout(resumeTimeoutRef.current);
+      }
 
-    const delay = Math.max(0, resumeTime - Date.now());
-    if (delay === 0) {
-      clearAutoResumeSchedule();
-      onResume();
-      return;
-    }
+      const delay = Math.max(0, resumeTime - Date.now());
+      if (delay === 0) {
+        clearAutoResumeSchedule();
+        onResume();
+        return;
+      }
 
-    resumeTimeoutRef.current = window.setTimeout(() => {
-      onResume();
-      clearAutoResumeSchedule();
-    }, delay);
-  }, [clearAutoResumeSchedule, onResume]);
+      resumeTimeoutRef.current = window.setTimeout(() => {
+        onResume();
+        clearAutoResumeSchedule();
+      }, delay);
+    },
+    [clearAutoResumeSchedule, onResume],
+  );
 
-  const scheduleAutoResume = useCallback((minutes: number) => {
-    const resumeTime = Date.now() + minutes * 60 * 1000;
-    setAutoResumeAt(resumeTime);
+  const scheduleAutoResume = useCallback(
+    (minutes: number) => {
+      const resumeTime = Date.now() + minutes * 60 * 1000;
+      setAutoResumeAt(resumeTime);
 
-    localPreferences.setAutoResume({
-      chainId: session.chainId,
-      startedAt: session.startedAt.toISOString(),
-      resumeAt: new Date(resumeTime).toISOString(),
-    });
+      localPreferences.setAutoResume({
+        chainId: session.chainId,
+        startedAt: session.startedAt.toISOString(),
+        resumeAt: new Date(resumeTime).toISOString(),
+      });
 
-    setupAutoResumeTimer(resumeTime);
-  }, [session.chainId, session.startedAt, setupAutoResumeTimer]);
+      setupAutoResumeTimer(resumeTime);
+    },
+    [session.chainId, session.startedAt, setupAutoResumeTimer],
+  );
 
   // 加载已有的自动恢复计划
   useEffect(() => {
@@ -66,7 +72,10 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     const data = localPreferences.getAutoResume();
     if (!data) return;
 
-    if (data.chainId === session.chainId && data.startedAt === session.startedAt.toISOString()) {
+    if (
+      data.chainId === session.chainId &&
+      data.startedAt === session.startedAt.toISOString()
+    ) {
       const ts = new Date(data.resumeAt).getTime();
       if (ts > Date.now()) {
         setAutoResumeAt(ts);
@@ -76,7 +85,14 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
         onResume();
       }
     }
-  }, [clearAutoResumeSchedule, onResume, session.chainId, session.isPaused, session.startedAt, setupAutoResumeTimer]);
+  }, [
+    clearAutoResumeSchedule,
+    onResume,
+    session.chainId,
+    session.isPaused,
+    session.startedAt,
+    setupAutoResumeTimer,
+  ]);
 
   // 倒计时显示
   useEffect(() => {
@@ -86,7 +102,9 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     }
 
     if (autoResumeAt) {
-      setResumeCountdown(Math.max(0, Math.ceil((autoResumeAt - Date.now()) / 1000)));
+      setResumeCountdown(
+        Math.max(0, Math.ceil((autoResumeAt - Date.now()) / 1000)),
+      );
 
       const interval = window.setInterval(() => {
         const secs = Math.max(0, Math.ceil((autoResumeAt - Date.now()) / 1000));
@@ -125,4 +143,3 @@ export function useAutoResume({ session, onResume }: UseAutoResumeParams) {
     clearAutoResumeSchedule,
   };
 }
-

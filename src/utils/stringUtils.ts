@@ -27,8 +27,8 @@ function levenshteinDistance(str1: string, str2: string): number {
       } else {
         matrix[i][j] = Math.min(
           matrix[i - 1][j - 1] + 1, // 替换
-          matrix[i][j - 1] + 1,     // 插入
-          matrix[i - 1][j] + 1      // 删除
+          matrix[i][j - 1] + 1, // 插入
+          matrix[i - 1][j] + 1, // 删除
         );
       }
     }
@@ -52,7 +52,7 @@ export function calculateSimilarity(str1: string, str2: string): number {
   const maxLength = Math.max(str1.length, str2.length);
 
   // smoothing factor (+1) 避免短字符串过度惩罚
-  return 1 - (distance / (maxLength + 1));
+  return 1 - distance / (maxLength + 1);
 }
 
 /**
@@ -65,7 +65,7 @@ export function normalizeName(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, ' ')              // 多个空格替换为单个空格
+    .replace(/\s+/g, ' ') // 多个空格替换为单个空格
     .replace(/[^\w\s\u4e00-\u9fff]/g, '') // 移除标点符号，保留中文字符
-    .replace(/\s/g, '');               // 移除所有空格
+    .replace(/\s/g, ''); // 移除所有空格
 }

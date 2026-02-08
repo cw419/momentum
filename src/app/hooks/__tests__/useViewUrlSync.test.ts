@@ -28,7 +28,9 @@ describe('useViewUrlSync', () => {
     );
 
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
-    const updater = setState.mock.calls[0]?.[0] as (prev: ReturnType<typeof createAppState>) => ReturnType<typeof createAppState>;
+    const updater = setState.mock.calls[0]?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
     const next = updater(createAppState());
     expect(next.currentView).toBe('detail');
     expect(next.viewingChainId).toBe(chain.id);
@@ -68,7 +70,9 @@ describe('useViewUrlSync', () => {
           isLoadingData: false,
         }),
       {
-        initialProps: { state: createAppState({ chains: [chain], currentView: 'dashboard' }) },
+        initialProps: {
+          state: createAppState({ chains: [chain], currentView: 'dashboard' }),
+        },
       },
     );
 
@@ -105,7 +109,9 @@ describe('useViewUrlSync', () => {
     window.dispatchEvent(new PopStateEvent('popstate'));
 
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
-    const updater = setState.mock.calls[0]?.[0] as (prev: ReturnType<typeof createAppState>) => ReturnType<typeof createAppState>;
+    const updater = setState.mock.calls[0]?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
     const next = updater(createAppState());
     expect(next.currentView).toBe('detail');
     expect(next.viewingChainId).toBe(chain.id);

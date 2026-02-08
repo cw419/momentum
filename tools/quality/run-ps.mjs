@@ -1,11 +1,14 @@
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 
-function tryRun(command, args) {
-  const result = spawnSync(command, args, { stdio: 'inherit' });
-  if (result.error?.code === 'ENOENT') {
-    return { ok: false };
-  }
-  return { ok: true, result };
+function normalizePath(inputPath) {
+  return inputPath.replace(/\\/g, '/');
+}
+
+function isAllowedScript(scriptPath) {
+  const normalized = normalizePath(path.resolve(scriptPath));
+  const allowedRoot = normalizePath(path.resolve('tools/quality')) + '/';
+  return normalized.startsWith(allowedRoot) && normalized.endsWith('.ps1');
 }
 
 const [, , scriptPath, ...scriptArgs] = process.argv;
@@ -15,16 +18,37 @@ if (!scriptPath) {
   process.exit(1);
 }
 
-const baseArgs = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, ...scriptArgs];
-const candidates = process.platform === 'win32' ? ['pwsh', 'powershell'] : ['pwsh'];
-
-for (const command of candidates) {
-  const attempt = tryRun(command, baseArgs);
-  if (!attempt.ok) continue;
-  const { result } = attempt;
-  process.exit(result.status ?? 1);
+if (!isAllowedScript(scriptPath)) {
+  console.error(
+    `Refusing to execute script outside tools/quality or non-ps1 file: "${scriptPath}"`,
+  );
+  process.exit(1);
 }
 
-console.error(`Unable to run PowerShell script "${scriptPath}": neither "pwsh" nor "powershell" was found.`);
-process.exit(1);
+const baseArgs = [
+  '-NoProfile',
+  '-ExecutionPolicy',
+  'Bypass',
+  '-File',
+  scriptPath,
+  ...scriptArgs,
+];
 
+const pwshResult = spawnSync('pwsh', baseArgs, { stdio: 'inherit' });
+if (pwshResult.error?.code !== 'ENOENT') {
+  process.exit(pwshResult.status ?? 1);
+}
+
+if (process.platform === 'win32') {
+  const powershellResult = spawnSync('powershell', baseArgs, {
+    stdio: 'inherit',
+  });
+  if (powershellResult.error?.code !== 'ENOENT') {
+    process.exit(powershellResult.status ?? 1);
+  }
+}
+
+console.error(
+  `Unable to run PowerShell script "${scriptPath}": neither "pwsh" nor "powershell" was found.`,
+);
+process.exit(1);

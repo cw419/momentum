@@ -8,4 +8,3 @@ export const STORAGE_KEYS = {
   TASK_TIME_STATS: 'momentum_task_time_stats',
   PET_STATE: 'momentum_pet_state',
 } as const;
-

@@ -4,9 +4,11 @@ import { localPreferences } from './localPreferences';
 const detectBrowserLanguage = (): Language => {
   if (typeof navigator === 'undefined') return 'en';
 
-  const candidates = Array.isArray(navigator.languages) && navigator.languages.length > 0
+  const browserLanguages: readonly string[] = Array.isArray(navigator.languages)
     ? navigator.languages
-    : [navigator.language];
+    : [];
+  const candidates: readonly string[] =
+    browserLanguages.length > 0 ? browserLanguages : [navigator.language];
 
   for (const candidate of candidates) {
     if (typeof candidate !== 'string') continue;
@@ -22,7 +24,10 @@ export const getCurrentLanguage = (): Language => {
   return detectBrowserLanguage();
 };
 
-export const tr = (zh: string, en: string, language: Language = getCurrentLanguage()): string => {
+export const tr = (
+  zh: string,
+  en: string,
+  language: Language = getCurrentLanguage(),
+): string => {
   return language === 'zh' ? zh : en;
 };
-

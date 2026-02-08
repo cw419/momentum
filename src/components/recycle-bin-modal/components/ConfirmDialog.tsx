@@ -33,7 +33,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             `Permanently delete the following ${showConfirmDialog.chainIds.length} chain(s)?\n\n${showConfirmDialog.chainNames.join(', ')}\n\n⚠️ This cannot be undone. All data will be permanently deleted!`,
           )
     }
-    confirmText={showConfirmDialog.type === 'restore' ? tr('恢复', 'Restore') : tr('永久删除', 'Delete permanently')}
+    confirmText={
+      showConfirmDialog.type === 'restore'
+        ? tr('恢复', 'Restore')
+        : tr('永久删除', 'Delete permanently')
+    }
     cancelText={tr('取消', 'Cancel')}
     confirmButtonClass={
       showConfirmDialog.type === 'restore'
@@ -44,4 +48,3 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     onCancel={onCancel}
   />
 );
-

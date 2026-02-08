@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { STORAGE_KEYS } from '../keys';
-import { getActiveSession, getScheduledSessions, saveActiveSession, saveScheduledSessions } from '../sessions';
+import {
+  getActiveSession,
+  getScheduledSessions,
+  saveActiveSession,
+  saveScheduledSessions,
+} from '../sessions';
 
 describe('storage/sessions', () => {
   beforeEach(() => {
@@ -20,7 +25,7 @@ describe('storage/sessions', () => {
           scheduledAt: '2026-02-01T10:00:00.000Z',
           expiresAt: '2026-02-01T10:30:00.000Z',
         },
-      ])
+      ]),
     );
 
     const [session] = getScheduledSessions();
@@ -39,7 +44,7 @@ describe('storage/sessions', () => {
           expiresAt: '2026-02-02T10:30:00.000Z',
           auxiliarySignal: 'custom-signal',
         },
-      ])
+      ]),
     );
 
     const [session] = getScheduledSessions();
@@ -56,7 +61,9 @@ describe('storage/sessions', () => {
       },
     ]);
 
-    expect(localStorage.getItem(STORAGE_KEYS.SCHEDULED_SESSIONS)).toContain('chain-2');
+    expect(localStorage.getItem(STORAGE_KEYS.SCHEDULED_SESSIONS)).toContain(
+      'chain-2',
+    );
   });
 
   it('returns null active session when storage is missing', () => {
@@ -73,7 +80,7 @@ describe('storage/sessions', () => {
         isPaused: true,
         pausedAt: '2026-02-01T12:10:00.000Z',
         totalPausedTime: 60,
-      })
+      }),
     );
 
     const session = getActiveSession();

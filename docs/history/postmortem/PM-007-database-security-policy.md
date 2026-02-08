@@ -9,6 +9,7 @@
 ## 1. 概述
 
 数据导入功能在执行时违反了 Supabase 的 Row Level Security (RLS) 策略，导致导入失败。问题根源在于：
+
 1. 导入的数据包含原始用户 ID，与当前用户不匹配
 2. RLS 策略阻止用户访问/修改他人数据
 3. 不同用户间的数据无法直接导入
@@ -16,11 +17,13 @@
 ## 2. 影响范围
 
 ### 用户可见症状
+
 - 导入其他设备/账户的数据失败
 - 错误信息：`new row violates row-level security policy`
 - 用户无法迁移自己的历史数据
 
 ### 影响面
+
 - 多设备用户
 - 从本地存储迁移到云端的用户
 - 数据备份恢复场景
@@ -73,7 +76,7 @@ async function importChains(data: ExportedData) {
   const currentUserId = auth.uid();
 
   // ✅ 重写所有 user_id 为当前用户
-  const rewrittenChains = data.chains.map(chain => ({
+  const rewrittenChains = data.chains.map((chain) => ({
     ...chain,
     user_id: currentUserId,
   }));
@@ -89,7 +92,7 @@ async function importChains(data: ExportedData) {
 const idMapping = new Map<string, string>();
 
 // 为每个链条生成新 ID
-const rewrittenChains = data.chains.map(chain => {
+const rewrittenChains = data.chains.map((chain) => {
   const newId = crypto.randomUUID();
   idMapping.set(chain.id, newId);
 
@@ -102,7 +105,7 @@ const rewrittenChains = data.chains.map(chain => {
 });
 
 // 更新 parent_id 引用
-const chainsWithParents = rewrittenChains.map(chain => ({
+const chainsWithParents = rewrittenChains.map((chain) => ({
   ...chain,
   parent_id: chain.parent_id ? idMapping.get(chain.parent_id) : null,
 }));
@@ -146,7 +149,7 @@ function exportData(): ExportedData {
   return {
     version: '2.0',
     exportedAt: new Date().toISOString(),
-    chains: chains.map(chain => ({
+    chains: chains.map((chain) => ({
       ...chain,
       // 不包含 user_id，导入时使用当前用户
       user_id: undefined,
@@ -182,9 +185,7 @@ function exportData(): ExportedData {
 describe('Data import with RLS', () => {
   it('should rewrite user_id to current user', async () => {
     const exportedData = {
-      chains: [
-        { id: 'old-id', user_id: 'other-user', name: 'Test' },
-      ],
+      chains: [{ id: 'old-id', user_id: 'other-user', name: 'Test' }],
     };
 
     await importData(exportedData);
@@ -203,8 +204,16 @@ describe('Data import with RLS', () => {
 
     await importData(exportedData);
 
-    const parent = await supabase.from('chains').select('*').eq('name', 'Parent').single();
-    const child = await supabase.from('chains').select('*').eq('name', 'Child').single();
+    const parent = await supabase
+      .from('chains')
+      .select('*')
+      .eq('name', 'Parent')
+      .single();
+    const child = await supabase
+      .from('chains')
+      .select('*')
+      .eq('name', 'Child')
+      .single();
 
     expect(child.data.parent_id).toBe(parent.data.id);
   });
@@ -213,15 +222,16 @@ describe('Data import with RLS', () => {
 
 ## 6. 相关提交
 
-| Commit | 描述 |
-|--------|------|
-| `cb4d3c9` | 修复数据导入 RLS 策略违反问题 |
+| Commit     | 描述                              |
+| ---------- | --------------------------------- |
+| `cb4d3c9`  | 修复数据导入 RLS 策略违反问题     |
 | `c11c6c05` | 解除所有用户 RLS 限制（临时方案） |
-| `0683a33` | 不同用户 ID 之间不能导入的问题 |
+| `0683a33`  | 不同用户 ID 之间不能导入的问题    |
 
 ## 7. 经验教训
 
 > **核心教训**: RLS 是 Supabase 的核心安全机制，不应被绕过，而应该正确适配：
+>
 > 1. 理解 RLS 策略如何影响你的操作
 > 2. 设计导入/导出格式时考虑 RLS 兼容性
 > 3. 使用 SECURITY DEFINER 函数处理特权操作，但要验证用户身份
@@ -249,5 +259,5 @@ describe('Data import with RLS', () => {
 
 ---
 
-*作者: Postmortem Analysis System*
-*日期: 2026-01-12*
+_作者: Postmortem Analysis System_
+_日期: 2026-01-12_

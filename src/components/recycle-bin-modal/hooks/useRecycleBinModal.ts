@@ -5,6 +5,7 @@ import { useI18n } from '../../../i18n';
 import { logger } from '../../../utils/logger';
 import { toast } from '../../../utils/toast';
 import { getSafeErrorDetailFromUnknown } from '../../../utils/errorMessage';
+import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 import type { AsyncOrSyncVoid, ConfirmDialogState } from '../types';
 import { performRecycleBinOperation } from './operations';
 import { formatDeletedTime } from './timeFormat';
@@ -28,7 +29,8 @@ export function useRecycleBinModal({
   const [deletedChains, setDeletedChains] = useState<DeletedChain[]>([]);
   const [selectedChains, setSelectedChains] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState<ConfirmDialogState | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] =
+    useState<ConfirmDialogState | null>(null);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -53,8 +55,18 @@ export function useRecycleBinModal({
       setDeletedChains(chains);
       setSelectedChains(new Set());
     } catch (error) {
-      logger.error('RECYCLE_BIN', '加载已删除链条失败', undefined, error as Error);
-      toast.error(tr('加载回收箱失败，请重试', 'Failed to load recycle bin. Please try again.'));
+      logger.error(
+        'RECYCLE_BIN',
+        '加载已删除链条失败',
+        undefined,
+        normalizeUnknownError(error),
+      );
+      toast.error(
+        tr(
+          '加载回收箱失败，请重试',
+          'Failed to load recycle bin. Please try again.',
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -65,17 +77,20 @@ export function useRecycleBinModal({
     void loadDeletedChains();
   }, [isOpen, loadDeletedChains]);
 
-  const handleSelectChain = useCallback((chainId: string, selected: boolean) => {
-    setSelectedChains((prev) => {
-      const next = new Set(prev);
-      if (selected) {
-        next.add(chainId);
-      } else {
-        next.delete(chainId);
-      }
-      return next;
-    });
-  }, []);
+  const handleSelectChain = useCallback(
+    (chainId: string, selected: boolean) => {
+      setSelectedChains((prev) => {
+        const next = new Set(prev);
+        if (selected) {
+          next.add(chainId);
+        } else {
+          next.delete(chainId);
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
   const handleSelectAll = useCallback(() => {
     if (selectedChains.size === deletedChains.length) {
@@ -147,19 +162,28 @@ export function useRecycleBinModal({
     setIsLoading(true);
     try {
       const dialog = showConfirmDialog;
-      logger.debug('RECYCLE_BIN', 'Starting operation', { type: dialog.type, chainIds: dialog.chainIds });
+      logger.debug('RECYCLE_BIN', 'Starting operation', {
+        type: dialog.type,
+        chainIds: dialog.chainIds,
+      });
 
       const operationResult = await performRecycleBinOperation({
         dialog,
         onRestore: onRestore as (chainIds: string[]) => AsyncOrSyncVoid,
-        onPermanentDelete: onPermanentDelete as (chainIds: string[]) => AsyncOrSyncVoid,
+        onPermanentDelete: onPermanentDelete as (
+          chainIds: string[],
+        ) => AsyncOrSyncVoid,
         language,
         tr,
       });
 
-      logger.debug('RECYCLE_BIN', 'Refreshing local recycle bin data', { type: dialog.type });
+      logger.debug('RECYCLE_BIN', 'Refreshing local recycle bin data', {
+        type: dialog.type,
+      });
       await loadDeletedChains();
-      logger.debug('RECYCLE_BIN', 'Local data refreshed successfully', { type: dialog.type });
+      logger.debug('RECYCLE_BIN', 'Local data refreshed successfully', {
+        type: dialog.type,
+      });
 
       if (operationResult.success) {
         toast.success(operationResult.message);
@@ -173,21 +197,34 @@ export function useRecycleBinModal({
         'RECYCLE_BIN',
         'Operation failed with unexpected error',
         { type: showConfirmDialog?.type },
-        error as Error,
+        normalizeUnknownError(error),
       );
       const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       toast.error(
         safeDetail
           ? tr(`操作失败: ${safeDetail}`, `Operation failed: ${safeDetail}`)
-          : tr('操作失败，请重试（详情见控制台）', 'Operation failed. Check the console for details, then try again.'),
+          : tr(
+              '操作失败，请重试（详情见控制台）',
+              'Operation failed. Check the console for details, then try again.',
+            ),
       );
     } finally {
       setIsLoading(false);
       setShowConfirmDialog(null);
       setSelectedChains(new Set());
-      logger.debug('RECYCLE_BIN', 'Operation cleanup completed, selections cleared');
+      logger.debug(
+        'RECYCLE_BIN',
+        'Operation cleanup completed, selections cleared',
+      );
     }
-  }, [showConfirmDialog, onPermanentDelete, onRestore, loadDeletedChains, language, tr]);
+  }, [
+    showConfirmDialog,
+    onPermanentDelete,
+    onRestore,
+    loadDeletedChains,
+    language,
+    tr,
+  ]);
 
   const handleCancelConfirm = useCallback(() => {
     setShowConfirmDialog(null);
@@ -218,4 +255,3 @@ export function useRecycleBinModal({
 }
 
 export type { ConfirmDialogState } from '../types';
-

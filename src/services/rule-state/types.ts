@@ -1,6 +1,12 @@
 import type { ExceptionRule, ExceptionRuleType } from '../../types';
 
-export type RuleStatus = 'active' | 'creating' | 'updating' | 'deleting' | 'error' | 'pending';
+export type RuleStatus =
+  | 'active'
+  | 'creating'
+  | 'updating'
+  | 'deleting'
+  | 'error'
+  | 'pending';
 
 export interface RuleState {
   id: string;
@@ -27,4 +33,3 @@ export interface IdMapping {
   realId: string;
   mappedAt: Date;
 }
-

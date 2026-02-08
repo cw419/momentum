@@ -19,9 +19,29 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'system-ui', 'sans-serif'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
-        chinese: ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', 'system-ui', 'sans-serif'],
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'system-ui',
+          'sans-serif',
+        ],
+        mono: [
+          'ui-monospace',
+          'SFMono-Regular',
+          'SF Mono',
+          'Menlo',
+          'Consolas',
+          'monospace',
+        ],
+        chinese: [
+          'PingFang SC',
+          'Hiragino Sans GB',
+          'Microsoft YaHei',
+          'WenQuanYi Micro Hei',
+          'system-ui',
+          'sans-serif',
+        ],
       },
       animation: {
         'fade-in': 'fadeIn 0.6s ease-out forwards',
@@ -33,8 +53,8 @@ export default {
         xs: '2px',
       },
       screens: {
-        'reduce-motion': { 'raw': '(prefers-reduced-motion: reduce)' },
-        'high-contrast': { 'raw': '(prefers-contrast: high)' },
+        'reduce-motion': { raw: '(prefers-reduced-motion: reduce)' },
+        'high-contrast': { raw: '(prefers-contrast: high)' },
       },
     },
   },

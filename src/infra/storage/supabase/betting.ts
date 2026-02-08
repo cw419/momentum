@@ -1,4 +1,7 @@
-import type { BetPlacementRequest, BetPlacementResult } from '../../../domain/betting';
+import type {
+  BetPlacementRequest,
+  BetPlacementResult,
+} from '../../../domain/betting';
 import type { AppError } from '../../../domain/errors';
 import { toAppError } from '../../../domain/errors';
 import type { Result } from '../../../domain/result';
@@ -8,11 +11,15 @@ import type { SupabaseStorageContext } from './types';
 export async function createBettingSession(
   ctx: SupabaseStorageContext,
   chainId: string,
-  duration: number
+  duration: number,
 ): Promise<Result<string, AppError>> {
   try {
     const user = await ctx.getCurrentUser();
-    if (!user) return err({ code: 'NOT_AUTHENTICATED', message: 'User not authenticated' });
+    if (!user)
+      return err({
+        code: 'NOT_AUTHENTICATED',
+        message: 'User not authenticated',
+      });
 
     const client = ctx.getClient();
     const { data, error } = await client
@@ -29,22 +36,47 @@ export async function createBettingSession(
       .select('id')
       .single();
 
-    if (error) return err({ code: 'STORAGE', message: error.message || 'Failed to create session', cause: error });
-    if (!data?.id) return err({ code: 'STORAGE', message: 'Failed to create session: missing id' });
+    if (error)
+      return err({
+        code: 'STORAGE',
+        message: error.message || 'Failed to create session',
+        cause: error,
+      });
+    if (!data?.id)
+      return err({
+        code: 'STORAGE',
+        message: 'Failed to create session: missing id',
+      });
     return ok(data.id);
   } catch (e) {
     return err(toAppError(e, 'Failed to create betting session'));
   }
 }
 
-export async function deleteBettingSession(ctx: SupabaseStorageContext, sessionId: string): Promise<Result<void, AppError>> {
+export async function deleteBettingSession(
+  ctx: SupabaseStorageContext,
+  sessionId: string,
+): Promise<Result<void, AppError>> {
   try {
     const user = await ctx.getCurrentUser();
-    if (!user) return err({ code: 'NOT_AUTHENTICATED', message: 'User not authenticated' });
+    if (!user)
+      return err({
+        code: 'NOT_AUTHENTICATED',
+        message: 'User not authenticated',
+      });
 
     const client = ctx.getClient();
-    const { error } = await client.from('active_sessions').delete().eq('id', sessionId).eq('user_id', user.id);
-    if (error) return err({ code: 'STORAGE', message: error.message || 'Failed to delete session', cause: error });
+    const { error } = await client
+      .from('active_sessions')
+      .delete()
+      .eq('id', sessionId)
+      .eq('user_id', user.id);
+    if (error)
+      return err({
+        code: 'STORAGE',
+        message: error.message || 'Failed to delete session',
+        cause: error,
+      });
     return ok(undefined);
   } catch (e) {
     return err(toAppError(e, 'Failed to delete betting session'));
@@ -55,7 +87,7 @@ export async function completeTaskWithBetting(
   ctx: SupabaseStorageContext,
   sessionId: string,
   wasSuccessful: boolean,
-  completionNotes?: string
+  completionNotes?: string,
 ): Promise<Result<unknown, AppError>> {
   try {
     const client = ctx.getClient();
@@ -64,7 +96,12 @@ export async function completeTaskWithBetting(
       p_was_successful: wasSuccessful,
       p_completion_notes: completionNotes || null,
     });
-    if (error) return err({ code: 'STORAGE', message: error.message || 'Failed to complete task', cause: error });
+    if (error)
+      return err({
+        code: 'STORAGE',
+        message: error.message || 'Failed to complete task',
+        cause: error,
+      });
     return ok(data as unknown);
   } catch (e) {
     return err(toAppError(e, 'Failed to complete task with betting'));
@@ -73,25 +110,37 @@ export async function completeTaskWithBetting(
 
 export async function placeBet(
   ctx: SupabaseStorageContext,
-  betRequest: BetPlacementRequest
+  betRequest: BetPlacementRequest,
 ): Promise<Result<BetPlacementResult, AppError>> {
   let writeSessionToken: string | null = null;
 
   try {
     const user = await ctx.getCurrentUser();
-    if (!user) return err({ code: 'NOT_AUTHENTICATED', message: 'User not authenticated' });
+    if (!user)
+      return err({
+        code: 'NOT_AUTHENTICATED',
+        message: 'User not authenticated',
+      });
 
     const client = ctx.getClient();
 
-    const { data: writeSessionData, error: writeSessionError } = await client.rpc('create_write_session', {
-      session_type: 'betting',
-      duration_minutes: 5,
-    });
+    const { data: writeSessionData, error: writeSessionError } =
+      await client.rpc('create_write_session', {
+        session_type: 'betting',
+        duration_minutes: 5,
+      });
 
-    if (writeSessionError || !writeSessionData?.success || !writeSessionData?.session_token) {
+    if (
+      writeSessionError ||
+      !writeSessionData?.success ||
+      !writeSessionData?.session_token
+    ) {
       return ok({
         success: false,
-        message: writeSessionError?.message || writeSessionData?.error || 'Failed to create betting session',
+        message:
+          writeSessionError?.message ||
+          writeSessionData?.error ||
+          'Failed to create betting session',
         error_code: 'WRITE_SESSION_CREATION_FAILED',
       });
     }
@@ -114,7 +163,9 @@ export async function placeBet(
     }
 
     try {
-      await client.rpc('complete_write_session', { p_session_token: writeSessionToken });
+      await client.rpc('complete_write_session', {
+        p_session_token: writeSessionToken,
+      });
     } catch {
       // ignore
     }
@@ -124,7 +175,9 @@ export async function placeBet(
     if (writeSessionToken) {
       try {
         const client = ctx.getClient();
-        await client.rpc('complete_write_session', { p_session_token: writeSessionToken });
+        await client.rpc('complete_write_session', {
+          p_session_token: writeSessionToken,
+        });
       } catch {
         // ignore
       }
@@ -133,17 +186,31 @@ export async function placeBet(
   }
 }
 
-export async function getUserAvailablePoints(ctx: SupabaseStorageContext): Promise<Result<number, AppError>> {
+export async function getUserAvailablePoints(
+  ctx: SupabaseStorageContext,
+): Promise<Result<number, AppError>> {
   try {
     const user = await ctx.getCurrentUser();
-    if (!user) return err({ code: 'NOT_AUTHENTICATED', message: 'User not authenticated' });
+    if (!user)
+      return err({
+        code: 'NOT_AUTHENTICATED',
+        message: 'User not authenticated',
+      });
 
     const client = ctx.getClient();
-    const { data, error } = await client.from('user_points').select('total_points').eq('user_id', user.id).single();
+    const { data, error } = await client
+      .from('user_points')
+      .select('total_points')
+      .eq('user_id', user.id)
+      .single();
 
     if (error) {
       if (error.code === 'PGRST116') return ok(0);
-      return err({ code: 'STORAGE', message: error.message || 'Failed to get user points', cause: error });
+      return err({
+        code: 'STORAGE',
+        message: error.message || 'Failed to get user points',
+        cause: error,
+      });
     }
 
     return ok(data?.total_points ?? 0);
@@ -152,7 +219,9 @@ export async function getUserAvailablePoints(ctx: SupabaseStorageContext): Promi
   }
 }
 
-export async function getTodayBetAmount(ctx: SupabaseStorageContext): Promise<Result<number, AppError>> {
+export async function getTodayBetAmount(
+  ctx: SupabaseStorageContext,
+): Promise<Result<number, AppError>> {
   try {
     const user = await ctx.getCurrentUser();
     if (!user) return ok(0);
@@ -172,10 +241,18 @@ export async function getTodayBetAmount(ctx: SupabaseStorageContext): Promise<Re
       .in('transaction_type', ['bet_placed', 'bet_refunded']);
 
     if (error) {
-      return err({ code: 'STORAGE', message: error.message || 'Failed to get today bet amount', cause: error });
+      return err({
+        code: 'STORAGE',
+        message: error.message || 'Failed to get today bet amount',
+        cause: error,
+      });
     }
 
-    const rows = (data as Array<{ transaction_type?: string; points_change?: number }> | null) ?? [];
+    const rows =
+      (data as Array<{
+        transaction_type?: string;
+        points_change?: number;
+      }> | null) ?? [];
 
     const totalPlaced = rows.reduce((sum, tx) => {
       if (tx.transaction_type !== 'bet_placed') return sum;

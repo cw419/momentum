@@ -60,7 +60,10 @@ vi.mock('../components/ChainsList', () => ({
       <button type="button" onClick={() => onRestore(deletedChains[0].id)}>
         single-restore
       </button>
-      <button type="button" onClick={() => onPermanentDelete(deletedChains[0].id)}>
+      <button
+        type="button"
+        onClick={() => onPermanentDelete(deletedChains[0].id)}
+      >
         single-delete
       </button>
     </div>
@@ -68,7 +71,13 @@ vi.mock('../components/ChainsList', () => ({
 }));
 
 vi.mock('../components/ConfirmDialog', () => ({
-  ConfirmDialog: ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => (
+  ConfirmDialog: ({
+    onConfirm,
+    onCancel,
+  }: {
+    onConfirm: () => void;
+    onCancel: () => void;
+  }) => (
     <div>
       <button type="button" onClick={onConfirm}>
         confirm-action
@@ -80,7 +89,9 @@ vi.mock('../components/ConfirmDialog', () => ({
   ),
 }));
 
-function createDeletedChain(overrides: Partial<DeletedChain> = {}): DeletedChain {
+function createDeletedChain(
+  overrides: Partial<DeletedChain> = {},
+): DeletedChain {
   return {
     ...createUnitChain({
       id: overrides.id ?? 'deleted-1',
@@ -92,7 +103,7 @@ function createDeletedChain(overrides: Partial<DeletedChain> = {}): DeletedChain
 }
 
 function createProps(
-  overrides: Partial<ComponentProps<typeof RecycleBinModalView>> = {}
+  overrides: Partial<ComponentProps<typeof RecycleBinModalView>> = {},
 ): ComponentProps<typeof RecycleBinModalView> {
   return {
     isOpen: true,

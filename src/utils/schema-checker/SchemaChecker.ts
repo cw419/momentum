@@ -3,11 +3,18 @@ import { supabase } from '../../lib/supabase';
 import { logger } from '../logger';
 
 import { EXPECTED_SCHEMA } from './expectedSchema';
-import { buildRecommendations, buildSchemaDiff, getMigrationStatus } from './schemaDiff';
+import {
+  buildRecommendations,
+  buildSchemaDiff,
+  getMigrationStatus,
+} from './schemaDiff';
 import type { ColumnInfo, SchemaStatus, TableInfo } from './types';
 
 export class SchemaChecker {
-  private schemaCache: Map<string, { result: TableInfo | null; timestamp: number }> = new Map();
+  private schemaCache: Map<
+    string,
+    { result: TableInfo | null; timestamp: number }
+  > = new Map();
   private readonly CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache
 
   private isValidTableName(tableName: string): boolean {
@@ -97,7 +104,9 @@ export class SchemaChecker {
       const { data, error } = await client.rpc('exec_sql', { sql });
 
       if (error) {
-        logger.error('SCHEMA', `获取表 ${tableName} 信息失败`, { error: error.message });
+        logger.error('SCHEMA', `获取表 ${tableName} 信息失败`, {
+          error: error.message,
+        });
         // Cache null result to avoid repeated failed queries
         this.schemaCache.set(tableName, { result: null, timestamp: now });
         return null;
@@ -105,7 +114,9 @@ export class SchemaChecker {
 
       const columns = this.parseColumnInfoRows(data);
       if (!columns) {
-        logger.error('SCHEMA', `解析表 ${tableName} 列信息失败`, { rawDataType: typeof data });
+        logger.error('SCHEMA', `解析表 ${tableName} 列信息失败`, {
+          rawDataType: typeof data,
+        });
         this.schemaCache.set(tableName, { result: null, timestamp: now });
         return null;
       }
@@ -211,4 +222,3 @@ export class SchemaChecker {
     return report;
   }
 }
-
