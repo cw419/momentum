@@ -8,7 +8,6 @@ import {
 } from './reporting';
 import { describeElement } from './describe';
 import type { LayoutIssue } from './types';
-
 export { describeElement } from './describe';
 
 export class LayoutIssueDetector {
@@ -19,7 +18,6 @@ export class LayoutIssueDetector {
   constructor(autoFix = true) {
     this.autoFix = autoFix;
   }
-
   handleLayoutShift(entry: LayoutShift): void {
     if (entry.hadRecentInput) return;
 

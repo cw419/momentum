@@ -51,7 +51,7 @@ npm run quality:type-coverage
 npm run quality:knip
 npm run quality:ts-prune
 npm run quality:depcheck
-npm run quality:circular:report
+npm run quality:circular
 npm run quality:sonar:report
 npm run quality:smell-audit
 ```

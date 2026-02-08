@@ -7,61 +7,11 @@ import {
   Search,
   Settings,
 } from 'lucide-react';
-import type { ExceptionRule } from '../../types';
 import { ExceptionRuleType } from '../../types';
 import RuleItem from '../RuleItem';
 import { ConfirmationDialog } from '../ConfirmationDialog';
-import type { RuleManagerFormData, SortBy } from './types';
+import type { RuleManagerViewViewProps } from './types';
 import { RuleManagerFormModal } from './components/RuleManagerFormModal';
-
-interface RuleManagerViewViewProps {
-  onClose: () => void;
-  onRuleSelected?: (rule: ExceptionRule) => void;
-  tr: (zh: string, en: string) => string;
-
-  loading: boolean;
-
-  error: string | null;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
-
-  deleteConfirmationRule: ExceptionRule | null;
-  setDeleteConfirmationRule: React.Dispatch<
-    React.SetStateAction<ExceptionRule | null>
-  >;
-  confirmDeleteRule: () => Promise<void>;
-
-  handleExportRules: () => Promise<void>;
-
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  typeFilter: ExceptionRuleType | 'all';
-  setTypeFilter: React.Dispatch<
-    React.SetStateAction<ExceptionRuleType | 'all'>
-  >;
-  sortBy: SortBy;
-  setSortBy: React.Dispatch<React.SetStateAction<SortBy>>;
-
-  filteredRules: ExceptionRule[];
-  optimisticUpdates: Map<string, ExceptionRule>;
-  handleEditRule: (rule: ExceptionRule) => void;
-  handleDeleteRule: (rule: ExceptionRule) => void;
-
-  showCreateForm: boolean;
-  setShowCreateForm: React.Dispatch<React.SetStateAction<boolean>>;
-  editingRule: ExceptionRule | null;
-  setEditingRule: React.Dispatch<React.SetStateAction<ExceptionRule | null>>;
-  resetForm: () => void;
-
-  formData: RuleManagerFormData;
-  setFormData: React.Dispatch<React.SetStateAction<RuleManagerFormData>>;
-  formErrors: string[];
-  formWarnings: string[];
-  duplicateSuggestions: string[];
-
-  handleCreateRule: () => Promise<void>;
-  handleUpdateRule: () => Promise<void>;
-  savingOperations: Set<string>;
-}
 
 export const RuleManagerViewView: React.FC<RuleManagerViewViewProps> = ({
   onClose,

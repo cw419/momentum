@@ -7,39 +7,13 @@ import {
   getSafeErrorDetail,
   getSafeErrorDetailFromUnknown,
 } from '../../../utils/errorMessage';
-import type { Language } from '../../../i18n/translations';
-import type { RuleManagerFormData } from '../types';
+import {
+  removeRuleById,
+  replaceRuleById,
+  type UseRuleManagerActionsArgs,
+} from './useRuleManagerActions.helpers';
 
-function replaceRuleById(
-  rules: ExceptionRule[],
-  targetId: string,
-  nextRule: ExceptionRule,
-) {
-  return rules.map((rule) => (rule.id === targetId ? nextRule : rule));
-}
-
-function removeRuleById(rules: ExceptionRule[], targetId: string) {
-  return rules.filter((rule) => rule.id !== targetId);
-}
-
-export function useRuleManagerActions(args: {
-  language: Language;
-  tr: (zh: string, en: string) => string;
-  loadRules: () => Promise<void>;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
-
-  formData: RuleManagerFormData;
-  editingRule: ExceptionRule | null;
-  setEditingRule: React.Dispatch<React.SetStateAction<ExceptionRule | null>>;
-  setShowCreateForm: React.Dispatch<React.SetStateAction<boolean>>;
-  resetForm: () => void;
-  beginEditRule: (rule: ExceptionRule) => void;
-
-  setRules: React.Dispatch<React.SetStateAction<ExceptionRule[]>>;
-  setFormErrors: React.Dispatch<React.SetStateAction<string[]>>;
-  setFormWarnings: React.Dispatch<React.SetStateAction<string[]>>;
-  setDuplicateSuggestions: React.Dispatch<React.SetStateAction<string[]>>;
-}) {
+export function useRuleManagerActions(args: UseRuleManagerActionsArgs) {
   const {
     language,
     tr,

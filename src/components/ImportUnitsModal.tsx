@@ -1,21 +1,10 @@
 import React, { useState } from 'react';
-import { Chain } from '../types';
 import { X, Import, Search, Clock, Flame, CheckCircle } from 'lucide-react';
 import { getChainTypeConfig } from '../utils/chainTree';
 import { Icon } from '../utils/iconMap';
 import { formatTime } from '../utils/time';
 import { useI18n } from '../i18n';
-
-interface ImportUnitsModalProps {
-  availableUnits: Chain[];
-  groupId: string;
-  onImport: (
-    unitIds: string[],
-    groupId: string,
-    mode?: 'move' | 'copy',
-  ) => void;
-  onClose: () => void;
-}
+import type { ImportUnitsModalProps } from './ImportUnitsModal.types';
 
 export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
   availableUnits,

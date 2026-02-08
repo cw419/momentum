@@ -2,10 +2,10 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useServiceLifecycle } from '../useServiceLifecycle';
 import { forwardTimerManager } from '../../../utils/forwardTimer';
-import { exceptionRuleCache } from '../../../utils/exceptionRuleCache';
 import { ruleStateManager } from '../../../services/RuleStateManager';
+import { migrationCoordinator } from '../../../services/migration';
+import { systemRuntime } from '../../../services/runtime';
 import { initializeRuleSystem } from '../../../utils/initializeRuleSystem';
-import { runMigration } from '../../../utils/migration';
 import { logger } from '../../../utils/logger';
 
 vi.mock('../../../utils/env', () => ({
@@ -19,10 +19,16 @@ vi.mock('../../../utils/forwardTimer', () => ({
   },
 }));
 
-vi.mock('../../../utils/exceptionRuleCache', () => ({
-  exceptionRuleCache: {
-    start: vi.fn(),
-    stop: vi.fn(),
+vi.mock('../../../services/runtime', () => ({
+  systemRuntime: {
+    cache: {
+      start: vi.fn(),
+      stop: vi.fn(),
+    },
+    monitoring: {
+      start: vi.fn(),
+      stop: vi.fn(),
+    },
   },
 }));
 
@@ -37,8 +43,10 @@ vi.mock('../../../utils/initializeRuleSystem', () => ({
   initializeRuleSystem: vi.fn(async () => ({ success: true, message: 'ok' })),
 }));
 
-vi.mock('../../../utils/migration', () => ({
-  runMigration: vi.fn(),
+vi.mock('../../../services/migration', () => ({
+  migrationCoordinator: {
+    runStartupMigrations: vi.fn(),
+  },
 }));
 
 vi.mock('../../../utils/logger', () => ({
@@ -62,19 +70,19 @@ describe('useServiceLifecycle', () => {
 
     expect(result.current.isInitialized).toBe(true);
     expect(forwardTimerManager.start).toHaveBeenCalledTimes(1);
-    expect(exceptionRuleCache.start).toHaveBeenCalledTimes(1);
+    expect(systemRuntime.cache.start).toHaveBeenCalledTimes(1);
     expect(ruleStateManager.start).toHaveBeenCalledTimes(1);
 
     vi.advanceTimersByTime(150);
     await Promise.resolve();
 
     expect(initializeRuleSystem).toHaveBeenCalledTimes(1);
-    expect(runMigration).toHaveBeenCalledTimes(1);
+    expect(migrationCoordinator.runStartupMigrations).toHaveBeenCalledTimes(1);
 
     unmount();
 
     expect(forwardTimerManager.stop).toHaveBeenCalledTimes(1);
-    expect(exceptionRuleCache.stop).toHaveBeenCalledTimes(1);
+    expect(systemRuntime.cache.stop).toHaveBeenCalledTimes(1);
     expect(ruleStateManager.stop).toHaveBeenCalledTimes(1);
   });
 

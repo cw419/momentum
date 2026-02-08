@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import type { RSIPMeta, RSIPNode, RSIPTreeNode, RSIPMode } from '../types';
+import type { RSIPNode, RSIPTreeNode, RSIPMode } from '../types';
+import type { RSIPViewProps } from './RSIPView.types';
 import { useI18n } from '../i18n';
 import {
   buildRSIPTree,
@@ -13,15 +14,6 @@ import { RSIPDailyReminder } from './rsip/RSIPDailyReminder';
 import { RSIPStrictModeCard } from './rsip/RSIPStrictModeCard';
 import { RSIPViolationDialog } from './rsip/RSIPViolationDialog';
 import { BackButton } from './BackButton';
-
-interface RSIPViewProps {
-  nodes: RSIPNode[];
-  meta: RSIPMeta;
-  onBack: () => void;
-  onSaveNodes: (nodes: RSIPNode[]) => void;
-  onSaveMeta: (meta: RSIPMeta) => void;
-}
-
 export const RSIPView: React.FC<RSIPViewProps> = ({
   nodes,
   meta,

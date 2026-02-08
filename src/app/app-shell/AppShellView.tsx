@@ -1,49 +1,20 @@
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 import { Dashboard } from '../../components/Dashboard';
 import { useI18n } from '../../i18n';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { LoadingFallback } from './LoadingFallback';
 import type { AppShellViewProps } from './types';
-
-const RSIPView = lazy(() =>
-  import('../../components/RSIPView').then((m) => ({ default: m.RSIPView })),
-);
-const ChainEditor = lazy(() =>
-  import('../../components/ChainEditor').then((m) => ({
-    default: m.ChainEditor,
-  })),
-);
-const FocusMode = lazy(() =>
-  import('../../components/FocusMode').then((m) => ({ default: m.FocusMode })),
-);
-const ChainDetail = lazy(() =>
-  import('../../components/ChainDetail').then((m) => ({
-    default: m.ChainDetail,
-  })),
-);
-const GroupView = lazy(() =>
-  import('../../components/GroupView').then((m) => ({ default: m.GroupView })),
-);
-const TaskGroupEditor = lazy(() =>
-  import('../../components/TaskGroupEditor').then((m) => ({
-    default: m.TaskGroupEditor,
-  })),
-);
-const AuxiliaryJudgment = lazy(() =>
-  import('../../components/AuxiliaryJudgment').then((m) => ({
-    default: m.AuxiliaryJudgment,
-  })),
-);
-const BettingModal = lazy(() =>
-  import('../../components/BettingModal').then((m) => ({
-    default: m.BettingModal,
-  })),
-);
-const PetWidget = lazy(() =>
-  import('../../components/pet/PetWidget').then((m) => ({
-    default: m.PetWidget,
-  })),
-);
+import {
+  AuxiliaryJudgment,
+  BettingModal,
+  ChainDetail,
+  ChainEditor,
+  FocusMode,
+  GroupView,
+  PetWidget,
+  RSIPView,
+  TaskGroupEditor,
+} from './lazyViews';
 
 export function AppShellView({
   state,

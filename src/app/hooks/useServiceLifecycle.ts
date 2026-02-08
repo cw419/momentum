@@ -3,10 +3,10 @@ import { isDev } from '../../utils/env';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
 import { forwardTimerManager } from '../../utils/forwardTimer';
-import { exceptionRuleCache } from '../../utils/exceptionRuleCache';
 import { ruleStateManager } from '../../services/RuleStateManager';
+import { migrationCoordinator } from '../../services/migration';
+import { systemRuntime } from '../../services/runtime';
 import { initializeRuleSystem } from '../../utils/initializeRuleSystem';
-import { runMigration } from '../../utils/migration';
 
 interface ServiceLifecycleResult {
   isInitialized: boolean;
@@ -14,8 +14,8 @@ interface ServiceLifecycleResult {
 
 /**
  * Manages global service lifecycle (start/stop) for the application.
- * Handles: forwardTimerManager, exceptionRuleCache, ruleStateManager,
- * and dev-only tools (performanceMonitor).
+ * Handles: forwardTimerManager, cache runtime, ruleStateManager,
+ * and dev-only monitoring runtime.
  */
 export function useServiceLifecycle(): ServiceLifecycleResult {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -24,17 +24,13 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
     setIsInitialized(true);
 
     forwardTimerManager.start();
-    exceptionRuleCache.start();
+    systemRuntime.cache.start();
     ruleStateManager.start();
 
     let devCleanup: (() => void) | undefined;
     if (isDev) {
-      import('../../utils/performanceMonitor').then(
-        (performanceMonitorModule) => {
-          performanceMonitorModule.performanceMonitor.start();
-          devCleanup = () => performanceMonitorModule.performanceMonitor.stop();
-        },
-      );
+      systemRuntime.monitoring.start();
+      devCleanup = () => systemRuntime.monitoring.stop();
     }
 
     const initializeNonCritical = () => {
@@ -56,7 +52,7 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
           );
         });
 
-      runMigration();
+      void migrationCoordinator.runStartupMigrations();
     };
 
     const requestIdleCallbackFn = window.requestIdleCallback;
@@ -68,7 +64,7 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
 
     return () => {
       forwardTimerManager.stop();
-      exceptionRuleCache.stop();
+      systemRuntime.cache.stop();
       ruleStateManager.stop();
       devCleanup?.();
     };

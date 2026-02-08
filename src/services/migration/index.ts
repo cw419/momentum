@@ -6,3 +6,4 @@ export * from './migrationTypes';
 export { migrationStorage } from './MigrationStorage';
 export { MigrationAnalyzer } from './MigrationAnalyzer';
 export { MigrationExecutor } from './MigrationExecutor';
+export { MigrationCoordinator, migrationCoordinator } from './MigrationCoordinator';

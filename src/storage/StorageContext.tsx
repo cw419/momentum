@@ -5,7 +5,7 @@ import { StorageContext } from './storageContextValue';
 import { isSupabaseConfigured } from '../utils/supabaseConfig';
 import { realTimeSyncService } from '../services/RealTimeSyncService';
 import { RecycleBinService } from '../services/RecycleBinService';
-import { exceptionRuleMigration } from '../services/ExceptionRuleMigration';
+import { migrationCoordinator } from '../services/migration';
 import { logger } from '../utils/logger';
 import { useI18n } from '../i18n';
 import { normalizeUnknownError } from '../utils/errors/normalizeError';
@@ -69,11 +69,11 @@ export function StorageProvider({ storage, children }: StorageProviderProps) {
 
     realTimeSyncService.setStorage(resolvedStorage);
     RecycleBinService.setStorage(resolvedStorage);
-    exceptionRuleMigration.setStorage(resolvedStorage);
+    migrationCoordinator.setStorage(resolvedStorage);
     return () => {
       realTimeSyncService.setStorage(null);
       RecycleBinService.setStorage(null);
-      exceptionRuleMigration.setStorage(null);
+      migrationCoordinator.setStorage(null);
     };
   }, [resolvedStorage]);
 

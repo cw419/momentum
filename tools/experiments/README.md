@@ -15,3 +15,15 @@
 ## archive/legacy-tests
 
 `tools/experiments/archive/legacy-tests/` 存放历史遗留的测试草稿（可能引用过时接口/导入路径，默认不保证可运行）。
+
+## archive/legacy-scripts
+
+`tools/experiments/archive/legacy-scripts/` 存放一次性修复脚本（例如 `directFix.ts`、`quickFix.ts`、`ultimateFix.ts` 等），默认视为历史归档，不参与当前开发流程。
+
+## 当前保留在根目录的脚本
+
+- `schemaCheckerFixed.ts`：架构检查修复实验稿
+- `service-optimization.test.ts`：服务优化方向实验测试
+- `systemHealthChecker.ts`：系统健康检查实验工具
+- `timerPerformanceTest.ts`：计时器性能压测工具
+- `UIFixesValidator.ts`：UI 修复验证工具

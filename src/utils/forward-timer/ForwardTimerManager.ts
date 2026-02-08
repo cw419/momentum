@@ -20,8 +20,6 @@ export class ForwardTimerManager {
   private blurHandler: (() => void) | null = null;
   private started = false;
 
-  constructor() {}
-
   start(): void {
     if (this.started) return;
     if (typeof window === 'undefined' || typeof document === 'undefined')

@@ -9,65 +9,11 @@ import { isDev } from '../../utils/env';
 import { logger } from '../../utils/logger';
 import { runWhenIdle } from '../../utils/runWhenIdle';
 import { isSessionExpired } from '../../utils/time';
-
-type CompletionHistory = Awaited<
-  ReturnType<MomentumStorage['getCompletionHistory']>
->;
-
-async function cleanupExpiredDeletedChains(
-  storage: MomentumStorage,
-): Promise<void> {
-  try {
-    const cleanedCount = await storage.cleanupExpiredDeletedChains(30);
-    if (cleanedCount > 0) {
-      logger.info(
-        'APP_SHELL',
-        `Auto-cleaned ${cleanedCount} expired deleted chains`,
-      );
-    }
-  } catch (error) {
-    logger.warn('APP_SHELL', 'Auto cleanup failed', undefined, toError(error));
-  }
-}
-
-async function persistCompletionHistoryTimingMigration(
-  storage: MomentumStorage,
-  completionHistory: CompletionHistory,
-): Promise<void> {
-  try {
-    await storage.saveCompletionHistory(completionHistory);
-  } catch (error) {
-    logger.warn(
-      'APP_SHELL',
-      'Failed to persist completion history timing migration',
-      undefined,
-      toError(error),
-    );
-  }
-}
-
-async function runDevDataMigration(): Promise<void> {
-  try {
-    const { dataMigrationManager } = await import('../../utils/dataMigration');
-    const migrationResult = await dataMigrationManager.migrateAll();
-
-    if (!migrationResult.success || migrationResult.errors.length > 0) {
-      logger.warn('APP_SHELL', 'Data migration completed with warnings', {
-        migrationResult,
-      });
-      return;
-    }
-
-    logger.info('APP_SHELL', 'Data migration completed successfully');
-  } catch (error) {
-    logger.warn(
-      'APP_SHELL',
-      'Error occurred during data migration',
-      undefined,
-      toError(error),
-    );
-  }
-}
+import {
+  cleanupExpiredDeletedChains,
+  persistCompletionHistoryTimingMigration,
+  runDevDataMigration,
+} from './appDataLoadHelpers';
 
 interface UseAppDataLoadParams {
   storage: MomentumStorage;

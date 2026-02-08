@@ -6,7 +6,4 @@
  * - ExceptionRuleCache: 规则特定缓存功能
  */
 
-export {
-  ExceptionRuleCache,
-  exceptionRuleCache,
-} from './cache/ExceptionRuleCache';
+export { ExceptionRuleCache, exceptionRuleCache } from './cache';

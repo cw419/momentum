@@ -427,7 +427,7 @@ queryOptimizer.generatePerformanceReport();
 npm run test:performance
 
 # Watch mode for development
-npm run test:performance:watch
+vitest --config vitest.performance.config.ts
 ```
 
 ### 3.2 Test Configuration
@@ -815,7 +815,7 @@ import { queryOptimizer, useOptimizedData } from '@/utils/queryOptimizer';
 
 ```bash
 npm run test:performance      # Run performance tests
-npm run test:performance:watch  # Watch mode
+vitest --config vitest.performance.config.ts  # Watch mode
 npm run test:all              # Run all tests including performance
 ```
 

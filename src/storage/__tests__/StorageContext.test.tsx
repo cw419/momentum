@@ -31,8 +31,8 @@ vi.mock('../../services/RecycleBinService', () => ({
   RecycleBinService: recycleBinServiceMock,
 }));
 
-vi.mock('../../services/ExceptionRuleMigration', () => ({
-  exceptionRuleMigration: migrationServiceMock,
+vi.mock('../../services/migration', () => ({
+  migrationCoordinator: migrationServiceMock,
 }));
 
 vi.mock('../localStorageAdapter', () => ({

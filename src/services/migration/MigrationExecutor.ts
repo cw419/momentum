@@ -1,8 +1,3 @@
-/**
- * 迁移执行器
- * 执行迁移和回滚操作
- */
-
 import { ExceptionRuleType } from '../../types';
 import type {
   MigrationResult,
@@ -21,20 +16,12 @@ import { logger } from '../../utils/logger';
 import { getCurrentLanguage, tr } from '../../utils/runtimeI18n';
 import { getSafeErrorDetail, toError } from '../../utils/errorMessage';
 
-/**
- * 迁移执行器
- * 负责执行迁移和回滚操作
- */
 export class MigrationExecutor {
   private analyzer: MigrationAnalyzer;
 
   constructor(private migrationStorage: MigrationStorage) {
     this.analyzer = new MigrationAnalyzer(migrationStorage);
   }
-
-  /**
-   * 检查是否需要迁移
-   */
   async needsMigration(): Promise<boolean> {
     try {
       const migrationInfo = this.migrationStorage.getMigrationInfo();
@@ -54,10 +41,6 @@ export class MigrationExecutor {
       return false;
     }
   }
-
-  /**
-   * 执行迁移
-   */
   async migrate(
     onProgress?: (progress: MigrationProgress) => void,
   ): Promise<MigrationResult> {
@@ -159,10 +142,6 @@ export class MigrationExecutor {
       return result;
     }
   }
-
-  /**
-   * 收集唯一规则
-   */
   private collectUniqueRules(
     chainsWithExceptions: Array<{ exceptions: string[] }>,
   ): Set<string> {
@@ -176,10 +155,6 @@ export class MigrationExecutor {
     }
     return uniqueRules;
   }
-
-  /**
-   * 创建规则
-   */
   private async createRules(
     uniqueRules: Set<string>,
     result: MigrationResult,
@@ -228,10 +203,6 @@ export class MigrationExecutor {
 
     return createdRuleIds;
   }
-
-  /**
-   * 回滚迁移
-   */
   async rollback(): Promise<RollbackResult> {
     try {
       const migrationInfo = this.migrationStorage.getMigrationInfo();
@@ -285,10 +256,6 @@ export class MigrationExecutor {
       };
     }
   }
-
-  /**
-   * 格式化错误信息
-   */
   private formatError(error: unknown): string {
     if (error instanceof Error) {
       const safe = getSafeErrorDetail(error.message, getCurrentLanguage());
