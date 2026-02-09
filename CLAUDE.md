@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Tech Stack
 
-React 18 + TypeScript 5.9 + Vite 7 + Tailwind CSS 3.4 + Supabase JS 2. Testing: Vitest 4 + Testing Library + MSW 2. PWA via vite-plugin-pwa.
+React 18 + TypeScript 5.9 + Vite 7 + Tailwind CSS 3.4 + Supabase JS 2. Testing: Vitest 4 + Testing Library + MSW 2. PWA via vite-plugin-pwa. **Desktop/Mobile**: Tauri v2 (Rust backend).
 
-**Node version**: `^20.19.0 || >=22.12.0` (see `.nvmrc` for exact version). License: GPL-3.0-only.
+**Node version**: `^20.19.0 || >=22.12.0` (see `.nvmrc` for exact version). **Rust**: stable (for Tauri). License: GPL-3.0-only.
 
 ## Build & Development Commands
 
@@ -52,6 +52,11 @@ npm run test:coverage    # Coverage report
 npx vitest run src/path/to/file.test.ts
 # Run tests matching a pattern
 npx vitest run -t "test name pattern"
+
+# Tauri (Desktop/Mobile)
+npm run tauri dev            # Tauri 桌面端开发模式
+npm run tauri build          # Tauri 生产构建（生成安装包）
+npm run tauri icon <path>    # 从源图片生成所有平台图标
 ```
 
 Notes:
@@ -61,6 +66,8 @@ Notes:
 - `npm run lint:sql` requires SQLFluff installed (recommended: `pipx install sqlfluff`).
 - Test configs: `vitest.ci.config.ts` (smoke/CI), `vitest.config.ts` (all), `vitest.integration.config.ts` (30s timeout), `vitest.db.config.ts` (60s timeout), `vitest.performance.config.ts` (benchmarks).
 - Test file naming: `*.test.ts(x)` (unit), `*.integration.test.ts(x)`, `*.db.test.ts(x)`, `*.performance.test.ts(x)`.
+- Tauri dev requires Rust toolchain (`rustup`). Tauri CLI is installed as npm devDependency (`@tauri-apps/cli`).
+- When `TAURI_ENV_PLATFORM` is set (by Tauri CLI), Vite config auto-disables PWA plugin to avoid Service Worker conflicts with WebView.
 
 ## Architecture Overview
 
@@ -240,8 +247,20 @@ src/
 ├── i18n/                 # Internationalization (zh-CN / en)
 ├── types/                # TypeScript type definitions
 ├── utils/                # Utility functions and classes
+│   ├── platform.ts       # Platform detection (web / tauri-desktop / tauri-mobile)
+│   ├── tauri-bridge.ts   # Tauri API lazy-loading bridge
+│   └── platform-adapters/ # Platform adapters (notifications, window, file)
 ├── constants/            # Application constants
 ├── lib/                  # Third-party library wrappers
 ├── styles/               # Global styles
 └── test/                 # Test utilities, setup files, factories
+
+src-tauri/                # Tauri Rust backend
+├── Cargo.toml            # Rust dependencies
+├── tauri.conf.json       # Tauri app configuration
+├── capabilities/         # Permission configs (desktop / mobile)
+└── src/
+    ├── main.rs           # Desktop entry point
+    ├── lib.rs            # Shared library (desktop + mobile)
+    └── commands/         # Rust commands (notifications, window, file_ops)
 ```

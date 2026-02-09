@@ -89,6 +89,53 @@
 - [x] 部署成功
 - [x] 网站可访问
 
+## 🖥️ Tauri 桌面端构建
+
+### 前置条件
+
+- Rust stable 工具链（[rustup.rs](https://rustup.rs/)）
+- Node.js 20.19+
+- 平台特定依赖：
+  - **Windows**：Visual Studio Build Tools（C++ 桌面开发）
+  - **macOS**：Xcode Command Line Tools
+  - **Linux**：`libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev`
+
+### 开发模式
+
+```bash
+npm run tauri dev
+```
+
+### 生产构建
+
+```bash
+npm run tauri build
+```
+
+构建产物位于 `src-tauri/target/release/bundle/`：
+
+| 平台    | 产物格式                |
+| ------- | ----------------------- |
+| Windows | `.msi` / `.exe`         |
+| macOS   | `.dmg` / `.app`         |
+| Linux   | `.deb` / `.AppImage`    |
+
+### Tauri 配置
+
+- 应用配置：`src-tauri/tauri.conf.json`
+- Rust 依赖：`src-tauri/Cargo.toml`
+- 权限配置：`src-tauri/capabilities/`
+
+### 自动更新
+
+Tauri updater 插件已集成（`tauri-plugin-updater`）。生产环境需要：
+
+1. 在 `tauri.conf.json` 的 `plugins.updater.endpoints` 中配置更新端点
+2. 配置 `plugins.updater.pubkey` 用于签名验证
+3. 代码签名（Windows: Authenticode, macOS: Apple Developer ID）
+
+---
+
 ## 🐛 常见问题
 
 ### 构建失败

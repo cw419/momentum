@@ -24,6 +24,17 @@ graph TD
         SupabaseImpl[SupabaseStorage<br/>云端模式]
     end
 
+    subgraph "Platform Layer"
+        PlatformDetect[platform.ts<br/>环境检测]
+        Adapters[platform-adapters/<br/>通知/窗口/文件]
+        TauriBridge[tauri-bridge.ts<br/>Tauri API 桥接]
+    end
+
+    subgraph "Tauri Backend (Rust)"
+        TauriCommands[commands/<br/>notifications, window, file_ops]
+        TauriPlugins[Tauri Plugins<br/>updater, dialog, fs, notification]
+    end
+
     Components --> DomainHooks
     AppShell --> DomainHooks
     DomainHooks --> Services
@@ -31,6 +42,11 @@ graph TD
     Services --> StorageInterface
     StorageInterface --> LocalAdapter
     StorageInterface --> SupabaseImpl
+    Components --> Adapters
+    Adapters --> PlatformDetect
+    Adapters --> TauriBridge
+    TauriBridge --> TauriCommands
+    TauriCommands --> TauriPlugins
 ```
 
 ### 层级职责
@@ -40,6 +56,8 @@ graph TD
 | **UI**             | `src/components/`, `src/app/`         | 纯展示、用户交互   | 禁止直接访问存储             |
 | **Domain**         | `src/hooks/domains/`, `src/services/` | 业务逻辑、状态管理 | 通过 `useStorage()` 访问数据 |
 | **Infrastructure** | `src/storage/`, `src/infra/`          | 数据持久化         | 实现 `MomentumStorage` 接口  |
+| **Platform**       | `src/utils/platform-adapters/`        | 平台适配           | 检测环境，桥接原生 API       |
+| **Tauri Backend**  | `src-tauri/`                          | 原生功能（Rust）   | 桌面/移动端原生能力          |
 
 ---
 
@@ -66,6 +84,20 @@ if (storage.kind === 'supabase') {
   // 云端特有逻辑
 }
 ```
+
+### 平台适配器模式
+
+通过 `src/utils/platform.ts` 检测运行环境（`web` / `tauri-desktop` / `tauri-mobile`），适配器根据平台自动选择实现：
+
+```typescript
+import { isTauri } from '../utils/platform';
+
+// 通知：Web 用 Notification API，Tauri 用原生通知
+// 文件：Web 用 Blob/FileReader，Tauri 用原生文件对话框
+// 窗口：Web 用 Fullscreen API，Tauri 用窗口管理 API
+```
+
+Tauri API 通过 `src/utils/tauri-bridge.ts` 懒加载，Web 构建时不会引入 Tauri 依赖。
 
 ---
 
@@ -247,9 +279,26 @@ src/
 ├── types/                  # 类型定义
 ├── domain/                 # 领域模型
 ├── utils/                  # 工具函数（25+）
+│   ├── platform.ts         # 平台检测（web/tauri-desktop/tauri-mobile）
+│   ├── tauri-bridge.ts     # Tauri API 懒加载桥接
+│   └── platform-adapters/  # 平台适配器（通知/窗口/文件）
 ├── i18n/                   # 国际化
 ├── lib/                    # 外部集成
 └── test/                   # 测试配置
+
+src-tauri/                  # Tauri Rust 后端
+├── Cargo.toml              # Rust 依赖
+├── tauri.conf.json         # Tauri 应用配置
+├── build.rs                # 构建脚本
+├── capabilities/           # 权限配置（桌面/移动端）
+└── src/
+    ├── main.rs             # 桌面入口
+    ├── lib.rs              # 共享库（桌面+移动）
+    └── commands/           # Tauri 命令
+        ├── mod.rs
+        ├── notifications.rs
+        ├── window.rs
+        └── file_ops.rs
 ```
 
 ---

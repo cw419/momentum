@@ -2,7 +2,7 @@
 
 # Momentum - 心理学驱动的专注力应用
 
-基于链式时延协议（CTDP）理论的自控力训练工具，通过"神圣座位原理"、"下必为例原理"和"线性时延原理"帮助用户建立强大的习惯链条。
+基于链式时延协议（CTDP）理论的自控力训练工具，通过"神圣座位原理"、"下必为例原理"和"线性时延原理"帮助用户建立强大的习惯链条。支持 Web（PWA）、桌面端（Windows/macOS/Linux）和移动端（iOS/Android），由 Tauri v2 驱动原生体验。
 
 详情请见：https://www.zhihu.com/question/19888447/answer/1930799480401293785
 
@@ -206,6 +206,7 @@ https://momentumctdp.netlify.app/
 
 - Node.js 20.19+ (or 22.12+)
 - npm 或 yarn
+- **桌面/移动端构建额外需要**：Rust 工具链（[rustup.rs](https://rustup.rs/)）
 
 ### 安装步骤
 
@@ -222,16 +223,26 @@ cd momentum
 npm install
 ```
 
-3. **启动开发服务器**
+3. **启动开发服务器（Web）**
 
 ```bash
 npm run dev
 ```
 
-4. **构建生产版本**
+4. **启动桌面应用（Tauri）**
 
 ```bash
+npm run tauri dev
+```
+
+5. **构建生产版本**
+
+```bash
+# Web 版本
 npm run build
+
+# 桌面安装包（Windows/macOS/Linux）
+npm run tauri build
 ```
 
 ## Sponsors
@@ -281,7 +292,8 @@ npm run build
 
 ## TO DO
 
-- [ ] **移动端适配优化**
+- [x] **桌面端原生应用（Tauri v2）** — Windows/macOS/Linux
+- [ ] **移动端原生应用（Tauri v2）** — iOS/Android（进行中）
 - [ ] **更多宠物外观和动画**
 - [ ] **社交功能（排行榜、好友系统）**
 - [ ] **更详细的统计分析面板**

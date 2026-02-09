@@ -5,12 +5,17 @@ Thanks for contributing to Momentum.
 ## Prerequisites
 
 - Node.js: see `package.json` `engines.node` (or use `.nvmrc`)
+- **Tauri 桌面/移动端构建额外需要**：Rust stable 工具链（[rustup.rs](https://rustup.rs/)）
 - Install deps: `npm install`
 
 ## Local Development
 
 ```bash
+# Web 开发
 npm run dev
+
+# Tauri 桌面应用开发
+npm run tauri dev
 ```
 
 ## Before You Open a PR (local, low-friction)

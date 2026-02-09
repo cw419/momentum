@@ -7,8 +7,10 @@ This file is the primary operating guide for coding agents working in this repos
 ## Quick Start
 
 - Install deps: `npm install`
-- Dev server: `npm run dev`
-- Production build: `npm run build`
+- Dev server (Web): `npm run dev`
+- Dev server (Tauri desktop): `npm run tauri dev`
+- Production build (Web): `npm run build`
+- Production build (Tauri): `npm run tauri build`
 - Preview build: `npm run preview`
 - Typecheck: `npm run typecheck`
 - Lint: `npm run lint`
@@ -28,6 +30,14 @@ This file is the primary operating guide for coding agents working in this repos
    - `MomentumStorage` defines the storage contract.
    - Implementations: `localStorageAdapter` (offline) and `SupabaseStorage` (cloud).
    - Use `storage.kind` (`'local' | 'supabase'`) to branch behavior.
+4. Platform Abstraction Layer (`src/utils/platform.ts`, `src/utils/platform-adapters/`)
+   - Detects runtime: `web` / `tauri-desktop` / `tauri-mobile`.
+   - Adapters for notifications, window management, file I/O.
+   - Tauri APIs are lazy-loaded via `src/utils/tauri-bridge.ts` to avoid Web build issues.
+5. Tauri Backend (`src-tauri/`)
+   - Rust backend for desktop/mobile native features.
+   - Commands: `src-tauri/src/commands/` (notifications, window, file_ops).
+   - Config: `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`.
 
 ### Container + View Pattern
 
