@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Tech Stack
+
+React 18 + TypeScript 5.9 + Vite 7 + Tailwind CSS 3.4 + Supabase JS 2. Testing: Vitest 4 + Testing Library + MSW 2. PWA via vite-plugin-pwa.
+
+**Node version**: `^20.19.0 || >=22.12.0` (see `.nvmrc` for exact version). License: GPL-3.0-only.
+
 ## Build & Development Commands
 
 ```bash
@@ -41,6 +47,11 @@ npm run test:integration # Integration tests only
 npm run test:db          # Database tests only
 npm run test:performance # Performance tests only
 npm run test:coverage    # Coverage report
+
+# Run a single test file
+npx vitest run src/path/to/file.test.ts
+# Run tests matching a pattern
+npx vitest run -t "test name pattern"
 ```
 
 Notes:
@@ -48,6 +59,8 @@ Notes:
 - This repo intentionally uses explicit `npm run ...` scripts (no pre-commit hooks) to keep local iteration unblocked.
 - `npm run security:semgrep` requires Semgrep installed (recommended: `pipx install semgrep`).
 - `npm run lint:sql` requires SQLFluff installed (recommended: `pipx install sqlfluff`).
+- Test configs: `vitest.ci.config.ts` (smoke/CI), `vitest.config.ts` (all), `vitest.integration.config.ts` (30s timeout), `vitest.db.config.ts` (60s timeout), `vitest.performance.config.ts` (benchmarks).
+- Test file naming: `*.test.ts(x)` (unit), `*.integration.test.ts(x)`, `*.db.test.ts(x)`, `*.performance.test.ts(x)`.
 
 ## Architecture Overview
 
@@ -60,10 +73,10 @@ The codebase follows a clear three-layer separation:
    - Never directly access Supabase or storage
    - Use `useStorage()` hook for all data operations
 
-2. **Domain Logic Layer** (`src/hooks/domains/`)
-   - Business logic encapsulated in domain hooks
-   - `useChainsDomain`, `useSessionsDomain`, `useBettingDomain`, `useRulesDomain`, `useRecycleBinDomain`, `useRsipDomain`, `useGroupDomain`, `useImportExportDomain`, `useCheckinDomain`, `usePetDomain`, `useSafeSaveChains`
-   - Handle state mutations and side effects
+2. **Domain Logic Layer** (`src/domain/`, `src/hooks/domains/`)
+   - `src/domain/` — Pure domain logic (no React dependencies): `result.ts`, `pet.ts`, `scheduling.ts`, `betting.ts`, `checkin.ts`, `auth.ts`, `errors.ts`, `userSettings.ts`
+   - `src/hooks/domains/` — React integration via domain hooks: `useChainsDomain`, `useSessionsDomain`, `useBettingDomain`, `useRulesDomain`, `useRecycleBinDomain`, `useRsipDomain`, `useGroupDomain`, `useImportExportDomain`, `useCheckinDomain`, `usePetDomain`, `useSafeSaveChains`
+   - Domain hooks use `useStorage()` for data access, never directly access Supabase/localStorage
 
 3. **Infrastructure Layer** (`src/storage/`, `src/infra/storage/supabase/`)
    - `MomentumStorage` interface defines the storage contract
@@ -109,8 +122,56 @@ Services with explicit `start()`/`stop()` lifecycle (managed in `AppShellContain
 ### Error Handling
 
 - Use `toast` from `src/utils/toast.ts` instead of `alert()`
+- Use `normalizeUnknownError()` from `src/utils/errors/normalizeError.ts` to safely convert unknown caught values to `Error`
+- `Result<T, E>` pattern from `src/domain/result.ts` — use `ok(value)` / `err(error)` constructors, check via `result.ok`
 - Exception rules use `EnhancedExceptionRuleException` with severity levels and recovery actions
-- `Result<T, E>` pattern from `src/domain/result.ts` for auth/betting/checkin operations
+
+## Quality Gates (CI Enforced)
+
+### Technical Debt Budgets (`npm run quality:debt-gate`)
+
+Hard limits — CI will fail if exceeded:
+
+- `as unknown as` casts: ≤30
+- `as Error` casts: ≤10
+- Non-null assertions (`!`): ≤70
+- jscpd clones: ≤6 blocks, ≤0.3%
+- Large files (>300 lines, non-generated): ≤15
+- Type coverage: ≥95% (`npm run quality:type-coverage`)
+
+### Test Coverage Thresholds
+
+Statements: 84%, Branches: 75%, Functions: 83%, Lines: 84%.
+
+### ESLint Rules That Block PRs
+
+- `no-console: error` — use `logger` from `src/utils/logger.ts`
+- `no-restricted-syntax` — bans `as any` (use `unknown` + narrowing)
+- `sonarjs/cognitive-complexity: warn, 15` — keep functions under 15
+- `@typescript-eslint/no-unused-vars` — `_` prefix allowed for intentionally unused vars
+- `jsx-a11y` — accessibility rules enforced
+
+## Unified Runtime & Migration
+
+### SystemRuntime (`src/services/runtime/SystemRuntime.ts`)
+
+Centralized entry point for cache and monitoring lifecycle:
+
+```typescript
+import { systemRuntime } from '@/services/runtime';
+systemRuntime.cache.start();    // exceptionRuleCache
+systemRuntime.monitoring.start(); // performanceMonitor, layoutStabilityMonitor
+```
+
+### MigrationCoordinator (`src/services/migration/MigrationCoordinator.ts`)
+
+Unified migration entry point — coordinates startup, data, and exception rule migrations:
+
+```typescript
+import { migrationCoordinator } from '@/services/migration/MigrationCoordinator';
+migrationCoordinator.setStorage(storage);
+migrationCoordinator.runStartupMigrations();
+```
 
 ## Key Domain Concepts
 
@@ -169,11 +230,18 @@ Use consistent suffixes based on the class's primary responsibility:
 
 ```
 src/
-├── components/           # UI components (PascalCase)
-│   └── chain-detail/     # Component subdirectories (kebab-case)
-├── services/             # Business logic services
+├── app/                  # Application shell (Container + View)
+├── components/           # UI components (kebab-case subdirs)
+├── domain/               # Pure domain logic (no React deps)
+├── hooks/domains/        # Domain hooks (React integration)
+├── services/             # Business services and managers
+├── storage/              # Storage abstraction (MomentumStorage interface)
+├── infra/storage/supabase/ # Supabase storage implementation
+├── i18n/                 # Internationalization (zh-CN / en)
+├── types/                # TypeScript type definitions
 ├── utils/                # Utility functions and classes
-│   └── cache/            # Utility subdirectories (kebab-case)
-├── hooks/domains/        # Domain-specific hooks
-└── types/                # Type definitions
+├── constants/            # Application constants
+├── lib/                  # Third-party library wrappers
+├── styles/               # Global styles
+└── test/                 # Test utilities, setup files, factories
 ```
