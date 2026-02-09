@@ -70,6 +70,11 @@ export function useAppDataLoad({
           completionHistory,
           rsipNodes,
           rsipMeta,
+          rsipGroups,
+          rsipPolicyLibrary,
+          rsipRunHistory,
+          rsipTaskLinks,
+          rsipExecutionRecords,
           taskTimeStats,
         ] = await Promise.all([
           storage.getActiveChains().catch((error) => {
@@ -125,6 +130,51 @@ export function useAppDataLoad({
               toError(error),
             );
             return {};
+          }),
+          storage.getRSIPGroups().catch((error) => {
+            logger.warn(
+              'APP_SHELL',
+              'Failed to load RSIP groups',
+              undefined,
+              toError(error),
+            );
+            return [];
+          }),
+          storage.getRSIPPolicyLibrary().catch((error) => {
+            logger.warn(
+              'APP_SHELL',
+              'Failed to load RSIP policy library',
+              undefined,
+              toError(error),
+            );
+            return [];
+          }),
+          storage.getRSIPRunHistory().catch((error) => {
+            logger.warn(
+              'APP_SHELL',
+              'Failed to load RSIP run history',
+              undefined,
+              toError(error),
+            );
+            return [];
+          }),
+          storage.getRSIPTaskLinks().catch((error) => {
+            logger.warn(
+              'APP_SHELL',
+              'Failed to load RSIP task links',
+              undefined,
+              toError(error),
+            );
+            return [];
+          }),
+          storage.getRSIPExecutionRecords().catch((error) => {
+            logger.warn(
+              'APP_SHELL',
+              'Failed to load RSIP execution records',
+              undefined,
+              toError(error),
+            );
+            return [];
           }),
           storage.getTaskTimeStats().catch((error) => {
             logger.warn(
@@ -224,6 +274,11 @@ export function useAppDataLoad({
           completionHistory: migratedCompletionHistory,
           rsipNodes,
           rsipMeta,
+          rsipGroups,
+          rsipPolicyLibrary,
+          rsipRunHistory,
+          rsipTaskLinks,
+          rsipExecutionRecords,
           taskTimeStats,
           currentView: activeSession ? 'focus' : 'dashboard',
         }));

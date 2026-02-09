@@ -14,8 +14,8 @@ vi.mock('../../../utils/logger', () => ({
   },
 }));
 
-function createBaseState(): AppState {
-  return createAppState();
+function createBaseState(overrides: Partial<AppState> = {}): AppState {
+  return createAppState(overrides);
 }
 
 function createStateContainer(initialState: AppState) {
@@ -427,5 +427,125 @@ describe('useRsipDomain', () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     expect(domain.hasOpenedToday({ lastTreeOpenedAt: yesterday })).toBe(false);
+  });
+
+  it('consumes reinforcement on violation before deleting node', async () => {
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [
+          createNode({
+            id: 'reinforced-node',
+            reinforcementLevel: 2,
+            totalViolations: 0,
+          }),
+        ],
+        rsipExecutionRecords: [],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      appendRSIPExecutionRecord: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const updated = await domain.markViolated('reinforced-node', [
+      createNode({
+        id: 'reinforced-node',
+        reinforcementLevel: 2,
+        totalViolations: 0,
+      }),
+    ]);
+
+    expect(updated).toHaveLength(1);
+    expect(updated[0].reinforcementLevel).toBe(1);
+    expect(updated[0].totalViolations).toBe(1);
+    expect(stateRef.getState().rsipExecutionRecords).toHaveLength(1);
+  });
+
+  it('respects group fault tolerance on violation', async () => {
+    const groupId = 'group-a';
+    const groupNodeA = createNode({ id: 'group-node-a', groupId });
+    const groupNodeB = createNode({ id: 'group-node-b', groupId });
+    const independent = createNode({ id: 'independent-node' });
+
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [groupNodeA, groupNodeB, independent],
+        rsipGroups: [
+          {
+            id: groupId,
+            title: 'Group A',
+            faultTolerance: 1,
+            createdAt: new Date('2026-02-01T00:00:00.000Z'),
+          },
+        ],
+        rsipPolicyLibrary: [],
+        rsipExecutionRecords: [],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      saveRSIPPolicyLibrary: vi.fn(async () => undefined),
+      appendRSIPExecutionRecord: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const updated = await domain.markViolated(groupNodeA.id, [
+      groupNodeA,
+      groupNodeB,
+      independent,
+    ]);
+
+    expect(updated.map((node) => node.id)).toEqual([
+      groupNodeB.id,
+      independent.id,
+    ]);
+    expect(stateRef.getState().rsipPolicyLibrary).toHaveLength(1);
+  });
+
+  it('records collapse and increments run number', async () => {
+    const startedAt = new Date('2026-02-01T00:00:00.000Z');
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipMeta: {
+          currentRunNumber: 2,
+          currentRunStartedAt: startedAt,
+        },
+        rsipRunHistory: [],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPMeta: vi.fn(async () => undefined),
+      saveRSIPRunHistory: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const nextMeta = await domain.recordCollapse(
+      stateRef.getState().rsipMeta,
+      'manual collapse',
+      'Node X',
+      10,
+    );
+
+    expect(nextMeta.currentRunNumber).toBe(3);
+    expect(nextMeta.currentRunStartedAt).toBeInstanceOf(Date);
+    expect(stateRef.getState().rsipRunHistory?.[0]).toMatchObject({
+      runNumber: 2,
+      maxNodeCount: 10,
+      collapseReason: 'manual collapse',
+      collapseNodeTitle: 'Node X',
+    });
   });
 });

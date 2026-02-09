@@ -3,8 +3,13 @@ import type {
   Chain,
   CompletionHistory,
   DeletedChain,
+  RSIPExecutionRecord,
+  RSIPLibraryEntry,
   RSIPMeta,
+  RSIPNodeGroup,
   RSIPNode,
+  RSIPRunRecord,
+  RSIPTaskLink,
   ScheduledSession,
   TaskTimeStats,
 } from '../types';
@@ -57,6 +62,16 @@ export interface MomentumStorage {
   saveRSIPNodes(nodes: RSIPNode[]): Promise<void>;
   getRSIPMeta(): Promise<RSIPMeta>;
   saveRSIPMeta(meta: RSIPMeta): Promise<void>;
+  getRSIPGroups(): Promise<RSIPNodeGroup[]>;
+  saveRSIPGroups(groups: RSIPNodeGroup[]): Promise<void>;
+  getRSIPPolicyLibrary(): Promise<RSIPLibraryEntry[]>;
+  saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): Promise<void>;
+  getRSIPRunHistory(): Promise<RSIPRunRecord[]>;
+  saveRSIPRunHistory(records: RSIPRunRecord[]): Promise<void>;
+  getRSIPTaskLinks(): Promise<RSIPTaskLink[]>;
+  saveRSIPTaskLinks(links: RSIPTaskLink[]): Promise<void>;
+  getRSIPExecutionRecords(): Promise<RSIPExecutionRecord[]>;
+  appendRSIPExecutionRecord(record: RSIPExecutionRecord): Promise<void>;
 
   // Task time stats
   getTaskTimeStats(): Promise<TaskTimeStats[]>;

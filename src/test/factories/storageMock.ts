@@ -40,6 +40,16 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
     saveRSIPNodes: vi.fn(async () => undefined),
     getRSIPMeta: vi.fn(async () => ({})),
     saveRSIPMeta: vi.fn(async () => undefined),
+    getRSIPGroups: vi.fn(async () => []),
+    saveRSIPGroups: vi.fn(async () => undefined),
+    getRSIPPolicyLibrary: vi.fn(async () => []),
+    saveRSIPPolicyLibrary: vi.fn(async () => undefined),
+    getRSIPRunHistory: vi.fn(async () => []),
+    saveRSIPRunHistory: vi.fn(async () => undefined),
+    getRSIPTaskLinks: vi.fn(async () => []),
+    saveRSIPTaskLinks: vi.fn(async () => undefined),
+    getRSIPExecutionRecords: vi.fn(async () => []),
+    appendRSIPExecutionRecord: vi.fn(async () => undefined),
 
     // Task time stats
     getTaskTimeStats: vi.fn(async () => []),

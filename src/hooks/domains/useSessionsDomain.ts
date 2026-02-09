@@ -16,6 +16,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
+import type { RSIPTaskEventPayload } from '../../services/rsip-integration/RSIPTaskIntegrationService';
 import { useI18n } from '../../i18n';
 import { createCompletionHandlers } from './sessions/completion';
 import { createPauseResumeHandlers } from './sessions/pauseResume';
@@ -41,6 +42,7 @@ interface UseSessionsDomainParams {
 
   // Pet system callback (optional)
   onPetTaskCompleted?: (duration: number, wasSuccessful: boolean) => void;
+  onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
 }
 
 export function useSessionsDomain({
@@ -57,6 +59,7 @@ export function useSessionsDomain({
   setShowBettingModal,
   setShowAuxiliaryJudgment,
   onPetTaskCompleted,
+  onRsipTaskEvent,
 }: UseSessionsDomainParams) {
   const { tr } = useI18n();
 
@@ -83,6 +86,7 @@ export function useSessionsDomain({
     currentSessionId,
     setCurrentSessionId,
     setShowBettingModal,
+    onRsipTaskEvent,
     tr,
   });
 
@@ -95,6 +99,7 @@ export function useSessionsDomain({
       activeSessionId,
       setActiveSessionId,
       onPetTaskCompleted,
+      onRsipTaskEvent,
       tr,
     });
 

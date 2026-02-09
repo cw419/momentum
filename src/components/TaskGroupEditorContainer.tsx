@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import type { Chain, ChainDraft } from '../types';
+import type { Chain, ChainDraft, RSIPNode, RSIPTaskLink } from '../types';
 import { TaskGroupEditorView } from './TaskGroupEditorView';
 import { useTaskGroupEditor } from './useTaskGroupEditor';
 
@@ -13,11 +13,25 @@ interface TaskGroupEditorContainerProps {
   initialParentId?: string;
   onSave: (chain: ChainDraft) => void;
   onCancel: () => void;
+  rsipNodes?: RSIPNode[];
+  rsipTaskLinks?: RSIPTaskLink[];
+  onUpsertRSIPTaskLinks?: (
+    links: RSIPTaskLink[],
+  ) => void | Promise<unknown>;
 }
 
 export const TaskGroupEditorContainer: React.FC<
   TaskGroupEditorContainerProps
-> = ({ chain, isEditing, initialParentId, onSave, onCancel }) => {
+> = ({
+  chain,
+  isEditing,
+  initialParentId,
+  onSave,
+  onCancel,
+  rsipNodes,
+  rsipTaskLinks,
+  onUpsertRSIPTaskLinks,
+}) => {
   const {
     name,
     description,
@@ -72,6 +86,9 @@ export const TaskGroupEditorContainer: React.FC<
       }
       onSubmit={handleSubmit}
       onCancel={onCancel}
+      rsipNodes={rsipNodes}
+      rsipTaskLinks={rsipTaskLinks}
+      onUpsertRSIPTaskLinks={onUpsertRSIPTaskLinks}
     />
   );
 };

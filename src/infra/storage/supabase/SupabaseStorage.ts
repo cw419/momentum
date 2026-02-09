@@ -26,8 +26,13 @@ import type {
   Chain,
   CompletionHistory,
   DeletedChain,
+  RSIPExecutionRecord,
+  RSIPLibraryEntry,
   RSIPMeta,
+  RSIPNodeGroup,
   RSIPNode,
+  RSIPRunRecord,
+  RSIPTaskLink,
   ScheduledSession,
   TaskTimeStats,
 } from '../../../types';
@@ -220,6 +225,46 @@ export class SupabaseStorage implements MomentumStorage {
   }
   saveRSIPMeta(meta: RSIPMeta): Promise<void> {
     return rsipApi.saveRSIPMeta(this.ctx, meta);
+  }
+  getRSIPGroups(): Promise<RSIPNodeGroup[]> {
+    return this.deduplicatedRequest('getRSIPGroups', () =>
+      rsipApi.getRSIPGroups(this.ctx),
+    );
+  }
+  saveRSIPGroups(groups: RSIPNodeGroup[]): Promise<void> {
+    return rsipApi.saveRSIPGroups(this.ctx, groups);
+  }
+  getRSIPPolicyLibrary(): Promise<RSIPLibraryEntry[]> {
+    return this.deduplicatedRequest('getRSIPPolicyLibrary', () =>
+      rsipApi.getRSIPPolicyLibrary(this.ctx),
+    );
+  }
+  saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): Promise<void> {
+    return rsipApi.saveRSIPPolicyLibrary(this.ctx, entries);
+  }
+  getRSIPRunHistory(): Promise<RSIPRunRecord[]> {
+    return this.deduplicatedRequest('getRSIPRunHistory', () =>
+      rsipApi.getRSIPRunHistory(this.ctx),
+    );
+  }
+  saveRSIPRunHistory(records: RSIPRunRecord[]): Promise<void> {
+    return rsipApi.saveRSIPRunHistory(this.ctx, records);
+  }
+  getRSIPTaskLinks(): Promise<RSIPTaskLink[]> {
+    return this.deduplicatedRequest('getRSIPTaskLinks', () =>
+      rsipApi.getRSIPTaskLinks(this.ctx),
+    );
+  }
+  saveRSIPTaskLinks(links: RSIPTaskLink[]): Promise<void> {
+    return rsipApi.saveRSIPTaskLinks(this.ctx, links);
+  }
+  getRSIPExecutionRecords(): Promise<RSIPExecutionRecord[]> {
+    return this.deduplicatedRequest('getRSIPExecutionRecords', () =>
+      rsipApi.getRSIPExecutionRecords(this.ctx),
+    );
+  }
+  appendRSIPExecutionRecord(record: RSIPExecutionRecord): Promise<void> {
+    return rsipApi.appendRSIPExecutionRecord(this.ctx, record);
   }
 
   // Task time stats

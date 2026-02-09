@@ -4,8 +4,12 @@ import type {
   ChainDraft,
   CompletionHistory,
   ExceptionRule,
+  RSIPLibraryEntry,
   RSIPMeta,
   RSIPNode,
+  RSIPNodeGroup,
+  RSIPRunRecord,
+  RSIPTaskLink,
 } from '../../types';
 import type { BetPlacementResult } from '../../domain/betting';
 import type {
@@ -20,6 +24,22 @@ interface ImportChainsOptions {
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
   exceptionRules?: ExceptionRule[];
+}
+
+interface RSIPExecutionActionOptions {
+  reinforce?: boolean;
+  reasonCode?: string;
+  repairHint?: string;
+  sourceChainId?: string;
+  sourceEvent?: string;
+}
+
+interface RSIPViolationActionOptions {
+  reasonCode?: string;
+  repairHint?: string;
+  sourceChainId?: string;
+  sourceEvent?: string;
+  collapseReason?: string;
 }
 
 export interface AppShellViewProps {
@@ -45,6 +65,38 @@ export interface AppShellViewProps {
   openRSIP: () => void;
   saveRSIPNodes: (nodes: RSIPNode[]) => void;
   saveRSIPMeta: (meta: RSIPMeta) => void;
+  saveRSIPGroups: (groups: RSIPNodeGroup[]) => void;
+  saveRSIPPolicyLibrary: (entries: RSIPLibraryEntry[]) => void;
+  saveRSIPRunHistory: (records: RSIPRunRecord[]) => void;
+  saveRSIPTaskLinks: (links: RSIPTaskLink[]) => void;
+  markRSIPExecuted: (
+    nodeId: string,
+    nodes: RSIPNode[],
+    notes?: string,
+    options?: RSIPExecutionActionOptions,
+  ) => Promise<RSIPNode[]>;
+  markRSIPViolated: (
+    nodeId: string,
+    nodes: RSIPNode[],
+    notes?: string,
+    options?: RSIPViolationActionOptions,
+  ) => Promise<RSIPNode[]>;
+  reinforceRSIPNode: (
+    nodeId: string,
+    nodes: RSIPNode[],
+    levelDelta?: number,
+  ) => Promise<RSIPNode[]>;
+  restoreRSIPFromLibrary: (
+    entryId: string,
+    parentId?: string,
+  ) => Promise<RSIPNode | null>;
+  createRSIPGroup: (
+    title: string,
+    faultTolerance: number,
+    emoji?: string,
+  ) => Promise<RSIPNodeGroup>;
+  upsertRSIPTaskLinks: (links: RSIPTaskLink[]) => Promise<RSIPTaskLink[]>;
+  getRSIPTaskActions: (rsipNodeId: string) => RSIPTaskLink[];
 
   handleScheduleChain: (chainId: string) => void;
   handleStartChain: (chainId: string) => Promise<void>;

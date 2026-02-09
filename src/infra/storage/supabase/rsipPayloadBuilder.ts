@@ -14,6 +14,13 @@ type RSIPNodeBasePayload = {
 
 type RSIPNodeStrictPayload = RSIPNodeBasePayload & {
   emoji: string | null;
+  type: string | null;
+  group_id: string | null;
+  reinforcement_level: number;
+  max_reinforcement_level: number;
+  cumulative_execution_days: number;
+  is_passive: boolean;
+  split_from_goal: string | null;
   stability_phase: string;
   phase_started_at: string | null;
   last_executed_at: string | null;
@@ -48,6 +55,13 @@ function buildStrictNodePayload(
   return {
     ...buildBaseNodePayload(node, userId),
     emoji: node.emoji ?? null,
+    type: node.type ?? null,
+    group_id: node.groupId ?? null,
+    reinforcement_level: node.reinforcementLevel ?? 0,
+    max_reinforcement_level: node.maxReinforcementLevel ?? 0,
+    cumulative_execution_days: node.cumulativeExecutionDays ?? 0,
+    is_passive: node.isPassive ?? false,
+    split_from_goal: node.splitFromGoal ?? null,
     stability_phase: node.stabilityPhase ?? 'E0',
     phase_started_at: node.phaseStartedAt?.toISOString() ?? null,
     last_executed_at: node.lastExecutedAt?.toISOString() ?? null,

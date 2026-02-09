@@ -13,6 +13,13 @@ describe('buildRSIPNodeRows', () => {
       useTimer: true,
       timerMinutes: 20,
       emoji: '🔥',
+      type: 'habit',
+      groupId: 'group-1',
+      reinforcementLevel: 2,
+      maxReinforcementLevel: 3,
+      cumulativeExecutionDays: 12,
+      isPassive: true,
+      splitFromGoal: '早睡早起',
       stabilityPhase: 'E1',
       phaseStartedAt: new Date('2026-02-07T00:10:00.000Z'),
       lastExecutedAt: new Date('2026-02-07T00:20:00.000Z'),
@@ -32,6 +39,9 @@ describe('buildRSIPNodeRows', () => {
     expect(row.user_id).toBe('user-1');
     expect(row).toHaveProperty('consecutive_executions', 2);
     expect(row).toHaveProperty('stability_phase', 'E1');
+    expect(row).toHaveProperty('group_id', 'group-1');
+    expect(row).toHaveProperty('reinforcement_level', 2);
+    expect(row).toHaveProperty('split_from_goal', '早睡早起');
   });
 
   it('builds basic payload without strict-only columns', () => {

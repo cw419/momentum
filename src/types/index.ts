@@ -5,3 +5,4 @@ export * from './rsip';
 export * from './exception-rule';
 export * from './exception-rule-errors';
 export * from './app-state';
+export * from './rsipIntegration';

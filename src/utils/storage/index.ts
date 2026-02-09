@@ -10,7 +10,22 @@ import {
 } from './chains';
 import { getCompletionHistory, saveCompletionHistory } from './history';
 import { getPetState, savePetState } from './pet';
-import { getRSIPMeta, getRSIPNodes, saveRSIPMeta, saveRSIPNodes } from './rsip';
+import {
+  appendRSIPExecutionRecord,
+  getRSIPExecutionRecords,
+  getRSIPGroups,
+  getRSIPMeta,
+  getRSIPNodes,
+  getRSIPPolicyLibrary,
+  getRSIPRunHistory,
+  getRSIPTaskLinks,
+  saveRSIPGroups,
+  saveRSIPMeta,
+  saveRSIPNodes,
+  saveRSIPPolicyLibrary,
+  saveRSIPRunHistory,
+  saveRSIPTaskLinks,
+} from './rsip';
 import {
   getActiveSession,
   getScheduledSessions,
@@ -51,6 +66,16 @@ export const storage = {
 
   getRSIPMeta,
   saveRSIPMeta,
+  getRSIPGroups,
+  saveRSIPGroups,
+  getRSIPPolicyLibrary,
+  saveRSIPPolicyLibrary,
+  getRSIPRunHistory,
+  saveRSIPRunHistory,
+  getRSIPTaskLinks,
+  saveRSIPTaskLinks,
+  getRSIPExecutionRecords,
+  appendRSIPExecutionRecord,
 
   // 回收箱相关方法
   getActiveChains,

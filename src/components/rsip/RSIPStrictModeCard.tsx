@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { Check, Shield, X } from 'lucide-react';
 import type { RSIPNode, RSIPStabilityPhase } from '../../types';
 import { RSIPConstraintIndicator } from './RSIPConstraintIndicator';
 import { RSIPPhaseBadge } from './RSIPPhaseBadge';
@@ -22,6 +22,7 @@ interface RSIPStrictModeCardProps {
   failureCost: number;
   onMarkExecuted: () => void;
   onMarkViolated: () => void;
+  onReinforce?: () => void;
 }
 
 export function RSIPStrictModeCard({
@@ -30,14 +31,14 @@ export function RSIPStrictModeCard({
   failureCost,
   onMarkExecuted,
   onMarkViolated,
+  onReinforce,
 }: RSIPStrictModeCardProps) {
   const phase: RSIPStabilityPhase = node.stabilityPhase ?? 'E0';
   const consecutiveExecutions = node.consecutiveExecutions ?? 0;
+  const reinforcementLevel = node.reinforcementLevel ?? 0;
 
   const cardBgClass = CARD_BG_CLASS_BY_PHASE[phase];
-
   const hoverBorderClass = HOVER_BORDER_CLASS_BY_PHASE[phase];
-
   const depthShadowClass =
     descendantCount > 3
       ? 'shadow-md shadow-indigo-500/10 dark:shadow-indigo-500/10'
@@ -45,11 +46,11 @@ export function RSIPStrictModeCard({
 
   return (
     <div
-      className={`relative rounded-2xl border p-4 transition ${cardBgClass} ${depthShadowClass} hover:shadow-lg ${hoverBorderClass} `}
+      className={`relative rounded-2xl border p-4 transition ${cardBgClass} ${depthShadowClass} hover:shadow-lg ${hoverBorderClass}`}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="group/title relative flex min-w-0 flex-1 items-center gap-2">
-          <span className="flex-shrink-0 text-xl">{node.emoji || '📌'}</span>
+          <span className="flex-shrink-0 text-xl">{node.emoji || '🧭'}</span>
           <h3
             className="cursor-help truncate font-medium text-slate-900 dark:text-white"
             title={node.title}
@@ -60,7 +61,16 @@ export function RSIPStrictModeCard({
             {node.title}
           </div>
         </div>
-        <RSIPPhaseBadge phase={phase} />
+
+        <div className="flex items-center gap-2">
+          {reinforcementLevel > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+              <Shield size={12} />
+              +{reinforcementLevel}
+            </span>
+          )}
+          <RSIPPhaseBadge phase={phase} />
+        </div>
       </div>
 
       <p className="mb-4 text-sm text-slate-700 dark:text-white/60">
@@ -80,6 +90,16 @@ export function RSIPStrictModeCard({
       </div>
 
       <div className="mt-4 flex gap-2">
+        {onReinforce && phase === 'E2' && (
+          <button
+            type="button"
+            onClick={onReinforce}
+            className="cursor-pointer rounded-xl bg-amber-500/20 px-3 py-2.5 text-sm font-medium text-amber-700 transition hover:bg-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/40"
+          >
+            强化 +1
+          </button>
+        )}
+
         <button
           type="button"
           onClick={onMarkExecuted}

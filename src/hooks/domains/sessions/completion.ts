@@ -13,6 +13,7 @@ import { notificationManager } from '../../../utils/notifications';
 import { emitPointsChanged } from '../../../utils/pointsEvents';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
+import type { RSIPTaskEventPayload } from '../../../services/rsip-integration/RSIPTaskIntegrationService';
 
 type Chain = AppState['chains'][number];
 type ActiveSession = NonNullable<AppState['activeSession']>;
@@ -60,14 +61,19 @@ function updateChainsForFailure(
   });
 }
 
+interface GroupCycleIncrementResult {
+  updatedChains: AppState['chains'];
+  completedGroupId?: string;
+}
+
 function maybeIncrementGroupCycleCompletion(
   chains: AppState['chains'],
   completedChain: Chain,
   tr: (zh: string, en: string) => string,
   chainsRevision?: number,
-): AppState['chains'] {
+): GroupCycleIncrementResult {
   if (!completedChain.parentId || completedChain.type === 'group')
-    return chains;
+    return { updatedChains: chains };
 
   const chainTree = queryOptimizer.memoizedBuildChainTree(
     chains,
@@ -76,8 +82,12 @@ function maybeIncrementGroupCycleCompletion(
   const groupNode = chainTree.find(
     (node) => node.id === completedChain.parentId,
   );
-  if (!groupNode || groupNode.type !== 'group') return chains;
-  if (!isGroupFullyCompleted(groupNode)) return chains;
+  if (!groupNode || groupNode.type !== 'group') {
+    return { updatedChains: chains };
+  }
+  if (!isGroupFullyCompleted(groupNode)) {
+    return { updatedChains: chains };
+  }
 
   logger.debug(
     'SESSIONS',
@@ -99,7 +109,10 @@ function maybeIncrementGroupCycleCompletion(
     );
   }
 
-  return updatedChains;
+  return {
+    updatedChains,
+    completedGroupId: completedChain.parentId,
+  };
 }
 
 async function persistCompletionHistoryAndCleanupSupabase(
@@ -142,6 +155,7 @@ interface CreateCompletionHandlersParams {
   activeSessionId: string | null;
   setActiveSessionId: Dispatch<SetStateAction<string | null>>;
   onPetTaskCompleted?: (duration: number, wasSuccessful: boolean) => void;
+  onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
   tr: (zh: string, en: string) => string;
 }
 
@@ -153,8 +167,21 @@ export function createCompletionHandlers({
   activeSessionId,
   setActiveSessionId,
   onPetTaskCompleted,
+  onRsipTaskEvent,
   tr,
 }: CreateCompletionHandlersParams) {
+  function emitRsipTaskEvent(payload: RSIPTaskEventPayload): void {
+    if (!onRsipTaskEvent) return;
+    Promise.resolve(onRsipTaskEvent(payload)).catch((error) => {
+      logger.warn(
+        'SESSIONS',
+        'RSIP integration event handler failed',
+        { ...payload },
+        normalizeUnknownError(error),
+      );
+    });
+  }
+
   function persistChains(
     updatedChains: AppState['chains'],
     context: string,
@@ -247,12 +274,13 @@ export function createCompletionHandlers({
       chain.id,
       completedAt,
     );
-    updatedChains = maybeIncrementGroupCycleCompletion(
+    const groupCycleResult = maybeIncrementGroupCycleCompletion(
       updatedChains,
       chain,
       tr,
       state.chainsRevision + 1,
     );
+    updatedChains = groupCycleResult.updatedChains;
 
     persistChains(updatedChains, '完成任务时保存链条数据失败');
     persistCompletionHistoryAndCleanup(historyToPersist, 'completion');
@@ -272,6 +300,22 @@ export function createCompletionHandlers({
 
     if (onPetTaskCompleted && actualDuration) {
       onPetTaskCompleted(actualDuration, true);
+    }
+
+    emitRsipTaskEvent({
+      event: 'task_completed',
+      chainId: chain.id,
+      chainKind: chain.type === 'group' ? 'group' : 'unit',
+      occurredAt: completedAt,
+    });
+
+    if (groupCycleResult.completedGroupId) {
+      emitRsipTaskEvent({
+        event: 'group_cycle_completed',
+        chainId: groupCycleResult.completedGroupId,
+        chainKind: 'group',
+        occurredAt: completedAt,
+      });
     }
 
     setState((prev) => ({
@@ -323,6 +367,13 @@ export function createCompletionHandlers({
 
     persistChains(updatedChains, '中断任务时保存链条数据失败');
     persistCompletionHistoryAndCleanup(historyToPersist, 'interrupt');
+
+    emitRsipTaskEvent({
+      event: 'task_interrupted',
+      chainId: chain.id,
+      chainKind: chain.type === 'group' ? 'group' : 'unit',
+      occurredAt: completionRecord.completedAt,
+    });
 
     setState((prev) => ({
       ...prev,

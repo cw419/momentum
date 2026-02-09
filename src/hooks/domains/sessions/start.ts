@@ -16,6 +16,7 @@ import {
 } from '../../../utils/timeLimit';
 import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
+import type { RSIPTaskEventPayload } from '../../../services/rsip-integration/RSIPTaskIntegrationService';
 
 type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];
@@ -30,6 +31,7 @@ interface CreateStartChainHandlerParams {
   currentSessionId: string | null;
   setCurrentSessionId: Dispatch<SetStateAction<string | null>>;
   setShowBettingModal: Dispatch<SetStateAction<boolean>>;
+  onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
   tr: (zh: string, en: string) => string;
 }
 
@@ -58,8 +60,21 @@ export function createStartChainHandler({
   currentSessionId,
   setCurrentSessionId,
   setShowBettingModal,
+  onRsipTaskEvent,
   tr,
 }: CreateStartChainHandlerParams) {
+  function emitRsipTaskEvent(payload: RSIPTaskEventPayload): void {
+    if (!onRsipTaskEvent) return;
+    Promise.resolve(onRsipTaskEvent(payload)).catch((error) => {
+      logger.warn(
+        'SESSIONS',
+        'RSIP integration event handler failed',
+        { ...payload },
+        normalizeUnknownError(error),
+      );
+    });
+  }
+
   function findChain(chainId: string): Chain | null {
     return state.chains.find((chain) => chain.id === chainId) ?? null;
   }
@@ -258,6 +273,13 @@ export function createStartChainHandler({
         chains: updatedChains,
         chainsRevision: prev.chainsRevision + 1,
       }));
+
+      emitRsipTaskEvent({
+        event: 'group_cycle_completed',
+        chainId: groupId,
+        chainKind: 'group',
+        occurredAt: new Date(),
+      });
 
       scheduleStartFirstUnitInNextCycle({
         groupId,

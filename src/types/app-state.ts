@@ -1,6 +1,14 @@
 import type { Chain } from './chain';
 import type { ExceptionRule, RuleUsageRecord } from './exception-rule';
-import type { RSIPExecutionRecord, RSIPMeta, RSIPNode } from './rsip';
+import type {
+  RSIPExecutionRecord,
+  RSIPLibraryEntry,
+  RSIPMeta,
+  RSIPNode,
+  RSIPNodeGroup,
+  RSIPRunRecord,
+} from './rsip';
+import type { RSIPTaskLink } from './rsipIntegration';
 import type {
   ActiveSession,
   CompletionHistory,
@@ -30,6 +38,10 @@ export interface AppState {
   rsipNodes: RSIPNode[];
   rsipMeta: RSIPMeta;
   rsipExecutionRecords?: RSIPExecutionRecord[]; // 定式执行记录（严格模式）
+  rsipGroups?: RSIPNodeGroup[]; // 国策组
+  rsipPolicyLibrary?: RSIPLibraryEntry[]; // 国策库
+  rsipRunHistory?: RSIPRunRecord[]; // 轮次历史
+  rsipTaskLinks?: RSIPTaskLink[]; // 国策-任务映射
   // 任务用时统计
   taskTimeStats: TaskTimeStats[];
   // 例外规则系统

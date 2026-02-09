@@ -48,5 +48,8 @@ describe('TaskGroupEditorView sections', () => {
     expect(
       screen.getByTestId('task-group-editor-duration'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('task-group-editor-rsip-links'),
+    ).toBeInTheDocument();
   });
 });

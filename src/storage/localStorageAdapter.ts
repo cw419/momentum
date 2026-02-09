@@ -51,6 +51,19 @@ export const localStorageAdapter: MomentumStorage = {
   saveRSIPNodes: async (nodes) => localStorageUtils.saveRSIPNodes(nodes),
   getRSIPMeta: async () => localStorageUtils.getRSIPMeta(),
   saveRSIPMeta: async (meta) => localStorageUtils.saveRSIPMeta(meta),
+  getRSIPGroups: async () => localStorageUtils.getRSIPGroups(),
+  saveRSIPGroups: async (groups) => localStorageUtils.saveRSIPGroups(groups),
+  getRSIPPolicyLibrary: async () => localStorageUtils.getRSIPPolicyLibrary(),
+  saveRSIPPolicyLibrary: async (entries) =>
+    localStorageUtils.saveRSIPPolicyLibrary(entries),
+  getRSIPRunHistory: async () => localStorageUtils.getRSIPRunHistory(),
+  saveRSIPRunHistory: async (records) =>
+    localStorageUtils.saveRSIPRunHistory(records),
+  getRSIPTaskLinks: async () => localStorageUtils.getRSIPTaskLinks(),
+  saveRSIPTaskLinks: async (links) => localStorageUtils.saveRSIPTaskLinks(links),
+  getRSIPExecutionRecords: async () => localStorageUtils.getRSIPExecutionRecords(),
+  appendRSIPExecutionRecord: async (record) =>
+    localStorageUtils.appendRSIPExecutionRecord(record),
 
   // Task time stats
   getTaskTimeStats: async () => localStorageUtils.getTaskTimeStats(),

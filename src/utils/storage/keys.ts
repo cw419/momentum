@@ -5,6 +5,11 @@ export const STORAGE_KEYS = {
   COMPLETION_HISTORY: 'momentum_completion_history',
   RSIP_NODES: 'momentum_rsip_nodes',
   RSIP_META: 'momentum_rsip_meta',
+  RSIP_GROUPS: 'momentum_rsip_groups',
+  RSIP_POLICY_LIBRARY: 'momentum_rsip_policy_library',
+  RSIP_RUN_HISTORY: 'momentum_rsip_run_history',
+  RSIP_TASK_LINKS: 'momentum_rsip_task_links',
+  RSIP_EXECUTION_RECORDS: 'momentum_rsip_execution_records',
   TASK_TIME_STATS: 'momentum_task_time_stats',
   PET_STATE: 'momentum_pet_state',
 } as const;

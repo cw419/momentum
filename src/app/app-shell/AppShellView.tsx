@@ -34,6 +34,17 @@ export function AppShellView({
   openRSIP,
   saveRSIPNodes,
   saveRSIPMeta,
+  saveRSIPGroups,
+  saveRSIPPolicyLibrary,
+  saveRSIPRunHistory,
+  saveRSIPTaskLinks,
+  markRSIPExecuted,
+  markRSIPViolated,
+  reinforceRSIPNode,
+  restoreRSIPFromLibrary,
+  createRSIPGroup,
+  upsertRSIPTaskLinks,
+  getRSIPTaskActions,
   handleScheduleChain,
   handleStartChain,
   handleCancelScheduledSession,
@@ -101,6 +112,9 @@ export function AppShellView({
       initialParentId: state.viewingChainId || undefined,
       onSave: handleSaveChain,
       onCancel: handleBackToDashboard,
+      rsipNodes: state.rsipNodes,
+      rsipTaskLinks: state.rsipTaskLinks ?? [],
+      onUpsertRSIPTaskLinks: upsertRSIPTaskLinks,
     };
 
     switch (state.currentView) {
@@ -203,9 +217,28 @@ export function AppShellView({
             <RSIPView
               nodes={state.rsipNodes}
               meta={state.rsipMeta}
+              groups={state.rsipGroups ?? []}
+              policyLibrary={state.rsipPolicyLibrary ?? []}
+              runHistory={state.rsipRunHistory ?? []}
+              executionRecords={state.rsipExecutionRecords ?? []}
+              taskLinks={state.rsipTaskLinks ?? []}
+              chains={state.chains}
               onBack={handleBackToDashboard}
               onSaveNodes={saveRSIPNodes}
               onSaveMeta={saveRSIPMeta}
+              onSaveGroups={saveRSIPGroups}
+              onSavePolicyLibrary={saveRSIPPolicyLibrary}
+              onSaveRunHistory={saveRSIPRunHistory}
+              onSaveTaskLinks={saveRSIPTaskLinks}
+              onMarkExecuted={markRSIPExecuted}
+              onMarkViolated={markRSIPViolated}
+              onReinforceNode={reinforceRSIPNode}
+              onRestoreFromLibrary={restoreRSIPFromLibrary}
+              onCreateGroup={createRSIPGroup}
+              onUpsertTaskLinks={upsertRSIPTaskLinks}
+              onGetTaskActions={getRSIPTaskActions}
+              onStartChain={handleStartChain}
+              onScheduleChain={handleScheduleChain}
             />
           </Suspense>
         );

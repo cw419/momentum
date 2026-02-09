@@ -1,4 +1,4 @@
-import type { Chain, ChainDraft } from '../../types';
+import type { Chain, ChainDraft, RSIPNode, RSIPTaskLink } from '../../types';
 import {
   useMobileOptimization,
   useTouchOptimization,
@@ -13,6 +13,11 @@ interface ChainEditorProps {
   initialParentId?: string;
   onSave: (chain: ChainDraft, isCopy?: boolean) => void;
   onCancel: () => void;
+  rsipNodes?: RSIPNode[];
+  rsipTaskLinks?: RSIPTaskLink[];
+  onUpsertRSIPTaskLinks?: (
+    links: RSIPTaskLink[],
+  ) => void | Promise<unknown>;
 }
 
 export function ChainEditor({
@@ -21,6 +26,9 @@ export function ChainEditor({
   initialParentId,
   onSave,
   onCancel,
+  rsipNodes,
+  rsipTaskLinks,
+  onUpsertRSIPTaskLinks,
 }: ChainEditorProps) {
   const form = useChainEditorForm({
     chain,
@@ -35,12 +43,16 @@ export function ChainEditor({
 
   return (
     <ChainEditorView
+      chain={chain}
       isEditing={isEditing}
       onCancel={onCancel}
       form={form}
       mobileInfo={mobileInfo}
       keyboardHeight={keyboardHeight}
       isKeyboardVisible={isKeyboardVisible}
+      rsipNodes={rsipNodes}
+      rsipTaskLinks={rsipTaskLinks}
+      onUpsertRSIPTaskLinks={onUpsertRSIPTaskLinks}
     />
   );
 }

@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import type { Chain } from '../../types';
+import type { Chain, RSIPNode, RSIPTaskLink } from '../../types';
 
 export interface FormErrors {
   name?: string;
@@ -43,4 +43,11 @@ export interface TaskGroupEditorViewProps {
   onAuxiliaryCompletionTriggerChange: (value: string) => void;
   onSubmit: (e: FormEvent) => void;
   onCancel: () => void;
+
+  // RSIP integration entry (task/group side)
+  rsipNodes?: RSIPNode[];
+  rsipTaskLinks?: RSIPTaskLink[];
+  onUpsertRSIPTaskLinks?: (
+    links: RSIPTaskLink[],
+  ) => void | Promise<unknown>;
 }

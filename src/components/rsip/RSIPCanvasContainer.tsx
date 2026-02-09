@@ -17,6 +17,7 @@ interface RSIPCanvasContainerProps {
   nodes: RSIPNode[];
   tree: RSIPTreeNode[];
   onSaveNodes: (nodes: RSIPNode[]) => void;
+  onMarkFailedNode?: (nodeId: string) => void;
   language: string;
   tr: (zh: string, en: string) => string;
 }
@@ -25,6 +26,7 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
   nodes,
   tree,
   onSaveNodes,
+  onMarkFailedNode,
   language,
   tr,
 }) => {
@@ -130,10 +132,14 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
       setConfirmAction(null);
       return;
     }
-    const newNodes = deleteNodeAndDescendants(nodes, confirmAction.nodeId);
-    onSaveNodes(newNodes);
+    if (onMarkFailedNode) {
+      onMarkFailedNode(confirmAction.nodeId);
+    } else {
+      const newNodes = deleteNodeAndDescendants(nodes, confirmAction.nodeId);
+      onSaveNodes(newNodes);
+    }
     setConfirmAction(null);
-  }, [confirmAction, confirmStopTimer, nodes, onSaveNodes]);
+  }, [confirmAction, confirmStopTimer, nodes, onMarkFailedNode, onSaveNodes]);
 
   const handleCancelConfirm = useCallback(() => {
     setConfirmAction(null);

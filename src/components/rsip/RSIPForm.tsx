@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Clock, Plus } from 'lucide-react';
-import type { RSIPMeta, RSIPTreeNode } from '../../types';
+import type { RSIPMeta, RSIPNodeGroup, RSIPTreeNode } from '../../types';
 import { getRsipTypeLabel, rsipTypeEmojiMap } from './rsipUi';
 
 interface RSIPFormProps {
@@ -20,6 +20,12 @@ interface RSIPFormProps {
   createType: string;
   setCreateType: (type: string) => void;
   setCreateEmoji: (emoji: string) => void;
+  groups?: RSIPNodeGroup[];
+  selectedGroupId?: string;
+  setSelectedGroupId?: (groupId: string | undefined) => void;
+  createIsPassive?: boolean;
+  setCreateIsPassive?: (isPassive: boolean) => void;
+  onCreateGroup?: () => void;
   onAdd: () => void;
   language: string;
   tr: (zh: string, en: string) => string;
@@ -42,6 +48,12 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
   createType,
   setCreateType,
   setCreateEmoji,
+  groups,
+  selectedGroupId,
+  setSelectedGroupId,
+  createIsPassive,
+  setCreateIsPassive,
+  onCreateGroup,
   onAdd,
   language,
   tr,
@@ -178,6 +190,54 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block font-chinese text-sm font-medium text-gray-700 dark:text-slate-300">
+            {tr('所属国策组', 'Policy group')}
+          </label>
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedGroupId || ''}
+              onChange={(e) => setSelectedGroupId?.(e.target.value || undefined)}
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 font-chinese text-gray-900 transition duration-200 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+            >
+              <option value="">{tr('不分组', 'No group')}</option>
+              {(groups ?? []).map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.emoji ? `${group.emoji} ` : ''}
+                  {group.title} ({tr('容错', 'Tolerance')} {group.faultTolerance})
+                </option>
+              ))}
+            </select>
+            {onCreateGroup && (
+              <button
+                type="button"
+                onClick={onCreateGroup}
+                className="rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-700 transition hover:bg-gray-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                {tr('新建组', 'New group')}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="bento-subtle flex items-center justify-between rounded-2xl px-4 py-3">
+          <span className="font-chinese text-sm text-gray-700 dark:text-slate-300">
+            {tr('被动国策', 'Passive policy')}
+          </span>
+          <label
+            className="relative inline-flex cursor-pointer items-center"
+            aria-label={tr('被动国策', 'Passive policy')}
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(createIsPassive)}
+              onChange={(e) => setCreateIsPassive?.(e.target.checked)}
+              className="peer sr-only"
+            />
+            <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition after:content-[''] peer-checked:bg-indigo-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-indigo-800"></div>
+          </label>
         </div>
       </div>
 

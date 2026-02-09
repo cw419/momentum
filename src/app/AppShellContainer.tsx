@@ -31,6 +31,11 @@ function createInitialAppState(): AppState {
     completionHistory: [],
     rsipNodes: [],
     rsipMeta: {},
+    rsipGroups: [],
+    rsipPolicyLibrary: [],
+    rsipRunHistory: [],
+    rsipTaskLinks: [],
+    rsipExecutionRecords: [],
     taskTimeStats: [],
     exceptionRules: [],
     ruleUsageRecords: [],
@@ -97,9 +102,22 @@ export default function AppShellContainer() {
     openRSIP,
     saveNodes: saveRSIPNodes,
     saveMeta: saveRSIPMeta,
+    saveGroups: saveRSIPGroups,
+    savePolicyLibrary: saveRSIPPolicyLibrary,
+    saveRunHistory: saveRSIPRunHistory,
+    saveTaskLinks: saveRSIPTaskLinks,
+    markExecuted: markRSIPExecuted,
+    markViolated: markRSIPViolated,
+    reinforceNode: reinforceRSIPNode,
+    restoreFromLibrary: restoreRSIPFromLibrary,
+    createGroup: createRSIPGroup,
+    upsertTaskLinks: upsertRSIPTaskLinks,
+    getRsipTaskActions,
+    handleTaskEventIntegration,
   } = useRsipDomain({
     setState,
     storage,
+    getState: () => stateRef.current,
   });
 
   const petDomain = usePetDomain();
@@ -127,6 +145,9 @@ export default function AppShellContainer() {
     setShowBettingModal,
     setShowAuxiliaryJudgment,
     onPetTaskCompleted: petDomain.onTaskCompleted,
+    onRsipTaskEvent: async (payload) => {
+      await handleTaskEventIntegration(payload);
+    },
   });
 
   const { handleBetPlaced, handleBetCancelled } = useBettingDomain({
@@ -212,6 +233,17 @@ export default function AppShellContainer() {
       openRSIP={openRSIP}
       saveRSIPNodes={saveRSIPNodes}
       saveRSIPMeta={saveRSIPMeta}
+      saveRSIPGroups={saveRSIPGroups}
+      saveRSIPPolicyLibrary={saveRSIPPolicyLibrary}
+      saveRSIPRunHistory={saveRSIPRunHistory}
+      saveRSIPTaskLinks={saveRSIPTaskLinks}
+      markRSIPExecuted={markRSIPExecuted}
+      markRSIPViolated={markRSIPViolated}
+      reinforceRSIPNode={reinforceRSIPNode}
+      restoreRSIPFromLibrary={restoreRSIPFromLibrary}
+      createRSIPGroup={createRSIPGroup}
+      upsertRSIPTaskLinks={upsertRSIPTaskLinks}
+      getRSIPTaskActions={getRsipTaskActions}
       handleScheduleChain={handleScheduleChain}
       handleStartChain={handleStartChain}
       handleCancelScheduledSession={handleCancelScheduledSession}

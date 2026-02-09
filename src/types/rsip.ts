@@ -1,7 +1,11 @@
 // RSIP（递归稳态迭代协议）类型定义
 
 // 定式执行状态
-type RSIPExecutionStatus = 'pending' | 'executed' | 'violated' | 'skipped';
+export type RSIPExecutionStatus =
+  | 'pending'
+  | 'executed'
+  | 'violated'
+  | 'skipped';
 
 // 稳态阶段：E0（新建）→ E1（稳定，7天）→ E2（内化，21天）
 export type RSIPStabilityPhase = 'E0' | 'E1' | 'E2';
@@ -22,6 +26,14 @@ export interface RSIPNode {
   // 新增：用于UI展示的emoji
   emoji?: string;
   type?: string; // 国策类型
+
+  // === 核心增强字段 ===
+  groupId?: string; // 所属国策组ID
+  reinforcementLevel?: number; // 强化等级（优先消耗）
+  maxReinforcementLevel?: number; // 历史最高强化等级
+  cumulativeExecutionDays?: number; // 跨轮次累计执行天数
+  isPassive?: boolean; // 被动国策（维护成本近似为0）
+  splitFromGoal?: string; // 拆分来源目标
 
   // === 严格模式字段（仅在 allowMultiplePerDay=false 时使用）===
 
@@ -52,6 +64,10 @@ export interface RSIPMeta {
   dailyTreeOpenRequired?: boolean; // 是否要求每日打开国策树
   treeOpenStreak?: number; // 连续打开国策树的天数
   phaseDistribution?: { E0: number; E1: number; E2: number }; // 各阶段定式数量统计
+
+  // === 轮次字段 ===
+  currentRunNumber?: number; // 当前轮次编号
+  currentRunStartedAt?: Date; // 当前轮次开始时间
 }
 
 // 定式执行记录（用于追踪每日执行/违反历史）
@@ -62,4 +78,41 @@ export interface RSIPExecutionRecord {
   executedAt: Date; // 执行时间
   status: RSIPExecutionStatus; // 执行状态
   notes?: string; // 备注
+  reasonCode?: string; // 违反/执行原因分类
+  repairHint?: string; // 修复建议
+  sourceChainId?: string; // 触发来源任务ID（协同链路）
+  sourceEvent?: string; // 触发来源事件
+}
+
+export interface RSIPNodeGroup {
+  id: string;
+  title: string;
+  faultTolerance: number;
+  createdAt: Date;
+  emoji?: string;
+}
+
+export interface RSIPLibraryEntry {
+  id: string;
+  title: string;
+  rule: string;
+  type?: string;
+  emoji?: string;
+  cumulativeExecutionDays: number;
+  internalizationProgress: number; // 0-100
+  lastActiveAt: Date;
+  timesUsed: number;
+  useTimer?: boolean;
+  timerMinutes?: number;
+  isPassive?: boolean;
+}
+
+export interface RSIPRunRecord {
+  runNumber: number;
+  startedAt: Date;
+  endedAt?: Date;
+  maxNodeCount: number;
+  durationDays: number;
+  collapseReason?: string;
+  collapseNodeTitle?: string;
 }
