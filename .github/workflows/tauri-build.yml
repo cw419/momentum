@@ -54,6 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
+          tauriScript: npx tauri
+          includeUpdaterJson: true
           tagName: ${{ github.ref_name }}
           releaseName: 'Momentum v__VERSION__'
           releaseBody: 'See the assets to download and install this version.'
