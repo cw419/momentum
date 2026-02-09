@@ -77,3 +77,4 @@ src-tauri/target/
 src-tauri/gen/
 src-tauri/icons/
 src-tauri/.tauri-private.key
+src-tauri/.tauri-private.key.pub
