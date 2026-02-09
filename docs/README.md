@@ -44,6 +44,10 @@
 - 声音系统：`docs/features/SOUND_FEATURE.md`
 - 回收箱（中文）：`docs/features/README-回收箱功能.md`
 - 时间限定功能（中文）：`docs/features/时间限定功能说明.md`
+- RSIP 任务联动：`docs/features/RSIP_TASK_INTEGRATION.md`
+- RSIP 分析与推荐：`docs/features/RSIP_INSIGHTS.md`
+- RSIP 国策库：`docs/features/RSIP_POLICY_LIBRARY.md`
+- RSIP 轮次历史：`docs/features/RSIP_RUN_HISTORY.md`
 
 ## API
 

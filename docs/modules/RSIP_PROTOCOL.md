@@ -76,6 +76,12 @@ interface RSIPMeta {
 | `src/components/rsip/RSIPTree.tsx`    | 树形视图组件                              |
 | `src/components/rsip/RSIPFilters.tsx` | 过滤器组件                                |
 | `src/infra/storage/supabase/rsip.ts`  | Supabase 存储实现                         |
+| `src/services/rsip-insights/RSIPInsightsService.ts` | 分析与推荐引擎              |
+| `src/services/rsip-integration/RSIPTaskIntegrationService.ts` | 任务联动服务      |
+| `src/components/rsip/RSIPTaskLinkPanel.tsx` | 任务联动面板                       |
+| `src/components/rsip/RSIPInsightsPanel.tsx` | 分析与推荐面板                      |
+| `src/components/rsip/RSIPPolicyLibrary.tsx` | 国策库面板                          |
+| `src/components/rsip/RSIPRunHistory.tsx` | 轮次历史面板                           |
 
 ### 组件结构
 
@@ -354,5 +360,9 @@ function startRoutineChain(routine: RSIPNode) {
 ## 相关文档
 
 - [DOMAIN_RSIP.md](../features/DOMAIN_RSIP.md) - 领域详情
+- [RSIP_TASK_INTEGRATION.md](../features/RSIP_TASK_INTEGRATION.md) - RSIP-任务流程联动
+- [RSIP_INSIGHTS.md](../features/RSIP_INSIGHTS.md) - 分析与推荐引擎
+- [RSIP_POLICY_LIBRARY.md](../features/RSIP_POLICY_LIBRARY.md) - 国策库
+- [RSIP_RUN_HISTORY.md](../features/RSIP_RUN_HISTORY.md) - 轮次历史
 - [ARCHITECTURE.md](../guides/ARCHITECTURE.md) - 架构总览
 - [CHAIN_EDITOR_GUIDE.md](../guides/CHAIN_EDITOR_GUIDE.md) - 链条编辑器

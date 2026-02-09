@@ -102,6 +102,13 @@ E0 (新建) ──[连续7天执行]──> E1 (稳定) ──[连续21天执行
 | `src/components/rsip/RSIPModeSwitch.tsx`          | 模式切换组件                                     |
 | `src/components/rsip/RSIPDailyReminder.tsx`       | 每日提醒横幅                                     |
 | `src/components/rsip/RSIPViolationDialog.tsx`     | 违反确认对话框                                   |
+| `src/components/rsip/RSIPTaskLinkPanel.tsx`       | RSIP-任务联动管理面板                            |
+| `src/components/rsip/RSIPInsightsPanel.tsx`       | 分析与推荐面板                                   |
+| `src/components/rsip/RSIPPolicyLibrary.tsx`       | 国策库面板                                       |
+| `src/components/rsip/RSIPRunHistory.tsx`          | 轮次历史面板                                     |
+| `src/services/rsip-insights/RSIPInsightsService.ts` | 分析与推荐引擎                                |
+| `src/services/rsip-integration/RSIPTaskIntegrationService.ts` | 任务联动核心服务                    |
+| `src/types/rsipIntegration.ts`                    | 联动类型定义                                     |
 
 ---
 
@@ -590,5 +597,9 @@ const updatedMeta = await recordTreeOpened(meta);
 - `docs/api/DATABASE_SCHEMA.md` - 数据库结构
 - `docs/features/DOMAIN_IMPORT_EXPORT.md` - 导入导出功能
 - `docs/modules/RSIP_PROTOCOL.md` - RSIP 协议详情
+- `docs/features/RSIP_TASK_INTEGRATION.md` - RSIP-任务流程联动
+- `docs/features/RSIP_INSIGHTS.md` - RSIP 分析与推荐引擎
+- `docs/features/RSIP_POLICY_LIBRARY.md` - 国策库
+- `docs/features/RSIP_RUN_HISTORY.md` - 轮次历史
 - `docs/guides/如何提高自制力？-edmond的回答.md` - 原作者理论文章（中文）
 - `docs/guides/How to Improve Self-Control by edmond EN.md` - 原作者理论文章（英文）
