@@ -1,0 +1,19 @@
+{
+  "identifier": "default",
+  "description": "Default permissions for desktop",
+  "platforms": ["linux", "macOS", "windows"],
+  "permissions": [
+    "core:default",
+    "shell:allow-open",
+    "notification:default",
+    "notification:allow-request-permission",
+    "notification:allow-notify",
+    "dialog:default",
+    "dialog:allow-save",
+    "dialog:allow-open",
+    "fs:default",
+    "process:default",
+    "os:default",
+    "updater:default"
+  ]
+}

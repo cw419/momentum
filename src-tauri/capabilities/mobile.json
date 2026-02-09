@@ -1,0 +1,17 @@
+{
+  "identifier": "mobile",
+  "description": "Mobile-specific permissions",
+  "platforms": ["iOS", "android"],
+  "permissions": [
+    "core:default",
+    "notification:default",
+    "notification:allow-request-permission",
+    "notification:allow-notify",
+    "dialog:default",
+    "dialog:allow-save",
+    "dialog:allow-open",
+    "fs:default",
+    "process:default",
+    "os:default"
+  ]
+}

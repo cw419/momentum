@@ -14,7 +14,7 @@
       content="#0F0F12"
       media="(prefers-color-scheme: dark)"
     />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
       content="Momentum - 心理学驱动的专注力应用，帮助您建立高效的工作习惯，通过任务链和专注模式提升生产力。"
@@ -24,6 +24,10 @@
     <!-- 移动端性能优化：100%使用系统字体，节省556KB字体下载，显著提升FCP/LCP -->
     <style>
       :root {
+        --safe-area-top: env(safe-area-inset-top);
+        --safe-area-bottom: env(safe-area-inset-bottom);
+        --safe-area-left: env(safe-area-inset-left);
+        --safe-area-right: env(safe-area-inset-right);
         --font-sans:
           -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         --font-chinese:

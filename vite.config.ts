@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+const isTauri = !!process.env.TAURI_ENV_PLATFORM;
+
 // 自定义插件：性能优化（预连接 + 首屏样式）
 function performanceOptimizations() {
   let supabaseUrl: string | undefined;
@@ -37,53 +39,59 @@ export default defineConfig({
   plugins: [
     performanceOptimizations(),
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: [
-        'favicon.svg',
-        'apple-touch-icon.png',
-        'icons/icon-192.png',
-        'icons/icon-512.png',
-      ],
-      manifest: {
-        name: 'Momentum - 心理学驱动的专注力应用',
-        short_name: 'Momentum',
-        description: '帮助您建立高效的工作习惯，通过任务链和专注模式提升生产力',
-        lang: 'zh-CN',
-        theme_color: '#6366F1',
-        background_color: '#0F0F12',
-        display: 'standalone',
-        start_url: '/',
-        scope: '/',
-        icons: [
-          {
-            src: 'icons/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable',
-          },
-          {
-            src: 'icons/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable',
-          },
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api',
-              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+    // Tauri 构建时禁用 PWA（Service Worker 与 Tauri WebView 冲突）
+    ...(!isTauri
+      ? [
+          VitePWA({
+            registerType: 'autoUpdate',
+            includeAssets: [
+              'favicon.svg',
+              'apple-touch-icon.png',
+              'icons/icon-192.png',
+              'icons/icon-512.png',
+            ],
+            manifest: {
+              name: 'Momentum - 心理学驱动的专注力应用',
+              short_name: 'Momentum',
+              description:
+                '帮助您建立高效的工作习惯，通过任务链和专注模式提升生产力',
+              lang: 'zh-CN',
+              theme_color: '#6366F1',
+              background_color: '#0F0F12',
+              display: 'standalone',
+              start_url: '/',
+              scope: '/',
+              icons: [
+                {
+                  src: 'icons/icon-192.png',
+                  sizes: '192x192',
+                  type: 'image/png',
+                  purpose: 'any maskable',
+                },
+                {
+                  src: 'icons/icon-512.png',
+                  sizes: '512x512',
+                  type: 'image/png',
+                  purpose: 'any maskable',
+                },
+              ],
             },
-          },
-        ],
-      },
-    }),
+            workbox: {
+              globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+              runtimeCaching: [
+                {
+                  urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+                  handler: 'NetworkFirst',
+                  options: {
+                    cacheName: 'supabase-api',
+                    expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+                  },
+                },
+              ],
+            },
+          }),
+        ]
+      : []),
     // Bundle 分析工具 - 运行 npm run build 后查看 stats.html
     visualizer({
       filename: 'stats.html',
@@ -92,6 +100,11 @@ export default defineConfig({
       brotliSize: true,
     }),
   ],
+  server: {
+    host: isTauri ? '0.0.0.0' : undefined,
+    port: 5173,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       // 优化 lucide-react barrel file 导入

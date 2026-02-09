@@ -71,3 +71,9 @@ manim/__pycache__/
 manim/*.jpg
 manim/*.png
 manim/*.mp4
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+src-tauri/icons/
+src-tauri/.tauri-private.key
