@@ -32,7 +32,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 鐙傝祵妯″紡鐩稿叧鐘舵€?
+  // 赌博模式相关状态
   const [gamblingSettings, setGamblingSettings] = useState<GamblingSettings>({
     gambling_mode_enabled: false,
     daily_bet_limit: null,
@@ -62,7 +62,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         setError(
           safeDetail ??
             tr(
-              '鑾峰彇鐢ㄦ埛淇℃伅澶辫触锛岃閲嶈瘯锛堣鎯呰鎺у埗鍙帮級',
+              '获取用户信息失败，请重试（详情见控制台）',
               'Failed to load user info. Check the console for details, then try again.',
             ),
         );
@@ -77,13 +77,13 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         undefined,
         normalizeUnknownError(err),
       );
-      setError(tr('鑾峰彇鐢ㄦ埛淇℃伅澶辫触', 'Failed to load user info'));
+      setError(tr('获取用户信息失败', 'Failed to load user info'));
     } finally {
       setLoading(false);
     }
   }, [storage, language, tr]);
 
-  // 鍔犺浇鐙傝祵妯″紡璁剧疆
+  // 加载赌博模式设置
   const loadGamblingSettings = useCallback(async () => {
     if (storage.kind !== 'supabase') return;
     try {
@@ -97,7 +97,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         setGamblingError(
           safeDetail ??
             tr(
-              '鑾峰彇璁剧疆澶辫触锛岃閲嶈瘯锛堣鎯呰鎺у埗鍙帮級',
+              '获取设置失败，请重试（详情见控制台）',
               'Failed to load settings. Check the console for details, then try again.',
             ),
         );
@@ -111,7 +111,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         undefined,
         normalizeUnknownError(err),
       );
-      setGamblingError(tr('鑾峰彇璁剧疆澶辫触', 'Failed to load settings'));
+      setGamblingError(tr('获取设置失败', 'Failed to load settings'));
     }
   }, [storage, language, tr]);
 
@@ -128,7 +128,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     }
   }, [isOpen, storage.kind, loadUser, loadGamblingSettings]);
 
-  // 鍒囨崲鐙傝祵妯″紡
+  // 切换赌博模式
   const handleGamblingToggle = async () => {
     if (storage.kind !== 'supabase') return;
     setGamblingLoading(true);
@@ -147,7 +147,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         setGamblingError(
           safeDetail ??
             tr(
-              '璁剧疆鏇存柊澶辫触锛岃閲嶈瘯锛堣鎯呰鎺у埗鍙帮級',
+              '设置更新失败，请重试（详情见控制台）',
               'Failed to update settings. Check the console for details, then try again.',
             ),
         );
@@ -165,7 +165,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             : tr('Gambling mode disabled', 'Gambling mode disabled'),
         );
 
-        // 3绉掑悗娓呴櫎鎴愬姛娑堟伅
+        // 3 秒后清除成功消息
         setTimeout(() => setGamblingSuccess(null), 3000);
       } else {
         const safeDetail = getSafeErrorDetail(
@@ -175,7 +175,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         setGamblingError(
           safeDetail ??
             tr(
-              '璁剧疆鏇存柊澶辫触锛岃閲嶈瘯锛堣鎯呰鎺у埗鍙帮級',
+              '设置更新失败，请重试（详情见控制台）',
               'Failed to update settings. Check the console for details, then try again.',
             ),
         );
@@ -191,7 +191,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setGamblingError(
         safeDetail ??
           tr(
-            '璁剧疆鏇存柊澶辫触锛岃閲嶈瘯锛堣鎯呰鎺у埗鍙帮級',
+            '设置更新失败，请重试（详情见控制台）',
             'Failed to update settings. Check the console for details, then try again.',
           ),
       );
@@ -252,8 +252,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
         <p className="font-chinese text-gray-600 dark:text-slate-400">
           {tr(
-            '褰撳墠浣跨敤鏈湴瀛樺偍妯″紡锛屾棤闇€璐﹀彿鐧诲綍',
-            'Using local storage 鈥?no account required.',
+            '当前使用本地存储模式，无需账号登录',
+            'Using local storage - no account required.',
           )}
         </p>
       </div>
@@ -265,7 +265,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
         </div>
         <p className="font-chinese text-gray-600 dark:text-slate-400">
-          {tr('姝ｅ湪鑾峰彇璐﹀彿淇℃伅...', 'Loading account...')}
+          {tr('正在获取账号信息...', 'Loading account...')}
         </p>
       </div>
     );
@@ -281,10 +281,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         <button
           type="button"
           onClick={loadUser}
-          aria-label={tr('閲嶈瘯鍔犺浇鐢ㄦ埛淇℃伅', 'Retry loading user info')}
+          aria-label={tr('重试加载用户信息', 'Retry loading user info')}
           className="font-chinese font-medium text-primary-500 transition-colors hover:text-primary-600"
         >
-          {tr('閲嶈瘯', 'Retry')}
+          {tr('重试', 'Retry')}
         </button>
       </div>
     );
@@ -330,7 +330,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       >
         <AccountModalHeader
           title={t('settings.title')}
-          closeLabel={tr('鍏抽棴', 'Close')}
+          closeLabel={tr('关闭', 'Close')}
           onClose={onClose}
         />
 

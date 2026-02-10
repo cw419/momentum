@@ -68,10 +68,17 @@ function createSupabaseStorage(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderAccountModal(
-  storage: ReturnType<typeof createSupabaseStorage>,
-  onClose = vi.fn(),
-) {
+function createLocalStorage() {
+  return {
+    kind: 'local' as const,
+  };
+}
+
+type TestStorage =
+  | ReturnType<typeof createSupabaseStorage>
+  | ReturnType<typeof createLocalStorage>;
+
+function renderAccountModal(storage: TestStorage, onClose = vi.fn()) {
   render(
     <I18nProvider>
       <StorageProvider storage={storage as any}>
@@ -85,6 +92,26 @@ function renderAccountModal(
 describe('AccountModal behavior', () => {
   beforeEach(() => {
     localStorage.setItem('language', 'en');
+  });
+
+  it('renders local-mode copy in english without garbled characters', () => {
+    localStorage.setItem('language', 'en');
+    renderAccountModal(createLocalStorage());
+
+    expect(
+      screen.getByText('Using local storage - no account required.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+  });
+
+  it('renders local-mode copy in chinese without garbled characters', () => {
+    localStorage.setItem('language', 'zh');
+    renderAccountModal(createLocalStorage());
+
+    expect(
+      screen.getByText('当前使用本地存储模式，无需账号登录'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '关闭' })).toBeInTheDocument();
   });
 
   it('shows loading first and then renders user content after successful fetch', async () => {

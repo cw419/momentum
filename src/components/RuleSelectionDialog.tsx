@@ -1,6 +1,6 @@
-﻿/**
- * 瑙勫垯閫夋嫨瀵硅瘽妗嗙粍浠讹紙Container锛?
- * 鐢ㄤ簬鍦ㄦ殏鍋滄垨鎻愬墠瀹屾垚浠诲姟鏃堕€夋嫨閫傜敤鐨勪緥澶栬鍒欍€?
+/**
+ * Rule selection dialog container.
+ * Lets users select applicable exception rules for pause/early completion flows.
  */
 
 import React, {
@@ -149,7 +149,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       } catch (err) {
         logger.error(
           'RULE_SELECTION',
-          '鑾峰彇瑙勫垯澶辫触',
+          '\u83b7\u53d6\u89c4\u5219\u5931\u8d25',
           { chainId, actionType: action },
           normalizeUnknownError(err),
         );
@@ -176,7 +176,10 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
       setRules(chainRules);
     } catch (err) {
       const safe = getSafeErrorDetailFromUnknown(err, language);
-      setError(safe ?? tr('鍔犺浇瑙勫垯澶辫触', 'Failed to load rules'));
+      setError(
+        safe ??
+          tr('\u52a0\u8f7d\u89c4\u5219\u5931\u8d25', 'Failed to load rules'),
+      );
     } finally {
       setLoading(false);
     }
@@ -251,7 +254,7 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
     async (rule: ExceptionRule) => {
       try {
         if (isDev) {
-          logger.debug('RULE_SELECTION', '閫夋嫨瑙勫垯', {
+          logger.debug('RULE_SELECTION', '\u9009\u62e9\u89c4\u5219', {
             ruleId: rule.id,
             actionType,
           });
@@ -266,7 +269,10 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         onRuleSelected(rule, pauseOptions);
       } catch (err) {
         const safe = getSafeErrorDetailFromUnknown(err, language);
-        setError(safe ?? tr('閫夋嫨瑙勫垯澶辫触', 'Failed to select rule'));
+        setError(
+          safe ??
+            tr('\u9009\u62e9\u89c4\u5219\u5931\u8d25', 'Failed to select rule'),
+        );
       }
     },
     [actionType, duration, isIndefinite, language, onRuleSelected, tr],
@@ -319,7 +325,10 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
         onCreateNewRule(cleanName, ruleType);
       } catch (err) {
         const safe = getSafeErrorDetailFromUnknown(err, language);
-        setError(safe ?? tr('鍒涘缓瑙勫垯澶辫触', 'Failed to create rule'));
+        setError(
+          safe ??
+            tr('\u521b\u5efa\u89c4\u5219\u5931\u8d25', 'Failed to create rule'),
+        );
       }
     },
     [

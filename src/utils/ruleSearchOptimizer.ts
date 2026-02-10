@@ -1,6 +1,6 @@
 /**
- * 鐟欏嫬鍨幖婊呭偍娴兼ê瀵查崳?
- * 閹绘劒绶甸弲楦垮厴閹兼粎鍌ㄩ妴浣哥紦鐠侇喖鎷伴幀褑鍏樻导妯哄閸旂喕鍏?
+ * Rule search optimizer facade.
+ * Coordinates indexing, caching, duplicate detection, and suggestions.
  */
 
 import { ExceptionRuleType } from '../types';
@@ -26,7 +26,7 @@ export class RuleSearchOptimizer {
   private readonly DEBOUNCE_DELAY = 200;
 
   updateIndex(rules: ExceptionRule[]): void {
-    this.cache.clearCache(); // index 鏇存柊鏃讹紝蹇呴』娓呯紦瀛橀伩鍏嶈鍛戒腑
+    this.cache.clearCache(); // Clear stale cache entries after index updates.
     this.index.updateIndex(rules);
   }
 
