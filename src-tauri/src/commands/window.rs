@@ -1,16 +1,24 @@
 #[tauri::command]
 pub async fn set_fullscreen(
-    window: tauri::WebviewWindow,
-    fullscreen: bool,
+    #[allow(unused_variables)] window: tauri::WebviewWindow,
+    #[allow(unused_variables)] fullscreen: bool,
 ) -> Result<(), String> {
-    window
-        .set_fullscreen(fullscreen)
-        .map_err(|e| e.to_string())
+    #[cfg(desktop)]
+    {
+        window
+            .set_fullscreen(fullscreen)
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
 pub async fn minimize_to_tray(
-    window: tauri::WebviewWindow,
+    #[allow(unused_variables)] window: tauri::WebviewWindow,
 ) -> Result<(), String> {
-    window.hide().map_err(|e| e.to_string())
+    #[cfg(desktop)]
+    {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }

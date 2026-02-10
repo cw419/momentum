@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import { Dashboard } from '../../components/Dashboard';
 import { useI18n } from '../../i18n';
+import { MobileBottomNav } from '../../components/mobile/MobileBottomNav';
+import { isTauriMobile } from '../../utils/platform';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { LoadingFallback } from './LoadingFallback';
 import type { AppShellViewProps } from './types';
@@ -64,6 +66,7 @@ export function AppShellView({
   handleReorderUnit,
   handleBetPlaced,
   handleBetCancelled,
+  onNavigateToView,
   petDomain,
 }: AppShellViewProps) {
   const { tr } = useI18n();
@@ -274,7 +277,16 @@ export function AppShellView({
   };
 
   return (
-    <>
+    <div
+      style={
+        isTauriMobile
+          ? {
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }
+          : undefined
+      }
+    >
       <a
         href="#main"
         onClick={() => document.getElementById('main')?.focus()}
@@ -320,6 +332,17 @@ export function AppShellView({
           />
         </Suspense>
       )}
-    </>
+
+      {isTauriMobile && (
+        <MobileBottomNav
+          currentView={state.currentView}
+          hasActiveSession={!!state.activeSession}
+          onNavigate={onNavigateToView}
+          onOpenSettings={() => {
+            /* TODO: open AccountModal */
+          }}
+        />
+      )}
+    </div>
   );
 }

@@ -23,3 +23,12 @@ export interface PlatformFileAdapter {
   saveFile(data: string, defaultName: string): Promise<boolean>;
   openFile(extensions: string[]): Promise<string | null>;
 }
+
+export type HapticImpactStyle = 'light' | 'medium' | 'heavy';
+export type HapticNotificationType = 'success' | 'warning' | 'error';
+
+export interface PlatformHapticsAdapter {
+  impact(style: HapticImpactStyle): Promise<void>;
+  notification(type: HapticNotificationType): Promise<void>;
+  selectionChanged(): Promise<void>;
+}

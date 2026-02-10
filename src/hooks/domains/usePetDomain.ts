@@ -28,6 +28,7 @@ import type {
 import { useStorage } from '../../storage/useStorage';
 import { logger } from '../../utils/logger';
 import { normalizeUnknownError } from '../../utils/errors/normalizeError';
+import { isTauriMobile } from '../../utils/platform';
 import {
   DEFAULT_PET_CONFIG,
   calculateDecay,
@@ -95,7 +96,13 @@ export function usePetDomain(): UsePetDomainReturn {
   // Create new pet
   const createPet = useCallback(
     async (name: string): Promise<PetState> => {
-      const newPet = createNewPet(name);
+      const mobileOptions = isTauriMobile
+        ? {
+            position: { x: 65, y: 65 },
+            minimizedPosition: { x: 82, y: 8 },
+          }
+        : undefined;
+      const newPet = createNewPet(name, mobileOptions);
       await storage.savePetState(newPet);
       setPet(newPet);
       setMood(calculateMood(newPet));

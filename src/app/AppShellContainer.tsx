@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type { AppState } from '../types';
+import type { AppState, ViewState } from '../types';
 import { useStorage } from '../storage/useStorage';
 import { useSafeSaveChains } from '../hooks/domains/useSafeSaveChains';
 import { useChainsDomain } from '../hooks/domains/useChainsDomain';
@@ -214,6 +214,20 @@ export default function AppShellContainer() {
     }));
   };
 
+  const onNavigateToView = useCallback(
+    (view: ViewState) => {
+      setState((prev) => ({
+        ...prev,
+        currentView: view,
+        ...(view === 'dashboard' && {
+          editingChain: null,
+          viewingChainId: null,
+        }),
+      }));
+    },
+    [setState],
+  );
+
   return (
     <AppShellView
       state={state}
@@ -263,6 +277,7 @@ export default function AppShellContainer() {
       handleReorderUnit={handleReorderUnit}
       handleBetPlaced={handleBetPlaced}
       handleBetCancelled={handleBetCancelled}
+      onNavigateToView={onNavigateToView}
       petDomain={petDomain}
     />
   );

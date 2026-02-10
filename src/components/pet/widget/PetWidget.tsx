@@ -45,6 +45,7 @@ export function PetWidget({
     hasDraggedRef,
     handleFeed,
     handleMouseDown,
+    handleTouchStart,
     handleCreatePet,
     handleMinimize,
     handleExpand,
@@ -95,17 +96,19 @@ export function PetWidget({
       {pet && currentPosition && (
         <div
           ref={widgetRef}
-          className={`fixed z-40 select-none ${isDragging ? 'transition-none' : 'transition duration-200'} ${pet.isMinimized ? '' : 'w-52'} ${isDragging ? 'scale-105 cursor-grabbing' : 'cursor-default'} `}
+          className={`fixed z-40 select-none ${isDragging ? 'transition-none' : 'transition duration-200'} ${pet.isMinimized ? '' : 'w-36 sm:w-44 md:w-52'} ${isDragging ? 'scale-105 cursor-grabbing' : 'cursor-default'} `}
           style={{
             left: `${currentPosition.x}%`,
             top: `${currentPosition.y}%`,
             willChange: isDragging ? 'left, top' : undefined,
+            touchAction: 'none',
           }}
         >
           {pet.isMinimized ? (
             <button
               type="button"
               onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
               onClick={(event) => {
                 if (!hasDraggedRef.current) {
                   event.stopPropagation();
@@ -124,6 +127,7 @@ export function PetWidget({
                 <button
                   type="button"
                   onMouseDown={handleMouseDown}
+                  onTouchStart={handleTouchStart}
                   className="min-w-0 flex-1 cursor-grab text-left active:cursor-grabbing"
                   aria-label={tr('拖拽移动宠物', 'Drag to move pet')}
                   title={tr('拖拽移动', 'Drag to move')}

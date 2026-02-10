@@ -244,7 +244,13 @@ export function getLevelProgress(
 /**
  * Create a new pet with default values
  */
-export function createNewPet(name: string): PetState {
+export function createNewPet(
+  name: string,
+  options?: {
+    position?: { x: number; y: number };
+    minimizedPosition?: { x: number; y: number };
+  },
+): PetState {
   const now = new Date();
   return {
     ...INITIAL_PET_STATE,
@@ -254,5 +260,9 @@ export function createNewPet(name: string): PetState {
     lastFedAt: now,
     lastInteractedAt: now,
     lastDecayCalculatedAt: now,
+    ...(options?.position && { position: options.position }),
+    ...(options?.minimizedPosition && {
+      minimizedPosition: options.minimizedPosition,
+    }),
   };
 }

@@ -12,6 +12,7 @@
     "dialog:allow-open",
     "fs:default",
     "process:default",
-    "os:default"
+    "os:default",
+    "haptics:default"
   ]
 }

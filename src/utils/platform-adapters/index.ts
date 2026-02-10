@@ -1,8 +1,9 @@
-import { isTauri } from '../platform';
+import { isTauri, isTauriMobile } from '../platform';
 import type {
   PlatformNotificationAdapter,
   PlatformWindowAdapter,
   PlatformFileAdapter,
+  PlatformHapticsAdapter,
 } from './types';
 
 export type { NotificationPayload } from './types';
@@ -10,11 +11,13 @@ export type {
   PlatformNotificationAdapter,
   PlatformWindowAdapter,
   PlatformFileAdapter,
+  PlatformHapticsAdapter,
 };
 
 let _notification: PlatformNotificationAdapter | null = null;
 let _window: PlatformWindowAdapter | null = null;
 let _file: PlatformFileAdapter | null = null;
+let _haptics: PlatformHapticsAdapter | null = null;
 
 export async function getNotificationAdapter(): Promise<PlatformNotificationAdapter> {
   if (_notification) return _notification;
@@ -50,4 +53,16 @@ export async function getFileAdapter(): Promise<PlatformFileAdapter> {
     _file = webFileAdapter;
   }
   return _file;
+}
+
+export async function getHapticsAdapter(): Promise<PlatformHapticsAdapter> {
+  if (_haptics) return _haptics;
+  if (isTauriMobile) {
+    const { tauriHapticsAdapter } = await import('./tauri-haptics');
+    _haptics = tauriHapticsAdapter;
+  } else {
+    const { webHapticsAdapter } = await import('./web-haptics');
+    _haptics = webHapticsAdapter;
+  }
+  return _haptics;
 }

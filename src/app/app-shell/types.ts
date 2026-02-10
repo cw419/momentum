@@ -10,6 +10,7 @@ import type {
   RSIPNodeGroup,
   RSIPRunRecord,
   RSIPTaskLink,
+  ViewState,
 } from '../../types';
 import type { BetPlacementResult } from '../../domain/betting';
 import type {
@@ -139,6 +140,8 @@ export interface AppShellViewProps {
 
   handleBetPlaced: (betResult: BetPlacementResult) => Promise<void>;
   handleBetCancelled: () => Promise<void>;
+
+  onNavigateToView: (view: ViewState) => void;
 
   petDomain: {
     pet: PetState | null;

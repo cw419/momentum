@@ -1,7 +1,5 @@
 import type {
   PlatformNotificationAdapter,
-  PlatformWindowAdapter,
-  PlatformFileAdapter,
   NotificationPayload,
 } from './types';
 import { invokeCommand } from '../tauri-bridge';
