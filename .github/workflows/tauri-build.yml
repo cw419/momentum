@@ -69,13 +69,7 @@ jobs:
           name: windows-artifacts
           path: |
             src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/msi/*.msi.sig
-            src-tauri/target/release/bundle/msi/*.msi.zip
-            src-tauri/target/release/bundle/msi/*.msi.zip.sig
             src-tauri/target/release/bundle/nsis/*-setup.exe
-            src-tauri/target/release/bundle/nsis/*-setup.exe.sig
-            src-tauri/target/release/bundle/nsis/*.nsis.zip
-            src-tauri/target/release/bundle/nsis/*.nsis.zip.sig
 
       - name: Upload artifacts (macOS)
         if: matrix.target == 'macos'
@@ -84,9 +78,6 @@ jobs:
           name: macos-artifacts
           path: |
             src-tauri/target/release/bundle/dmg/*.dmg
-            src-tauri/target/release/bundle/macos/*.app
-            src-tauri/target/release/bundle/macos/*.app.tar.gz
-            src-tauri/target/release/bundle/macos/*.app.tar.gz.sig
 
       - name: Upload artifacts (Linux)
         if: matrix.target == 'linux'
@@ -96,9 +87,6 @@ jobs:
           path: |
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/appimage/*.AppImage.sig
-            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
-            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
 
   create-release:
     needs: build-desktop
@@ -120,7 +108,16 @@ jobs:
         with:
           draft: true
           name: 'Momentum ${{ github.ref_name }}'
-          body: 'See the assets to download and install this version.'
+          body: |
+            ## Download
+
+            | Platform | File | Notes |
+            |----------|------|-------|
+            | **Windows** | `Momentum_*_x64-setup.exe` | Recommended for most users |
+            | **Windows** | `Momentum_*_x64_en-US.msi` | For IT/enterprise deployment |
+            | **macOS** | `Momentum_*_aarch64.dmg` | Apple Silicon (M1/M2/M3/M4) |
+            | **Linux** | `Momentum_*_amd64.AppImage` | Universal, no install needed |
+            | **Linux** | `Momentum_*_amd64.deb` | Debian/Ubuntu |
           files: artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
