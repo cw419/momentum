@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+﻿import type { Dispatch, SetStateAction } from 'react';
 import type { ActiveSession, AppState } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import type { SafelySaveChains } from '../useChainsDomain';
@@ -7,7 +7,7 @@ import {
   incrementGroupCompletionCount,
 } from '../../../utils/chainTree';
 import { logger } from '../../../utils/logger';
-import { notificationManager } from '../../../utils/notifications';
+import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import {
   isGroupExpired,
@@ -185,7 +185,7 @@ export function createStartChainHandler({
       chainsRevision: prev.chainsRevision + 1,
     }));
 
-    notificationManager.notifyTaskFailed(
+    void systemNotificationService.notifyTaskFailed(
       groupName,
       tr('任务群已超时', 'Group has expired'),
     );
@@ -255,7 +255,7 @@ export function createStartChainHandler({
     const updatedGroup = updatedChains.find((chain) => chain.id === groupId);
 
     if (updatedGroup) {
-      notificationManager.notifyTaskCompleted(
+      void systemNotificationService.notifyTaskCompleted(
         updatedGroup.name,
         updatedGroup.totalCompletions,
         tr(
@@ -322,7 +322,7 @@ export function createStartChainHandler({
     if (nextUnit) {
       logger.debug(
         'SESSIONS',
-        `任务群 ${groupChain.name} 开始下一个任务: ${nextUnit.name}`,
+        `任务群 ${groupChain.name} 开始下一个任务 ${nextUnit.name}`,
       );
       await handleStartChain(nextUnit.id);
       return;
@@ -354,7 +354,7 @@ export function createStartChainHandler({
       : state.chains;
 
     if (existingScheduledSession) {
-      notificationManager.notifyTaskCompleted(
+      void systemNotificationService.notifyTaskCompleted(
         chain.name,
         chain.auxiliaryStreak + 1,
         tr('预约已完成', 'Schedule completed'),
@@ -393,3 +393,6 @@ export function createStartChainHandler({
 
   return handleStartChain;
 }
+
+
+

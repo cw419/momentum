@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 
 interface UseRSIPTimersResult {
   now: number;
@@ -25,23 +26,15 @@ export function useRSIPTimers(
     Object.entries(activeTimers).forEach(([id, endsAt]) => {
       if (now >= endsAt) {
         setActiveTimers((prev) => {
-          const copy = { ...prev } as Record<string, number>;
+          const copy = { ...prev };
           delete copy[id];
           return copy;
         });
-        try {
-          if ('Notification' in window) {
-            if (Notification.permission === 'granted') {
-              new Notification(tr('计时完成', 'Timer complete'), {
-                body: tr('RSIP 定式计时已结束', 'RSIP timer has ended'),
-              });
-            } else if (Notification.permission !== 'denied') {
-              Notification.requestPermission();
-            }
-          }
-        } catch {
-          // ignore notification errors
-        }
+
+        void systemNotificationService.notifyTimerCompleted(
+          tr('计时完成', 'Timer complete'),
+          tr('RSIP 定式计时已结束', 'RSIP timer has ended'),
+        );
       }
     });
   }, [now, activeTimers, tr]);
@@ -63,9 +56,7 @@ export function useRSIPTimers(
   const handleStartTimer = useCallback((nodeId: string, minutes: number) => {
     const endsAt = Date.now() + minutes * 60 * 1000;
     setActiveTimers((prev) => ({ ...prev, [nodeId]: endsAt }));
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+    void systemNotificationService.requestPermission('feature');
   }, []);
 
   const handleStopTimerRequest = useCallback((_nodeId: string) => {
@@ -90,3 +81,4 @@ export function useRSIPTimers(
     confirmStopTimer,
   };
 }
+

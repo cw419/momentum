@@ -7,6 +7,7 @@ import {
   getSafeErrorDetail,
   getSafeErrorDetailFromUnknown,
 } from '../../../utils/errorMessage';
+import { getPlatformCapabilityCenter } from '../../../utils/platform-capabilities/center';
 import {
   removeRuleById,
   replaceRuleById,
@@ -39,6 +40,7 @@ export function useRuleManagerActions(args: UseRuleManagerActionsArgs) {
   const [optimisticUpdates, setOptimisticUpdates] = useState<
     Map<string, ExceptionRule>
   >(new Map());
+  const capabilityCenter = getPlatformCapabilityCenter();
 
   const handleCreateRule = useCallback(async () => {
     const operationId = `create-rule-${Date.now()}`;
@@ -265,21 +267,14 @@ export function useRuleManagerActions(args: UseRuleManagerActionsArgs) {
   const handleExportRules = useCallback(async () => {
     try {
       const exportData = await exceptionRuleManager.exportRules(true);
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `exception-rules-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      await capabilityCenter.file.saveFile(
+        JSON.stringify(exportData, null, 2),
+        `exception-rules-${new Date().toISOString().split('T')[0]}.json`,
+      );
     } catch {
       setError(tr('导出规则失败', 'Failed to export rules'));
     }
-  }, [setError, tr]);
+  }, [capabilityCenter.file, setError, tr]);
 
   return {
     deleteConfirmationRule,
@@ -294,3 +289,5 @@ export function useRuleManagerActions(args: UseRuleManagerActionsArgs) {
     optimisticUpdates,
   };
 }
+
+

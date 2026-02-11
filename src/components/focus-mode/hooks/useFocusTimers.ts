@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ActiveSession, Chain } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
-import { notificationManager } from '../../../utils/notifications';
+import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { forwardTimerManager } from '../../../utils/forwardTimer';
 import { soundManager } from '../../../utils/soundManager';
 import { useI18n } from '../../../i18n';
@@ -129,7 +129,7 @@ export function useFocusTimers({
       ) {
         hasShownWarningRef.current = true;
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        notificationManager.notifyTaskWarning(
+        void systemNotificationService.notifyTaskWarning(
           chain.name,
           tr(`${minutes}分钟`, `${minutes} min`),
         );
@@ -160,3 +160,5 @@ export function useFocusTimers({
     minimumCountdown,
   };
 }
+
+

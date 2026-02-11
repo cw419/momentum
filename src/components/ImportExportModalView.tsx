@@ -24,6 +24,7 @@ interface ImportExportModalViewProps {
   onImportDataChange: (data: string) => void;
   onImportOptionsChange: (options: ImportExportImportOptions) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onOpenFile?: () => void;
   onExport: () => void;
   onImport: () => void;
   onClose: () => void;
@@ -42,6 +43,7 @@ export const ImportExportModalView: React.FC<ImportExportModalViewProps> = ({
   onImportDataChange,
   onImportOptionsChange,
   onFileUpload,
+  onOpenFile,
   onExport,
   onImport,
   onClose,
@@ -96,6 +98,7 @@ export const ImportExportModalView: React.FC<ImportExportModalViewProps> = ({
             onImportDataChange={onImportDataChange}
             onImportOptionsChange={onImportOptionsChange}
             onFileUpload={onFileUpload}
+            onOpenFile={onOpenFile}
             onImport={onImport}
             tr={tr}
           />
@@ -190,6 +193,7 @@ interface ImportTabProps {
   onImportDataChange: (data: string) => void;
   onImportOptionsChange: (options: ImportExportImportOptions) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onOpenFile?: () => void;
   onImport: () => void;
   tr: (zh: string, en: string) => string;
 }
@@ -204,12 +208,14 @@ const ImportTab: React.FC<ImportTabProps> = ({
   onImportDataChange,
   onImportOptionsChange,
   onFileUpload,
+  onOpenFile,
   onImport,
   tr,
 }) => (
   <div className="space-y-6">
     <ImportInfoBox tr={tr} />
     <FileUploadSection onFileUpload={onFileUpload} tr={tr} />
+    {onOpenFile && <SystemFilePickerButton onOpenFile={onOpenFile} tr={tr} />}
     <ManualInputSection
       importData={importData}
       onImportDataChange={onImportDataChange}
@@ -233,4 +239,17 @@ const ImportTab: React.FC<ImportTabProps> = ({
       tr={tr}
     />
   </div>
+);
+
+const SystemFilePickerButton: React.FC<{
+  onOpenFile: () => void;
+  tr: (zh: string, en: string) => string;
+}> = ({ onOpenFile, tr }) => (
+  <button
+    type="button"
+    onClick={onOpenFile}
+    className="rounded-xl border border-gray-200 px-4 py-2 font-chinese text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+  >
+    {tr('使用系统文件选择器', 'Use system file picker')}
+  </button>
 );

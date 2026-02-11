@@ -14,6 +14,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { AccountModalHeader } from './account-modal/AccountModalHeader';
 import { AccountModalLanguageSection } from './account-modal/AccountModalLanguageSection';
 import { AccountModalUserContent } from './account-modal/AccountModalUserContent';
+import { NotificationToggle } from './NotificationToggle';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -342,6 +343,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             setLanguage={setLanguage}
             t={t}
           />
+
+          <NotificationToggle placement="settings" />
 
           {accountContent}
         </div>

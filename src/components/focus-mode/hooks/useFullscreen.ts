@@ -1,52 +1,90 @@
 import { useCallback, useEffect, useState } from 'react';
 import { logger } from '../../../utils/logger';
+import { getPlatformCapabilityCenter } from '../../../utils/platform-capabilities/center';
+import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 
 export function useFullscreen() {
-  const [isFullscreen, setIsFullscreen] = useState(() => {
-    if (typeof document === 'undefined') return false;
-    return !!document.fullscreenElement;
-  });
+  const capabilityCenter = getPlatformCapabilityCenter();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canSetFullscreen, setCanSetFullscreen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCapabilities = async () => {
+      try {
+        const capabilities = await capabilityCenter.getCapabilities();
+        if (!active) return;
+        setCanSetFullscreen(capabilities.window.canSetFullscreen);
+        if (typeof document !== 'undefined') {
+          setIsFullscreen(Boolean(document.fullscreenElement));
+        }
+      } catch (error) {
+        logger.error(
+          'FOCUS_MODE',
+          'Failed to load fullscreen capabilities',
+          undefined,
+          normalizeUnknownError(error),
+        );
+      }
+    };
+
+    void loadCapabilities();
+
+    return () => {
+      active = false;
+    };
+  }, [capabilityCenter]);
 
   const enterFullscreen = useCallback(async () => {
-    try {
-      if (typeof document === 'undefined') return;
-      await document.documentElement.requestFullscreen();
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('FOCUS_MODE', 'Failed to enter fullscreen', undefined, err);
+    if (!canSetFullscreen) return;
+
+    const ok = await capabilityCenter.window.setFullscreen(true);
+    if (ok) {
+      setIsFullscreen(true);
+      return;
     }
-  }, []);
+
+    logger.warn(
+      'FOCUS_MODE',
+      'Failed to enter fullscreen via capability center',
+    );
+  }, [canSetFullscreen, capabilityCenter]);
 
   const exitFullscreen = useCallback(async () => {
-    try {
-      if (typeof document === 'undefined') return;
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      }
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('FOCUS_MODE', 'Failed to exit fullscreen', undefined, err);
+    if (!canSetFullscreen) return;
+
+    const ok = await capabilityCenter.window.setFullscreen(false);
+    if (ok) {
+      setIsFullscreen(false);
+      return;
     }
-  }, []);
+
+    logger.warn(
+      'FOCUS_MODE',
+      'Failed to exit fullscreen via capability center',
+    );
+  }, [canSetFullscreen, capabilityCenter]);
 
   const toggleFullscreen = useCallback(() => {
-    if (typeof document === 'undefined') return;
-    if (document.fullscreenElement) {
+    if (!canSetFullscreen) return;
+    if (isFullscreen) {
       void exitFullscreen();
     } else {
       void enterFullscreen();
     }
-  }, [enterFullscreen, exitFullscreen]);
+  }, [canSetFullscreen, enterFullscreen, exitFullscreen, isFullscreen]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      setIsFullscreen(Boolean(document.fullscreenElement));
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && document.fullscreenElement) {
+      if (!canSetFullscreen) return;
+      if (e.key === 'Escape' && isFullscreen) {
         void exitFullscreen();
       } else if (e.key === 'F11') {
         e.preventDefault();
@@ -61,7 +99,8 @@ export function useFullscreen() {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [exitFullscreen, toggleFullscreen]);
+  }, [canSetFullscreen, exitFullscreen, isFullscreen, toggleFullscreen]);
 
   return { isFullscreen, enterFullscreen, exitFullscreen, toggleFullscreen };
 }
+

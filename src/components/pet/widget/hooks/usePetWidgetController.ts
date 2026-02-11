@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FeedResult, PetMood, PetState } from '../../../../types/pet';
 import { toast } from '../../../../utils/toast';
-import { getHapticsAdapter } from '../../../../utils/platform-adapters';
+import { getPlatformCapabilityCenter } from '../../../../utils/platform-capabilities/center';
 
 export function usePetWidgetController(params: {
   pet: PetState | null;
@@ -34,6 +34,7 @@ export function usePetWidgetController(params: {
   const [showCreationDialog, setShowCreationDialog] = useState(false);
   const [dismissedCreationDialog, setDismissedCreationDialog] = useState(false);
   const [isFeeding, setIsFeeding] = useState(false);
+  const capabilityCenter = getPlatformCapabilityCenter();
 
   const dragRef = useRef<{
     startX: number;
@@ -60,7 +61,7 @@ export function usePetWidgetController(params: {
     try {
       const result = await onFeedPet();
       if (result && result.hungerReduced > 0) {
-        getHapticsAdapter().then((h) => h.notification('success'));
+        void capabilityCenter.haptics.notification('success');
         toast.success(
           tr(
             `喂食成功！饱食度+${Math.round(result.hungerReduced)}`,
@@ -68,12 +69,12 @@ export function usePetWidgetController(params: {
           ),
         );
       } else if (result && result.hungerReduced === 0) {
-        toast.info(tr('宠物已经吃饱了~', 'Pet is already full~'));
+        toast.info(tr('宠物已经吃饱啦~', 'Pet is already full~'));
       }
     } finally {
       setIsFeeding(false);
     }
-  }, [isFeeding, onFeedPet, pet, tr]);
+  }, [capabilityCenter.haptics, isFeeding, onFeedPet, pet, tr]);
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent) => {
@@ -103,7 +104,7 @@ export function usePetWidgetController(params: {
       const touch = event.touches[0];
       setIsDragging(true);
       hasDraggedRef.current = false;
-      getHapticsAdapter().then((h) => h.impact('light'));
+      void capabilityCenter.haptics.impact('light');
 
       const currentPos = pet.isMinimized ? pet.minimizedPosition : pet.position;
       dragRef.current = {
@@ -113,7 +114,7 @@ export function usePetWidgetController(params: {
         initialY: currentPos.y,
       };
     },
-    [pet],
+    [capabilityCenter.haptics, pet],
   );
 
   const handleMouseMove = useCallback(
@@ -255,7 +256,7 @@ export function usePetWidgetController(params: {
     async (name: string) => {
       await onCreatePet(name);
       setShowCreationDialog(false);
-      toast.success(tr(`欢迎 ${name} 加入！`, `Welcome ${name}!`) + ' 🎉');
+      toast.success(tr(`欢迎 ${name} 加入！`, `Welcome ${name}!`) + ' 🎀');
     },
     [onCreatePet, tr],
   );
@@ -288,3 +289,4 @@ export function usePetWidgetController(params: {
     handleExpand,
   };
 }
+

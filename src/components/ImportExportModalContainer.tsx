@@ -17,6 +17,7 @@ import { logger } from '../utils/logger';
 import { useI18n, type Language } from '../i18n';
 import { getSafeErrorDetail } from '../utils/errorMessage';
 import { normalizeUnknownError } from '../utils/errors/normalizeError';
+import { getPlatformCapabilityCenter } from '../utils/platform-capabilities/center';
 import { ImportExportModalView } from './ImportExportModalView';
 import type { ImportStatus } from './ImportExportModalParts';
 
@@ -117,6 +118,7 @@ export const ImportExportModalContainer: React.FC<
   const { language, tr } = useI18n();
   const storage = useStorage();
   const isSupabase = storage.kind === 'supabase';
+  const capabilityCenter = getPlatformCapabilityCenter();
 
   const [activeTab, setActiveTab] = useState<'export' | 'import'>(
     chains.length === 0 ? 'import' : 'export',
@@ -147,16 +149,13 @@ export const ImportExportModalContainer: React.FC<
         });
 
       const dataStr = JSON.stringify(exportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `momentum-data-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const saved = await capabilityCenter.file.saveFile(
+        dataStr,
+        `momentum-data-${new Date().toISOString().split('T')[0]}.json`,
+      );
+      if (!saved) {
+        logger.warn('IMPORT_EXPORT', 'Export canceled or unsupported');
+      }
     } catch (error) {
       logger.error(
         'IMPORT_EXPORT',
@@ -165,7 +164,7 @@ export const ImportExportModalContainer: React.FC<
         normalizeUnknownError(error),
       );
     }
-  }, [chains, history, rsipNodes, rsipMeta, userPreferences]);
+  }, [capabilityCenter.file, chains, history, rsipNodes, rsipMeta, userPreferences]);
 
   const handleImport = useCallback(async () => {
     try {
@@ -246,6 +245,13 @@ export const ImportExportModalContainer: React.FC<
     [],
   );
 
+  const handleOpenFile = useCallback(async () => {
+    const content = await capabilityCenter.file.openFile(['json']);
+    if (content) {
+      setImportData(content);
+    }
+  }, [capabilityCenter.file]);
+
   const handleTabChange = useCallback((tab: 'export' | 'import') => {
     setActiveTab(tab);
   }, []);
@@ -274,6 +280,7 @@ export const ImportExportModalContainer: React.FC<
       onImportDataChange={handleImportDataChange}
       onImportOptionsChange={handleImportOptionsChange}
       onFileUpload={handleFileUpload}
+      onOpenFile={handleOpenFile}
       onExport={handleExport}
       onImport={handleImport}
       onClose={onClose}

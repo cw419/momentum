@@ -5,7 +5,7 @@ import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
 import { isSessionExpired } from '../../utils/time';
-import { notificationManager } from '../../utils/notifications';
+import { systemNotificationService } from '../../services/platform/SystemNotificationService';
 import { isGroupExpired, resetGroupProgress } from '../../utils/timeLimit';
 import { soundManager } from '../../utils/soundManager';
 
@@ -91,7 +91,7 @@ export function usePeriodicCleanup({
       for (const session of expiredSessions) {
         const chain = current.chains.find((c) => c.id === session.chainId);
         if (chain) {
-          notificationManager.notifyScheduleFailed(chain.name);
+          void systemNotificationService.notifyScheduleFailed(chain.name);
         }
       }
 

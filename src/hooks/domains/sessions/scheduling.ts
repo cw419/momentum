@@ -1,9 +1,9 @@
-import type { Dispatch, SetStateAction } from 'react';
+﻿import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, ScheduledSession } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import type { SafelySaveChains } from '../useChainsDomain';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
-import { notificationManager } from '../../../utils/notifications';
+import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { logger } from '../../../utils/logger';
 import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
@@ -119,7 +119,7 @@ export function createSchedulingHandlers({
       chainsRevision: prev.chainsRevision + 1,
     }));
 
-    notificationManager.notifyTaskCompleted(
+    void systemNotificationService.notifyTaskCompleted(
       chain.name,
       chain.auxiliaryStreak + 1,
       tr('预约已完成', 'Schedule completed'),
@@ -132,3 +132,6 @@ export function createSchedulingHandlers({
     handleCompleteBooking,
   };
 }
+
+
+

@@ -28,7 +28,7 @@ const DashboardTopBarComponent: React.FC<DashboardTopBarProps> = ({
       <Settings size={18} aria-hidden="true" />
       <span className="font-chinese text-sm">{settingsButtonText}</span>
     </button>
-    <NotificationToggle />
+    <NotificationToggle placement="topbar" />
     <ThemeToggle />
   </div>
 );

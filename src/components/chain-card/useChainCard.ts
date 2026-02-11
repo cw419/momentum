@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useChainCard hook - 封装 ChainCard 的状态和副作用逻辑
  */
 
@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { Chain, ScheduledSession, ChainTreeNode } from '../../types';
 import { getTimeRemaining } from '../../utils/time';
 import { getChainTypeConfig } from '../../utils/chainTree';
-import { notificationManager } from '../../utils/notifications';
+import { systemNotificationService } from '../../services/platform/SystemNotificationService';
 import { useStorage } from '../../storage/useStorage';
 import { soundManager } from '../../utils/soundManager';
 import { isDev } from '../../utils/env';
@@ -145,7 +145,7 @@ export function useChainCard({
       ) {
         setHasShownWarning(true);
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        notificationManager.notifyScheduleWarning(
+        void systemNotificationService.notifyScheduleWarning(
           chain.name,
           tr(`${minutes}分钟`, `${minutes} min`),
         );
@@ -153,7 +153,7 @@ export function useChainCard({
 
       if (remaining <= 0) {
         // 预约失败通知
-        notificationManager.notifyScheduleFailed(chain.name);
+        void systemNotificationService.notifyScheduleFailed(chain.name);
 
         // Play sound when timer reaches 0, but only once per session
         if (
@@ -223,3 +223,6 @@ export function useChainCard({
     handleCancelDelete,
   };
 }
+
+
+

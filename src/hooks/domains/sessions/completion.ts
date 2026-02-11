@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+﻿import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, CompletionHistory } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import type { SafelySaveChains } from '../useChainsDomain';
@@ -9,7 +9,7 @@ import {
 } from '../../../utils/chainTree';
 import { forwardTimerManager } from '../../../utils/forwardTimer';
 import { logger } from '../../../utils/logger';
-import { notificationManager } from '../../../utils/notifications';
+import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { emitPointsChanged } from '../../../utils/pointsEvents';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
@@ -102,7 +102,7 @@ function maybeIncrementGroupCycleCompletion(
     (chain) => chain.id === completedChain.parentId,
   );
   if (parentChain) {
-    notificationManager.notifyTaskCompleted(
+    void systemNotificationService.notifyTaskCompleted(
       parentChain.name,
       parentChain.currentStreak,
       tr('任务群完成一轮', 'Group completed a cycle'),
@@ -252,7 +252,7 @@ export function createCompletionHandlers({
 
     const completedAt = new Date();
     const newStreak = chain.currentStreak + 1;
-    notificationManager.notifyTaskCompleted(chain.name, newStreak);
+    void systemNotificationService.notifyTaskCompleted(chain.name, newStreak);
 
     const completionRecord: CompletionHistory = {
       chainId: chain.id,
@@ -387,3 +387,6 @@ export function createCompletionHandlers({
 
   return { handleCompleteSession, handleInterruptSession };
 }
+
+
+
