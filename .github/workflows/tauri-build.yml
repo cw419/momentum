@@ -145,12 +145,22 @@ jobs:
       - name: Rename APK
         shell: bash
         run: |
+          set -euo pipefail
           VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
           APK_DIR="src-tauri/gen/android/app/build/outputs/apk/universal/release"
+          TARGET_APK="$APK_DIR/Momentum_${VERSION}_universal.apk"
+          SOURCE_APK=""
+
           if [ -f "$APK_DIR/app-universal-release.apk" ]; then
-            mv "$APK_DIR/app-universal-release.apk" \
-               "$APK_DIR/Momentum_${VERSION}_universal.apk"
+            SOURCE_APK="$APK_DIR/app-universal-release.apk"
+          elif [ -f "$APK_DIR/app-universal-release-unsigned.apk" ]; then
+            SOURCE_APK="$APK_DIR/app-universal-release-unsigned.apk"
           fi
+
+          if [ -n "$SOURCE_APK" ]; then
+            cp "$SOURCE_APK" "$TARGET_APK"
+          fi
+
           echo "=== Android APK ==="
           ls -la "$APK_DIR/" 2>/dev/null || echo "APK dir not found"
 
@@ -160,6 +170,7 @@ jobs:
           name: android-artifacts
           path: |
             src-tauri/gen/android/app/build/outputs/apk/universal/release/Momentum_*.apk
+            src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
 
   create-release:
     needs: [build-desktop, build-android]
