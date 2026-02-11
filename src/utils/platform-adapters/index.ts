@@ -6,7 +6,11 @@ import type {
   PlatformHapticsAdapter,
 } from './types';
 
-export type { NotificationPayload } from './types';
+export type {
+  NotificationPayload,
+  HapticImpactStyle,
+  HapticNotificationType,
+} from './types';
 export type {
   PlatformNotificationAdapter,
   PlatformWindowAdapter,

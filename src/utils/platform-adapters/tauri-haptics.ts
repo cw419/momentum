@@ -5,6 +5,14 @@ import type {
 } from './types';
 
 export const tauriHapticsAdapter: PlatformHapticsAdapter = {
+  getCapabilities() {
+    return {
+      canImpact: true,
+      canNotification: true,
+      canSelectionChanged: true,
+    };
+  },
+
   async impact(style: HapticImpactStyle): Promise<void> {
     const { impactFeedback } = await import('@tauri-apps/plugin-haptics');
     await impactFeedback(style);

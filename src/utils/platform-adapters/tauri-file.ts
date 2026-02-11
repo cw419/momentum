@@ -1,6 +1,13 @@
 import type { PlatformFileAdapter } from './types';
 
 export const tauriFileAdapter: PlatformFileAdapter = {
+  getCapabilities() {
+    return {
+      canSaveFile: true,
+      canOpenFile: true,
+    };
+  },
+
   async saveFile(data: string, defaultName: string): Promise<boolean> {
     const { save } = await import('@tauri-apps/plugin-dialog');
     const { writeTextFile } = await import('@tauri-apps/plugin-fs');

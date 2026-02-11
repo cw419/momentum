@@ -3,6 +3,14 @@ import { invokeCommand } from '../tauri-bridge';
 import { isTauriMobile } from '../platform';
 
 export const tauriWindowAdapter: PlatformWindowAdapter = {
+  getCapabilities() {
+    return {
+      canSetFullscreen: !isTauriMobile,
+      canMinimizeToTray: !isTauriMobile,
+      canFocus: true,
+    };
+  },
+
   async setFullscreen(fullscreen: boolean): Promise<void> {
     if (isTauriMobile) return;
     await invokeCommand('set_fullscreen', { fullscreen });

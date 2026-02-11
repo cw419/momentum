@@ -1,6 +1,13 @@
 import type { PlatformFileAdapter } from './types';
 
 export const webFileAdapter: PlatformFileAdapter = {
+  getCapabilities() {
+    return {
+      canSaveFile: typeof document !== 'undefined',
+      canOpenFile: typeof document !== 'undefined',
+    };
+  },
+
   async saveFile(data: string, defaultName: string): Promise<boolean> {
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);

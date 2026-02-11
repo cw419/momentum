@@ -8,12 +8,25 @@ export const webNotificationAdapter: PlatformNotificationAdapter = {
     return typeof window !== 'undefined' && 'Notification' in window;
   },
 
-  async requestPermission(): Promise<boolean> {
-    if (!this.isSupported()) return false;
-    if (Notification.permission === 'granted') return true;
-    if (Notification.permission === 'denied') return false;
+  getCapabilities() {
+    const supported = this.isSupported();
+    return {
+      canRequestPermission: supported,
+      canShow: supported,
+    };
+  },
+
+  async getPermissionState(): Promise<'default' | 'granted' | 'denied'> {
+    if (!this.isSupported()) return 'default';
+    return Notification.permission;
+  },
+
+  async requestPermission(): Promise<'default' | 'granted' | 'denied'> {
+    if (!this.isSupported()) return 'default';
+    if (Notification.permission === 'granted') return 'granted';
+    if (Notification.permission === 'denied') return 'denied';
     const result = await Notification.requestPermission();
-    return result === 'granted';
+    return result;
   },
 
   async show(options: NotificationPayload): Promise<void> {
