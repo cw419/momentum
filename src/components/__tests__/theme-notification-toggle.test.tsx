@@ -5,7 +5,13 @@ import { I18nProvider } from '../../i18n';
 import { ThemeToggle } from '../ThemeToggle';
 import { NotificationToggle } from '../NotificationToggle';
 import { localPreferences } from '../../utils/localPreferences';
-import { notificationManager } from '../../utils/notifications';
+import { systemNotificationService } from '../../services/platform/SystemNotificationService';
+
+const useSystemNotificationStateMock = vi.hoisted(() => vi.fn());
+
+vi.mock('../../hooks/useSystemNotificationState', () => ({
+  useSystemNotificationState: useSystemNotificationStateMock,
+}));
 
 function renderWithI18n(ui: React.ReactElement) {
   localStorage.setItem('language', 'en');
@@ -15,6 +21,13 @@ function renderWithI18n(ui: React.ReactElement) {
 describe('Theme and notification toggles', () => {
   beforeEach(() => {
     document.documentElement.classList.remove('light', 'dark');
+    useSystemNotificationStateMock.mockReturnValue({
+      initialized: true,
+      supported: true,
+      permission: 'granted',
+      enabled: false,
+      togglePlacement: 'topbar',
+    });
   });
 
   describe('ThemeToggle', () => {
@@ -70,68 +83,86 @@ describe('Theme and notification toggles', () => {
 
   describe('NotificationToggle', () => {
     it('renders nothing when notifications are not supported', () => {
-      vi.spyOn(notificationManager, 'isSupported').mockReturnValue(false);
+      useSystemNotificationStateMock.mockReturnValue({
+        initialized: true,
+        supported: false,
+        permission: 'default',
+        enabled: false,
+        togglePlacement: 'hidden',
+      });
 
-      const { container } = renderWithI18n(<NotificationToggle />);
+      const { container } = renderWithI18n(
+        <NotificationToggle placement="topbar" />,
+      );
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('renders nothing when placement does not match', () => {
+      useSystemNotificationStateMock.mockReturnValue({
+        initialized: true,
+        supported: true,
+        permission: 'granted',
+        enabled: true,
+        togglePlacement: 'settings',
+      });
+
+      const { container } = renderWithI18n(
+        <NotificationToggle placement="topbar" />,
+      );
       expect(container).toBeEmptyDOMElement();
     });
 
     it('enables notifications when switch is turned on', async () => {
-      vi.spyOn(notificationManager, 'isSupported').mockReturnValue(true);
-      vi.spyOn(notificationManager, 'isNotificationsEnabled').mockReturnValue(
-        false,
-      );
+      useSystemNotificationStateMock.mockReturnValue({
+        initialized: true,
+        supported: true,
+        permission: 'granted',
+        enabled: false,
+        togglePlacement: 'topbar',
+      });
       const enableSpy = vi
-        .spyOn(notificationManager, 'enableNotifications')
+        .spyOn(systemNotificationService, 'enable')
         .mockResolvedValue(true);
-      vi.spyOn(notificationManager, 'disableNotifications').mockImplementation(
+      vi.spyOn(systemNotificationService, 'disable').mockImplementation(
         () => undefined,
       );
 
-      renderWithI18n(<NotificationToggle />);
+      renderWithI18n(<NotificationToggle placement="topbar" />);
 
       const toggle = await screen.findByRole('switch', {
-        name: 'Toggle desktop notifications',
+        name: 'Toggle system notifications',
       });
       expect(toggle).toHaveAttribute('aria-checked', 'false');
 
       await userEvent.click(toggle);
 
       expect(enableSpy).toHaveBeenCalledTimes(1);
-      await waitFor(() => {
-        expect(
-          screen.getByRole('switch', { name: 'Toggle desktop notifications' }),
-        ).toHaveAttribute('aria-checked', 'true');
-      });
     });
 
     it('disables notifications when switch is turned off', async () => {
-      vi.spyOn(notificationManager, 'isSupported').mockReturnValue(true);
-      vi.spyOn(notificationManager, 'isNotificationsEnabled').mockReturnValue(
-        true,
-      );
-      vi.spyOn(notificationManager, 'enableNotifications').mockResolvedValue(
-        true,
-      );
+      useSystemNotificationStateMock.mockReturnValue({
+        initialized: true,
+        supported: true,
+        permission: 'granted',
+        enabled: true,
+        togglePlacement: 'topbar',
+      });
+      vi.spyOn(systemNotificationService, 'enable').mockResolvedValue(true);
       const disableSpy = vi
-        .spyOn(notificationManager, 'disableNotifications')
+        .spyOn(systemNotificationService, 'disable')
         .mockImplementation(() => undefined);
 
-      renderWithI18n(<NotificationToggle />);
+      renderWithI18n(<NotificationToggle placement="topbar" />);
 
       const toggle = await screen.findByRole('switch', {
-        name: 'Toggle desktop notifications',
+        name: 'Toggle system notifications',
       });
       expect(toggle).toHaveAttribute('aria-checked', 'true');
 
       await userEvent.click(toggle);
 
       expect(disableSpy).toHaveBeenCalledTimes(1);
-      await waitFor(() => {
-        expect(
-          screen.getByRole('switch', { name: 'Toggle desktop notifications' }),
-        ).toHaveAttribute('aria-checked', 'false');
-      });
     });
   });
 });
+

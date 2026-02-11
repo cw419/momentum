@@ -10,7 +10,7 @@ import {
 import { createStartChainHandler } from '../start';
 import { queryOptimizer } from '../../../../utils/queryOptimizer';
 import { logger } from '../../../../utils/logger';
-import { notificationManager } from '../../../../utils/notifications';
+import { systemNotificationService } from '../../../../services/platform/SystemNotificationService';
 import { toast } from '../../../../utils/toast';
 import {
   getNextUnitInGroup,
@@ -36,8 +36,8 @@ vi.mock('../../../../utils/queryOptimizer', () => ({
   },
 }));
 
-vi.mock('../../../../utils/notifications', () => ({
-  notificationManager: {
+vi.mock('../../../../services/platform/SystemNotificationService', () => ({
+  systemNotificationService: {
     notifyTaskCompleted: vi.fn(),
     notifyTaskFailed: vi.fn(),
   },
@@ -209,7 +209,7 @@ describe('createStartChainHandler', () => {
       stateRef.getState().chains.find((item) => item.id === chain.id)
         ?.auxiliaryStreak,
     ).toBe(2);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledWith(
       chain.name,
       2,
       'Schedule completed',
@@ -462,7 +462,7 @@ describe('createStartChainHandler', () => {
       stateRef.getState().chains.find((item) => item.id === group.id)
         ?.totalFailures,
     ).toBe(resetGroup.totalFailures);
-    expect(notificationManager.notifyTaskFailed).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyTaskFailed).toHaveBeenCalledWith(
       group.name,
       'Group has expired',
     );
@@ -631,7 +631,7 @@ describe('createStartChainHandler', () => {
       group.id,
     );
     expect(safelySaveChains).toHaveBeenCalledWith([incremented]);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledWith(
       incremented.name,
       incremented.totalCompletions,
       'Cycle 3 completed. Starting cycle 4.',
@@ -995,3 +995,4 @@ describe('createStartChainHandler', () => {
     );
   });
 });
+

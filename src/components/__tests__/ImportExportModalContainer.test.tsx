@@ -9,6 +9,8 @@ const exportRulesMock = vi.hoisted(() => vi.fn());
 const importRulesMock = vi.hoisted(() => vi.fn());
 const getSafeErrorDetailMock = vi.hoisted(() => vi.fn());
 const loggerErrorMock = vi.hoisted(() => vi.fn());
+const saveFileMock = vi.hoisted(() => vi.fn(async () => true));
+const openFileMock = vi.hoisted(() => vi.fn(async () => null));
 
 vi.mock('../../storage/useStorage', () => ({
   useStorage: useStorageMock,
@@ -46,6 +48,15 @@ vi.mock('../../services/ImportExportService', () => ({
     parseImportData: parseImportDataMock,
     createExportData: createExportDataMock,
   },
+}));
+
+vi.mock('../../utils/platform-capabilities/center', () => ({
+  getPlatformCapabilityCenter: () => ({
+    file: {
+      saveFile: saveFileMock,
+      openFile: openFileMock,
+    },
+  }),
 }));
 
 vi.mock('../ImportExportModalView', () => ({
@@ -173,39 +184,11 @@ describe('ImportExportModalContainer', () => {
     });
     importRulesMock.mockResolvedValue({ imported: [{ id: 'rule-a' }] });
     exportRulesMock.mockResolvedValue([{ id: 'rule-a' }]);
+    saveFileMock.mockResolvedValue(true);
     createExportDataMock.mockReturnValue({
       version: 2,
       chains: [{ id: 'c1' }],
     });
-
-    if (!URL.createObjectURL) {
-      Object.defineProperty(URL, 'createObjectURL', {
-        configurable: true,
-        writable: true,
-        value: vi.fn(() => 'blob:test-url'),
-      });
-    }
-    if (!URL.revokeObjectURL) {
-      Object.defineProperty(URL, 'revokeObjectURL', {
-        configurable: true,
-        writable: true,
-        value: vi.fn(),
-      });
-    }
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
-
-    const originalCreateElement = Document.prototype.createElement;
-    const anchor = originalCreateElement.call(document, 'a');
-    vi.spyOn(anchor, 'click').mockImplementation(() => undefined);
-    vi.spyOn(document, 'createElement').mockImplementation(
-      (tagName: string) => {
-        if (tagName.toLowerCase() === 'a') {
-          return anchor;
-        }
-        return originalCreateElement.call(document, tagName);
-      },
-    );
   });
 
   it('selects import tab when there are no chains and export tab otherwise', () => {
@@ -434,7 +417,11 @@ describe('ImportExportModalContainer', () => {
         exceptionRules: [{ id: 'rule-a' }],
       }),
     );
-    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(saveFileMock).toHaveBeenCalledTimes(1);
+    expect(saveFileMock).toHaveBeenCalledWith(
+      expect.stringContaining('"version": 2'),
+      expect.stringMatching(/^momentum-data-\d{4}-\d{2}-\d{2}\.json$/),
+    );
   });
 
   it('logs export failures', async () => {

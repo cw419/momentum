@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+﻿import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../../../types';
 import {
@@ -11,7 +11,7 @@ import {
 import { createCompletionHandlers } from '../completion';
 import { queryOptimizer } from '../../../../utils/queryOptimizer';
 import { forwardTimerManager } from '../../../../utils/forwardTimer';
-import { notificationManager } from '../../../../utils/notifications';
+import { systemNotificationService } from '../../../../services/platform/SystemNotificationService';
 import { emitPointsChanged } from '../../../../utils/pointsEvents';
 import {
   incrementGroupCompletionCount,
@@ -43,8 +43,8 @@ vi.mock('../../../../utils/forwardTimer', () => ({
   },
 }));
 
-vi.mock('../../../../utils/notifications', () => ({
-  notificationManager: {
+vi.mock('../../../../services/platform/SystemNotificationService', () => ({
+  systemNotificationService: {
     notifyTaskCompleted: vi.fn(),
   },
 }));
@@ -169,7 +169,7 @@ describe('createCompletionHandlers', () => {
     );
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(storage.updateTaskTimeStats).toHaveBeenCalledWith(chain.id, 25);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledWith(
       chain.name,
       2,
     );
@@ -189,7 +189,7 @@ describe('createCompletionHandlers', () => {
     expect(
       (vi.mocked(logger.debug).mock.calls[0]?.[1] ?? '').length,
     ).toBeGreaterThan(0);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledWith(
       group.name,
       expect.any(Number),
       '任务群完成一轮',
@@ -361,11 +361,11 @@ describe('createCompletionHandlers', () => {
       expect.any(Array),
       group.id,
     );
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledWith(
       chain.name,
       3,
     );
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledTimes(1);
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledTimes(1);
     expect(tr).not.toHaveBeenCalled();
   });
 
@@ -1289,3 +1289,5 @@ describe('createCompletionHandlers', () => {
     );
   });
 });
+
+

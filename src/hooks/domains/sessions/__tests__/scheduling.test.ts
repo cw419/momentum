@@ -7,7 +7,7 @@ import {
 } from '../../../../test/factories';
 import { createSchedulingHandlers } from '../scheduling';
 import { queryOptimizer } from '../../../../utils/queryOptimizer';
-import { notificationManager } from '../../../../utils/notifications';
+import { systemNotificationService } from '../../../../services/platform/SystemNotificationService';
 import { toast } from '../../../../utils/toast';
 
 vi.mock('../../../../utils/queryOptimizer', () => ({
@@ -16,8 +16,8 @@ vi.mock('../../../../utils/queryOptimizer', () => ({
   },
 }));
 
-vi.mock('../../../../utils/notifications', () => ({
-  notificationManager: {
+vi.mock('../../../../services/platform/SystemNotificationService', () => ({
+  systemNotificationService: {
     notifyTaskCompleted: vi.fn(),
   },
 }));
@@ -199,7 +199,7 @@ describe('createSchedulingHandlers', () => {
       stateRef.getState().chains.find((item) => item.id === chain.id)
         ?.auxiliaryStreak,
     ).toBe(3);
-    expect(notificationManager.notifyTaskCompleted).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledWith(
       chain.name,
       3,
       'Schedule completed',
@@ -235,3 +235,4 @@ describe('createSchedulingHandlers', () => {
     );
   });
 });
+

@@ -27,6 +27,7 @@ const errorMessageMock = vi.hoisted(() => ({
     value instanceof Error ? value : new Error(String(value)),
   ),
 }));
+const saveFileMock = vi.hoisted(() => vi.fn(async () => true));
 
 vi.mock('../../../../services/ExceptionRuleManager', () => ({
   exceptionRuleManager: exceptionRuleManagerMock,
@@ -37,6 +38,14 @@ vi.mock('../../../../utils/AsyncOperationManager', () => ({
 }));
 
 vi.mock('../../../../utils/errorMessage', () => errorMessageMock);
+
+vi.mock('../../../../utils/platform-capabilities/center', () => ({
+  getPlatformCapabilityCenter: () => ({
+    file: {
+      saveFile: saveFileMock,
+    },
+  }),
+}));
 
 function createRule(overrides: Partial<ExceptionRule> = {}): ExceptionRule {
   return {
@@ -121,6 +130,7 @@ function createArgs(overrides?: {
 describe('useRuleManagerActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    saveFileMock.mockResolvedValue(true);
     errorMessageMock.getSafeErrorDetail.mockReturnValue('friendly error');
     errorMessageMock.getSafeErrorDetailFromUnknown.mockReturnValue(
       'friendly unknown error',
@@ -404,31 +414,9 @@ describe('useRuleManagerActions', () => {
     expect(context.errorState.get()).toBe('friendly unknown error');
   });
 
-  it('exports rules as downloadable json file and handles export failure', async () => {
+  it('exports rules through capability center and handles export failure', async () => {
     const context = createArgs();
     const { result } = renderHook(() => useRuleManagerActions(context.args));
-
-    const originalCreateObjectURL = URL.createObjectURL;
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    const createObjectURLMock = vi.fn(() => 'blob:test-url');
-    const revokeObjectURLMock = vi.fn();
-
-    Object.defineProperty(URL, 'createObjectURL', {
-      value: createObjectURLMock,
-      configurable: true,
-      writable: true,
-    });
-    Object.defineProperty(URL, 'revokeObjectURL', {
-      value: revokeObjectURLMock,
-      configurable: true,
-      writable: true,
-    });
-
-    const appendSpy = vi.spyOn(document.body, 'appendChild');
-    const removeSpy = vi.spyOn(document.body, 'removeChild');
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(() => undefined);
 
     exceptionRuleManagerMock.exportRules.mockResolvedValue({
       rules: [],
@@ -439,11 +427,11 @@ describe('useRuleManagerActions', () => {
       await result.current.handleExportRules();
     });
 
-    expect(createObjectURLMock).toHaveBeenCalledTimes(1);
-    expect(revokeObjectURLMock).toHaveBeenCalledTimes(1);
-    expect(appendSpy).toHaveBeenCalledTimes(1);
-    expect(removeSpy).toHaveBeenCalledTimes(1);
-    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(saveFileMock).toHaveBeenCalledTimes(1);
+    expect(saveFileMock).toHaveBeenCalledWith(
+      expect.stringContaining('"rules"'),
+      expect.stringMatching(/^exception-rules-\d{4}-\d{2}-\d{2}\.json$/),
+    );
 
     exceptionRuleManagerMock.exportRules.mockRejectedValue(
       new Error('cannot export'),
@@ -453,20 +441,5 @@ describe('useRuleManagerActions', () => {
     });
 
     expect(context.errorState.get()).toBe('Failed to export rules');
-
-    appendSpy.mockRestore();
-    removeSpy.mockRestore();
-    clickSpy.mockRestore();
-
-    Object.defineProperty(URL, 'createObjectURL', {
-      value: originalCreateObjectURL,
-      configurable: true,
-      writable: true,
-    });
-    Object.defineProperty(URL, 'revokeObjectURL', {
-      value: originalRevokeObjectURL,
-      configurable: true,
-      writable: true,
-    });
   });
 });

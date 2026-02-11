@@ -34,8 +34,8 @@ vi.mock('../../../utils/chainTree', () => ({
   getChainTypeConfig: getChainTypeConfigMock,
 }));
 
-vi.mock('../../../utils/notifications', () => ({
-  notificationManager: {
+vi.mock('../../../services/platform/SystemNotificationService', () => ({
+  systemNotificationService: {
     notifyScheduleWarning: notifyScheduleWarningMock,
     notifyScheduleFailed: notifyScheduleFailedMock,
   },
@@ -315,3 +315,4 @@ describe('useChainCard', () => {
     document.body.removeChild(previouslyFocused);
   });
 });
+

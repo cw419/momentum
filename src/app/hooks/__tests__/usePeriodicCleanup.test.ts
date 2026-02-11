@@ -9,7 +9,7 @@ import {
 import { usePeriodicCleanup } from '../usePeriodicCleanup';
 import { isGroupExpired, resetGroupProgress } from '../../../utils/timeLimit';
 import { isSessionExpired } from '../../../utils/time';
-import { notificationManager } from '../../../utils/notifications';
+import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { soundManager } from '../../../utils/soundManager';
 
 vi.mock('../../../utils/logger', () => ({
@@ -27,8 +27,8 @@ vi.mock('../../../utils/time', () => ({
   isSessionExpired: vi.fn(() => false),
 }));
 
-vi.mock('../../../utils/notifications', () => ({
-  notificationManager: {
+vi.mock('../../../services/platform/SystemNotificationService', () => ({
+  systemNotificationService: {
     notifyScheduleFailed: vi.fn(),
   },
 }));
@@ -136,7 +136,7 @@ describe('usePeriodicCleanup', () => {
     await Promise.resolve();
 
     expect(soundManager.playTimerFinished).toHaveBeenCalledTimes(1);
-    expect(notificationManager.notifyScheduleFailed).toHaveBeenCalledWith(
+    expect(systemNotificationService.notifyScheduleFailed).toHaveBeenCalledWith(
       expiredChain.name,
     );
     expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(expiredChain.id);
@@ -168,3 +168,4 @@ describe('usePeriodicCleanup', () => {
     expect(setState).not.toHaveBeenCalled();
   });
 });
+
