@@ -370,6 +370,51 @@ describe('sessions.ts', () => {
       expect(result!.forwardElapsedTime).toBe(0);
       expect(ctx.mockClient.from).toHaveBeenCalledTimes(2);
     });
+
+    it('should skip full select after forward-timer columns are marked missing', async () => {
+      const ctx = createMockContext();
+
+      const firstQuery = createMockQueryBuilder({
+        data: null,
+        error: createSupabaseError(
+          'PGRST204',
+          'is_forward_timer does not exist',
+        ),
+      });
+
+      const basicRow = {
+        id: 'session-1',
+        chain_id: 'chain-1',
+        started_at: '2024-01-15T10:00:00Z',
+        duration: 30,
+        is_paused: false,
+        paused_at: null,
+        total_paused_time: 0,
+        user_id: 'test-user-123',
+      };
+
+      const secondQuery = createMockQueryBuilder({
+        data: [basicRow],
+        error: null,
+      });
+      const thirdQuery = createMockQueryBuilder({
+        data: [basicRow],
+        error: null,
+      });
+
+      ctx.mockClient.from = vi
+        .fn()
+        .mockReturnValueOnce(firstQuery)
+        .mockReturnValueOnce(secondQuery)
+        .mockReturnValueOnce(thirdQuery);
+
+      const firstResult = await getActiveSession(ctx);
+      const secondResult = await getActiveSession(ctx);
+
+      expect(firstResult).not.toBeNull();
+      expect(secondResult).not.toBeNull();
+      expect(ctx.mockClient.from).toHaveBeenCalledTimes(3);
+    });
   });
 
   describe('saveActiveSession', () => {
@@ -481,6 +526,40 @@ describe('sessions.ts', () => {
       await saveActiveSession(ctx, session);
 
       expect(callCount).toBe(2);
+    });
+
+    it('should skip strict payload after detecting missing forward-timer columns', async () => {
+      const session: ActiveSession = {
+        id: 'session-1',
+        chainId: 'chain-1',
+        startedAt: new Date('2024-01-15T10:00:00Z'),
+        duration: 30,
+        isPaused: false,
+        totalPausedTime: 0,
+        isForwardTimer: true,
+        forwardElapsedTime: 600,
+      };
+
+      const ctx = createMockContext();
+      const upsert = vi.fn().mockImplementation((payload: Record<string, unknown>) => {
+        if (Object.prototype.hasOwnProperty.call(payload, 'is_forward_timer')) {
+          return {
+            error: createSupabaseError(
+              '42703',
+              'is_forward_timer does not exist',
+            ),
+          };
+        }
+        return { error: null };
+      });
+
+      ctx.mockClient.from = vi.fn().mockReturnValue({ upsert });
+
+      await saveActiveSession(ctx, session);
+      await saveActiveSession(ctx, session);
+
+      expect(upsert).toHaveBeenCalledTimes(3);
+      expect(upsert.mock.calls[2]?.[0]).not.toHaveProperty('is_forward_timer');
     });
 
     it('should throw error when both upsert attempts fail', async () => {

@@ -88,6 +88,9 @@ export function createMockContext(
   } = options;
 
   const mockClient = createMockSupabaseClient(queryBuilder);
+  const missingCapabilities = new Set<string>();
+  const capabilityKey = (tableName: string, capabilityName: string) =>
+    `${tableName}:${capabilityName}`;
 
   return {
     getClient: () =>
@@ -101,6 +104,21 @@ export function createMockContext(
       hasAllColumns: true,
       missingColumns: [],
     }),
+    isSchemaCapabilityMissing: vi
+      .fn()
+      .mockImplementation((tableName: string, capabilityName: string) =>
+        missingCapabilities.has(capabilityKey(tableName, capabilityName)),
+      ),
+    markSchemaCapabilityMissing: vi
+      .fn()
+      .mockImplementation((tableName: string, capabilityName: string) => {
+        missingCapabilities.add(capabilityKey(tableName, capabilityName));
+      }),
+    markSchemaCapabilityAvailable: vi
+      .fn()
+      .mockImplementation((tableName: string, capabilityName: string) => {
+        missingCapabilities.delete(capabilityKey(tableName, capabilityName));
+      }),
     clearSchemaCache: vi.fn(),
     mockClient,
   };

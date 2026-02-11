@@ -41,7 +41,11 @@ import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { migrateCompletionHistoryForTiming } from '../../../utils/completionHistoryTimingMigration';
 import { storage as localStorageUtils } from '../../../utils/storage';
 import { retryOperation, retryWithAuth } from './retry';
-import type { SchemaVerificationResult, SupabaseStorageContext } from './types';
+import type {
+  SchemaCapabilityState,
+  SchemaVerificationResult,
+  SupabaseStorageContext,
+} from './types';
 import * as authApi from './auth';
 import * as bettingApi from './betting';
 import * as chainsApi from './chains';
@@ -57,6 +61,7 @@ export class SupabaseStorage implements MomentumStorage {
 
   private schemaCache: Map<string, SchemaVerificationResult> = new Map();
   private sessionSchemaVerified: Set<string> = new Set();
+  private schemaCapabilityCache: Map<string, SchemaCapabilityState> = new Map();
 
   // Request deduplication: prevents multiple concurrent calls from triggering duplicate queries
   private pendingRequests: Map<string, Promise<unknown>> = new Map();
@@ -93,6 +98,7 @@ export class SupabaseStorage implements MomentumStorage {
   clearSchemaCache(): void {
     this.schemaCache.clear();
     this.sessionSchemaVerified.clear();
+    this.schemaCapabilityCache.clear();
   }
 
   clearCache(): void {
@@ -123,6 +129,31 @@ export class SupabaseStorage implements MomentumStorage {
     return result;
   }
 
+  private getSchemaCapabilityKey(
+    tableName: string,
+    capabilityName: string,
+  ): string {
+    return `${tableName}:${capabilityName}`;
+  }
+
+  isSchemaCapabilityMissing(tableName: string, capabilityName: string): boolean {
+    const key = this.getSchemaCapabilityKey(tableName, capabilityName);
+    return this.schemaCapabilityCache.get(key) === 'missing';
+  }
+
+  markSchemaCapabilityMissing(tableName: string, capabilityName: string): void {
+    const key = this.getSchemaCapabilityKey(tableName, capabilityName);
+    this.schemaCapabilityCache.set(key, 'missing');
+  }
+
+  markSchemaCapabilityAvailable(
+    tableName: string,
+    capabilityName: string,
+  ): void {
+    const key = this.getSchemaCapabilityKey(tableName, capabilityName);
+    this.schemaCapabilityCache.set(key, 'available');
+  }
+
   private readonly ctx: SupabaseStorageContext = {
     getClient: () => this.getClient(),
     getCurrentUser: () => supabaseGetCurrentUser(),
@@ -144,6 +175,12 @@ export class SupabaseStorage implements MomentumStorage {
       ),
     verifySchemaColumns: (tableName, requiredColumns) =>
       this.verifySchemaColumns(tableName, requiredColumns),
+    isSchemaCapabilityMissing: (tableName, capabilityName) =>
+      this.isSchemaCapabilityMissing(tableName, capabilityName),
+    markSchemaCapabilityMissing: (tableName, capabilityName) =>
+      this.markSchemaCapabilityMissing(tableName, capabilityName),
+    markSchemaCapabilityAvailable: (tableName, capabilityName) =>
+      this.markSchemaCapabilityAvailable(tableName, capabilityName),
     clearSchemaCache: () => this.clearSchemaCache(),
   };
 

@@ -644,6 +644,51 @@ describe('chains.ts', () => {
       expect(ctx.retryWithAuth).toHaveBeenCalledTimes(2);
     });
 
+    it('should skip strict payload after detecting missing strict columns', async () => {
+      const chains = [createMockChain({ id: 'chain-1' })];
+      const ctx = createMockContext();
+
+      const upsert = vi.fn().mockImplementation((rows: Record<string, unknown>[]) => {
+        const row = rows[0] ?? {};
+        if (Object.prototype.hasOwnProperty.call(row, 'group_repeat_count')) {
+          return {
+            data: null,
+            error: createSupabaseError(
+              'PGRST204',
+              "Could not find the 'group_repeat_count' column of 'chains' in the schema cache",
+            ),
+          };
+        }
+        return { data: [{ id: 'chain-1' }], error: null };
+      });
+
+      ctx.mockClient.from = vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            data: [],
+            error: null,
+          }),
+        }),
+        upsert: vi
+          .fn()
+          .mockImplementation((rows: Record<string, unknown>[]) => ({
+            select: vi.fn().mockReturnValue(upsert(rows)),
+          })),
+      }));
+
+      ctx.retryWithAuth = vi.fn().mockImplementation((op) => op());
+
+      await saveChains(ctx, chains);
+      await saveChains(ctx, chains);
+
+      expect(upsert).toHaveBeenCalledTimes(3);
+      const thirdPayload = upsert.mock.calls[2]?.[0]?.[0] as Record<
+        string,
+        unknown
+      >;
+      expect(thirdPayload).not.toHaveProperty('group_repeat_count');
+    });
+
     it('should warn when some expected ids are missing from upsert result', async () => {
       const chains = [
         createMockChain({ id: 'chain-1' }),

@@ -36,7 +36,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: null,
               error: createSupabaseError('PGRST116', 'No rows returned'),
             }),
@@ -54,6 +54,33 @@ describe('userSettings.ts', () => {
       }
     });
 
+    it('should use maybeSingle for nullable-safe reads', async () => {
+      const maybeSingle = vi.fn().mockReturnValue({
+        data: null,
+        error: null,
+      });
+      const single = vi.fn().mockReturnValue({
+        data: null,
+        error: createSupabaseError('PGRST116', 'No rows returned'),
+      });
+
+      const ctx = createMockContext();
+      ctx.mockClient.from = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle,
+            single,
+          }),
+        }),
+      });
+
+      const result = await getGamblingSettings(ctx);
+
+      expect(result.ok).toBe(true);
+      expect(maybeSingle).toHaveBeenCalledTimes(1);
+      expect(single).not.toHaveBeenCalled();
+    });
+
     it('should return settings on success', async () => {
       const mockSettings = {
         gambling_mode_enabled: true,
@@ -64,7 +91,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: mockSettings,
               error: null,
             }),
@@ -87,7 +114,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: null,
               error: createSupabaseError('UNKNOWN', 'Database error'),
             }),
@@ -113,7 +140,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: mockSettings,
               error: null,
             }),
@@ -163,7 +190,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: {
                 gambling_mode_enabled: true,
                 daily_bet_limit: 1000,
@@ -188,7 +215,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: {
                 gambling_mode_enabled: false,
                 daily_bet_limit: null,
@@ -213,7 +240,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: null,
               error: createSupabaseError('PGRST116', 'No rows returned'),
             }),
@@ -250,7 +277,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: {
                 gambling_mode_enabled: false,
                 daily_bet_limit: null,
@@ -292,7 +319,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: {
                 gambling_mode_enabled: true,
                 daily_bet_limit: 1000,
@@ -332,7 +359,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: {
                 gambling_mode_enabled: false,
                 daily_bet_limit: null,
@@ -366,7 +393,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: null,
               error: createSupabaseError('UNKNOWN', 'Database error'),
             }),
@@ -387,7 +414,7 @@ describe('userSettings.ts', () => {
       ctx.mockClient.from = vi.fn().mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockReturnValue({
               data: {
                 gambling_mode_enabled: false,
                 daily_bet_limit: null,

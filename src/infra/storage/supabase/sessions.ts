@@ -10,6 +10,100 @@ type ActiveSessionInsert =
 type ScheduledSessionInsert =
   Database['public']['Tables']['scheduled_sessions']['Insert'];
 
+const ACTIVE_SESSIONS_TABLE = 'active_sessions';
+const FORWARD_TIMER_CAPABILITIES = [
+  'is_forward_timer',
+  'forward_elapsed_time',
+] as const;
+
+function hasKnownMissingForwardTimerCapabilities(
+  ctx: SupabaseStorageContext,
+): boolean {
+  return FORWARD_TIMER_CAPABILITIES.some((capabilityName) =>
+    ctx.isSchemaCapabilityMissing(ACTIVE_SESSIONS_TABLE, capabilityName),
+  );
+}
+
+function markForwardTimerCapabilitiesMissing(ctx: SupabaseStorageContext): void {
+  FORWARD_TIMER_CAPABILITIES.forEach((capabilityName) =>
+    ctx.markSchemaCapabilityMissing(ACTIVE_SESSIONS_TABLE, capabilityName),
+  );
+}
+
+function markForwardTimerCapabilitiesAvailable(
+  ctx: SupabaseStorageContext,
+): void {
+  FORWARD_TIMER_CAPABILITIES.forEach((capabilityName) =>
+    ctx.markSchemaCapabilityAvailable(ACTIVE_SESSIONS_TABLE, capabilityName),
+  );
+}
+
+function isMissingForwardTimerCapabilityError(
+  errorCode: string,
+  errorMessage: string,
+): boolean {
+  return (
+    errorCode === '42703' ||
+    errorCode === 'PGRST204' ||
+    errorMessage.includes('is_forward_timer') ||
+    errorMessage.includes('forward_elapsed_time')
+  );
+}
+
+function shouldIncludeForwardTimerFields(session: ActiveSession): boolean {
+  return (
+    session.isForwardTimer === true ||
+    (typeof session.forwardElapsedTime === 'number' &&
+      session.forwardElapsedTime > 0)
+  );
+}
+
+function buildBasicActiveSessionPayload(
+  session: ActiveSession,
+  userId: string,
+): ActiveSessionInsert {
+  return {
+    id: session.id,
+    chain_id: session.chainId,
+    started_at: session.startedAt.toISOString(),
+    duration: session.duration,
+    is_paused: session.isPaused,
+    paused_at: session.pausedAt?.toISOString() ?? null,
+    total_paused_time: session.totalPausedTime,
+    user_id: userId,
+  };
+}
+
+function buildPrimaryActiveSessionPayload(
+  payloadBasic: ActiveSessionInsert,
+  session: ActiveSession,
+  shouldIncludeForwardFields: boolean,
+  shouldSkipForwardFields: boolean,
+): ActiveSessionInsert {
+  if (!shouldIncludeForwardFields || shouldSkipForwardFields) {
+    return payloadBasic;
+  }
+
+  return {
+    ...payloadBasic,
+    is_forward_timer: session.isForwardTimer ?? false,
+    forward_elapsed_time: session.forwardElapsedTime ?? 0,
+  };
+}
+
+function shouldFallbackToBasicActiveSessionPayload(
+  errorCode: string | undefined,
+  errorMessage: string,
+  shouldIncludeForwardFields: boolean,
+  shouldSkipForwardFields: boolean,
+): boolean {
+  if (shouldSkipForwardFields || !shouldIncludeForwardFields) {
+    return false;
+  }
+
+  return isMissingForwardTimerCapabilityError(errorCode ?? '', errorMessage);
+}
+
 export async function getScheduledSessions(
   ctx: SupabaseStorageContext,
 ): Promise<ScheduledSession[]> {
@@ -111,30 +205,35 @@ export async function getActiveSession(
   const basicSelect =
     'id, chain_id, started_at, duration, is_paused, paused_at, total_paused_time';
 
-  const { data, error } = await client
-    .from('active_sessions')
-    .select(fullSelect)
-    .eq('user_id', user.id)
-    .order('started_at', { ascending: false })
-    .limit(1);
+  const shouldSkipFullSelect = hasKnownMissingForwardTimerCapabilities(ctx);
 
-  if (!error && data && data.length > 0) {
-    const sessionData = data[0] as ActiveSessionRow;
-    return mapActiveSessionRow(sessionData);
+  if (!shouldSkipFullSelect) {
+    const { data, error } = await client
+      .from('active_sessions')
+      .select(fullSelect)
+      .eq('user_id', user.id)
+      .order('started_at', { ascending: false })
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      markForwardTimerCapabilitiesAvailable(ctx);
+      const sessionData = data[0] as ActiveSessionRow;
+      return mapActiveSessionRow(sessionData);
+    }
+
+    if (!error) return null;
+
+    const errorMessage = error.message ?? '';
+    const errorCode = error.code ?? '';
+    if (!isMissingForwardTimerCapabilityError(errorCode, errorMessage)) {
+      return null;
+    }
+
+    markForwardTimerCapabilitiesMissing(ctx);
   }
 
-  const errorMessage = error?.message ?? '';
-  const errorCode = error?.code ?? '';
-  const isMissingForwardFields =
-    errorCode === '42703' ||
-    errorCode === 'PGRST204' ||
-    errorMessage.includes('is_forward_timer') ||
-    errorMessage.includes('forward_elapsed_time');
-
-  if (!isMissingForwardFields) return null;
-
   const { data: basicData, error: basicError } = await client
-    .from('active_sessions')
+    .from(ACTIVE_SESSIONS_TABLE)
     .select(basicSelect)
     .eq('user_id', user.id)
     .order('started_at', { ascending: false })
@@ -167,48 +266,40 @@ export async function saveActiveSession(
     return;
   }
 
-  const sessionId = session.id;
-
-  const payloadBasic: ActiveSessionInsert = {
-    id: sessionId,
-    chain_id: session.chainId,
-    started_at: session.startedAt.toISOString(),
-    duration: session.duration,
-    is_paused: session.isPaused,
-    paused_at: session.pausedAt?.toISOString() ?? null,
-    total_paused_time: session.totalPausedTime,
-    user_id: user.id,
-  };
-
-  const shouldIncludeForwardFields =
-    session.isForwardTimer === true ||
-    (typeof session.forwardElapsedTime === 'number' &&
-      session.forwardElapsedTime > 0);
-  const payload: ActiveSessionInsert = { ...payloadBasic };
-
-  if (shouldIncludeForwardFields) {
-    payload.is_forward_timer = session.isForwardTimer ?? false;
-    payload.forward_elapsed_time = session.forwardElapsedTime ?? 0;
-  }
+  const payloadBasic = buildBasicActiveSessionPayload(session, user.id);
+  const shouldIncludeForwardFields = shouldIncludeForwardTimerFields(session);
+  const shouldSkipForwardFields =
+    shouldIncludeForwardFields && hasKnownMissingForwardTimerCapabilities(ctx);
+  const payload = buildPrimaryActiveSessionPayload(
+    payloadBasic,
+    session,
+    shouldIncludeForwardFields,
+    shouldSkipForwardFields,
+  );
 
   const { error } = await client
     .from('active_sessions')
     .upsert(payload, { onConflict: 'id' });
 
-  if (!error) return;
+  if (!error) {
+    if (shouldIncludeForwardFields && !shouldSkipForwardFields) {
+      markForwardTimerCapabilitiesAvailable(ctx);
+    }
+    return;
+  }
 
   const errorMessage = error.message || 'Failed to persist active session';
   const errorCode = error.code;
 
-  // If schema lacks forward-timer columns, retry without them.
-  const isMissingForwardFields =
-    shouldIncludeForwardFields &&
-    (errorCode === '42703' ||
-      errorCode === 'PGRST204' ||
-      errorMessage.includes('is_forward_timer') ||
-      errorMessage.includes('forward_elapsed_time'));
-
-  if (isMissingForwardFields) {
+  if (
+    shouldFallbackToBasicActiveSessionPayload(
+      errorCode,
+      errorMessage,
+      shouldIncludeForwardFields,
+      shouldSkipForwardFields,
+    )
+  ) {
+    markForwardTimerCapabilitiesMissing(ctx);
     const { error: fallbackError } = await client
       .from('active_sessions')
       .upsert(payloadBasic, { onConflict: 'id' });

@@ -7,6 +7,8 @@ export interface SchemaVerificationResult {
   error?: string;
 }
 
+export type SchemaCapabilityState = 'missing' | 'available';
+
 export type SupabaseClient = NonNullable<typeof supabase>;
 
 export interface SupabaseStorageContext {
@@ -32,5 +34,14 @@ export interface SupabaseStorageContext {
     tableName: string,
     requiredColumns: string[],
   ): Promise<SchemaVerificationResult>;
+  isSchemaCapabilityMissing(
+    tableName: string,
+    capabilityName: string,
+  ): boolean;
+  markSchemaCapabilityMissing(tableName: string, capabilityName: string): void;
+  markSchemaCapabilityAvailable(
+    tableName: string,
+    capabilityName: string,
+  ): void;
   clearSchemaCache(): void;
 }

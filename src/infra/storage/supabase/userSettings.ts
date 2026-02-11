@@ -24,7 +24,7 @@ export async function getGamblingSettings(
       .from('user_settings')
       .select('gambling_mode_enabled, daily_bet_limit, max_single_bet')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       if (error.code === 'PGRST116') {
