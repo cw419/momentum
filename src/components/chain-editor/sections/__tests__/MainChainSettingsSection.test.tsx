@@ -86,4 +86,16 @@ describe('MainChainSettingsSection', () => {
     expect(form.setMinimumDuration).toHaveBeenCalledWith(0);
     expect(form.setIsCustomMinimumDuration).toHaveBeenCalledWith(false);
   });
+
+  it('exposes labeled custom minimum duration input', () => {
+    const form = createForm({
+      isDurationless: true,
+      isCustomMinimumDuration: true,
+      minimumDuration: 25,
+    });
+
+    render(<MainChainSettingsSection form={form} />);
+
+    expect(screen.getByLabelText('Custom minutes')).toBeInTheDocument();
+  });
 });

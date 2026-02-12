@@ -45,6 +45,18 @@ function renderJudgment(overrides: Parameters<typeof createUnitChain>[0] = {}) {
 }
 
 describe('AuxiliaryJudgment', () => {
+  it('associates labels with existing-rule select and reason textarea', () => {
+    renderJudgment();
+
+    fireEvent.click(screen.getByLabelText('Use an existing exception'));
+    expect(
+      screen.getByLabelText('Choose an applicable exception:'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Add a new exception'));
+    expect(screen.getByLabelText('Describe what happened:')).toBeInTheDocument();
+  });
+
   it('uses an existing exception rule when selected', () => {
     const { onJudgmentAllow } = renderJudgment();
 

@@ -206,7 +206,10 @@ export function MainChainSettingsSection({
               </p>
 
               <details className="rounded-2xl border border-gray-200/70 bg-gray-50/70 p-3 dark:border-slate-600/60 dark:bg-slate-700/40">
-                <summary className="cursor-pointer font-chinese text-sm text-gray-800 dark:text-slate-100">
+                <summary
+                  aria-label={tr('最小时长', 'Minimum duration')}
+                  className="cursor-pointer font-chinese text-sm text-gray-800 dark:text-slate-100"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <Hourglass className="text-indigo-500" size={16} />
@@ -248,7 +251,16 @@ export function MainChainSettingsSection({
                   </div>
 
                   <div className="flex items-center gap-3">
+                    <label
+                      htmlFor="custom-minimum-duration"
+                      className="sr-only"
+                    >
+                      {tr('自定义分钟数', 'Custom minutes')}
+                    </label>
                     <input
+                      id="custom-minimum-duration"
+                      name="customMinimumDuration"
+                      aria-label={tr('自定义分钟数', 'Custom minutes')}
                       type="number"
                       min="1"
                       max="480"

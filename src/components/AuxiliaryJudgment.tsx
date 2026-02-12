@@ -31,6 +31,8 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
   const [reason, setReason] = useState('');
   const [selectedExistingRule, setSelectedExistingRule] = useState('');
   const [useExistingRule, setUseExistingRule] = useState(false);
+  const existingRuleSelectId = 'auxiliary-existing-rule-select';
+  const reasonInputId = 'auxiliary-new-rule-reason';
 
   // 初始化时如果有已存在的规则，设置默认选择
   React.useEffect(() => {
@@ -172,13 +174,18 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
             chain.auxiliaryExceptions &&
             chain.auxiliaryExceptions.length > 0 && (
               <div className="rounded-2xl border border-green-200 bg-green-50 p-6 dark:border-green-700/50 dark:bg-green-900/20">
-                <label className="mb-3 block font-chinese text-sm font-medium text-green-700 dark:text-green-300">
+                <label
+                  htmlFor={existingRuleSelectId}
+                  className="mb-3 block font-chinese text-sm font-medium text-green-700 dark:text-green-300"
+                >
                   {tr(
                     '选择适用的例外规则：',
                     'Choose an applicable exception:',
                   )}
                 </label>
                 <select
+                  id={existingRuleSelectId}
+                  name="existingExceptionRule"
                   value={selectedExistingRule}
                   onChange={(e) => setSelectedExistingRule(e.target.value)}
                   className="w-full rounded-2xl border border-green-300 bg-white px-4 py-3 font-chinese text-gray-900 transition duration-300 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-green-600 dark:bg-slate-700 dark:text-slate-100"
@@ -212,10 +219,15 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
           {/* 新规则输入 */}
           {!useExistingRule && (
             <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-700/50 dark:bg-yellow-900/20">
-              <label className="mb-3 block font-chinese text-sm font-medium text-yellow-700 dark:text-yellow-300">
+              <label
+                htmlFor={reasonInputId}
+                className="mb-3 block font-chinese text-sm font-medium text-yellow-700 dark:text-yellow-300"
+              >
                 {tr('请描述具体行为：', 'Describe what happened:')}
               </label>
               <textarea
+                id={reasonInputId}
+                name="newExceptionRuleReason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder={tr(
@@ -242,6 +254,8 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
 
         <div className="space-y-3">
           <button
+            type="button"
+            aria-label={tr('判定失败', 'Mark as failed')}
             onClick={() =>
               onJudgmentFailure(
                 reason || tr('用户主动中断预约', 'User interrupted booking'),
@@ -262,6 +276,8 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
           </button>
 
           <button
+            type="button"
+            aria-label={tr('判定允许（下必为例）', 'Allow (Precedent)')}
             onClick={handleJudgmentAllowClick}
             disabled={useExistingRule ? !selectedExistingRule : !reason.trim()}
             className={`w-full rounded-2xl px-6 py-3 font-chinese font-medium text-white shadow-lg transition duration-300 hover:scale-105 disabled:cursor-not-allowed disabled:bg-gray-300 ${
@@ -291,6 +307,7 @@ export const AuxiliaryJudgment: React.FC<AuxiliaryJudgmentProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={onCancel}
             className="w-full rounded-2xl bg-gray-100 px-4 py-2 font-chinese font-medium text-gray-900 transition duration-300 hover:scale-105 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
           >

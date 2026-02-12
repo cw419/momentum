@@ -58,6 +58,8 @@ export const DailyCheckinDemo: React.FC<DailyCheckinDemoProps> = ({
           {tr('每日签到', 'Daily Check-in')}
         </h2>
         <button
+          type="button"
+          aria-label={tr('刷新数据', 'Refresh')}
           className="p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
           title={tr('刷新数据', 'Refresh')}
         >

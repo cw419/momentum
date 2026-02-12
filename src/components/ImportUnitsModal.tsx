@@ -143,10 +143,16 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
+            <label htmlFor="import-units-search" className="sr-only">
+              {tr('搜索任务单元', 'Search units')}
+            </label>
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
               <Search className="text-gray-400" size={20} />
             </div>
             <input
+              id="import-units-search"
+              name="importUnitsSearch"
+              aria-label={tr('搜索任务单元', 'Search units')}
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -190,6 +196,10 @@ export const ImportUnitsModal: React.FC<ImportUnitsModalProps> = ({
                 <button
                   type="button"
                   key={unit.id}
+                  aria-label={tr(
+                    `选择任务单元：${unit.name}`,
+                    `Select unit: ${unit.name}`,
+                  )}
                   className={`w-full cursor-pointer rounded-2xl border-2 p-4 text-left transition duration-300 ${
                     isSelected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
