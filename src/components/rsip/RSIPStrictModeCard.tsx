@@ -52,7 +52,7 @@ export function RSIPStrictModeCard({
         <div className="group/title relative flex min-w-0 flex-1 items-center gap-2">
           <span className="flex-shrink-0 text-xl">{node.emoji || '🧭'}</span>
           <h3
-            className="cursor-help truncate font-medium text-slate-900 dark:text-white"
+            className="cursor-help break-words font-medium text-slate-900 dark:text-white"
             title={node.title}
           >
             {node.title}
@@ -73,7 +73,7 @@ export function RSIPStrictModeCard({
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-slate-700 dark:text-white/60">
+      <p className="mb-4 break-words text-sm text-slate-700 dark:text-white/60">
         {node.rule}
       </p>
 
