@@ -10,10 +10,16 @@ import type {
   Chain,
   CompletionHistory,
   ExceptionRule,
+  RSIPExecutionRecord,
+  RSIPLibraryEntry,
   RSIPMeta,
   RSIPNode,
+  RSIPNodeGroup,
+  RSIPRunRecord,
   ScheduledSession,
+  RSIPTaskLink,
 } from '../types';
+import type { PetState } from '../types/pet';
 import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { getTopLevelChains } from '../utils/chainTree';
@@ -71,6 +77,12 @@ interface DashboardProps {
       history?: CompletionHistory[];
       rsipNodes?: RSIPNode[];
       rsipMeta?: RSIPMeta;
+      rsipGroups?: RSIPNodeGroup[];
+      rsipPolicyLibrary?: RSIPLibraryEntry[];
+      rsipRunHistory?: RSIPRunRecord[];
+      rsipExecutionRecords?: RSIPExecutionRecord[];
+      rsipTaskLinks?: RSIPTaskLink[];
+      petState?: PetState;
       exceptionRules?: ExceptionRule[];
     },
   ) => Promise<void>;
@@ -79,6 +91,13 @@ interface DashboardProps {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
+  rsipGroups?: RSIPNodeGroup[];
+  rsipPolicyLibrary?: RSIPLibraryEntry[];
+  rsipRunHistory?: RSIPRunRecord[];
+  rsipExecutionRecords?: RSIPExecutionRecord[];
+  rsipTaskLinks?: RSIPTaskLink[];
+  petState?: PetState | null;
+  userPreferences?: unknown;
 }
 
 // Performance optimized Dashboard component with React.memo and proper memoization
@@ -102,6 +121,13 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
     history,
     rsipNodes,
     rsipMeta,
+    rsipGroups,
+    rsipPolicyLibrary,
+    rsipRunHistory,
+    rsipExecutionRecords,
+    rsipTaskLinks,
+    petState,
+    userPreferences,
     onOpenRSIP,
   }) => {
     const [showImportExport, setShowImportExport] = useState(false);
@@ -232,6 +258,12 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
           history?: CompletionHistory[];
           rsipNodes?: RSIPNode[];
           rsipMeta?: RSIPMeta;
+          rsipGroups?: RSIPNodeGroup[];
+          rsipPolicyLibrary?: RSIPLibraryEntry[];
+          rsipRunHistory?: RSIPRunRecord[];
+          rsipExecutionRecords?: RSIPExecutionRecord[];
+          rsipTaskLinks?: RSIPTaskLink[];
+          petState?: PetState;
           exceptionRules?: ExceptionRule[];
         },
       ) => {
@@ -327,6 +359,13 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
               history={history}
               rsipNodes={rsipNodes}
               rsipMeta={rsipMeta}
+              rsipGroups={rsipGroups}
+              rsipPolicyLibrary={rsipPolicyLibrary}
+              rsipRunHistory={rsipRunHistory}
+              rsipExecutionRecords={rsipExecutionRecords}
+              rsipTaskLinks={rsipTaskLinks}
+              petState={petState}
+              userPreferences={userPreferences}
               onImport={handleImport}
               onClose={handleHideImportExport}
             />

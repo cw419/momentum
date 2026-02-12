@@ -3,14 +3,20 @@ import type {
   Chain,
   CompletionHistory,
   ExceptionRule,
+  RSIPExecutionRecord,
+  RSIPLibraryEntry,
   RSIPNode,
+  RSIPNodeGroup,
   RSIPMeta,
+  RSIPRunRecord,
+  RSIPTaskLink,
 } from '../types';
+import type { PetState } from '../types/pet';
 import { exceptionRuleManager } from '../services/ExceptionRuleManager';
 import {
   importExportService,
   type ImportExportImportOptions,
-  type MomentumExportDataV2,
+  type MomentumExportDataV3,
 } from '../services/ImportExportService';
 import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
@@ -91,6 +97,12 @@ interface ImportExportModalContainerProps {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
+  rsipGroups?: RSIPNodeGroup[];
+  rsipPolicyLibrary?: RSIPLibraryEntry[];
+  rsipRunHistory?: RSIPRunRecord[];
+  rsipExecutionRecords?: RSIPExecutionRecord[];
+  rsipTaskLinks?: RSIPTaskLink[];
+  petState?: PetState | null;
   userPreferences?: unknown;
   onImport: (
     chains: Chain[],
@@ -98,6 +110,12 @@ interface ImportExportModalContainerProps {
       history?: CompletionHistory[];
       rsipNodes?: RSIPNode[];
       rsipMeta?: RSIPMeta;
+      rsipGroups?: RSIPNodeGroup[];
+      rsipPolicyLibrary?: RSIPLibraryEntry[];
+      rsipRunHistory?: RSIPRunRecord[];
+      rsipExecutionRecords?: RSIPExecutionRecord[];
+      rsipTaskLinks?: RSIPTaskLink[];
+      petState?: PetState;
       exceptionRules?: ExceptionRule[];
     },
   ) => Promise<void>;
@@ -111,6 +129,12 @@ export const ImportExportModalContainer: React.FC<
   history,
   rsipNodes,
   rsipMeta,
+  rsipGroups,
+  rsipPolicyLibrary,
+  rsipRunHistory,
+  rsipExecutionRecords,
+  rsipTaskLinks,
+  petState,
   userPreferences,
   onImport,
   onClose,
@@ -138,12 +162,18 @@ export const ImportExportModalContainer: React.FC<
     try {
       const exceptionRulesData = await exceptionRuleManager.exportRules(true);
 
-      const exportData: MomentumExportDataV2 =
+      const exportData: MomentumExportDataV3 =
         importExportService.createExportData({
           chains,
           history,
           rsipNodes,
           rsipMeta,
+          rsipGroups,
+          rsipPolicyLibrary,
+          rsipRunHistory,
+          rsipExecutionRecords,
+          rsipTaskLinks,
+          petState,
           userPreferences,
           exceptionRules: exceptionRulesData,
         });
@@ -164,7 +194,20 @@ export const ImportExportModalContainer: React.FC<
         normalizeUnknownError(error),
       );
     }
-  }, [capabilityCenter.file, chains, history, rsipNodes, rsipMeta, userPreferences]);
+  }, [
+    capabilityCenter.file,
+    chains,
+    history,
+    rsipExecutionRecords,
+    rsipGroups,
+    rsipMeta,
+    rsipNodes,
+    rsipPolicyLibrary,
+    rsipRunHistory,
+    rsipTaskLinks,
+    petState,
+    userPreferences,
+  ]);
 
   const handleImport = useCallback(async () => {
     try {
@@ -179,8 +222,20 @@ export const ImportExportModalContainer: React.FC<
         json: importData,
         options: importOptions,
         existingRsipNodes: rsipNodes,
+        existingRsipGroups: rsipGroups,
         tr,
       });
+
+      if (
+        parsedData.invalidReferences.rsipExecutionRecordsSkipped > 0 ||
+        parsedData.invalidReferences.rsipTaskLinksSkipped > 0
+      ) {
+        logger.warn(
+          'IMPORT_EXPORT',
+          'Skipped invalid RSIP relation records during import',
+          parsedData.invalidReferences,
+        );
+      }
 
       let importedExceptionRules: ExceptionRule[] = [];
       if (parsedData.exceptionRulesToImport.length > 0) {
@@ -200,6 +255,12 @@ export const ImportExportModalContainer: React.FC<
         history: parsedData.history,
         rsipNodes: parsedData.rsipNodes,
         rsipMeta: parsedData.rsipMeta,
+        rsipGroups: parsedData.rsipGroups,
+        rsipPolicyLibrary: parsedData.rsipPolicyLibrary,
+        rsipRunHistory: parsedData.rsipRunHistory,
+        rsipExecutionRecords: parsedData.rsipExecutionRecords,
+        rsipTaskLinks: parsedData.rsipTaskLinks,
+        petState: parsedData.petState,
         exceptionRules: importedExceptionRules,
       });
 
@@ -225,6 +286,7 @@ export const ImportExportModalContainer: React.FC<
     language,
     onClose,
     onImport,
+    rsipGroups,
     rsipNodes,
     storage,
     tr,

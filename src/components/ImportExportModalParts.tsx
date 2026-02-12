@@ -27,14 +27,15 @@ export const ImportInfoBox: React.FC<{
     </h3>
     <p className="mb-4 font-chinese text-sm leading-relaxed text-yellow-700 dark:text-yellow-300">
       {tr(
-        '导入功能将添加新的数据到您的系统中，包括任务链、国策树和例外规则。导入的链条将生成新的ID，不会覆盖现有数据。',
-        'Import adds new data to your system, including chains, RSIP, and exception rules. Imported chains get new IDs and will not overwrite existing data.',
+        '导入功能将添加新的数据到您的系统中，包括任务链、国策树扩展数据、宠物状态和例外规则。导入的链条将生成新的ID，不会覆盖现有数据。',
+        'Import adds new data to your system, including chains, extended RSIP data, pet state, and exception rules. Imported chains get new IDs and will not overwrite existing data.',
       )}
     </p>
     <div className="mb-4 space-y-2">
       {[
         tr('任务链数据（生成新ID）', 'Chains (new IDs)'),
-        tr('国策树节点与配置', 'RSIP nodes & config'),
+        tr('国策树节点与扩展记录', 'RSIP nodes & extended records'),
+        tr('宠物状态（覆盖导入）', 'Pet state (overwrite on import)'),
         tr('例外规则（跳过重复）', 'Exception rules (skip duplicates)'),
       ].map((text, i) => (
         <div
@@ -336,18 +337,19 @@ export const ExportTab: React.FC<{
         {tr('导出任务链数据', 'Export your data')}
       </h3>
       <p className="mb-4 font-chinese text-sm leading-relaxed text-blue-700 dark:text-blue-300">
-        {tr(
-          '导出功能将保存您当前的所有数据，包括任务链配置、统计数据、国策树和例外规则。',
-          'Export saves all your current data, including chains, stats, RSIP tree, and exception rules.',
-        )}
+      {tr(
+        '导出功能将保存您当前的所有数据，包括任务链配置、统计数据、国策树扩展数据、宠物状态和例外规则。',
+        'Export saves all your current data, including chains, stats, extended RSIP data, pet state, and exception rules.',
+      )}
       </p>
       <div className="space-y-2">
         {[
-          tr('任务链配置与统计', 'Chain config & stats'),
-          tr('完成历史记录', 'Completion history'),
-          tr('国策树（RSIP）数据', 'RSIP tree data'),
-          tr('例外规则配置', 'Exception rules'),
-        ].map((text, i) => (
+        tr('任务链配置与统计', 'Chain config & stats'),
+        tr('完成历史记录', 'Completion history'),
+        tr('国策树（RSIP）完整数据', 'Full RSIP dataset'),
+        tr('宠物状态', 'Pet state'),
+        tr('例外规则配置', 'Exception rules'),
+      ].map((text, i) => (
           <div
             key={i}
             className="flex items-center space-x-2 text-blue-600 dark:text-blue-400"

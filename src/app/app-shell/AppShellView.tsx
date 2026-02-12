@@ -269,6 +269,12 @@ export function AppShellView({
               history={state.completionHistory}
               rsipNodes={state.rsipNodes}
               rsipMeta={state.rsipMeta}
+              rsipGroups={state.rsipGroups}
+              rsipPolicyLibrary={state.rsipPolicyLibrary}
+              rsipRunHistory={state.rsipRunHistory}
+              rsipExecutionRecords={state.rsipExecutionRecords}
+              rsipTaskLinks={state.rsipTaskLinks}
+              petState={petDomain.pet}
             />
             {renderAuxiliaryJudgment()}
           </>

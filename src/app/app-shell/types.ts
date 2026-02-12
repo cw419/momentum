@@ -4,6 +4,7 @@ import type {
   ChainDraft,
   CompletionHistory,
   ExceptionRule,
+  RSIPExecutionRecord,
   RSIPLibraryEntry,
   RSIPMeta,
   RSIPNode,
@@ -24,6 +25,12 @@ interface ImportChainsOptions {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
+  rsipGroups?: RSIPNodeGroup[];
+  rsipPolicyLibrary?: RSIPLibraryEntry[];
+  rsipRunHistory?: RSIPRunRecord[];
+  rsipExecutionRecords?: RSIPExecutionRecord[];
+  rsipTaskLinks?: RSIPTaskLink[];
+  petState?: PetState;
   exceptionRules?: ExceptionRule[];
 }
 

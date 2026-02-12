@@ -5,6 +5,7 @@ import type { AppState } from '../../../types';
 import {
   createAppState,
   createLocalStorageMock,
+  createPetState,
   createSupabaseStorageMock,
   createUnitChain,
 } from '../../../test/factories';
@@ -63,8 +64,63 @@ describe('useImportExportDomain', () => {
         completionHistory: [],
         rsipNodes: [],
         rsipMeta: {},
+        rsipGroups: [],
+        rsipPolicyLibrary: [],
+        rsipRunHistory: [],
+        rsipExecutionRecords: [],
+        rsipTaskLinks: [],
       }),
     );
+
+    const pet = createPetState({ id: 'pet-imported', name: 'Nori' });
+    const rsipGroups = [
+      {
+        id: 'group-1',
+        title: 'Group',
+        faultTolerance: 1,
+        createdAt: new Date('2026-02-01T10:00:00.000Z'),
+      },
+    ];
+    const rsipPolicyLibrary = [
+      {
+        id: 'lib-1',
+        title: 'Lib',
+        rule: 'Rule',
+        cumulativeExecutionDays: 2,
+        internalizationProgress: 10,
+        lastActiveAt: new Date('2026-02-01T10:00:00.000Z'),
+        timesUsed: 1,
+      },
+    ];
+    const rsipRunHistory = [
+      {
+        runNumber: 1,
+        startedAt: new Date('2026-02-01T10:00:00.000Z'),
+        maxNodeCount: 2,
+        durationDays: 1,
+      },
+    ];
+    const rsipExecutionRecords = [
+      {
+        id: 'exec-1',
+        nodeId: 'node-1',
+        executedAt: new Date('2026-02-01T10:00:00.000Z'),
+        status: 'executed' as const,
+      },
+    ];
+    const rsipTaskLinks = [
+      {
+        id: 'link-1',
+        rsipNodeId: 'node-1',
+        chainId: imported.id,
+        chainKind: 'unit' as const,
+        triggerEvent: 'task_completed' as const,
+        effect: 'mark_rsip_executed' as const,
+        automation: 'confirm' as const,
+        isActive: true,
+        updatedAt: new Date('2026-02-01T10:00:00.000Z'),
+      },
+    ];
 
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [existing]),
@@ -74,6 +130,16 @@ describe('useImportExportDomain', () => {
       saveRSIPNodes: vi.fn(async () => undefined),
       getRSIPMeta: vi.fn(async () => ({ origin: 'local' })),
       saveRSIPMeta: vi.fn(async () => undefined),
+      getRSIPGroups: vi.fn(async () => []),
+      saveRSIPGroups: vi.fn(async () => undefined),
+      getRSIPPolicyLibrary: vi.fn(async () => []),
+      saveRSIPPolicyLibrary: vi.fn(async () => undefined),
+      getRSIPRunHistory: vi.fn(async () => []),
+      saveRSIPRunHistory: vi.fn(async () => undefined),
+      getRSIPTaskLinks: vi.fn(async () => []),
+      saveRSIPTaskLinks: vi.fn(async () => undefined),
+      appendRSIPExecutionRecord: vi.fn(async () => undefined),
+      savePetState: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
 
@@ -108,6 +174,12 @@ describe('useImportExportDomain', () => {
         history,
         rsipNodes,
         rsipMeta: { imported: true },
+        rsipGroups,
+        rsipPolicyLibrary,
+        rsipRunHistory,
+        rsipExecutionRecords,
+        rsipTaskLinks,
+        petState: pet,
       });
     });
 
@@ -118,11 +190,28 @@ describe('useImportExportDomain', () => {
       origin: 'local',
       imported: true,
     });
+    expect(storage.saveRSIPGroups).toHaveBeenCalledWith(rsipGroups);
+    expect(storage.saveRSIPPolicyLibrary).toHaveBeenCalledWith(
+      rsipPolicyLibrary,
+    );
+    expect(storage.saveRSIPRunHistory).toHaveBeenCalledWith(rsipRunHistory);
+    expect(storage.appendRSIPExecutionRecord).toHaveBeenCalledWith(
+      rsipExecutionRecords[0],
+    );
+    expect(storage.saveRSIPTaskLinks).toHaveBeenCalledWith(rsipTaskLinks);
+    expect(storage.savePetState).toHaveBeenCalledWith(pet);
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
     expect(stateRef.getState().chains).toEqual([existing, imported]);
     expect(stateRef.getState().completionHistory).toEqual(history);
     expect(stateRef.getState().rsipNodes).toEqual(rsipNodes);
     expect(stateRef.getState().rsipMeta).toEqual({ imported: true });
+    expect(stateRef.getState().rsipGroups).toEqual(rsipGroups);
+    expect(stateRef.getState().rsipPolicyLibrary).toEqual(rsipPolicyLibrary);
+    expect(stateRef.getState().rsipRunHistory).toEqual(rsipRunHistory);
+    expect(stateRef.getState().rsipExecutionRecords).toEqual(
+      rsipExecutionRecords,
+    );
+    expect(stateRef.getState().rsipTaskLinks).toEqual(rsipTaskLinks);
     expect(stateRef.getState().chainsRevision).toBe(1);
 
     expect(logger.info).toHaveBeenCalledWith(

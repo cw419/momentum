@@ -19,9 +19,15 @@ import type {
   Chain,
   CompletionHistory,
   ExceptionRule,
+  RSIPExecutionRecord,
+  RSIPLibraryEntry,
   RSIPMeta,
   RSIPNode,
+  RSIPNodeGroup,
+  RSIPRunRecord,
+  RSIPTaskLink,
 } from '../../types';
+import type { PetState } from '../../types/pet';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
 import { useI18n } from '../../i18n';
@@ -33,6 +39,12 @@ interface ImportChainsOptions {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
+  rsipGroups?: RSIPNodeGroup[];
+  rsipPolicyLibrary?: RSIPLibraryEntry[];
+  rsipRunHistory?: RSIPRunRecord[];
+  rsipExecutionRecords?: RSIPExecutionRecord[];
+  rsipTaskLinks?: RSIPTaskLink[];
+  petState?: PetState;
   exceptionRules?: ExceptionRule[];
 }
 
@@ -153,10 +165,63 @@ export function useImportExportDomain({
     await storage.saveRSIPMeta({ ...existingMeta, ...meta });
   }
 
+  async function persistImportedRsipGroups(
+    groups: RSIPNodeGroup[] | undefined,
+  ): Promise<void> {
+    if (!groups || groups.length === 0) return;
+    const existing = await storage.getRSIPGroups();
+    await storage.saveRSIPGroups([...existing, ...groups]);
+  }
+
+  async function persistImportedRsipLibrary(
+    entries: RSIPLibraryEntry[] | undefined,
+  ): Promise<void> {
+    if (!entries || entries.length === 0) return;
+    const existing = await storage.getRSIPPolicyLibrary();
+    await storage.saveRSIPPolicyLibrary([...existing, ...entries]);
+  }
+
+  async function persistImportedRsipRunHistory(
+    records: RSIPRunRecord[] | undefined,
+  ): Promise<void> {
+    if (!records || records.length === 0) return;
+    const existing = await storage.getRSIPRunHistory();
+    await storage.saveRSIPRunHistory([...existing, ...records]);
+  }
+
+  async function persistImportedRsipExecutionRecords(
+    records: RSIPExecutionRecord[] | undefined,
+  ): Promise<void> {
+    if (!records || records.length === 0) return;
+    for (const record of records) {
+      await storage.appendRSIPExecutionRecord(record);
+    }
+  }
+
+  async function persistImportedRsipTaskLinks(
+    links: RSIPTaskLink[] | undefined,
+  ): Promise<void> {
+    if (!links || links.length === 0) return;
+    const existing = await storage.getRSIPTaskLinks();
+    await storage.saveRSIPTaskLinks([...existing, ...links]);
+  }
+
+  async function persistImportedPetState(
+    petState: PetState | undefined,
+  ): Promise<void> {
+    if (!petState) return;
+    await storage.savePetState(petState);
+  }
+
   async function reloadStateAfterImportFailure(): Promise<void> {
     const currentChains = await storage.getChains();
     const currentRsipNodes = await storage.getRSIPNodes();
     const currentRsipMeta = await storage.getRSIPMeta();
+    const currentRsipGroups = await storage.getRSIPGroups();
+    const currentRsipPolicyLibrary = await storage.getRSIPPolicyLibrary();
+    const currentRsipRunHistory = await storage.getRSIPRunHistory();
+    const currentRsipTaskLinks = await storage.getRSIPTaskLinks();
+    const currentRsipExecutionRecords = await storage.getRSIPExecutionRecords();
 
     setState((prev) => ({
       ...prev,
@@ -164,6 +229,11 @@ export function useImportExportDomain({
       chainsRevision: prev.chainsRevision + 1,
       rsipNodes: currentRsipNodes,
       rsipMeta: currentRsipMeta,
+      rsipGroups: currentRsipGroups,
+      rsipPolicyLibrary: currentRsipPolicyLibrary,
+      rsipRunHistory: currentRsipRunHistory,
+      rsipTaskLinks: currentRsipTaskLinks,
+      rsipExecutionRecords: currentRsipExecutionRecords,
     }));
   }
 
@@ -199,6 +269,12 @@ export function useImportExportDomain({
       await persistImportedHistory(options?.history);
       await persistImportedRsipNodes(options?.rsipNodes);
       await persistImportedRsipMeta(options?.rsipMeta);
+      await persistImportedRsipGroups(options?.rsipGroups);
+      await persistImportedRsipLibrary(options?.rsipPolicyLibrary);
+      await persistImportedRsipRunHistory(options?.rsipRunHistory);
+      await persistImportedRsipExecutionRecords(options?.rsipExecutionRecords);
+      await persistImportedRsipTaskLinks(options?.rsipTaskLinks);
+      await persistImportedPetState(options?.petState);
 
       logger.info('APP_SHELL', '导入数据保存成功，更新 UI 状态');
 
@@ -214,6 +290,23 @@ export function useImportExportDomain({
         rsipMeta: options?.rsipMeta
           ? { ...prev.rsipMeta, ...options.rsipMeta }
           : prev.rsipMeta,
+        rsipGroups: appendIfNonEmpty(prev.rsipGroups ?? [], options?.rsipGroups),
+        rsipPolicyLibrary: appendIfNonEmpty(
+          prev.rsipPolicyLibrary ?? [],
+          options?.rsipPolicyLibrary,
+        ),
+        rsipRunHistory: appendIfNonEmpty(
+          prev.rsipRunHistory ?? [],
+          options?.rsipRunHistory,
+        ),
+        rsipExecutionRecords: appendIfNonEmpty(
+          prev.rsipExecutionRecords ?? [],
+          options?.rsipExecutionRecords,
+        ),
+        rsipTaskLinks: appendIfNonEmpty(
+          prev.rsipTaskLinks ?? [],
+          options?.rsipTaskLinks,
+        ),
       }));
 
       logger.info('APP_SHELL', '导入完成，UI 状态更新完成');

@@ -180,13 +180,17 @@ describe('ImportExportModalContainer', () => {
       history: [{ id: 'h1' }],
       rsipNodes: [{ id: 'r1' }],
       rsipMeta: { allowMultiplePerDay: true },
+      invalidReferences: {
+        rsipExecutionRecordsSkipped: 0,
+        rsipTaskLinksSkipped: 0,
+      },
       exceptionRulesToImport: [{ id: 'rule-a' }],
     });
     importRulesMock.mockResolvedValue({ imported: [{ id: 'rule-a' }] });
     exportRulesMock.mockResolvedValue([{ id: 'rule-a' }]);
     saveFileMock.mockResolvedValue(true);
     createExportDataMock.mockReturnValue({
-      version: 2,
+      version: 3,
       chains: [{ id: 'c1' }],
     });
   });
@@ -260,6 +264,10 @@ describe('ImportExportModalContainer', () => {
       history: [],
       rsipNodes: [],
       rsipMeta: { allowMultiplePerDay: false },
+      invalidReferences: {
+        rsipExecutionRecordsSkipped: 0,
+        rsipTaskLinksSkipped: 0,
+      },
       exceptionRulesToImport: [],
     });
     useStorageMock.mockReturnValue({
@@ -419,7 +427,7 @@ describe('ImportExportModalContainer', () => {
     );
     expect(saveFileMock).toHaveBeenCalledTimes(1);
     expect(saveFileMock).toHaveBeenCalledWith(
-      expect.stringContaining('"version": 2'),
+      expect.stringContaining('"version": 3'),
       expect.stringMatching(/^momentum-data-\d{4}-\d{2}-\d{2}\.json$/),
     );
   });

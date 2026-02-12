@@ -1,11 +1,28 @@
-import type { Chain, CompletionHistory, RSIPMeta, RSIPNode } from '../../types';
+import type {
+  Chain,
+  CompletionHistory,
+  RSIPExecutionRecord,
+  RSIPLibraryEntry,
+  RSIPMeta,
+  RSIPNode,
+  RSIPNodeGroup,
+  RSIPRunRecord,
+  RSIPTaskLink,
+} from '../../types';
+import type { PetState } from '../../types/pet';
 
 import {
-  type MomentumExportDataV2,
+  type MomentumExportDataV3,
   toExportedChain,
   toExportedCompletionHistory,
+  toExportedPetState,
+  toExportedRSIPExecutionRecord,
+  toExportedRSIPGroup,
+  toExportedRSIPLibraryEntry,
   toExportedRSIPMeta,
   toExportedRSIPNode,
+  toExportedRSIPRunRecord,
+  toExportedRSIPTaskLink,
 } from './DataTransformers';
 
 export class ExportService {
@@ -14,25 +31,51 @@ export class ExportService {
     history?: CompletionHistory[];
     rsipNodes?: RSIPNode[];
     rsipMeta?: RSIPMeta;
+    rsipGroups?: RSIPNodeGroup[];
+    rsipPolicyLibrary?: RSIPLibraryEntry[];
+    rsipRunHistory?: RSIPRunRecord[];
+    rsipExecutionRecords?: RSIPExecutionRecord[];
+    rsipTaskLinks?: RSIPTaskLink[];
+    petState?: PetState | null;
     userPreferences?: unknown;
     exceptionRules?: unknown;
-  }): MomentumExportDataV2 {
+  }): MomentumExportDataV3 {
     const {
       chains,
       history,
       rsipNodes,
       rsipMeta,
+      rsipGroups,
+      rsipPolicyLibrary,
+      rsipRunHistory,
+      rsipExecutionRecords,
+      rsipTaskLinks,
+      petState,
       userPreferences,
       exceptionRules,
     } = params;
 
     return {
-      version: '2.0',
+      version: '3.0',
       exportedAt: new Date().toISOString(),
       chains: chains.map(toExportedChain),
       completionHistory: (history || []).map(toExportedCompletionHistory),
       rsipNodes: rsipNodes ? rsipNodes.map(toExportedRSIPNode) : undefined,
       rsipMeta: rsipMeta ? toExportedRSIPMeta(rsipMeta) : undefined,
+      rsipGroups: rsipGroups ? rsipGroups.map(toExportedRSIPGroup) : undefined,
+      rsipPolicyLibrary: rsipPolicyLibrary
+        ? rsipPolicyLibrary.map(toExportedRSIPLibraryEntry)
+        : undefined,
+      rsipRunHistory: rsipRunHistory
+        ? rsipRunHistory.map(toExportedRSIPRunRecord)
+        : undefined,
+      rsipExecutionRecords: rsipExecutionRecords
+        ? rsipExecutionRecords.map(toExportedRSIPExecutionRecord)
+        : undefined,
+      rsipTaskLinks: rsipTaskLinks
+        ? rsipTaskLinks.map(toExportedRSIPTaskLink)
+        : undefined,
+      petState: petState ? toExportedPetState(petState) : undefined,
       userPreferences,
       exceptionRules,
     };

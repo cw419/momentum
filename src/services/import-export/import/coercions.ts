@@ -69,6 +69,17 @@ export function toOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+export function parseDateOrUndefined(value: unknown): Date | undefined {
+  if (value == null) return undefined;
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+export function parseTruthyDateOrUndefined(value: unknown): Date | undefined {
+  if (!value) return undefined;
+  return parseDateOrUndefined(value);
+}
+
 export function parseTruthyDateOrNow(value: unknown): Date {
-  return value ? new Date(String(value)) : new Date();
+  return parseTruthyDateOrUndefined(value) ?? new Date();
 }
