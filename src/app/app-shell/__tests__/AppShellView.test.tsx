@@ -217,6 +217,7 @@ describe('AppShellView', () => {
 
     const { rerender } = render(<AppShellView {...editorProps} />);
     expect(await screen.findByTestId('chain-editor')).toBeInTheDocument();
+    expect(screen.queryByTestId('pet-widget')).not.toBeInTheDocument();
 
     rerender(
       <AppShellView
@@ -229,6 +230,7 @@ describe('AppShellView', () => {
       />,
     );
     expect(await screen.findByTestId('taskgroup-editor')).toBeInTheDocument();
+    expect(screen.queryByTestId('pet-widget')).not.toBeInTheDocument();
   });
 
   it('renders focus/detail/group/rsip views when required state is available', async () => {
@@ -255,6 +257,7 @@ describe('AppShellView', () => {
       />,
     );
     expect(await screen.findByTestId('focus-mode')).toBeInTheDocument();
+    expect(screen.queryByTestId('pet-widget')).not.toBeInTheDocument();
 
     rerender(
       <AppShellView
@@ -268,6 +271,7 @@ describe('AppShellView', () => {
       />,
     );
     expect(await screen.findByTestId('chain-detail')).toBeInTheDocument();
+    expect(screen.queryByTestId('pet-widget')).not.toBeInTheDocument();
 
     rerender(
       <AppShellView
@@ -281,6 +285,7 @@ describe('AppShellView', () => {
       />,
     );
     expect(await screen.findByTestId('group-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('pet-widget')).not.toBeInTheDocument();
 
     rerender(
       <AppShellView
@@ -293,6 +298,7 @@ describe('AppShellView', () => {
       />,
     );
     expect(await screen.findByTestId('rsip-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('pet-widget')).not.toBeInTheDocument();
   });
 
   it('returns null main content for focus/detail/group when prerequisites are missing', () => {

@@ -70,6 +70,7 @@ export function AppShellView({
   petDomain,
 }: AppShellViewProps) {
   const { tr } = useI18n();
+  const shouldShowPetWidget = isInitialized && state.currentView === 'dashboard';
 
   const renderAuxiliaryJudgment = () => {
     if (!showAuxiliaryJudgment) return null;
@@ -305,21 +306,23 @@ export function AppShellView({
         {renderCurrentView()}
       </main>
 
-      <Suspense fallback={null}>
-        <PetWidget
-          pet={petDomain.pet}
-          mood={petDomain.mood}
-          isLoading={petDomain.isLoading}
-          hasPet={petDomain.hasPet}
-          onCreatePet={petDomain.createPet}
-          onFeedPet={petDomain.feedPet}
-          onUpdatePosition={petDomain.updatePosition}
-          onUpdateMinimizedPosition={petDomain.updateMinimizedPosition}
-          onToggleVisibility={petDomain.toggleVisibility}
-          onMinimize={petDomain.minimize}
-          onExpand={petDomain.expand}
-        />
-      </Suspense>
+      {shouldShowPetWidget && (
+        <Suspense fallback={null}>
+          <PetWidget
+            pet={petDomain.pet}
+            mood={petDomain.mood}
+            isLoading={petDomain.isLoading}
+            hasPet={petDomain.hasPet}
+            onCreatePet={petDomain.createPet}
+            onFeedPet={petDomain.feedPet}
+            onUpdatePosition={petDomain.updatePosition}
+            onUpdateMinimizedPosition={petDomain.updateMinimizedPosition}
+            onToggleVisibility={petDomain.toggleVisibility}
+            onMinimize={petDomain.minimize}
+            onExpand={petDomain.expand}
+          />
+        </Suspense>
+      )}
 
       {showBettingModal && pendingChainId && currentSessionId && (
         <Suspense fallback={null}>
