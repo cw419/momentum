@@ -21,6 +21,7 @@ import type {
 } from '../types';
 import type { PetState } from '../types/pet';
 import { useStorage } from '../storage/useStorage';
+import { useStorageMode } from '../storage/useStorageMode';
 import { useI18n } from '../i18n';
 import { getTopLevelChains } from '../utils/chainTree';
 import { queryOptimizer } from '../utils/queryOptimizer';
@@ -136,6 +137,12 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
     const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(isDev);
     const [recycleBinCount, setRecycleBinCount] = useState(0);
     const storage = useStorage();
+    const {
+      canUseSupabase,
+      isChoicePending,
+      setMode,
+      dismissFirstLaunchHint,
+    } = useStorageMode();
     const { t, tr, language } = useI18n();
     const isSupabase = storage.kind === 'supabase';
 
@@ -280,6 +287,14 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
       [scheduledSessions],
     );
 
+    const handleEnableCloudMode = useCallback(() => {
+      setMode('supabase');
+    }, [setMode]);
+
+    const handleKeepLocalMode = useCallback(() => {
+      dismissFirstLaunchHint();
+    }, [dismissFirstLaunchHint]);
+
     return (
       <div className="bg-background min-h-screen p-4 md:p-6">
         <div className="mx-auto max-w-7xl">
@@ -290,6 +305,37 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
           />
 
           <DashboardHero language={language} tr={tr} />
+
+          {isChoicePending && (
+            <section className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-6 shadow-sm dark:border-blue-800/60 dark:bg-blue-900/20">
+              <h3 className="mb-2 font-chinese text-lg font-semibold text-blue-900 dark:text-blue-100">
+                {tr('选择你的数据模式', 'Choose your data mode')}
+              </h3>
+              <p className="mb-4 text-sm text-blue-800 dark:text-blue-200">
+                {tr(
+                  '默认是本地模式。你也可以连接 Supabase 开启登录与多端同步。',
+                  'Local mode is the default. You can also connect Supabase for sign-in and multi-device sync.',
+                )}
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleKeepLocalMode}
+                  className="rounded-xl border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  {tr('继续本地模式', 'Continue with local mode')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEnableCloudMode}
+                  disabled={!canUseSupabase}
+                  className="rounded-xl bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {tr('连接云端同步', 'Connect cloud sync')}
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* Daily Check-in Section - lazy loaded */}
           <div className="mb-12 animate-fade-in">

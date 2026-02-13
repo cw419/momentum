@@ -3,6 +3,7 @@ import { User, AlertCircle } from 'lucide-react';
 import type { AuthUser } from '../domain/auth';
 import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/useStorage';
+import { useStorageMode } from '../storage/useStorageMode';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 import {
@@ -11,8 +12,10 @@ import {
 } from '../utils/errorMessage';
 import { normalizeUnknownError } from '../utils/errors/normalizeError';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { isTauri } from '../utils/platform';
 import { AccountModalHeader } from './account-modal/AccountModalHeader';
 import { AccountModalLanguageSection } from './account-modal/AccountModalLanguageSection';
+import { AccountModalStorageSection } from './account-modal/AccountModalStorageSection';
 import { AccountModalUserContent } from './account-modal/AccountModalUserContent';
 import { NotificationToggle } from './NotificationToggle';
 
@@ -26,6 +29,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   onClose,
 }) => {
   const storage = useStorage();
+  const { mode, canUseSupabase, setMode } = useStorageMode();
   const { language, locale, setLanguage, t, tr } = useI18n();
   const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -241,6 +245,14 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     }
   };
 
+  const handleSwitchToLocalMode = useCallback(() => {
+    setMode('local');
+  }, [setMode]);
+
+  const handleSwitchToSupabaseMode = useCallback(() => {
+    setMode('supabase');
+  }, [setMode]);
+
   if (!isOpen) return null;
 
   let accountContent: React.ReactNode;
@@ -343,6 +355,16 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             setLanguage={setLanguage}
             t={t}
           />
+
+          {isTauri && (
+            <AccountModalStorageSection
+              mode={mode}
+              canUseSupabase={canUseSupabase}
+              tr={tr}
+              onSwitchToLocal={handleSwitchToLocalMode}
+              onSwitchToSupabase={handleSwitchToSupabaseMode}
+            />
+          )}
 
           <NotificationToggle placement="settings" />
 

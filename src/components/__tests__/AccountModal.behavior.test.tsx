@@ -15,6 +15,29 @@ import { I18nProvider } from '../../i18n';
 import { StorageProvider } from '../../storage/StorageContext';
 import { AccountModal } from '../AccountModal';
 
+const isTauriRef = vi.hoisted(() => ({ value: false }));
+const storageModeMock = vi.hoisted(() => ({
+  mode: 'local' as 'local' | 'supabase',
+  canUseSupabase: true,
+  isChoicePending: false,
+  setMode: vi.fn(),
+  dismissFirstLaunchHint: vi.fn(),
+}));
+
+vi.mock('../../utils/platform', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../utils/platform')>();
+  return {
+    ...actual,
+    get isTauri() {
+      return isTauriRef.value;
+    },
+  };
+});
+
+vi.mock('../../storage/useStorageMode', () => ({
+  useStorageMode: () => storageModeMock,
+}));
+
 type Deferred<T> = {
   promise: Promise<T>;
   resolve: (value: T) => void;
@@ -92,6 +115,11 @@ function renderAccountModal(storage: TestStorage, onClose = vi.fn()) {
 describe('AccountModal behavior', () => {
   beforeEach(() => {
     localStorage.setItem('language', 'en');
+    isTauriRef.value = false;
+    storageModeMock.mode = 'local';
+    storageModeMock.canUseSupabase = true;
+    storageModeMock.setMode.mockReset();
+    storageModeMock.dismissFirstLaunchHint.mockReset();
   });
 
   it('renders local-mode copy in english without garbled characters', () => {
@@ -326,5 +354,35 @@ describe('AccountModal behavior', () => {
       await screen.findByText('Sign out failed. Please try again.'),
     ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('shows tauri storage section and handles mode switches', async () => {
+    const user = userEvent.setup();
+    isTauriRef.value = true;
+    storageModeMock.mode = 'supabase';
+
+    renderAccountModal(createSupabaseStorage());
+
+    await user.click(
+      await screen.findByRole('radio', { name: 'Local mode' }),
+    );
+    await user.click(screen.getByRole('radio', { name: 'Cloud mode' }));
+
+    expect(storageModeMock.setMode).toHaveBeenCalledWith('local');
+    expect(storageModeMock.setMode).toHaveBeenCalledWith('supabase');
+  });
+
+  it('disables cloud mode option when supabase is unavailable in tauri', () => {
+    isTauriRef.value = true;
+    storageModeMock.canUseSupabase = false;
+
+    renderAccountModal(createLocalStorage());
+
+    expect(screen.getByRole('radio', { name: 'Cloud mode' })).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Supabase is not configured, so only local mode is available.',
+      ),
+    ).toBeInTheDocument();
   });
 });

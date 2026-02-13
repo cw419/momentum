@@ -1,17 +1,38 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../i18n';
 import { StorageProvider } from '../../storage/StorageContext';
 import { err, ok } from '../../domain/result';
+
+const isTauriRef = vi.hoisted(() => ({ value: false }));
+const storageModeMock = vi.hoisted(() => ({
+  setMode: vi.fn(),
+}));
+
+vi.mock('../../utils/platform', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../utils/platform')>();
+  return {
+    ...actual,
+    get isTauri() {
+      return isTauriRef.value;
+    },
+  };
+});
+
+vi.mock('../../storage/useStorageMode', () => ({
+  useStorageMode: () => storageModeMock,
+}));
 
 vi.mock('../IntroScreen', () => ({
   IntroScreen: ({
     onSignIn,
     onSignUp,
+    onUseLocalMode,
   }: {
     onSignIn: () => void;
     onSignUp: () => void;
+    onUseLocalMode?: () => void;
   }) => (
     <div data-testid="intro-screen">
       <button type="button" onClick={onSignIn}>
@@ -20,6 +41,11 @@ vi.mock('../IntroScreen', () => ({
       <button type="button" onClick={onSignUp}>
         intro-sign-up
       </button>
+      {onUseLocalMode && (
+        <button type="button" onClick={onUseLocalMode}>
+          intro-use-local
+        </button>
+      )}
     </div>
   ),
 }));
@@ -28,15 +54,22 @@ vi.mock('../AuthForm', () => ({
   AuthForm: ({
     initialIsSignUp,
     onBack,
+    onUseLocalMode,
   }: {
     initialIsSignUp: boolean;
     onBack: () => void;
+    onUseLocalMode?: () => void;
   }) => (
     <div data-testid="auth-form">
       <span>{initialIsSignUp ? 'signup' : 'signin'}</span>
       <button type="button" onClick={onBack}>
         auth-back
       </button>
+      {onUseLocalMode && (
+        <button type="button" onClick={onUseLocalMode}>
+          auth-use-local
+        </button>
+      )}
     </div>
   ),
 }));
@@ -57,6 +90,46 @@ function renderWrapper(storage: any) {
 }
 
 describe('AuthWrapper', () => {
+  beforeEach(() => {
+    isTauriRef.value = false;
+    storageModeMock.setMode.mockReset();
+  });
+
+  it('passes local mode switch entry in tauri intro view', async () => {
+    isTauriRef.value = true;
+    renderWrapper({
+      kind: 'supabase',
+      onAuthStateChange: vi.fn(() => ok(() => undefined)),
+      waitForAuthentication: vi
+        .fn()
+        .mockResolvedValue(ok({ user: null, isAuthenticated: false })),
+    });
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'intro-use-local' }),
+    );
+    expect(storageModeMock.setMode).toHaveBeenCalledWith('local');
+  });
+
+  it('passes local mode switch entry in tauri auth view', async () => {
+    isTauriRef.value = true;
+    renderWrapper({
+      kind: 'supabase',
+      onAuthStateChange: vi.fn(() => ok(() => undefined)),
+      waitForAuthentication: vi
+        .fn()
+        .mockResolvedValue(ok({ user: null, isAuthenticated: false })),
+    });
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'intro-sign-in' }),
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'auth-use-local' }),
+    );
+    expect(storageModeMock.setMode).toHaveBeenCalledWith('local');
+  });
+
   it('renders children directly when storage is local', () => {
     renderWrapper({ kind: 'local' });
     expect(screen.getByTestId('protected-content')).toBeInTheDocument();

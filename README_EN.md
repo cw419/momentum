@@ -23,6 +23,14 @@ You can also read this README on Zhihu: https://zhuanlan.zhihu.com/p/19325300067
 | ☁️ Cloud Sync                | Multi-device sync via Supabase                                    |
 | 🎨 Glassmorphism UI          | Modern frosted glass interface design                             |
 
+## 🔀 Tauri Storage Modes (v0.3.2)
+
+- `tauri-desktop` and `tauri-mobile` now default to **Local mode** on first launch.
+- If Supabase is configured, users see a one-time non-blocking prompt: keep local mode or connect cloud sync.
+- Users can switch between **Local mode** and **Cloud mode** at any time in settings.
+- Mode switching only changes the data source; there is no automatic import/export/merge.
+- Virtual pet data remains device-local in both modes and is not synced cross-device.
+
 ## 🎯 Core Concept
 
 Momentum is based on the Chained Time-Delay Protocol (CTDP) theory proposed by Edmond on Zhihu, which uses a mathematical model to solve self-control problems:
@@ -205,6 +213,9 @@ Complete data management functionality.
 
 - Node.js 20.19+ (or 22.12+)
 - npm or yarn
+- To enable Supabase cloud mode, configure:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
 
 ### Installation Steps
 

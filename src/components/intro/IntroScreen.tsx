@@ -21,11 +21,13 @@ import { IntroPrinciplesSection } from './IntroPrinciplesSection';
 interface IntroScreenProps {
   onSignIn: () => void;
   onSignUp: () => void;
+  onUseLocalMode?: () => void;
 }
 
 export const IntroScreen: React.FC<IntroScreenProps> = ({
   onSignIn,
   onSignUp,
+  onUseLocalMode,
 }) => {
   const { language, setLanguage } = useI18n();
   const lang: Lang = language;
@@ -105,6 +107,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
         lang={lang}
         onSignIn={onSignIn}
         onSignUp={onSignUp}
+        onUseLocalMode={onUseLocalMode}
         onScrollDown={scrollToNext}
       />
 

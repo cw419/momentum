@@ -3,6 +3,8 @@ export const LOCAL_STORAGE_KEYS = {
   THEME: 'theme',
   LANGUAGE: 'language',
   NOTIFICATIONS_ENABLED: 'notifications_enabled',
+  STORAGE_MODE: 'momentum_storage_mode',
+  STORAGE_MODE_HINT_DISMISSED: 'momentum_storage_mode_hint_dismissed',
 
   // Ephemeral UI State
   RSIP_CANVAS_STATE: 'momentum:rsip-canvas-state',

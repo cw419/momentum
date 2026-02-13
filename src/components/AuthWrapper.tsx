@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { AuthUser } from '../domain/auth';
 import { useStorage } from '../storage/useStorage';
+import { useStorageMode } from '../storage/useStorageMode';
 import { logger } from '../utils/logger';
 import { AuthForm } from './AuthForm';
 import { IntroScreen } from './IntroScreen';
 import { Loader2 } from 'lucide-react';
 import { useI18n } from '../i18n';
+import { isTauri } from '../utils/platform';
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -14,10 +16,15 @@ interface AuthWrapperProps {
 export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const { tr } = useI18n();
   const storage = useStorage();
+  const { setMode } = useStorageMode();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'intro' | 'auth'>('intro');
   const [initialIsSignUp, setInitialIsSignUp] = useState(false);
+
+  const handleSwitchToLocalMode = useCallback(() => {
+    setMode('local');
+  }, [setMode]);
 
   useEffect(() => {
     if (storage.kind !== 'supabase') {
@@ -100,6 +107,7 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
             setInitialIsSignUp(true);
             setView('auth');
           }}
+          onUseLocalMode={isTauri ? handleSwitchToLocalMode : undefined}
         />
       );
     }
@@ -107,6 +115,7 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
       <AuthForm
         initialIsSignUp={initialIsSignUp}
         onBack={() => setView('intro')}
+        onUseLocalMode={isTauri ? handleSwitchToLocalMode : undefined}
       />
     );
   }

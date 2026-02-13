@@ -1,4 +1,5 @@
 import type { CanvasState, Language, Theme, TimerPersistData } from './types';
+import { LOCAL_STORAGE_KEYS } from './keys';
 import { clearAutoResume, getAutoResume, setAutoResume } from './autoResume';
 import {
   clearCanvasState,
@@ -59,6 +60,28 @@ class LocalPreferencesManager {
 
   setNotificationsEnabled(enabled: boolean): void {
     setNotificationsEnabled(enabled);
+  }
+
+  // ==================== Storage Mode ====================
+
+  getStorageMode(): 'local' | 'supabase' | null {
+    const stored = getRaw(LOCAL_STORAGE_KEYS.STORAGE_MODE);
+    if (stored === 'local' || stored === 'supabase') {
+      return stored;
+    }
+    return null;
+  }
+
+  setStorageMode(mode: 'local' | 'supabase'): void {
+    setRaw(LOCAL_STORAGE_KEYS.STORAGE_MODE, mode);
+  }
+
+  getStorageModeHintDismissed(): boolean {
+    return getRaw(LOCAL_STORAGE_KEYS.STORAGE_MODE_HINT_DISMISSED) === 'true';
+  }
+
+  setStorageModeHintDismissed(dismissed: boolean): void {
+    setRaw(LOCAL_STORAGE_KEYS.STORAGE_MODE_HINT_DISMISSED, String(dismissed));
   }
 
   // ==================== Canvas State ====================

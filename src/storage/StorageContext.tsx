@@ -1,7 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { MomentumStorage } from './MomentumStorage';
 import { localStorageAdapter } from './localStorageAdapter';
 import { StorageContext } from './storageContextValue';
+import {
+  StorageModeContext,
+  type StorageMode,
+} from './storageModeContextValue';
 import { isSupabaseConfigured } from '../utils/supabaseConfig';
 import { realTimeSyncService } from '../services/RealTimeSyncService';
 import { RecycleBinService } from '../services/RecycleBinService';
@@ -9,6 +13,9 @@ import { migrationCoordinator } from '../services/migration';
 import { logger } from '../utils/logger';
 import { useI18n } from '../i18n';
 import { normalizeUnknownError } from '../utils/errors/normalizeError';
+import { localPreferences } from '../utils/localPreferences';
+import { isTauri } from '../utils/platform';
+import { toast } from '../utils/toast';
 
 interface StorageProviderProps {
   storage?: MomentumStorage;
@@ -17,38 +24,121 @@ interface StorageProviderProps {
 
 export function StorageProvider({ storage, children }: StorageProviderProps) {
   const { tr } = useI18n();
+  const [mode, setModeState] = useState<StorageMode>(() => {
+    if (storage) return storage.kind;
+
+    if (isTauri) {
+      const preferredMode = localPreferences.getStorageMode();
+      if (preferredMode === 'supabase' && isSupabaseConfigured) {
+        return 'supabase';
+      }
+      return 'local';
+    }
+
+    return isSupabaseConfigured ? 'supabase' : 'local';
+  });
+  const [isChoicePending, setIsChoicePending] = useState<boolean>(() => {
+    if (storage || !isTauri || !isSupabaseConfigured) return false;
+    return (
+      localPreferences.getStorageMode() === null &&
+      !localPreferences.getStorageModeHintDismissed()
+    );
+  });
   const [dynamicStorage, setDynamicStorage] = useState<MomentumStorage | null>(
-    storage ?? (isSupabaseConfigured ? null : localStorageAdapter),
+    () => {
+      if (storage) return storage;
+      if (mode === 'supabase' && isSupabaseConfigured) return null;
+      return localStorageAdapter;
+    },
+  );
+
+  const dismissFirstLaunchHint = useCallback(() => {
+    if (storage) return;
+
+    setModeState('local');
+    setDynamicStorage(localStorageAdapter);
+    setIsChoicePending(false);
+    localPreferences.setStorageMode('local');
+    localPreferences.setStorageModeHintDismissed(true);
+  }, [storage]);
+
+  const setMode = useCallback(
+    (nextMode: StorageMode) => {
+      if (storage) return;
+
+      if (nextMode === 'supabase' && !isSupabaseConfigured) {
+        toast.error(
+          tr(
+            '未检测到 Supabase 配置，无法切换到云端模式。',
+            'Supabase is not configured, so cloud mode is unavailable.',
+          ),
+        );
+        return;
+      }
+
+      setModeState(nextMode);
+      localPreferences.setStorageMode(nextMode);
+      localPreferences.setStorageModeHintDismissed(true);
+      setIsChoicePending(false);
+
+      logger.info('STORAGE', 'Storage mode switched', { mode: nextMode });
+    },
+    [storage, tr],
   );
 
   useEffect(() => {
-    if (
-      storage ||
-      !isSupabaseConfigured ||
-      dynamicStorage?.kind === 'supabase'
-    ) {
+    if (!storage) return;
+
+    setModeState(storage.kind);
+    setDynamicStorage(storage);
+    setIsChoicePending(false);
+  }, [storage]);
+
+  useEffect(() => {
+    if (storage) return;
+
+    if (mode === 'local') {
+      setDynamicStorage(localStorageAdapter);
       return;
     }
 
+    if (!isSupabaseConfigured) {
+      setDynamicStorage(localStorageAdapter);
+      return;
+    }
+
+    if (dynamicStorage?.kind === 'supabase') return;
+
     let cancelled = false;
+    setDynamicStorage(null);
 
     const loadSupabase = async () => {
       try {
         const { supabaseStorage } = await import('../utils/supabaseStorage');
-        if (!cancelled) {
-          logger.debug('STORAGE', 'Supabase storage loaded dynamically');
-          setDynamicStorage(supabaseStorage);
-        }
+        if (cancelled) return;
+
+        logger.debug('STORAGE', 'Supabase storage loaded dynamically');
+        setDynamicStorage(supabaseStorage);
       } catch (error) {
+        const normalizedError = normalizeUnknownError(error);
         logger.error(
           'STORAGE',
           'Failed to load Supabase storage, falling back to localStorage',
           undefined,
-          normalizeUnknownError(error),
+          normalizedError,
         );
-        if (!cancelled) {
-          setDynamicStorage(localStorageAdapter);
-        }
+
+        if (cancelled) return;
+
+        setModeState('local');
+        setDynamicStorage(localStorageAdapter);
+        localPreferences.setStorageMode('local');
+        toast.error(
+          tr(
+            '加载云端存储失败，已自动切回本地模式。',
+            'Failed to load cloud storage. Switched back to local mode.',
+          ),
+        );
       }
     };
 
@@ -57,12 +147,23 @@ export function StorageProvider({ storage, children }: StorageProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [storage, dynamicStorage?.kind]);
+  }, [storage, mode, dynamicStorage?.kind, tr]);
 
   const resolvedStorage = useMemo<MomentumStorage | null>(() => {
     if (storage) return storage;
     return dynamicStorage;
   }, [storage, dynamicStorage]);
+
+  const storageModeContextValue = useMemo(
+    () => ({
+      mode,
+      canUseSupabase: isSupabaseConfigured,
+      isChoicePending,
+      setMode,
+      dismissFirstLaunchHint,
+    }),
+    [mode, isChoicePending, setMode, dismissFirstLaunchHint],
+  );
 
   useEffect(() => {
     if (!resolvedStorage) return;
@@ -93,8 +194,10 @@ export function StorageProvider({ storage, children }: StorageProviderProps) {
   }
 
   return (
-    <StorageContext.Provider value={resolvedStorage}>
-      {children}
-    </StorageContext.Provider>
+    <StorageModeContext.Provider value={storageModeContextValue}>
+      <StorageContext.Provider value={resolvedStorage}>
+        {children}
+      </StorageContext.Provider>
+    </StorageModeContext.Provider>
   );
 }

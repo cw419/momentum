@@ -25,6 +25,14 @@
 | ☁️ 云同步        | 支持 Supabase 多设备同步               |
 | 🎨 玻璃拟态UI    | 现代化的毛玻璃界面设计                 |
 
+## 🔀 Tauri 存储模式（v0.3.2）
+
+- `tauri-desktop` / `tauri-mobile` 首次启动默认进入 **本地模式**。
+- 当检测到 Supabase 配置时，会出现一次非阻塞提示卡，可选“继续本地模式”或“连接云端同步”。
+- 设置页可随时在 **本地模式** 和 **云端模式** 间切换。
+- 切换仅更换数据源，不做自动导入、导出或合并。
+- 虚拟宠物数据在两种模式下都只保存在本机，不参与多端同步。
+
 ## 🎯 核心理念
 
 Momentum基于Edmond在知乎上提出的链式时延协议（Chained Time-Delay Protocol, CTDP）理论，通过数学模型解决自制力问题：
@@ -207,6 +215,9 @@ https://momentumctdp.netlify.app/
 - Node.js 20.19+ (or 22.12+)
 - npm 或 yarn
 - **桌面/移动端构建额外需要**：Rust 工具链（[rustup.rs](https://rustup.rs/)）
+- 启用 Supabase 云端模式时需要配置：
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
 
 ### 安装步骤
 

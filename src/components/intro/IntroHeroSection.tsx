@@ -10,6 +10,7 @@ interface IntroHeroSectionProps {
   lang: IntroLang;
   onSignIn: () => void;
   onSignUp: () => void;
+  onUseLocalMode?: () => void;
   onScrollDown: () => void;
 }
 
@@ -17,6 +18,7 @@ export const IntroHeroSection: React.FC<IntroHeroSectionProps> = ({
   lang,
   onSignIn,
   onSignUp,
+  onUseLocalMode,
   onScrollDown,
 }) => {
   return (
@@ -66,6 +68,16 @@ export const IntroHeroSection: React.FC<IntroHeroSectionProps> = ({
               </span>
             </button>
           </div>
+
+          {onUseLocalMode && (
+            <button
+              type="button"
+              onClick={onUseLocalMode}
+              className="rounded text-xs font-medium text-slate-500 transition hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              {lang === 'zh' ? '切换到本地模式' : 'Switch to local mode'}
+            </button>
+          )}
         </div>
 
         <div className="flex w-full justify-center lg:justify-end">

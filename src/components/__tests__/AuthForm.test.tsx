@@ -147,4 +147,30 @@ describe('AuthForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Go back' }));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
+
+  it('shows local mode switch entry when callback is provided', async () => {
+    const onUseLocalMode = vi.fn();
+    localStorage.setItem('language', 'en');
+
+    render(
+      <I18nProvider>
+        <StorageProvider
+          storage={
+            {
+              kind: 'supabase',
+              signIn: vi.fn().mockResolvedValue(ok({ user: { id: 'u1' } })),
+              signUp: vi.fn().mockResolvedValue(ok({ user: null })),
+            } as any
+          }
+        >
+          <AuthForm onBack={vi.fn()} onUseLocalMode={onUseLocalMode} />
+        </StorageProvider>
+      </I18nProvider>,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Switch to local mode' }),
+    );
+    expect(onUseLocalMode).toHaveBeenCalledTimes(1);
+  });
 });

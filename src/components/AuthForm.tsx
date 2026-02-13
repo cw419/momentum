@@ -18,11 +18,13 @@ import {
 interface AuthFormProps {
   initialIsSignUp?: boolean;
   onBack?: () => void;
+  onUseLocalMode?: () => void;
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({
   initialIsSignUp = false,
   onBack,
+  onUseLocalMode,
 }) => {
   const { language, tr } = useI18n();
   const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
@@ -250,6 +252,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 {isSignUp ? tr('登录', 'Sign In') : tr('注册', 'Sign Up')}
               </button>
             </p>
+
+            {onUseLocalMode && (
+              <button
+                type="button"
+                onClick={onUseLocalMode}
+                className="mt-3 rounded text-xs font-medium text-slate-500 transition hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                {tr('切换到本地模式', 'Switch to local mode')}
+              </button>
+            )}
           </div>
         </div>
       </div>
