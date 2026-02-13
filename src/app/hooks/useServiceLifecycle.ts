@@ -7,6 +7,7 @@ import { ruleStateManager } from '../../services/RuleStateManager';
 import { migrationCoordinator } from '../../services/migration';
 import { systemRuntime } from '../../services/runtime';
 import { initializeRuleSystem } from '../../utils/initializeRuleSystem';
+import { checkForUpdates } from '../../utils/platform-adapters/updater';
 
 interface ServiceLifecycleResult {
   isInitialized: boolean;
@@ -53,6 +54,7 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
         });
 
       void migrationCoordinator.runStartupMigrations();
+      void checkForUpdates();
     };
 
     const requestIdleCallbackFn = window.requestIdleCallback;

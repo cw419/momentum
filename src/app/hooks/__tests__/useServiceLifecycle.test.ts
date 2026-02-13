@@ -6,6 +6,7 @@ import { ruleStateManager } from '../../../services/RuleStateManager';
 import { migrationCoordinator } from '../../../services/migration';
 import { systemRuntime } from '../../../services/runtime';
 import { initializeRuleSystem } from '../../../utils/initializeRuleSystem';
+import { checkForUpdates } from '../../../utils/platform-adapters/updater';
 import { logger } from '../../../utils/logger';
 
 vi.mock('../../../utils/env', () => ({
@@ -49,6 +50,10 @@ vi.mock('../../../services/migration', () => ({
   },
 }));
 
+vi.mock('../../../utils/platform-adapters/updater', () => ({
+  checkForUpdates: vi.fn(async () => undefined),
+}));
+
 vi.mock('../../../utils/logger', () => ({
   logger: {
     error: vi.fn(),
@@ -78,6 +83,7 @@ describe('useServiceLifecycle', () => {
 
     expect(initializeRuleSystem).toHaveBeenCalledTimes(1);
     expect(migrationCoordinator.runStartupMigrations).toHaveBeenCalledTimes(1);
+    expect(checkForUpdates).toHaveBeenCalledTimes(1);
 
     unmount();
 
