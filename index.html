@@ -14,7 +14,10 @@
       content="#0F0F12"
       media="(prefers-color-scheme: dark)"
     />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <meta
       name="description"
       content="Momentum - 心理学驱动的专注力应用，帮助您建立高效的工作习惯，通过任务链和专注模式提升生产力。"
@@ -87,6 +90,27 @@
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
       }
     </style>
+    <script>
+      (() => {
+        const root = document.documentElement;
+
+        const prefersDark =
+          typeof window.matchMedia === 'function' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        let isDark = prefersDark;
+        try {
+          const storedTheme = localStorage.getItem('theme');
+          if (storedTheme === 'dark') isDark = true;
+          else if (storedTheme === 'light') isDark = false;
+        } catch {
+          // Ignore storage access errors and fallback to system preference.
+        }
+
+        root.classList.toggle('dark', isDark);
+        root.style.colorScheme = isDark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

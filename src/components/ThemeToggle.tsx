@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { localPreferences } from '../utils/localPreferences';
@@ -21,10 +21,11 @@ export const ThemeToggle: React.FC = () => {
     return 'light';
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    if (theme === 'dark') root.classList.add('dark');
+    const isDarkTheme = theme === 'dark';
+    root.classList.toggle('dark', isDarkTheme);
+    root.style.colorScheme = isDarkTheme ? 'dark' : 'light';
     localPreferences.setTheme(theme);
   }, [theme]);
 
