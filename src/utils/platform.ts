@@ -1,10 +1,15 @@
 export type Platform = 'web' | 'tauri-desktop' | 'tauri-mobile';
 
-function detectPlatform(): Platform {
-  if (typeof window === 'undefined') return 'web';
+function hasTauriRuntime(): boolean {
+  if (typeof window === 'undefined') return false;
+  if ('__TAURI_INTERNALS__' in window) return true;
+  if ('__TAURI__' in window) return true;
+  if (window.location.protocol === 'tauri:') return true;
+  return /\bTauri\b/i.test(navigator.userAgent ?? '');
+}
 
-  const hasTauri = '__TAURI_INTERNALS__' in window;
-  if (!hasTauri) return 'web';
+function detectPlatform(): Platform {
+  if (!hasTauriRuntime()) return 'web';
 
   const isMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   return isMobileUA ? 'tauri-mobile' : 'tauri-desktop';

@@ -3,8 +3,11 @@ import type {
   NotificationPayload,
 } from './types';
 import { invokeCommand } from '../tauri-bridge';
+import { isTauriMobile } from '../platform';
 
-let cachedPermissionState: 'default' | 'granted' | 'denied' = 'default';
+type PermissionState = 'default' | 'granted' | 'denied';
+
+let cachedPermissionState: PermissionState = 'default';
 
 export const tauriNotificationAdapter: PlatformNotificationAdapter = {
   isSupported() {
@@ -18,7 +21,12 @@ export const tauriNotificationAdapter: PlatformNotificationAdapter = {
     };
   },
 
-  async getPermissionState(): Promise<'default' | 'granted' | 'denied'> {
+  async getPermissionState(): Promise<PermissionState> {
+    if (!isTauriMobile) {
+      cachedPermissionState = 'granted';
+      return 'granted';
+    }
+
     const { isPermissionGranted } = await import(
       '@tauri-apps/plugin-notification'
     );
@@ -30,7 +38,12 @@ export const tauriNotificationAdapter: PlatformNotificationAdapter = {
     return cachedPermissionState;
   },
 
-  async requestPermission(): Promise<'default' | 'granted' | 'denied'> {
+  async requestPermission(): Promise<PermissionState> {
+    if (!isTauriMobile) {
+      cachedPermissionState = 'granted';
+      return 'granted';
+    }
+
     const { isPermissionGranted, requestPermission } = await import(
       '@tauri-apps/plugin-notification'
     );
