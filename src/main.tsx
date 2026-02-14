@@ -11,6 +11,7 @@ import './styles/rsip-canvas.css';
 // Web Vitals 性能监控
 import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
 import type { Metric } from 'web-vitals';
+import { installChunkLoadRecovery } from './utils/chunkLoadRecovery';
 import { logger } from './utils/logger';
 
 function reportWebVitals() {
@@ -31,6 +32,7 @@ function reportWebVitals() {
 }
 
 reportWebVitals();
+installChunkLoadRecovery();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

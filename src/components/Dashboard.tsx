@@ -27,31 +27,66 @@ import { getTopLevelChains } from '../utils/chainTree';
 import { queryOptimizer } from '../utils/queryOptimizer';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
+import { lazyWithChunkRecovery } from '../utils/lazyWithChunkRecovery';
 import { toError } from '../utils/errorMessage';
 import { DashboardChainsSection } from './dashboard/DashboardChainsSection';
 import { DashboardEmptyState } from './dashboard/DashboardEmptyState';
 import { DashboardHero } from './dashboard/DashboardHero';
 import { DashboardTopBar } from './dashboard/DashboardTopBar';
 
-const ImportExportModal = lazy(() =>
-  import('./ImportExportModal').then((m) => ({ default: m.ImportExportModal })),
+const ImportExportModal = lazy(
+  lazyWithChunkRecovery(
+    () =>
+      import('./ImportExportModal').then((m) => ({
+        default: m.ImportExportModal,
+      })),
+    'ImportExportModal',
+  ),
 );
-const RecycleBinModal = lazy(() =>
-  import('./RecycleBinModal').then((m) => ({ default: m.RecycleBinModal })),
+const RecycleBinModal = lazy(
+  lazyWithChunkRecovery(
+    () =>
+      import('./RecycleBinModal').then((m) => ({
+        default: m.RecycleBinModal,
+      })),
+    'RecycleBinModal',
+  ),
 );
-const AccountModal = lazy(() =>
-  import('./AccountModal').then((m) => ({ default: m.AccountModal })),
+const AccountModal = lazy(
+  lazyWithChunkRecovery(
+    () =>
+      import('./AccountModal').then((m) => ({
+        default: m.AccountModal,
+      })),
+    'AccountModal',
+  ),
 );
-const PerformanceMonitor = lazy(() =>
-  import('./PerformanceMonitor').then((m) => ({
-    default: m.PerformanceMonitor,
-  })),
+const PerformanceMonitor = lazy(
+  lazyWithChunkRecovery(
+    () =>
+      import('./PerformanceMonitor').then((m) => ({
+        default: m.PerformanceMonitor,
+      })),
+    'PerformanceMonitor',
+  ),
 );
-const DailyCheckin = lazy(() =>
-  import('./DailyCheckin').then((m) => ({ default: m.DailyCheckin })),
+const DailyCheckin = lazy(
+  lazyWithChunkRecovery(
+    () =>
+      import('./DailyCheckin').then((m) => ({
+        default: m.DailyCheckin,
+      })),
+    'DailyCheckin',
+  ),
 );
-const DailyCheckinDemo = lazy(() =>
-  import('./DailyCheckinDemo').then((m) => ({ default: m.DailyCheckinDemo })),
+const DailyCheckinDemo = lazy(
+  lazyWithChunkRecovery(
+    () =>
+      import('./DailyCheckinDemo').then((m) => ({
+        default: m.DailyCheckinDemo,
+      })),
+    'DailyCheckinDemo',
+  ),
 );
 
 const CheckinPlaceholder = () => (
@@ -137,12 +172,8 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
     const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(isDev);
     const [recycleBinCount, setRecycleBinCount] = useState(0);
     const storage = useStorage();
-    const {
-      canUseSupabase,
-      isChoicePending,
-      setMode,
-      dismissFirstLaunchHint,
-    } = useStorageMode();
+    const { canUseSupabase, isChoicePending, setMode, dismissFirstLaunchHint } =
+      useStorageMode();
     const { t, tr, language } = useI18n();
     const isSupabase = storage.kind === 'supabase';
 

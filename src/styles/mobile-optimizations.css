@@ -259,3 +259,14 @@
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
   }
 }
+
+/* iOS PWA 上全屏 backdrop-filter 易触发黑屏，降级为纯遮罩 */
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) {
+    .fixed.inset-0[class*='backdrop-blur'] {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      background-color: rgb(0 0 0 / 68%) !important;
+    }
+  }
+}

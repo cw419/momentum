@@ -1,8 +1,15 @@
 import { Suspense, lazy } from 'react';
 import { AuthWrapper } from './components/AuthWrapper';
+import { ChunkLoadErrorBoundary } from './components/ChunkLoadErrorBoundary';
 import { useI18n } from './i18n';
+import { lazyWithChunkRecovery } from './utils/lazyWithChunkRecovery';
 
-const AppShellContainer = lazy(() => import('./app/AppShellContainer'));
+const AppShellContainer = lazy(
+  lazyWithChunkRecovery(
+    () => import('./app/AppShellContainer'),
+    'AppShellContainer',
+  ),
+);
 
 function AppShellLoadingFallback() {
   const { tr } = useI18n();
@@ -23,10 +30,12 @@ function AppShellLoadingFallback() {
 
 export default function AppShell() {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<AppShellLoadingFallback />}>
-        <AppShellContainer />
-      </Suspense>
-    </AuthWrapper>
+    <ChunkLoadErrorBoundary>
+      <AuthWrapper>
+        <Suspense fallback={<AppShellLoadingFallback />}>
+          <AppShellContainer />
+        </Suspense>
+      </AuthWrapper>
+    </ChunkLoadErrorBoundary>
   );
 }
