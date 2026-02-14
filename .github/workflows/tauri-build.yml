@@ -26,6 +26,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate tag version matches tauri.conf.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          CONFIG_VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          if [ "$TAG_VERSION" != "$CONFIG_VERSION" ]; then
+            echo "Tag version (${TAG_VERSION}) does not match src-tauri/tauri.conf.json (${CONFIG_VERSION})"
+            exit 1
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -83,9 +95,9 @@ jobs:
           name: windows-artifacts
           path: |
             src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/msi/*.msi.sig
             src-tauri/target/release/bundle/nsis/*-setup.exe
-            src-tauri/target/release/bundle/nsis/*.nsis.zip
-            src-tauri/target/release/bundle/nsis/*.nsis.zip.sig
+            src-tauri/target/release/bundle/nsis/*-setup.exe.sig
 
       - name: Upload artifacts (macOS)
         if: matrix.target == 'macos'
@@ -105,13 +117,24 @@ jobs:
           path: |
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
-            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
+            src-tauri/target/release/bundle/appimage/*.AppImage.sig
 
   build-android:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate tag version matches tauri.conf.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          CONFIG_VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          if [ "$TAG_VERSION" != "$CONFIG_VERSION" ]; then
+            echo "Tag version (${TAG_VERSION}) does not match src-tauri/tauri.conf.json (${CONFIG_VERSION})"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -224,20 +247,47 @@ jobs:
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           REPO="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
 
-          read_sig() {
-            local pattern="$1"
-            local sig_file
-            sig_file=$(find artifacts -name "$pattern" -type f | head -n1)
-            if [ -n "$sig_file" ]; then cat "$sig_file"; else echo ""; fi
+          require_file() {
+            local label="$1"
+            local file_path="$2"
+            if [ -z "$file_path" ] || [ ! -f "$file_path" ]; then
+              echo "Missing ${label}: ${file_path}"
+              exit 1
+            fi
           }
 
-          WIN_SIG=$(read_sig "*.nsis.zip.sig")
-          LINUX_SIG=$(read_sig "*.AppImage.tar.gz.sig")
-          MAC_SIG=$(read_sig "*.app.tar.gz.sig")
+          WIN_FILE=$(find artifacts -name '*-setup.exe' -type f | head -n1 || true)
+          WIN_SIG_FILE="${WIN_FILE}.sig"
 
-          WIN_URL="$REPO/$(find artifacts -name '*.nsis.zip' ! -name '*.sig' -type f -printf '%f' | head -n1)"
-          LINUX_URL="$REPO/$(find artifacts -name '*.AppImage.tar.gz' ! -name '*.sig' -type f -printf '%f' | head -n1)"
-          MAC_URL="$REPO/$(find artifacts -name '*.app.tar.gz' ! -name '*.sig' -type f -printf '%f' | head -n1)"
+          if [ -z "$WIN_FILE" ] || [ ! -f "$WIN_SIG_FILE" ]; then
+            WIN_FILE=$(find artifacts -name '*.msi' -type f | head -n1 || true)
+            WIN_SIG_FILE="${WIN_FILE}.sig"
+          fi
+
+          LINUX_FILE=$(find artifacts -name '*.AppImage' -type f | head -n1 || true)
+          LINUX_SIG_FILE="${LINUX_FILE}.sig"
+
+          MAC_FILE=$(find artifacts -name '*.app.tar.gz' -type f | head -n1 || true)
+          MAC_SIG_FILE="${MAC_FILE}.sig"
+
+          require_file "windows updater asset" "$WIN_FILE"
+          require_file "windows updater signature" "$WIN_SIG_FILE"
+          require_file "linux updater asset" "$LINUX_FILE"
+          require_file "linux updater signature" "$LINUX_SIG_FILE"
+          require_file "macOS updater asset" "$MAC_FILE"
+          require_file "macOS updater signature" "$MAC_SIG_FILE"
+
+          WIN_SIG=$(tr -d '\r\n' < "$WIN_SIG_FILE")
+          LINUX_SIG=$(tr -d '\r\n' < "$LINUX_SIG_FILE")
+          MAC_SIG=$(tr -d '\r\n' < "$MAC_SIG_FILE")
+
+          WIN_URL="$REPO/$(basename "$WIN_FILE")"
+          LINUX_URL="$REPO/$(basename "$LINUX_FILE")"
+          MAC_URL="$REPO/$(basename "$MAC_FILE")"
+          MAC_PLATFORM_KEY="darwin-aarch64"
+          if echo "$(basename "$MAC_FILE")" | grep -Eq '(x64|x86_64|amd64)'; then
+            MAC_PLATFORM_KEY="darwin-x86_64"
+          fi
 
           cat > artifacts/latest.json << ENDJSON
           {
@@ -247,7 +297,7 @@ jobs:
             "platforms": {
               "windows-x86_64": { "signature": "$WIN_SIG", "url": "$WIN_URL" },
               "linux-x86_64": { "signature": "$LINUX_SIG", "url": "$LINUX_URL" },
-              "darwin-aarch64": { "signature": "$MAC_SIG", "url": "$MAC_URL" }
+              "$MAC_PLATFORM_KEY": { "signature": "$MAC_SIG", "url": "$MAC_URL" }
             }
           }
           ENDJSON
