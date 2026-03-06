@@ -1,5 +1,12 @@
 export const QUALITY_CHECKS = Object.freeze([
   {
+    id: 'mutation',
+    label: 'Mutation tests',
+    script: 'test:mutation',
+    lanes: ['nightly'],
+    reports: [],
+  },
+  {
     id: 'knip',
     label: 'Knip',
     script: 'quality:knip',
@@ -19,7 +26,7 @@ export const QUALITY_CHECKS = Object.freeze([
     id: 'depcheck',
     label: 'depcheck',
     script: 'quality:depcheck',
-    lanes: ['smell-audit'],
+    lanes: ['smell-audit', 'nightly'],
     reports: [],
     textReportPath: 'reports/quality/depcheck.txt',
   },
@@ -35,21 +42,21 @@ export const QUALITY_CHECKS = Object.freeze([
     id: 'jscpd',
     label: 'JSCPD',
     script: 'quality:jscpd',
-    lanes: ['info'],
+    lanes: ['info', 'structural-budget', 'nightly'],
     reports: ['reports/jscpd/jscpd-report.json'],
   },
   {
     id: 'debt-gate-core',
     label: 'Debt gate core',
     script: 'quality:debt-gate:core',
-    lanes: ['info'],
+    lanes: ['info', 'structural-budget', 'nightly'],
     reports: [],
   },
   {
     id: 'large-files',
     label: 'Large file budget',
     script: 'quality:large-files',
-    lanes: ['info'],
+    lanes: ['info', 'structural-budget', 'nightly'],
     reports: ['reports/quality/large-file-budget.json'],
   },
   {
@@ -64,7 +71,7 @@ export const QUALITY_CHECKS = Object.freeze([
     id: 'semgrep',
     label: 'Semgrep',
     script: 'security:semgrep',
-    lanes: ['info'],
+    lanes: ['info', 'nightly'],
     reports: [],
   },
   {
@@ -120,7 +127,7 @@ export const QUALITY_CHECKS = Object.freeze([
     id: 'mutation-hotspots',
     label: 'Mutation hotspots',
     script: 'quality:test:mutation-hotspots',
-    lanes: ['info'],
+    lanes: ['info', 'nightly'],
     reports: ['reports/quality/test-mutation-hotspots.json'],
   },
 ]);
@@ -129,6 +136,7 @@ export const QUALITY_LANES = Object.freeze({
   info: {
     id: 'info',
     label: 'Informational quality lane',
+    exitPolicy: 'info',
     summaryJsonPath: 'reports/quality/info-summary.json',
     summaryMarkdownPath: 'reports/quality/info-summary.md',
     logsDir: 'reports/quality/info-logs',
@@ -139,12 +147,35 @@ export const QUALITY_LANES = Object.freeze({
   'smell-audit': {
     id: 'smell-audit',
     label: 'Smell audit',
+    exitPolicy: 'required',
     summaryJsonPath: 'reports/quality/smell-audit-summary.json',
     summaryMarkdownPath: 'reports/quality/smell-audit-summary.md',
     logsDir: 'reports/quality/smell-audit-logs',
     checks: QUALITY_CHECKS.filter((check) =>
       check.lanes.includes('smell-audit'),
     ).map((check) => check.id),
+  },
+  'structural-budget': {
+    id: 'structural-budget',
+    label: 'Structural budget',
+    exitPolicy: 'required',
+    summaryJsonPath: 'reports/quality/structural-budget-summary.json',
+    summaryMarkdownPath: 'reports/quality/structural-budget-summary.md',
+    logsDir: 'reports/quality/structural-budget-logs',
+    checks: QUALITY_CHECKS.filter((check) =>
+      check.lanes.includes('structural-budget'),
+    ).map((check) => check.id),
+  },
+  nightly: {
+    id: 'nightly',
+    label: 'Nightly quality lane',
+    exitPolicy: 'required',
+    summaryJsonPath: 'reports/quality/nightly-summary.json',
+    summaryMarkdownPath: 'reports/quality/nightly-summary.md',
+    logsDir: 'reports/quality/nightly-logs',
+    checks: QUALITY_CHECKS.filter((check) => check.lanes.includes('nightly')).map(
+      (check) => check.id,
+    ),
   },
 });
 

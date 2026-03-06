@@ -6,6 +6,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Test-IsCiEnvironment {
+  return $env:CI -and $env:CI -ne "0" -and $env:CI -ne "false"
+}
+
 function Resolve-PythonUserScriptPath {
   param(
     [Parameter(Mandatory = $true)]
@@ -38,8 +42,14 @@ if ($sqlfluffCmd) {
 }
 
 if (-not $sqlfluffExecutable) {
-  Write-Error "sqlfluff is required but not installed or not discoverable on PATH. Install with: pipx install sqlfluff (or: python -m pip install --user sqlfluff)."
-  exit 1
+  $installHint = "Install with: pipx install sqlfluff (or: python -m pip install --user sqlfluff)."
+  if (Test-IsCiEnvironment) {
+    Write-Error "sqlfluff is required in CI but not installed or not discoverable on PATH. $installHint"
+    exit 1
+  }
+
+  Write-Output "[sqlfluff] SKIPPED: sqlfluff is not installed locally. $installHint"
+  exit 0
 }
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {

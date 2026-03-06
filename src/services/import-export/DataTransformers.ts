@@ -82,17 +82,6 @@ type ExportedRSIPTaskLink = Omit<RSIPTaskLink, 'updatedAt' | 'userId'> & {
   updatedAt: string;
 };
 
-export interface MomentumExportDataV2 {
-  version: '2.0';
-  exportedAt: string;
-  chains: ExportedChain[];
-  completionHistory: ExportedCompletionHistory[];
-  rsipNodes?: ExportedRSIPNode[];
-  rsipMeta?: ExportedRSIPMeta;
-  userPreferences?: unknown;
-  exceptionRules?: unknown;
-}
-
 export interface MomentumExportDataV3 {
   version: '3.0';
   exportedAt: string;
@@ -109,8 +98,6 @@ export interface MomentumExportDataV3 {
   userPreferences?: unknown;
   exceptionRules?: unknown;
 }
-
-export type MomentumExportData = MomentumExportDataV2 | MomentumExportDataV3;
 
 function serializeDeletedAt(
   deletedAt: Date | null | undefined,

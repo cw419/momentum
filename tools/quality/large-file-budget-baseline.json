@@ -1,0 +1,126 @@
+{
+  "lineThreshold": 300,
+  "maxLargeFiles": 15,
+  "offenders": [
+    {
+      "file": "src/components/RSIPView.tsx",
+      "lines": 879
+    },
+    {
+      "file": "src/hooks/domains/useRsipDomain.ts",
+      "lines": 756
+    },
+    {
+      "file": "src/infra/storage/supabase/rsip.ts",
+      "lines": 650
+    },
+    {
+      "file": "src/services/rsip-insights/RSIPInsightsService.ts",
+      "lines": 562
+    },
+    {
+      "file": "src/components/Dashboard.tsx",
+      "lines": 491
+    },
+    {
+      "file": "src/infra/storage/supabase/SupabaseStorage.ts",
+      "lines": 435
+    },
+    {
+      "file": "src/hooks/domains/sessions/start.ts",
+      "lines": 396
+    },
+    {
+      "file": "src/components/ImportExportModalParts.tsx",
+      "lines": 392
+    },
+    {
+      "file": "src/components/focus-mode/hooks/useExceptionRuleFlow.ts",
+      "lines": 391
+    },
+    {
+      "file": "src/hooks/domains/sessions/completion.ts",
+      "lines": 390
+    },
+    {
+      "file": "src/services/import-export/import/rsip.ts",
+      "lines": 389
+    },
+    {
+      "file": "src/components/rsip/RSIPTaskLinkPanel.tsx",
+      "lines": 386
+    },
+    {
+      "file": "src/components/AccountModal.tsx",
+      "lines": 377
+    },
+    {
+      "file": "src/components/useBettingModal.ts",
+      "lines": 374
+    },
+    {
+      "file": "src/components/RuleSelectionDialog.tsx",
+      "lines": 372
+    },
+    {
+      "file": "src/app/app-shell/AppShellView.tsx",
+      "lines": 359
+    },
+    {
+      "file": "src/services/RealTimeSyncService.ts",
+      "lines": 359
+    },
+    {
+      "file": "src/components/group-view/GroupViewView.tsx",
+      "lines": 357
+    },
+    {
+      "file": "src/components/ImportExportModalContainer.tsx",
+      "lines": 353
+    },
+    {
+      "file": "src/infra/storage/supabase/chains/mutations.ts",
+      "lines": 353
+    },
+    {
+      "file": "src/components/AuxiliaryJudgment.tsx",
+      "lines": 345
+    },
+    {
+      "file": "src/hooks/domains/useImportExportDomain.ts",
+      "lines": 345
+    },
+    {
+      "file": "src/services/exception-rule-manager/ExceptionRuleManager.ts",
+      "lines": 343
+    },
+    {
+      "file": "src/utils/platform-capabilities/center.ts",
+      "lines": 341
+    },
+    {
+      "file": "src/components/group-card/GroupCard.tsx",
+      "lines": 339
+    },
+    {
+      "file": "src/hooks/domains/usePetDomain.ts",
+      "lines": 329
+    },
+    {
+      "file": "src/infra/storage/supabase/sessions.ts",
+      "lines": 318
+    },
+    {
+      "file": "src/app/hooks/useAppDataLoad.ts",
+      "lines": 315
+    },
+    {
+      "file": "src/components/chain-editor/sections/MainChainSettingsSection.tsx",
+      "lines": 308
+    },
+    {
+      "file": "src/components/ImportUnitsModal.tsx",
+      "lines": 308
+    }
+  ]
+}

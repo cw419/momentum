@@ -8,9 +8,9 @@
 } from '../../types';
 import { getDescendantCount } from '../../utils/rsipTree';
 
-export type RSIPTrendDirection = 'up' | 'down' | 'flat' | 'insufficient_data';
-export type RSIPRecommendationPriority = 'high' | 'medium' | 'low';
-export type RSIPRecommendationKind =
+type RSIPTrendDirection = 'up' | 'down' | 'flat' | 'insufficient_data';
+type RSIPRecommendationPriority = 'high' | 'medium' | 'low';
+type RSIPRecommendationKind =
   | 'rural_first'
   | 'split'
   | 'grouping'
@@ -21,7 +21,7 @@ export type RSIPRecommendationKind =
 
 type RSIPInsightsLocale = 'zh' | 'en';
 
-export interface RSIPRiskNode {
+interface RSIPRiskNode {
   nodeId: string;
   title: string;
   failureCost: number;

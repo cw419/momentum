@@ -11,7 +11,7 @@ import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 
 const DEFAULT_NOTIFICATION_ICON = '/icons/icon-192.png';
 
-export type NotificationPermissionSource = 'toggle' | 'feature';
+type NotificationPermissionSource = 'toggle' | 'feature';
 
 export interface SystemNotificationState {
   initialized: boolean;

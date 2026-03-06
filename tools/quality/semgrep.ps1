@@ -4,6 +4,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Test-IsCiEnvironment {
+  return $env:CI -and $env:CI -ne "0" -and $env:CI -ne "false"
+}
+
 function Resolve-PythonUserScriptPath {
   param(
     [Parameter(Mandatory = $true)]
@@ -36,8 +40,14 @@ if ($semgrepCmd) {
 }
 
 if (-not $semgrepExecutable) {
-  Write-Error "semgrep is required but not installed or not discoverable on PATH. Install with: pipx install semgrep (or: python -m pip install --user semgrep)."
-  exit 1
+  $installHint = "Install with: pipx install semgrep (or: python -m pip install --user semgrep)."
+  if (Test-IsCiEnvironment) {
+    Write-Error "semgrep is required in CI but not installed or not discoverable on PATH. $installHint"
+    exit 1
+  }
+
+  Write-Output "[semgrep] SKIPPED: semgrep is not installed locally. $installHint"
+  exit 0
 }
 
 $env:PYTHONUTF8 = "1"

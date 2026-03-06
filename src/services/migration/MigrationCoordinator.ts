@@ -14,7 +14,7 @@ import type {
  * Single migration entrypoint used by app lifecycle and storage wiring.
  * Existing migration modules are treated as pluggable steps behind this facade.
  */
-export class MigrationCoordinator {
+class MigrationCoordinator {
   setStorage(storage: MomentumStorage | null): void {
     exceptionRuleMigration.setStorage(storage);
   }

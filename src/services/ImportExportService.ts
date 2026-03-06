@@ -2,8 +2,6 @@ import { ExportService, ImportService } from './import-export';
 
 export type {
   ImportExportImportOptions,
-  MomentumExportData,
-  MomentumExportDataV2,
   MomentumExportDataV3,
 } from './import-export';
 

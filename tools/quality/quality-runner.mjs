@@ -101,6 +101,14 @@ function getResultStatus(execution, freshnessEntries) {
   return 'pass';
 }
 
+function resolveLaneExitCode(results, exitPolicy) {
+  if (exitPolicy === 'info') {
+    return 0;
+  }
+
+  return results.some((result) => result.status !== 'pass') ? 1 : 0;
+}
+
 function renderSummaryMarkdown(summary) {
   const lines = [
     `# ${summary.laneLabel}`,
@@ -141,6 +149,7 @@ export async function runLane({
   repoRoot = process.cwd(),
   checks,
   executeCheck = defaultExecuteCheck,
+  exitPolicy,
   summaryJsonPath,
   summaryMarkdownPath,
   logsDir,
@@ -154,6 +163,7 @@ export async function runLane({
         ? getLaneConfig(laneId)
         : null;
   const selectedChecks = checks ?? getLaneChecks(laneId);
+  const resolvedExitPolicy = exitPolicy ?? laneConfig?.exitPolicy ?? 'required';
   const resolvedRepoRoot = path.resolve(repoRoot);
   const resolvedSummaryJsonPath = path.resolve(
     resolvedRepoRoot,
@@ -233,10 +243,11 @@ export async function runLane({
     });
   }
 
-  const exitCode = results.some((result) => result.status !== 'pass') ? 1 : 0;
+  const exitCode = resolveLaneExitCode(results, resolvedExitPolicy);
   const summary = {
     laneId: laneId ?? 'ad-hoc',
     laneLabel: laneLabel ?? laneConfig?.label ?? 'Quality lane',
+    exitPolicy: resolvedExitPolicy,
     generatedAt: new Date().toISOString(),
     gitSha: getGitSha(resolvedRepoRoot),
     exitCode,
