@@ -1,281 +1,348 @@
-# Momentum 静态分析治理重整方案 v2（fact-checked）
+# Momentum 静态分析工具链增强计划 v3（2026-03-06 复核）
 
-> **v2 变更说明**: 本版基于 v1 方案，经三轮实测验证后修正数据偏差、补充遗漏项、细化实施分期。
-> 勘误对照见 [§ Corrigendum](#corrigendum)。
-
----
-
-## Corrigendum
-
-v1 方案每项声明 vs 2026-03-06 实测结果对照：
-
-| # | v1 断言 | 实测结果 | 偏差等级 | 说明 |
-|---|---------|---------|----------|------|
-| 1 | knip 21 条 | knip 21 条（7 values + 14 types） | **无偏差** | 数量吻合；但 21 条中绝大多数为 barrel index 再导出（migration/, cache/）和跨文件类型重复计入，真正「死代码」集中在 RSIP insight 类型和 migration barrel |
-| 2 | ts-prune 25 条 | 原始输出 ~25 条，其中绝大多数标记 `(used in module)` 为假阳性 | **中度偏差** | v1 未说明假阳性比例；真实未使用导出与 knip 重叠，ts-prune 独立增量价值极低 |
-| 3 | sonar 29 条 | 29 条（void-use 18、no-nested-functions 3、no-nested-conditional 3、cognitive-complexity 2、no-unused-vars 2、todo-tag 1） | **无偏差** | v1 未给出规则分布，v2 补充 |
-| 4 | large-file-budget 30 个超限文件 | 30 个 | **无偏差** | 已确认 |
-| 5 | quality:test:audit 1 条错误 | test-lint-budget.json 显示 warnings: 0, errors: 0 | **轻度偏差** | 报告本身为 0 error，但 **报告已过期 26 天**（generatedAt: 2026-02-08），结果不可信 |
-| 6 | jscpd 未提及超限 | **10 clones > max 6**；0.30% 恰好踩线 ≤0.30% | **重要遗漏** | debt-gate 在 jscpd clone 数上必定 FAIL，v1 完全未提及 |
-| 7 | quality:ci:info && 串联短路 | 已确认：package.json line 42 用 `&&` 串联 11 个子命令 | **无偏差** | |
-| 8 | debt-gate 读旧 artifact | 已确认：`reports/jscpd/` 未被 .gitignore 排除 | **无偏差** | |
-| 9 | lint、typecheck、test、build、quality:type-coverage 均过 | 已确认 | **无偏差** | |
-| 10 | madge 循环依赖为 0 | 已确认 | **无偏差** | |
-| 11 | depcheck 为 0 | 已确认 | **无偏差** | |
+> 这版不是在 v2 上继续累加假设，而是把“已经落地的治理项”和“还没做完的剩余问题”分开。
+>
+> 本次 fact check 依据：
+> - 直接检查 `package.json`、`tools/quality/*.mjs`、`.gitignore`、`.github/workflows/ci.yml`
+> - 重新执行 `npm run quality:smell-audit`
+> - 重新执行 `npm run quality:ci:info`
+> - 复核时间：2026-03-06
+> - 复核对应 Git SHA：`c32f9a0078fbe5e8ad9bd3a5d4d35280f6f22161`
 
 ---
 
-## Summary
+## 一页结论
 
-- **当前状态评估：`中度，约 5.5/10`**。不是塌方型屎山——`lint`、`typecheck`、`test`、`build`、`quality:type-coverage` 都能过，`madge` 循环依赖为 0；但治理链路已经失真，且 jscpd 已硬性超限。
-- **v1 → v2 评分调整**（6/10 → 5.5/10）：knip 21 条虽数量不变但大部分是 barrel 再导出而非散落死码；ts-prune 独立增量价值极低；实际债务热点更集中（RSIP + pet widget + session domain），不是全仓平均失控。但 jscpd **10 > 6** 这一硬门失败使得评分不能降太多。
-- **失真证据已坐实**：`quality:ci:info` 在 [package.json](./package.json) line 42 用 `&&` 串行 11 个子命令，首个失败即短路后续全部跳过；[debt-gate.mjs](./tools/quality/debt-gate.mjs) 读取已提交的 `jscpd-report.json`（`reports/jscpd/` 未被 `.gitignore` 排除），会被旧 artifact 误导。
-- **当前真实债务**：
-  - `knip` 21 条（7 unused values + 14 unused types），集中在 barrel index 再导出（migration/、cache/）和 RSIP insight 类型
-  - `ts-prune` 原始输出 ~25 条，绝大多数 `(used in module)` 假阳性，与 knip 重叠
-  - `sonarjs` 29 条（void-use 18、no-nested-functions 3、no-nested-conditional 3、cognitive-complexity 2、no-unused-vars 2、todo-tag 1）
-  - `jscpd` **10 clones > max 6，0.30% 恰好踩线** — 这是当前唯一硬门 FAIL
-  - `large-file-budget` 30 个超限文件（budget 15），热点 RSIPView.tsx(879)、useRsipDomain.ts(756)、rsip.ts(718)
-  - `test-lint-budget.json` 已过期 26 天（2026-02-08 → 今日 2026-03-06），结果不可信
-  - `depcheck` 为 0（干净）
-  - `quality:circular` 为 0（干净）
-- 推荐方向不是"再堆工具"，而是 **"修编排、去重叠、降 jscpd、做 ratchet"**。
+- v2 里最重的几条“治理链路失真”判断已经不成立：`quality:ci:info` 现在已经走 runner，不再是 `&&` 串联；`reports/jscpd/` 已被 `.gitignore` 排除；`ts-prune` 和 `depcheck` 也已经移出 info lane。
+- `jscpd` 和 `quality:debt-gate:core` 当前是 **PASS**，不再是主矛盾。最新实测为 **6 clones / 0.16% duplicated lines**，刚好压线通过。
+- 当前真正还在发红的点，优先级应改成：
+  1. `quality:ci:info` / `quality:smell-audit` 本地仍返回非 0，和“信息型通道”语义不一致。
+  2. `semgrep` / `sqlfluff` 缺少本地二进制时直接 fail，和仓库文档里的“本地可选、缺失自动跳过”不一致。
+  3. `large-file-budget` 仍然是最大的真实结构性失败项，当前 **30 > 15**。
+  4. `knip` 21 条、`sonarjs` 29 条仍待清理。
+- 如果继续按 v2 那种顺序推进，会把时间花在已经修掉的问题上。v3 的目标应该改成：**先修信号语义和本地体验，再处理 large-file backlog，最后做 nightly 收敛。**
 
 ---
 
-## Key Changes
+## v2 关键断言勘误
 
-### 1. 用 soft-lane runner 替代 `&&` 串联
+| v2 断言 | 2026-03-06 复核结果 | 结论 |
+|---|---|---|
+| `quality:ci:info` 仍是 `&&` 串联，首个失败会短路 | `package.json` 已改为 `node tools/quality/soft-lane-runner.mjs info`；实测 `knip` 失败后其余检查仍全部执行 | 已修复，不应再列为待办 |
+| info lane 仍通过 `quality:test:audit` 聚合，存在内部短路 | info lane 已改为 leaf checks：`quality:test:lint`、`quality:test:lint-budget`、`quality:test:assertions`、`quality:test:runtime`、`quality:test:coverage-hotspots`、`quality:test:mutation-hotspots` | 已修复 |
+| `ts-prune` 仍在 PR soft lane | `ts-prune` 只在 `quality:smell-audit`，不在 info lane | 已修复 |
+| `depcheck` 仍在 PR soft lane | `depcheck` 只在 `quality:smell-audit`，不在 info lane | 已修复 |
+| `reports/jscpd/` 未被忽略，旧 artifact 会污染门禁 | `.gitignore` 已包含 `reports/jscpd/` | 已修复 |
+| `jscpd` 当前 10 clones，`quality:debt-gate` 因此 fail | 最新实测 `jscpd` 为 6 clones、0.16%；`quality:debt-gate:core` PASS。聚合脚本 `quality:debt-gate` 若失败，当前原因是 `quality:large-files` | 结论已过期 |
+| `debt-gate` 读取旧报告、正常路径下不可靠 | `quality:ci:info` 与 `quality:debt-gate` 聚合脚本都会先跑 fresh `quality:jscpd`；runner 也会先删除旧报告再执行。`quality:debt-gate:core` 单独执行时仍依赖已有报告 | 风险已显著下降，但可继续硬化 |
+| 主矛盾仍是 orchestration 缺陷 | orchestration 还没彻底收口，但主矛盾已经转向“lane 语义、本地可选工具行为、large-file backlog” | 优先级需要重排 |
 
-用一个 Node 版 `soft-lane-runner.mjs` 替代 `quality:ci:info` 的 `&&` 串联，单次运行必须跑完全部 soft checks。
+---
 
-**`soft-lane-runner.mjs` 设计规格：**
+## 当前真实基线
 
+### 1. Info lane（刚复跑）
+
+`npm run quality:ci:info` 的最新结果：
+
+- PASS：`quality:circular`、`quality:jscpd`、`quality:debt-gate:core`、`quality:test:lint`、`quality:test:lint-budget`、`quality:test:assertions`、`quality:test:runtime`、`quality:test:coverage-hotspots`、`quality:test:mutation-hotspots`
+- FAIL：`quality:knip`、`quality:large-files`、`quality:sonar:report`、`security:semgrep`、`security:npm-audit`、`lint:sql`
+- 结果汇总已写入：`reports/quality/info-summary.json`
+- 关键事实：虽然存在多个 FAIL，但 runner 已经把所有检查都跑完了，说明 **“不短路”这个目标已经达成**
+
+### 2. Smell audit（刚复跑）
+
+`npm run quality:smell-audit` 的最新结果：
+
+- FAIL：`quality:knip`、`quality:ts-prune:strict`、`quality:sonar:report`
+- PASS：`quality:depcheck`、`quality:circular`
+- 结果汇总已写入：`reports/quality/smell-audit-summary.json`
+
+### 3. 关键指标快照
+
+| 指标 | 当前值 | 预算/说明 | 状态 |
+|---|---|---|---|
+| `knip` unused exports/types | 21 | 7 values + 14 types | FAIL |
+| `ts-prune` strict | 25 条原始输出 | 大量 `(used in module)` 假阳性 | FAIL |
+| `depcheck` | 0 | 无问题 | PASS |
+| `madge` circular deps | 0 | 当前无循环依赖 | PASS |
+| `sonarjs` | 29 | `void-use 18`、`no-nested-functions 3`、`no-nested-conditional 3`、`cognitive-complexity 2`、`no-unused-vars 2`、`todo-tag 1` | FAIL |
+| `jscpd` clones | 6 | `<= 6` | PASS |
+| `jscpd` duplicated lines | 0.16% | `<= 0.30%` | PASS |
+| `as unknown as` | 10 | `<= 30` | PASS |
+| `as Error` | 0 | `<= 10` | PASS |
+| 非空断言 `!` | 36 | `<= 70` | PASS |
+| `large-file-budget` | 30 | `<= 15` | FAIL |
+| `test-lint-budget` | warnings 0 / errors 0 | fresh report | PASS |
+| `npm audit` | 14 vulnerabilities | 1 low / 4 moderate / 9 high | FAIL |
+| `semgrep` | 本地未安装 | 当前脚本直接 exit 1 | FAIL |
+| `sqlfluff` | 本地未安装 | 当前脚本直接 exit 1 | FAIL |
+
+### 4. large-file 热点
+
+当前最大的结构性热点已经不是 `jscpd`，而是大文件预算：
+
+1. `src/components/RSIPView.tsx` 879 行
+2. `src/hooks/domains/useRsipDomain.ts` 756 行
+3. `src/infra/storage/supabase/rsip.ts` 650 行
+4. `src/services/rsip-insights/RSIPInsightsService.ts` 562 行
+5. `src/components/Dashboard.tsx` 491 行
+6. `src/infra/storage/supabase/SupabaseStorage.ts` 435 行
+7. `src/hooks/domains/sessions/start.ts` 396 行
+8. `src/components/ImportExportModalParts.tsx` 392 行
+9. `src/components/focus-mode/hooks/useExceptionRuleFlow.ts` 391 行
+10. `src/hooks/domains/sessions/completion.ts` 390 行
+
+### 5. jscpd 热点
+
+`jscpd` 虽然已经达标，但仍有 6 个 clone block，主要集中在：
+
+- `src/components/pet/widget/hooks/usePetWidgetController.ts` 内部自重复 2 处
+- `src/components/task-group-editor/DurationSection.tsx` 与 `src/components/chain-editor/sections/AuxiliaryChainSettingsSection.tsx`
+- `src/components/rsip/RSIPCanvasView.tsx` 与 `src/components/rsip/RSIPTree.tsx`
+- `src/app/app-shell/types.ts` 与 `src/hooks/domains/usePetDomain.ts`
+- `src/components/Dashboard.tsx` 与 `src/components/ImportExportModalContainer.tsx`
+
+这部分现在不是 P0，但应该防止反弹。
+
+---
+
+## 当前真正的问题
+
+### 1. “信息型通道”仍然返回非 0
+
+`quality-runner.mjs` 目前的 exit 规则是：
+
+- 只要有任一 check 不是 `pass`，整个 lane 的 `exitCode` 就是 `1`
+
+这导致：
+
+- `quality:ci:info` 名义上是 informational，但本地执行仍会红
+- GitHub Actions 之所以不阻塞，只是因为 `ci.yml` 给 info job 配了 `continue-on-error: true`
+- “发现 smell” 和 “runner 自身坏掉/缺依赖” 在 exit code 层面没有被清晰地区分
+
+这已经不是“跑不全”的问题，而是 **信号语义不清** 的问题。
+
+### 2. 本地可选工具没有按“可选”工作
+
+仓库文档写的是：
+
+- `security:semgrep`、`lint:sql` 在本地如果底层工具没安装应自动跳过
+
+但当前脚本真实行为是：
+
+- `tools/quality/semgrep.ps1` 找不到 `semgrep` 就 `Write-Error` + `exit 1`
+- `tools/quality/sqlfluff.ps1` 找不到 `sqlfluff` 就 `Write-Error` + `exit 1`
+
+这会直接导致：
+
+- 本地 `quality:ci:info` 必红
+- 红因不再是代码问题，而是“开发机上没装某个 Python 工具”
+- 文档与脚本行为不一致
+
+### 3. `quality:debt-gate` 这个名字已经不够准确
+
+当前脚本定义是：
+
+```json
+"quality:debt-gate": "npm run quality:jscpd && npm run quality:debt-gate:core && npm run quality:large-files"
 ```
-位置：tools/quality/soft-lane-runner.mjs
-输入：子命令列表（硬编码或读 package.json scripts）
-输出：
-  - stdout: 每项 check 的 name / exit code / 耗时 / 报告路径 / stale 标记
-  - reports/quality/soft-summary.json — 机器可读汇总
-  - reports/quality/soft-summary.md — 人类可读汇总
-退出码约定：
-  - quality:ci:soft     → 永远 exit 0（纯汇报）
-  - quality:ci:soft:strict → 按配置决定 exit code（某些项 fail 可返非 0）
+
+这意味着：
+
+- `quality:debt-gate:core` 已经 PASS
+- `quality:debt-gate` 聚合命令仍可能因为 `quality:large-files` FAIL
+- 当人看到“debt-gate fail”时，很容易误以为是 `jscpd` / 类型断言 / 非空断言超标
+
+现在更准确的描述应是：
+
+- **debt-gate core 已恢复健康**
+- **真正仍在 fail 的是 large-file structural budget**
+
+### 4. Nightly 仍然保留旧式 `&&` 编排
+
+虽然 `quality:ci:info` 已经改成 runner，但 `quality:ci:nightly` 仍然是：
+
+```json
+"quality:ci:nightly": "npm run test:mutation && npm run quality:test:mutation-hotspots && npm run quality:debt-gate && npm run quality:depcheck && npm run security:semgrep"
 ```
 
-**检查清单**（保持与现有 `quality:ci:info` 一致）：
+这意味着 nightly 仍有旧问题：
 
-1. `quality:knip`
-2. `quality:ts-prune`（过渡期保留，Phase 2 移除）
-3. `quality:depcheck`（过渡期保留，Phase 3 降到 nightly）
-4. `quality:circular`
-5. `quality:jscpd`
-6. `quality:debt-gate`
-7. `quality:sonar:report`
-8. `security:semgrep`
-9. `security:npm-audit`
-10. `lint:sql`
-11. `quality:test:audit`
+- 只要前一项失败，后续不再执行
+- 后续报告不会生成
+- 夜间巡检的可观测性反而比 info lane 差
 
-**关键约束**：脚本名 `quality:ci:info` 保持不变——改内部实现（从 `&&` 串联改为调用 `soft-lane-runner.mjs`），不改脚本名，避免触发 `repo-governance.test.ts`（line 90: `expect(commands).toEqual(['quality:ci:info', 'quality:ci:required'])`) 需要修改。
-
-### 2. 绑死"报告生成"和"报告消费"
-
-- `quality:debt-gate`（`debt-gate.mjs`）自己先生成 fresh `jscpd` 报告，或校验 `generatedAt` + `git SHA`。
-- 所有依赖 `reports/` 的脚本都改成"先生成、再判断"，不信任仓库里已有产物。
-- **将 `reports/jscpd/` 加入 `.gitignore`**，杜绝旧 artifact 被提交。
-
-### 3. 重新分层工具链
-
-| 层级 | 包含项 | 退出码 |
-|------|--------|--------|
-| **Required**（硬门） | `format:check`, `lint`, `lint:css`, `lint:md`, `lint:spell`, `lint:spell:docs`, `typecheck`, `quality:type-coverage`, `test:coverage`, `build`, `quality:circular` | 非 0 即 block |
-| **PR soft**（信息门） | `knip`, `quality:sonar:report`, fresh `jscpd` + `debt-gate`, `large-file-budget`, `quality:test:audit` | 永远 exit 0，仅出报告 |
-| **Nightly/On-demand** | `semgrep`, `npm-audit`, `lint:sql`, mutation/coverage hotspots, license 检查 | 定时或按需 |
-
-### 4. 明确主次，减少重复噪声
-
-- `knip` 作为 unused exports/files/deps 的**唯一主口径**。
-- `ts-prune` 从 CI soft lane 移除，保留为一次性迁移辅助工具。（原始输出假阳性率极高，独立增量价值不足以证明 CI 开销）
-- `depcheck` 当前为 0 且与 `knip` 重叠，降到 nightly 或退休。
-
-### 5. 把常红门改成 ratchet
-
-- `large-file-budget`：先改为"不允许新增 >300 行文件 / 不允许现有 Top offenders 继续膨胀"，等第一轮拆分后再收回绝对阈值。
-- `sonarjs`：先冻结 29 条为基线，优先清 `void-use`（18 条）、`cognitive-complexity`（2 条）、`no-nested-functions`（3 条）。
-- `knip`：优先清 barrel index 再导出（`migration/index`、`utils/cache/index`）、RSIP insight 类型、import/export 重复类型。
+如果下一步还想继续修 orchestration，优先级应该放在 nightly，而不是回头重做 info lane。
 
 ---
 
-## jscpd Clone 热点分析及修复策略
+## 更新后的实施计划
 
-当前 **10 clones**（budget 6），需削减至少 4 个 clone block：
+### Phase 1: 修 lane 语义和本地体验
 
-### 热点 1：`src/infra/storage/supabase/rsip.ts` — 4 clones
+**目标**：让“信息型通道”真正表达信息，而不是因为环境缺依赖变成假红。
 
-**问题**：lines 341-365 / 407-431 / 489-513 / 560-584 / 637-661 存在大量结构相同的 Supabase query 模式（每段 24 行、225 tokens）。
+### 1. 给 runner 增加 lane 级别 exit policy
 
-**修复策略**：提取通用 Supabase query builder helper，用参数化消除重复模式。例如：
+建议在 `tools/quality/quality-runner.mjs` / `tools/quality/lanes.config.mjs` 加一个明确策略，例如：
 
-```typescript
-// 提取为泛型 helper
-async function queryRsipData<T>(
-  supabase: SupabaseClient,
-  tableName: string,
-  filters: Record<string, unknown>,
-  select: string
-): Promise<T[]> { ... }
-```
+- `required`：任一 fail/block/stale 即退出非 0
+- `info`：永远退出 0，但仍完整写 summary
+- `smell-audit`：可保留非 0，或提供 `strict` / `non-strict` 两种入口
 
-**预期收益**：消除 4 个 clone blocks → 剩余 6（恰好达标）
+最小改法：
 
-### 热点 2：`src/components/pet/widget/hooks/usePetWidgetController.ts` — 4 clones
+- 保持 `quality:ci:info` 名字不变
+- 让 `quality:ci:info` 默认 exit 0
+- 如确有需要，再补一个 `quality:ci:info:strict`
 
-**问题**：
-- lines 130-151 vs 164-185（21 行）：相似的状态更新逻辑
-- lines 185-211 vs 211-237（26 行）：重复的动画/过渡处理
-- 文件总体 31.76% 为重复代码
+### 2. 把 semgrep/sqlfluff 改成“本地缺失可跳过，CI 继续强制”
 
-**修复策略**：提取共享的状态更新函数和动画处理 hook。
+建议行为：
 
-**预期收益**：消除 2-4 个 clone blocks
+- 本地缺少 `semgrep` / `sqlfluff` 时输出明确的 `SKIPPED` 或 `BLOCKED` 信息
+- 本地 exit 0，不污染 info lane
+- `CI=true` 时保持强制安装、强制 fail
 
-### 热点 3：其他散点 clone（各 1 个）
+这样才能和仓库文档一致，也更符合 “Security / SQL Optional Locally” 的说明。
 
-| 文件对 | 行数 | 策略 |
-|--------|------|------|
-| `DurationSection.tsx` vs `AuxiliaryChainSettingsSection.tsx` | 17 行 | 提取共享 duration 组件 |
-| `RSIPCanvasView.tsx` vs `RSIPTree.tsx` | 14 行 | 提取共享 RSIP 渲染 util |
-| `app-shell/types.ts` vs `usePetDomain.ts` | 12 行 | 统一类型定义到一处 |
-| `Dashboard.tsx` vs `ImportExportModalContainer.tsx` | 15 行 | 提取共享 UI pattern |
+### 3. 明确 `quality:debt-gate` 与 `quality:large-files` 的职责边界
 
-### 修复优先级
+两个可选方案：
 
-**Phase 1 目标**：将 10 → ≤6（达标）。最高 ROI 是修 `rsip.ts`（4 clones，修 1 个文件即可达标）。
+1. 保留 `quality:debt-gate:core`，把聚合命令改名为 `quality:structural-budget`
+2. 保留 `quality:debt-gate` 名字，但把 `quality:large-files` 从聚合命令里拆出去
 
----
+我更倾向方案 1，因为语义最清楚。
 
-## sonarjs 29 条规则分布
+### 4. 如果脚本入口改名或行为改动，同步更新测试
 
-| 规则 | 数量 | 占比 | 优先级 | 修复难度 |
-|------|------|------|--------|----------|
-| `void-use` | 18 | 62% | P1 | 低（加 `await` 或显式忽略） |
-| `no-nested-functions` | 3 | 10% | P2 | 中（提取为独立函数） |
-| `no-nested-conditional` | 3 | 10% | P2 | 中（early return 或提取） |
-| `cognitive-complexity` | 2 | 7% | P1 | 中（拆分复杂函数） |
-| `no-unused-vars` | 2 | 7% | P3 | 低（删除或 `_` 前缀） |
-| `todo-tag` | 1 | 3% | P3 | 低（清理或转 issue） |
+当前这些测试在钉脚本契约：
 
-**推荐清理顺序**：先清 `void-use`（18 条，批量 sed 可解决大半）→ `cognitive-complexity`（2 条，质量提升明显）→ 其余。
+- `src/__tests__/repo-governance.test.ts`
+- `src/__tests__/quality-lanes.test.ts`
+
+Phase 1 改动如果涉及脚本名、lane 列表或聚合命令，需要同步改测试，不然 CI 会先炸在治理测试本身。
 
 ---
 
-## 陈旧报告清理
+### Phase 2: 开始处理真实 backlog
 
-### 问题
+**目标**：不要再围着已经恢复健康的 `jscpd` 打转，把时间花在仍红的结构性债务上。
 
-1. `reports/jscpd/` 未被 `.gitignore` 排除 → 旧 `jscpd-report.json` 可能被提交，误导 `debt-gate.mjs`
-2. `test-lint-budget.json` 已过期 26 天（generatedAt: 2026-02-08）→ 结果不可信
+### 1. 优先处理 large-file-budget，而不是继续追 jscpd
 
-### 修复
+推荐顺序：
 
-1. 在 `.gitignore` 中添加 `reports/jscpd/`
-2. 所有 `reports/` 子目录统一排除（确认现有条目 + 补充缺失）：
-   ```gitignore
-   # Quality report outputs (generated, never commit)
-   reports/
-   ```
-   或更保守地逐项添加：
-   ```gitignore
-   reports/jscpd/
-   ```
-3. 已提交的旧报告从 tracking 中移除：`git rm --cached -r reports/jscpd/`
+1. `src/components/RSIPView.tsx`
+2. `src/hooks/domains/useRsipDomain.ts`
+3. `src/infra/storage/supabase/rsip.ts`
+4. `src/services/rsip-insights/RSIPInsightsService.ts`
+5. `src/components/Dashboard.tsx`
 
----
+建议策略不是一次性从 `30 -> 15` 硬砍，而是先做 ratchet：
 
-## 实施分期
+- 不允许新增超过 300 行的新文件
+- Top offenders 不允许继续膨胀
+- 每次拆 2-3 个最高热点文件
 
-### Phase 1: 修编排 + 降 jscpd（消除硬门 FAIL）
+等热点拆到 20 左右，再收紧绝对阈值。
 
-**目标**：`quality:debt-gate` 从 FAIL → PASS
+### 2. 清理 knip 21 条
 
-**涉及文件**：
-- `tools/quality/soft-lane-runner.mjs`（新建）
-- `package.json`（`quality:ci:info` 内部实现改为调用 runner）
-- `.gitignore`（添加 `reports/jscpd/`）
-- `tools/quality/debt-gate.mjs`（添加 fresh report 生成/校验逻辑）
-- `src/infra/storage/supabase/rsip.ts`（消除 4 jscpd clones）
+最值得先清的点：
 
-**验证方式**：
-1. `npm run quality:jscpd && npm run quality:debt-gate` 应 PASS（clones ≤ 6）
-2. 删除 `reports/jscpd/jscpd-report.json` 后重跑 `quality:debt-gate`，确认能自动再生成
-3. `npm run quality:ci:info` 跑完全部 11 项，不因某项失败而短路
-4. `npx vitest run src/__tests__/repo-governance.test.ts` 应 PASS（脚本名未改）
+- `src/services/migration/index.ts` 的 barrel 再导出
+- `src/utils/cache/index.ts` 的 barrel 再导出
+- `src/services/rsip-insights/RSIPInsightsService.ts` 里的导出类型
+- `import-export` 相关重复导出类型
 
-### Phase 2: 去重叠 + 清 sonarjs
+这批问题收益高，改动也相对可控。
 
-**目标**：`ts-prune` 退出 CI soft lane；sonarjs 基线降至 ≤20
+### 3. 清理 sonarjs 29 条
 
-**涉及文件**：
-- `package.json`（从 `quality:ci:info` / soft-lane 配置中移除 `ts-prune`）
-- `tools/quality/soft-lane-runner.mjs`（更新检查清单）
-- sonarjs `void-use` 涉及的 ~18 个文件（加 `await` 或显式处理）
-- sonarjs `cognitive-complexity` 涉及的 2 个文件（拆分）
+推荐顺序：
 
-**验证方式**：
-1. `npm run quality:sonar:report` 产出 ≤ 20 条
-2. `npm run lint` 仍 PASS
-3. `npm run quality:ci:info` 仍跑完全套（ts-prune 已移除但其余不变）
+1. `void-use` 18 条
+2. `cognitive-complexity` 2 条
+3. `no-nested-functions` 3 条
+4. `no-nested-conditional` 3 条
+5. 其余 3 条
 
-### Phase 3: ratchet + 收尾
+这里比 v2 更重要的一点是：**sonar 现在是明确 backlog，不再承担“证明编排坏了”的角色。**
 
-**目标**：建立持续约束机制，防止回弹
+### 4. `ts-prune` 保持在 smell-audit，不要重新拉回 info lane
 
-**涉及文件**：
-- `tools/quality/debt-gate.mjs`（添加 ratchet 配置：读当前基线 → 只允许 ≤ 基线值）
-- `tools/quality/large-file-ratchet.mjs`（新建，替代绝对阈值）
-- `package.json`（`depcheck` 降为 nightly）
-- knip barrel re-export 涉及的 `src/services/migration/index.ts`、`src/utils/cache/index.ts`
+实测看，`ts-prune` 仍有大量 `(used in module)` 假阳性。
 
-**验证方式**：
-1. knip 条数 ≤ 原基线（21 或更低）
-2. 人为新增 >300 行文件时 ratchet 拒绝
-3. `npm run quality:ci:nightly` 全链路跑通
+建议：
+
+- 保持它只存在于 `quality:smell-audit`
+- 作为一次性迁移辅助工具使用
+- 如果后续确认增量价值持续偏低，可以考虑退休
 
 ---
 
-## Test Plan
+### Phase 3: 收 nightly，补最后一圈治理一致性
 
-1. **short-circuit 修复验证**：运行新 `quality:ci:info`（内部走 `soft-lane-runner.mjs`），即使 `knip` 失败，也要确认 `sonar`、`jscpd`、`large-file-budget`、`test:audit` 仍全部执行并进入汇总。
-2. **旧报告免疫**：删除或污染旧 `reports/jscpd/jscpd-report.json` 后再跑 `quality:debt-gate`，确认不会再出现"旧报告误过门禁"。
-3. **对比一致性**：soft lane summary 与单项命令结果对比，确认失败数、耗时、报告路径一致。
-4. **硬门不变**：`lint`、`typecheck`、`build`、测试 smoke、`quality:circular` 的 exit code 仍直接反映真实状态。
-5. **repo-governance 不变**：`npx vitest run src/__tests__/repo-governance.test.ts` PASS — 脚本名 `quality:ci:info` / `quality:ci:required` / `quality:ci:nightly` 均未改。
-6. **债务清理验收**（Phase 1 完成后）：
-   - `quality:debt-gate` PASS（jscpd clones ≤ 6）
-   - `test-lint-budget.json` 刷新为最新 generatedAt
-   - soft-summary.json 生成且无 stale 标记
+**目标**：把剩余的 orchestration 旧债收口。
+
+### 1. 用 runner 重写 `quality:ci:nightly`
+
+nightly 现在仍然会短路。建议像 info lane 一样改成 lane runner，至少覆盖：
+
+- `test:mutation`
+- `quality:test:mutation-hotspots`
+- `quality:debt-gate` 或新的 structural budget lane
+- `quality:depcheck`
+- `security:semgrep`
+
+### 2. 重新决定 `npm audit` 的位置
+
+当前 `npm audit` 在 info lane 里持续报 14 个漏洞，其中不少需要 breaking upgrade。
+
+建议二选一：
+
+1. 保留在 info lane，但作为纯报告项，不影响本地命令 exit code
+2. 移到 nightly 或依赖治理专用流程，避免每次本地跑 info lane 都被它“染红”
+
+### 3. 决定 `quality:circular` 是否升级到 required lane
+
+当前它很快、很稳定，而且值是 0。
+
+如果团队想把“禁止循环依赖”当成硬架构约束，可以把它升到 `quality:ci:required`。但这属于新增治理目标，不是本次 fact check 发现的 bug。
 
 ---
 
-## Assumptions
+## 不建议继续投入的方向
 
-- 按"平衡分层、仓库内自给"原则，不依赖 GitHub Code Scanning 或 SARIF 平台能力。
-- 不建议现在再叠加 `Biome`、`Oxlint` 或更多 SaaS smell 工具；当前瓶颈是 orchestration 和基线漂移，不是工具数量不够。
-- 本次已实测通过的是 `lint`、`typecheck`、`test`、`build`、`quality:type-coverage`、`quality:circular`；未端到端重验 `quality:ci:required` 的全部子项。
-- 实施不需要修改 `ci.yml` 中的 job 结构（仍调用 `quality:ci:required` + `quality:ci:info`），只改 package.json 脚本内部实现。
+- 不要再把“修 `quality:ci:info` 的短路问题”列为主任务，这部分已经做完。
+- 不要再把“去掉 info lane 里的 `ts-prune` / `depcheck`”列为主任务，这部分也已经做完。
+- 不要再把“修 jscpd 从 10 clones 降到 6”列为当前目标，这部分已经完成。
+- 不要优先重写 `debt-gate:core` 的 jscpd 读取逻辑，除非团队明确要求“单独运行 `quality:debt-gate:core` 也必须完全自愈”。按当前正常路径，它已经不再是主要风险。
 
 ---
 
-## 附录：当前 debt-gate 指标快照（2026-03-06）
+## 验收标准
 
-| 指标 | 当前值 | 预算 | 状态 |
-|------|--------|------|------|
-| `as unknown as` 类型断言 | 14 | ≤30 | PASS |
-| `as Error` 类型断言 | 0 | ≤10 | PASS |
-| 非空断言 (`!`) | 36 | ≤70 | PASS |
-| jscpd clone blocks | **10** | **≤6** | **FAIL** |
-| jscpd 重复百分比 | 0.30% | ≤0.30% | PASS（踩线） |
-| 循环依赖 | 0 | 0 | PASS |
-| type coverage | ≥95% | ≥95% | PASS |
-| depcheck | 0 | 0 | PASS |
+1. `npm run quality:ci:info` 本地执行后应完整产出 summary，且默认 exit 0。
+2. 本地未安装 `semgrep` / `sqlfluff` 时，info lane 不再因为环境原因变红。
+3. `quality:ci:nightly` 不再使用 `&&` 链式短路。
+4. `quality:large-files` 至少切换到 ratchet 模式，避免继续把 30 个历史大文件与“新增坏味道”混在一起。
+5. `knip` 不高于 21，`sonarjs` 不高于 29，并开始向下收敛。
+6. `quality:debt-gate:core` 继续保持 PASS，`jscpd` 不得反弹到 6 以上。
+
+---
+
+## 附录：本次复核时最关键的事实
+
+- `quality:ci:info` 已经改成 runner，且实测不会因首个失败短路。
+- `quality:smell-audit` 已经是独立 lane，不再混进 info lane。
+- `.gitignore` 已经忽略 `reports/jscpd/`。
+- `quality:debt-gate:core` 当前 PASS；`quality:large-files` 当前 FAIL。
+- 当前最需要修的不是 `jscpd`，而是：
+  - lane exit 语义
+  - 本地可选工具行为
+  - large-file backlog
+  - knip / sonar backlog
