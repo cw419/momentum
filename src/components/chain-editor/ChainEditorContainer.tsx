@@ -15,9 +15,7 @@ interface ChainEditorProps {
   onCancel: () => void;
   rsipNodes?: RSIPNode[];
   rsipTaskLinks?: RSIPTaskLink[];
-  onUpsertRSIPTaskLinks?: (
-    links: RSIPTaskLink[],
-  ) => void | Promise<unknown>;
+  onUpsertRSIPTaskLinks?: (links: RSIPTaskLink[]) => void | Promise<unknown>;
 }
 
 export function ChainEditor({

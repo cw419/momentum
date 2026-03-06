@@ -387,6 +387,3 @@ export function createCompletionHandlers({
 
   return { handleCompleteSession, handleInterruptSession };
 }
-
-
-

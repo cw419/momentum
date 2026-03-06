@@ -103,4 +103,3 @@ export function useFullscreen() {
 
   return { isFullscreen, enterFullscreen, exitFullscreen, toggleFullscreen };
 }
-

@@ -30,7 +30,9 @@ function shouldSkipChainsStrictUpsert(ctx: SupabaseStorageContext): boolean {
   );
 }
 
-function markChainsStrictCapabilitiesMissing(ctx: SupabaseStorageContext): void {
+function markChainsStrictCapabilitiesMissing(
+  ctx: SupabaseStorageContext,
+): void {
   CHAINS_STRICT_CAPABILITIES.forEach((capabilityName) =>
     ctx.markSchemaCapabilityMissing(CHAINS_TABLE, capabilityName),
   );

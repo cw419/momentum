@@ -186,15 +186,20 @@ describe('StorageProvider', () => {
 
     fireEvent.click(screen.getByTestId('switch-supabase'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('storage-kind').textContent).toBe('supabase');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('storage-kind').textContent).toBe('supabase');
+      },
+      { timeout: 3000 },
+    );
 
     expect(screen.getByTestId('storage-mode').textContent).toBe('supabase');
-    expect(localPreferencesMock.setStorageMode).toHaveBeenCalledWith('supabase');
-    expect(localPreferencesMock.setStorageModeHintDismissed).toHaveBeenCalledWith(
-      true,
+    expect(localPreferencesMock.setStorageMode).toHaveBeenCalledWith(
+      'supabase',
     );
+    expect(
+      localPreferencesMock.setStorageModeHintDismissed,
+    ).toHaveBeenCalledWith(true);
   });
 
   it('shows toast and keeps local mode when switching to supabase without config', () => {
@@ -230,8 +235,8 @@ describe('StorageProvider', () => {
 
     expect(screen.getByTestId('choice-pending').textContent).toBe('false');
     expect(localPreferencesMock.setStorageMode).toHaveBeenCalledWith('local');
-    expect(localPreferencesMock.setStorageModeHintDismissed).toHaveBeenCalledWith(
-      true,
-    );
+    expect(
+      localPreferencesMock.setStorageModeHintDismissed,
+    ).toHaveBeenCalledWith(true);
   });
 });

@@ -5,7 +5,9 @@ import { I18nProvider } from '../../../i18n';
 import type { ViewState } from '../../../types/app-state';
 import { MobileBottomNav } from '../MobileBottomNav';
 
-function renderNav(overrides: Partial<Parameters<typeof MobileBottomNav>[0]> = {}) {
+function renderNav(
+  overrides: Partial<Parameters<typeof MobileBottomNav>[0]> = {},
+) {
   const defaultProps = {
     currentView: 'dashboard' as ViewState,
     hasActiveSession: false,
@@ -36,11 +38,19 @@ describe('MobileBottomNav', () => {
     expect(screen.getByRole('button', { name: /Home/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Focus/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /RSIP/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Settings/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Settings/i }),
+    ).toBeInTheDocument();
   });
 
   it('should return null for hidden views', () => {
-    const hiddenViews: ViewState[] = ['editor', 'detail', 'group', 'taskgroup-editor', 'focus'];
+    const hiddenViews: ViewState[] = [
+      'editor',
+      'detail',
+      'group',
+      'taskgroup-editor',
+      'focus',
+    ];
 
     for (const view of hiddenViews) {
       const { container } = render(
@@ -115,7 +125,9 @@ describe('MobileBottomNav', () => {
   it('should have accessible navigation landmark', () => {
     renderNav();
 
-    expect(screen.getByRole('navigation', { name: /Bottom navigation/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('navigation', { name: /Bottom navigation/i }),
+    ).toBeInTheDocument();
   });
 
   it('should have minimum 44px touch targets', () => {

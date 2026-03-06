@@ -315,4 +315,3 @@ describe('useChainCard', () => {
     document.body.removeChild(previouslyFocused);
   });
 });
-

@@ -22,7 +22,8 @@
     "ts-prune",
     "depcheck",
     "license-checker",
-    "npm-run-all2"
+    "npm-run-all2",
+    "@tauri-apps/cli"
   ],
   "specials": ["eslint", "vite"]
 }

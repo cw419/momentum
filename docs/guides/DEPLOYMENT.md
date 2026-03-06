@@ -114,11 +114,11 @@ npm run tauri build
 
 构建产物位于 `src-tauri/target/release/bundle/`：
 
-| 平台    | 产物格式                |
-| ------- | ----------------------- |
-| Windows | `.msi` / `.exe`         |
-| macOS   | `.dmg` / `.app`         |
-| Linux   | `.deb` / `.AppImage`    |
+| 平台    | 产物格式             |
+| ------- | -------------------- |
+| Windows | `.msi` / `.exe`      |
+| macOS   | `.dmg` / `.app`      |
+| Linux   | `.deb` / `.AppImage` |
 
 ### Tauri 配置
 

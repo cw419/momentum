@@ -42,10 +42,7 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> =
     }) => {
       const { language, tr } = useI18n();
       const canEditRsipLinks = Boolean(
-        chain?.id &&
-          rsipNodes &&
-          rsipTaskLinks &&
-          onUpsertRSIPTaskLinks,
+        chain?.id && rsipNodes && rsipTaskLinks && onUpsertRSIPTaskLinks,
       );
 
       return (

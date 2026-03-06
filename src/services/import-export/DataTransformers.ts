@@ -62,7 +62,9 @@ type ExportedPetState = Omit<
   lastDecayCalculatedAt: string;
 };
 
-type ExportedRSIPGroup = Omit<RSIPNodeGroup, 'createdAt'> & { createdAt: string };
+type ExportedRSIPGroup = Omit<RSIPNodeGroup, 'createdAt'> & {
+  createdAt: string;
+};
 type ExportedRSIPLibraryEntry = Omit<RSIPLibraryEntry, 'lastActiveAt'> & {
   lastActiveAt: string;
 };

@@ -541,17 +541,21 @@ describe('sessions.ts', () => {
       };
 
       const ctx = createMockContext();
-      const upsert = vi.fn().mockImplementation((payload: Record<string, unknown>) => {
-        if (Object.prototype.hasOwnProperty.call(payload, 'is_forward_timer')) {
-          return {
-            error: createSupabaseError(
-              '42703',
-              'is_forward_timer does not exist',
-            ),
-          };
-        }
-        return { error: null };
-      });
+      const upsert = vi
+        .fn()
+        .mockImplementation((payload: Record<string, unknown>) => {
+          if (
+            Object.prototype.hasOwnProperty.call(payload, 'is_forward_timer')
+          ) {
+            return {
+              error: createSupabaseError(
+                '42703',
+                'is_forward_timer does not exist',
+              ),
+            };
+          }
+          return { error: null };
+        });
 
       ctx.mockClient.from = vi.fn().mockReturnValue({ upsert });
 

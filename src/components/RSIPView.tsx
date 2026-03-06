@@ -1,9 +1,5 @@
 ﻿import React, { useCallback, useMemo, useState } from 'react';
-import type {
-  RSIPNode,
-  RSIPTreeNode,
-  RSIPMode,
-} from '../types';
+import type { RSIPNode, RSIPTreeNode, RSIPMode } from '../types';
 import type { RSIPViewProps } from './RSIPView.types';
 import { useI18n } from '../i18n';
 import {
@@ -193,9 +189,8 @@ export const RSIPView: React.FC<RSIPViewProps> = ({
   const [splitGoal, setSplitGoal] = useState('');
   const [splitItems, setSplitItems] = useState<SplitDraftItem[]>([]);
 
-  const [violationDialogNode, setViolationDialogNode] = useState<RSIPNode | null>(
-    null,
-  );
+  const [violationDialogNode, setViolationDialogNode] =
+    useState<RSIPNode | null>(null);
   const [violationGroupMessage, setViolationGroupMessage] = useState<string>();
   const splitTemplates = useMemo(() => getSplitTemplates(language), [language]);
 
@@ -304,17 +299,20 @@ export const RSIPView: React.FC<RSIPViewProps> = ({
     title,
   ]);
 
-  const handleApplySplitTemplate = useCallback((templateKey: string) => {
-    const template = splitTemplates[templateKey];
-    if (!template) return;
-    setSplitGoal(template.goal);
-    setSplitItems(
-      template.items.map((item) => ({
-        ...item,
-        id: crypto.randomUUID(),
-      })),
-    );
-  }, [splitTemplates]);
+  const handleApplySplitTemplate = useCallback(
+    (templateKey: string) => {
+      const template = splitTemplates[templateKey];
+      if (!template) return;
+      setSplitGoal(template.goal);
+      setSplitItems(
+        template.items.map((item) => ({
+          ...item,
+          id: crypto.randomUUID(),
+        })),
+      );
+    },
+    [splitTemplates],
+  );
 
   const handleAddSplitRow = useCallback(() => {
     setSplitItems((prev) => [
@@ -523,10 +521,12 @@ export const RSIPView: React.FC<RSIPViewProps> = ({
       const phaseWeight = { E0: 1, E1: 2, E2: 3 };
       const weight =
         phaseWeight[(node.stabilityPhase ?? 'E0') as keyof typeof phaseWeight];
-      const reinforcementMultiplier = (node.reinforcementLevel ?? 0) > 0 ? 0.3 : 1;
+      const reinforcementMultiplier =
+        (node.reinforcementLevel ?? 0) > 0 ? 0.3 : 1;
       const failureCost =
-        Math.round((descendantCount + 1) * weight * reinforcementMultiplier * 100) /
-        100;
+        Math.round(
+          (descendantCount + 1) * weight * reinforcementMultiplier * 100,
+        ) / 100;
       return { descendantCount, failureCost };
     },
     [nodes],
@@ -625,7 +625,10 @@ export const RSIPView: React.FC<RSIPViewProps> = ({
         {activeTab === 'tree' && (
           <>
             <div className="mb-6">
-              <RSIPModeSwitch mode={currentMode} onModeChange={handleModeChange} />
+              <RSIPModeSwitch
+                mode={currentMode}
+                onModeChange={handleModeChange}
+              />
             </div>
 
             {isStrictMode && (
@@ -742,7 +745,7 @@ export const RSIPView: React.FC<RSIPViewProps> = ({
                           )
                         }
                         placeholder={tr('子国策标题', 'Sub-policy title')}
-                        className="md:col-span-4 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                        className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 md:col-span-4"
                       />
                       <input
                         value={item.rule}
@@ -756,9 +759,9 @@ export const RSIPView: React.FC<RSIPViewProps> = ({
                           )
                         }
                         placeholder={tr('子国策规则', 'Sub-policy rule')}
-                        className="md:col-span-6 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                        className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 md:col-span-6"
                       />
-                      <label className="md:col-span-2 inline-flex items-center justify-center gap-2 text-xs text-gray-600 dark:text-slate-300">
+                      <label className="inline-flex items-center justify-center gap-2 text-xs text-gray-600 dark:text-slate-300 md:col-span-2">
                         <input
                           type="checkbox"
                           checked={item.isPassive}
@@ -873,6 +876,3 @@ export const RSIPView: React.FC<RSIPViewProps> = ({
     </div>
   );
 };
-
-
-

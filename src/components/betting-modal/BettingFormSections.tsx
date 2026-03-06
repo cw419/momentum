@@ -172,10 +172,7 @@ export const BettingRules: React.FC<{ tr: TranslationFn }> = ({ tr }) => (
           </li>
           <li>{tr('• 任务失败：损失押注积分', '• If failed: lose the bet')}</li>
           <li>
-            {tr(
-              '• 每个任务会话只能押注一次',
-              '• Only one bet per session',
-            )}
+            {tr('• 每个任务会话只能押注一次', '• Only one bet per session')}
           </li>
         </ul>
       </div>

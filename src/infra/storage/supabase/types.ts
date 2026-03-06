@@ -34,10 +34,7 @@ export interface SupabaseStorageContext {
     tableName: string,
     requiredColumns: string[],
   ): Promise<SchemaVerificationResult>;
-  isSchemaCapabilityMissing(
-    tableName: string,
-    capabilityName: string,
-  ): boolean;
+  isSchemaCapabilityMissing(tableName: string, capabilityName: string): boolean;
   markSchemaCapabilityMissing(tableName: string, capabilityName: string): void;
   markSchemaCapabilityAvailable(
     tableName: string,

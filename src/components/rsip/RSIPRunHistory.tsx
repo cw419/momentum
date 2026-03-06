@@ -22,7 +22,9 @@ export function RSIPRunHistory({ records }: RSIPRunHistoryProps) {
         averageMaxNodeCount: 0,
       };
     }
-    const longestDuration = Math.max(...sorted.map((item) => item.durationDays));
+    const longestDuration = Math.max(
+      ...sorted.map((item) => item.durationDays),
+    );
     const averageMaxNodeCount =
       sorted.reduce((sum, item) => sum + item.maxNodeCount, 0) / sorted.length;
     return {
@@ -54,13 +56,17 @@ export function RSIPRunHistory({ records }: RSIPRunHistoryProps) {
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <div className="bento-card">
-          <p className="text-sm text-gray-500 dark:text-slate-400">{tr('总轮次', 'Total runs')}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">
+            {tr('总轮次', 'Total runs')}
+          </p>
           <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             {stats.totalRuns}
           </p>
         </div>
         <div className="bento-card">
-          <p className="text-sm text-gray-500 dark:text-slate-400">{tr('最长持续', 'Longest duration')}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">
+            {tr('最长持续', 'Longest duration')}
+          </p>
           <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             {language.startsWith('zh')
               ? `${stats.longestDuration} 天`
@@ -91,7 +97,8 @@ export function RSIPRunHistory({ records }: RSIPRunHistoryProps) {
               </h3>
               <span className="text-xs text-gray-500 dark:text-slate-400">
                 {record.startedAt.toLocaleDateString(dateLocale)} -{' '}
-                {record.endedAt?.toLocaleDateString(dateLocale) ?? tr('进行中', 'In progress')}
+                {record.endedAt?.toLocaleDateString(dateLocale) ??
+                  tr('进行中', 'In progress')}
               </span>
             </div>
             <p className="text-sm text-gray-600 dark:text-slate-300">

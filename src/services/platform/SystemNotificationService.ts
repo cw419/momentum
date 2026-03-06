@@ -96,7 +96,9 @@ class SystemNotificationService {
     };
   }
 
-  async requestPermission(source: NotificationPermissionSource): Promise<boolean> {
+  async requestPermission(
+    source: NotificationPermissionSource,
+  ): Promise<boolean> {
     await this.init();
     if (!this.state.supported) return false;
 
@@ -282,4 +284,3 @@ class SystemNotificationService {
 }
 
 export const systemNotificationService = new SystemNotificationService();
-

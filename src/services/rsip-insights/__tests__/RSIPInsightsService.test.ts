@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { RSIPExecutionRecord, RSIPNode, RSIPRunRecord } from '../../../types';
+import type {
+  RSIPExecutionRecord,
+  RSIPNode,
+  RSIPRunRecord,
+} from '../../../types';
 import { buildRSIPInsights } from '../RSIPInsightsService';
 
 function createNode(overrides: Partial<RSIPNode> = {}): RSIPNode {
@@ -71,9 +75,9 @@ describe('buildRSIPInsights', () => {
       now: new Date('2026-02-09T00:00:00.000Z'),
     });
 
-    expect(result.recommendations.some((item) => item.kind === 'rural_first')).toBe(
-      true,
-    );
+    expect(
+      result.recommendations.some((item) => item.kind === 'rural_first'),
+    ).toBe(true);
     expect(result.riskNodes[0]?.nodeId).toBe('root');
   });
 
@@ -96,9 +100,9 @@ describe('buildRSIPInsights', () => {
     });
 
     expect(result.summary.linkCount).toBe(0);
-    expect(result.recommendations.some((item) => item.kind === 'automation')).toBe(
-      true,
-    );
+    expect(
+      result.recommendations.some((item) => item.kind === 'automation'),
+    ).toBe(true);
   });
 
   it('computes run trends from history', () => {
@@ -114,7 +118,19 @@ describe('buildRSIPInsights', () => {
       runHistory: runs,
       executionRecords: [],
       groups: [],
-      taskLinks: [{ id: 'l1', rsipNodeId: 'node-a', chainId: 'c1', chainKind: 'unit', triggerEvent: 'task_completed', effect: 'mark_rsip_executed', automation: 'auto', isActive: true, updatedAt: new Date('2026-02-08T00:00:00.000Z') }],
+      taskLinks: [
+        {
+          id: 'l1',
+          rsipNodeId: 'node-a',
+          chainId: 'c1',
+          chainKind: 'unit',
+          triggerEvent: 'task_completed',
+          effect: 'mark_rsip_executed',
+          automation: 'auto',
+          isActive: true,
+          updatedAt: new Date('2026-02-08T00:00:00.000Z'),
+        },
+      ],
       policyLibrary: [],
       now: new Date('2026-02-09T00:00:00.000Z'),
     });
@@ -123,4 +139,3 @@ describe('buildRSIPInsights', () => {
     expect(result.trends.runDurationTrend).toBe('up');
   });
 });
-

@@ -14,14 +14,14 @@ Insights 引擎从 RSIP 的多维数据中提取信号，帮助用户理解当�
 
 ```typescript
 interface BuildRSIPInsightsInput {
-  nodes: RSIPNode[];              // 当前活跃节点
-  runHistory: RSIPRunRecord[];    // 轮次历史
+  nodes: RSIPNode[]; // 当前活跃节点
+  runHistory: RSIPRunRecord[]; // 轮次历史
   executionRecords: RSIPExecutionRecord[]; // 执行记录
-  groups: RSIPNodeGroup[];        // 国策组
-  taskLinks: RSIPTaskLink[];      // 任务联动
-  policyLibrary: RSIPLibraryEntry[];  // 国策库
-  now?: Date;                     // 当前时间（测试用）
-  locale?: string;                // 语言（zh/en）
+  groups: RSIPNodeGroup[]; // 国策组
+  taskLinks: RSIPTaskLink[]; // 任务联动
+  policyLibrary: RSIPLibraryEntry[]; // 国策库
+  now?: Date; // 当前时间（测试用）
+  locale?: string; // 语言（zh/en）
 }
 ```
 
@@ -31,28 +31,28 @@ interface BuildRSIPInsightsInput {
 
 ### 汇总指标 (RSIPInsightSummary)
 
-| 指标 | 说明 |
-| --- | --- |
-| `activeNodeCount` | 活跃国策数 |
-| `strictNodeCount` | 严格模式节点数（非 E0） |
-| `passiveNodeRatio` | 被动国策占比 |
-| `reinforcementCoverage` | 强化覆盖率 |
-| `policyLibrarySize` | 国策库条目数 |
-| `runCount` | 总轮次数 |
-| `linkCount` | 活跃联动数 |
-| `executionCount14d` | 近 14 天执行次数 |
-| `violationCount14d` | 近 14 天违约次数 |
-| `successRate14d` | 近 14 天成功率 |
+| 指标                    | 说明                    |
+| ----------------------- | ----------------------- |
+| `activeNodeCount`       | 活跃国策数              |
+| `strictNodeCount`       | 严格模式节点数（非 E0） |
+| `passiveNodeRatio`      | 被动国策占比            |
+| `reinforcementCoverage` | 强化覆盖率              |
+| `policyLibrarySize`     | 国策库条目数            |
+| `runCount`              | 总轮次数                |
+| `linkCount`             | 活跃联动数              |
+| `executionCount14d`     | 近 14 天执行次数        |
+| `violationCount14d`     | 近 14 天违约次数        |
+| `successRate14d`        | 近 14 天成功率          |
 
 ### 趋势快照 (RSIPTrendSnapshot)
 
-| 指标 | 说明 |
-| --- | --- |
-| `maxNodeTrend` | 节点规模趋势（up / down / flat / insufficient_data） |
-| `runDurationTrend` | 轮次时长趋势 |
-| `collapseFrequency14d` | 近 14 天崩溃次数 |
-| `averageMaxNodeCount` | 历史平均峰值节点数 |
-| `averageRunDurationDays` | 历史平均轮次天数 |
+| 指标                     | 说明                                                 |
+| ------------------------ | ---------------------------------------------------- |
+| `maxNodeTrend`           | 节点规模趋势（up / down / flat / insufficient_data） |
+| `runDurationTrend`       | 轮次时长趋势                                         |
+| `collapseFrequency14d`   | 近 14 天崩溃次数                                     |
+| `averageMaxNodeCount`    | 历史平均峰值节点数                                   |
+| `averageRunDurationDays` | 历史平均轮次天数                                     |
 
 ### 风险节点 (RSIPRiskNode)
 
@@ -76,15 +76,15 @@ failureCost = (子孙节点数 + 1) × 阶段权重 × 强化折扣
 
 引擎最多输出 6 条推荐，每条包含优先级（high / medium / low）、标题、理由和行动项。
 
-| 类型 | 优先级 | 触发条件 |
-| --- | --- | --- |
-| `rural_first` | high | 存在高风险节点或近 14 天崩溃 >= 2 次 |
-| `split` | high | 存在高风险节点（failureCost >= 4 且有违约） |
-| `grouping` | medium | 未分组节点 >= 4 且无国策组 |
-| `reinforcement` | medium | 存在 E2 节点但未强化，且成功率 >= 60% |
-| `passive` | medium | 被动覆盖率 < 20% 且近期有违约 |
-| `automation` | low | 无活跃联动 |
-| `rebuild` | medium | 节点规模或轮次时长趋势下降 |
+| 类型            | 优先级 | 触发条件                                    |
+| --------------- | ------ | ------------------------------------------- |
+| `rural_first`   | high   | 存在高风险节点或近 14 天崩溃 >= 2 次        |
+| `split`         | high   | 存在高风险节点（failureCost >= 4 且有违约） |
+| `grouping`      | medium | 未分组节点 >= 4 且无国策组                  |
+| `reinforcement` | medium | 存在 E2 节点但未强化，且成功率 >= 60%       |
+| `passive`       | medium | 被动覆盖率 < 20% 且近期有违约               |
+| `automation`    | low    | 无活跃联动                                  |
+| `rebuild`       | medium | 节点规模或轮次时长趋势下降                  |
 
 ### rural_first（农村包围城市重启）
 
@@ -118,11 +118,11 @@ failureCost = (子孙节点数 + 1) × 阶段权重 × 强化折扣
 
 ## 关键文件
 
-| 文件 | 职责 |
-| --- | --- |
+| 文件                                                | 职责                                   |
+| --------------------------------------------------- | -------------------------------------- |
 | `src/services/rsip-insights/RSIPInsightsService.ts` | 核心引擎（纯函数 `buildRSIPInsights`） |
-| `src/components/rsip/RSIPInsightsPanel.tsx` | Insights 面板 UI |
-| `src/components/RSIPView.tsx` | RSIP 主视图（insights tab 入口） |
+| `src/components/rsip/RSIPInsightsPanel.tsx`         | Insights 面板 UI                       |
+| `src/components/RSIPView.tsx`                       | RSIP 主视图（insights tab 入口）       |
 
 ---
 

@@ -5,7 +5,9 @@ const runMigrationMock = vi.hoisted(() => vi.fn());
 const setStorageMock = vi.hoisted(() => vi.fn());
 const needsMigrationMock = vi.hoisted(() => vi.fn(async () => false));
 const migrateMock = vi.hoisted(() => vi.fn(async () => ({ migratedRules: 0 })));
-const suggestionsMock = vi.hoisted(() => vi.fn(async () => ({ suggestions: [] })));
+const suggestionsMock = vi.hoisted(() =>
+  vi.fn(async () => ({ suggestions: [] })),
+);
 const rollbackMock = vi.hoisted(() => vi.fn(async () => ({ success: true })));
 const validateMock = vi.hoisted(() => vi.fn(async () => ({ valid: true })));
 const reportMock = vi.hoisted(() => vi.fn(async () => 'ok'));

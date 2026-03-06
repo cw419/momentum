@@ -1,12 +1,15 @@
 import type { PetStage, PetState } from '../../../types/pet';
-import {
-  isRecord,
-  parseTruthyDateOrNow,
-  toNumber,
-} from './coercions';
+import { isRecord, parseTruthyDateOrNow, toNumber } from './coercions';
 import { generateId } from './id';
 
-const PET_STAGES: PetStage[] = ['egg', 'baby', 'child', 'teen', 'adult', 'elder'];
+const PET_STAGES: PetStage[] = [
+  'egg',
+  'baby',
+  'child',
+  'teen',
+  'adult',
+  'elder',
+];
 
 function parsePetStage(value: unknown): PetStage {
   if (typeof value === 'string' && PET_STAGES.includes(value as PetStage)) {
@@ -30,8 +33,12 @@ export function parseImportPetState(raw: unknown): PetState | undefined {
   if (!isRecord(raw)) return undefined;
 
   return {
-    id: typeof raw.id === 'string' && raw.id.length > 0 ? raw.id : generateId('pet'),
-    name: typeof raw.name === 'string' && raw.name.length > 0 ? raw.name : 'Pet',
+    id:
+      typeof raw.id === 'string' && raw.id.length > 0
+        ? raw.id
+        : generateId('pet'),
+    name:
+      typeof raw.name === 'string' && raw.name.length > 0 ? raw.name : 'Pet',
     hunger: toNumber(raw.hunger, 50),
     happiness: toNumber(raw.happiness, 50),
     health: toNumber(raw.health, 100),
@@ -48,4 +55,3 @@ export function parseImportPetState(raw: unknown): PetState | undefined {
     minimizedPosition: parsePosition(raw.minimizedPosition, { x: 92, y: 2 }),
   };
 }
-

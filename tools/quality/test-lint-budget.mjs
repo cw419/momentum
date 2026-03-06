@@ -147,7 +147,10 @@ function main() {
   );
   console.log(`[test-lint-budget] report: ${REPORT_PATH}`);
 
-  if (warningCount > MAX_TEST_LINT_WARNINGS || errorCount > MAX_TEST_LINT_ERRORS) {
+  if (
+    warningCount > MAX_TEST_LINT_WARNINGS ||
+    errorCount > MAX_TEST_LINT_ERRORS
+  ) {
     console.error('[test-lint-budget] FAILED');
     for (const entry of topWarningRules) {
       console.error(`  - ${entry.rule}: ${entry.count}`);

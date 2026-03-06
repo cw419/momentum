@@ -5,12 +5,14 @@
 ## 2026-02-11 QA 热修复（Netlify 线上库 schema 漂移）
 
 当你在线上看到以下报错时，先执行这组热修复：
+
 - `active_sessions.is_forward_timer does not exist`
 - `group_repeat_count` 缺失
 - `relation "public.rsip_groups" does not exist`
 - `completion_history` `ON CONFLICT` 缺少唯一索引
 
 推荐执行顺序：
+
 1. 通过 CLI 推送迁移（推荐）
    - `npx --yes supabase link --project-ref <your-project-ref>`
    - `npx --yes supabase db push --linked --include-all`
@@ -20,6 +22,7 @@
    - 执行 `reports/qa/sql/momentumctdp_2026-02-11_cleanup.sql`
 
 如果 CLI 无法直连，可在 Dashboard SQL Editor 执行：
+
 - `reports/qa/sql/momentumctdp_2026-02-11_apply.sql`
 - `reports/qa/sql/momentumctdp_2026-02-11_verify.sql`
 

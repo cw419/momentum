@@ -47,7 +47,5 @@ export interface TaskGroupEditorViewProps {
   // RSIP integration entry (task/group side)
   rsipNodes?: RSIPNode[];
   rsipTaskLinks?: RSIPTaskLink[];
-  onUpsertRSIPTaskLinks?: (
-    links: RSIPTaskLink[],
-  ) => void | Promise<unknown>;
+  onUpsertRSIPTaskLinks?: (links: RSIPTaskLink[]) => void | Promise<unknown>;
 }

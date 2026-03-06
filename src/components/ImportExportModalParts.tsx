@@ -337,19 +337,19 @@ export const ExportTab: React.FC<{
         {tr('导出任务链数据', 'Export your data')}
       </h3>
       <p className="mb-4 font-chinese text-sm leading-relaxed text-blue-700 dark:text-blue-300">
-      {tr(
-        '导出功能将保存您当前的所有数据，包括任务链配置、统计数据、国策树扩展数据、宠物状态和例外规则。',
-        'Export saves all your current data, including chains, stats, extended RSIP data, pet state, and exception rules.',
-      )}
+        {tr(
+          '导出功能将保存您当前的所有数据，包括任务链配置、统计数据、国策树扩展数据、宠物状态和例外规则。',
+          'Export saves all your current data, including chains, stats, extended RSIP data, pet state, and exception rules.',
+        )}
       </p>
       <div className="space-y-2">
         {[
-        tr('任务链配置与统计', 'Chain config & stats'),
-        tr('完成历史记录', 'Completion history'),
-        tr('国策树（RSIP）完整数据', 'Full RSIP dataset'),
-        tr('宠物状态', 'Pet state'),
-        tr('例外规则配置', 'Exception rules'),
-      ].map((text, i) => (
+          tr('任务链配置与统计', 'Chain config & stats'),
+          tr('完成历史记录', 'Completion history'),
+          tr('国策树（RSIP）完整数据', 'Full RSIP dataset'),
+          tr('宠物状态', 'Pet state'),
+          tr('例外规则配置', 'Exception rules'),
+        ].map((text, i) => (
           <div
             key={i}
             className="flex items-center space-x-2 text-blue-600 dark:text-blue-400"

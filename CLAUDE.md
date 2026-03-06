@@ -166,7 +166,7 @@ Centralized entry point for cache and monitoring lifecycle:
 
 ```typescript
 import { systemRuntime } from '@/services/runtime';
-systemRuntime.cache.start();    // exceptionRuleCache
+systemRuntime.cache.start(); // exceptionRuleCache
 systemRuntime.monitoring.start(); // performanceMonitor, layoutStabilityMonitor
 ```
 

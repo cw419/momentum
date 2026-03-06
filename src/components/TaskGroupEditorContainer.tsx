@@ -15,9 +15,7 @@ interface TaskGroupEditorContainerProps {
   onCancel: () => void;
   rsipNodes?: RSIPNode[];
   rsipTaskLinks?: RSIPTaskLink[];
-  onUpsertRSIPTaskLinks?: (
-    links: RSIPTaskLink[],
-  ) => void | Promise<unknown>;
+  onUpsertRSIPTaskLinks?: (links: RSIPTaskLink[]) => void | Promise<unknown>;
 }
 
 export const TaskGroupEditorContainer: React.FC<

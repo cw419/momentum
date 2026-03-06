@@ -189,4 +189,3 @@ describe('import/rsip parser', () => {
     expect(links.skipped).toBe(1);
   });
 });
-

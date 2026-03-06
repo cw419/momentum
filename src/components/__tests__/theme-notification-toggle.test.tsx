@@ -165,4 +165,3 @@ describe('Theme and notification toggles', () => {
     });
   });
 });
-

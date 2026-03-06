@@ -70,7 +70,8 @@ export function AppShellView({
   petDomain,
 }: AppShellViewProps) {
   const { tr } = useI18n();
-  const shouldShowPetWidget = isInitialized && state.currentView === 'dashboard';
+  const shouldShowPetWidget =
+    isInitialized && state.currentView === 'dashboard';
 
   const renderAuxiliaryJudgment = () => {
     if (!showAuxiliaryJudgment) return null;

@@ -648,19 +648,21 @@ describe('chains.ts', () => {
       const chains = [createMockChain({ id: 'chain-1' })];
       const ctx = createMockContext();
 
-      const upsert = vi.fn().mockImplementation((rows: Record<string, unknown>[]) => {
-        const row = rows[0] ?? {};
-        if (Object.prototype.hasOwnProperty.call(row, 'group_repeat_count')) {
-          return {
-            data: null,
-            error: createSupabaseError(
-              'PGRST204',
-              "Could not find the 'group_repeat_count' column of 'chains' in the schema cache",
-            ),
-          };
-        }
-        return { data: [{ id: 'chain-1' }], error: null };
-      });
+      const upsert = vi
+        .fn()
+        .mockImplementation((rows: Record<string, unknown>[]) => {
+          const row = rows[0] ?? {};
+          if (Object.prototype.hasOwnProperty.call(row, 'group_repeat_count')) {
+            return {
+              data: null,
+              error: createSupabaseError(
+                'PGRST204',
+                "Could not find the 'group_repeat_count' column of 'chains' in the schema cache",
+              ),
+            };
+          }
+          return { data: [{ id: 'chain-1' }], error: null };
+        });
 
       ctx.mockClient.from = vi.fn().mockImplementation(() => ({
         select: vi.fn().mockReturnValue({

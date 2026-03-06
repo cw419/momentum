@@ -393,6 +393,3 @@ export function createStartChainHandler({
 
   return handleStartChain;
 }
-
-
-

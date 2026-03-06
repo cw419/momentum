@@ -199,14 +199,17 @@ export const RSIPForm: React.FC<RSIPFormProps> = ({
           <div className="flex items-center gap-2">
             <select
               value={selectedGroupId || ''}
-              onChange={(e) => setSelectedGroupId?.(e.target.value || undefined)}
+              onChange={(e) =>
+                setSelectedGroupId?.(e.target.value || undefined)
+              }
               className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 font-chinese text-gray-900 transition duration-200 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
             >
               <option value="">{tr('不分组', 'No group')}</option>
               {(groups ?? []).map((group) => (
                 <option key={group.id} value={group.id}>
                   {group.emoji ? `${group.emoji} ` : ''}
-                  {group.title} ({tr('容错', 'Tolerance')} {group.faultTolerance})
+                  {group.title} ({tr('容错', 'Tolerance')}{' '}
+                  {group.faultTolerance})
                 </option>
               ))}
             </select>

@@ -250,7 +250,13 @@ export function usePetWidgetController(params: {
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd, isDragging]);
+  }, [
+    handleMouseMove,
+    handleMouseUp,
+    handleTouchMove,
+    handleTouchEnd,
+    isDragging,
+  ]);
 
   const handleCreatePet = useCallback(
     async (name: string) => {
@@ -289,4 +295,3 @@ export function usePetWidgetController(params: {
     handleExpand,
   };
 }
-

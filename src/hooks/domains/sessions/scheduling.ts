@@ -132,6 +132,3 @@ export function createSchedulingHandlers({
     handleCompleteBooking,
   };
 }
-
-
-

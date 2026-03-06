@@ -6,8 +6,27 @@ on:
   pull_request:
 
 jobs:
-  build-and-test:
+  required:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Required Quality Lane
+        run: npm run quality:ci:required
+
+  info:
+    runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,74 +51,8 @@ jobs:
           python -m pip install --user semgrep sqlfluff
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Format Check
-        run: npm run format:check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: CSS Lint
-        run: npm run lint:css
-
-      - name: Markdown Lint
-        run: npm run lint:md
-
-      - name: Spell Check (Code)
-        run: npm run lint:spell
-
-      - name: Spell Check (Docs)
-        run: npm run lint:spell:docs
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Type Coverage
-        run: npm run quality:type-coverage
-
-      - name: Unused Files / Exports (Knip)
-        run: npm run quality:knip
-
-      - name: Unused Exports Gate (ts-prune)
-        run: npm run quality:ts-prune:strict
-
-      - name: Dependency Hygiene (depcheck)
-        run: npm run quality:depcheck
-
-      - name: Circular Dependency Check
-        run: npm run quality:circular
-
-      - name: SonarJS Smell Report
-        run: npm run quality:sonar:report
-
-      - name: Duplicate Code Check (jscpd)
-        run: npm run quality:jscpd
-
-      - name: Debt Gate
-        run: npm run quality:debt-gate
-
-      - name: Security Audit (npm)
-        run: npm run security:npm-audit
-
-      - name: Security Scan (semgrep)
-        run: npm run security:semgrep
-
-      - name: SQL Lint
-        run: npm run lint:sql
-
-      - name: Test Quality Lint
-        run: npm run quality:test:lint
-
-      - name: Test Assertion Guard
-        run: npm run quality:test:assertions
-
-      - name: Test (Coverage)
-        run: npm run test:coverage
-
-      - name: Test Coverage Hotspots
-        run: npm run quality:test:coverage-hotspots
-
-      - name: Test Runtime Budget
-        run: npm run quality:test:runtime
+      - name: Informational Quality Lane
+        run: npm run quality:ci:info
 
       - name: Upload Quality Reports
         if: always()
@@ -109,7 +62,5 @@ jobs:
           path: |
             reports/quality
             reports/jscpd
+            reports/mutation
           if-no-files-found: ignore
-
-      - name: Build
-        run: npm run build

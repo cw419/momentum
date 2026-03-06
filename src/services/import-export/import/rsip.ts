@@ -119,7 +119,10 @@ function mapRsipParentId(
   raw: Record<string, unknown>,
   idMapRsip: Map<string, string>,
 ): string | undefined {
-  const sourceParentId = getStringFromCandidates(raw, ['parentId', 'parent_id']);
+  const sourceParentId = getStringFromCandidates(raw, [
+    'parentId',
+    'parent_id',
+  ]);
   if (!sourceParentId) return undefined;
   return idMapRsip.get(sourceParentId) ?? sourceParentId;
 }
@@ -264,7 +267,9 @@ export function parseImportRsipLibrary(
     }));
 }
 
-export function parseImportRsipRunHistory(rsipRunHistory: unknown): RSIPRunRecord[] {
+export function parseImportRsipRunHistory(
+  rsipRunHistory: unknown,
+): RSIPRunRecord[] {
   if (!Array.isArray(rsipRunHistory)) return [];
 
   return rsipRunHistory
@@ -341,7 +346,10 @@ export function parseImportRsipTaskLinks(
       continue;
     }
 
-    const sourceNodeId = getStringFromCandidates(raw, ['rsipNodeId', 'rsip_node_id']);
+    const sourceNodeId = getStringFromCandidates(raw, [
+      'rsipNodeId',
+      'rsip_node_id',
+    ]);
     const sourceChainId = getStringFromCandidates(raw, ['chainId', 'chain_id']);
     if (!sourceNodeId || !sourceChainId) {
       skipped += 1;

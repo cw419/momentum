@@ -60,8 +60,10 @@ export const localStorageAdapter: MomentumStorage = {
   saveRSIPRunHistory: async (records) =>
     localStorageUtils.saveRSIPRunHistory(records),
   getRSIPTaskLinks: async () => localStorageUtils.getRSIPTaskLinks(),
-  saveRSIPTaskLinks: async (links) => localStorageUtils.saveRSIPTaskLinks(links),
-  getRSIPExecutionRecords: async () => localStorageUtils.getRSIPExecutionRecords(),
+  saveRSIPTaskLinks: async (links) =>
+    localStorageUtils.saveRSIPTaskLinks(links),
+  getRSIPExecutionRecords: async () =>
+    localStorageUtils.getRSIPExecutionRecords(),
   appendRSIPExecutionRecord: async (record) =>
     localStorageUtils.appendRSIPExecutionRecord(record),
 

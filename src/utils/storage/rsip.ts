@@ -123,7 +123,10 @@ export function getRSIPPolicyLibrary(): RSIPLibraryEntry[] {
 }
 
 export function saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): void {
-  localStorage.setItem(STORAGE_KEYS.RSIP_POLICY_LIBRARY, JSON.stringify(entries));
+  localStorage.setItem(
+    STORAGE_KEYS.RSIP_POLICY_LIBRARY,
+    JSON.stringify(entries),
+  );
 }
 
 export function getRSIPRunHistory(): RSIPRunRecord[] {

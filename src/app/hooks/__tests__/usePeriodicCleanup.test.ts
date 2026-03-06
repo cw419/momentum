@@ -168,4 +168,3 @@ describe('usePeriodicCleanup', () => {
     expect(setState).not.toHaveBeenCalled();
   });
 });
-

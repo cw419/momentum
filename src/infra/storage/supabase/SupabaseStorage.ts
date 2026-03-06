@@ -136,7 +136,10 @@ export class SupabaseStorage implements MomentumStorage {
     return `${tableName}:${capabilityName}`;
   }
 
-  isSchemaCapabilityMissing(tableName: string, capabilityName: string): boolean {
+  isSchemaCapabilityMissing(
+    tableName: string,
+    capabilityName: string,
+  ): boolean {
     const key = this.getSchemaCapabilityKey(tableName, capabilityName);
     return this.schemaCapabilityCache.get(key) === 'missing';
   }

@@ -19,4 +19,3 @@ describe('DailyCheckinDemo accessibility', () => {
     );
   });
 });
-

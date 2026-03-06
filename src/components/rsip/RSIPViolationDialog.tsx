@@ -66,8 +66,12 @@ export function RSIPViolationDialog({
             <AlertTriangle className="text-red-400" size={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">{tr('确认违反国策', 'Confirm violation')}</h3>
-            <p className="text-sm text-red-300/70">{tr('该操作不可撤销', 'This action cannot be undone')}</p>
+            <h3 className="text-lg font-semibold text-white">
+              {tr('确认违反国策', 'Confirm violation')}
+            </h3>
+            <p className="text-sm text-red-300/70">
+              {tr('该操作不可撤销', 'This action cannot be undone')}
+            </p>
           </div>
         </div>
 
@@ -82,12 +86,16 @@ export function RSIPViolationDialog({
             )}
           </div>
           <p>{dangerMessage}</p>
-          {groupMessage && <p className="mt-2 text-amber-200">{groupMessage}</p>}
+          {groupMessage && (
+            <p className="mt-2 text-amber-200">{groupMessage}</p>
+          )}
         </div>
 
         {reinforcementLevel <= 0 && descendants.length > 0 && (
           <div className="mb-4 max-h-40 overflow-y-auto rounded-xl bg-red-500/10 p-3">
-            <p className="mb-2 text-sm text-red-200">{tr('受影响的子节点：', 'Impacted descendants:')}</p>
+            <p className="mb-2 text-sm text-red-200">
+              {tr('受影响的子节点：', 'Impacted descendants:')}
+            </p>
             <ul className="space-y-1 text-sm text-red-300/80">
               {descendants.map((descendant) => (
                 <li key={descendant.id}>

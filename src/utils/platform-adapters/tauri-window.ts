@@ -22,9 +22,8 @@ export const tauriWindowAdapter: PlatformWindowAdapter = {
   },
 
   async focus(): Promise<void> {
-    const { getCurrentWebviewWindow } = await import(
-      '@tauri-apps/api/webviewWindow'
-    );
+    const { getCurrentWebviewWindow } =
+      await import('@tauri-apps/api/webviewWindow');
     const win = getCurrentWebviewWindow();
     await win.setFocus();
   },

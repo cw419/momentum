@@ -24,7 +24,9 @@ function hasKnownMissingForwardTimerCapabilities(
   );
 }
 
-function markForwardTimerCapabilitiesMissing(ctx: SupabaseStorageContext): void {
+function markForwardTimerCapabilitiesMissing(
+  ctx: SupabaseStorageContext,
+): void {
   FORWARD_TIMER_CAPABILITIES.forEach((capabilityName) =>
     ctx.markSchemaCapabilityMissing(ACTIVE_SESSIONS_TABLE, capabilityName),
   );

@@ -66,4 +66,3 @@ describe('import/pet parser', () => {
     expect(parsed?.minimizedPosition).toEqual({ x: 92, y: 2 });
   });
 });
-

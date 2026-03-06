@@ -363,9 +363,7 @@ describe('AccountModal behavior', () => {
 
     renderAccountModal(createSupabaseStorage());
 
-    await user.click(
-      await screen.findByRole('radio', { name: 'Local mode' }),
-    );
+    await user.click(await screen.findByRole('radio', { name: 'Local mode' }));
     await user.click(screen.getByRole('radio', { name: 'Cloud mode' }));
 
     expect(storageModeMock.setMode).toHaveBeenCalledWith('local');

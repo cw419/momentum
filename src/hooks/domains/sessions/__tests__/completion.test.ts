@@ -365,7 +365,9 @@ describe('createCompletionHandlers', () => {
       chain.name,
       3,
     );
-    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledTimes(1);
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledTimes(
+      1,
+    );
     expect(tr).not.toHaveBeenCalled();
   });
 
@@ -1289,5 +1291,3 @@ describe('createCompletionHandlers', () => {
     );
   });
 });
-
-

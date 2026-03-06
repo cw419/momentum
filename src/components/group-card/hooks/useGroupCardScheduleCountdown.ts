@@ -69,5 +69,3 @@ export function useGroupCardScheduleCountdown(params: {
 
   return { timeRemaining };
 }
-
-

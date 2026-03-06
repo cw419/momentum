@@ -44,7 +44,9 @@ export function RSIPInsightsPanel({
     return `${Math.round(value * 100)}%`;
   };
 
-  const trendLabel = (value: 'up' | 'down' | 'flat' | 'insufficient_data'): string => {
+  const trendLabel = (
+    value: 'up' | 'down' | 'flat' | 'insufficient_data',
+  ): string => {
     if (value === 'up') return tr('上升', 'Up');
     if (value === 'down') return tr('下降', 'Down');
     if (value === 'flat') return tr('持平', 'Flat');
@@ -68,7 +70,15 @@ export function RSIPInsightsPanel({
         policyLibrary,
         locale: language,
       }),
-    [executionRecords, groups, language, nodes, policyLibrary, runHistory, taskLinks],
+    [
+      executionRecords,
+      groups,
+      language,
+      nodes,
+      policyLibrary,
+      runHistory,
+      taskLinks,
+    ],
   );
 
   return (
@@ -141,7 +151,10 @@ export function RSIPInsightsPanel({
         </h3>
         {insights.ruralFirstCandidates.length === 0 ? (
           <p className="text-sm text-gray-600 dark:text-slate-300">
-            {tr('暂未检测到低成本候选。', 'No low-cost candidates detected yet.')}
+            {tr(
+              '暂未检测到低成本候选。',
+              'No low-cost candidates detected yet.',
+            )}
           </p>
         ) : (
           <div className="space-y-2">
@@ -154,7 +167,8 @@ export function RSIPInsightsPanel({
                   {node.title}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-slate-400">
-                  {tr('失败成本', 'Failure cost')} {node.failureCost} | {tr('违约率', 'Violation rate')}{' '}
+                  {tr('失败成本', 'Failure cost')} {node.failureCost} |{' '}
+                  {tr('违约率', 'Violation rate')}{' '}
                   {toPercent(node.violationRate)}
                 </p>
               </div>

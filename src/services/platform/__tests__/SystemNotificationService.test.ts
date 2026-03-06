@@ -161,9 +161,9 @@ describe('SystemNotificationService', () => {
     });
     await loaded.service.init();
 
-    await expect(
-      loaded.service.requestPermission('feature'),
-    ).resolves.toBe(true);
+    await expect(loaded.service.requestPermission('feature')).resolves.toBe(
+      true,
+    );
 
     expect(loaded.requestPermissionMock).toHaveBeenCalledTimes(1);
     expect(loaded.service.isEnabled()).toBe(false);
@@ -195,4 +195,3 @@ describe('SystemNotificationService', () => {
     expect(loaded.showMock).not.toHaveBeenCalled();
   });
 });
-

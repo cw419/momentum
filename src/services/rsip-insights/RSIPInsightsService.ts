@@ -175,8 +175,12 @@ export function buildRSIPInsights(
   const records14d = input.executionRecords.filter(
     (record) => record.executedAt >= lookbackThreshold,
   );
-  const executed14d = records14d.filter((record) => record.status === 'executed').length;
-  const violated14d = records14d.filter((record) => record.status === 'violated').length;
+  const executed14d = records14d.filter(
+    (record) => record.status === 'executed',
+  ).length;
+  const violated14d = records14d.filter(
+    (record) => record.status === 'violated',
+  ).length;
   const tracked14d = executed14d + violated14d;
 
   const strictNodeCount = input.nodes.filter(
@@ -218,7 +222,10 @@ export function buildRSIPInsights(
     averageRunDurationDays: round(average(durationSeries)),
   };
 
-  const executionStatsByNode = new Map<string, { executed: number; violated: number }>();
+  const executionStatsByNode = new Map<
+    string,
+    { executed: number; violated: number }
+  >();
   for (const record of records14d) {
     if (record.status !== 'executed' && record.status !== 'violated') continue;
     const current = executionStatsByNode.get(record.nodeId) ?? {
@@ -232,14 +239,19 @@ export function buildRSIPInsights(
 
   const riskNodes = input.nodes
     .map((node) => {
-      const phaseWeight = node.stabilityPhase === 'E2' ? 3 : node.stabilityPhase === 'E1' ? 2 : 1;
-      const reinforcementMultiplier = (node.reinforcementLevel ?? 0) > 0 ? 0.3 : 1;
+      const phaseWeight =
+        node.stabilityPhase === 'E2' ? 3 : node.stabilityPhase === 'E1' ? 2 : 1;
+      const reinforcementMultiplier =
+        (node.reinforcementLevel ?? 0) > 0 ? 0.3 : 1;
       const failureCost = round(
         (getDescendantCount(input.nodes, node.id) + 1) *
           phaseWeight *
           reinforcementMultiplier,
       );
-      const stats = executionStatsByNode.get(node.id) ?? { executed: 0, violated: 0 };
+      const stats = executionStatsByNode.get(node.id) ?? {
+        executed: 0,
+        violated: 0,
+      };
       const tracked = stats.executed + stats.violated;
       const violationRate = tracked > 0 ? round(stats.violated / tracked) : 0;
       return {
@@ -266,7 +278,8 @@ export function buildRSIPInsights(
   const ruralFirstCandidates = riskNodes
     .filter((node) => node.failureCost <= 2.5)
     .sort((a, b) => {
-      if (a.violationRate !== b.violationRate) return a.violationRate - b.violationRate;
+      if (a.violationRate !== b.violationRate)
+        return a.violationRate - b.violationRate;
       return b.executed - a.executed;
     })
     .slice(0, 5);
@@ -403,7 +416,8 @@ export function buildRSIPInsights(
   }
 
   const e2WithoutReinforcement = input.nodes.filter(
-    (node) => node.stabilityPhase === 'E2' && (node.reinforcementLevel ?? 0) === 0,
+    (node) =>
+      node.stabilityPhase === 'E2' && (node.reinforcementLevel ?? 0) === 0,
   );
   if (
     e2WithoutReinforcement.length > 0 &&
@@ -512,7 +526,11 @@ export function buildRSIPInsights(
       id: 'rebuild-from-library',
       kind: 'rebuild',
       priority: 'medium',
-      title: localize(locale, '使用国策库辅助重建', 'Use library-assisted rebuild'),
+      title: localize(
+        locale,
+        '使用国策库辅助重建',
+        'Use library-assisted rebuild',
+      ),
       rationale: localize(
         locale,
         '轮次趋势下滑，优先恢复已验证国策，而不是只新增新国策。',

@@ -10,16 +10,16 @@ RSIP 与任务/任务组之间的双向事件驱动联动，实现国策执行�
 
 ### 两个方向
 
-| 方向 | 触发事件 | 效果 |
-| --- | --- | --- |
-| 任务 -> RSIP | `task_completed` / `task_interrupted` / `group_cycle_completed` | `mark_rsip_executed` / `mark_rsip_violated` |
-| RSIP -> 任务 | `rsip_mark_executed` | `prompt_start_chain` / `prompt_schedule_chain` |
+| 方向         | 触发事件                                                        | 效果                                           |
+| ------------ | --------------------------------------------------------------- | ---------------------------------------------- |
+| 任务 -> RSIP | `task_completed` / `task_interrupted` / `group_cycle_completed` | `mark_rsip_executed` / `mark_rsip_violated`    |
+| RSIP -> 任务 | `rsip_mark_executed`                                            | `prompt_start_chain` / `prompt_schedule_chain` |
 
 ### 自动化模式
 
-| 模式 | 说明 |
-| --- | --- |
-| `auto` | 事件触发后自动执行效果，无需用户确认 |
+| 模式      | 说明                                     |
+| --------- | ---------------------------------------- |
+| `auto`    | 事件触发后自动执行效果，无需用户确认     |
 | `confirm` | 事件触发后弹出确认提示，用户决定是否执行 |
 
 默认规则：任务 -> RSIP 方向默认 `auto`；RSIP -> 任务方向默认 `confirm`。
@@ -36,8 +36,8 @@ RSIP 与任务/任务组之间的双向事件驱动联动，实现国策执行�
 interface RSIPTaskLink {
   id: string;
   userId?: string;
-  rsipNodeId: string;       // 关联的 RSIP 节点
-  chainId: string;           // 关联的任务链/任务组
+  rsipNodeId: string; // 关联的 RSIP 节点
+  chainId: string; // 关联的任务链/任务组
   chainKind: 'group' | 'unit';
   triggerEvent: RSIPTaskLinkTriggerEvent;
   effect: RSIPTaskLinkEffect;
@@ -49,21 +49,21 @@ interface RSIPTaskLink {
 
 ### 触发事件枚举
 
-| 事件 | 说明 |
-| --- | --- |
-| `task_completed` | 任务完成 |
-| `task_interrupted` | 任务中断 |
-| `group_cycle_completed` | 任务组周期完成 |
-| `rsip_mark_executed` | RSIP 节点标记为已执行 |
+| 事件                    | 说明                  |
+| ----------------------- | --------------------- |
+| `task_completed`        | 任务完成              |
+| `task_interrupted`      | 任务中断              |
+| `group_cycle_completed` | 任务组周期完成        |
+| `rsip_mark_executed`    | RSIP 节点标记为已执行 |
 
 ### 效果枚举
 
-| 效果 | 说明 |
-| --- | --- |
-| `mark_rsip_executed` | 标记国策节点已执行 |
-| `mark_rsip_violated` | 标记国策节点已违反 |
-| `prompt_start_chain` | 提示用户立即开始任务 |
-| `prompt_schedule_chain` | 提示用户安排任务 |
+| 效果                    | 说明                 |
+| ----------------------- | -------------------- |
+| `mark_rsip_executed`    | 标记国策节点已执行   |
+| `mark_rsip_violated`    | 标记国策节点已违反   |
+| `prompt_start_chain`    | 提示用户立即开始任务 |
+| `prompt_schedule_chain` | 提示用户安排任务     |
 
 ---
 
@@ -96,14 +96,14 @@ RLS 策略：用户只能管理自己的联动记录。
 
 ## 关键文件
 
-| 文件 | 职责 |
-| --- | --- |
-| `src/types/rsipIntegration.ts` | 联动类型定义 |
+| 文件                                                          | 职责                                         |
+| ------------------------------------------------------------- | -------------------------------------------- |
+| `src/types/rsipIntegration.ts`                                | 联动类型定义                                 |
 | `src/services/rsip-integration/RSIPTaskIntegrationService.ts` | 联动核心服务（LWW 冲突解决、事件匹配、去重） |
-| `src/components/rsip/RSIPTaskLinkPanel.tsx` | 联动管理面板 UI |
-| `src/components/chain-editor/ChainEditorView.tsx` | 任务编辑器内嵌联动区 |
-| `src/components/task-group-editor/TaskGroupEditorView.tsx` | 任务组编辑器内嵌联动区 |
-| `src/infra/storage/supabase/rsip.ts` | Supabase 存储实现 |
+| `src/components/rsip/RSIPTaskLinkPanel.tsx`                   | 联动管理面板 UI                              |
+| `src/components/chain-editor/ChainEditorView.tsx`             | 任务编辑器内嵌联动区                         |
+| `src/components/task-group-editor/TaskGroupEditorView.tsx`    | 任务组编辑器内嵌联动区                       |
+| `src/infra/storage/supabase/rsip.ts`                          | Supabase 存储实现                            |
 
 ---
 
@@ -117,13 +117,22 @@ class RSIPTaskIntegrationService {
   resolveLatestLinks(links: RSIPTaskLink[]): RSIPTaskLink[];
 
   // 合并已有 links 和新 links
-  upsertLinks(existing: RSIPTaskLink[], incoming: RSIPTaskLink[]): RSIPTaskLink[];
+  upsertLinks(
+    existing: RSIPTaskLink[],
+    incoming: RSIPTaskLink[],
+  ): RSIPTaskLink[];
 
   // 匹配任务事件 -> RSIP 方向的 links（含每日去重）
-  matchTaskEventLinks(allLinks: RSIPTaskLink[], payload: RSIPTaskEventPayload): RSIPTaskEventLinkMatch[];
+  matchTaskEventLinks(
+    allLinks: RSIPTaskLink[],
+    payload: RSIPTaskEventPayload,
+  ): RSIPTaskEventLinkMatch[];
 
   // 获取 RSIP -> 任务方向的 links
-  getRsipToTaskLinks(allLinks: RSIPTaskLink[], rsipNodeId: string): RSIPTaskLink[];
+  getRsipToTaskLinks(
+    allLinks: RSIPTaskLink[],
+    rsipNodeId: string,
+  ): RSIPTaskLink[];
 }
 ```
 

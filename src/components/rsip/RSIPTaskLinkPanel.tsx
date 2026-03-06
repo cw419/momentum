@@ -18,7 +18,9 @@ const TASK_TO_RSIP_EVENTS: RSIPTaskLink['triggerEvent'][] = [
   'group_cycle_completed',
 ];
 
-const RSIP_TO_TASK_EVENTS: RSIPTaskLink['triggerEvent'][] = ['rsip_mark_executed'];
+const RSIP_TO_TASK_EVENTS: RSIPTaskLink['triggerEvent'][] = [
+  'rsip_mark_executed',
+];
 
 const TASK_TO_RSIP_EFFECTS: RSIPTaskLink['effect'][] = [
   'mark_rsip_executed',
@@ -36,7 +38,8 @@ function eventLabel(
 ): string {
   if (event === 'task_completed') return tr('任务完成', 'Task completed');
   if (event === 'task_interrupted') return tr('任务中断', 'Task interrupted');
-  if (event === 'group_cycle_completed') return tr('任务组周期完成', 'Group cycle completed');
+  if (event === 'group_cycle_completed')
+    return tr('任务组周期完成', 'Group cycle completed');
   return tr('RSIP 标记已执行', 'RSIP marked executed');
 }
 
@@ -44,9 +47,12 @@ function effectLabel(
   effect: RSIPTaskLink['effect'],
   tr: (zh: string, en: string) => string,
 ): string {
-  if (effect === 'mark_rsip_executed') return tr('标记国策已执行', 'Mark RSIP executed');
-  if (effect === 'mark_rsip_violated') return tr('标记国策已违反', 'Mark RSIP violated');
-  if (effect === 'prompt_start_chain') return tr('提示立即开始任务', 'Prompt start task');
+  if (effect === 'mark_rsip_executed')
+    return tr('标记国策已执行', 'Mark RSIP executed');
+  if (effect === 'mark_rsip_violated')
+    return tr('标记国策已违反', 'Mark RSIP violated');
+  if (effect === 'prompt_start_chain')
+    return tr('提示立即开始任务', 'Prompt start task');
   return tr('提示安排任务', 'Prompt schedule task');
 }
 
@@ -67,7 +73,8 @@ export function RSIPTaskLinkPanel({
   description,
 }: RSIPTaskLinkPanelProps) {
   const { tr } = useI18n();
-  const resolvedTitle = title ?? tr('RSIP × 任务流程协同', 'RSIP <-> Task Integration');
+  const resolvedTitle =
+    title ?? tr('RSIP × 任务流程协同', 'RSIP <-> Task Integration');
   const resolvedDescription =
     description ??
     tr(
@@ -106,7 +113,9 @@ export function RSIPTaskLinkPanel({
     }
     setSelectedChainId((current) => {
       if (!current) return '';
-      return availableChains.some((chain) => chain.id === current) ? current : '';
+      return availableChains.some((chain) => chain.id === current)
+        ? current
+        : '';
     });
   }, [availableChains, fixedChainId]);
 
@@ -118,18 +127,21 @@ export function RSIPTaskLinkPanel({
   const canCreate = selectedNodeId.length > 0 && selectedChainId.length > 0;
 
   const nodeTitleById = useMemo(() => {
-    const entries = nodes.map((node) => [
-      node.id,
-      (node.emoji ? `${node.emoji} ` : '') + node.title,
-    ] as const);
+    const entries = nodes.map(
+      (node) =>
+        [node.id, (node.emoji ? `${node.emoji} ` : '') + node.title] as const,
+    );
     return new Map(entries);
   }, [nodes]);
 
   const chainLabelById = useMemo(() => {
-    const entries = chains.map((chain) => [
-      chain.id,
-      `${chain.type === 'group' ? tr('任务组', 'Group') : tr('任务', 'Task')}: ${chain.name}`,
-    ] as const);
+    const entries = chains.map(
+      (chain) =>
+        [
+          chain.id,
+          `${chain.type === 'group' ? tr('任务组', 'Group') : tr('任务', 'Task')}: ${chain.name}`,
+        ] as const,
+    );
     return new Map(entries);
   }, [chains, tr]);
 
@@ -237,10 +249,15 @@ export function RSIPTaskLinkPanel({
               onChange={(event) => setSelectedChainId(event.target.value)}
               className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             >
-              <option value="">{tr('选择任务/任务组', 'Select task/group')}</option>
+              <option value="">
+                {tr('选择任务/任务组', 'Select task/group')}
+              </option>
               {availableChains.map((chain) => (
                 <option key={chain.id} value={chain.id}>
-                  {chain.type === 'group' ? tr('任务组', 'Group') : tr('任务', 'Task')}: {chain.name}
+                  {chain.type === 'group'
+                    ? tr('任务组', 'Group')
+                    : tr('任务', 'Task')}
+                  : {chain.name}
                 </option>
               ))}
             </select>
@@ -249,31 +266,37 @@ export function RSIPTaskLinkPanel({
           <select
             value={triggerEvent}
             onChange={(event) =>
-              setTriggerEvent(event.target.value as RSIPTaskLink['triggerEvent'])
+              setTriggerEvent(
+                event.target.value as RSIPTaskLink['triggerEvent'],
+              )
             }
             className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           >
-            {(mode === 'task_to_rsip' ? TASK_TO_RSIP_EVENTS : RSIP_TO_TASK_EVENTS).map(
-              (event) => (
-                <option key={event} value={event}>
-                  {eventLabel(event, tr)} ({event})
-                </option>
-              ),
-            )}
+            {(mode === 'task_to_rsip'
+              ? TASK_TO_RSIP_EVENTS
+              : RSIP_TO_TASK_EVENTS
+            ).map((event) => (
+              <option key={event} value={event}>
+                {eventLabel(event, tr)} ({event})
+              </option>
+            ))}
           </select>
 
           <select
             value={effect}
-            onChange={(event) => setEffect(event.target.value as RSIPTaskLink['effect'])}
+            onChange={(event) =>
+              setEffect(event.target.value as RSIPTaskLink['effect'])
+            }
             className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           >
-            {(mode === 'task_to_rsip' ? TASK_TO_RSIP_EFFECTS : RSIP_TO_TASK_EFFECTS).map(
-              (currentEffect) => (
-                <option key={currentEffect} value={currentEffect}>
-                  {effectLabel(currentEffect, tr)} ({currentEffect})
-                </option>
-              ),
-            )}
+            {(mode === 'task_to_rsip'
+              ? TASK_TO_RSIP_EFFECTS
+              : RSIP_TO_TASK_EFFECTS
+            ).map((currentEffect) => (
+              <option key={currentEffect} value={currentEffect}>
+                {effectLabel(currentEffect, tr)} ({currentEffect})
+              </option>
+            ))}
           </select>
 
           <select
@@ -316,15 +339,20 @@ export function RSIPTaskLinkPanel({
           >
             <div>
               <p className="font-medium">
-                {eventLabel(link.triggerEvent, tr)} {'->'} {effectLabel(link.effect, tr)}
+                {eventLabel(link.triggerEvent, tr)} {'->'}{' '}
+                {effectLabel(link.effect, tr)}
               </p>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                {tr('节点', 'Node')}: {nodeTitleById.get(link.rsipNodeId) ?? link.rsipNodeId}
+                {tr('节点', 'Node')}:{' '}
+                {nodeTitleById.get(link.rsipNodeId) ?? link.rsipNodeId}
               </p>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                {tr('目标', 'Target')}: {chainLabelById.get(link.chainId) ?? link.chainId} |{' '}
-                {link.chainKind === 'group' ? tr('任务组', 'Group') : tr('任务', 'Task')} |{' '}
-                {automationLabel(link.automation, tr)}
+                {tr('目标', 'Target')}:{' '}
+                {chainLabelById.get(link.chainId) ?? link.chainId} |{' '}
+                {link.chainKind === 'group'
+                  ? tr('任务组', 'Group')
+                  : tr('任务', 'Task')}{' '}
+                | {automationLabel(link.automation, tr)}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -337,7 +365,9 @@ export function RSIPTaskLinkPanel({
                     : 'bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300'
                 }`}
               >
-                {link.isActive ? tr('已启用', 'Enabled') : tr('已禁用', 'Disabled')}
+                {link.isActive
+                  ? tr('已启用', 'Enabled')
+                  : tr('已禁用', 'Disabled')}
               </button>
               <button
                 type="button"

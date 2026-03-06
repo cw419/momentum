@@ -10,16 +10,16 @@
  */
 
 import type { MomentumStorage } from '../storage/MomentumStorage';
+import { MigrationAnalyzer } from './migration/MigrationAnalyzer';
+import { MigrationExecutor } from './migration/MigrationExecutor';
+import { migrationStorage } from './migration/MigrationStorage';
 import {
-  migrationStorage,
-  MigrationAnalyzer,
-  MigrationExecutor,
   type MigrationResult,
   type MigrationProgress,
   type MigrationSuggestions,
   type MigrationValidation,
   type RollbackResult,
-} from './migration';
+} from './migration/migrationTypes';
 
 /**
  * 例外规则迁移服务

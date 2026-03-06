@@ -20,9 +20,7 @@ describe('useRSIPTimers', () => {
   });
 
   it('requests permission when a timer starts', () => {
-    const { result } = renderHook(() =>
-      useRSIPTimers((_zh, en) => en),
-    );
+    const { result } = renderHook(() => useRSIPTimers((_zh, en) => en));
 
     act(() => {
       result.current.handleStartTimer('node-1', 1);
@@ -32,9 +30,7 @@ describe('useRSIPTimers', () => {
   });
 
   it('emits completion notification when timer expires', () => {
-    const { result } = renderHook(() =>
-      useRSIPTimers((_zh, en) => en),
-    );
+    const { result } = renderHook(() => useRSIPTimers((_zh, en) => en));
 
     act(() => {
       result.current.handleStartTimer('node-1', 1);
@@ -50,4 +46,3 @@ describe('useRSIPTimers', () => {
     );
   });
 });
-

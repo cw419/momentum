@@ -96,11 +96,12 @@ async function replaceUserScopedRows(
   if (!user) return;
 
   const client = ctx.getClient() as unknown as {
-    from: (
-      tableName: string,
-    ) => {
+    from: (tableName: string) => {
       delete: () => {
-        eq: (column: string, value: string) => Promise<{ error: SupabaseLikeError | null }>;
+        eq: (
+          column: string,
+          value: string,
+        ) => Promise<{ error: SupabaseLikeError | null }>;
       };
       insert: (
         payload: Record<string, unknown>[],
@@ -270,7 +271,8 @@ export async function getRSIPMeta(
     lastTreeOpenedAt: rowAny.last_tree_opened_at
       ? new Date(rowAny.last_tree_opened_at as string)
       : undefined,
-    dailyTreeOpenRequired: (rowAny.daily_tree_open_required as boolean) ?? false,
+    dailyTreeOpenRequired:
+      (rowAny.daily_tree_open_required as boolean) ?? false,
     treeOpenStreak: (rowAny.tree_open_streak as number) ?? 0,
     currentRunNumber: (rowAny.current_run_number as number | null) ?? undefined,
     currentRunStartedAt: asDate(rowAny.current_run_started_at),
@@ -341,12 +343,8 @@ export async function getRSIPGroups(
   if (!user) return [];
 
   const client = ctx.getClient() as unknown as {
-    from: (
-      tableName: string,
-    ) => {
-      select: (
-        columns: string,
-      ) => {
+    from: (tableName: string) => {
+      select: (columns: string) => {
         eq: (
           column: string,
           value: string,
@@ -354,7 +352,10 @@ export async function getRSIPGroups(
           order: (
             column: string,
             options: { ascending: boolean },
-          ) => Promise<{ data: Record<string, unknown>[] | null; error: SupabaseLikeError | null }>;
+          ) => Promise<{
+            data: Record<string, unknown>[] | null;
+            error: SupabaseLikeError | null;
+          }>;
         };
       };
     };
@@ -408,12 +409,8 @@ export async function getRSIPPolicyLibrary(
   if (!user) return [];
 
   const client = ctx.getClient() as unknown as {
-    from: (
-      tableName: string,
-    ) => {
-      select: (
-        columns: string,
-      ) => {
+    from: (tableName: string) => {
+      select: (columns: string) => {
         eq: (
           column: string,
           value: string,
@@ -421,7 +418,10 @@ export async function getRSIPPolicyLibrary(
           order: (
             column: string,
             options: { ascending: boolean },
-          ) => Promise<{ data: Record<string, unknown>[] | null; error: SupabaseLikeError | null }>;
+          ) => Promise<{
+            data: Record<string, unknown>[] | null;
+            error: SupabaseLikeError | null;
+          }>;
         };
       };
     };
@@ -491,12 +491,8 @@ export async function getRSIPRunHistory(
   if (!user) return [];
 
   const client = ctx.getClient() as unknown as {
-    from: (
-      tableName: string,
-    ) => {
-      select: (
-        columns: string,
-      ) => {
+    from: (tableName: string) => {
+      select: (columns: string) => {
         eq: (
           column: string,
           value: string,
@@ -504,7 +500,10 @@ export async function getRSIPRunHistory(
           order: (
             column: string,
             options: { ascending: boolean },
-          ) => Promise<{ data: Record<string, unknown>[] | null; error: SupabaseLikeError | null }>;
+          ) => Promise<{
+            data: Record<string, unknown>[] | null;
+            error: SupabaseLikeError | null;
+          }>;
         };
       };
     };
@@ -563,12 +562,8 @@ export async function getRSIPTaskLinks(
   if (!user) return [];
 
   const client = ctx.getClient() as unknown as {
-    from: (
-      tableName: string,
-    ) => {
-      select: (
-        columns: string,
-      ) => {
+    from: (tableName: string) => {
+      select: (columns: string) => {
         eq: (
           column: string,
           value: string,
@@ -576,7 +571,10 @@ export async function getRSIPTaskLinks(
           order: (
             column: string,
             options: { ascending: boolean },
-          ) => Promise<{ data: Record<string, unknown>[] | null; error: SupabaseLikeError | null }>;
+          ) => Promise<{
+            data: Record<string, unknown>[] | null;
+            error: SupabaseLikeError | null;
+          }>;
         };
       };
     };
@@ -641,12 +639,8 @@ export async function getRSIPExecutionRecords(
   if (!user) return [];
 
   const client = ctx.getClient() as unknown as {
-    from: (
-      tableName: string,
-    ) => {
-      select: (
-        columns: string,
-      ) => {
+    from: (tableName: string) => {
+      select: (columns: string) => {
         eq: (
           column: string,
           value: string,
@@ -654,7 +648,10 @@ export async function getRSIPExecutionRecords(
           order: (
             column: string,
             options: { ascending: boolean },
-          ) => Promise<{ data: Record<string, unknown>[] | null; error: SupabaseLikeError | null }>;
+          ) => Promise<{
+            data: Record<string, unknown>[] | null;
+            error: SupabaseLikeError | null;
+          }>;
         };
       };
     };
@@ -693,9 +690,7 @@ export async function appendRSIPExecutionRecord(
   if (!user) return;
 
   const client = ctx.getClient() as unknown as {
-    from: (
-      tableName: string,
-    ) => {
+    from: (tableName: string) => {
       insert: (
         payload: Record<string, unknown>,
       ) => Promise<{ error: SupabaseLikeError | null }>;

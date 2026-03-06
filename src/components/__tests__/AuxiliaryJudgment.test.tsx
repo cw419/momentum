@@ -54,7 +54,9 @@ describe('AuxiliaryJudgment', () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText('Add a new exception'));
-    expect(screen.getByLabelText('Describe what happened:')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Describe what happened:'),
+    ).toBeInTheDocument();
   });
 
   it('uses an existing exception rule when selected', () => {

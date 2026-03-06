@@ -7,6 +7,16 @@ vi.mock('../../../storage/useStorage', () => ({
   useStorage: () => ({ kind: 'local' }),
 }));
 
+vi.mock('../../../storage/useStorageMode', () => ({
+  useStorageMode: () => ({
+    mode: 'local' as const,
+    canUseSupabase: false,
+    isChoicePending: false,
+    setMode: vi.fn(),
+    dismissFirstLaunchHint: vi.fn(),
+  }),
+}));
+
 const renderWithI18n = (ui: React.ReactElement) => {
   return render(ui, { wrapper: I18nProvider });
 };

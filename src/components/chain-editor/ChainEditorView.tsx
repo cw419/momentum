@@ -25,9 +25,7 @@ interface ChainEditorViewProps {
   isKeyboardVisible: boolean;
   rsipNodes?: RSIPNode[];
   rsipTaskLinks?: RSIPTaskLink[];
-  onUpsertRSIPTaskLinks?: (
-    links: RSIPTaskLink[],
-  ) => void | Promise<unknown>;
+  onUpsertRSIPTaskLinks?: (links: RSIPTaskLink[]) => void | Promise<unknown>;
 }
 
 export function ChainEditorView({
@@ -44,10 +42,7 @@ export function ChainEditorView({
 }: ChainEditorViewProps) {
   const { tr } = useI18n();
   const canEditRsipLinks = Boolean(
-    chain?.id &&
-      rsipNodes &&
-      rsipTaskLinks &&
-      onUpsertRSIPTaskLinks,
+    chain?.id && rsipNodes && rsipTaskLinks && onUpsertRSIPTaskLinks,
   );
 
   return (

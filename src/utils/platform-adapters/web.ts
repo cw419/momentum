@@ -1,7 +1,4 @@
-import type {
-  PlatformNotificationAdapter,
-  NotificationPayload,
-} from './types';
+import type { PlatformNotificationAdapter, NotificationPayload } from './types';
 
 export const webNotificationAdapter: PlatformNotificationAdapter = {
   isSupported() {

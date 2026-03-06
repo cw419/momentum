@@ -8,9 +8,7 @@ import {
 } from '../platform-adapters';
 import type { PlatformCapabilityCenter, PlatformCapabilities } from './types';
 
-function toPlacement(
-  supported: boolean,
-): 'topbar' | 'settings' | 'hidden' {
+function toPlacement(supported: boolean): 'topbar' | 'settings' | 'hidden' {
   if (!supported) return 'hidden';
   if (isTauriMobile) return 'settings';
   return 'topbar';
@@ -340,4 +338,3 @@ export function getPlatformCapabilityCenter(): PlatformCapabilityCenter {
   }
   return singleton;
 }
-

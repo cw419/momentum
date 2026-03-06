@@ -21,13 +21,13 @@ interface RSIPLibraryEntry {
   rule: string;
   type?: string;
   emoji?: string;
-  cumulativeExecutionDays: number;  // 跨轮次累计执行天数
-  internalizationProgress: number;  // 内化进度 0-100
-  lastActiveAt: Date;               // 最后活跃时间
-  timesUsed: number;                // 使用次数（被恢复的次数）
+  cumulativeExecutionDays: number; // 跨轮次累计执行天数
+  internalizationProgress: number; // 内化进度 0-100
+  lastActiveAt: Date; // 最后活跃时间
+  timesUsed: number; // 使用次数（被恢复的次数）
   useTimer?: boolean;
   timerMinutes?: number;
-  isPassive?: boolean;              // 是否为被动国策
+  isPassive?: boolean; // 是否为被动国策
 }
 ```
 
@@ -64,12 +64,12 @@ RLS 策略：用户只能管理自己的国策库条目。
 
 ## 关键文件
 
-| 文件 | 职责 |
-| --- | --- |
-| `src/types/rsip.ts` | `RSIPLibraryEntry` 类型定义 |
-| `src/components/rsip/RSIPPolicyLibrary.tsx` | 国策库 UI 组件 |
-| `src/components/RSIPView.tsx` | RSIP 主视图（library tab 入口） |
-| `src/infra/storage/supabase/rsip.ts` | Supabase 存储实现 |
+| 文件                                        | 职责                            |
+| ------------------------------------------- | ------------------------------- |
+| `src/types/rsip.ts`                         | `RSIPLibraryEntry` 类型定义     |
+| `src/components/rsip/RSIPPolicyLibrary.tsx` | 国策库 UI 组件                  |
+| `src/components/RSIPView.tsx`               | RSIP 主视图（library tab 入口） |
+| `src/infra/storage/supabase/rsip.ts`        | Supabase 存储实现               |
 
 ---
 

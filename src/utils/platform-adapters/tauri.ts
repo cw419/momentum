@@ -1,7 +1,4 @@
-import type {
-  PlatformNotificationAdapter,
-  NotificationPayload,
-} from './types';
+import type { PlatformNotificationAdapter, NotificationPayload } from './types';
 import { invokeCommand } from '../tauri-bridge';
 import { isTauriMobile } from '../platform';
 
@@ -27,9 +24,8 @@ export const tauriNotificationAdapter: PlatformNotificationAdapter = {
       return 'granted';
     }
 
-    const { isPermissionGranted } = await import(
-      '@tauri-apps/plugin-notification'
-    );
+    const { isPermissionGranted } =
+      await import('@tauri-apps/plugin-notification');
     const granted = await isPermissionGranted();
     if (granted) {
       cachedPermissionState = 'granted';
@@ -44,9 +40,8 @@ export const tauriNotificationAdapter: PlatformNotificationAdapter = {
       return 'granted';
     }
 
-    const { isPermissionGranted, requestPermission } = await import(
-      '@tauri-apps/plugin-notification'
-    );
+    const { isPermissionGranted, requestPermission } =
+      await import('@tauri-apps/plugin-notification');
     const granted = await isPermissionGranted();
     if (granted) {
       cachedPermissionState = 'granted';

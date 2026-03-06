@@ -22,11 +22,19 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Mutation Test
-        run: npm run test:mutation
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Mutation Hotspots
-        run: npm run quality:test:mutation-hotspots
+      - name: Install Security Tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --user semgrep
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Nightly Quality Lane
+        run: npm run quality:ci:nightly
 
       - name: Upload Mutation Reports
         if: always()
@@ -35,5 +43,6 @@ jobs:
           name: mutation-reports
           path: |
             reports/mutation
-            reports/quality/test-mutation-hotspots.json
+            reports/quality
+            reports/jscpd
           if-no-files-found: ignore

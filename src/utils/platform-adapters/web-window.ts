@@ -8,7 +8,8 @@ export const webWindowAdapter: PlatformWindowAdapter = {
     return {
       canSetFullscreen,
       canMinimizeToTray: false,
-      canFocus: typeof window !== 'undefined' && typeof window.focus === 'function',
+      canFocus:
+        typeof window !== 'undefined' && typeof window.focus === 'function',
     };
   },
 
@@ -28,4 +29,3 @@ export const webWindowAdapter: PlatformWindowAdapter = {
     window.focus();
   },
 };
-

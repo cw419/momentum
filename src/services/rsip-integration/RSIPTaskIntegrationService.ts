@@ -111,7 +111,10 @@ export class RSIPTaskIntegrationService {
     return matches;
   }
 
-  getRsipToTaskLinks(allLinks: RSIPTaskLink[], rsipNodeId: string): RSIPTaskLink[] {
+  getRsipToTaskLinks(
+    allLinks: RSIPTaskLink[],
+    rsipNodeId: string,
+  ): RSIPTaskLink[] {
     return this.resolveLatestLinks(allLinks).filter(
       (link) =>
         link.isActive &&

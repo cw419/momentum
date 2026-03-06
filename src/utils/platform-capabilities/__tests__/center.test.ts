@@ -204,12 +204,11 @@ describe('platform capability center', () => {
     );
     await expect(loaded.center.file.openFile(['json'])).resolves.toBeNull();
     await expect(loaded.center.haptics.impact('light')).resolves.toBe(false);
-    await expect(
-      loaded.center.haptics.notification('success'),
-    ).resolves.toBe(false);
+    await expect(loaded.center.haptics.notification('success')).resolves.toBe(
+      false,
+    );
     await expect(loaded.center.haptics.selectionChanged()).resolves.toBe(false);
 
     expect(loaded.loggerWarn).toHaveBeenCalled();
   });
 });
-

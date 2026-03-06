@@ -1,6 +1,9 @@
 import { isTauri } from './platform';
 
-type InvokeFn = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
+type InvokeFn = (
+  cmd: string,
+  args?: Record<string, unknown>,
+) => Promise<unknown>;
 
 let tauriInvoke: InvokeFn | null = null;
 

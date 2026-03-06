@@ -26,4 +26,3 @@ export interface RSIPTaskLink {
   isActive: boolean;
   updatedAt: Date;
 }
-

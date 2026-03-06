@@ -223,6 +223,3 @@ export function useChainCard({
     handleCancelDelete,
   };
 }
-
-
-

@@ -7,6 +7,7 @@
  * - useChainCard: 封装状态和副作用的 hook（如需使用请直接从 ./chain-card/useChainCard 引入）
  *
  * @see src/components/chain-card/
+ * @deprecated Remove after 2026-09-30 once direct imports are migrated.
  */
 
 export { ChainCard } from './chain-card';

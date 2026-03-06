@@ -77,11 +77,13 @@ export function RSIPPolicyLibrary({
 
       <div className="grid gap-4 md:grid-cols-2">
         {sortedEntries.map((entry) => {
-          const progress = Math.max(0, Math.min(100, entry.internalizationProgress));
-          const statusText =
-            language.startsWith('zh')
-              ? `内化进度 ${progress}% · 累计执行 ${entry.cumulativeExecutionDays} 天 · 使用 ${entry.timesUsed} 次`
-              : `Internalization ${progress}% · Executed ${entry.cumulativeExecutionDays} days · Used ${entry.timesUsed} times`;
+          const progress = Math.max(
+            0,
+            Math.min(100, entry.internalizationProgress),
+          );
+          const statusText = language.startsWith('zh')
+            ? `内化进度 ${progress}% · 累计执行 ${entry.cumulativeExecutionDays} 天 · 使用 ${entry.timesUsed} 次`
+            : `Internalization ${progress}% · Executed ${entry.cumulativeExecutionDays} days · Used ${entry.timesUsed} times`;
 
           return (
             <div
@@ -120,7 +122,9 @@ export function RSIPPolicyLibrary({
                   }
                   className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                 >
-                  <option value="">{tr('恢复为新根节点', 'Restore as new root')}</option>
+                  <option value="">
+                    {tr('恢复为新根节点', 'Restore as new root')}
+                  </option>
                   {parentOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.label}
@@ -130,7 +134,9 @@ export function RSIPPolicyLibrary({
 
                 <button
                   type="button"
-                  onClick={() => void onRestore(entry.id, parentSelections[entry.id])}
+                  onClick={() =>
+                    void onRestore(entry.id, parentSelections[entry.id])
+                  }
                   className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
                 >
                   {tr('恢复', 'Restore')}

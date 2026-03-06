@@ -12,10 +12,7 @@ import type {
   RSIPTaskLink,
 } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
-import {
-  getDescendantCount,
-  getDescendantIds,
-} from '../../utils/rsipTree';
+import { getDescendantCount, getDescendantIds } from '../../utils/rsipTree';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
 import {
@@ -238,7 +235,9 @@ export function useRsipDomain({
     const group = allGroups.find((item) => item.id === groupId);
     if (!group) return false;
 
-    const aliveCount = allNodes.filter((item) => item.groupId === groupId).length;
+    const aliveCount = allNodes.filter(
+      (item) => item.groupId === groupId,
+    ).length;
     if (aliveCount === 0) return false;
 
     // Current model stores only alive nodes, so we keep this as a conservative check.
@@ -272,8 +271,9 @@ export function useRsipDomain({
         timerMinutes: node.timerMinutes ?? current.timerMinutes,
         isPassive: node.isPassive ?? current.isPassive,
         cumulativeExecutionDays,
-        internalizationProgress:
-          computeInternalizationProgress(cumulativeExecutionDays),
+        internalizationProgress: computeInternalizationProgress(
+          cumulativeExecutionDays,
+        ),
         lastActiveAt: now,
         timesUsed: current.timesUsed + 1,
       };
@@ -313,7 +313,9 @@ export function useRsipDomain({
     const state = readState();
     if (!state) return null;
 
-    const entry = (state.rsipPolicyLibrary ?? []).find((item) => item.id === entryId);
+    const entry = (state.rsipPolicyLibrary ?? []).find(
+      (item) => item.id === entryId,
+    );
     if (!entry) return null;
 
     const now = new Date();
@@ -629,10 +631,12 @@ export function useRsipDomain({
       E2: 3,
     };
     const weight = phaseWeight[node.stabilityPhase ?? 'E0'];
-    const reinforcementMultiplier = (node.reinforcementLevel ?? 0) > 0 ? 0.3 : 1;
-    const failureCost = Math.round(
-      (descendantCount + 1) * weight * reinforcementMultiplier * 100,
-    ) / 100;
+    const reinforcementMultiplier =
+      (node.reinforcementLevel ?? 0) > 0 ? 0.3 : 1;
+    const failureCost =
+      Math.round(
+        (descendantCount + 1) * weight * reinforcementMultiplier * 100,
+      ) / 100;
 
     return { descendantCount, failureCost };
   };

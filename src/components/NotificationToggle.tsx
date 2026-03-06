@@ -51,4 +51,3 @@ export const NotificationToggle: React.FC<NotificationToggleProps> = ({
     </div>
   );
 };
-

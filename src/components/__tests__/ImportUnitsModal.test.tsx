@@ -35,4 +35,3 @@ describe('ImportUnitsModal accessibility', () => {
     ).toBeInTheDocument();
   });
 });
-

@@ -289,5 +289,3 @@ export function useRuleManagerActions(args: UseRuleManagerActionsArgs) {
     optimisticUpdates,
   };
 }
-
-
