@@ -20,6 +20,30 @@ type SupabaseLikeError = {
   message?: string;
 };
 
+type OrderedRowsResult = {
+  userId: string | null;
+  rows: Record<string, unknown>[];
+};
+
+type OrderedRowsClient = {
+  from: (tableName: string) => {
+    select: (columns: string) => {
+      eq: (
+        column: string,
+        value: string,
+      ) => {
+        order: (
+          column: string,
+          options: { ascending: boolean },
+        ) => Promise<{
+          data: Record<string, unknown>[] | null;
+          error: SupabaseLikeError | null;
+        }>;
+      };
+    };
+  };
+};
+
 const RSIP_NODES_STRICT_COLUMNS_SUPPORTED = new WeakMap<
   SupabaseStorageContext,
   boolean
@@ -130,6 +154,40 @@ async function replaceUserScopedRows(
     }
     throw new Error(`Failed to save ${table}: ${insertError.message}`);
   }
+}
+
+async function getUserScopedOrderedRows(
+  ctx: SupabaseStorageContext,
+  options: {
+    table: string;
+    orderBy: string;
+    ascending: boolean;
+    errorLabel: string;
+  },
+): Promise<OrderedRowsResult> {
+  const user = await ctx.getCurrentUser();
+  if (!user) {
+    return { userId: null, rows: [] };
+  }
+
+  const client = ctx.getClient() as unknown as OrderedRowsClient;
+  const { data, error } = await client
+    .from(options.table)
+    .select('*')
+    .eq('user_id', user.id)
+    .order(options.orderBy, { ascending: options.ascending });
+
+  if (error) {
+    if (isSchemaMissing(error)) {
+      return { userId: user.id, rows: [] };
+    }
+    throw new Error(`Failed to load ${options.errorLabel}: ${error.message}`);
+  }
+
+  return {
+    userId: user.id,
+    rows: data ?? [],
+  };
 }
 
 export async function getRSIPNodes(
@@ -339,40 +397,14 @@ export async function saveRSIPMeta(
 export async function getRSIPGroups(
   ctx: SupabaseStorageContext,
 ): Promise<RSIPNodeGroup[]> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return [];
+  const { rows } = await getUserScopedOrderedRows(ctx, {
+    table: 'rsip_groups',
+    orderBy: 'created_at',
+    ascending: true,
+    errorLabel: 'rsip groups',
+  });
 
-  const client = ctx.getClient() as unknown as {
-    from: (tableName: string) => {
-      select: (columns: string) => {
-        eq: (
-          column: string,
-          value: string,
-        ) => {
-          order: (
-            column: string,
-            options: { ascending: boolean },
-          ) => Promise<{
-            data: Record<string, unknown>[] | null;
-            error: SupabaseLikeError | null;
-          }>;
-        };
-      };
-    };
-  };
-
-  const { data, error } = await client
-    .from('rsip_groups')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    if (isSchemaMissing(error)) return [];
-    throw new Error(`Failed to load rsip groups: ${error.message}`);
-  }
-
-  return (data || []).map((row) => ({
+  return rows.map((row) => ({
     id: String(row.id),
     title: String(row.title ?? ''),
     faultTolerance: Number(row.fault_tolerance ?? 0),
@@ -405,40 +437,14 @@ export async function saveRSIPGroups(
 export async function getRSIPPolicyLibrary(
   ctx: SupabaseStorageContext,
 ): Promise<RSIPLibraryEntry[]> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return [];
+  const { rows } = await getUserScopedOrderedRows(ctx, {
+    table: 'rsip_policy_library',
+    orderBy: 'updated_at',
+    ascending: false,
+    errorLabel: 'rsip policy library',
+  });
 
-  const client = ctx.getClient() as unknown as {
-    from: (tableName: string) => {
-      select: (columns: string) => {
-        eq: (
-          column: string,
-          value: string,
-        ) => {
-          order: (
-            column: string,
-            options: { ascending: boolean },
-          ) => Promise<{
-            data: Record<string, unknown>[] | null;
-            error: SupabaseLikeError | null;
-          }>;
-        };
-      };
-    };
-  };
-
-  const { data, error } = await client
-    .from('rsip_policy_library')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false });
-
-  if (error) {
-    if (isSchemaMissing(error)) return [];
-    throw new Error(`Failed to load rsip policy library: ${error.message}`);
-  }
-
-  return (data || []).map((row) => ({
+  return rows.map((row) => ({
     id: String(row.id),
     title: String(row.title ?? ''),
     rule: String(row.rule ?? ''),
@@ -487,40 +493,14 @@ export async function saveRSIPPolicyLibrary(
 export async function getRSIPRunHistory(
   ctx: SupabaseStorageContext,
 ): Promise<RSIPRunRecord[]> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return [];
+  const { rows } = await getUserScopedOrderedRows(ctx, {
+    table: 'rsip_run_history',
+    orderBy: 'run_number',
+    ascending: false,
+    errorLabel: 'rsip run history',
+  });
 
-  const client = ctx.getClient() as unknown as {
-    from: (tableName: string) => {
-      select: (columns: string) => {
-        eq: (
-          column: string,
-          value: string,
-        ) => {
-          order: (
-            column: string,
-            options: { ascending: boolean },
-          ) => Promise<{
-            data: Record<string, unknown>[] | null;
-            error: SupabaseLikeError | null;
-          }>;
-        };
-      };
-    };
-  };
-
-  const { data, error } = await client
-    .from('rsip_run_history')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('run_number', { ascending: false });
-
-  if (error) {
-    if (isSchemaMissing(error)) return [];
-    throw new Error(`Failed to load rsip run history: ${error.message}`);
-  }
-
-  return (data || []).map((row) => ({
+  return rows.map((row) => ({
     runNumber: Number(row.run_number ?? 0),
     startedAt: asDate(row.started_at) ?? new Date(),
     endedAt: asDate(row.ended_at),
@@ -558,42 +538,18 @@ export async function saveRSIPRunHistory(
 export async function getRSIPTaskLinks(
   ctx: SupabaseStorageContext,
 ): Promise<RSIPTaskLink[]> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return [];
+  const { userId, rows } = await getUserScopedOrderedRows(ctx, {
+    table: 'rsip_task_links',
+    orderBy: 'updated_at',
+    ascending: false,
+    errorLabel: 'rsip task links',
+  });
 
-  const client = ctx.getClient() as unknown as {
-    from: (tableName: string) => {
-      select: (columns: string) => {
-        eq: (
-          column: string,
-          value: string,
-        ) => {
-          order: (
-            column: string,
-            options: { ascending: boolean },
-          ) => Promise<{
-            data: Record<string, unknown>[] | null;
-            error: SupabaseLikeError | null;
-          }>;
-        };
-      };
-    };
-  };
+  if (!userId) return [];
 
-  const { data, error } = await client
-    .from('rsip_task_links')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false });
-
-  if (error) {
-    if (isSchemaMissing(error)) return [];
-    throw new Error(`Failed to load rsip task links: ${error.message}`);
-  }
-
-  return (data || []).map((row) => ({
+  return rows.map((row) => ({
     id: String(row.id),
-    userId: user.id,
+    userId,
     rsipNodeId: String(row.rsip_node_id),
     chainId: String(row.chain_id),
     chainKind: (row.chain_kind as 'group' | 'unit') ?? 'unit',
@@ -635,42 +591,18 @@ export async function saveRSIPTaskLinks(
 export async function getRSIPExecutionRecords(
   ctx: SupabaseStorageContext,
 ): Promise<RSIPExecutionRecord[]> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return [];
+  const { userId, rows } = await getUserScopedOrderedRows(ctx, {
+    table: 'rsip_execution_records',
+    orderBy: 'executed_at',
+    ascending: false,
+    errorLabel: 'rsip execution records',
+  });
 
-  const client = ctx.getClient() as unknown as {
-    from: (tableName: string) => {
-      select: (columns: string) => {
-        eq: (
-          column: string,
-          value: string,
-        ) => {
-          order: (
-            column: string,
-            options: { ascending: boolean },
-          ) => Promise<{
-            data: Record<string, unknown>[] | null;
-            error: SupabaseLikeError | null;
-          }>;
-        };
-      };
-    };
-  };
+  if (!userId) return [];
 
-  const { data, error } = await client
-    .from('rsip_execution_records')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('executed_at', { ascending: false });
-
-  if (error) {
-    if (isSchemaMissing(error)) return [];
-    throw new Error(`Failed to load rsip execution records: ${error.message}`);
-  }
-
-  return (data || []).map((row) => ({
+  return rows.map((row) => ({
     id: String(row.id),
-    userId: user.id,
+    userId,
     nodeId: String(row.node_id),
     executedAt: asDate(row.executed_at) ?? new Date(),
     status: (row.status as RSIPExecutionRecord['status']) ?? 'pending',

@@ -21,8 +21,8 @@ function Resolve-PythonUserScriptPath {
     return $null
   }
 
-  $candidate = Join-Path $scriptDir.Trim() $ScriptName
-  if (Test-Path $candidate) {
+  $candidate = [System.IO.Path]::Combine($scriptDir.Trim(), $ScriptName)
+  if ([System.IO.File]::Exists($candidate)) {
     return $candidate
   }
 

@@ -46,6 +46,9 @@ coverage/
 # Quality report outputs
 reports/quality/
 reports/mutation/
+reports/jscpd/
+reports/main-lint-temp.json
+reports/sonar-temp.json
 
 # Lighthouse / DevTools traces (baseline & repro artifacts; keep repo clean)
 reports/lighthouse/
@@ -60,6 +63,7 @@ reports/devtools/
 .serena/
 .claude/
 .augment/
+%SystemDrive%/
 
 # Local backups / scratch
 archive/

@@ -58,28 +58,29 @@ function extractNpmRunCommands(workflow: string): string[] {
 
 function detectCompatibilityFacades(): string[] {
   const roots = ['src/components', 'src/services'];
-  const detected = new Set<string>();
-
-  for (const root of roots) {
-    const absoluteRoot = path.join(REPO_ROOT, root);
-    for (const entry of readdirSync(absoluteRoot)) {
-      const absolutePath = path.join(absoluteRoot, entry);
-      if (!statSync(absolutePath).isFile()) continue;
-
-      const content = readFile(absolutePath);
-      const relPath = normalizePath(path.relative(REPO_ROOT, absolutePath));
-      const hasFacadeMarker = COMPATIBILITY_FACADE_PATTERNS.some((pattern) =>
-        pattern.test(content),
-      );
-
-      if (!hasFacadeMarker) continue;
-      if (!/export\s+.*from\s+['"][.]{1,2}\//.test(content)) continue;
-
-      detected.add(relPath);
-    }
-  }
-
-  return [...detected].sort();
+  return [...new Set(
+    roots
+      .flatMap((root) => {
+        const absoluteRoot = path.join(REPO_ROOT, root);
+        return readdirSync(absoluteRoot).map((entry) =>
+          path.join(absoluteRoot, entry),
+        );
+      })
+      .filter((absolutePath) => statSync(absolutePath).isFile())
+      .map((absolutePath) => {
+        const content = readFile(absolutePath);
+        return {
+          content,
+          relPath: normalizePath(path.relative(REPO_ROOT, absolutePath)),
+        };
+      })
+      .filter(
+        ({ content }) =>
+          COMPATIBILITY_FACADE_PATTERNS.some((pattern) => pattern.test(content)) &&
+          /export\s+.*from\s+['"][.]{1,2}\//.test(content),
+      )
+      .map(({ relPath }) => relPath),
+  )].sort();
 }
 
 describe('repo governance', () => {
@@ -93,9 +94,9 @@ describe('repo governance', () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.scripts['quality:ci:required']).toBeTruthy();
-    expect(packageJson.scripts['quality:ci:info']).toBeTruthy();
-    expect(packageJson.scripts['quality:ci:nightly']).toBeTruthy();
+    expect(packageJson.scripts['quality:ci:required']).toEqual(expect.any(String));
+    expect(packageJson.scripts['quality:ci:info']).toEqual(expect.any(String));
+    expect(packageJson.scripts['quality:ci:nightly']).toEqual(expect.any(String));
   });
 
   it('codeql workflow uses the security-extended query suite', () => {

@@ -19,8 +19,8 @@ function Resolve-PythonUserScriptPath {
     return $null
   }
 
-  $candidate = Join-Path $scriptDir.Trim() $ScriptName
-  if (Test-Path $candidate) {
+  $candidate = [System.IO.Path]::Combine($scriptDir.Trim(), $ScriptName)
+  if ([System.IO.File]::Exists($candidate)) {
     return $candidate
   }
 
@@ -42,7 +42,7 @@ if (-not $semgrepExecutable) {
 
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
-$semgrepDir = Split-Path -Parent $semgrepExecutable
+$semgrepDir = [System.IO.Path]::GetDirectoryName($semgrepExecutable)
 if ($semgrepDir) {
   $env:Path = "$semgrepDir;$env:Path"
 }

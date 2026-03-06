@@ -4,6 +4,8 @@ import {
   saveRSIPNodes,
   getRSIPMeta,
   saveRSIPMeta,
+  getRSIPGroups,
+  getRSIPExecutionRecords,
 } from '../rsip';
 import {
   createMockContext,
@@ -730,6 +732,75 @@ describe('rsip.ts', () => {
 
       expect(upsertData.last_added_at).toBeNull();
       expect(upsertData.allow_multiple_per_day).toBe(false);
+    });
+  });
+
+  describe('getRSIPGroups', () => {
+    it('should return mapped groups on success', async () => {
+      const queryBuilder = createMockQueryBuilder({
+        data: [
+          {
+            id: 'group-1',
+            title: 'Group A',
+            fault_tolerance: 2,
+            emoji: '🧭',
+            created_at: '2024-02-01T00:00:00Z',
+          },
+        ],
+        error: null,
+      });
+      const ctx = createMockContext({ queryBuilder });
+
+      const result = await getRSIPGroups(ctx);
+
+      expect(result).toEqual([
+        {
+          id: 'group-1',
+          title: 'Group A',
+          faultTolerance: 2,
+          emoji: '🧭',
+          createdAt: new Date('2024-02-01T00:00:00Z'),
+        },
+      ]);
+    });
+  });
+
+  describe('getRSIPExecutionRecords', () => {
+    it('should return mapped execution records on success', async () => {
+      const queryBuilder = createMockQueryBuilder({
+        data: [
+          {
+            id: 'record-1',
+            node_id: 'node-1',
+            executed_at: '2024-03-01T09:00:00Z',
+            status: 'completed',
+            notes: 'done',
+            reason_code: 'ok',
+            repair_hint: 'none',
+            source_chain_id: 'chain-1',
+            source_event: 'manual',
+          },
+        ],
+        error: null,
+      });
+      const ctx = createMockContext({ queryBuilder });
+
+      const result = await getRSIPExecutionRecords(ctx);
+
+      expect(result).toEqual([
+        {
+          id: 'record-1',
+          userId: 'test-user-123',
+          nodeId: 'node-1',
+          executedAt: new Date('2024-03-01T09:00:00Z'),
+          status: 'completed',
+          notes: 'done',
+          reasonCode: 'ok',
+          repairHint: 'none',
+          sourceChainId: 'chain-1',
+          sourceEvent: 'manual',
+        },
+      ]);
     });
   });
 });

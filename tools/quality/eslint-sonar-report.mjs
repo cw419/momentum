@@ -83,4 +83,4 @@ console.log(
   `[soft-gate][sonarjs] report: ${path.relative(repoRoot, outJsonPath)}`,
 );
 
-process.exitCode = 0;
+process.exitCode = run.status ?? (messageCount > 0 ? 1 : 0);
