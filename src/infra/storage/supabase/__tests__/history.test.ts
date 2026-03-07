@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCompletionHistory, saveCompletionHistory } from '../history';
+import {
+  appendCompletionHistory,
+  getCompletionHistory,
+  saveCompletionHistory,
+} from '../history';
 import {
   createMockContext,
   createMockQueryBuilder,
@@ -347,6 +351,45 @@ describe('history.ts', () => {
       expect(record.description).toBeNull();
       expect(record.notes).toBeNull();
       expect(record.reason_for_failure).toBeNull();
+    });
+  });
+
+  describe('appendCompletionHistory', () => {
+    it('should upsert a single completion record', async () => {
+      const history: CompletionHistory = {
+        chainId: 'chain-1',
+        completedAt: new Date('2024-01-15T10:00:00Z'),
+        duration: 30,
+        wasSuccessful: true,
+        actualDuration: 25,
+        isForwardTimed: false,
+      };
+      const upsert = vi.fn().mockReturnValue({ data: null, error: null });
+      const ctx = createMockContext();
+
+      ctx.mockClient.from = vi.fn().mockImplementation((table) => {
+        if (table !== 'completion_history') return createMockQueryBuilder();
+        return {
+          upsert,
+          select: vi.fn(),
+        };
+      });
+
+      await appendCompletionHistory(ctx, history);
+
+      expect(upsert).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            chain_id: 'chain-1',
+            user_id: 'test-user-123',
+            actual_duration: 25,
+          }),
+        ],
+        {
+          onConflict: 'user_id,chain_id,completed_at',
+          ignoreDuplicates: true,
+        },
+      );
     });
   });
 });

@@ -135,7 +135,7 @@ describe('useAppDataLoad', () => {
       getRSIPMeta: vi.fn(async () => ({})),
       getTaskTimeStats: vi.fn(async () => []),
       saveCompletionHistory: vi.fn(async () => undefined),
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
 
     const setState = vi.fn();
@@ -155,9 +155,7 @@ describe('useAppDataLoad', () => {
     expect(runWhenIdle).toHaveBeenCalled();
     expect(fireAndForget).toHaveBeenCalled();
     expect(storage.cleanupExpiredDeletedChains).toHaveBeenCalledWith(30);
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
-      activeSessionBooking,
-    ]);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(chain.id);
     expect(storage.saveCompletionHistory).toHaveBeenCalledWith(migratedHistory);
 
     const stateUpdater = setState.mock.calls.at(-1)?.[0] as (

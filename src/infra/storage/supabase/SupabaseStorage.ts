@@ -230,6 +230,12 @@ export class SupabaseStorage implements MomentumStorage {
   saveScheduledSessions(sessions: ScheduledSession[]): Promise<void> {
     return sessionsApi.saveScheduledSessions(this.ctx, sessions);
   }
+  setScheduledSession(session: ScheduledSession): Promise<void> {
+    return sessionsApi.setScheduledSession(this.ctx, session);
+  }
+  removeScheduledSession(chainId: string): Promise<void> {
+    return sessionsApi.removeScheduledSession(this.ctx, chainId);
+  }
 
   // Active session (with request deduplication for read operations)
   getActiveSession(): Promise<ActiveSession | null> {
@@ -249,6 +255,9 @@ export class SupabaseStorage implements MomentumStorage {
   }
   saveCompletionHistory(history: CompletionHistory[]): Promise<void> {
     return historyApi.saveCompletionHistory(this.ctx, history);
+  }
+  appendCompletionHistory(record: CompletionHistory): Promise<void> {
+    return historyApi.appendCompletionHistory(this.ctx, record);
   }
 
   // RSIP (with request deduplication for read operations)

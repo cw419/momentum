@@ -115,7 +115,7 @@ describe('usePeriodicCleanup', () => {
     const setState = vi.fn();
     const setShowAuxiliaryJudgment = vi.fn();
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
 
     vi.mocked(isSessionExpired).mockImplementation(
@@ -140,7 +140,7 @@ describe('usePeriodicCleanup', () => {
       expiredChain.name,
     );
     expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(expiredChain.id);
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([activeSession]);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(expiredChain.id);
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
   });
 
@@ -148,7 +148,7 @@ describe('usePeriodicCleanup', () => {
     const setState = vi.fn();
     const storage = createLocalStorageMock({
       saveChains: vi.fn(async () => undefined),
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
 
     renderHook(() =>
@@ -164,7 +164,7 @@ describe('usePeriodicCleanup', () => {
     vi.advanceTimersByTime(120000);
 
     expect(storage.saveChains).not.toHaveBeenCalled();
-    expect(storage.saveScheduledSessions).not.toHaveBeenCalled();
+    expect(storage.removeScheduledSession).not.toHaveBeenCalled();
     expect(setState).not.toHaveBeenCalled();
   });
 });

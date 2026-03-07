@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getScheduledSessions,
+  removeScheduledSession,
   saveScheduledSessions,
+  setScheduledSession,
   getActiveSession,
   saveActiveSession,
 } from '../sessions';
@@ -239,6 +241,63 @@ describe('sessions.ts', () => {
           user_id: 'test-user-123',
         }),
       ]);
+    });
+  });
+
+  describe('setScheduledSession', () => {
+    it('should upsert a single scheduled session without querying the full list', async () => {
+      const session: ScheduledSession = {
+        chainId: 'chain-1',
+        scheduledAt: new Date('2024-01-15T10:00:00Z'),
+        expiresAt: new Date('2024-01-15T11:00:00Z'),
+        auxiliarySignal: 'Signal',
+      };
+      const upsert = vi.fn().mockReturnValue({ data: null, error: null });
+      const ctx = createMockContext();
+
+      ctx.mockClient.from = vi.fn().mockImplementation((table) => {
+        if (table !== 'scheduled_sessions') return createMockQueryBuilder();
+        return {
+          upsert,
+          delete: vi.fn(),
+          insert: vi.fn(),
+          eq: vi.fn(),
+        };
+      });
+
+      await setScheduledSession(ctx, session);
+
+      expect(ctx.mockClient.from).toHaveBeenCalledWith('scheduled_sessions');
+      expect(upsert).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            chain_id: 'chain-1',
+            auxiliary_signal: 'Signal',
+            user_id: 'test-user-123',
+          }),
+        ],
+        { onConflict: 'user_id,chain_id' },
+      );
+    });
+  });
+
+  describe('removeScheduledSession', () => {
+    it('should delete a single scheduled session by chain id', async () => {
+      const deleteChain = vi.fn().mockReturnValue({ data: null, error: null });
+      const deleteUser = vi.fn().mockReturnValue({ eq: deleteChain });
+      const ctx = createMockContext();
+
+      ctx.mockClient.from = vi.fn().mockImplementation((table) => {
+        if (table !== 'scheduled_sessions') return createMockQueryBuilder();
+        return {
+          delete: vi.fn().mockReturnValue({ eq: deleteUser }),
+        };
+      });
+
+      await removeScheduledSession(ctx, 'chain-1');
+
+      expect(deleteUser).toHaveBeenCalledWith('user_id', 'test-user-123');
+      expect(deleteChain).toHaveBeenCalledWith('chain_id', 'chain-1');
     });
   });
 

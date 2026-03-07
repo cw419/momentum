@@ -1,6 +1,7 @@
 ﻿import type { Dispatch, SetStateAction } from 'react';
 import type { AppState, CompletionHistory } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
+import { hasStorageCapability } from '../../../storage/ports';
 import type { SafelySaveChains } from '../useChainsDomain';
 import {
   incrementGroupCompletionCount,
@@ -117,12 +118,12 @@ function maybeIncrementGroupCycleCompletion(
 
 async function persistCompletionHistoryAndCleanupSupabase(
   storage: MomentumStorage,
-  historyToPersist: CompletionHistory[],
+  record: CompletionHistory,
   setActiveSessionId: Dispatch<SetStateAction<string | null>>,
   context: 'completion' | 'interrupt',
 ): Promise<void> {
   try {
-    await storage.saveCompletionHistory(historyToPersist);
+    await storage.appendCompletionHistory(record);
   } catch (error) {
     logger.error(
       'SESSIONS',
@@ -198,13 +199,13 @@ export function createCompletionHandlers({
   }
 
   function persistCompletionHistoryAndCleanup(
-    historyToPersist: CompletionHistory[],
+    record: CompletionHistory,
     context: 'completion' | 'interrupt',
   ): void {
-    if (activeSessionId && storage.kind === 'supabase') {
+    if (activeSessionId && hasStorageCapability(storage, 'betting')) {
       persistCompletionHistoryAndCleanupSupabase(
         storage,
-        historyToPersist,
+        record,
         setActiveSessionId,
         context,
       ).catch((error) => {
@@ -229,7 +230,7 @@ export function createCompletionHandlers({
       );
     });
 
-    storage.saveCompletionHistory(historyToPersist).catch((error) => {
+    storage.appendCompletionHistory(record).catch((error) => {
       logger.error(
         'SESSIONS',
         `Failed to persist completion history after ${context}`,
@@ -266,8 +267,6 @@ export function createCompletionHandlers({
     };
 
     const updatedHistory = [...state.completionHistory, completionRecord];
-    const historyToPersist =
-      storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
 
     let updatedChains = updateChainsForSuccess(
       state.chains,
@@ -283,7 +282,7 @@ export function createCompletionHandlers({
     updatedChains = groupCycleResult.updatedChains;
 
     persistChains(updatedChains, '完成任务时保存链条数据失败');
-    persistCompletionHistoryAndCleanup(historyToPersist, 'completion');
+    persistCompletionHistoryAndCleanup(completionRecord, 'completion');
 
     if (completionRecord.actualDuration) {
       storage
@@ -353,8 +352,6 @@ export function createCompletionHandlers({
     };
 
     const updatedHistory = [...state.completionHistory, completionRecord];
-    const historyToPersist =
-      storage.kind === 'supabase' ? [completionRecord] : updatedHistory;
 
     let updatedChains = updateChainsForFailure(state.chains, chain.id);
     if (chain.parentId && chain.type !== 'group') {
@@ -366,7 +363,7 @@ export function createCompletionHandlers({
     }
 
     persistChains(updatedChains, '中断任务时保存链条数据失败');
-    persistCompletionHistoryAndCleanup(historyToPersist, 'interrupt');
+    persistCompletionHistoryAndCleanup(completionRecord, 'interrupt');
 
     emitRsipTaskEvent({
       event: 'task_interrupted',

@@ -46,6 +46,8 @@ export interface ChainStore {
 export interface SessionStore {
   getScheduledSessions(): Promise<ScheduledSession[]>;
   saveScheduledSessions(sessions: ScheduledSession[]): Promise<void>;
+  setScheduledSession(session: ScheduledSession): Promise<void>;
+  removeScheduledSession(chainId: string): Promise<void>;
   getActiveSession(): Promise<ActiveSession | null>;
   saveActiveSession(session: ActiveSession | null): Promise<void>;
 }
@@ -53,6 +55,7 @@ export interface SessionStore {
 export interface HistoryStore {
   getCompletionHistory(): Promise<CompletionHistory[]>;
   saveCompletionHistory(history: CompletionHistory[]): Promise<void>;
+  appendCompletionHistory(record: CompletionHistory): Promise<void>;
 }
 
 export interface RsipStore {

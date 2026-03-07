@@ -8,7 +8,11 @@ import {
   saveChains,
   softDeleteChain,
 } from './chains';
-import { getCompletionHistory, saveCompletionHistory } from './history';
+import {
+  appendCompletionHistory,
+  getCompletionHistory,
+  saveCompletionHistory,
+} from './history';
 import { getPetState, savePetState } from './pet';
 import {
   appendRSIPExecutionRecord,
@@ -29,8 +33,10 @@ import {
 import {
   getActiveSession,
   getScheduledSessions,
+  removeScheduledSession,
   saveActiveSession,
   saveScheduledSessions,
+  setScheduledSession,
 } from './sessions';
 import {
   getLastCompletionTime,
@@ -53,12 +59,15 @@ export const storage = {
 
   getScheduledSessions,
   saveScheduledSessions,
+  setScheduledSession,
+  removeScheduledSession,
 
   getActiveSession,
   saveActiveSession,
 
   getCompletionHistory,
   saveCompletionHistory,
+  appendCompletionHistory,
 
   // RSIP nodes
   getRSIPNodes,

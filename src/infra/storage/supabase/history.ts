@@ -253,3 +253,10 @@ export async function saveCompletionHistory(
     return;
   }
 }
+
+export async function appendCompletionHistory(
+  ctx: SupabaseStorageContext,
+  record: CompletionHistory,
+): Promise<void> {
+  await saveCompletionHistory(ctx, [record]);
+}

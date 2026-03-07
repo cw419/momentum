@@ -114,7 +114,7 @@ describe('createCompletionHandlers', () => {
     const stateRef = createStateContainer(initialState);
 
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -164,8 +164,13 @@ describe('createCompletionHandlers', () => {
     });
 
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
-    expect(storage.saveCompletionHistory).toHaveBeenCalledWith(
-      nextState.completionHistory,
+    expect(storage.appendCompletionHistory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chainId: chain.id,
+        wasSuccessful: true,
+        description: 'desc',
+        notes: 'notes',
+      }),
     );
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(storage.updateTaskTimeStats).toHaveBeenCalledWith(chain.id, 25);
@@ -223,7 +228,7 @@ describe('createCompletionHandlers', () => {
     );
 
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -270,7 +275,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -324,7 +329,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -399,7 +404,7 @@ describe('createCompletionHandlers', () => {
     );
 
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -457,7 +462,7 @@ describe('createCompletionHandlers', () => {
     const stateRef = createStateContainer(initialState);
 
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -508,7 +513,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -548,7 +553,7 @@ describe('createCompletionHandlers', () => {
     const stateRef = createStateContainer(initialState);
 
     const storage = createSupabaseStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
     const setActiveSessionId = vi.fn();
@@ -567,11 +572,10 @@ describe('createCompletionHandlers', () => {
     handleCompleteSession();
     await flushPromises();
 
-    expect(storage.saveCompletionHistory).toHaveBeenCalledTimes(1);
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+    expect(storage.appendCompletionHistory).toHaveBeenCalledTimes(1);
+    const persisted = vi.mocked(storage.appendCompletionHistory).mock
       .calls[0]?.[0];
-    expect(persisted).toHaveLength(1);
-    expect(persisted?.[0]).toMatchObject({
+    expect(persisted).toMatchObject({
       chainId: chain.id,
       wasSuccessful: true,
     });
@@ -607,7 +611,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
     const storage = createSupabaseStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
     const setActiveSessionId = vi.fn();
@@ -627,9 +631,9 @@ describe('createCompletionHandlers', () => {
 
     expect(setActiveSessionId).toHaveBeenCalledWith(null);
     expect(emitPointsChanged).not.toHaveBeenCalled();
-    expect(storage.saveCompletionHistory).toHaveBeenCalledWith([
+    expect(storage.appendCompletionHistory).toHaveBeenCalledWith(
       expect.objectContaining({ chainId: chain.id, wasSuccessful: true }),
-    ]);
+    );
   });
 
   it('should keep local cleanup path when activeSessionId is set', async () => {
@@ -656,7 +660,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
       updateTaskTimeStats: vi.fn(async () => undefined),
     });
@@ -674,11 +678,9 @@ describe('createCompletionHandlers', () => {
     handleCompleteSession();
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+    const persisted = vi.mocked(storage.appendCompletionHistory).mock
       .calls[0]?.[0];
-    expect(persisted).toHaveLength(2);
-    expect(persisted?.[0]).toMatchObject(existingRecord);
-    expect(persisted?.[1]).toMatchObject({
+    expect(persisted).toMatchObject({
       chainId: chain.id,
       wasSuccessful: true,
     });
@@ -709,7 +711,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
     const storage = createSupabaseStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
 
@@ -726,10 +728,9 @@ describe('createCompletionHandlers', () => {
     handleCompleteSession();
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+    const persisted = vi.mocked(storage.appendCompletionHistory).mock
       .calls[0]?.[0];
-    expect(persisted).toHaveLength(1);
-    expect(persisted?.[0]).toMatchObject({
+    expect(persisted).toMatchObject({
       chainId: chain.id,
       wasSuccessful: true,
     });
@@ -751,7 +752,7 @@ describe('createCompletionHandlers', () => {
     const stateRef = createStateContainer(initialState);
 
     const storage = createSupabaseStorageMock({
-      saveCompletionHistory: vi.fn(async () => {
+      appendCompletionHistory: vi.fn(async () => {
         throw new Error('history failed');
       }),
       saveActiveSession: vi.fn(async () => {
@@ -807,7 +808,7 @@ describe('createCompletionHandlers', () => {
     const stateRef = createStateContainer(initialState);
 
     const storage = createSupabaseStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
 
@@ -861,7 +862,7 @@ describe('createCompletionHandlers', () => {
     });
     const stateRef = createStateContainer(initialState);
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
@@ -938,7 +939,7 @@ describe('createCompletionHandlers', () => {
       state: stateRef.getState(),
       setState: stateRef.setState,
       storage: createLocalStorageMock({
-        saveCompletionHistory: vi.fn(async () => undefined),
+        appendCompletionHistory: vi.fn(async () => undefined),
         saveActiveSession: vi.fn(async () => undefined),
       }),
       safelySaveChains: vi.fn(async () => undefined),
@@ -983,7 +984,7 @@ describe('createCompletionHandlers', () => {
       state: stateRef.getState(),
       setState: stateRef.setState,
       storage: createLocalStorageMock({
-        saveCompletionHistory: vi.fn(async () => undefined),
+        appendCompletionHistory: vi.fn(async () => undefined),
         saveActiveSession: vi.fn(async () => undefined),
       }),
       safelySaveChains: vi.fn(async () => undefined),
@@ -1020,7 +1021,7 @@ describe('createCompletionHandlers', () => {
       state: stateRef.getState(),
       setState: stateRef.setState,
       storage: createLocalStorageMock({
-        saveCompletionHistory: vi.fn(async () => undefined),
+        appendCompletionHistory: vi.fn(async () => undefined),
         saveActiveSession: vi.fn(async () => undefined),
       }),
       safelySaveChains: vi.fn(async () => {
@@ -1050,7 +1051,7 @@ describe('createCompletionHandlers', () => {
       createAppState({ chains: [chain], activeSession: null }),
     );
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
 
@@ -1068,7 +1069,7 @@ describe('createCompletionHandlers', () => {
     noSessionHandlers.handleInterruptSession('reason');
     await flushPromises();
 
-    expect(storage.saveCompletionHistory).not.toHaveBeenCalled();
+    expect(storage.appendCompletionHistory).not.toHaveBeenCalled();
     expect(stateRefNoSession.getState().completionHistory).toHaveLength(0);
 
     const stateRefMissingChain = createStateContainer(
@@ -1129,7 +1130,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
 
@@ -1146,11 +1147,9 @@ describe('createCompletionHandlers', () => {
     handleInterruptSession('manual-stop');
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+    const persisted = vi.mocked(storage.appendCompletionHistory).mock
       .calls[0]?.[0];
-    expect(persisted).toHaveLength(2);
-    expect(persisted?.[0]).toMatchObject(existingRecord);
-    expect(persisted?.[1]).toMatchObject({
+    expect(persisted).toMatchObject({
       chainId: chain.id,
       wasSuccessful: false,
       reasonForFailure: 'manual-stop',
@@ -1187,7 +1186,7 @@ describe('createCompletionHandlers', () => {
     );
 
     const storage = createSupabaseStorageMock({
-      saveCompletionHistory: vi.fn(async () => undefined),
+      appendCompletionHistory: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
     const setActiveSessionId = vi.fn();
@@ -1205,10 +1204,9 @@ describe('createCompletionHandlers', () => {
     handleInterruptSession('manual-stop');
     await flushPromises();
 
-    const persisted = vi.mocked(storage.saveCompletionHistory).mock
+    const persisted = vi.mocked(storage.appendCompletionHistory).mock
       .calls[0]?.[0];
-    expect(persisted).toHaveLength(1);
-    expect(persisted?.[0]).toMatchObject({
+    expect(persisted).toMatchObject({
       chainId: chain.id,
       wasSuccessful: false,
       reasonForFailure: 'manual-stop',
@@ -1235,7 +1233,7 @@ describe('createCompletionHandlers', () => {
     });
     const stateRef = createStateContainer(initialState);
     const storage = createLocalStorageMock({
-      saveCompletionHistory: vi.fn(async () => {
+      appendCompletionHistory: vi.fn(async () => {
         throw new Error('history fail');
       }),
       saveActiveSession: vi.fn(async () => {

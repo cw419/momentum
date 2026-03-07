@@ -37,6 +37,10 @@ export const localStorageAdapter: MomentumStorage = {
   getScheduledSessions: async () => localStorageUtils.getScheduledSessions(),
   saveScheduledSessions: async (sessions) =>
     localStorageUtils.saveScheduledSessions(sessions),
+  setScheduledSession: async (session) =>
+    localStorageUtils.setScheduledSession(session),
+  removeScheduledSession: async (chainId) =>
+    localStorageUtils.removeScheduledSession(chainId),
 
   // Active session
   getActiveSession: async () => localStorageUtils.getActiveSession(),
@@ -47,6 +51,8 @@ export const localStorageAdapter: MomentumStorage = {
   getCompletionHistory: async () => localStorageUtils.getCompletionHistory(),
   saveCompletionHistory: async (history) =>
     localStorageUtils.saveCompletionHistory(history),
+  appendCompletionHistory: async (record) =>
+    localStorageUtils.appendCompletionHistory(record),
 
   // RSIP
   getRSIPNodes: async () => localStorageUtils.getRSIPNodes(),

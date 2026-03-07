@@ -52,7 +52,7 @@ export function createSchedulingHandlers({
         );
 
         await Promise.all([
-          storage.saveScheduledSessions(updatedSessions),
+          storage.setScheduledSession(scheduledSession),
           safelySaveChains(updatedChains),
         ]);
         queryOptimizer.onDataChange('chains');
@@ -94,7 +94,7 @@ export function createSchedulingHandlers({
       c.id === chainId ? { ...c, auxiliaryStreak: c.auxiliaryStreak + 1 } : c,
     );
 
-    storage.saveScheduledSessions(updatedScheduledSessions).catch((error) => {
+    storage.removeScheduledSession(chainId).catch((error) => {
       logger.error(
         'SESSIONS',
         'Failed to persist scheduled sessions after completing booking',

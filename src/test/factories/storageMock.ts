@@ -26,6 +26,8 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
     // Scheduled sessions
     getScheduledSessions: vi.fn(async () => []),
     saveScheduledSessions: vi.fn(async () => undefined),
+    setScheduledSession: vi.fn(async () => undefined),
+    removeScheduledSession: vi.fn(async () => undefined),
 
     // Active session
     getActiveSession: vi.fn(async () => null),
@@ -34,6 +36,7 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
     // Completion history
     getCompletionHistory: vi.fn(async () => []),
     saveCompletionHistory: vi.fn(async () => undefined),
+    appendCompletionHistory: vi.fn(async () => undefined),
 
     // RSIP
     getRSIPNodes: vi.fn(async () => []),

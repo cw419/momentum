@@ -97,7 +97,11 @@ export function usePeriodicCleanup({
 
       setShowAuxiliaryJudgment(expiredSessions[0].chainId);
 
-      storage.saveScheduledSessions(activeScheduledSessions).catch((error) => {
+      Promise.all(
+        expiredSessions.map((session) =>
+          storage.removeScheduledSession(session.chainId),
+        ),
+      ).catch((error) => {
         logger.error(
           'PERIODIC_CLEANUP',
           'Failed to persist scheduled session cleanup',

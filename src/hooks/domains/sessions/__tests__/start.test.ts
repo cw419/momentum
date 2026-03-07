@@ -185,7 +185,7 @@ describe('createStartChainHandler', () => {
     );
     const storage = createLocalStorageMock({
       saveActiveSession: vi.fn(async () => undefined),
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
 
@@ -204,7 +204,7 @@ describe('createStartChainHandler', () => {
 
     await handleStartChain(chain.id);
 
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([]);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(chain.id);
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
     expect(stateRef.getState().scheduledSessions).toHaveLength(0);
     expect(
@@ -550,7 +550,7 @@ describe('createStartChainHandler', () => {
     );
     const storage = createLocalStorageMock({
       saveActiveSession: vi.fn(async () => undefined),
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
 
@@ -1072,10 +1072,22 @@ describe('createStartChainHandler', () => {
 
   it('should log when scheduled sessions persistence fails', async () => {
     const chain = createUnitChain({ id: 'persist-schedule-fail' });
-    const stateRef = createStateContainer(createAppState({ chains: [chain] }));
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        scheduledSessions: [
+          {
+            chainId: chain.id,
+            scheduledAt: new Date('2026-02-06T10:00:00.000Z'),
+            expiresAt: new Date('2026-02-06T10:20:00.000Z'),
+            auxiliarySignal: 'signal',
+          },
+        ],
+      }),
+    );
     const storage = createLocalStorageMock({
       saveActiveSession: vi.fn(async () => undefined),
-      saveScheduledSessions: vi.fn(async () => {
+      removeScheduledSession: vi.fn(async () => {
         throw new Error('schedule write failed');
       }),
     });
@@ -1197,7 +1209,7 @@ describe('createStartChainHandler', () => {
     await handleStartChain(chain.id);
 
     expect(stateRef.getState().scheduledSessions).toEqual([otherSchedule]);
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([otherSchedule]);
+    expect(storage.removeScheduledSession).not.toHaveBeenCalled();
     expect(systemNotificationService.notifyTaskCompleted).not.toHaveBeenCalled();
     expect(safelySaveChains).not.toHaveBeenCalled();
   });
@@ -1266,7 +1278,7 @@ describe('createStartChainHandler', () => {
   it('should return early for missing local chains without persisting anything', async () => {
     const storage = createLocalStorageMock({
       saveActiveSession: vi.fn(async () => undefined),
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
     const handleStartChain = createStartChainHandler({
       state: createAppState({ chains: [] }),
@@ -1284,6 +1296,6 @@ describe('createStartChainHandler', () => {
     await handleStartChain('missing-local-chain');
 
     expect(storage.saveActiveSession).not.toHaveBeenCalled();
-    expect(storage.saveScheduledSessions).not.toHaveBeenCalled();
+    expect(storage.removeScheduledSession).not.toHaveBeenCalled();
   });
 });

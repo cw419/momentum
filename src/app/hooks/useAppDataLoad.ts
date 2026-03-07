@@ -287,7 +287,15 @@ export function useAppDataLoad({
 
         // Clean up expired sessions.
         if (scheduledSessions.length !== allScheduledSessions.length) {
-          await storage.saveScheduledSessions(scheduledSessions);
+          const expiredScheduledSessions = allScheduledSessions.filter(
+            (session) => isSessionExpired(session.expiresAt),
+          );
+
+          await Promise.all(
+            expiredScheduledSessions.map((session) =>
+              storage.removeScheduledSession(session.chainId),
+            ),
+          );
         }
       } catch (error) {
         logger.error(

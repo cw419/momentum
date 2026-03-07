@@ -72,7 +72,7 @@ describe('createSchedulingHandlers', () => {
       createAppState({ chains: [chain], chainsRevision: 2 }),
     );
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      setScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
     const setShowAuxiliaryJudgment = vi.fn();
@@ -98,8 +98,11 @@ describe('createSchedulingHandlers', () => {
     expect(
       nextState.chains.find((item) => item.id === chain.id)?.auxiliaryStreak,
     ).toBe(5);
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith(
-      nextState.scheduledSessions,
+    expect(storage.setScheduledSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chainId: chain.id,
+        auxiliarySignal: chain.auxiliarySignal,
+      }),
     );
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
@@ -120,7 +123,7 @@ describe('createSchedulingHandlers', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      setScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
 
@@ -137,7 +140,7 @@ describe('createSchedulingHandlers', () => {
     handleScheduleChain('missing-chain');
     await flushPromises();
 
-    expect(storage.saveScheduledSessions).not.toHaveBeenCalled();
+    expect(storage.setScheduledSession).not.toHaveBeenCalled();
     expect(safelySaveChains).not.toHaveBeenCalled();
     expect(stateRef.setState).not.toHaveBeenCalled();
   });
@@ -178,7 +181,7 @@ describe('createSchedulingHandlers', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
 
@@ -204,7 +207,7 @@ describe('createSchedulingHandlers', () => {
       3,
       'Schedule completed',
     );
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([]);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(chain.id);
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
   });
 
@@ -212,7 +215,7 @@ describe('createSchedulingHandlers', () => {
     const chain = createUnitChain({ id: 'chain-5' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      setScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => {
       throw new Error('save failed');

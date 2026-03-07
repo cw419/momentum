@@ -28,6 +28,20 @@ export function saveScheduledSessions(sessions: ScheduledSession[]): void {
   );
 }
 
+export function setScheduledSession(session: ScheduledSession): void {
+  const sessions = getScheduledSessions();
+  const nextSessions = sessions.filter((item) => item.chainId !== session.chainId);
+  nextSessions.push(session);
+  saveScheduledSessions(nextSessions);
+}
+
+export function removeScheduledSession(chainId: string): void {
+  const sessions = getScheduledSessions();
+  saveScheduledSessions(
+    sessions.filter((session) => session.chainId !== chainId),
+  );
+}
+
 export function getActiveSession(): ActiveSession | null {
   const data = localStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION);
   if (!data) return null;

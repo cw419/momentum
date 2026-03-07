@@ -34,6 +34,8 @@ const chainsApiMocks = vi.hoisted(() => ({
 const sessionsApiMocks = vi.hoisted(() => ({
   getScheduledSessions: vi.fn(),
   saveScheduledSessions: vi.fn(),
+  setScheduledSession: vi.fn(),
+  removeScheduledSession: vi.fn(),
   getActiveSession: vi.fn(),
   saveActiveSession: vi.fn(),
 }));
@@ -41,6 +43,7 @@ const sessionsApiMocks = vi.hoisted(() => ({
 const historyApiMocks = vi.hoisted(() => ({
   getCompletionHistory: vi.fn(),
   saveCompletionHistory: vi.fn(),
+  appendCompletionHistory: vi.fn(),
 }));
 
 const rsipApiMocks = vi.hoisted(() => ({
@@ -143,11 +146,14 @@ describe('supabase/SupabaseStorage', () => {
 
     sessionsApiMocks.getScheduledSessions.mockResolvedValue([]);
     sessionsApiMocks.saveScheduledSessions.mockResolvedValue(undefined);
+    sessionsApiMocks.setScheduledSession.mockResolvedValue(undefined);
+    sessionsApiMocks.removeScheduledSession.mockResolvedValue(undefined);
     sessionsApiMocks.getActiveSession.mockResolvedValue(null);
     sessionsApiMocks.saveActiveSession.mockResolvedValue(undefined);
 
     historyApiMocks.getCompletionHistory.mockResolvedValue([]);
     historyApiMocks.saveCompletionHistory.mockResolvedValue(undefined);
+    historyApiMocks.appendCompletionHistory.mockResolvedValue(undefined);
 
     rsipApiMocks.getRSIPNodes.mockResolvedValue([]);
     rsipApiMocks.saveRSIPNodes.mockResolvedValue(undefined);

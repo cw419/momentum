@@ -22,6 +22,17 @@ const FORWARD_TIMER_CAPABILITIES = [
   'forward_elapsed_time',
 ] as const;
 
+function isMissingUniqueConstraint(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  return (
+    error.code === '42P10' ||
+    error.message?.includes('no unique or exclusion constraint matching') ===
+      true
+  );
+}
+
 function hasKnownMissingForwardTimerCapabilities(
   ctx: SupabaseStorageContext,
 ): boolean {
@@ -114,6 +125,19 @@ function shouldFallbackToBasicActiveSessionPayload(
   return isMissingForwardTimerCapabilityError(error);
 }
 
+function toScheduledSessionInsert(
+  session: ScheduledSession,
+  userId: string,
+): ScheduledSessionInsert {
+  return {
+    chain_id: session.chainId,
+    scheduled_at: session.scheduledAt.toISOString(),
+    expires_at: session.expiresAt.toISOString(),
+    auxiliary_signal: session.auxiliarySignal,
+    user_id: userId,
+  };
+}
+
 export async function getScheduledSessions(
   ctx: SupabaseStorageContext,
 ): Promise<ScheduledSession[]> {
@@ -147,13 +171,6 @@ export async function saveScheduledSessions(
 
   const client = ctx.getClient();
 
-  const isMissingUniqueConstraint = (error: {
-    code?: string;
-    message?: string;
-  }) =>
-    error.code === '42P10' ||
-    error.message?.includes('no unique or exclusion constraint matching');
-
   if (sessions.length === 0) {
     await client.from('scheduled_sessions').delete().eq('user_id', user.id);
     return;
@@ -180,13 +197,9 @@ export async function saveScheduledSessions(
       .in('chain_id', chainIdsToDelete);
   }
 
-  const payload: ScheduledSessionInsert[] = sessions.map((session) => ({
-    chain_id: session.chainId,
-    scheduled_at: session.scheduledAt.toISOString(),
-    expires_at: session.expiresAt.toISOString(),
-    auxiliary_signal: session.auxiliarySignal,
-    user_id: user.id,
-  }));
+  const payload: ScheduledSessionInsert[] = sessions.map((session) =>
+    toScheduledSessionInsert(session, user.id),
+  );
 
   const { error } = await client
     .from('scheduled_sessions')
@@ -201,6 +214,49 @@ export async function saveScheduledSessions(
   }
 
   // best-effort: ignore
+}
+
+export async function setScheduledSession(
+  ctx: SupabaseStorageContext,
+  session: ScheduledSession,
+): Promise<void> {
+  const user = await ctx.getCurrentUser();
+  if (!user) return;
+
+  const client = ctx.getClient();
+  const payload = [toScheduledSessionInsert(session, user.id)];
+
+  const { error } = await client
+    .from('scheduled_sessions')
+    .upsert(payload, { onConflict: 'user_id,chain_id' });
+
+  if (!error) return;
+
+  if (!isMissingUniqueConstraint(error)) {
+    return;
+  }
+
+  await client
+    .from('scheduled_sessions')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('chain_id', session.chainId);
+  await client.from('scheduled_sessions').insert(payload);
+}
+
+export async function removeScheduledSession(
+  ctx: SupabaseStorageContext,
+  chainId: string,
+): Promise<void> {
+  const user = await ctx.getCurrentUser();
+  if (!user) return;
+
+  await ctx
+    .getClient()
+    .from('scheduled_sessions')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('chain_id', chainId);
 }
 
 export async function getActiveSession(

@@ -1,6 +1,7 @@
 ﻿import type { Dispatch, SetStateAction } from 'react';
 import type { ActiveSession, AppState } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
+import { hasStorageCapability } from '../../../storage/ports';
 import type { SafelySaveChains } from '../useChainsDomain';
 import {
   getNextUnitInGroup,
@@ -86,11 +87,8 @@ export function createStartChainHandler({
     );
   }
 
-  function persistScheduledSessions(
-    chainId: string,
-    scheduledSessions: AppState['scheduledSessions'],
-  ): void {
-    storage.saveScheduledSessions(scheduledSessions).catch((error) => {
+  function persistScheduledSessionRemoval(chainId: string): void {
+    storage.removeScheduledSession(chainId).catch((error) => {
       logger.error(
         'SESSIONS',
         'Failed to persist scheduled sessions',
@@ -130,7 +128,7 @@ export function createStartChainHandler({
   }
 
   async function maybeStartBettingSession(chainId: string): Promise<boolean> {
-    if (storage.kind !== 'supabase') return false;
+    if (!hasStorageCapability(storage, 'betting')) return false;
     if (pendingChainId) return false;
 
     try {
@@ -362,8 +360,8 @@ export function createStartChainHandler({
     }
 
     persistActiveSession(chain.id, activeSession);
-    persistScheduledSessions(chain.id, updatedScheduledSessions);
     if (existingScheduledSession) {
+      persistScheduledSessionRemoval(chain.id);
       persistChains(chain.id, updatedChains);
     }
 

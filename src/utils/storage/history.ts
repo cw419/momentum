@@ -23,3 +23,8 @@ export function saveCompletionHistory(history: CompletionHistory[]): void {
     JSON.stringify(history),
   );
 }
+
+export function appendCompletionHistory(record: CompletionHistory): void {
+  const history = getCompletionHistory();
+  saveCompletionHistory([...history, record]);
+}
