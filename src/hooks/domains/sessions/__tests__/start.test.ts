@@ -26,6 +26,7 @@ vi.mock('../../../../utils/logger', () => ({
   logger: {
     debug: vi.fn(),
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -82,6 +83,7 @@ function flushPromises() {
 
 describe('createStartChainHandler', () => {
   const tr = (_zh: string, en: string) => en;
+  const zhTr = (zh: string) => zh;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -289,6 +291,36 @@ describe('createStartChainHandler', () => {
     expect(storage.saveActiveSession).toHaveBeenCalledTimes(1);
   });
 
+  it('should not probe gambling for local storage and should not reuse a mismatched betting session id', async () => {
+    const chain = createUnitChain({ id: 'local-unit', duration: 30 });
+    const stateRef = createStateContainer(createAppState({ chains: [chain] }));
+    const storage = createLocalStorageMock({
+      isGamblingModeEnabled: vi.fn(async () => ({ ok: true, value: true })),
+      saveActiveSession: vi.fn(async () => undefined),
+      saveScheduledSessions: vi.fn(async () => undefined),
+    });
+
+    const handleStartChain = createStartChainHandler({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      pendingChainId: 'different-chain',
+      setPendingChainId: vi.fn(),
+      currentSessionId: 'should-not-be-used',
+      setCurrentSessionId: vi.fn(),
+      setShowBettingModal: vi.fn(),
+      tr,
+    });
+
+    await handleStartChain(chain.id);
+
+    expect(storage.isGamblingModeEnabled).not.toHaveBeenCalled();
+    expect(storage.saveActiveSession).toHaveBeenCalledWith(
+      expect.not.objectContaining({ id: 'should-not-be-used' }),
+    );
+  });
+
   it('should fall back to normal start when gambling mode is disabled', async () => {
     const chain = createUnitChain({ id: 'unit-gambling-off' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
@@ -431,12 +463,13 @@ describe('createStartChainHandler', () => {
       id: 'group-expired',
       name: 'Expired Group',
     });
+    const untouched = createUnitChain({ id: 'untouched-chain' });
     const resetGroup = createGroupChain({
       ...group,
       totalFailures: group.totalFailures + 1,
     });
     const stateRef = createStateContainer(
-      createAppState({ chains: [group], chainsRevision: 5 }),
+      createAppState({ chains: [group, untouched], chainsRevision: 5 }),
     );
     const storage = createLocalStorageMock();
 
@@ -462,9 +495,41 @@ describe('createStartChainHandler', () => {
       stateRef.getState().chains.find((item) => item.id === group.id)
         ?.totalFailures,
     ).toBe(resetGroup.totalFailures);
+    expect(stateRef.getState().chains.find((item) => item.id === untouched.id)).toEqual(
+      untouched,
+    );
+    expect(stateRef.getState().chainsRevision).toBe(6);
     expect(systemNotificationService.notifyTaskFailed).toHaveBeenCalledWith(
       group.name,
       'Group has expired',
+    );
+  });
+
+  it('should use chinese copy for expired group notifications', async () => {
+    const group = createGroupChain({
+      id: 'group-expired-zh',
+      name: '过期任务群',
+    });
+    vi.mocked(isGroupExpired).mockReturnValue(true);
+    vi.mocked(resetGroupProgress).mockReturnValue(group);
+    const handleStartChain = createStartChainHandler({
+      state: createAppState({ chains: [group], chainsRevision: 1 }),
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+      safelySaveChains: vi.fn(async () => undefined),
+      pendingChainId: null,
+      setPendingChainId: vi.fn(),
+      currentSessionId: null,
+      setCurrentSessionId: vi.fn(),
+      setShowBettingModal: vi.fn(),
+      tr: zhTr,
+    });
+
+    await handleStartChain(group.id);
+
+    expect(systemNotificationService.notifyTaskFailed).toHaveBeenCalledWith(
+      group.name,
+      '任务群已超时',
     );
   });
 
@@ -705,6 +770,68 @@ describe('createStartChainHandler', () => {
     );
   });
 
+  it('should emit exact group cycle payload and warn when RSIP task event handler rejects', async () => {
+    vi.useFakeTimers();
+
+    const group = createGroupChain({
+      id: 'group-rsip-event',
+      name: 'RSIP Group',
+      totalCompletions: 1,
+    });
+    const incremented = createGroupChain({ ...group, totalCompletions: 2 });
+    const stateRef = createStateContainer(
+      createAppState({ chains: [group], chainsRevision: 2 }),
+    );
+    const storage = createLocalStorageMock({
+      getActiveChains: vi.fn(async () => [incremented]),
+    });
+    const onRsipTaskEvent = vi.fn(async () => {
+      throw new Error('rsip event failed');
+    });
+
+    vi.mocked(queryOptimizer.memoizedBuildChainTree).mockReturnValue([
+      { id: group.id, type: 'group', name: group.name, children: [] },
+    ] as never);
+    vi.mocked(getNextUnitInGroup).mockReturnValue(null);
+    vi.mocked(incrementGroupCompletionCount).mockReturnValue([incremented]);
+
+    const handleStartChain = createStartChainHandler({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      pendingChainId: null,
+      setPendingChainId: vi.fn(),
+      currentSessionId: null,
+      setCurrentSessionId: vi.fn(),
+      setShowBettingModal: vi.fn(),
+      onRsipTaskEvent,
+      tr,
+    });
+
+    await handleStartChain(group.id);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onRsipTaskEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'group_cycle_completed',
+        chainId: group.id,
+        chainKind: 'group',
+      }),
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      'SESSIONS',
+      'RSIP integration event handler failed',
+      expect.objectContaining({
+        event: 'group_cycle_completed',
+        chainId: group.id,
+        chainKind: 'group',
+      }),
+      expect.any(Error),
+    );
+  });
+
   it('should log when fetching fresh chains for next cycle fails', async () => {
     vi.useFakeTimers();
 
@@ -867,6 +994,45 @@ describe('createStartChainHandler', () => {
     expect(storage.saveActiveSession).not.toHaveBeenCalled();
   });
 
+  it('should use chinese copy and exact logger payload when betting session creation fails', async () => {
+    const chain = createUnitChain({ id: 'unit-err-zh', duration: 15 });
+    const storage = createSupabaseStorageMock({
+      isGamblingModeEnabled: vi.fn(async () => ({ ok: true, value: true })),
+      createBettingSession: vi.fn(async () => ({
+        ok: false,
+        error: { code: 'FAIL', message: 'nope' },
+      })),
+      saveActiveSession: vi.fn(async () => undefined),
+    });
+    const handleStartChain = createStartChainHandler({
+      state: createAppState({ chains: [chain] }),
+      setState: vi.fn(),
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      pendingChainId: null,
+      setPendingChainId: vi.fn(),
+      currentSessionId: null,
+      setCurrentSessionId: vi.fn(),
+      setShowBettingModal: vi.fn(),
+      tr: zhTr,
+    });
+
+    await handleStartChain(chain.id);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'SESSIONS',
+      'Failed to create betting session',
+      {
+        chainId: chain.id,
+        code: 'FAIL',
+        message: 'nope',
+      },
+    );
+    expect(toast.error).toHaveBeenCalledWith(
+      '无法创建押注会话：数据库可能处于只读状态（查看控制台）',
+    );
+  });
+
   it('should show toast and log when active session persistence fails', async () => {
     const chain = createUnitChain({ id: 'persist-active-fail' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
@@ -993,5 +1159,131 @@ describe('createStartChainHandler', () => {
       { chainId: chain.id },
       expect.any(Error),
     );
+  });
+
+  it('should preserve unrelated schedules and skip notification/persistChains when no matching schedule exists', async () => {
+    const chain = createUnitChain({ id: 'plain-chain', name: 'Plain Chain' });
+    const otherSchedule = {
+      chainId: 'other-chain',
+      scheduledAt: new Date('2026-02-06T11:00:00.000Z'),
+      expiresAt: new Date('2026-02-06T11:20:00.000Z'),
+      auxiliarySignal: 'other',
+    };
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        scheduledSessions: [otherSchedule],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveActiveSession: vi.fn(async () => undefined),
+      saveScheduledSessions: vi.fn(async () => undefined),
+    });
+    const safelySaveChains = vi.fn(async () => undefined);
+
+    const handleStartChain = createStartChainHandler({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains,
+      pendingChainId: null,
+      setPendingChainId: vi.fn(),
+      currentSessionId: null,
+      setCurrentSessionId: vi.fn(),
+      setShowBettingModal: vi.fn(),
+      tr,
+    });
+
+    await handleStartChain(chain.id);
+
+    expect(stateRef.getState().scheduledSessions).toEqual([otherSchedule]);
+    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([otherSchedule]);
+    expect(systemNotificationService.notifyTaskCompleted).not.toHaveBeenCalled();
+    expect(safelySaveChains).not.toHaveBeenCalled();
+  });
+
+  it('should consume only the matching schedule when other schedules remain', async () => {
+    const chain = createUnitChain({
+      id: 'scheduled-chain',
+      auxiliaryStreak: 4,
+      name: 'Scheduled Chain',
+    });
+    const unrelated = {
+      chainId: 'keep-me',
+      scheduledAt: new Date('2026-02-06T12:00:00.000Z'),
+      expiresAt: new Date('2026-02-06T12:20:00.000Z'),
+      auxiliarySignal: 'keep',
+    };
+    const targetSchedule = {
+      chainId: chain.id,
+      scheduledAt: new Date('2026-02-06T13:00:00.000Z'),
+      expiresAt: new Date('2026-02-06T13:20:00.000Z'),
+      auxiliarySignal: 'target',
+    };
+    const untouched = createUnitChain({ id: 'other-chain' });
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain, untouched],
+        scheduledSessions: [unrelated, targetSchedule],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveActiveSession: vi.fn(async () => undefined),
+      saveScheduledSessions: vi.fn(async () => undefined),
+    });
+    const safelySaveChains = vi.fn(async () => undefined);
+
+    const handleStartChain = createStartChainHandler({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains,
+      pendingChainId: null,
+      setPendingChainId: vi.fn(),
+      currentSessionId: null,
+      setCurrentSessionId: vi.fn(),
+      setShowBettingModal: vi.fn(),
+      tr,
+    });
+
+    await handleStartChain(chain.id);
+
+    expect(stateRef.getState().scheduledSessions).toEqual([unrelated]);
+    expect(
+      stateRef.getState().chains.find((item) => item.id === chain.id)
+        ?.auxiliaryStreak,
+    ).toBe(5);
+    expect(
+      stateRef.getState().chains.find((item) => item.id === untouched.id),
+    ).toEqual(untouched);
+    expect(systemNotificationService.notifyTaskCompleted).toHaveBeenCalledWith(
+      chain.name,
+      5,
+      'Schedule completed',
+    );
+  });
+
+  it('should return early for missing local chains without persisting anything', async () => {
+    const storage = createLocalStorageMock({
+      saveActiveSession: vi.fn(async () => undefined),
+      saveScheduledSessions: vi.fn(async () => undefined),
+    });
+    const handleStartChain = createStartChainHandler({
+      state: createAppState({ chains: [] }),
+      setState: vi.fn(),
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      pendingChainId: null,
+      setPendingChainId: vi.fn(),
+      currentSessionId: null,
+      setCurrentSessionId: vi.fn(),
+      setShowBettingModal: vi.fn(),
+      tr,
+    });
+
+    await handleStartChain('missing-local-chain');
+
+    expect(storage.saveActiveSession).not.toHaveBeenCalled();
+    expect(storage.saveScheduledSessions).not.toHaveBeenCalled();
   });
 });

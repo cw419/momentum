@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
-import type { AppState, RSIPMeta, RSIPNode } from '../../../types';
+import type {
+  AppState,
+  RSIPLibraryEntry,
+  RSIPMeta,
+  RSIPNode,
+  RSIPNodeGroup,
+  RSIPTaskLink,
+} from '../../../types';
 import { useRsipDomain } from '../useRsipDomain';
 import {
   createAppState,
@@ -11,6 +18,7 @@ import { logger } from '../../../utils/logger';
 vi.mock('../../../utils/logger', () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -41,6 +49,51 @@ function createNode(overrides: Partial<RSIPNode> = {}): RSIPNode {
     sortOrder: overrides.sortOrder ?? 1,
     createdAt: overrides.createdAt ?? new Date('2026-02-01T00:00:00.000Z'),
     ...overrides,
+  };
+}
+
+function createGroup(overrides: Partial<RSIPNodeGroup> = {}): RSIPNodeGroup {
+  return {
+    id: overrides.id ?? 'group-id',
+    title: overrides.title ?? 'Group',
+    faultTolerance: overrides.faultTolerance ?? 0,
+    createdAt: overrides.createdAt ?? new Date('2026-02-01T00:00:00.000Z'),
+    emoji: overrides.emoji,
+  };
+}
+
+function createLibraryEntry(
+  overrides: Partial<RSIPLibraryEntry> = {},
+): RSIPLibraryEntry {
+  return {
+    id: overrides.id ?? 'library-id',
+    title: overrides.title ?? 'Library Title',
+    rule: overrides.rule ?? 'Library Rule',
+    type: overrides.type ?? 'habit',
+    emoji: overrides.emoji ?? '🔥',
+    cumulativeExecutionDays: overrides.cumulativeExecutionDays ?? 12,
+    internalizationProgress: overrides.internalizationProgress ?? 20,
+    lastActiveAt:
+      overrides.lastActiveAt ?? new Date('2026-02-05T00:00:00.000Z'),
+    timesUsed: overrides.timesUsed ?? 1,
+    useTimer: overrides.useTimer ?? false,
+    timerMinutes: overrides.timerMinutes,
+    isPassive: overrides.isPassive ?? false,
+  };
+}
+
+function createTaskLink(overrides: Partial<RSIPTaskLink> = {}): RSIPTaskLink {
+  return {
+    id: overrides.id ?? 'link-id',
+    rsipNodeId: overrides.rsipNodeId ?? 'node-id',
+    chainId: overrides.chainId ?? 'chain-id',
+    chainKind: overrides.chainKind ?? 'unit',
+    triggerEvent: overrides.triggerEvent ?? 'task_completed',
+    effect: overrides.effect ?? 'mark_rsip_executed',
+    automation: overrides.automation ?? 'confirm',
+    isActive: overrides.isActive ?? true,
+    updatedAt: overrides.updatedAt ?? new Date('2026-02-08T00:00:00.000Z'),
+    userId: overrides.userId ?? 'user-id',
   };
 }
 
@@ -546,6 +599,815 @@ describe('useRsipDomain', () => {
       maxNodeCount: 10,
       collapseReason: 'manual collapse',
       collapseNodeTitle: 'Node X',
+    });
+  });
+
+  it('starts a new run when saving the first node into existing meta state', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T14:00:00.000Z'));
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [],
+        rsipMeta: { allowMultiplePerDay: false },
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      saveRSIPMeta: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    await domain.saveNodes([createNode({ id: 'first-node' })]);
+
+    expect(storage.saveRSIPMeta).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentRunNumber: 1,
+        currentRunStartedAt: new Date('2026-03-07T14:00:00.000Z'),
+      }),
+    );
+    expect(stateRef.getState().rsipMeta).toMatchObject({
+      currentRunNumber: 1,
+    });
+  });
+
+  it('does not start a new run when nodes already exist or when the incoming list is empty', async () => {
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [createNode({ id: 'existing-node' })],
+        rsipMeta: { allowMultiplePerDay: false, currentRunNumber: 9 },
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      saveRSIPMeta: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    await domain.saveNodes([createNode({ id: 'replacement-node' })]);
+    await domain.saveNodes([]);
+
+    expect(storage.saveRSIPMeta).not.toHaveBeenCalled();
+    expect(stateRef.getState().rsipMeta).toMatchObject({
+      currentRunNumber: 9,
+    });
+  });
+
+  it('optimistically saves groups, policy library, and run history while logging persistence failures', async () => {
+    const groups = [createGroup({ id: 'group-save' })];
+    const library = [createLibraryEntry({ id: 'library-save' })];
+    const history = [
+      {
+        runNumber: 1,
+        startedAt: new Date('2026-02-01T00:00:00.000Z'),
+        endedAt: new Date('2026-02-02T00:00:00.000Z'),
+        maxNodeCount: 4,
+        durationDays: 1,
+      },
+    ];
+    const stateRef = createStateContainer(createBaseState());
+    const storage = createLocalStorageMock({
+      saveRSIPGroups: vi.fn(async () => {
+        throw new Error('groups failed');
+      }),
+      saveRSIPPolicyLibrary: vi.fn(async () => {
+        throw new Error('library failed');
+      }),
+      saveRSIPRunHistory: vi.fn(async () => {
+        throw new Error('history failed');
+      }),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    await domain.saveGroups(groups);
+    await domain.savePolicyLibrary(library);
+    await domain.saveRunHistory(history);
+
+    expect(stateRef.getState().rsipGroups).toEqual(groups);
+    expect(stateRef.getState().rsipPolicyLibrary).toEqual(library);
+    expect(stateRef.getState().rsipRunHistory).toEqual(history);
+    expect(logger.error).toHaveBeenCalledWith(
+      'RSIP',
+      'Failed to save RSIP groups',
+      { count: 1 },
+      expect.any(Error),
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'RSIP',
+      'Failed to save RSIP policy library',
+      { count: 1 },
+      expect.any(Error),
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'RSIP',
+      'Failed to save RSIP run history',
+      { count: 1 },
+      expect.any(Error),
+    );
+  });
+
+  it('normalizes task links before saving and logs persistence failures', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T15:00:00.000Z'));
+    const latestLink = createTaskLink({
+      id: 'link-latest',
+      chainId: 'chain-1',
+      rsipNodeId: 'node-1',
+      updatedAt: new Date('2026-02-08T01:00:00.000Z'),
+    });
+    const staleDuplicate = createTaskLink({
+      id: 'link-stale',
+      chainId: 'chain-1',
+      rsipNodeId: 'node-1',
+      updatedAt: new Date('invalid'),
+    });
+    const stateRef = createStateContainer(createBaseState());
+    const storage = createLocalStorageMock({
+      saveRSIPTaskLinks: vi.fn(async () => {
+        throw new Error('links failed');
+      }),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    await domain.saveTaskLinks([latestLink, staleDuplicate]);
+
+    expect(stateRef.getState().rsipTaskLinks).toHaveLength(1);
+    expect(stateRef.getState().rsipTaskLinks?.[0]).toMatchObject({
+      id: 'link-stale',
+      chainId: 'chain-1',
+      rsipNodeId: 'node-1',
+    });
+    expect(stateRef.getState().rsipTaskLinks?.[0]?.updatedAt).toEqual(
+      new Date('2026-03-07T15:00:00.000Z'),
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'RSIP',
+      'Failed to save RSIP task links',
+      { count: 1 },
+      expect.any(Error),
+    );
+  });
+
+  it('creates groups with trimmed titles and floored fault tolerance', async () => {
+    const existingGroup = createGroup({ id: 'existing-group' });
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipGroups: [existingGroup],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPGroups: vi.fn(async () => undefined),
+    });
+    const randomUUIDMock = vi
+      .spyOn(crypto, 'randomUUID')
+      .mockReturnValue('created-group-id');
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const created = await domain.createGroup('  Focus Group  ', 2.8, '🎯');
+
+    expect(created).toMatchObject({
+      id: 'created-group-id',
+      title: 'Focus Group',
+      faultTolerance: 2,
+      emoji: '🎯',
+    });
+    expect(stateRef.getState().rsipGroups).toHaveLength(2);
+    randomUUIDMock.mockRestore();
+  });
+
+  it('creates groups without state by starting from an empty list', async () => {
+    const storage = createLocalStorageMock({
+      saveRSIPGroups: vi.fn(async () => undefined),
+    });
+    const randomUUIDMock = vi
+      .spyOn(crypto, 'randomUUID')
+      .mockReturnValue('stateless-group-id');
+    const stateRef = createStateContainer(createBaseState());
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+    });
+
+    const created = await domain.createGroup('Stateless Group', 1.2);
+
+    expect(created).toMatchObject({
+      id: 'stateless-group-id',
+      title: 'Stateless Group',
+      faultTolerance: 1,
+    });
+    expect(stateRef.getState().rsipGroups).toEqual([created]);
+    randomUUIDMock.mockRestore();
+  });
+
+  it('evaluates group liveness across missing, empty, and populated states', () => {
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [createNode({ id: 'alive-node', groupId: 'alive-group' })],
+        rsipGroups: [
+          createGroup({ id: 'alive-group', faultTolerance: 0 }),
+          createGroup({ id: 'empty-group', faultTolerance: 2 }),
+        ],
+      }),
+    );
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage: createLocalStorageMock(),
+      getState: stateRef.getState,
+    });
+
+    expect(domain.isGroupAlive('missing-group')).toBe(false);
+    expect(domain.isGroupAlive('empty-group')).toBe(false);
+    expect(domain.isGroupAlive('alive-group')).toBe(true);
+  });
+
+  it('evaluates group liveness from explicit nodes and groups without relying on state', () => {
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+    });
+    const groups = [createGroup({ id: 'provided-group', faultTolerance: 3 })];
+    const nodes = [createNode({ id: 'provided-node', groupId: 'provided-group' })];
+
+    expect(domain.isGroupAlive('provided-group', nodes, groups)).toBe(true);
+    expect(domain.isGroupAlive('missing-group', nodes, groups)).toBe(false);
+  });
+
+  it('archives new and existing library entries with accumulated progress', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T16:00:00.000Z'));
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipPolicyLibrary: [
+          createLibraryEntry({
+            id: 'archived-node',
+            cumulativeExecutionDays: 50,
+            timesUsed: 2,
+            internalizationProgress: 83.33,
+          }),
+        ],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPPolicyLibrary: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const accumulated = await domain.archiveToLibrary(
+      createNode({
+        id: 'archived-node',
+        title: 'Updated Title',
+        rule: 'Updated Rule',
+        cumulativeExecutionDays: 20,
+        emoji: '🧠',
+      }),
+    );
+    const created = await domain.archiveToLibrary(
+      createNode({
+        id: 'new-library-node',
+        title: 'Brand New',
+        rule: 'Brand Rule',
+        cumulativeExecutionDays: 15,
+      }),
+      accumulated,
+    );
+
+    expect(accumulated[0]).toMatchObject({
+      title: 'Updated Title',
+      rule: 'Updated Rule',
+      cumulativeExecutionDays: 70,
+      internalizationProgress: 100,
+      timesUsed: 3,
+      lastActiveAt: new Date('2026-03-07T16:00:00.000Z'),
+    });
+    expect(created.find((entry) => entry.id === 'new-library-node')).toMatchObject({
+      cumulativeExecutionDays: 15,
+      internalizationProgress: 25,
+      timesUsed: 1,
+    });
+  });
+
+  it('archives into explicit library input and preserves fallback fields from the existing entry', async () => {
+    const storage = createLocalStorageMock({
+      saveRSIPPolicyLibrary: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage,
+    });
+    const existingEntry = createLibraryEntry({
+      id: 'preserve-entry',
+      type: 'discipline',
+      emoji: '🪨',
+      useTimer: true,
+      timerMinutes: 45,
+      isPassive: true,
+      cumulativeExecutionDays: 10,
+      timesUsed: 1,
+    });
+
+    const next = await domain.archiveToLibrary(
+      createNode({
+        id: 'preserve-entry',
+        title: 'Preserved Title',
+        rule: 'Preserved Rule',
+        totalExecutions: 5,
+        type: undefined,
+        emoji: undefined,
+        useTimer: undefined,
+        timerMinutes: undefined,
+        isPassive: undefined,
+      }),
+      [existingEntry],
+    );
+
+    expect(next).toHaveLength(1);
+    expect(next[0]).toMatchObject({
+      title: 'Preserved Title',
+      rule: 'Preserved Rule',
+      type: 'discipline',
+      emoji: '🪨',
+      useTimer: true,
+      timerMinutes: 45,
+      isPassive: true,
+      cumulativeExecutionDays: 15,
+      timesUsed: 2,
+    });
+  });
+
+  it('restores nodes from library entries and updates usage metadata', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T17:00:00.000Z'));
+    const entry = createLibraryEntry({
+      id: 'restore-entry',
+      title: 'Restore Me',
+      rule: 'Restored Rule',
+      useTimer: true,
+      timerMinutes: 25,
+      cumulativeExecutionDays: 18,
+      timesUsed: 4,
+    });
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [createNode({ id: 'existing-node' })],
+        rsipPolicyLibrary: [entry],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      saveRSIPPolicyLibrary: vi.fn(async () => undefined),
+    });
+    const randomUUIDMock = vi
+      .spyOn(crypto, 'randomUUID')
+      .mockReturnValue('restored-node-id');
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    expect(await domain.restoreFromLibrary('missing-entry')).toBeNull();
+
+    const restored = await domain.restoreFromLibrary('restore-entry', 'parent-1');
+
+    expect(restored).toMatchObject({
+      id: 'restored-node-id',
+      parentId: 'parent-1',
+      title: 'Restore Me',
+      rule: 'Restored Rule',
+      useTimer: true,
+      timerMinutes: 25,
+      cumulativeExecutionDays: 18,
+      stabilityPhase: 'E0',
+      consecutiveExecutions: 0,
+      totalExecutions: 0,
+      totalViolations: 0,
+    });
+    expect(stateRef.getState().rsipNodes).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'restored-node-id' })]),
+    );
+    expect(stateRef.getState().rsipPolicyLibrary?.[0]).toMatchObject({
+      id: 'restore-entry',
+      timesUsed: 5,
+      lastActiveAt: new Date('2026-03-07T17:00:00.000Z'),
+    });
+    randomUUIDMock.mockRestore();
+  });
+
+  it('returns null when restoring from library without state access', async () => {
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+    });
+
+    await expect(domain.restoreFromLibrary('any-entry')).resolves.toBeNull();
+  });
+
+  it('starts new runs idempotently and reinforces only E2 nodes', async () => {
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipMeta: {
+          currentRunNumber: 3,
+          currentRunStartedAt: new Date('2026-02-20T00:00:00.000Z'),
+        },
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPMeta: vi.fn(async () => undefined),
+      saveRSIPNodes: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const sameMeta = await domain.startNewRun(stateRef.getState().rsipMeta);
+    const reinforced = await domain.reinforceNode(
+      'reinforce-target',
+      [
+        createNode({
+          id: 'reinforce-target',
+          stabilityPhase: 'E2',
+          reinforcementLevel: 2,
+          maxReinforcementLevel: 2,
+        }),
+        createNode({
+          id: 'not-reinforced',
+          stabilityPhase: 'E1',
+          reinforcementLevel: 5,
+        }),
+      ],
+      0,
+    );
+
+    expect(sameMeta).toEqual(stateRef.getState().rsipMeta);
+    expect(storage.saveRSIPMeta).not.toHaveBeenCalled();
+    expect(reinforced.find((node) => node.id === 'reinforce-target')).toMatchObject(
+      {
+        reinforcementLevel: 3,
+        maxReinforcementLevel: 3,
+      },
+    );
+    expect(reinforced.find((node) => node.id === 'not-reinforced')).toMatchObject({
+      reinforcementLevel: 5,
+    });
+  });
+
+  it('reinforces E2 executions, appends records beside existing state, and logs append failures', async () => {
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipExecutionRecords: [
+          {
+            id: 'existing-record',
+            nodeId: 'other-node',
+            executedAt: new Date('2026-02-01T00:00:00.000Z'),
+            status: 'executed',
+          },
+        ],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      appendRSIPExecutionRecord: vi.fn(async () => {
+        throw new Error('append failed');
+      }),
+    });
+    const randomUUIDMock = vi
+      .spyOn(crypto, 'randomUUID')
+      .mockReturnValue('new-record-id');
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const updated = await domain.markExecuted(
+      'reinforced-e2',
+      [
+        createNode({
+          id: 'reinforced-e2',
+          stabilityPhase: 'E2',
+          reinforcementLevel: 1,
+          maxReinforcementLevel: 1,
+          consecutiveExecutions: 21,
+          totalExecutions: 21,
+        }),
+      ],
+      'reinforced execution',
+      {
+        reinforce: true,
+        reasonCode: 'manual_execution',
+      },
+    );
+
+    expect(updated[0]).toMatchObject({
+      reinforcementLevel: 2,
+      maxReinforcementLevel: 2,
+      totalExecutions: 22,
+    });
+    expect(stateRef.getState().rsipExecutionRecords).toHaveLength(2);
+    expect(stateRef.getState().rsipExecutionRecords?.[1]).toMatchObject({
+      id: 'new-record-id',
+      nodeId: 'reinforced-e2',
+      status: 'executed',
+      notes: 'reinforced execution',
+      reasonCode: 'manual_execution',
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      'RSIP',
+      'Failed to append RSIP execution record',
+      { nodeId: 'reinforced-e2', status: 'executed' },
+      expect.any(Error),
+    );
+    randomUUIDMock.mockRestore();
+  });
+
+  it('upserts task links and returns RSIP task actions for rsip_mark_executed prompts', async () => {
+    const existing = createTaskLink({
+      id: 'existing-link',
+      rsipNodeId: 'node-1',
+      chainId: 'chain-1',
+      updatedAt: new Date('2026-02-08T00:00:00.000Z'),
+    });
+    const incoming = createTaskLink({
+      id: 'incoming-link',
+      rsipNodeId: 'node-1',
+      chainId: 'chain-1',
+      updatedAt: new Date('2026-02-08T01:00:00.000Z'),
+      triggerEvent: 'rsip_mark_executed',
+      effect: 'prompt_start_chain',
+    });
+    const ignored = createTaskLink({
+      id: 'ignored-link',
+      rsipNodeId: 'node-1',
+      chainId: 'chain-2',
+      triggerEvent: 'task_completed',
+      effect: 'mark_rsip_executed',
+    });
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipTaskLinks: [existing, ignored],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPTaskLinks: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const merged = await domain.upsertTaskLinks([incoming]);
+
+    expect(merged).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'incoming-link' })]),
+    );
+    expect(domain.getRsipTaskActions('node-1')).toEqual([
+      expect.objectContaining({
+        id: 'incoming-link',
+        triggerEvent: 'rsip_mark_executed',
+        effect: 'prompt_start_chain',
+      }),
+    ]);
+  });
+
+  it('returns empty task-link integrations when state is unavailable', async () => {
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+    });
+
+    await expect(domain.upsertTaskLinks([createTaskLink()])).resolves.toEqual([
+      createTaskLink(),
+    ]);
+    expect(domain.getRsipTaskActions('missing-node')).toEqual([]);
+    await expect(
+      domain.handleTaskEventIntegration({
+        event: 'task_completed',
+        chainId: 'missing-chain',
+        chainKind: 'unit',
+      }),
+    ).resolves.toEqual([]);
+  });
+
+  it('handles task integration execution, dedupe, and missing-node warnings', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T18:00:00.000Z'));
+    const executableNode = createNode({
+      id: 'integration-node',
+      stabilityPhase: 'E0',
+      consecutiveExecutions: 6,
+      totalExecutions: 6,
+    });
+    const executionLink = createTaskLink({
+      id: 'integration-link',
+      rsipNodeId: executableNode.id,
+      chainId: 'chain-1',
+      triggerEvent: 'task_completed',
+      effect: 'mark_rsip_executed',
+      updatedAt: new Date('2026-02-08T01:00:00.000Z'),
+    });
+    const staleDuplicate = createTaskLink({
+      id: 'integration-link-stale',
+      rsipNodeId: executableNode.id,
+      chainId: 'chain-1',
+      triggerEvent: 'task_completed',
+      effect: 'mark_rsip_executed',
+      updatedAt: new Date('2026-02-08T00:00:00.000Z'),
+    });
+    const missingNodeLink = createTaskLink({
+      id: 'missing-node-link',
+      rsipNodeId: 'missing-node',
+      chainId: 'chain-2',
+      triggerEvent: 'task_interrupted',
+      effect: 'mark_rsip_violated',
+    });
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [executableNode],
+        rsipTaskLinks: [staleDuplicate, executionLink, missingNodeLink],
+        rsipExecutionRecords: [],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      appendRSIPExecutionRecord: vi.fn(async () => undefined),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const executed = await domain.handleTaskEventIntegration({
+      event: 'task_completed',
+      chainId: 'chain-1',
+      chainKind: 'unit',
+      occurredAt: new Date('2026-03-07T18:00:00.000Z'),
+    });
+    const deduped = await domain.handleTaskEventIntegration({
+      event: 'task_completed',
+      chainId: 'chain-1',
+      chainKind: 'unit',
+      occurredAt: new Date('2026-03-07T18:00:00.000Z'),
+    });
+    const missingNodeResult = await domain.handleTaskEventIntegration({
+      event: 'task_interrupted',
+      chainId: 'chain-2',
+      chainKind: 'unit',
+      occurredAt: new Date('2026-03-07T18:00:00.000Z'),
+    });
+
+    expect(executed.find((node) => node.id === 'integration-node')).toMatchObject({
+      stabilityPhase: 'E1',
+      totalExecutions: 7,
+      consecutiveExecutions: 7,
+    });
+    expect(deduped).toEqual(executed);
+    expect(missingNodeResult).toEqual(executed);
+    expect(stateRef.getState().rsipExecutionRecords).toHaveLength(1);
+    expect(stateRef.getState().rsipExecutionRecords?.[0]).toMatchObject({
+      nodeId: 'integration-node',
+      status: 'executed',
+      sourceChainId: 'chain-1',
+      sourceEvent: 'task_completed',
+      reasonCode: 'integration_task_completed',
+    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      'RSIP',
+      'RSIP integration skipped: target node missing',
+      {
+        event: 'task_interrupted',
+        rsipNodeId: 'missing-node',
+        chainId: 'chain-2',
+      },
+    );
+  });
+
+  it('handles task integration violation effects and records collapse details', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T19:00:00.000Z'));
+    const targetNode = createNode({
+      id: 'violation-node',
+      title: 'Violation Node',
+      parentId: 'group-parent',
+      groupId: 'group-collapse',
+    });
+    const siblingNode = createNode({
+      id: 'violation-sibling',
+      parentId: 'group-parent',
+      groupId: 'group-collapse',
+    });
+    const independentNode = createNode({ id: 'safe-node' });
+    const violationLink = createTaskLink({
+      id: 'violation-link',
+      rsipNodeId: targetNode.id,
+      chainId: 'chain-violation',
+      triggerEvent: 'task_interrupted',
+      effect: 'mark_rsip_violated',
+    });
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipNodes: [targetNode, siblingNode, independentNode],
+        rsipGroups: [createGroup({ id: 'group-collapse', faultTolerance: 0 })],
+        rsipTaskLinks: [violationLink],
+        rsipMeta: {
+          currentRunNumber: 4,
+          currentRunStartedAt: new Date('2026-03-05T19:00:00.000Z'),
+        },
+        rsipRunHistory: [],
+        rsipPolicyLibrary: [],
+        rsipExecutionRecords: [],
+      }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      saveRSIPPolicyLibrary: vi.fn(async () => undefined),
+      appendRSIPExecutionRecord: vi.fn(async () => undefined),
+      saveRSIPRunHistory: vi.fn(async () => undefined),
+      saveRSIPMeta: vi.fn(async () => undefined),
+    });
+    const randomUUIDMock = vi
+      .spyOn(crypto, 'randomUUID')
+      .mockReturnValue('violation-record-id');
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    const updated = await domain.handleTaskEventIntegration({
+      event: 'task_interrupted',
+      chainId: 'chain-violation',
+      chainKind: 'unit',
+      occurredAt: new Date('2026-03-07T19:00:00.000Z'),
+    });
+
+    expect(updated).toEqual([expect.objectContaining({ id: 'safe-node' })]);
+    expect(stateRef.getState().rsipExecutionRecords?.[0]).toMatchObject({
+      id: 'violation-record-id',
+      nodeId: 'violation-node',
+      status: 'violated',
+      reasonCode: 'integration_task_interrupted',
+      sourceChainId: 'chain-violation',
+      sourceEvent: 'task_interrupted',
+    });
+    expect(stateRef.getState().rsipRunHistory?.[0]).toMatchObject({
+      runNumber: 4,
+      maxNodeCount: 3,
+      durationDays: 2,
+      collapseReason: 'integration_task_interrupted',
+      collapseNodeTitle: 'Violation Node',
+    });
+    expect(stateRef.getState().rsipMeta).toMatchObject({
+      currentRunNumber: 5,
+    });
+    randomUUIDMock.mockRestore();
+  });
+
+  it('calculates reduced failure cost for reinforced nodes', () => {
+    const domain = useRsipDomain({
+      setState: vi.fn(),
+      storage: createLocalStorageMock(),
+    });
+    const root = createNode({
+      id: 'reinforced-root',
+      stabilityPhase: 'E2',
+      reinforcementLevel: 2,
+    });
+    const child = createNode({
+      id: 'reinforced-child',
+      parentId: root.id,
+      stabilityPhase: 'E1',
+    });
+
+    expect(domain.calculateConstraintPower(root.id, [root, child])).toEqual({
+      descendantCount: 1,
+      failureCost: 1.8,
     });
   });
 });

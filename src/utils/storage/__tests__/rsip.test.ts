@@ -1,15 +1,29 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STORAGE_KEYS } from '../keys';
 import {
+  appendRSIPExecutionRecord,
+  getRSIPExecutionRecords,
+  getRSIPGroups,
   getRSIPMeta,
   getRSIPNodes,
+  getRSIPPolicyLibrary,
+  getRSIPRunHistory,
+  getRSIPTaskLinks,
+  saveRSIPGroups,
   saveRSIPMeta,
   saveRSIPNodes,
+  saveRSIPPolicyLibrary,
+  saveRSIPRunHistory,
+  saveRSIPTaskLinks,
 } from '../rsip';
 
 describe('storage/rsip', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('returns empty RSIP nodes when storage is empty', () => {
@@ -33,6 +47,47 @@ describe('storage/rsip', () => {
     const [node] = getRSIPNodes();
     expect(node.id).toBe('node-1');
     expect(node.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('hydrates optional RSIP node dates when stored as strings', () => {
+    localStorage.setItem(
+      STORAGE_KEYS.RSIP_NODES,
+      JSON.stringify([
+        {
+          id: 'node-with-optional-dates',
+          title: 'Rule',
+          rule: 'Do it',
+          sortOrder: 0,
+          createdAt: '2026-02-01T00:00:00.000Z',
+          phaseStartedAt: '2026-02-02T00:00:00.000Z',
+          lastExecutedAt: '2026-02-03T00:00:00.000Z',
+          lastViolatedAt: '2026-02-04T00:00:00.000Z',
+        },
+        {
+          id: 'node-without-optional-dates',
+          title: 'Fallback Rule',
+          rule: 'Skip it',
+          sortOrder: 1,
+          createdAt: '2026-02-01T00:00:00.000Z',
+          phaseStartedAt: 123,
+          lastExecutedAt: null,
+          lastViolatedAt: {},
+        },
+      ]),
+    );
+
+    const [node, fallbackNode] = getRSIPNodes();
+
+    expect(node.phaseStartedAt).toEqual(new Date('2026-02-02T00:00:00.000Z'));
+    expect(node.lastExecutedAt).toEqual(
+      new Date('2026-02-03T00:00:00.000Z'),
+    );
+    expect(node.lastViolatedAt).toEqual(
+      new Date('2026-02-04T00:00:00.000Z'),
+    );
+    expect(fallbackNode.phaseStartedAt).toBeUndefined();
+    expect(fallbackNode.lastExecutedAt).toBeUndefined();
+    expect(fallbackNode.lastViolatedAt).toBeUndefined();
   });
 
   it('saves RSIP nodes JSON', () => {
@@ -76,5 +131,213 @@ describe('storage/rsip', () => {
     const raw = localStorage.getItem(STORAGE_KEYS.RSIP_META);
     expect(raw).toContain('2026-02-03T00:00:00.000Z');
     expect(raw).toContain('"allowMultiplePerDay":false');
+  });
+
+  it('returns empty arrays for RSIP group/library/history/link/execution storage when missing', () => {
+    expect(getRSIPGroups()).toEqual([]);
+    expect(getRSIPPolicyLibrary()).toEqual([]);
+    expect(getRSIPRunHistory()).toEqual([]);
+    expect(getRSIPTaskLinks()).toEqual([]);
+    expect(getRSIPExecutionRecords()).toEqual([]);
+  });
+
+  it('hydrates and saves RSIP groups with createdAt fallback when date is invalid', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T09:30:00.000Z'));
+    localStorage.setItem(
+      STORAGE_KEYS.RSIP_GROUPS,
+      JSON.stringify([
+        {
+          id: 'group-valid',
+          title: 'Valid Group',
+          faultTolerance: 2,
+          createdAt: '2026-02-05T00:00:00.000Z',
+        },
+        {
+          id: 'group-fallback',
+          title: 'Fallback Group',
+          faultTolerance: 0,
+          createdAt: 'not-a-date',
+        },
+      ]),
+    );
+
+    const groups = getRSIPGroups();
+    expect(groups[0]?.createdAt).toEqual(new Date('2026-02-05T00:00:00.000Z'));
+    expect(groups[1]?.createdAt).toEqual(new Date('2026-03-07T09:30:00.000Z'));
+
+    localStorage.removeItem(STORAGE_KEYS.RSIP_GROUPS);
+    saveRSIPGroups(groups);
+    expect(localStorage.getItem(STORAGE_KEYS.RSIP_GROUPS)).toContain(
+      'group-valid',
+    );
+  });
+
+  it('hydrates and saves RSIP policy library entries with lastActiveAt fallback', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T10:00:00.000Z'));
+    localStorage.setItem(
+      STORAGE_KEYS.RSIP_POLICY_LIBRARY,
+      JSON.stringify([
+        {
+          id: 'library-valid',
+          title: 'Library Entry',
+          rule: 'Persist',
+          cumulativeExecutionDays: 12,
+          internalizationProgress: 20,
+          lastActiveAt: '2026-02-06T00:00:00.000Z',
+          timesUsed: 4,
+        },
+        {
+          id: 'library-fallback',
+          title: 'Fallback Entry',
+          rule: 'Fallback',
+          cumulativeExecutionDays: 1,
+          internalizationProgress: 2,
+          lastActiveAt: null,
+          timesUsed: 1,
+        },
+      ]),
+    );
+
+    const entries = getRSIPPolicyLibrary();
+    expect(entries[0]?.lastActiveAt).toEqual(
+      new Date('2026-02-06T00:00:00.000Z'),
+    );
+    expect(entries[1]?.lastActiveAt).toEqual(
+      new Date('2026-03-07T10:00:00.000Z'),
+    );
+
+    localStorage.removeItem(STORAGE_KEYS.RSIP_POLICY_LIBRARY);
+    saveRSIPPolicyLibrary(entries);
+    expect(localStorage.getItem(STORAGE_KEYS.RSIP_POLICY_LIBRARY)).toContain(
+      'library-valid',
+    );
+  });
+
+  it('hydrates and saves RSIP run history with endedAt preserved and invalid startedAt fallback', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T11:00:00.000Z'));
+    localStorage.setItem(
+      STORAGE_KEYS.RSIP_RUN_HISTORY,
+      JSON.stringify([
+        {
+          runNumber: 1,
+          startedAt: '2026-02-01T00:00:00.000Z',
+          endedAt: '2026-02-10T00:00:00.000Z',
+          maxNodeCount: 5,
+          durationDays: 9,
+        },
+        {
+          runNumber: 2,
+          startedAt: 'invalid-start',
+          endedAt: 'invalid-end',
+          maxNodeCount: 2,
+          durationDays: 1,
+        },
+      ]),
+    );
+
+    const records = getRSIPRunHistory();
+    expect(records[0]?.startedAt).toEqual(new Date('2026-02-01T00:00:00.000Z'));
+    expect(records[0]?.endedAt).toEqual(new Date('2026-02-10T00:00:00.000Z'));
+    expect(records[1]?.startedAt).toEqual(new Date('2026-03-07T11:00:00.000Z'));
+    expect(records[1]?.endedAt).toBeUndefined();
+
+    localStorage.removeItem(STORAGE_KEYS.RSIP_RUN_HISTORY);
+    saveRSIPRunHistory(records);
+    expect(localStorage.getItem(STORAGE_KEYS.RSIP_RUN_HISTORY)).toContain(
+      '"runNumber":1',
+    );
+  });
+
+  it('hydrates and saves RSIP task links with updatedAt fallback', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T12:00:00.000Z'));
+    localStorage.setItem(
+      STORAGE_KEYS.RSIP_TASK_LINKS,
+      JSON.stringify([
+        {
+          id: 'link-valid',
+          rsipNodeId: 'node-1',
+          chainId: 'chain-1',
+          chainKind: 'unit',
+          triggerEvent: 'task_completed',
+          effect: 'mark_rsip_executed',
+          automation: 'confirm',
+          isActive: true,
+          updatedAt: '2026-02-08T00:00:00.000Z',
+        },
+        {
+          id: 'link-fallback',
+          rsipNodeId: 'node-2',
+          chainId: 'chain-2',
+          chainKind: 'group',
+          triggerEvent: 'group_cycle_completed',
+          effect: 'mark_rsip_violated',
+          automation: 'auto',
+          isActive: false,
+          updatedAt: {},
+        },
+      ]),
+    );
+
+    const links = getRSIPTaskLinks();
+    expect(links[0]?.updatedAt).toEqual(new Date('2026-02-08T00:00:00.000Z'));
+    expect(links[1]?.updatedAt).toEqual(new Date('2026-03-07T12:00:00.000Z'));
+
+    localStorage.removeItem(STORAGE_KEYS.RSIP_TASK_LINKS);
+    saveRSIPTaskLinks(links);
+    expect(localStorage.getItem(STORAGE_KEYS.RSIP_TASK_LINKS)).toContain(
+      'link-valid',
+    );
+  });
+
+  it('hydrates execution records and appends a new record', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-07T13:00:00.000Z'));
+    localStorage.setItem(
+      STORAGE_KEYS.RSIP_EXECUTION_RECORDS,
+      JSON.stringify([
+        {
+          id: 'record-valid',
+          nodeId: 'node-1',
+          executedAt: '2026-02-09T00:00:00.000Z',
+          status: 'executed',
+        },
+        {
+          id: 'record-fallback',
+          nodeId: 'node-2',
+          executedAt: [],
+          status: 'violated',
+        },
+      ]),
+    );
+
+    const records = getRSIPExecutionRecords();
+    expect(records[0]?.executedAt).toEqual(
+      new Date('2026-02-09T00:00:00.000Z'),
+    );
+    expect(records[1]?.executedAt).toEqual(
+      new Date('2026-03-07T13:00:00.000Z'),
+    );
+
+    appendRSIPExecutionRecord({
+      id: 'record-appended',
+      nodeId: 'node-3',
+      executedAt: new Date('2026-03-07T13:30:00.000Z'),
+      status: 'skipped',
+    });
+
+    const appended = getRSIPExecutionRecords();
+    expect(appended).toHaveLength(3);
+    expect(appended[2]).toMatchObject({
+      id: 'record-appended',
+      nodeId: 'node-3',
+      status: 'skipped',
+    });
+    expect(appended[2]?.executedAt).toEqual(
+      new Date('2026-03-07T13:30:00.000Z'),
+    );
   });
 });

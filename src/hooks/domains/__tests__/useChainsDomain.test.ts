@@ -8,6 +8,7 @@ import {
   createUnitChain,
 } from '../../../test/factories';
 import { useChainsDomain } from '../useChainsDomain';
+import { useI18n } from '../../../i18n';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import { toast } from '../../../utils/toast';
 import { logger } from '../../../utils/logger';
@@ -134,6 +135,10 @@ describe('useChainsDomain', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     trMock.mockClear();
+    vi.mocked(useI18n).mockReturnValue({
+      language: 'en',
+      tr: trMock,
+    });
   });
 
   it('should open chain editor and ignore non-string parent input', () => {
@@ -216,6 +221,33 @@ describe('useChainsDomain', () => {
     expect(stateRef.getState().editingChain?.id).toBe(group.id);
   });
 
+  it('should route legacy task-group shaped chains to taskgroup editor', () => {
+    const legacyTaskGroup = {
+      ...createUnitChain({ id: 'legacy-taskgroup', name: 'Legacy Task Group' }),
+      isTaskGroup: true,
+    } as AppState['chains'][number];
+    const decoy = createUnitChain({ id: 'decoy-unit', name: 'Decoy Unit' });
+    const stateRef = createStateContainer(
+      createAppState({ chains: [decoy, legacyTaskGroup] }),
+    );
+
+    const { result } = renderHook(() =>
+      useChainsDomain({
+        state: stateRef.getState(),
+        setState: stateRef.setState,
+        storage: createLocalStorageMock(),
+        safelySaveChains: vi.fn(async () => undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.handleEditChain(legacyTaskGroup.id);
+    });
+
+    expect(stateRef.getState().currentView).toBe('taskgroup-editor');
+    expect(stateRef.getState().editingChain?.id).toBe(legacyTaskGroup.id);
+  });
+
   it('should route unit chain edit to chain editor', () => {
     const unit = createUnitChain({ id: 'unit-1', name: 'Unit 1' });
     const stateRef = createStateContainer(createAppState({ chains: [unit] }));
@@ -262,16 +294,17 @@ describe('useChainsDomain', () => {
   it('should create a new chain and persist via safelySaveChains', async () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('new-chain-id');
     const existing = createUnitChain({ id: 'existing-1', name: 'Existing' });
+    const anotherActive = createUnitChain({ id: 'existing-2', name: 'Existing 2' });
     const deleted = createUnitChain({
       id: 'deleted-1',
       name: 'Deleted',
       deletedAt: new Date(),
     });
     const stateRef = createStateContainer(
-      createAppState({ chains: [existing] }),
+      createAppState({ chains: [existing, anotherActive] }),
     );
     const storage = createLocalStorageMock({
-      getChains: vi.fn(async () => [existing, deleted]),
+      getChains: vi.fn(async () => [existing, anotherActive, deleted]),
     });
     const safelySaveChains = vi.fn(async () => undefined);
 
@@ -290,10 +323,16 @@ describe('useChainsDomain', () => {
 
     expect(safelySaveChains).toHaveBeenCalledTimes(1);
     const updated = safelySaveChains.mock.calls[0]?.[0];
-    expect(updated).toHaveLength(2);
-    expect(updated?.[1]).toMatchObject({
+    expect(updated).toHaveLength(3);
+    expect(updated?.[2]).toMatchObject({
       id: 'new-chain-id',
       name: 'Draft Chain',
+      parentId: undefined,
+      currentStreak: 0,
+      auxiliaryStreak: 0,
+      totalCompletions: 0,
+      totalFailures: 0,
+      auxiliaryFailures: 0,
     });
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
     expect(stateRef.getState().currentView).toBe('dashboard');
@@ -306,20 +345,35 @@ describe('useChainsDomain', () => {
         chainName: 'Draft Chain',
         chainType: 'unit',
         isCopy: false,
-        chainCount: 1,
+        chainCount: 2,
       }),
     );
     expect(logger.debug).toHaveBeenCalledWith(
       'CHAINS',
       'Loaded existing chains (including deleted)',
       {
-        count: 2,
+        count: 3,
       },
     );
     expect(logger.debug).toHaveBeenCalledWith('CHAINS', 'Chain counts', {
-      active: 1,
+      active: 2,
       deleted: 1,
     });
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Create chain',
+      expect.objectContaining({
+        newChainId: 'new-chain-id',
+        type: 'unit',
+      }),
+    );
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Added chain; updated active chains',
+      {
+        count: 3,
+      },
+    );
     expect(logger.debug).toHaveBeenCalledWith('CHAINS', 'Saving chains');
     expect(logger.debug).toHaveBeenCalledWith(
       'CHAINS',
@@ -416,6 +470,64 @@ describe('useChainsDomain', () => {
     expect(edited?.name).toBe('Edited Unit');
     expect(edited?.parentId).toBeUndefined();
     expect(stillUntouched).toEqual(untouched);
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Editing existing chain',
+      { chainId: editing.id },
+    );
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Edited chain; updated active chains',
+      { count: 2 },
+    );
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Edited chain snapshot',
+      {
+        chainId: editing.id,
+        name: 'Edited Unit',
+        type: 'unit',
+      },
+    );
+  });
+
+  it('should default isCopy to false when omitted and preserve a valid string parent id', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('implicit-copy-flag-id');
+    const stateRef = createStateContainer(createAppState({ chains: [] }));
+    const storage = createLocalStorageMock({
+      getChains: vi.fn(async () => []),
+    });
+    const safelySaveChains = vi.fn(async () => undefined);
+
+    const { result } = renderHook(() =>
+      useChainsDomain({
+        state: stateRef.getState(),
+        setState: stateRef.setState,
+        storage,
+        safelySaveChains,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSaveChain(
+        createUnitDraft({ parentId: 'parent-123', name: 'Implicit Copy Flag' }),
+      );
+    });
+
+    expect(safelySaveChains).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: 'implicit-copy-flag-id',
+        parentId: 'parent-123',
+        name: 'Implicit Copy Flag',
+      }),
+    ]);
+    expect(logger.debug).toHaveBeenCalledWith(
+      'CHAINS',
+      'Starting to save chain data',
+      expect.objectContaining({
+        isCopy: false,
+      }),
+    );
   });
 
   it('should convert edited group chain into unit chain by removing group-only fields', async () => {
@@ -627,9 +739,13 @@ describe('useChainsDomain', () => {
       undefined,
       expect.any(Error),
     );
-    expect(
-      (vi.mocked(logger.error).mock.calls[1]?.[1] as string).trim().length,
-    ).toBeGreaterThan(0);
+    expect(logger.error).toHaveBeenNthCalledWith(
+      2,
+      'CHAINS',
+      '重新加载数据也失败了',
+      undefined,
+      expect.any(Error),
+    );
   });
 
   it('should use generic toast message when safe detail is unavailable', async () => {
@@ -746,5 +862,51 @@ describe('useChainsDomain', () => {
     );
     expect(stateRef.getState().chains).toEqual([editing]);
     expect(logger.error).toHaveBeenCalledTimes(2);
+  });
+
+  it('should use chinese error copy when safe detail is unavailable', async () => {
+    vi.mocked(useI18n).mockReturnValue({
+      language: 'zh',
+      tr: (zh: string) => zh,
+    });
+    const editing = createUnitChain({ id: 'editing-zh', name: 'Editing Zh' });
+    const stateRef = createStateContainer(
+      createAppState({ chains: [editing], editingChain: editing }),
+    );
+    const storage = createLocalStorageMock({
+      getChains: vi.fn(async () => [editing]),
+      getActiveChains: vi.fn(async () => {
+        throw 'reload-failed';
+      }),
+    });
+    const safelySaveChains = vi.fn(async () => {
+      throw 'save-failed';
+    });
+    vi.mocked(getSafeErrorDetailFromUnknown).mockReturnValue('');
+
+    const { result } = renderHook(() =>
+      useChainsDomain({
+        state: stateRef.getState(),
+        setState: stateRef.setState,
+        storage,
+        safelySaveChains,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSaveChain(
+        createUnitDraft({ name: '中文保存失败' }),
+        false,
+      );
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('保存失败，请重试（详情见控制台）');
+    expect(logger.error).toHaveBeenNthCalledWith(
+      2,
+      'CHAINS',
+      '重新加载数据也失败了',
+      undefined,
+      expect.any(Error),
+    );
   });
 });
