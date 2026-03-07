@@ -8,6 +8,7 @@ function createStorageMock(
     kind: 'supabase',
     getChains: vi.fn().mockResolvedValue([]),
     saveChains: vi.fn().mockResolvedValue(undefined),
+    upsertChain: vi.fn().mockResolvedValue(undefined),
     getActiveChains: vi.fn().mockResolvedValue([]),
     getDeletedChains: vi.fn().mockResolvedValue([]),
     softDeleteChain: vi.fn().mockResolvedValue(undefined),

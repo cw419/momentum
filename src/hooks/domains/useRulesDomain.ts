@@ -47,12 +47,8 @@ export function useRulesDomain({
     });
   };
 
-  const persistScheduledSessions = (
-    chainId: string,
-    updatedScheduledSessions: AppState['scheduledSessions'],
-    context: string,
-  ) => {
-    storage.saveScheduledSessions(updatedScheduledSessions).catch((error) => {
+  const removeScheduledSession = (chainId: string, context: string) => {
+    storage.removeScheduledSession(chainId).catch((error) => {
       logger.error('RULES_DOMAIN', context, { chainId }, toError(error));
     });
   };
@@ -76,9 +72,8 @@ export function useRulesDomain({
       updatedChains,
       'Failed to persist chains after failure judgment',
     );
-    persistScheduledSessions(
+    removeScheduledSession(
       chainId,
-      updatedScheduledSessions,
       'Failed to persist scheduled sessions after failure judgment',
     );
 
@@ -115,9 +110,8 @@ export function useRulesDomain({
       updatedChains,
       'Failed to persist chains after allow judgment',
     );
-    persistScheduledSessions(
+    removeScheduledSession(
       chainId,
-      updatedScheduledSessions,
       'Failed to persist scheduled sessions after allow judgment',
     );
 

@@ -104,7 +104,7 @@ describe('useRecycleBinDomain', () => {
     );
 
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
     vi.mocked(realTimeSyncService.deleteWithSync).mockResolvedValue([
@@ -127,16 +127,7 @@ describe('useRecycleBinDomain', () => {
       storage,
       chain.id,
     );
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          chainId: otherChain.id,
-        }),
-      ]),
-    );
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
-      expect.objectContaining({ chainId: otherChain.id }),
-    ]);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(chain.id);
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(stateRef.getState().chains).toEqual([otherChain]);
     expect(stateRef.getState().activeSession).toBeNull();
@@ -174,7 +165,7 @@ describe('useRecycleBinDomain', () => {
     );
 
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
     vi.mocked(realTimeSyncService.deleteWithSync).mockResolvedValue([
@@ -208,7 +199,7 @@ describe('useRecycleBinDomain', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
     vi.mocked(realTimeSyncService.deleteWithSync).mockResolvedValue([
@@ -234,7 +225,7 @@ describe('useRecycleBinDomain', () => {
     const chain = createUnitChain({ id: 'chain-log-delete' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => {
+      removeScheduledSession: vi.fn(async () => {
         throw new Error('save scheduled failed');
       }),
       saveActiveSession: vi.fn(async () => {

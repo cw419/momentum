@@ -34,6 +34,20 @@ export function saveChains(chains: Chain[]): void {
   localStorage.setItem(STORAGE_KEYS.CHAINS, JSON.stringify(chains));
 }
 
+export function upsertChain(chain: Chain): void {
+  const chains = getChains();
+  const existingIndex = chains.findIndex((item) => item.id === chain.id);
+
+  if (existingIndex >= 0) {
+    const updatedChains = [...chains];
+    updatedChains.splice(existingIndex, 1, chain);
+    saveChains(updatedChains);
+    return;
+  }
+
+  saveChains([...chains, chain]);
+}
+
 export function getActiveChains(): Chain[] {
   return getChains().filter((chain) => chain.deletedAt == null);
 }

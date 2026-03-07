@@ -23,6 +23,7 @@ export const localStorageAdapter: MomentumStorage = {
   // Chains
   getChains: async () => localStorageUtils.getChains(),
   saveChains: async (chains) => localStorageUtils.saveChains(chains),
+  upsertChain: async (chain) => localStorageUtils.upsertChain(chain),
   getActiveChains: async () => localStorageUtils.getActiveChains(),
   getDeletedChains: async () => localStorageUtils.getDeletedChains(),
   softDeleteChain: async (chainId) =>

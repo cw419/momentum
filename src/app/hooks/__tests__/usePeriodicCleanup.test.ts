@@ -62,7 +62,7 @@ describe('usePeriodicCleanup', () => {
     const state = createAppState({ chains: [expiredGroup], chainsRevision: 2 });
     const setState = vi.fn();
     const storage = createLocalStorageMock({
-      saveChains: vi.fn(async () => undefined),
+      upsertChain: vi.fn(async () => undefined),
       saveScheduledSessions: vi.fn(async () => undefined),
     });
 
@@ -83,7 +83,8 @@ describe('usePeriodicCleanup', () => {
     vi.advanceTimersByTime(60000);
     await Promise.resolve();
 
-    expect(storage.saveChains).toHaveBeenCalledWith([resetGroup]);
+    expect(storage.upsertChain).toHaveBeenCalledWith(resetGroup);
+    expect(storage.saveChains).not.toHaveBeenCalled();
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
   });
 
@@ -147,7 +148,7 @@ describe('usePeriodicCleanup', () => {
   it('should not start periodic tasks before initialization', () => {
     const setState = vi.fn();
     const storage = createLocalStorageMock({
-      saveChains: vi.fn(async () => undefined),
+      upsertChain: vi.fn(async () => undefined),
       removeScheduledSession: vi.fn(async () => undefined),
     });
 
@@ -163,7 +164,7 @@ describe('usePeriodicCleanup', () => {
 
     vi.advanceTimersByTime(120000);
 
-    expect(storage.saveChains).not.toHaveBeenCalled();
+    expect(storage.upsertChain).not.toHaveBeenCalled();
     expect(storage.removeScheduledSession).not.toHaveBeenCalled();
     expect(setState).not.toHaveBeenCalled();
   });

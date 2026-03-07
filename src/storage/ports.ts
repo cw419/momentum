@@ -35,6 +35,7 @@ import type {
 export interface ChainStore {
   getChains(): Promise<Chain[]>;
   saveChains(chains: Chain[]): Promise<void>;
+  upsertChain(chain: Chain): Promise<void>;
   getActiveChains(): Promise<Chain[]>;
   getDeletedChains(): Promise<DeletedChain[]>;
   softDeleteChain(chainId: string): Promise<void>;

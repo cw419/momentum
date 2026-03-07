@@ -16,6 +16,7 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
     // Chains
     getChains: vi.fn(async () => []),
     saveChains: vi.fn(async () => undefined),
+    upsertChain: vi.fn(async () => undefined),
     getActiveChains: vi.fn(async () => []),
     getDeletedChains: vi.fn(async () => []),
     softDeleteChain: vi.fn(async () => undefined),

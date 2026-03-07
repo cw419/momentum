@@ -294,3 +294,30 @@ export async function saveChains(
     });
   }
 }
+
+export async function upsertChain(
+  ctx: SupabaseStorageContext,
+  chain: Chain,
+): Promise<void> {
+  const { user, isAuthenticated } = await ctx.waitForAuthentication(10000);
+  if (!isAuthenticated || !user) {
+    throw new Error('User authentication failed or timed out');
+  }
+
+  const rowsWithNew = [buildChainRow(chain, user.id, true)];
+  const rowsBase = [buildChainRow(chain, user.id, false)];
+  const client = ctx.getClient();
+
+  const upsertedIds = await upsertChainsWithCapabilityFallback(
+    ctx,
+    client,
+    rowsWithNew,
+    rowsBase,
+  );
+
+  if (!upsertedIds.includes(chain.id)) {
+    logger.warn('SUPABASE_STORAGE', 'Upserted chain id missing from result', {
+      chainId: chain.id,
+    });
+  }
+}

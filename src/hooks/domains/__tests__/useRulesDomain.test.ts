@@ -79,7 +79,7 @@ describe('useRulesDomain', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
     const setShowAuxiliaryJudgment = vi.fn();
@@ -109,9 +109,7 @@ describe('useRulesDomain', () => {
     expect(updatedChains?.find((item) => item.id === unaffected.id)).toEqual(
       unaffected,
     );
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
-      expect.objectContaining({ chainId: unaffected.id }),
-    ]);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(chain.id);
     expect(stateRef.getState().scheduledSessions).toEqual([
       expect.objectContaining({ chainId: unaffected.id }),
     ]);
@@ -149,7 +147,7 @@ describe('useRulesDomain', () => {
       }),
     );
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
     const setShowAuxiliaryJudgment = vi.fn();
@@ -184,9 +182,7 @@ describe('useRulesDomain', () => {
     expect(updatedChains?.find((item) => item.id === untouched.id)).toEqual(
       untouched,
     );
-    expect(storage.saveScheduledSessions).toHaveBeenCalledWith([
-      expect.objectContaining({ chainId: untouched.id }),
-    ]);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(chain.id);
     expect(stateRef.getState().chainsRevision).toBe(14);
     expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(null);
   });
@@ -195,7 +191,7 @@ describe('useRulesDomain', () => {
     const chain = createUnitChain({ id: 'chain-3' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => undefined),
+      removeScheduledSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => {
       throw new Error('save failed');
@@ -223,7 +219,7 @@ describe('useRulesDomain', () => {
     const chain = createUnitChain({ id: 'chain-3' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => {
+      removeScheduledSession: vi.fn(async () => {
         throw new Error('session save failed');
       }),
     });
@@ -264,7 +260,7 @@ describe('useRulesDomain', () => {
     const chain = createUnitChain({ id: 'chain-4' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
     const storage = createLocalStorageMock({
-      saveScheduledSessions: vi.fn(async () => {
+      removeScheduledSession: vi.fn(async () => {
         throw new Error('session save failed');
       }),
     });

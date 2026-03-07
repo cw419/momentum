@@ -4,5 +4,6 @@ export {
   restoreChain,
   saveChains,
   softDeleteChain,
+  upsertChain,
 } from './mutations';
 export { getActiveChains, getChains, getDeletedChains } from './queries';

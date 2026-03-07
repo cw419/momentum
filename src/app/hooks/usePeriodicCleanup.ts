@@ -40,25 +40,30 @@ export function usePeriodicCleanup({
     const checkExpiredGroups = () => {
       const current = stateRef.current;
       let hasChanges = false;
+      const resetChains: AppState['chains'] = [];
 
       const updatedChains = current.chains.map((chain) => {
         if (chain.type === 'group' && isGroupExpired(chain)) {
           hasChanges = true;
-          return resetGroupProgress(chain);
+          const resetChain = resetGroupProgress(chain);
+          resetChains.push(resetChain);
+          return resetChain;
         }
         return chain;
       });
 
       if (!hasChanges) return;
 
-      storage.saveChains(updatedChains).catch((error) => {
-        logger.error(
-          'PERIODIC_CLEANUP',
-          'Failed to persist group expiry cleanup',
-          undefined,
-          toError(error),
-        );
-      });
+      Promise.all(resetChains.map((chain) => storage.upsertChain(chain))).catch(
+        (error) => {
+          logger.error(
+            'PERIODIC_CLEANUP',
+            'Failed to persist group expiry cleanup',
+            undefined,
+            toError(error),
+          );
+        },
+      );
 
       setState((prev) => ({
         ...prev,

@@ -6,6 +6,7 @@ import { localStorageAdapter } from '../localStorageAdapter';
 const storageUtilsMock = vi.hoisted(() => ({
   getChains: vi.fn(async () => []),
   saveChains: vi.fn(async () => undefined),
+  upsertChain: vi.fn(async () => undefined),
   getActiveChains: vi.fn(async () => []),
   getDeletedChains: vi.fn(async () => []),
   softDeleteChain: vi.fn(async () => undefined),
@@ -143,6 +144,7 @@ describe('localStorageAdapter', () => {
     await expect(localStorageAdapter.getPetState()).resolves.toEqual(pet);
 
     await localStorageAdapter.saveChains(chains);
+    await localStorageAdapter.upsertChain(chain);
     await localStorageAdapter.softDeleteChain(chain.id);
     await localStorageAdapter.restoreChain(chain.id);
     await localStorageAdapter.permanentlyDeleteChain(chain.id);
@@ -165,6 +167,7 @@ describe('localStorageAdapter', () => {
     localStorageAdapter.clearCache();
 
     expect(storageUtilsMock.saveChains).toHaveBeenCalledWith(chains);
+    expect(storageUtilsMock.upsertChain).toHaveBeenCalledWith(chain);
     expect(storageUtilsMock.softDeleteChain).toHaveBeenCalledWith(chain.id);
     expect(storageUtilsMock.restoreChain).toHaveBeenCalledWith(chain.id);
     expect(storageUtilsMock.permanentlyDeleteChain).toHaveBeenCalledWith(

@@ -46,7 +46,7 @@ export function useRecycleBinDomain({
       const updatedActiveSession =
         state.activeSession?.chainId === chainId ? null : state.activeSession;
 
-      storage.saveScheduledSessions(updatedScheduledSessions).catch((error) => {
+      storage.removeScheduledSession(chainId).catch((error) => {
         logger.error(
           'RECYCLE_BIN',
           'Failed to persist scheduled sessions after delete',

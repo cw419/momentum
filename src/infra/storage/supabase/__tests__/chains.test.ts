@@ -8,6 +8,7 @@ import {
   permanentlyDeleteChain,
   cleanupExpiredDeletedChains,
   saveChains,
+  upsertChain,
 } from '../chains';
 import {
   createMockContext,
@@ -752,6 +753,62 @@ describe('chains.ts', () => {
       await expect(saveChains(ctx, chains)).rejects.toThrow(
         'Failed to delete extra chains',
       );
+    });
+  });
+
+  describe('upsertChain', () => {
+    it('should throw error when user authentication fails', async () => {
+      const ctx = createMockContext({ user: null, isAuthenticated: false });
+
+      await expect(upsertChain(ctx, createMockChain())).rejects.toThrow(
+        'User authentication failed or timed out',
+      );
+    });
+
+    it('should upsert a single chain without querying or deleting unrelated rows', async () => {
+      const chain = createMockChain({ id: 'chain-upsert-1' });
+      const ctx = createMockContext();
+
+      ctx.mockClient.from = vi.fn().mockImplementation(() =>
+        createMockQueryBuilder({
+          data: [{ id: chain.id }],
+          error: null,
+        }),
+      );
+      ctx.retryWithAuth = vi.fn().mockImplementation((op) => op());
+
+      await upsertChain(ctx, chain);
+
+      expect(ctx.retryWithAuth).toHaveBeenCalledTimes(1);
+      expect(ctx.mockClient.from).toHaveBeenCalledWith('chains');
+    });
+
+    it('should fallback to base columns when strict upsert columns are missing', async () => {
+      const chain = createMockChain({ id: 'chain-upsert-2' });
+      const ctx = createMockContext();
+
+      ctx.mockClient.from = vi.fn().mockImplementation(() =>
+        createMockQueryBuilder({
+          data: [{ id: chain.id }],
+          error: null,
+        }),
+      );
+
+      let retryCallCount = 0;
+      ctx.retryWithAuth = vi.fn().mockImplementation(async (op) => {
+        retryCallCount++;
+        if (retryCallCount === 1) {
+          throw createSupabaseError(
+            'PGRST204',
+            "column 'deleted_at' does not exist",
+          );
+        }
+        return op();
+      });
+
+      await upsertChain(ctx, chain);
+
+      expect(ctx.retryWithAuth).toHaveBeenCalledTimes(2);
     });
   });
 });

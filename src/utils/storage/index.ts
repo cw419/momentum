@@ -7,6 +7,7 @@ import {
   restoreChain,
   saveChains,
   softDeleteChain,
+  upsertChain,
 } from './chains';
 import {
   appendCompletionHistory,
@@ -56,6 +57,7 @@ import {
 export const storage = {
   getChains,
   saveChains,
+  upsertChain,
 
   getScheduledSessions,
   saveScheduledSessions,

@@ -198,6 +198,9 @@ export class SupabaseStorage implements MomentumStorage {
   saveChains(chains: Chain[]): Promise<void> {
     return chainsApi.saveChains(this.ctx, chains);
   }
+  upsertChain(chain: Chain): Promise<void> {
+    return chainsApi.upsertChain(this.ctx, chain);
+  }
   getActiveChains(): Promise<Chain[]> {
     return this.deduplicatedRequest('getActiveChains', () =>
       chainsApi.getActiveChains(this.ctx),

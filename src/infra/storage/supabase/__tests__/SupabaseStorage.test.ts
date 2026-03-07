@@ -23,6 +23,7 @@ const retryMocks = vi.hoisted(() => ({
 const chainsApiMocks = vi.hoisted(() => ({
   getChains: vi.fn(),
   saveChains: vi.fn(),
+  upsertChain: vi.fn(),
   getActiveChains: vi.fn(),
   getDeletedChains: vi.fn(),
   softDeleteChain: vi.fn(),
@@ -139,6 +140,7 @@ describe('supabase/SupabaseStorage', () => {
     chainsApiMocks.getActiveChains.mockResolvedValue([]);
     chainsApiMocks.getDeletedChains.mockResolvedValue([]);
     chainsApiMocks.saveChains.mockResolvedValue(undefined);
+    chainsApiMocks.upsertChain.mockResolvedValue(undefined);
     chainsApiMocks.softDeleteChain.mockResolvedValue(undefined);
     chainsApiMocks.restoreChain.mockResolvedValue(undefined);
     chainsApiMocks.permanentlyDeleteChain.mockResolvedValue(undefined);
@@ -281,6 +283,12 @@ describe('supabase/SupabaseStorage', () => {
 
     await Promise.all([storage.saveChains([]), storage.saveChains([])]);
     expect(chainsApiMocks.saveChains).toHaveBeenCalledTimes(2);
+
+    await Promise.all([
+      storage.upsertChain({ id: 'chain-1' } as never),
+      storage.upsertChain({ id: 'chain-2' } as never),
+    ]);
+    expect(chainsApiMocks.upsertChain).toHaveBeenCalledTimes(2);
   });
 
   it('wires retryOperation and retryWithAuth through SupabaseStorage context', async () => {
