@@ -38,8 +38,6 @@ export interface RSIPViewProps {
   onSaveNodes: (nodes: RSIPNode[]) => void;
   onSaveMeta: (meta: RSIPMeta) => void;
   onSaveGroups?: (groups: RSIPNodeGroup[]) => void;
-  onSavePolicyLibrary?: (entries: RSIPLibraryEntry[]) => void;
-  onSaveRunHistory?: (records: RSIPRunRecord[]) => void;
   onSaveTaskLinks?: (links: RSIPTaskLink[]) => void;
   onMarkExecuted?: (
     nodeId: string,

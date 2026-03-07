@@ -54,6 +54,13 @@ const rsipApiMocks = vi.hoisted(() => ({
   saveRSIPMeta: vi.fn(),
 }));
 
+const rsipIntentApiMocks = vi.hoisted(() => ({
+  upsertRSIPNode: vi.fn(),
+  removeRSIPNodes: vi.fn(),
+  upsertRSIPLibraryEntry: vi.fn(),
+  appendRSIPRunRecord: vi.fn(),
+}));
+
 const taskTimeApiMocks = vi.hoisted(() => ({
   getTaskTimeStats: vi.fn(),
   saveTaskTimeStats: vi.fn(),
@@ -109,6 +116,7 @@ vi.mock('../chains', () => chainsApiMocks);
 vi.mock('../sessions', () => sessionsApiMocks);
 vi.mock('../history', () => historyApiMocks);
 vi.mock('../rsip', () => rsipApiMocks);
+vi.mock('../rsipIntents', () => rsipIntentApiMocks);
 vi.mock('../taskTimeStats', () => taskTimeApiMocks);
 vi.mock('../auth', () => authApiMocks);
 vi.mock('../userSettings', () => userSettingsApiMocks);
@@ -161,6 +169,10 @@ describe('supabase/SupabaseStorage', () => {
     rsipApiMocks.saveRSIPNodes.mockResolvedValue(undefined);
     rsipApiMocks.getRSIPMeta.mockResolvedValue({});
     rsipApiMocks.saveRSIPMeta.mockResolvedValue(undefined);
+    rsipIntentApiMocks.upsertRSIPNode.mockResolvedValue(undefined);
+    rsipIntentApiMocks.removeRSIPNodes.mockResolvedValue(undefined);
+    rsipIntentApiMocks.upsertRSIPLibraryEntry.mockResolvedValue(undefined);
+    rsipIntentApiMocks.appendRSIPRunRecord.mockResolvedValue(undefined);
 
     taskTimeApiMocks.getTaskTimeStats.mockResolvedValue([]);
     taskTimeApiMocks.saveTaskTimeStats.mockResolvedValue(undefined);
@@ -256,6 +268,45 @@ describe('supabase/SupabaseStorage', () => {
     chainsApiMocks.getChains.mockResolvedValueOnce([{ id: 'chain-2' }]);
     await storage.getChains();
     expect(chainsApiMocks.getChains).toHaveBeenCalledTimes(2);
+  });
+
+  it('delegates RSIP intent writes to the RSIP intent API module', async () => {
+    const storage = new SupabaseStorage();
+    const node = {
+      id: 'node-1',
+      title: 'Node',
+      rule: 'Rule',
+      sortOrder: 0,
+      createdAt: new Date('2026-03-07T00:00:00.000Z'),
+    };
+    const entry = {
+      id: 'library-1',
+      title: 'Library',
+      rule: 'Rule',
+      cumulativeExecutionDays: 1,
+      internalizationProgress: 1,
+      lastActiveAt: new Date('2026-03-07T00:00:00.000Z'),
+      timesUsed: 1,
+    };
+    const run = {
+      runNumber: 1,
+      startedAt: new Date('2026-03-07T00:00:00.000Z'),
+      maxNodeCount: 1,
+      durationDays: 1,
+    };
+
+    await storage.upsertRSIPNode(node as never);
+    await storage.removeRSIPNodes(['node-1', 'node-2']);
+    await storage.upsertRSIPLibraryEntry(entry as never);
+    await storage.appendRSIPRunRecord(run as never);
+
+    expect(rsipIntentApiMocks.upsertRSIPNode).toHaveBeenCalledTimes(1);
+    expect(rsipIntentApiMocks.removeRSIPNodes).toHaveBeenCalledWith(
+      expect.anything(),
+      ['node-1', 'node-2'],
+    );
+    expect(rsipIntentApiMocks.upsertRSIPLibraryEntry).toHaveBeenCalledTimes(1);
+    expect(rsipIntentApiMocks.appendRSIPRunRecord).toHaveBeenCalledTimes(1);
   });
 
   it('clears pending request after rejection so subsequent calls can retry', async () => {

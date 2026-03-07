@@ -62,14 +62,18 @@ export interface HistoryStore {
 export interface RsipStore {
   getRSIPNodes(): Promise<RSIPNode[]>;
   saveRSIPNodes(nodes: RSIPNode[]): Promise<void>;
+  upsertRSIPNode(node: RSIPNode): Promise<void>;
+  removeRSIPNodes(nodeIds: string[]): Promise<void>;
   getRSIPMeta(): Promise<RSIPMeta>;
   saveRSIPMeta(meta: RSIPMeta): Promise<void>;
   getRSIPGroups(): Promise<RSIPNodeGroup[]>;
   saveRSIPGroups(groups: RSIPNodeGroup[]): Promise<void>;
   getRSIPPolicyLibrary(): Promise<RSIPLibraryEntry[]>;
   saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): Promise<void>;
+  upsertRSIPLibraryEntry(entry: RSIPLibraryEntry): Promise<void>;
   getRSIPRunHistory(): Promise<RSIPRunRecord[]>;
   saveRSIPRunHistory(records: RSIPRunRecord[]): Promise<void>;
+  appendRSIPRunRecord(record: RSIPRunRecord): Promise<void>;
   getRSIPTaskLinks(): Promise<RSIPTaskLink[]>;
   saveRSIPTaskLinks(links: RSIPTaskLink[]): Promise<void>;
   getRSIPExecutionRecords(): Promise<RSIPExecutionRecord[]>;

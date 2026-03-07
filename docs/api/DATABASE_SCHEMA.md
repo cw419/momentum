@@ -523,6 +523,7 @@ CREATE POLICY "Users can manage their own [table]"
 
 | 迁移文件                                                | 日期       | 说明                                   |
 | ------------------------------------------------------- | ---------- | -------------------------------------- |
+| `20250122000000_performance_optimization_v2.sql`        | 2025-01-22 | 旧版性能优化脚本（仓库中保留）          |
 | `20250730021823_winter_flame.sql`                       | 2025-07-30 | 初始 schema：chains, sessions, history |
 | `20250801160754_peaceful_palace.sql`                    | 2025-08-01 | 添加 parent_id, type, sort_order       |
 | `20250808000000_add_group_time_limit.sql`               | 2025-08-08 | 任务群时间限制                         |
@@ -531,13 +532,28 @@ CREATE POLICY "Users can manage their own [table]"
 | `20250814000000_add_soft_delete.sql`                    | 2025-08-14 | 软删除/回收箱                          |
 | `20250817000000_add_completion_description_notes.sql`   | 2025-08-17 | 完成描述和备注                         |
 | `20250817100000_add_timing_fields.sql`                  | 2025-08-17 | 正向计时字段                           |
+| `20250801161456_fading_sunset.sql`                      | 2025-08-01 | parent/type/sort_order 兼容性补丁      |
+| `20250817103715_add_completion_description_notes.sql`   | 2025-08-17 | description/notes 幂等补丁             |
+| `20250817110614_add_timing_fields.sql`                  | 2025-08-17 | timing 字段幂等补丁                    |
 | `20250820000000_performance_optimization.sql`           | 2025-08-20 | 性能优化索引                           |
 | `20250904000000_add_daily_checkin_system.sql`           | 2025-09-04 | 签到积分系统                           |
 | `20250905000000_add_gambling_mode_system.sql`           | 2025-09-05 | 赌注系统                               |
 | `20250905100000_fix_bet_transaction_atomicity.sql`      | 2025-09-05 | 押注事务修复                           |
 | `20250906000000_implement_universal_write_sessions.sql` | 2025-09-06 | 通用写入会话                           |
-| `20250906000001-6_*.sql`                                | 2025-09-06 | 函数冲突修复系列                       |
-| `20250122000000_performance_optimization_v2.sql`        | 2025-01-22 | 性能优化 v2                            |
+| `20250906000001_fix_function_conflicts.sql`             | 2025-09-06 | 函数命名/冲突修复                      |
+| `20250906000002_fix_bet_settlement_on_session_completion.sql` | 2025-09-06 | 会话完成时的赌注结算修复         |
+| `20250906000003_fix_betting_reward_calculation.sql`     | 2025-09-06 | 赌注奖励计算修复                      |
+| `20250906000004_fix_function_overloading_conflict.sql`  | 2025-09-06 | RPC 重载冲突修复                      |
+| `20250906000005_complete_function_conflict_fix.sql`     | 2025-09-06 | 函数冲突修复收尾                      |
+| `20250906000006_fix_create_write_session_type_mismatch.sql` | 2025-09-06 | 写入会话类型不匹配修复          |
+| `20260114000000_add_chain_repeat_and_minimum_duration.sql` | 2026-01-14 | 任务重复次数与最小时长字段       |
+| `20260123000000_optimize_rls_policy_auth_uid.sql`       | 2026-01-23 | RLS 性能与安全增强                     |
+| `20260124000000_rsip_execution_tracking.sql`            | 2026-01-24 | RSIP 稳态阶段与执行追踪字段            |
+| `20260127000000_dedupe_and_add_unique_indexes.sql`      | 2026-01-27 | scheduled/completion 去重与唯一索引    |
+| `20260208000000_rsip_process_integration.sql`           | 2026-02-08 | RSIP 分组、策略库、运行历史、任务联动  |
+| `20260211000000_schema_alignment_hotfix.sql`            | 2026-02-11 | schema 对齐热修复                      |
+| `20260223000000_migrate_points_columns_to_bigint.sql`   | 2026-02-23 | 积分字段迁移到 bigint                  |
+| `20260225000000_fix_settle_task_bet_loss_noop_transaction.sql` | 2026-02-25 | 修复输掉赌注的 0 分事务问题     |
 
 ---
 

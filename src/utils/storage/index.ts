@@ -17,6 +17,7 @@ import {
 import { getPetState, savePetState } from './pet';
 import {
   appendRSIPExecutionRecord,
+  appendRSIPRunRecord,
   getRSIPExecutionRecords,
   getRSIPGroups,
   getRSIPMeta,
@@ -24,12 +25,15 @@ import {
   getRSIPPolicyLibrary,
   getRSIPRunHistory,
   getRSIPTaskLinks,
+  removeRSIPNodes,
   saveRSIPGroups,
   saveRSIPMeta,
   saveRSIPNodes,
   saveRSIPPolicyLibrary,
   saveRSIPRunHistory,
   saveRSIPTaskLinks,
+  upsertRSIPLibraryEntry,
+  upsertRSIPNode,
 } from './rsip';
 import {
   getActiveSession,
@@ -74,6 +78,8 @@ export const storage = {
   // RSIP nodes
   getRSIPNodes,
   saveRSIPNodes,
+  upsertRSIPNode,
+  removeRSIPNodes,
 
   getRSIPMeta,
   saveRSIPMeta,
@@ -81,8 +87,10 @@ export const storage = {
   saveRSIPGroups,
   getRSIPPolicyLibrary,
   saveRSIPPolicyLibrary,
+  upsertRSIPLibraryEntry,
   getRSIPRunHistory,
   saveRSIPRunHistory,
+  appendRSIPRunRecord,
   getRSIPTaskLinks,
   saveRSIPTaskLinks,
   getRSIPExecutionRecords,

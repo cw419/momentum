@@ -25,8 +25,12 @@ const storageUtilsMock = vi.hoisted(() => ({
 
   getRSIPNodes: vi.fn(async () => []),
   saveRSIPNodes: vi.fn(async () => undefined),
+  upsertRSIPNode: vi.fn(async () => undefined),
+  removeRSIPNodes: vi.fn(async () => undefined),
   getRSIPMeta: vi.fn(async () => null),
   saveRSIPMeta: vi.fn(async () => undefined),
+  upsertRSIPLibraryEntry: vi.fn(async () => undefined),
+  appendRSIPRunRecord: vi.fn(async () => undefined),
 
   getTaskTimeStats: vi.fn(async () => []),
   saveTaskTimeStats: vi.fn(async () => undefined),
@@ -157,7 +161,24 @@ describe('localStorageAdapter', () => {
 
     await localStorageAdapter.saveCompletionHistory(history as never[]);
     await localStorageAdapter.saveRSIPNodes(rsipNodes as never[]);
+    await localStorageAdapter.upsertRSIPNode(rsipNodes[0] as never);
+    await localStorageAdapter.removeRSIPNodes(['n-1']);
     await localStorageAdapter.saveRSIPMeta(rsipMeta as never);
+    await localStorageAdapter.upsertRSIPLibraryEntry({
+      id: 'lib-1',
+      title: 'Library',
+      rule: 'Rule',
+      cumulativeExecutionDays: 1,
+      internalizationProgress: 1,
+      lastActiveAt: new Date(),
+      timesUsed: 1,
+    } as never);
+    await localStorageAdapter.appendRSIPRunRecord({
+      runNumber: 1,
+      startedAt: new Date(),
+      maxNodeCount: 1,
+      durationDays: 1,
+    } as never);
 
     await localStorageAdapter.saveTaskTimeStats(taskTimeStats as never[]);
     await localStorageAdapter.updateTaskTimeStats(chain.id, 900);
@@ -188,7 +209,11 @@ describe('localStorageAdapter', () => {
       history,
     );
     expect(storageUtilsMock.saveRSIPNodes).toHaveBeenCalledWith(rsipNodes);
+    expect(storageUtilsMock.upsertRSIPNode).toHaveBeenCalledWith(rsipNodes[0]);
+    expect(storageUtilsMock.removeRSIPNodes).toHaveBeenCalledWith(['n-1']);
     expect(storageUtilsMock.saveRSIPMeta).toHaveBeenCalledWith(rsipMeta);
+    expect(storageUtilsMock.upsertRSIPLibraryEntry).toHaveBeenCalledTimes(1);
+    expect(storageUtilsMock.appendRSIPRunRecord).toHaveBeenCalledTimes(1);
 
     expect(storageUtilsMock.saveTaskTimeStats).toHaveBeenCalledWith(
       taskTimeStats,

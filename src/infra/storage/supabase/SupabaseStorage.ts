@@ -53,6 +53,7 @@ import * as chainsApi from './chains';
 import * as checkinApi from './checkin';
 import * as historyApi from './history';
 import * as rsipApi from './rsip';
+import * as rsipIntentApi from './rsipIntents';
 import * as sessionsApi from './sessions';
 import * as taskTimeApi from './taskTimeStats';
 import * as userSettingsApi from './userSettings';
@@ -60,19 +61,10 @@ import * as userSettingsApi from './userSettings';
 export class SupabaseStorage implements MomentumStorage {
   readonly kind = 'supabase' as const;
   readonly capabilities = SUPABASE_STORAGE_CAPABILITIES;
-
   private schemaCache: Map<string, SchemaVerificationResult> = new Map();
   private sessionSchemaVerified: Set<string> = new Set();
   private schemaCapabilityCache: Map<string, SchemaCapabilityState> = new Map();
-
-  // Request deduplication: prevents multiple concurrent calls from triggering duplicate queries
   private pendingRequests: Map<string, Promise<unknown>> = new Map();
-
-  /**
-   * Deduplicates concurrent requests with the same key.
-   * If a request with the same key is already in-flight, returns the existing promise.
-   * This prevents redundant database queries when multiple components request the same data simultaneously.
-   */
   private deduplicatedRequest<T>(
     key: string,
     request: () => Promise<T>,
@@ -81,11 +73,9 @@ export class SupabaseStorage implements MomentumStorage {
     if (existing) {
       return existing as Promise<T>;
     }
-
     const promise = request().finally(() => {
       this.pendingRequests.delete(key);
     });
-
     this.pendingRequests.set(key, promise);
     return promise;
   }
@@ -117,8 +107,6 @@ export class SupabaseStorage implements MomentumStorage {
       const cached = this.schemaCache.get(cacheKey);
       if (cached) return cached;
     }
-
-    // Keep schema verification conservative: avoid information_schema access in production.
     const result: SchemaVerificationResult = {
       hasAllColumns: true,
       missingColumns: [],
@@ -188,8 +176,6 @@ export class SupabaseStorage implements MomentumStorage {
       this.markSchemaCapabilityAvailable(tableName, capabilityName),
     clearSchemaCache: () => this.clearSchemaCache(),
   };
-
-  // Chains (with request deduplication for read operations)
   getChains(): Promise<Chain[]> {
     return this.deduplicatedRequest('getChains', () =>
       chainsApi.getChains(this.ctx),
@@ -223,8 +209,6 @@ export class SupabaseStorage implements MomentumStorage {
   cleanupExpiredDeletedChains(olderThanDays?: number): Promise<number> {
     return chainsApi.cleanupExpiredDeletedChains(this.ctx, olderThanDays);
   }
-
-  // Scheduled sessions (with request deduplication for read operations)
   getScheduledSessions(): Promise<ScheduledSession[]> {
     return this.deduplicatedRequest('getScheduledSessions', () =>
       sessionsApi.getScheduledSessions(this.ctx),
@@ -239,8 +223,6 @@ export class SupabaseStorage implements MomentumStorage {
   removeScheduledSession(chainId: string): Promise<void> {
     return sessionsApi.removeScheduledSession(this.ctx, chainId);
   }
-
-  // Active session (with request deduplication for read operations)
   getActiveSession(): Promise<ActiveSession | null> {
     return this.deduplicatedRequest('getActiveSession', () =>
       sessionsApi.getActiveSession(this.ctx),
@@ -249,8 +231,6 @@ export class SupabaseStorage implements MomentumStorage {
   saveActiveSession(session: ActiveSession | null): Promise<void> {
     return sessionsApi.saveActiveSession(this.ctx, session);
   }
-
-  // Completion history (with request deduplication for read operations)
   getCompletionHistory(): Promise<CompletionHistory[]> {
     return this.deduplicatedRequest('getCompletionHistory', () =>
       historyApi.getCompletionHistory(this.ctx),
@@ -262,8 +242,6 @@ export class SupabaseStorage implements MomentumStorage {
   appendCompletionHistory(record: CompletionHistory): Promise<void> {
     return historyApi.appendCompletionHistory(this.ctx, record);
   }
-
-  // RSIP (with request deduplication for read operations)
   getRSIPNodes(): Promise<RSIPNode[]> {
     return this.deduplicatedRequest('getRSIPNodes', () =>
       rsipApi.getRSIPNodes(this.ctx),
@@ -271,6 +249,12 @@ export class SupabaseStorage implements MomentumStorage {
   }
   saveRSIPNodes(nodes: RSIPNode[]): Promise<void> {
     return rsipApi.saveRSIPNodes(this.ctx, nodes);
+  }
+  upsertRSIPNode(node: RSIPNode): Promise<void> {
+    return rsipIntentApi.upsertRSIPNode(this.ctx, node);
+  }
+  removeRSIPNodes(nodeIds: string[]): Promise<void> {
+    return rsipIntentApi.removeRSIPNodes(this.ctx, nodeIds);
   }
   getRSIPMeta(): Promise<RSIPMeta> {
     return this.deduplicatedRequest('getRSIPMeta', () =>
@@ -296,6 +280,9 @@ export class SupabaseStorage implements MomentumStorage {
   saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): Promise<void> {
     return rsipApi.saveRSIPPolicyLibrary(this.ctx, entries);
   }
+  upsertRSIPLibraryEntry(entry: RSIPLibraryEntry): Promise<void> {
+    return rsipIntentApi.upsertRSIPLibraryEntry(this.ctx, entry);
+  }
   getRSIPRunHistory(): Promise<RSIPRunRecord[]> {
     return this.deduplicatedRequest('getRSIPRunHistory', () =>
       rsipApi.getRSIPRunHistory(this.ctx),
@@ -303,6 +290,9 @@ export class SupabaseStorage implements MomentumStorage {
   }
   saveRSIPRunHistory(records: RSIPRunRecord[]): Promise<void> {
     return rsipApi.saveRSIPRunHistory(this.ctx, records);
+  }
+  appendRSIPRunRecord(record: RSIPRunRecord): Promise<void> {
+    return rsipIntentApi.appendRSIPRunRecord(this.ctx, record);
   }
   getRSIPTaskLinks(): Promise<RSIPTaskLink[]> {
     return this.deduplicatedRequest('getRSIPTaskLinks', () =>
@@ -320,8 +310,6 @@ export class SupabaseStorage implements MomentumStorage {
   appendRSIPExecutionRecord(record: RSIPExecutionRecord): Promise<void> {
     return rsipApi.appendRSIPExecutionRecord(this.ctx, record);
   }
-
-  // Task time stats
   getTaskTimeStats(): Promise<TaskTimeStats[]> {
     return taskTimeApi.getTaskTimeStats();
   }
@@ -337,8 +325,6 @@ export class SupabaseStorage implements MomentumStorage {
   getTaskAverageTime(chainId: string): Promise<number | null> {
     return taskTimeApi.getTaskAverageTime(chainId);
   }
-
-  // Compatibility / maintenance
   async migrateCompletionHistoryForTiming(): Promise<void> {
     try {
       const [history, chains] = await Promise.all([
@@ -354,11 +340,8 @@ export class SupabaseStorage implements MomentumStorage {
         await this.saveCompletionHistory(updatedHistory);
       }
     } catch {
-      // ignore
     }
   }
-
-  // Auth (supabase)
   getCurrentUser(): Promise<Result<AuthUser | null, AppError>> {
     return authApi.getCurrentUser();
   }
@@ -384,8 +367,6 @@ export class SupabaseStorage implements MomentumStorage {
   ): Result<() => void, AppError> {
     return authApi.onAuthStateChange(callback);
   }
-
-  // User settings (supabase)
   getGamblingSettings(): Promise<Result<GamblingSettings, AppError>> {
     return userSettingsApi.getGamblingSettings(this.ctx);
   }
@@ -395,8 +376,6 @@ export class SupabaseStorage implements MomentumStorage {
   isGamblingModeEnabled(): Promise<Result<boolean, AppError>> {
     return userSettingsApi.isGamblingModeEnabled(this.ctx);
   }
-
-  // Betting (supabase)
   createBettingSession(
     chainId: string,
     duration: number,
@@ -429,16 +408,12 @@ export class SupabaseStorage implements MomentumStorage {
   getTodayBetAmount(): Promise<Result<number, AppError>> {
     return bettingApi.getTodayBetAmount(this.ctx);
   }
-
-  // Daily check-in (supabase)
   performDailyCheckin(): Promise<Result<CheckinResult, AppError>> {
     return checkinApi.performDailyCheckin(this.ctx);
   }
   getUserCheckinStats(): Promise<Result<CheckinStats, AppError>> {
     return checkinApi.getUserCheckinStats(this.ctx);
   }
-
-  // Pet (uses localStorage for now, could be extended to Supabase in the future)
   async getPetState(): Promise<PetState | null> {
     return localStorageUtils.getPetState();
   }

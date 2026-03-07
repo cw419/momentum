@@ -41,6 +41,24 @@ export function saveRSIPNodes(nodes: RSIPNode[]): void {
   localStorage.setItem(STORAGE_KEYS.RSIP_NODES, JSON.stringify(nodes));
 }
 
+export function upsertRSIPNode(node: RSIPNode): void {
+  const current = getRSIPNodes();
+  const next = current.filter((existingNode) => existingNode.id !== node.id);
+  next.push(node);
+  saveRSIPNodes(next.sort((left, right) => left.sortOrder - right.sortOrder));
+}
+
+export function removeRSIPNodes(nodeIds: string[]): void {
+  if (nodeIds.length === 0) {
+    return;
+  }
+
+  const nodeIdSet = new Set(nodeIds);
+  saveRSIPNodes(
+    getRSIPNodes().filter((node) => !nodeIdSet.has(node.id)),
+  );
+}
+
 export function getRSIPMeta(): RSIPMeta {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_META);
   if (!data) return {};
@@ -129,6 +147,13 @@ export function saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): void {
   );
 }
 
+export function upsertRSIPLibraryEntry(entry: RSIPLibraryEntry): void {
+  const current = getRSIPPolicyLibrary();
+  const next = current.filter((existingEntry) => existingEntry.id !== entry.id);
+  next.push(entry);
+  saveRSIPPolicyLibrary(next);
+}
+
 export function getRSIPRunHistory(): RSIPRunRecord[] {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_RUN_HISTORY);
   if (!data) return [];
@@ -142,6 +167,10 @@ export function getRSIPRunHistory(): RSIPRunRecord[] {
 
 export function saveRSIPRunHistory(records: RSIPRunRecord[]): void {
   localStorage.setItem(STORAGE_KEYS.RSIP_RUN_HISTORY, JSON.stringify(records));
+}
+
+export function appendRSIPRunRecord(record: RSIPRunRecord): void {
+  saveRSIPRunHistory([record, ...getRSIPRunHistory()]);
 }
 
 export function getRSIPTaskLinks(): RSIPTaskLink[] {

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STORAGE_KEYS } from '../keys';
 import {
   appendRSIPExecutionRecord,
+  appendRSIPRunRecord,
   getRSIPExecutionRecords,
   getRSIPGroups,
   getRSIPMeta,
@@ -9,12 +10,15 @@ import {
   getRSIPPolicyLibrary,
   getRSIPRunHistory,
   getRSIPTaskLinks,
+  removeRSIPNodes,
   saveRSIPGroups,
   saveRSIPMeta,
   saveRSIPNodes,
   saveRSIPPolicyLibrary,
   saveRSIPRunHistory,
   saveRSIPTaskLinks,
+  upsertRSIPLibraryEntry,
+  upsertRSIPNode,
 } from '../rsip';
 
 describe('storage/rsip', () => {
@@ -102,6 +106,46 @@ describe('storage/rsip', () => {
     ]);
 
     expect(localStorage.getItem(STORAGE_KEYS.RSIP_NODES)).toContain('node-2');
+  });
+
+  it('upserts and removes RSIP nodes incrementally', () => {
+    saveRSIPNodes([
+      {
+        id: 'node-1',
+        title: 'Original',
+        rule: 'Keep',
+        sortOrder: 0,
+        createdAt: new Date('2026-02-01T00:00:00.000Z'),
+      },
+      {
+        id: 'node-2',
+        title: 'Second',
+        rule: 'Remove me',
+        sortOrder: 1,
+        createdAt: new Date('2026-02-02T00:00:00.000Z'),
+      },
+    ]);
+
+    upsertRSIPNode({
+      id: 'node-1',
+      title: 'Updated',
+      rule: 'Keep updated',
+      sortOrder: 0,
+      createdAt: new Date('2026-02-01T00:00:00.000Z'),
+    });
+    upsertRSIPNode({
+      id: 'node-3',
+      title: 'Third',
+      rule: 'Added',
+      sortOrder: 2,
+      createdAt: new Date('2026-02-03T00:00:00.000Z'),
+    });
+    removeRSIPNodes(['node-2']);
+
+    expect(getRSIPNodes()).toEqual([
+      expect.objectContaining({ id: 'node-1', title: 'Updated' }),
+      expect.objectContaining({ id: 'node-3', title: 'Third' }),
+    ]);
   });
 
   it('returns default empty meta when storage is missing', () => {
@@ -215,6 +259,44 @@ describe('storage/rsip', () => {
     );
   });
 
+  it('upserts RSIP policy library entries incrementally', () => {
+    saveRSIPPolicyLibrary([
+      {
+        id: 'library-1',
+        title: 'Original entry',
+        rule: 'Original rule',
+        cumulativeExecutionDays: 10,
+        internalizationProgress: 16.67,
+        lastActiveAt: new Date('2026-02-06T00:00:00.000Z'),
+        timesUsed: 1,
+      },
+    ]);
+
+    upsertRSIPLibraryEntry({
+      id: 'library-1',
+      title: 'Updated entry',
+      rule: 'Updated rule',
+      cumulativeExecutionDays: 12,
+      internalizationProgress: 20,
+      lastActiveAt: new Date('2026-03-07T10:00:00.000Z'),
+      timesUsed: 2,
+    });
+    upsertRSIPLibraryEntry({
+      id: 'library-2',
+      title: 'Second entry',
+      rule: 'Second rule',
+      cumulativeExecutionDays: 4,
+      internalizationProgress: 6.67,
+      lastActiveAt: new Date('2026-03-07T11:00:00.000Z'),
+      timesUsed: 1,
+    });
+
+    expect(getRSIPPolicyLibrary()).toEqual([
+      expect.objectContaining({ id: 'library-1', title: 'Updated entry' }),
+      expect.objectContaining({ id: 'library-2', title: 'Second entry' }),
+    ]);
+  });
+
   it('hydrates and saves RSIP run history with endedAt preserved and invalid startedAt fallback', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-07T11:00:00.000Z'));
@@ -249,6 +331,31 @@ describe('storage/rsip', () => {
     expect(localStorage.getItem(STORAGE_KEYS.RSIP_RUN_HISTORY)).toContain(
       '"runNumber":1',
     );
+  });
+
+  it('appends RSIP run records to the front of history', () => {
+    saveRSIPRunHistory([
+      {
+        runNumber: 1,
+        startedAt: new Date('2026-02-01T00:00:00.000Z'),
+        endedAt: new Date('2026-02-02T00:00:00.000Z'),
+        maxNodeCount: 3,
+        durationDays: 1,
+      },
+    ]);
+
+    appendRSIPRunRecord({
+      runNumber: 2,
+      startedAt: new Date('2026-03-07T12:00:00.000Z'),
+      endedAt: new Date('2026-03-08T12:00:00.000Z'),
+      maxNodeCount: 5,
+      durationDays: 1,
+    });
+
+    expect(getRSIPRunHistory()).toEqual([
+      expect.objectContaining({ runNumber: 2 }),
+      expect.objectContaining({ runNumber: 1 }),
+    ]);
   });
 
   it('hydrates and saves RSIP task links with updatedAt fallback', () => {

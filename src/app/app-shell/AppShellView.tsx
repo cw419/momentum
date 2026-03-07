@@ -37,8 +37,6 @@ export function AppShellView({
   saveRSIPNodes,
   saveRSIPMeta,
   saveRSIPGroups,
-  saveRSIPPolicyLibrary,
-  saveRSIPRunHistory,
   saveRSIPTaskLinks,
   markRSIPExecuted,
   markRSIPViolated,
@@ -232,8 +230,6 @@ export function AppShellView({
               onSaveNodes={saveRSIPNodes}
               onSaveMeta={saveRSIPMeta}
               onSaveGroups={saveRSIPGroups}
-              onSavePolicyLibrary={saveRSIPPolicyLibrary}
-              onSaveRunHistory={saveRSIPRunHistory}
               onSaveTaskLinks={saveRSIPTaskLinks}
               onMarkExecuted={markRSIPExecuted}
               onMarkViolated={markRSIPViolated}

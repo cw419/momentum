@@ -58,6 +58,9 @@ export const localStorageAdapter: MomentumStorage = {
   // RSIP
   getRSIPNodes: async () => localStorageUtils.getRSIPNodes(),
   saveRSIPNodes: async (nodes) => localStorageUtils.saveRSIPNodes(nodes),
+  upsertRSIPNode: async (node) => localStorageUtils.upsertRSIPNode(node),
+  removeRSIPNodes: async (nodeIds) =>
+    localStorageUtils.removeRSIPNodes(nodeIds),
   getRSIPMeta: async () => localStorageUtils.getRSIPMeta(),
   saveRSIPMeta: async (meta) => localStorageUtils.saveRSIPMeta(meta),
   getRSIPGroups: async () => localStorageUtils.getRSIPGroups(),
@@ -65,9 +68,13 @@ export const localStorageAdapter: MomentumStorage = {
   getRSIPPolicyLibrary: async () => localStorageUtils.getRSIPPolicyLibrary(),
   saveRSIPPolicyLibrary: async (entries) =>
     localStorageUtils.saveRSIPPolicyLibrary(entries),
+  upsertRSIPLibraryEntry: async (entry) =>
+    localStorageUtils.upsertRSIPLibraryEntry(entry),
   getRSIPRunHistory: async () => localStorageUtils.getRSIPRunHistory(),
   saveRSIPRunHistory: async (records) =>
     localStorageUtils.saveRSIPRunHistory(records),
+  appendRSIPRunRecord: async (record) =>
+    localStorageUtils.appendRSIPRunRecord(record),
   getRSIPTaskLinks: async () => localStorageUtils.getRSIPTaskLinks(),
   saveRSIPTaskLinks: async (links) =>
     localStorageUtils.saveRSIPTaskLinks(links),
