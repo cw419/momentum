@@ -38,6 +38,7 @@ import type {
 } from '../../../types';
 import type { PetState } from '../../../types/pet';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
+import { SUPABASE_STORAGE_CAPABILITIES } from '../../../storage/ports';
 import { migrateCompletionHistoryForTiming } from '../../../utils/completionHistoryTimingMigration';
 import { storage as localStorageUtils } from '../../../utils/storage';
 import { retryOperation, retryWithAuth } from './retry';
@@ -58,6 +59,7 @@ import * as userSettingsApi from './userSettings';
 
 export class SupabaseStorage implements MomentumStorage {
   readonly kind = 'supabase' as const;
+  readonly capabilities = SUPABASE_STORAGE_CAPABILITIES;
 
   private schemaCache: Map<string, SchemaVerificationResult> = new Map();
   private sessionSchemaVerified: Set<string> = new Set();

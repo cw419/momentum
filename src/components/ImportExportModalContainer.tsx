@@ -18,6 +18,7 @@ import {
   type ImportExportImportOptions,
   type MomentumExportDataV3,
 } from '../services/ImportExportService';
+import { hasStorageCapability } from '../storage/ports';
 import { useStorage } from '../storage/useStorage';
 import { logger } from '../utils/logger';
 import { useI18n, type Language } from '../i18n';
@@ -31,7 +32,7 @@ async function ensureAuthenticatedForImport(
   storage: ReturnType<typeof useStorage>,
   tr: (zh: string, en: string) => string,
 ) {
-  if (storage.kind !== 'supabase') return;
+  if (!hasStorageCapability(storage, 'auth')) return;
 
   const authResult = await storage.waitForAuthentication(10000);
   if (
@@ -141,7 +142,7 @@ export const ImportExportModalContainer: React.FC<
 }) => {
   const { language, tr } = useI18n();
   const storage = useStorage();
-  const isSupabase = storage.kind === 'supabase';
+  const canUseAuth = hasStorageCapability(storage, 'auth');
   const capabilityCenter = getPlatformCapabilityCenter();
 
   const [activeTab, setActiveTab] = useState<'export' | 'import'>(
@@ -214,7 +215,7 @@ export const ImportExportModalContainer: React.FC<
       setImportStatus('checking-auth');
       setImportError('');
 
-      if (isSupabase) await ensureAuthenticatedForImport(storage, tr);
+      if (canUseAuth) await ensureAuthenticatedForImport(storage, tr);
 
       setImportStatus('creating-session');
 
@@ -280,9 +281,9 @@ export const ImportExportModalContainer: React.FC<
       setImportStatus('error');
     }
   }, [
+    canUseAuth,
     importData,
     importOptions,
-    isSupabase,
     language,
     onClose,
     onImport,

@@ -14,6 +14,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { BetPlacementResult } from '../../domain/betting';
 import { useStorage } from '../../storage/useStorage';
+import { hasStorageCapability } from '../../storage/ports';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorMessage';
 import { isDev } from '../../utils/env';
@@ -42,6 +43,7 @@ export function useBettingDomain({
   handleStartChain,
 }: UseBettingDomainParams) {
   const storage = useStorage();
+  const canUseBetting = hasStorageCapability(storage, 'betting');
 
   const handleBetPlaced = async (betResult: BetPlacementResult) => {
     if (isDev) {
@@ -61,7 +63,7 @@ export function useBettingDomain({
   };
 
   const handleBetCancelled = async () => {
-    if (currentSessionId && storage.kind === 'supabase') {
+    if (currentSessionId && canUseBetting) {
       try {
         const result = await storage.deleteBettingSession(currentSessionId);
         if (!result.ok) {

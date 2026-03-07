@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
+import { hasStorageCapability } from '../../storage/ports';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
 
@@ -27,9 +28,10 @@ export function useAuthController({
 }: UseAuthControllerParams): AuthControllerResult {
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const prevAuthUserIdRef = useRef<string | null>(null);
+  const canUseAuth = hasStorageCapability(storage, 'auth');
 
   useEffect(() => {
-    if (storage.kind !== 'supabase') {
+    if (!canUseAuth) {
       setAuthUserId(null);
       prevAuthUserIdRef.current = null;
       return;
@@ -62,9 +64,9 @@ export function useAuthController({
     }
 
     return () => unsubscribeResult.value();
-  }, [storage, resetAppState, setState]);
+  }, [canUseAuth, storage, resetAppState, setState]);
 
-  const isAuthReady = storage.kind !== 'supabase' || Boolean(authUserId);
+  const isAuthReady = !canUseAuth || Boolean(authUserId);
 
   return {
     authUserId,

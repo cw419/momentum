@@ -334,6 +334,10 @@ describe('rsip.ts', () => {
       await saveRSIPNodes(ctx, nodes);
 
       expect(upsert).toHaveBeenCalledTimes(2);
+      expect(ctx.markSchemaCapabilityMissing).toHaveBeenCalledWith(
+        'rsip_nodes',
+        'consecutive_executions',
+      );
 
       const firstPayload = upsert.mock.calls[0]?.[0] as Record<
         string,
@@ -394,6 +398,10 @@ describe('rsip.ts', () => {
       // First save: strict upsert fails then fallback succeeds (2 calls)
       // Second save: should only use basic payload (1 call)
       expect(upsert).toHaveBeenCalledTimes(3);
+      expect(ctx.isSchemaCapabilityMissing).toHaveBeenCalledWith(
+        'rsip_nodes',
+        'consecutive_executions',
+      );
 
       const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<
         string,
@@ -668,6 +676,14 @@ describe('rsip.ts', () => {
       // First save: strict upsert fails then fallback succeeds (2 calls)
       // Second save: should only use basic payload (1 call)
       expect(upsert).toHaveBeenCalledTimes(3);
+      expect(ctx.markSchemaCapabilityMissing).toHaveBeenCalledWith(
+        'rsip_meta',
+        'last_tree_opened_at',
+      );
+      expect(ctx.isSchemaCapabilityMissing).toHaveBeenCalledWith(
+        'rsip_meta',
+        'last_tree_opened_at',
+      );
 
       const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<
         string,

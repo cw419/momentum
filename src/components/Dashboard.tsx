@@ -20,6 +20,7 @@ import type {
   RSIPTaskLink,
 } from '../types';
 import type { PetState } from '../types/pet';
+import { hasStorageCapability } from '../storage/ports';
 import { useStorage } from '../storage/useStorage';
 import { useStorageMode } from '../storage/useStorageMode';
 import { useI18n } from '../i18n';
@@ -175,7 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
     const { canUseSupabase, isChoicePending, setMode, dismissFirstLaunchHint } =
       useStorageMode();
     const { t, tr, language } = useI18n();
-    const isSupabase = storage.kind === 'supabase';
+    const canUseCheckin = hasStorageCapability(storage, 'checkin');
 
     // Only log in development mode to improve production performance
     if (isDev) {
@@ -371,7 +372,7 @@ export const Dashboard: React.FC<DashboardProps> = React.memo(
           {/* Daily Check-in Section - lazy loaded */}
           <div className="mb-12 animate-fade-in">
             <Suspense fallback={<CheckinPlaceholder />}>
-              {isSupabase ? (
+              {canUseCheckin ? (
                 <DailyCheckin className="mx-auto max-w-2xl" />
               ) : (
                 <DailyCheckinDemo className="mx-auto max-w-2xl" />

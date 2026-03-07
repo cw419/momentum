@@ -14,6 +14,11 @@ erDiagram
     auth_users ||--o{ completion_history : "owns"
     auth_users ||--o{ rsip_nodes : "owns"
     auth_users ||--|| rsip_meta : "has"
+    auth_users ||--o{ rsip_groups : "owns"
+    auth_users ||--o{ rsip_policy_library : "owns"
+    auth_users ||--o{ rsip_run_history : "owns"
+    auth_users ||--o{ rsip_execution_records : "owns"
+    auth_users ||--o{ rsip_task_links : "owns"
     auth_users ||--|| user_points : "has"
     auth_users ||--|| user_settings : "has"
     auth_users ||--o{ daily_checkins : "owns"
@@ -29,6 +34,10 @@ erDiagram
     active_sessions ||--o| task_bets : "has bet"
 
     rsip_nodes ||--o{ rsip_nodes : "parent-child"
+    rsip_groups ||--o{ rsip_nodes : "groups"
+    rsip_nodes ||--o{ rsip_execution_records : "records"
+    rsip_nodes ||--o{ rsip_task_links : "links"
+    chains ||--o{ rsip_task_links : "linked from"
 ```
 
 ---
@@ -158,35 +167,172 @@ erDiagram
 
 递归稳态迭代协议的规则节点。
 
-| 字段            | 类型        | 约束                      | 说明          |
-| --------------- | ----------- | ------------------------- | ------------- |
-| `id`            | uuid        | PK                        | 主键          |
-| `user_id`       | uuid        | FK → auth.users, NOT NULL | 所属用户      |
-| `parent_id`     | uuid        | FK → rsip_nodes(id)       | 父节点        |
-| `title`         | text        | NOT NULL                  | 国策/定式名称 |
-| `rule`          | text        | NOT NULL                  | 规则描述      |
-| `sort_order`    | integer     | NOT NULL, DEFAULT 0       | 排序          |
-| `use_timer`     | boolean     | NOT NULL, DEFAULT false   | 是否使用计时  |
-| `timer_minutes` | integer     |                           | 计时分钟数    |
-| `emoji`         | text        |                           | 展示图标      |
-| `type`          | text        |                           | 国策类型      |
-| `created_at`    | timestamptz | NOT NULL, DEFAULT now()   | 创建时间      |
+| 字段                         | 类型        | 约束                                      | 说明                          |
+| ---------------------------- | ----------- | ----------------------------------------- | ----------------------------- |
+| `id`                         | uuid        | PK                                        | 主键                          |
+| `user_id`                    | uuid        | FK → auth.users, NOT NULL                 | 所属用户                      |
+| `parent_id`                  | uuid        | FK → rsip_nodes(id)                       | 父节点                        |
+| `group_id`                   | uuid        | FK → rsip_groups(id), ON DELETE SET NULL  | 所属国策组                    |
+| `title`                      | text        | NOT NULL                                  | 国策/定式名称                 |
+| `rule`                       | text        | NOT NULL                                  | 规则描述                      |
+| `sort_order`                 | integer     | NOT NULL, DEFAULT 0                       | 排序                          |
+| `use_timer`                  | boolean     | NOT NULL, DEFAULT false                   | 是否使用计时                  |
+| `timer_minutes`              | integer     |                                           | 计时分钟数                    |
+| `emoji`                      | text        |                                           | 展示图标                      |
+| `type`                       | text        |                                           | 国策类型                      |
+| `reinforcement_level`        | integer     | NOT NULL, DEFAULT 0                       | 当前强化等级                  |
+| `max_reinforcement_level`    | integer     | NOT NULL, DEFAULT 0                       | 历史最高强化等级              |
+| `cumulative_execution_days`  | integer     | NOT NULL, DEFAULT 0                       | 累积执行天数                  |
+| `is_passive`                 | boolean     | NOT NULL, DEFAULT false                   | 是否为被动型规则              |
+| `split_from_goal`            | text        |                                           | 该节点拆分自的上层目标        |
+| `stability_phase`            | text        | DEFAULT 'E0', CHECK IN ('E0','E1','E2')   | 稳态阶段                      |
+| `phase_started_at`           | timestamptz |                                           | 当前阶段开始时间              |
+| `last_executed_at`           | timestamptz |                                           | 最近执行时间                  |
+| `last_violated_at`           | timestamptz |                                           | 最近违规时间                  |
+| `consecutive_executions`     | integer     | DEFAULT 0                                 | 连续执行次数                  |
+| `consecutive_violations`     | integer     | DEFAULT 0                                 | 连续违规次数                  |
+| `total_executions`           | integer     | DEFAULT 0                                 | 总执行次数                    |
+| `total_violations`           | integer     | DEFAULT 0                                 | 总违规次数                    |
+| `created_at`                 | timestamptz | NOT NULL, DEFAULT now()                   | 创建时间                      |
 
 **索引**：
 
 - `idx_rsip_nodes_user` (user_id)
 - `idx_rsip_nodes_parent` (parent_id)
 - `idx_rsip_nodes_sort` (sort_order)
+- `idx_rsip_nodes_group_id` (group_id)
+- `idx_rsip_nodes_reinforcement` (reinforcement_level)
+- `idx_rsip_nodes_is_passive` (is_passive)
+- `idx_rsip_nodes_stability_phase` (stability_phase)
+- `idx_rsip_nodes_last_executed` (last_executed_at DESC)
 
 ### rsip_meta（RSIP 元数据）
 
 每用户一条的 RSIP 配置。
 
-| 字段                     | 类型        | 约束                    | 说明         |
-| ------------------------ | ----------- | ----------------------- | ------------ |
-| `user_id`                | uuid        | PK, FK → auth.users     | 用户 ID      |
-| `last_added_at`          | timestamptz |                         | 最近添加时间 |
-| `allow_multiple_per_day` | boolean     | NOT NULL, DEFAULT false | 允许每日多条 |
+| 字段                       | 类型        | 约束                    | 说明                 |
+| -------------------------- | ----------- | ----------------------- | -------------------- |
+| `user_id`                  | uuid        | PK, FK → auth.users     | 用户 ID              |
+| `last_added_at`            | timestamptz |                         | 最近添加时间         |
+| `allow_multiple_per_day`   | boolean     | NOT NULL, DEFAULT false | 允许每日多条         |
+| `last_tree_opened_at`      | timestamptz |                         | 最近打开 RSIP 树时间 |
+| `daily_tree_open_required` | boolean     | DEFAULT false           | 是否要求每日先开树   |
+| `tree_open_streak`         | integer     | DEFAULT 0               | 连续开树天数         |
+| `current_run_number`       | integer     |                         | 当前运行轮次         |
+| `current_run_started_at`   | timestamptz |                         | 当前轮开始时间       |
+
+---
+
+### rsip_groups（RSIP 国策组）
+
+规则节点的逻辑分组，用于容错和批量管理。
+
+| 字段               | 类型        | 约束                            | 说明         |
+| ------------------ | ----------- | ------------------------------- | ------------ |
+| `id`               | uuid        | PK, DEFAULT gen_random_uuid()   | 主键         |
+| `user_id`          | uuid        | FK → auth.users, NOT NULL       | 所属用户     |
+| `title`            | text        | NOT NULL                        | 组名称       |
+| `fault_tolerance`  | integer     | NOT NULL, DEFAULT 0, CHECK >= 0 | 容错值       |
+| `emoji`            | text        |                                 | 组图标       |
+| `created_at`       | timestamptz | NOT NULL, DEFAULT now()         | 创建时间     |
+| `updated_at`       | timestamptz | NOT NULL, DEFAULT now()         | 更新时间     |
+
+**索引**：
+
+- `idx_rsip_groups_user` (user_id)
+- `idx_rsip_groups_created` (user_id, created_at DESC)
+
+### rsip_policy_library（RSIP 策略库）
+
+已归档的规则模板库，用于复用成熟策略。
+
+| 字段                         | 类型         | 约束                            | 说明             |
+| ---------------------------- | ------------ | ------------------------------- | ---------------- |
+| `user_id`                    | uuid         | PK(part), FK → auth.users       | 用户 ID          |
+| `id`                         | uuid         | PK(part)                        | 策略 ID          |
+| `title`                      | text         | NOT NULL                        | 标题             |
+| `rule`                       | text         | NOT NULL                        | 规则内容         |
+| `type`                       | text         |                                 | 策略类型         |
+| `emoji`                      | text         |                                 | 展示图标         |
+| `cumulative_execution_days`  | integer      | NOT NULL, DEFAULT 0             | 累积执行天数     |
+| `internalization_progress`   | numeric(5,2) | NOT NULL, DEFAULT 0, CHECK 0-100| 内化进度         |
+| `last_active_at`             | timestamptz  | NOT NULL, DEFAULT now()         | 最近活跃时间     |
+| `times_used`                 | integer      | NOT NULL, DEFAULT 0             | 复用次数         |
+| `use_timer`                  | boolean      | NOT NULL, DEFAULT false         | 是否启用计时     |
+| `timer_minutes`              | integer      |                                 | 计时分钟数       |
+| `is_passive`                 | boolean      | NOT NULL, DEFAULT false         | 是否被动型       |
+| `updated_at`                 | timestamptz  | NOT NULL, DEFAULT now()         | 更新时间         |
+
+**索引**：
+
+- `idx_rsip_policy_library_user_updated` (user_id, updated_at DESC)
+
+### rsip_run_history（RSIP 运行历史）
+
+记录每一轮 RSIP 运行的起止和塌缩上下文。
+
+| 字段                  | 类型        | 约束                        | 说明               |
+| --------------------- | ----------- | --------------------------- | ------------------ |
+| `user_id`             | uuid        | PK(part), FK → auth.users   | 用户 ID            |
+| `run_number`          | integer     | PK(part), CHECK > 0         | 运行轮次           |
+| `started_at`          | timestamptz | NOT NULL                    | 开始时间           |
+| `ended_at`            | timestamptz |                             | 结束时间           |
+| `max_node_count`      | integer     | NOT NULL, DEFAULT 0         | 轮次内最大节点数   |
+| `duration_days`       | integer     | NOT NULL, DEFAULT 0         | 持续天数           |
+| `collapse_reason`     | text        |                             | 塌缩原因           |
+| `collapse_node_title` | text        |                             | 触发塌缩的节点标题 |
+| `updated_at`          | timestamptz | NOT NULL, DEFAULT now()     | 更新时间           |
+
+**索引**：
+
+- `idx_rsip_run_history_user` (user_id, run_number DESC)
+
+### rsip_execution_records（RSIP 执行记录）
+
+记录节点执行、违规和修复上下文。
+
+| 字段              | 类型        | 约束                                                       | 说明             |
+| ----------------- | ----------- | ---------------------------------------------------------- | ---------------- |
+| `id`              | uuid        | PK, DEFAULT gen_random_uuid()                              | 主键             |
+| `user_id`         | uuid        | FK → auth.users, NOT NULL                                  | 所属用户         |
+| `node_id`         | uuid        | FK → rsip_nodes(id), NOT NULL                              | 关联 RSIP 节点   |
+| `executed_at`     | timestamptz | NOT NULL, DEFAULT now()                                    | 事件时间         |
+| `status`          | text        | NOT NULL, CHECK IN ('pending','executed','violated','skipped') | 事件状态     |
+| `notes`           | text        |                                                            | 备注             |
+| `reason_code`     | text        |                                                            | 原因代码         |
+| `repair_hint`     | text        |                                                            | 修复建议         |
+| `source_chain_id` | uuid        | FK → chains(id)                                            | 来源任务链       |
+| `source_event`    | text        |                                                            | 来源事件         |
+| `created_at`      | timestamptz | NOT NULL, DEFAULT now()                                    | 创建时间         |
+
+**索引**：
+
+- `idx_rsip_execution_records_user` (user_id)
+- `idx_rsip_execution_records_node` (node_id)
+- `idx_rsip_execution_records_date` (executed_at DESC)
+- `idx_rsip_execution_records_status` (status)
+
+### rsip_task_links（RSIP 任务联动）
+
+定义 RSIP 节点和普通任务链之间的触发与联动效果。
+
+| 字段            | 类型        | 约束                                                                                     | 说明         |
+| --------------- | ----------- | ---------------------------------------------------------------------------------------- | ------------ |
+| `id`            | uuid        | PK, DEFAULT gen_random_uuid()                                                            | 主键         |
+| `user_id`       | uuid        | FK → auth.users, NOT NULL                                                                | 所属用户     |
+| `rsip_node_id`  | uuid        | FK → rsip_nodes(id), NOT NULL                                                            | RSIP 节点    |
+| `chain_id`      | uuid        | FK → chains(id), NOT NULL                                                                | 关联任务链   |
+| `chain_kind`    | text        | NOT NULL, CHECK IN ('group','unit')                                                      | 任务链类型   |
+| `trigger_event` | text        | NOT NULL, CHECK IN ('task_completed','task_interrupted','group_cycle_completed','rsip_mark_executed') | 触发事件 |
+| `effect`        | text        | NOT NULL, CHECK IN ('mark_rsip_executed','mark_rsip_violated','prompt_start_chain','prompt_schedule_chain') | 联动效果 |
+| `automation`    | text        | NOT NULL, DEFAULT 'confirm', CHECK IN ('auto','confirm')                                 | 自动化策略   |
+| `is_active`     | boolean     | NOT NULL, DEFAULT true                                                                   | 是否启用     |
+| `updated_at`    | timestamptz | NOT NULL, DEFAULT now()                                                                  | 更新时间     |
+
+**索引 / 约束**：
+
+- `uq_rsip_task_links_key` (user_id, rsip_node_id, chain_id, trigger_event, effect) UNIQUE
+- `idx_rsip_task_links_user` (user_id, updated_at DESC)
 
 ---
 

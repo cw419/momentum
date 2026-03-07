@@ -231,6 +231,13 @@ export interface Database {
           timer_minutes: number | null;
           created_at: string;
           emoji: string | null;
+          type: string | null;
+          group_id: string | null;
+          reinforcement_level: number;
+          max_reinforcement_level: number;
+          cumulative_execution_days: number;
+          is_passive: boolean;
+          split_from_goal: string | null;
           stability_phase: 'E0' | 'E1' | 'E2' | null;
           phase_started_at: string | null;
           last_executed_at: string | null;
@@ -251,6 +258,13 @@ export interface Database {
           timer_minutes?: number | null;
           created_at?: string;
           emoji?: string | null;
+          type?: string | null;
+          group_id?: string | null;
+          reinforcement_level?: number;
+          max_reinforcement_level?: number;
+          cumulative_execution_days?: number;
+          is_passive?: boolean;
+          split_from_goal?: string | null;
           stability_phase?: 'E0' | 'E1' | 'E2' | null;
           phase_started_at?: string | null;
           last_executed_at?: string | null;
@@ -271,6 +285,13 @@ export interface Database {
           timer_minutes?: number | null;
           created_at?: string;
           emoji?: string | null;
+          type?: string | null;
+          group_id?: string | null;
+          reinforcement_level?: number;
+          max_reinforcement_level?: number;
+          cumulative_execution_days?: number;
+          is_passive?: boolean;
+          split_from_goal?: string | null;
           stability_phase?: 'E0' | 'E1' | 'E2' | null;
           phase_started_at?: string | null;
           last_executed_at?: string | null;
@@ -290,6 +311,8 @@ export interface Database {
           last_tree_opened_at: string | null;
           daily_tree_open_required: boolean | null;
           tree_open_streak: number | null;
+          current_run_number: number | null;
+          current_run_started_at: string | null;
         };
         Insert: {
           user_id: string;
@@ -298,6 +321,8 @@ export interface Database {
           last_tree_opened_at?: string | null;
           daily_tree_open_required?: boolean | null;
           tree_open_streak?: number | null;
+          current_run_number?: number | null;
+          current_run_started_at?: string | null;
         };
         Update: {
           user_id?: string;
@@ -306,6 +331,8 @@ export interface Database {
           last_tree_opened_at?: string | null;
           daily_tree_open_required?: boolean | null;
           tree_open_streak?: number | null;
+          current_run_number?: number | null;
+          current_run_started_at?: string | null;
         };
         Relationships: [];
       };
@@ -317,6 +344,10 @@ export interface Database {
           executed_at: string;
           status: 'pending' | 'executed' | 'violated' | 'skipped';
           notes: string | null;
+          reason_code: string | null;
+          repair_hint: string | null;
+          source_chain_id: string | null;
+          source_event: string | null;
           created_at: string;
         };
         Insert: {
@@ -326,6 +357,10 @@ export interface Database {
           executed_at?: string;
           status: 'pending' | 'executed' | 'violated' | 'skipped';
           notes?: string | null;
+          reason_code?: string | null;
+          repair_hint?: string | null;
+          source_chain_id?: string | null;
+          source_event?: string | null;
           created_at?: string;
         };
         Update: {
@@ -335,7 +370,167 @@ export interface Database {
           executed_at?: string;
           status?: 'pending' | 'executed' | 'violated' | 'skipped';
           notes?: string | null;
+          reason_code?: string | null;
+          repair_hint?: string | null;
+          source_chain_id?: string | null;
+          source_event?: string | null;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      rsip_groups: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          fault_tolerance: number;
+          emoji: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          fault_tolerance?: number;
+          emoji?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          fault_tolerance?: number;
+          emoji?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      rsip_policy_library: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          rule: string;
+          type: string | null;
+          emoji: string | null;
+          cumulative_execution_days: number;
+          internalization_progress: number;
+          last_active_at: string;
+          times_used: number;
+          use_timer: boolean;
+          timer_minutes: number | null;
+          is_passive: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          user_id: string;
+          title: string;
+          rule: string;
+          type?: string | null;
+          emoji?: string | null;
+          cumulative_execution_days?: number;
+          internalization_progress?: number;
+          last_active_at?: string;
+          times_used?: number;
+          use_timer?: boolean;
+          timer_minutes?: number | null;
+          is_passive?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          rule?: string;
+          type?: string | null;
+          emoji?: string | null;
+          cumulative_execution_days?: number;
+          internalization_progress?: number;
+          last_active_at?: string;
+          times_used?: number;
+          use_timer?: boolean;
+          timer_minutes?: number | null;
+          is_passive?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      rsip_run_history: {
+        Row: {
+          user_id: string;
+          run_number: number;
+          started_at: string;
+          ended_at: string | null;
+          max_node_count: number;
+          duration_days: number;
+          collapse_reason: string | null;
+          collapse_node_title: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          run_number: number;
+          started_at: string;
+          ended_at?: string | null;
+          max_node_count?: number;
+          duration_days?: number;
+          collapse_reason?: string | null;
+          collapse_node_title?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          run_number?: number;
+          started_at?: string;
+          ended_at?: string | null;
+          max_node_count?: number;
+          duration_days?: number;
+          collapse_reason?: string | null;
+          collapse_node_title?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      rsip_task_links: {
+        Row: {
+          id: string;
+          user_id: string;
+          rsip_node_id: string;
+          chain_id: string;
+          chain_kind: string;
+          trigger_event: string;
+          effect: string;
+          automation: string;
+          is_active: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          rsip_node_id: string;
+          chain_id: string;
+          chain_kind: string;
+          trigger_event: string;
+          effect: string;
+          automation?: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          rsip_node_id?: string;
+          chain_id?: string;
+          chain_kind?: string;
+          trigger_event?: string;
+          effect?: string;
+          automation?: string;
+          is_active?: boolean;
+          updated_at?: string;
         };
         Relationships: [];
       };

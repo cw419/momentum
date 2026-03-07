@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStorage } from '../storage/useStorage';
+import { hasStorageCapability } from '../storage/ports';
 import { logger } from '../utils/logger';
 import {
   Eye,
@@ -36,10 +37,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   const storage = useStorage();
+  const canUseAuth = hasStorageCapability(storage, 'auth');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (storage.kind !== 'supabase') return;
+    if (!canUseAuth) return;
 
     setLoading(true);
     setError(null);

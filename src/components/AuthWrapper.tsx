@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { AuthUser } from '../domain/auth';
 import { useStorage } from '../storage/useStorage';
+import { hasStorageCapability } from '../storage/ports';
 import { useStorageMode } from '../storage/useStorageMode';
 import { logger } from '../utils/logger';
 import { AuthForm } from './AuthForm';
@@ -21,13 +22,14 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'intro' | 'auth'>('intro');
   const [initialIsSignUp, setInitialIsSignUp] = useState(false);
+  const canUseAuth = hasStorageCapability(storage, 'auth');
 
   const handleSwitchToLocalMode = useCallback(() => {
     setMode('local');
   }, [setMode]);
 
   useEffect(() => {
-    if (storage.kind !== 'supabase') {
+    if (!canUseAuth) {
       setUser(null);
       setLoading(false);
       return;
@@ -71,9 +73,9 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
         unsubscribeResult.value();
       }
     };
-  }, [storage]);
+  }, [canUseAuth, storage]);
 
-  if (storage.kind !== 'supabase') {
+  if (!canUseAuth) {
     return <>{children}</>;
   }
 

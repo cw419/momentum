@@ -1,6 +1,12 @@
 import type { ActiveSession, ScheduledSession } from '../../../types';
 import type { SupabaseStorageContext } from './types';
 import type { Database } from '../../../lib/database.types';
+import {
+  hasKnownMissingCapabilities,
+  isMissingSchemaCapabilityError,
+  markCapabilitiesAvailable,
+  markCapabilitiesMissing,
+} from './schemaCapabilities';
 import { formatSupabaseError } from './supabaseError';
 import { mapActiveSessionRow } from './sessionMapper';
 
@@ -19,34 +25,37 @@ const FORWARD_TIMER_CAPABILITIES = [
 function hasKnownMissingForwardTimerCapabilities(
   ctx: SupabaseStorageContext,
 ): boolean {
-  return FORWARD_TIMER_CAPABILITIES.some((capabilityName) =>
-    ctx.isSchemaCapabilityMissing(ACTIVE_SESSIONS_TABLE, capabilityName),
+  return hasKnownMissingCapabilities(
+    ctx,
+    ACTIVE_SESSIONS_TABLE,
+    FORWARD_TIMER_CAPABILITIES,
   );
 }
 
 function markForwardTimerCapabilitiesMissing(
   ctx: SupabaseStorageContext,
 ): void {
-  FORWARD_TIMER_CAPABILITIES.forEach((capabilityName) =>
-    ctx.markSchemaCapabilityMissing(ACTIVE_SESSIONS_TABLE, capabilityName),
-  );
+  markCapabilitiesMissing(ctx, ACTIVE_SESSIONS_TABLE, FORWARD_TIMER_CAPABILITIES);
 }
 
 function markForwardTimerCapabilitiesAvailable(
   ctx: SupabaseStorageContext,
 ): void {
-  FORWARD_TIMER_CAPABILITIES.forEach((capabilityName) =>
-    ctx.markSchemaCapabilityAvailable(ACTIVE_SESSIONS_TABLE, capabilityName),
+  markCapabilitiesAvailable(
+    ctx,
+    ACTIVE_SESSIONS_TABLE,
+    FORWARD_TIMER_CAPABILITIES,
   );
 }
 
-function isMissingForwardTimerCapabilityError(
-  errorCode: string,
-  errorMessage: string,
-): boolean {
+function isMissingForwardTimerCapabilityError(error: unknown): boolean {
+  if (!isMissingSchemaCapabilityError(error)) {
+    return false;
+  }
+
+  const errorMessage = formatSupabaseError(error, '').toLowerCase();
+
   return (
-    errorCode === '42703' ||
-    errorCode === 'PGRST204' ||
     errorMessage.includes('is_forward_timer') ||
     errorMessage.includes('forward_elapsed_time')
   );
@@ -94,8 +103,7 @@ function buildPrimaryActiveSessionPayload(
 }
 
 function shouldFallbackToBasicActiveSessionPayload(
-  errorCode: string | undefined,
-  errorMessage: string,
+  error: unknown,
   shouldIncludeForwardFields: boolean,
   shouldSkipForwardFields: boolean,
 ): boolean {
@@ -103,7 +111,7 @@ function shouldFallbackToBasicActiveSessionPayload(
     return false;
   }
 
-  return isMissingForwardTimerCapabilityError(errorCode ?? '', errorMessage);
+  return isMissingForwardTimerCapabilityError(error);
 }
 
 export async function getScheduledSessions(
@@ -225,9 +233,7 @@ export async function getActiveSession(
 
     if (!error) return null;
 
-    const errorMessage = error.message ?? '';
-    const errorCode = error.code ?? '';
-    if (!isMissingForwardTimerCapabilityError(errorCode, errorMessage)) {
+    if (!isMissingForwardTimerCapabilityError(error)) {
       return null;
     }
 
@@ -290,13 +296,9 @@ export async function saveActiveSession(
     return;
   }
 
-  const errorMessage = error.message || 'Failed to persist active session';
-  const errorCode = error.code;
-
   if (
     shouldFallbackToBasicActiveSessionPayload(
-      errorCode,
-      errorMessage,
+      error,
       shouldIncludeForwardFields,
       shouldSkipForwardFields,
     )
@@ -313,5 +315,7 @@ export async function saveActiveSession(
     return;
   }
 
-  throw new Error(formatSupabaseError(error, errorMessage));
+  throw new Error(
+    formatSupabaseError(error, 'Failed to persist active session'),
+  );
 }

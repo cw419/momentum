@@ -11,6 +11,12 @@
 import type { SupabaseStorageContext } from './types';
 import type { Database } from '../../../lib/database.types';
 import { buildRSIPNodeRows } from './rsipPayloadBuilder';
+import {
+  cacheMissingCapabilitiesFromError,
+  hasKnownMissingCapabilities,
+  isMissingSchemaCapabilityError,
+  markCapabilitiesAvailable,
+} from './schemaCapabilities';
 
 type RSIPNodeRow = Database['public']['Tables']['rsip_nodes']['Row'];
 type RSIPMetaRow = Database['public']['Tables']['rsip_meta']['Row'];
@@ -44,27 +50,38 @@ type OrderedRowsClient = {
   };
 };
 
-const RSIP_NODES_STRICT_COLUMNS_SUPPORTED = new WeakMap<
-  SupabaseStorageContext,
-  boolean
->();
-const RSIP_META_STRICT_COLUMNS_SUPPORTED = new WeakMap<
-  SupabaseStorageContext,
-  boolean
->();
+const RSIP_NODES_TABLE = 'rsip_nodes';
+const RSIP_META_TABLE = 'rsip_meta';
+
+const RSIP_NODE_STRICT_CAPABILITIES = [
+  'emoji',
+  'type',
+  'group_id',
+  'reinforcement_level',
+  'max_reinforcement_level',
+  'cumulative_execution_days',
+  'is_passive',
+  'split_from_goal',
+  'stability_phase',
+  'phase_started_at',
+  'last_executed_at',
+  'last_violated_at',
+  'consecutive_executions',
+  'consecutive_violations',
+  'total_executions',
+  'total_violations',
+] as const;
+
+const RSIP_META_STRICT_CAPABILITIES = [
+  'last_tree_opened_at',
+  'daily_tree_open_required',
+  'tree_open_streak',
+  'current_run_number',
+  'current_run_started_at',
+] as const;
 
 function isSchemaMissing(error: SupabaseLikeError): boolean {
-  const code = error.code ?? '';
-  const message = error.message ?? '';
-
-  return (
-    code === '42703' ||
-    code === 'PGRST204' ||
-    code === '42P01' ||
-    message.includes('schema cache') ||
-    message.includes('does not exist') ||
-    message.includes('Could not find')
-  );
+  return isMissingSchemaCapabilityError(error);
 }
 
 function isMissingRSIPNodeStrictColumns(error: SupabaseLikeError): boolean {
@@ -206,8 +223,6 @@ export async function getRSIPNodes(
   if (error) return [];
 
   return (data || []).map((row: RSIPNodeRow) => {
-    const rowAny = row as unknown as Record<string, unknown>;
-
     return {
       id: row.id,
       parentId: row.parent_id || undefined,
@@ -217,27 +232,22 @@ export async function getRSIPNodes(
       createdAt: new Date(row.created_at),
       useTimer: row.use_timer ?? false,
       timerMinutes: row.timer_minutes ?? undefined,
-      emoji: (rowAny.emoji as string | null) ?? undefined,
-      type: (rowAny.type as string | null) ?? undefined,
-      groupId: (rowAny.group_id as string | null) ?? undefined,
-      reinforcementLevel:
-        (rowAny.reinforcement_level as number | null) ?? undefined,
-      maxReinforcementLevel:
-        (rowAny.max_reinforcement_level as number | null) ?? undefined,
-      cumulativeExecutionDays:
-        (rowAny.cumulative_execution_days as number | null) ?? undefined,
-      isPassive: (rowAny.is_passive as boolean | null) ?? undefined,
-      splitFromGoal: (rowAny.split_from_goal as string | null) ?? undefined,
-      stabilityPhase: (rowAny.stability_phase as RSIPStabilityPhase) || 'E0',
-      phaseStartedAt: asDate(rowAny.phase_started_at),
-      lastExecutedAt: asDate(rowAny.last_executed_at),
-      lastViolatedAt: asDate(rowAny.last_violated_at),
-      consecutiveExecutions:
-        (rowAny.consecutive_executions as number | null) ?? 0,
-      consecutiveViolations:
-        (rowAny.consecutive_violations as number | null) ?? 0,
-      totalExecutions: (rowAny.total_executions as number | null) ?? 0,
-      totalViolations: (rowAny.total_violations as number | null) ?? 0,
+      emoji: row.emoji ?? undefined,
+      type: row.type ?? undefined,
+      groupId: row.group_id ?? undefined,
+      reinforcementLevel: row.reinforcement_level ?? undefined,
+      maxReinforcementLevel: row.max_reinforcement_level ?? undefined,
+      cumulativeExecutionDays: row.cumulative_execution_days ?? undefined,
+      isPassive: row.is_passive ?? undefined,
+      splitFromGoal: row.split_from_goal ?? undefined,
+      stabilityPhase: (row.stability_phase as RSIPStabilityPhase) ?? 'E0',
+      phaseStartedAt: asDate(row.phase_started_at),
+      lastExecutedAt: asDate(row.last_executed_at),
+      lastViolatedAt: asDate(row.last_violated_at),
+      consecutiveExecutions: row.consecutive_executions ?? 0,
+      consecutiveViolations: row.consecutive_violations ?? 0,
+      totalExecutions: row.total_executions ?? 0,
+      totalViolations: row.total_violations ?? 0,
     };
   });
 }
@@ -250,7 +260,11 @@ export async function saveRSIPNodes(
   if (!user) return;
 
   const client = ctx.getClient();
-  const strictColumnsSupported = RSIP_NODES_STRICT_COLUMNS_SUPPORTED.get(ctx);
+  const shouldSkipStrictColumns = hasKnownMissingCapabilities(
+    ctx,
+    RSIP_NODES_TABLE,
+    RSIP_NODE_STRICT_CAPABILITIES,
+  );
 
   const rows = buildRSIPNodeRows(nodes, user.id, { strict: true });
   const rowsBasic = buildRSIPNodeRows(nodes, user.id, { strict: false });
@@ -278,13 +292,17 @@ export async function saveRSIPNodes(
     }
   }
 
-  const primaryRows = strictColumnsSupported === false ? rowsBasic : rows;
+  const primaryRows = shouldSkipStrictColumns ? rowsBasic : rows;
   const { error } = await client
-    .from('rsip_nodes')
+    .from(RSIP_NODES_TABLE)
     .upsert(primaryRows, { onConflict: 'id' });
   if (!error) {
-    if (strictColumnsSupported == null && primaryRows === rows) {
-      RSIP_NODES_STRICT_COLUMNS_SUPPORTED.set(ctx, true);
+    if (!shouldSkipStrictColumns) {
+      markCapabilitiesAvailable(
+        ctx,
+        RSIP_NODES_TABLE,
+        RSIP_NODE_STRICT_CAPABILITIES,
+      );
     }
     return;
   }
@@ -297,10 +315,16 @@ export async function saveRSIPNodes(
     throw new Error(`Failed to save RSIP nodes: ${error.message}`);
   }
 
-  RSIP_NODES_STRICT_COLUMNS_SUPPORTED.set(ctx, false);
+  cacheMissingCapabilitiesFromError(
+    ctx,
+    RSIP_NODES_TABLE,
+    RSIP_NODE_STRICT_CAPABILITIES,
+    error,
+    { markAllOnSchemaError: true },
+  );
 
   const { error: fallbackError } = await client
-    .from('rsip_nodes')
+    .from(RSIP_NODES_TABLE)
     .upsert(rowsBasic, { onConflict: 'id' });
   if (fallbackError) {
     throw new Error(`Failed to save RSIP nodes: ${fallbackError.message}`);
@@ -322,18 +346,16 @@ export async function getRSIPMeta(
   if (error || !data || data.length === 0) return {};
 
   const row = data[0] as RSIPMetaRow;
-  const rowAny = row as unknown as Record<string, unknown>;
   return {
     lastAddedAt: row.last_added_at ? new Date(row.last_added_at) : undefined,
     allowMultiplePerDay: !!row.allow_multiple_per_day,
-    lastTreeOpenedAt: rowAny.last_tree_opened_at
-      ? new Date(rowAny.last_tree_opened_at as string)
+    lastTreeOpenedAt: row.last_tree_opened_at
+      ? new Date(row.last_tree_opened_at)
       : undefined,
-    dailyTreeOpenRequired:
-      (rowAny.daily_tree_open_required as boolean) ?? false,
-    treeOpenStreak: (rowAny.tree_open_streak as number) ?? 0,
-    currentRunNumber: (rowAny.current_run_number as number | null) ?? undefined,
-    currentRunStartedAt: asDate(rowAny.current_run_started_at),
+    dailyTreeOpenRequired: row.daily_tree_open_required ?? false,
+    treeOpenStreak: row.tree_open_streak ?? 0,
+    currentRunNumber: row.current_run_number ?? undefined,
+    currentRunStartedAt: asDate(row.current_run_started_at),
   };
 }
 
@@ -345,7 +367,11 @@ export async function saveRSIPMeta(
   if (!user) return;
 
   const client = ctx.getClient();
-  const strictColumnsSupported = RSIP_META_STRICT_COLUMNS_SUPPORTED.get(ctx);
+  const shouldSkipStrictColumns = hasKnownMissingCapabilities(
+    ctx,
+    RSIP_META_TABLE,
+    RSIP_META_STRICT_CAPABILITIES,
+  );
 
   const baseData = {
     user_id: user.id,
@@ -362,9 +388,9 @@ export async function saveRSIPMeta(
     current_run_started_at: meta.currentRunStartedAt?.toISOString() ?? null,
   };
 
-  if (strictColumnsSupported === false) {
+  if (shouldSkipStrictColumns) {
     const { error } = await client
-      .from('rsip_meta')
+      .from(RSIP_META_TABLE)
       .upsert(baseData, { onConflict: 'user_id' });
     if (error) {
       throw new Error(`Failed to save RSIP meta: ${error.message}`);
@@ -373,20 +399,32 @@ export async function saveRSIPMeta(
   }
 
   const { error } = await client
-    .from('rsip_meta')
+    .from(RSIP_META_TABLE)
     .upsert(fullData, { onConflict: 'user_id' });
 
   if (!error) {
-    RSIP_META_STRICT_COLUMNS_SUPPORTED.set(ctx, true);
+    markCapabilitiesAvailable(
+      ctx,
+      RSIP_META_TABLE,
+      RSIP_META_STRICT_CAPABILITIES,
+    );
     return;
   }
 
-  if (isMissingRSIPMetaStrictColumns(error)) {
-    RSIP_META_STRICT_COLUMNS_SUPPORTED.set(ctx, false);
+  if (!isMissingRSIPMetaStrictColumns(error)) {
+    throw new Error(`Failed to save RSIP meta: ${error.message}`);
   }
 
+  cacheMissingCapabilitiesFromError(
+    ctx,
+    RSIP_META_TABLE,
+    RSIP_META_STRICT_CAPABILITIES,
+    error,
+    { markAllOnSchemaError: true },
+  );
+
   const { error: fallbackError } = await client
-    .from('rsip_meta')
+    .from(RSIP_META_TABLE)
     .upsert(baseData, { onConflict: 'user_id' });
 
   if (fallbackError) {

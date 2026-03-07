@@ -9,6 +9,7 @@ import type {
   BetPlacementResult,
 } from '../domain/betting';
 import type { GamblingSettings } from '../domain/userSettings';
+import { hasStorageCapability } from '../storage/ports';
 import { useStorage } from '../storage/useStorage';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
@@ -58,6 +59,7 @@ export function useBettingModal({
 }: UseBettingModalOptions) {
   const storage = useStorage();
   const { language, tr } = useI18n();
+  const canUseBetting = hasStorageCapability(storage, 'betting');
 
   // 状态
   const [betAmount, setBetAmount] = useState<string>('');
@@ -75,7 +77,7 @@ export function useBettingModal({
   // 加载初始数据
   const loadData = useCallback(async () => {
     if (!isOpen) return;
-    if (storage.kind !== 'supabase') {
+    if (!canUseBetting) {
       setIsLoading(false);
       setError(
         tr(
@@ -162,7 +164,7 @@ export function useBettingModal({
     } finally {
       setIsLoading(false);
     }
-  }, [isOpen, language, storage, tr]);
+  }, [canUseBetting, isOpen, language, storage, tr]);
 
   // 验证押注金额
   const validateBetAmount = useCallback(
@@ -240,7 +242,7 @@ export function useBettingModal({
       return;
     }
 
-    if (storage.kind !== 'supabase') {
+    if (!canUseBetting) {
       setError(
         tr(
           '当前存储不支持押注功能',
@@ -324,6 +326,7 @@ export function useBettingModal({
     onBetPlaced,
     validateBetAmount,
     storage,
+    canUseBetting,
     language,
     tr,
   ]);

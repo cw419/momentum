@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
+import { hasStorageCapability } from '../../storage/ports';
 import { fireAndForget } from '../../utils/fireAndForget';
 import { migrateCompletionHistoryForTiming } from '../../utils/completionHistoryTimingMigration';
 import { toError } from '../../utils/errorMessage';
@@ -27,6 +28,7 @@ export function useAppDataLoad({
   setState,
 }: UseAppDataLoadParams) {
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const canUseAuth = hasStorageCapability(storage, 'auth');
 
   useEffect(() => {
     const loadData = async () => {
@@ -36,7 +38,7 @@ export function useAppDataLoad({
       setIsLoadingData(true);
 
       try {
-        if (storage.kind === 'supabase') {
+        if (canUseAuth) {
           const authResult = await storage.waitForAuthentication(10000);
           if (!authResult.ok) {
             logger.warn(
@@ -308,7 +310,7 @@ export function useAppDataLoad({
     } else {
       setIsLoadingData(false);
     }
-  }, [storage, isInitialized, setState]);
+  }, [canUseAuth, storage, isInitialized, setState]);
 
   return { isLoadingData };
 }

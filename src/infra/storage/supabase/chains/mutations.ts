@@ -3,7 +3,12 @@ import type { Database } from '../../../../lib/database.types';
 import { toError } from '../../../../utils/errorMessage';
 import { logger } from '../../../../utils/logger';
 import { buildChainRow } from '../mappers';
-import { formatSupabaseError, getSupabaseErrorCode } from '../supabaseError';
+import {
+  cacheMissingCapabilitiesFromError,
+  hasKnownMissingCapabilities,
+  isMissingSchemaCapabilityError,
+  markCapabilitiesAvailable,
+} from '../schemaCapabilities';
 import type { SupabaseStorageContext } from '../types';
 import { findChainAndChildren, formatDbError } from './internal';
 import { getChains } from './queries';
@@ -25,95 +30,34 @@ const CHAINS_STRICT_CAPABILITIES = [
 ] as const;
 
 function shouldSkipChainsStrictUpsert(ctx: SupabaseStorageContext): boolean {
-  return CHAINS_STRICT_CAPABILITIES.some((capabilityName) =>
-    ctx.isSchemaCapabilityMissing(CHAINS_TABLE, capabilityName),
-  );
-}
-
-function markChainsStrictCapabilitiesMissing(
-  ctx: SupabaseStorageContext,
-): void {
-  CHAINS_STRICT_CAPABILITIES.forEach((capabilityName) =>
-    ctx.markSchemaCapabilityMissing(CHAINS_TABLE, capabilityName),
+  return hasKnownMissingCapabilities(
+    ctx,
+    CHAINS_TABLE,
+    CHAINS_STRICT_CAPABILITIES,
   );
 }
 
 function markChainsStrictCapabilitiesAvailable(
   ctx: SupabaseStorageContext,
 ): void {
-  CHAINS_STRICT_CAPABILITIES.forEach((capabilityName) =>
-    ctx.markSchemaCapabilityAvailable(CHAINS_TABLE, capabilityName),
-  );
-}
-
-function extractMissingColumnName(message: string): string | null {
-  const patterns = [
-    /column ['"]?([a-z0-9_]+)['"]?/i,
-    /could not find the ['"]([a-z0-9_]+)['"] column/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = message.match(pattern);
-    if (match?.[1]) {
-      return match[1].toLowerCase();
-    }
-  }
-
-  return null;
+  markCapabilitiesAvailable(ctx, CHAINS_TABLE, CHAINS_STRICT_CAPABILITIES);
 }
 
 function cacheMissingChainsCapabilities(
   ctx: SupabaseStorageContext,
   error: unknown,
 ): void {
-  const message = formatSupabaseError(error, '');
-  const messageLower = message.toLowerCase();
-  const errorCode = getSupabaseErrorCode(error) ?? '';
-
-  let matchedSpecificCapability = false;
-
-  const extractedColumn = extractMissingColumnName(messageLower);
-  if (
-    extractedColumn &&
-    (CHAINS_STRICT_CAPABILITIES as readonly string[]).includes(extractedColumn)
-  ) {
-    ctx.markSchemaCapabilityMissing(CHAINS_TABLE, extractedColumn);
-    matchedSpecificCapability = true;
-  }
-
-  for (const capabilityName of CHAINS_STRICT_CAPABILITIES) {
-    if (messageLower.includes(capabilityName)) {
-      ctx.markSchemaCapabilityMissing(CHAINS_TABLE, capabilityName);
-      matchedSpecificCapability = true;
-    }
-  }
-
-  if (
-    !matchedSpecificCapability &&
-    (errorCode === '42P01' || messageLower.includes('schema cache'))
-  ) {
-    markChainsStrictCapabilitiesMissing(ctx);
-  }
+  cacheMissingCapabilitiesFromError(
+    ctx,
+    CHAINS_TABLE,
+    CHAINS_STRICT_CAPABILITIES,
+    error,
+    { markAllOnSchemaCacheError: true },
+  );
 }
 
 function isMissingColumnError(error: unknown): boolean {
-  const msg = formatSupabaseError(error, '').toLowerCase();
-  const code = getSupabaseErrorCode(error) ?? '';
-
-  const patterns = [
-    /column .* does not exist/,
-    /schema cache/,
-    /could not find .* column/,
-    /relation .* does not exist/,
-    /unknown column/,
-    /invalid column name/,
-    /column .* not found/,
-    /undefined column/,
-  ];
-
-  const errorCodes = ['PGRST204', 'PGRST116', '42703', '42P01'];
-
-  return patterns.some((p) => p.test(msg)) || errorCodes.includes(code);
+  return isMissingSchemaCapabilityError(error);
 }
 
 async function upsertChainsWithCapabilityFallback(

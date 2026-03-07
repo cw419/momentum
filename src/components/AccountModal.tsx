@@ -4,6 +4,7 @@ import type { AuthUser } from '../domain/auth';
 import type { GamblingSettings } from '../domain/userSettings';
 import { useStorage } from '../storage/useStorage';
 import { useStorageMode } from '../storage/useStorageMode';
+import { hasStorageCapability } from '../storage/ports';
 import { useI18n } from '../i18n';
 import { logger } from '../utils/logger';
 import {
@@ -31,6 +32,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const storage = useStorage();
   const { mode, canUseSupabase, setMode } = useStorageMode();
   const { language, locale, setLanguage, t, tr } = useI18n();
+  const canUseAuth = hasStorageCapability(storage, 'auth');
+  const canUseBetting = hasStorageCapability(storage, 'betting');
   const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +56,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   })();
 
   const loadUser = useCallback(async () => {
-    if (storage.kind !== 'supabase') return;
+    if (!canUseAuth) return;
     setLoading(true);
     setError(null);
     try {
@@ -86,11 +89,11 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [storage, language, tr]);
+  }, [canUseAuth, storage, language, tr]);
 
   // 加载赌博模式设置
   const loadGamblingSettings = useCallback(async () => {
-    if (storage.kind !== 'supabase') return;
+    if (!canUseBetting) return;
     try {
       setGamblingError(null);
       const settingsResult = await storage.getGamblingSettings();
@@ -118,11 +121,11 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       );
       setGamblingError(tr('获取设置失败', 'Failed to load settings'));
     }
-  }, [storage, language, tr]);
+  }, [canUseBetting, storage, language, tr]);
 
   useEffect(() => {
     if (isOpen) {
-      if (storage.kind !== 'supabase') {
+      if (!canUseAuth) {
         setUser(null);
         setLoading(false);
         return;
@@ -131,11 +134,11 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       void loadUser();
       void loadGamblingSettings();
     }
-  }, [isOpen, storage.kind, loadUser, loadGamblingSettings]);
+  }, [isOpen, canUseAuth, loadUser, loadGamblingSettings]);
 
   // 切换赌博模式
   const handleGamblingToggle = async () => {
-    if (storage.kind !== 'supabase') return;
+    if (!canUseBetting) return;
     setGamblingLoading(true);
     setGamblingError(null);
     setGamblingSuccess(null);
@@ -206,7 +209,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   };
 
   const handleSignOut = async () => {
-    if (storage.kind !== 'supabase') return;
+    if (!canUseAuth) return;
     setSigningOut(true);
     setError(null);
     try {
@@ -257,7 +260,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
   let accountContent: React.ReactNode;
 
-  if (storage.kind !== 'supabase') {
+  if (!canUseAuth) {
     accountContent = (
       <div className="py-8 text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 dark:bg-slate-700">

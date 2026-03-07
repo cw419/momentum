@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CheckinResult, CheckinStats } from '../../domain/checkin';
 import { useStorage } from '../../storage/useStorage';
+import { hasStorageCapability } from '../../storage/ports';
 import { logger } from '../../utils/logger';
 import { useI18n } from '../../i18n';
 import {
@@ -27,7 +28,7 @@ import { POINTS_CHANGED_EVENT } from '../../utils/pointsEvents';
 export function useCheckinDomain() {
   const { language, tr } = useI18n();
   const storage = useStorage();
-  const isSupabase = storage.kind === 'supabase';
+  const canUseCheckin = hasStorageCapability(storage, 'checkin');
 
   const [stats, setStats] = useState<CheckinStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +66,7 @@ export function useCheckinDomain() {
   }, []);
 
   const loadStats = useCallback(async () => {
-    if (!isSupabase) {
+    if (!canUseCheckin) {
       setError(tr('签到功能需要登录后使用', 'Daily check-in requires login'));
       setIsLoading(false);
       return;
@@ -101,7 +102,7 @@ export function useCheckinDomain() {
     } finally {
       setIsLoading(false);
     }
-  }, [isSupabase, language, storage, tr]);
+  }, [canUseCheckin, language, storage, tr]);
 
   const handleCheckin = useCallback(async () => {
     // Use refs to get latest values without causing callback recreation
@@ -189,7 +190,7 @@ export function useCheckinDomain() {
   }, [loadStats]);
 
   useEffect(() => {
-    if (!isSupabase) return;
+    if (!canUseCheckin) return;
 
     const handler = () => {
       void loadStats();
@@ -199,7 +200,7 @@ export function useCheckinDomain() {
     return () => {
       window.removeEventListener(POINTS_CHANGED_EVENT, handler);
     };
-  }, [isSupabase, loadStats]);
+  }, [canUseCheckin, loadStats]);
 
   return {
     stats,

@@ -29,6 +29,7 @@ import type {
 } from '../../types';
 import type { PetState } from '../../types/pet';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
+import { hasStorageCapability } from '../../storage/ports';
 import type { SafelySaveChains } from './useChainsDomain';
 import { useI18n } from '../../i18n';
 import { logger } from '../../utils/logger';
@@ -65,9 +66,10 @@ export function useImportExportDomain({
   setState,
 }: UseImportExportDomainParams) {
   const { tr } = useI18n();
+  const canUseAuth = hasStorageCapability(storage, 'auth');
 
   async function ensureAuthenticatedForImport(): Promise<void> {
-    if (storage.kind !== 'supabase') return;
+    if (!canUseAuth) return;
 
     logger.debug(
       'APP_SHELL',
@@ -138,7 +140,7 @@ export function useImportExportDomain({
   ): Promise<void> {
     if (!history || history.length === 0) return;
 
-    if (storage.kind === 'supabase') {
+    if (canUseAuth) {
       await storage.saveCompletionHistory(history);
       return;
     }

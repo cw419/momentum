@@ -1,4 +1,5 @@
 import type { MomentumStorage } from './MomentumStorage';
+import { LOCAL_STORAGE_CAPABILITIES } from './ports';
 import { storage as localStorageUtils } from '../utils/storage';
 import { err, ok } from '../domain/result';
 import type { AppError } from '../domain/errors';
@@ -17,6 +18,7 @@ const DAILY_CHECKIN_NOT_SUPPORTED_MESSAGE =
 
 export const localStorageAdapter: MomentumStorage = {
   kind: 'local',
+  capabilities: LOCAL_STORAGE_CAPABILITIES,
 
   // Chains
   getChains: async () => localStorageUtils.getChains(),
