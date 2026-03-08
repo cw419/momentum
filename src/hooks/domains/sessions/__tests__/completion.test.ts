@@ -120,6 +120,7 @@ describe('createCompletionHandlers', () => {
     });
     const safelySaveChains = vi.fn(async () => undefined);
     const setActiveSessionId = vi.fn();
+    const onNavigateToDashboard = vi.fn();
 
     vi.mocked(queryOptimizer.memoizedBuildChainTree).mockReturnValue([
       { id: group.id, type: 'group', name: group.name },
@@ -140,6 +141,7 @@ describe('createCompletionHandlers', () => {
       safelySaveChains,
       activeSessionId: null,
       setActiveSessionId,
+      onNavigateToDashboard,
       tr,
     });
 
@@ -152,7 +154,7 @@ describe('createCompletionHandlers', () => {
     expect(updatedChain?.totalCompletions).toBe(4);
     expect(nextState.chainsRevision).toBe(4);
     expect(nextState.activeSession).toBeNull();
-    expect(nextState.currentView).toBe('dashboard');
+    expect(onNavigateToDashboard).toHaveBeenCalledTimes(1);
     expect(nextState.completionHistory).toHaveLength(1);
     expect(nextState.completionHistory[0]).toMatchObject({
       chainId: chain.id,
@@ -866,6 +868,7 @@ describe('createCompletionHandlers', () => {
       saveActiveSession: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
+    const onNavigateToDashboard = vi.fn();
 
     vi.mocked(resetGroupCompletionCount).mockImplementation((chains) => chains);
 
@@ -876,6 +879,7 @@ describe('createCompletionHandlers', () => {
       safelySaveChains,
       activeSessionId: null,
       setActiveSessionId: vi.fn(),
+      onNavigateToDashboard,
       tr,
     });
 
@@ -898,7 +902,7 @@ describe('createCompletionHandlers', () => {
     });
     expect(nextState.chainsRevision).toBe(12);
     expect(nextState.activeSession).toBeNull();
-    expect(nextState.currentView).toBe('dashboard');
+    expect(onNavigateToDashboard).toHaveBeenCalledTimes(1);
     expect(nextState.completionHistory.at(-1)).toMatchObject({
       chainId: chain.id,
       wasSuccessful: false,
@@ -935,6 +939,7 @@ describe('createCompletionHandlers', () => {
       }),
     );
 
+    const onNavigateToDashboard = vi.fn();
     const { handleInterruptSession } = createCompletionHandlers({
       state: stateRef.getState(),
       setState: stateRef.setState,
@@ -945,6 +950,7 @@ describe('createCompletionHandlers', () => {
       safelySaveChains: vi.fn(async () => undefined),
       activeSessionId: null,
       setActiveSessionId: vi.fn(),
+      onNavigateToDashboard,
       tr,
     });
 
@@ -953,7 +959,7 @@ describe('createCompletionHandlers', () => {
 
     expect(forwardTimerManager.clearTimer).not.toHaveBeenCalled();
     expect(stateRef.getState().chainsRevision).toBe(1);
-    expect(stateRef.getState().currentView).toBe('dashboard');
+    expect(onNavigateToDashboard).toHaveBeenCalledTimes(1);
     expect(stateRef.getState().completionHistory.at(-1)?.reasonForFailure).toBe(
       '用户主动中断',
     );

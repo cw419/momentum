@@ -119,7 +119,7 @@ function maybeIncrementGroupCycleCompletion(
 async function persistCompletionHistoryAndCleanupSupabase(
   storage: MomentumStorage,
   record: CompletionHistory,
-  setActiveSessionId: Dispatch<SetStateAction<string | null>>,
+  setActiveSessionId: (sessionId: string | null) => void,
   context: 'completion' | 'interrupt',
 ): Promise<void> {
   try {
@@ -154,7 +154,8 @@ interface CreateCompletionHandlersParams {
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
   activeSessionId: string | null;
-  setActiveSessionId: Dispatch<SetStateAction<string | null>>;
+  setActiveSessionId: (sessionId: string | null) => void;
+  onNavigateToDashboard?: () => void;
   onPetTaskCompleted?: (duration: number, wasSuccessful: boolean) => void;
   onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
   tr: (zh: string, en: string) => string;
@@ -167,6 +168,7 @@ export function createCompletionHandlers({
   safelySaveChains,
   activeSessionId,
   setActiveSessionId,
+  onNavigateToDashboard,
   onPetTaskCompleted,
   onRsipTaskEvent,
   tr,
@@ -323,8 +325,8 @@ export function createCompletionHandlers({
       chainsRevision: prev.chainsRevision + 1,
       activeSession: null,
       completionHistory: updatedHistory,
-      currentView: 'dashboard',
     }));
+    onNavigateToDashboard?.();
   };
 
   const handleInterruptSession = (reason?: string) => {
@@ -378,8 +380,8 @@ export function createCompletionHandlers({
       chainsRevision: prev.chainsRevision + 1,
       activeSession: null,
       completionHistory: updatedHistory,
-      currentView: 'dashboard',
     }));
+    onNavigateToDashboard?.();
   };
 
   return { handleCompleteSession, handleInterruptSession };

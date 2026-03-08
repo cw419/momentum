@@ -56,6 +56,8 @@ describe('useSessionsDomain', () => {
     const setCurrentSessionId = vi.fn();
     const setShowBettingModal = vi.fn();
     const setShowAuxiliaryJudgment = vi.fn();
+    const onNavigateToFocus = vi.fn();
+    const onNavigateToDashboard = vi.fn();
     const onPetTaskCompleted = vi.fn();
 
     const result = useSessionsDomain({
@@ -71,6 +73,8 @@ describe('useSessionsDomain', () => {
       setCurrentSessionId,
       setShowBettingModal,
       setShowAuxiliaryJudgment,
+      onNavigateToFocus,
+      onNavigateToDashboard,
       onPetTaskCompleted,
     });
 
@@ -94,6 +98,7 @@ describe('useSessionsDomain', () => {
         setPendingChainId,
         setCurrentSessionId,
         setShowBettingModal,
+        onNavigateToFocus,
       }),
     );
 
@@ -104,6 +109,7 @@ describe('useSessionsDomain', () => {
         storage,
         safelySaveChains,
         setActiveSessionId,
+        onNavigateToDashboard,
         onPetTaskCompleted,
       }),
     );

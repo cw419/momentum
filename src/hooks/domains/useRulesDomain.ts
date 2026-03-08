@@ -26,7 +26,7 @@ interface UseRulesDomainParams {
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
-  setShowAuxiliaryJudgment: Dispatch<SetStateAction<string | null>>;
+  setShowAuxiliaryJudgment: (chainId: string | null) => void;
 }
 
 export function useRulesDomain({

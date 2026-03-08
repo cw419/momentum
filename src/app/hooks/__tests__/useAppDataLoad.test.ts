@@ -12,6 +12,7 @@ import { fireAndForget } from '../../../utils/fireAndForget';
 import { isSessionExpired } from '../../../utils/time';
 import { runWhenIdle } from '../../../utils/runWhenIdle';
 import { useAppDataLoad } from '../useAppDataLoad';
+import { createInitialUIState, uiStore } from '../../../stores/uiStore';
 
 vi.mock('../../../utils/env', () => ({
   isDev: false,
@@ -50,6 +51,7 @@ vi.mock('../../../utils/time', () => ({
 describe('useAppDataLoad', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    uiStore.setState(createInitialUIState());
     vi.mocked(migrateCompletionHistoryForTiming).mockImplementation(
       (history) => ({
         updatedHistory: history,
@@ -166,7 +168,7 @@ describe('useAppDataLoad', () => {
     expect(next.scheduledSessions).toEqual([activeSessionBooking]);
     expect(next.activeSession).toEqual(activeSession);
     expect(next.completionHistory).toEqual(migratedHistory);
-    expect(next.currentView).toBe('focus');
+    expect(uiStore.getState().currentView).toBe('focus');
   });
 
   it('should skip data load when supabase user is not authenticated', async () => {
@@ -199,6 +201,7 @@ describe('useAppDataLoad', () => {
       id: 'circular-1',
       parentId: 'circular-1',
     });
+    uiStore.getState().navigateToView('focus');
     const storage = createLocalStorageMock({
       getActiveChains: vi.fn(async () => [circular]),
       getScheduledSessions: vi.fn(async () => []),
@@ -234,8 +237,8 @@ describe('useAppDataLoad', () => {
     const stateUpdater = setState.mock.calls.at(-1)?.[0] as (
       prev: ReturnType<typeof createAppState>,
     ) => ReturnType<typeof createAppState>;
-    const next = stateUpdater(createAppState({ currentView: 'focus' }));
-    expect(next.currentView).toBe('dashboard');
+    const next = stateUpdater(createAppState());
+    expect(uiStore.getState().currentView).toBe('dashboard');
     expect(next.scheduledSessions).toEqual([]);
     expect(next.activeSession).toBeNull();
     expect(next.completionHistory).toEqual([]);

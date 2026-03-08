@@ -8,13 +8,13 @@ import { isSessionExpired } from '../../utils/time';
 import { systemNotificationService } from '../../services/platform/SystemNotificationService';
 import { isGroupExpired, resetGroupProgress } from '../../utils/timeLimit';
 import { soundManager } from '../../utils/soundManager';
+import { uiStore } from '../../stores/uiStore';
 
 interface UsePeriodicCleanupParams {
   state: AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   isInitialized: boolean;
-  setShowAuxiliaryJudgment: (chainId: string | null) => void;
 }
 
 /**
@@ -27,7 +27,6 @@ export function usePeriodicCleanup({
   setState,
   storage,
   isInitialized,
-  setShowAuxiliaryJudgment,
 }: UsePeriodicCleanupParams): void {
   const stateRef = useRef(state);
   useEffect(() => {
@@ -100,7 +99,7 @@ export function usePeriodicCleanup({
         }
       }
 
-      setShowAuxiliaryJudgment(expiredSessions[0].chainId);
+      uiStore.getState().setShowAuxiliaryJudgment(expiredSessions[0].chainId);
 
       Promise.all(
         expiredSessions.map((session) =>
@@ -122,5 +121,5 @@ export function usePeriodicCleanup({
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [storage, isInitialized, setState, setShowAuxiliaryJudgment]);
+  }, [storage, isInitialized, setState]);
 }

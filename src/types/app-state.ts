@@ -30,9 +30,6 @@ export interface AppState {
   chainsRevision: number;
   scheduledSessions: ScheduledSession[];
   activeSession: ActiveSession | null;
-  currentView: ViewState;
-  editingChain: Chain | null;
-  viewingChainId: string | null;
   completionHistory: CompletionHistory[];
   // RSIP
   rsipNodes: RSIPNode[];

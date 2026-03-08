@@ -77,8 +77,6 @@ describe('useRecycleBinDomain', () => {
     const stateRef = createStateContainer(
       createAppState({
         chains: [chain, otherChain],
-        viewingChainId: chain.id,
-        currentView: 'detail',
         activeSession: {
           chainId: chain.id,
           startedAt: new Date(),
@@ -107,6 +105,7 @@ describe('useRecycleBinDomain', () => {
       removeScheduledSession: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
+    const onChainDeleted = vi.fn();
     vi.mocked(realTimeSyncService.deleteWithSync).mockResolvedValue([
       otherChain,
     ]);
@@ -116,6 +115,7 @@ describe('useRecycleBinDomain', () => {
         state: stateRef.getState(),
         setState: stateRef.setState,
         storage,
+        onChainDeleted,
       }),
     );
 
@@ -131,8 +131,7 @@ describe('useRecycleBinDomain', () => {
     expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
     expect(stateRef.getState().chains).toEqual([otherChain]);
     expect(stateRef.getState().activeSession).toBeNull();
-    expect(stateRef.getState().currentView).toBe('dashboard');
-    expect(stateRef.getState().viewingChainId).toBeNull();
+    expect(onChainDeleted).toHaveBeenCalledWith(chain.id, false);
     expect(stateRef.getState().scheduledSessions).toEqual([
       expect.objectContaining({ chainId: otherChain.id }),
     ]);
@@ -145,7 +144,6 @@ describe('useRecycleBinDomain', () => {
     const stateRef = createStateContainer(
       createAppState({
         chains: [deletingChain, activeChain],
-        currentView: 'focus',
         activeSession: {
           chainId: activeChain.id,
           startedAt: new Date(),
@@ -168,6 +166,7 @@ describe('useRecycleBinDomain', () => {
       removeScheduledSession: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
+    const onChainDeleted = vi.fn();
     vi.mocked(realTimeSyncService.deleteWithSync).mockResolvedValue([
       activeChain,
     ]);
@@ -177,6 +176,7 @@ describe('useRecycleBinDomain', () => {
         state: stateRef.getState(),
         setState: stateRef.setState,
         storage,
+        onChainDeleted,
       }),
     );
 
@@ -185,7 +185,7 @@ describe('useRecycleBinDomain', () => {
     });
 
     expect(stateRef.getState().activeSession?.chainId).toBe(activeChain.id);
-    expect(stateRef.getState().currentView).toBe('focus');
+    expect(onChainDeleted).toHaveBeenCalledWith(deletingChain.id, true);
     expect(storage.saveActiveSession).not.toHaveBeenCalled();
   });
 
@@ -195,13 +195,13 @@ describe('useRecycleBinDomain', () => {
     const stateRef = createStateContainer(
       createAppState({
         chains: [deletingChain, viewingChain],
-        viewingChainId: viewingChain.id,
       }),
     );
     const storage = createLocalStorageMock({
       removeScheduledSession: vi.fn(async () => undefined),
       saveActiveSession: vi.fn(async () => undefined),
     });
+    const onChainDeleted = vi.fn();
     vi.mocked(realTimeSyncService.deleteWithSync).mockResolvedValue([
       viewingChain,
     ]);
@@ -211,6 +211,7 @@ describe('useRecycleBinDomain', () => {
         state: stateRef.getState(),
         setState: stateRef.setState,
         storage,
+        onChainDeleted,
       }),
     );
 
@@ -218,7 +219,7 @@ describe('useRecycleBinDomain', () => {
       await result.current.handleDeleteChain(deletingChain.id);
     });
 
-    expect(stateRef.getState().viewingChainId).toBe(viewingChain.id);
+    expect(onChainDeleted).toHaveBeenCalledWith(deletingChain.id, false);
   });
 
   it('should log persistence failures after successful delete', async () => {

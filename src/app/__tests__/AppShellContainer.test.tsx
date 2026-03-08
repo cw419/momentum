@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AppShellContainer from '../AppShellContainer';
+import { createInitialUIState, uiStore } from '../../stores/uiStore';
 
 const useStorageMock = vi.hoisted(() => vi.fn());
 const useSafeSaveChainsMock = vi.hoisted(() => vi.fn());
@@ -157,6 +158,7 @@ vi.mock('../AppShellView', () => ({
 describe('AppShellContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    uiStore.setState(createInitialUIState());
 
     useStorageMock.mockReturnValue({ kind: 'local' });
     useSafeSaveChainsMock.mockReturnValue(vi.fn(async () => undefined));

@@ -160,10 +160,15 @@ describe('useRsipDomain', () => {
         throw new Error('meta persist failed');
       }),
     });
-    const domain = useRsipDomain({ setState: stateRef.setState, storage });
+    const onNavigateToRSIP = vi.fn();
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      onNavigateToRSIP,
+    });
 
     domain.openRSIP();
-    expect(stateRef.getState().currentView).toBe('rsip');
+    expect(onNavigateToRSIP).toHaveBeenCalledTimes(1);
 
     const meta: RSIPMeta = { allowMultiplePerDay: false, treeOpenStreak: 2 };
     await expect(domain.saveMeta(meta)).resolves.toBeUndefined();

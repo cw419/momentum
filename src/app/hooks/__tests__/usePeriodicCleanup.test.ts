@@ -11,6 +11,7 @@ import { isGroupExpired, resetGroupProgress } from '../../../utils/timeLimit';
 import { isSessionExpired } from '../../../utils/time';
 import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { soundManager } from '../../../utils/soundManager';
+import { createInitialUIState, uiStore } from '../../../stores/uiStore';
 
 vi.mock('../../../utils/logger', () => ({
   logger: {
@@ -44,6 +45,7 @@ describe('usePeriodicCleanup', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-02-02T15:00:00.000Z'));
+    uiStore.setState(createInitialUIState());
   });
 
   afterEach(() => {
@@ -76,7 +78,6 @@ describe('usePeriodicCleanup', () => {
         setState,
         storage,
         isInitialized: true,
-        setShowAuxiliaryJudgment: vi.fn(),
       }),
     );
 
@@ -114,7 +115,6 @@ describe('usePeriodicCleanup', () => {
       scheduledSessions: [expiredSession, activeSession],
     });
     const setState = vi.fn();
-    const setShowAuxiliaryJudgment = vi.fn();
     const storage = createLocalStorageMock({
       removeScheduledSession: vi.fn(async () => undefined),
     });
@@ -129,7 +129,6 @@ describe('usePeriodicCleanup', () => {
         setState,
         storage,
         isInitialized: true,
-        setShowAuxiliaryJudgment,
       }),
     );
 
@@ -140,7 +139,7 @@ describe('usePeriodicCleanup', () => {
     expect(systemNotificationService.notifyScheduleFailed).toHaveBeenCalledWith(
       expiredChain.name,
     );
-    expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(expiredChain.id);
+    expect(uiStore.getState().showAuxiliaryJudgment).toBe(expiredChain.id);
     expect(storage.removeScheduledSession).toHaveBeenCalledWith(expiredChain.id);
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
   });
@@ -158,7 +157,6 @@ describe('usePeriodicCleanup', () => {
         setState,
         storage,
         isInitialized: false,
-        setShowAuxiliaryJudgment: vi.fn(),
       }),
     );
 

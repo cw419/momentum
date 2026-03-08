@@ -34,6 +34,7 @@ export interface UseRsipDomainParams {
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   getState?: () => AppState;
+  onNavigateToRSIP?: () => void;
 }
 
 export interface SaveFns {

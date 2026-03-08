@@ -25,12 +25,14 @@ describe('useAuthController', () => {
     const storage = createLocalStorageMock();
     const setState = vi.fn();
     const resetAppState = vi.fn(() => createAppState());
+    const resetUIState = vi.fn();
 
     const { result } = renderHook(() =>
       useAuthController({
         storage,
         resetAppState,
         setState,
+        resetUIState,
       }),
     );
 
@@ -41,9 +43,8 @@ describe('useAuthController', () => {
 
   it('should react to auth user changes in supabase mode', () => {
     const setState = vi.fn();
-    const resetAppState = vi.fn(() =>
-      createAppState({ currentView: 'dashboard' }),
-    );
+    const resetAppState = vi.fn(() => createAppState());
+    const resetUIState = vi.fn();
     let callback: ((event: string, session: AuthSession) => void) | null = null;
     const unsubscribe = vi.fn();
 
@@ -62,6 +63,7 @@ describe('useAuthController', () => {
         storage,
         resetAppState,
         setState,
+        resetUIState,
       }),
     );
 
@@ -77,6 +79,7 @@ describe('useAuthController', () => {
     expect(result.current.authUserId).toBe('user-1');
     expect(result.current.isAuthReady).toBe(true);
     expect(setState).toHaveBeenCalledWith(resetAppState());
+    expect(resetUIState).toHaveBeenCalledTimes(1);
 
     // Same user again should not reset app state twice.
     act(() => {
@@ -102,6 +105,7 @@ describe('useAuthController', () => {
         storage,
         resetAppState: () => createAppState(),
         setState: vi.fn(),
+        resetUIState: vi.fn(),
       }),
     );
 

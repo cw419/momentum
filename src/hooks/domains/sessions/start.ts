@@ -28,10 +28,11 @@ interface CreateStartChainHandlerParams {
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
   pendingChainId: string | null;
-  setPendingChainId: Dispatch<SetStateAction<string | null>>;
+  setPendingChainId: (chainId: string | null) => void;
   currentSessionId: string | null;
-  setCurrentSessionId: Dispatch<SetStateAction<string | null>>;
-  setShowBettingModal: Dispatch<SetStateAction<boolean>>;
+  setCurrentSessionId: (sessionId: string | null) => void;
+  setShowBettingModal: (isOpen: boolean) => void;
+  onNavigateToFocus?: () => void;
   onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
   tr: (zh: string, en: string) => string;
 }
@@ -61,6 +62,7 @@ export function createStartChainHandler({
   currentSessionId,
   setCurrentSessionId,
   setShowBettingModal,
+  onNavigateToFocus,
   onRsipTaskEvent,
   tr,
 }: CreateStartChainHandlerParams) {
@@ -371,8 +373,8 @@ export function createStartChainHandler({
       scheduledSessions: updatedScheduledSessions,
       chains: updatedChains,
       chainsRevision: prev.chainsRevision + 1,
-      currentView: 'focus',
     }));
+    onNavigateToFocus?.();
   }
 
   async function handleStartChain(chainId: string): Promise<void> {

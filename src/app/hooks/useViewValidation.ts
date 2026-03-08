@@ -1,10 +1,15 @@
-import { useEffect, useRef } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
-import type { AppState } from '../../types';
+import { useEffect } from 'react';
+import type { ActiveSession, Chain } from '../../types';
+import {
+  selectCurrentView,
+  selectViewingChainId,
+  uiStore,
+  useUIStore,
+} from '../../stores/uiStore';
 
 interface UseViewValidationParams {
-  state: AppState;
-  setState: Dispatch<SetStateAction<AppState>>;
+  chains: Chain[];
+  activeSession: ActiveSession | null;
   isInitialized: boolean;
 }
 
@@ -13,50 +18,31 @@ interface UseViewValidationParams {
  * Redirects to dashboard if viewing invalid/missing chains.
  */
 export function useViewValidation({
-  state,
-  setState,
+  chains,
+  activeSession,
   isInitialized,
 }: UseViewValidationParams): void {
-  const stateRef = useRef(state);
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
-
-  const currentView = state.currentView;
-  const activeSessionChainId = state.activeSession?.chainId ?? null;
-  const viewingChainId = state.viewingChainId;
+  const currentView = useUIStore(selectCurrentView);
+  const viewingChainId = useUIStore(selectViewingChainId);
+  const activeSessionChainId = activeSession?.chainId ?? null;
 
   useEffect(() => {
     if (!isInitialized) return;
     if (currentView === 'focus') {
-      const activeChain = stateRef.current.chains.find(
-        (c) => c.id === activeSessionChainId,
-      );
+      const activeChain = chains.find((c) => c.id === activeSessionChainId);
       if (!activeSessionChainId || !activeChain) {
-        setState((prev) => ({
-          ...prev,
-          currentView: 'dashboard',
-          editingChain: null,
-          viewingChainId: null,
-        }));
+        uiStore.getState().navigateToDashboard();
       }
     }
-  }, [currentView, activeSessionChainId, isInitialized, setState]);
+  }, [chains, currentView, activeSessionChainId, isInitialized]);
 
   useEffect(() => {
     if (!isInitialized) return;
     if (currentView === 'detail' || currentView === 'group') {
-      const viewingChain = stateRef.current.chains.find(
-        (c) => c.id === viewingChainId,
-      );
+      const viewingChain = chains.find((c) => c.id === viewingChainId);
       if (!viewingChain) {
-        setState((prev) => ({
-          ...prev,
-          currentView: 'dashboard',
-          editingChain: null,
-          viewingChainId: null,
-        }));
+        uiStore.getState().navigateToDashboard();
       }
     }
-  }, [currentView, viewingChainId, isInitialized, setState]);
+  }, [chains, currentView, viewingChainId, isInitialized]);
 }

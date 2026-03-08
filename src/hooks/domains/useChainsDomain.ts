@@ -100,15 +100,25 @@ export type SafelySaveChains = (
 interface UseChainsDomainParams {
   state: AppState;
   setState: Dispatch<SetStateAction<AppState>>;
+  editingChain: Chain | null;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
+  onNavigateToEditor?: (parentId: string | null) => void;
+  onNavigateToTaskGroupEditor?: () => void;
+  onEditChain?: (chain: Chain, isTaskGroup: boolean) => void;
+  onNavigateToDashboard?: () => void;
 }
 
 export function useChainsDomain({
   state,
   setState,
+  editingChain,
   storage,
   safelySaveChains,
+  onNavigateToEditor = () => undefined,
+  onNavigateToTaskGroupEditor = () => undefined,
+  onEditChain = () => undefined,
+  onNavigateToDashboard = () => undefined,
 }: UseChainsDomainParams) {
   const { language, tr } = useI18n();
   const handleCreateChain = (parentId?: unknown) => {
@@ -116,31 +126,18 @@ export function useChainsDomain({
     // If we treat it as a parentId, it can leak `Window` into persisted data and break JSON serialization.
     const normalizedParentId = typeof parentId === 'string' ? parentId : null;
 
-    setState((prev) => ({
-      ...prev,
-      currentView: 'editor',
-      editingChain: null,
-      viewingChainId: normalizedParentId,
-    }));
+    onNavigateToEditor(normalizedParentId);
   };
 
   const handleCreateTaskGroup = () => {
-    setState((prev) => ({
-      ...prev,
-      currentView: 'taskgroup-editor',
-      editingChain: null,
-    }));
+    onNavigateToTaskGroupEditor();
   };
 
   const handleEditChain = (chainId: string) => {
     const chain = state.chains.find((c) => c.id === chainId);
     if (chain) {
-      const isTaskGroup = chain.type === 'group' || chain.isTaskGroup;
-      setState((prev) => ({
-        ...prev,
-        currentView: isTaskGroup ? 'taskgroup-editor' : 'editor',
-        editingChain: chain,
-      }));
+      const isTaskGroup = chain.type === 'group' || Boolean(chain.isTaskGroup);
+      onEditChain(chain, isTaskGroup);
     }
   };
 
@@ -149,7 +146,7 @@ export function useChainsDomain({
     isCopy: boolean = false,
   ) => {
     logger.debug('CHAINS', 'Starting to save chain data', {
-      chainId: state.editingChain?.id ?? null,
+      chainId: editingChain?.id ?? null,
       chainName: chainData.name,
       chainType: chainData.type,
       isCopy,
@@ -176,12 +173,12 @@ export function useChainsDomain({
       let updatedActiveChains: Chain[];
       const normalizedParentId = normalizeOptionalParentId(chainData.parentId);
 
-      if (state.editingChain && !isCopy) {
+      if (editingChain && !isCopy) {
         logger.debug('CHAINS', 'Editing existing chain', {
-          chainId: state.editingChain.id,
+          chainId: editingChain.id,
         });
 
-        const editingChainId = state.editingChain.id;
+        const editingChainId = editingChain.id;
         updatedActiveChains = state.chains.map((chain) =>
           chain.id === editingChainId
             ? updateChainFromDraft(chain, chainData, normalizedParentId)
@@ -229,9 +226,8 @@ export function useChainsDomain({
         ...prev,
         chains: updatedActiveChains,
         chainsRevision: prev.chainsRevision + 1,
-        currentView: 'dashboard',
-        editingChain: null,
       }));
+      onNavigateToDashboard();
     } catch (error) {
       logger.error(
         'CHAINS',

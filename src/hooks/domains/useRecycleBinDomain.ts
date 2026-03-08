@@ -25,12 +25,14 @@ interface UseRecycleBinDomainParams {
   state: AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
+  onChainDeleted?: (chainId: string, hasActiveSession: boolean) => void;
 }
 
 export function useRecycleBinDomain({
   state,
   setState,
   storage,
+  onChainDeleted,
 }: UseRecycleBinDomainParams) {
   const { language, tr } = useI18n();
   const handleDeleteChain = async (chainId: string) => {
@@ -71,10 +73,8 @@ export function useRecycleBinDomain({
         chainsRevision: prev.chainsRevision + 1,
         scheduledSessions: updatedScheduledSessions,
         activeSession: updatedActiveSession,
-        currentView: updatedActiveSession ? prev.currentView : 'dashboard',
-        viewingChainId:
-          prev.viewingChainId === chainId ? null : prev.viewingChainId,
       }));
+      onChainDeleted?.(chainId, Boolean(updatedActiveSession));
     } catch (error) {
       const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       logger.error(

@@ -24,6 +24,7 @@ export function useRsipDomain({
   setState,
   storage,
   getState,
+  onNavigateToRSIP,
 }: UseRsipDomainParams) {
   const readState = (): AppState | null => getState?.() ?? null;
 
@@ -32,7 +33,7 @@ export function useRsipDomain({
   };
 
   const openRSIP = () => {
-    setState((prev) => ({ ...prev, currentView: 'rsip' }));
+    onNavigateToRSIP?.();
   };
 
   const appendExecutionRecord: SaveFns['appendExecutionRecord'] = async (

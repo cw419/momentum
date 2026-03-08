@@ -30,15 +30,17 @@ interface UseSessionsDomainParams {
   safelySaveChains: SafelySaveChains;
 
   activeSessionId: string | null;
-  setActiveSessionId: Dispatch<SetStateAction<string | null>>;
+  setActiveSessionId: (sessionId: string | null) => void;
 
   pendingChainId: string | null;
-  setPendingChainId: Dispatch<SetStateAction<string | null>>;
+  setPendingChainId: (chainId: string | null) => void;
   currentSessionId: string | null;
-  setCurrentSessionId: Dispatch<SetStateAction<string | null>>;
-  setShowBettingModal: Dispatch<SetStateAction<boolean>>;
+  setCurrentSessionId: (sessionId: string | null) => void;
+  setShowBettingModal: (isOpen: boolean) => void;
 
-  setShowAuxiliaryJudgment: Dispatch<SetStateAction<string | null>>;
+  setShowAuxiliaryJudgment: (chainId: string | null) => void;
+  onNavigateToFocus: () => void;
+  onNavigateToDashboard: () => void;
 
   // Pet system callback (optional)
   onPetTaskCompleted?: (duration: number, wasSuccessful: boolean) => void;
@@ -58,6 +60,8 @@ export function useSessionsDomain({
   setCurrentSessionId,
   setShowBettingModal,
   setShowAuxiliaryJudgment,
+  onNavigateToFocus,
+  onNavigateToDashboard,
   onPetTaskCompleted,
   onRsipTaskEvent,
 }: UseSessionsDomainParams) {
@@ -86,6 +90,7 @@ export function useSessionsDomain({
     currentSessionId,
     setCurrentSessionId,
     setShowBettingModal,
+    onNavigateToFocus,
     onRsipTaskEvent,
     tr,
   });
@@ -98,6 +103,7 @@ export function useSessionsDomain({
       safelySaveChains,
       activeSessionId,
       setActiveSessionId,
+      onNavigateToDashboard,
       onPetTaskCompleted,
       onRsipTaskEvent,
       tr,

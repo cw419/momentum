@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
-import type { AppState } from '../../types';
+import type { ActiveSession, Chain } from '../../types';
 import {
   parseViewStateFromSearch,
   serializeViewStateToSearch,
 } from '../viewUrlState';
+import {
+  selectCurrentView,
+  selectEditingChain,
+  selectViewingChainId,
+  uiStore,
+  useUIStore,
+} from '../../stores/uiStore';
 
 interface UseViewUrlSyncParams {
-  state: AppState;
-  setState: Dispatch<SetStateAction<AppState>>;
+  chains: Chain[];
+  activeSession: ActiveSession | null;
   shouldLoadData: boolean;
   isLoadingData: boolean;
 }
@@ -16,15 +22,19 @@ interface UseViewUrlSyncParams {
 type UrlSyncedViewState = ReturnType<typeof parseViewStateFromSearch>;
 
 export function useViewUrlSync({
-  state,
-  setState,
+  chains,
+  activeSession,
   shouldLoadData,
   isLoadingData,
 }: UseViewUrlSyncParams): void {
-  const stateRef = useRef(state);
+  const stateRef = useRef({ chains, activeSession });
   useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+    stateRef.current = { chains, activeSession };
+  }, [chains, activeSession]);
+
+  const currentView = useUIStore(selectCurrentView);
+  const viewingChainId = useUIStore(selectViewingChainId);
+  const editingChain = useUIStore(selectEditingChain);
 
   const isApplyingUrlRef = useRef(false);
   const hasProcessedInitialUrlRef = useRef(false);
@@ -32,18 +42,17 @@ export function useViewUrlSync({
   const applyViewStateFromUrl = useCallback(
     (next: UrlSyncedViewState) => {
       isApplyingUrlRef.current = true;
-      setState((prev) => ({
-        ...prev,
+      uiStore.setState({
         currentView: next.currentView,
         viewingChainId: next.viewingChainId,
         editingChain: next.editingChain,
-      }));
+      });
 
       setTimeout(() => {
         isApplyingUrlRef.current = false;
       }, 0);
     },
-    [setState],
+    [],
   );
 
   useEffect(() => {
@@ -85,10 +94,10 @@ export function useViewUrlSync({
     if (isApplyingUrlRef.current) return;
 
     const nextSearch = serializeViewStateToSearch({
-      currentView: state.currentView,
-      viewingChainId: state.viewingChainId,
-      editingChainId: state.editingChain?.id ?? null,
-      activeSessionChainId: state.activeSession?.chainId ?? null,
+      currentView,
+      viewingChainId,
+      editingChainId: editingChain?.id ?? null,
+      activeSessionChainId: activeSession?.chainId ?? null,
     });
 
     if (nextSearch === window.location.search) return;
@@ -96,10 +105,10 @@ export function useViewUrlSync({
     const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`;
     window.history.pushState(null, '', nextUrl);
   }, [
-    state.currentView,
-    state.viewingChainId,
-    state.editingChain?.id,
-    state.activeSession?.chainId,
+    currentView,
+    viewingChainId,
+    editingChain?.id,
+    activeSession?.chainId,
     shouldLoadData,
     isLoadingData,
   ]);

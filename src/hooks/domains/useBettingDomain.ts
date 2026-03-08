@@ -11,7 +11,6 @@
  * @see docs/features/DOMAIN_BETTING.md - 赌注系统完整文档
  * @see src/domain/betting.ts - 类型定义
  */
-import type { Dispatch, SetStateAction } from 'react';
 import type { BetPlacementResult } from '../../domain/betting';
 import { useStorage } from '../../storage/useStorage';
 import { hasStorageCapability } from '../../storage/ports';
@@ -22,13 +21,13 @@ import { emitPointsChanged } from '../../utils/pointsEvents';
 
 interface UseBettingDomainParams {
   pendingChainId: string | null;
-  setPendingChainId: Dispatch<SetStateAction<string | null>>;
+  setPendingChainId: (chainId: string | null) => void;
 
   currentSessionId: string | null;
-  setCurrentSessionId: Dispatch<SetStateAction<string | null>>;
+  setCurrentSessionId: (sessionId: string | null) => void;
 
-  setActiveSessionId: Dispatch<SetStateAction<string | null>>;
-  setShowBettingModal: Dispatch<SetStateAction<boolean>>;
+  setActiveSessionId: (sessionId: string | null) => void;
+  setShowBettingModal: (isOpen: boolean) => void;
 
   handleStartChain: (chainId: string) => Promise<void>;
 }

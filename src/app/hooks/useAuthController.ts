@@ -10,6 +10,7 @@ interface UseAuthControllerParams {
   storage: MomentumStorage;
   resetAppState: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
+  resetUIState?: () => void;
 }
 
 interface AuthControllerResult {
@@ -25,6 +26,7 @@ export function useAuthController({
   storage,
   resetAppState,
   setState,
+  resetUIState,
 }: UseAuthControllerParams): AuthControllerResult {
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const prevAuthUserIdRef = useRef<string | null>(null);
@@ -50,6 +52,7 @@ export function useAuthController({
           nextUserId,
         });
         setState(resetAppState());
+        resetUIState?.();
       }
     });
 
@@ -64,7 +67,7 @@ export function useAuthController({
     }
 
     return () => unsubscribeResult.value();
-  }, [canUseAuth, storage, resetAppState, setState]);
+  }, [canUseAuth, storage, resetAppState, resetUIState, setState]);
 
   const isAuthReady = !canUseAuth || Boolean(authUserId);
 

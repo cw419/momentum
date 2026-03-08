@@ -143,12 +143,15 @@ describe('useChainsDomain', () => {
 
   it('should open chain editor and ignore non-string parent input', () => {
     const stateRef = createStateContainer(createAppState());
+    const onNavigateToEditor = vi.fn();
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
+        onNavigateToEditor,
       }),
     );
 
@@ -157,19 +160,20 @@ describe('useChainsDomain', () => {
       result.current.handleCreateChain(fakeEvent);
     });
 
-    expect(stateRef.getState().currentView).toBe('editor');
-    expect(stateRef.getState().editingChain).toBeNull();
-    expect(stateRef.getState().viewingChainId).toBeNull();
+    expect(onNavigateToEditor).toHaveBeenCalledWith(null);
   });
 
   it('should open chain editor with explicit parent id', () => {
     const stateRef = createStateContainer(createAppState());
+    const onNavigateToEditor = vi.fn();
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
+        onNavigateToEditor,
       }),
     );
 
@@ -177,18 +181,20 @@ describe('useChainsDomain', () => {
       result.current.handleCreateChain('parent-123');
     });
 
-    expect(stateRef.getState().currentView).toBe('editor');
-    expect(stateRef.getState().viewingChainId).toBe('parent-123');
+    expect(onNavigateToEditor).toHaveBeenCalledWith('parent-123');
   });
 
   it('should open task group editor when creating task group', () => {
     const stateRef = createStateContainer(createAppState());
+    const onNavigateToTaskGroupEditor = vi.fn();
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
+        onNavigateToTaskGroupEditor,
       }),
     );
 
@@ -196,20 +202,22 @@ describe('useChainsDomain', () => {
       result.current.handleCreateTaskGroup();
     });
 
-    expect(stateRef.getState().currentView).toBe('taskgroup-editor');
-    expect(stateRef.getState().editingChain).toBeNull();
+    expect(onNavigateToTaskGroupEditor).toHaveBeenCalledTimes(1);
   });
 
   it('should route group chain edit to taskgroup editor', () => {
     const group = createGroupChain({ id: 'group-1', name: 'Group 1' });
     const stateRef = createStateContainer(createAppState({ chains: [group] }));
+    const onEditChain = vi.fn();
 
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
+        onEditChain,
       }),
     );
 
@@ -217,8 +225,7 @@ describe('useChainsDomain', () => {
       result.current.handleEditChain(group.id);
     });
 
-    expect(stateRef.getState().currentView).toBe('taskgroup-editor');
-    expect(stateRef.getState().editingChain?.id).toBe(group.id);
+    expect(onEditChain).toHaveBeenCalledWith(group, true);
   });
 
   it('should route legacy task-group shaped chains to taskgroup editor', () => {
@@ -230,13 +237,16 @@ describe('useChainsDomain', () => {
     const stateRef = createStateContainer(
       createAppState({ chains: [decoy, legacyTaskGroup] }),
     );
+    const onEditChain = vi.fn();
 
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
+        onEditChain,
       }),
     );
 
@@ -244,20 +254,22 @@ describe('useChainsDomain', () => {
       result.current.handleEditChain(legacyTaskGroup.id);
     });
 
-    expect(stateRef.getState().currentView).toBe('taskgroup-editor');
-    expect(stateRef.getState().editingChain?.id).toBe(legacyTaskGroup.id);
+    expect(onEditChain).toHaveBeenCalledWith(legacyTaskGroup, true);
   });
 
   it('should route unit chain edit to chain editor', () => {
     const unit = createUnitChain({ id: 'unit-1', name: 'Unit 1' });
     const stateRef = createStateContainer(createAppState({ chains: [unit] }));
+    const onEditChain = vi.fn();
 
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
+        onEditChain,
       }),
     );
 
@@ -265,21 +277,21 @@ describe('useChainsDomain', () => {
       result.current.handleEditChain(unit.id);
     });
 
-    expect(stateRef.getState().currentView).toBe('editor');
-    expect(stateRef.getState().editingChain?.id).toBe(unit.id);
+    expect(onEditChain).toHaveBeenCalledWith(unit, false);
   });
 
   it('should ignore edit request when chain id does not exist', () => {
-    const stateRef = createStateContainer(
-      createAppState({ currentView: 'dashboard' }),
-    );
+    const stateRef = createStateContainer(createAppState());
+    const onEditChain = vi.fn();
 
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
+        onEditChain,
       }),
     );
 
@@ -287,8 +299,7 @@ describe('useChainsDomain', () => {
       result.current.handleEditChain('missing-id');
     });
 
-    expect(stateRef.getState().currentView).toBe('dashboard');
-    expect(stateRef.getState().editingChain).toBeNull();
+    expect(onEditChain).not.toHaveBeenCalled();
   });
 
   it('should create a new chain and persist via safelySaveChains', async () => {
@@ -307,13 +318,16 @@ describe('useChainsDomain', () => {
       getChains: vi.fn(async () => [existing, anotherActive, deleted]),
     });
     const safelySaveChains = vi.fn(async () => undefined);
+    const onNavigateToDashboard = vi.fn();
 
     const { result } = renderHook(() =>
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage,
         safelySaveChains,
+        onNavigateToDashboard,
       }),
     );
 
@@ -335,8 +349,7 @@ describe('useChainsDomain', () => {
       auxiliaryFailures: 0,
     });
     expect(queryOptimizer.onDataChange).toHaveBeenCalledWith('chains');
-    expect(stateRef.getState().currentView).toBe('dashboard');
-    expect(stateRef.getState().editingChain).toBeNull();
+    expect(onNavigateToDashboard).toHaveBeenCalledTimes(1);
     expect(stateRef.getState().chainsRevision).toBe(1);
     expect(logger.debug).toHaveBeenCalledWith(
       'CHAINS',
@@ -397,6 +410,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: null,
         storage,
         safelySaveChains,
       }),
@@ -436,7 +450,7 @@ describe('useChainsDomain', () => {
     });
     const untouched = createUnitChain({ id: 'untouched-1', name: 'Untouched' });
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing, untouched], editingChain: editing }),
+      createAppState({ chains: [editing, untouched] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing, untouched]),
@@ -447,6 +461,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -538,7 +553,7 @@ describe('useChainsDomain', () => {
       groupRepeatCount: 2,
     });
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -549,6 +564,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -576,7 +592,7 @@ describe('useChainsDomain', () => {
       name: 'Unit Before',
     });
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -587,6 +603,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -611,7 +628,7 @@ describe('useChainsDomain', () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('copied-chain-id');
     const editing = createUnitChain({ id: 'editing-1', name: 'Source Chain' });
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -622,6 +639,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -655,7 +673,7 @@ describe('useChainsDomain', () => {
     const editing = createUnitChain({ id: 'editing-1', name: 'Editing' });
     const fallback = [createUnitChain({ id: 'fallback-1', name: 'Fallback' })];
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -670,6 +688,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -702,7 +721,7 @@ describe('useChainsDomain', () => {
   it('should log reload failure when save recovery also fails', async () => {
     const editing = createUnitChain({ id: 'editing-1', name: 'Editing' });
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -719,6 +738,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -752,7 +772,7 @@ describe('useChainsDomain', () => {
     const editing = createUnitChain({ id: 'editing-1', name: 'Editing' });
     const fallback = [createUnitChain({ id: 'fallback-1', name: 'Fallback' })];
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -767,6 +787,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -828,7 +849,7 @@ describe('useChainsDomain', () => {
       name: 'Editing',
     });
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -845,6 +866,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),
@@ -871,7 +893,7 @@ describe('useChainsDomain', () => {
     });
     const editing = createUnitChain({ id: 'editing-zh', name: 'Editing Zh' });
     const stateRef = createStateContainer(
-      createAppState({ chains: [editing], editingChain: editing }),
+      createAppState({ chains: [editing] }),
     );
     const storage = createLocalStorageMock({
       getChains: vi.fn(async () => [editing]),
@@ -888,6 +910,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
+        editingChain: editing,
         storage,
         safelySaveChains,
       }),

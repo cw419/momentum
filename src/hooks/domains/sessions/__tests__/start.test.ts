@@ -99,6 +99,7 @@ describe('createStartChainHandler', () => {
       saveScheduledSessions: vi.fn(async () => undefined),
     });
     const safelySaveChains = vi.fn(async () => undefined);
+    const onNavigateToFocus = vi.fn();
 
     const handleStartChain = createStartChainHandler({
       state: stateRef.getState(),
@@ -110,6 +111,7 @@ describe('createStartChainHandler', () => {
       currentSessionId: null,
       setCurrentSessionId: vi.fn(),
       setShowBettingModal: vi.fn(),
+      onNavigateToFocus,
       tr,
     });
 
@@ -123,7 +125,7 @@ describe('createStartChainHandler', () => {
       isPaused: false,
       totalPausedTime: 0,
     });
-    expect(stateRef.getState().currentView).toBe('focus');
+    expect(onNavigateToFocus).toHaveBeenCalledTimes(1);
     expect(stateRef.getState().activeSession?.chainId).toBe(chain.id);
   });
 
@@ -437,6 +439,7 @@ describe('createStartChainHandler', () => {
       saveActiveSession: vi.fn(async () => undefined),
       saveScheduledSessions: vi.fn(async () => undefined),
     });
+    const onNavigateToFocus = vi.fn();
 
     const handleStartChain = createStartChainHandler({
       state: stateRef.getState(),
@@ -448,6 +451,7 @@ describe('createStartChainHandler', () => {
       currentSessionId: null,
       setCurrentSessionId: vi.fn(),
       setShowBettingModal: vi.fn(),
+      onNavigateToFocus,
       tr,
     });
 
@@ -455,7 +459,7 @@ describe('createStartChainHandler', () => {
 
     expect(storage.createBettingSession).not.toHaveBeenCalled();
     expect(storage.saveActiveSession).toHaveBeenCalledTimes(1);
-    expect(stateRef.getState().currentView).toBe('focus');
+    expect(onNavigateToFocus).toHaveBeenCalledTimes(1);
   });
 
   it('should reset an expired group and notify failure', async () => {
@@ -1142,6 +1146,7 @@ describe('createStartChainHandler', () => {
     const safelySaveChains = vi.fn(async () => {
       throw new Error('chains save failed');
     });
+    const onNavigateToFocus = vi.fn();
 
     const handleStartChain = createStartChainHandler({
       state: stateRef.getState(),
@@ -1153,13 +1158,14 @@ describe('createStartChainHandler', () => {
       currentSessionId: null,
       setCurrentSessionId: vi.fn(),
       setShowBettingModal: vi.fn(),
+      onNavigateToFocus,
       tr,
     });
 
     await handleStartChain(chain.id);
     await flushPromises();
 
-    expect(stateRef.getState().currentView).toBe('focus');
+    expect(onNavigateToFocus).toHaveBeenCalledTimes(1);
     expect(
       stateRef.getState().chains.find((item) => item.id === chain.id)
         ?.auxiliaryStreak,

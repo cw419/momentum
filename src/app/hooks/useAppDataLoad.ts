@@ -15,6 +15,7 @@ import {
   persistCompletionHistoryTimingMigration,
   runDevDataMigration,
 } from './appDataLoadHelpers';
+import { uiStore } from '../../stores/uiStore';
 
 interface UseAppDataLoadParams {
   storage: MomentumStorage;
@@ -224,8 +225,8 @@ export function useAppDataLoad({
             scheduledSessions: [],
             activeSession: null,
             completionHistory: [],
-            currentView: 'dashboard',
           }));
+          uiStore.getState().navigateToDashboard();
           return;
         }
 
@@ -282,8 +283,10 @@ export function useAppDataLoad({
           rsipTaskLinks,
           rsipExecutionRecords,
           taskTimeStats,
-          currentView: activeSession ? 'focus' : 'dashboard',
         }));
+        uiStore
+          .getState()
+          .navigateToView(activeSession ? 'focus' : 'dashboard');
 
         // Clean up expired sessions.
         if (scheduledSessions.length !== allScheduledSessions.length) {
