@@ -23,6 +23,14 @@ export const QUALITY_CHECKS = Object.freeze([
     textReportPath: 'reports/quality/ts-prune.txt',
   },
   {
+    id: 'comment-debt',
+    label: 'Comment debt',
+    script: 'quality:comment-debt',
+    lanes: ['smell-audit'],
+    reports: ['reports/quality/comment-debt.json'],
+    textReportPath: 'reports/quality/comment-debt.txt',
+  },
+  {
     id: 'depcheck',
     label: 'depcheck',
     script: 'quality:depcheck',

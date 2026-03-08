@@ -27,8 +27,6 @@ export class ForwardTimerManager {
 
     this.started = true;
     this.setupVisibilityHandler();
-
-    // 页面启动时清理过期数据
     this.cleanupExpiredStates();
   }
 
@@ -46,21 +44,14 @@ export class ForwardTimerManager {
         const now = performance.now();
 
         if (document.hidden) {
-          // 页面隐藏时记录时间戳
           this.timers.forEach((timer) => {
             if (!timer.isPaused) {
               timer.lastVisibilityChange = now;
             }
           });
         } else {
-          // 页面恢复可见时处理时间差
           this.timers.forEach((timer) => {
             if (!timer.isPaused && timer.lastVisibilityChange) {
-              // 如果隐藏时间超过1秒，则认为是真正的标签页切换
-              // 注释掉暂停时间累积，让计时器继续运行
-              // if (hiddenDuration > 1000) {
-              //   timer.totalPausedDuration += hiddenDuration;
-              // }
               timer.lastVisibilityChange = undefined;
             }
           });
@@ -69,14 +60,8 @@ export class ForwardTimerManager {
 
       document.addEventListener('visibilitychange', this.visibilityHandler);
 
-      // 添加窗口焦点事件监听，确保最小化窗口时也继续计时
-      this.focusHandler = () => {
-        // 窗口获得焦点时，不需要特殊处理，让计时器自然继续
-      };
-
-      this.blurHandler = () => {
-        // 窗口失去焦点时，不暂停计时器，让它继续运行
-      };
+      this.focusHandler = () => {};
+      this.blurHandler = () => {};
 
       window.addEventListener('focus', this.focusHandler);
       window.addEventListener('blur', this.blurHandler);
@@ -91,7 +76,6 @@ export class ForwardTimerManager {
     const now = performance.now();
 
     if (this.timers.has(sessionId)) {
-      // 如果计时器已存在，重置状态
       const existingTimer = this.timers.get(sessionId)!;
       existingTimer.startTime = now;
       existingTimer.pausedTime = 0;
@@ -99,7 +83,6 @@ export class ForwardTimerManager {
       existingTimer.isPaused = false;
       existingTimer.lastVisibilityChange = undefined;
     } else {
-      // 创建新的计时器
       this.timers.set(sessionId, {
         startTime: now,
         pausedTime: 0,
@@ -108,7 +91,6 @@ export class ForwardTimerManager {
       });
     }
 
-    // 持久化到localStorage
     this.persistTimerState(sessionId);
   }
 
@@ -154,8 +136,6 @@ export class ForwardTimerManager {
     if (!timer) return 0;
 
     const totalElapsed = this.getCurrentElapsed(sessionId);
-
-    // 清理计时器和持久化数据
     this.clearTimer(sessionId);
 
     return totalElapsed;
@@ -179,10 +159,7 @@ export class ForwardTimerManager {
       elapsedTime = now - timer.startTime;
     }
 
-    // 减去暂停时间
     const adjustedElapsed = elapsedTime - timer.totalPausedDuration;
-
-    // 转换为秒并确保不为负数
     return Math.max(0, Math.floor(adjustedElapsed / 1000));
   }
 
@@ -243,7 +220,6 @@ export class ForwardTimerManager {
     const data = localPreferences.getTimerState(sessionId);
     if (!data) return false;
 
-    // 检查数据是否过期（超过24小时）
     if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
       localPreferences.clearTimerState(sessionId);
       return false;

@@ -58,6 +58,9 @@ describe('quality lane tooling', () => {
     expect(packageJson.scripts['quality:debt-gate']).toMatch(
       /^npm run quality:structural-budget$/,
     );
+    expect(packageJson.scripts['quality:comment-debt']).toMatch(
+      /^node tools\/quality\/comment-debt\.mjs$/,
+    );
   });
 
   it('defines the info and nightly lanes in terms of leaf checks instead of nested aggregators', async () => {
@@ -89,6 +92,17 @@ describe('quality lane tooling', () => {
     expect(nightlyScripts).toContain('quality:large-files');
     expect(nightlyScripts).toContain('quality:depcheck');
     expect(nightlyScripts).toContain('security:semgrep');
+  });
+
+  it('wires comment debt into the smell-audit lane', async () => {
+    const { getLaneChecks } = await import('../../tools/quality/lanes.config.mjs');
+
+    const smellAuditChecks = getLaneChecks('smell-audit');
+    const smellAuditScripts = smellAuditChecks.map(
+      (check: { script: string }) => check.script,
+    );
+
+    expect(smellAuditScripts).toContain('quality:comment-debt');
   });
 
   it('runs every check and distinguishes pass, fail, stale, and blocked', async () => {

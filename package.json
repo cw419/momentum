@@ -30,6 +30,7 @@
     "quality:depcheck": "depcheck",
     "quality:jscpd": "jscpd src --config .jscpd.json",
     "quality:large-files": "node tools/quality/large-file-budget.mjs",
+    "quality:comment-debt": "node tools/quality/comment-debt.mjs",
     "quality:debt-gate:core": "node tools/quality/debt-gate.mjs",
     "quality:structural-budget": "node tools/quality/lane-runner.mjs structural-budget",
     "quality:debt-gate": "npm run quality:structural-budget",

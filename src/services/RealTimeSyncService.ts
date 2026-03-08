@@ -48,7 +48,6 @@ class RealTimeSyncService {
     }
     this.syncCallbacks.get(dataType)!.push(callback);
 
-    // Return unsubscribe function
     return () => {
       const callbacks = this.syncCallbacks.get(dataType);
       if (callbacks) {
@@ -75,7 +74,6 @@ class RealTimeSyncService {
     try {
       let data = freshData;
 
-      // Fetch fresh data if not provided
       if (!data) {
         const storage = this.storage;
         if (!storage) {
@@ -100,7 +98,6 @@ class RealTimeSyncService {
         }
       }
 
-      // Notify all subscribers
       callbacks.forEach((callback) => {
         try {
           callback(data);
@@ -143,7 +140,6 @@ class RealTimeSyncService {
       operationType,
     });
 
-    // Notify subscribers with fresh data
     await this.notifySubscribers(dataType, freshData);
 
     this.lastSyncTimestamp = Date.now();
@@ -157,7 +153,6 @@ class RealTimeSyncService {
 
     logger.debug('REALTIME_SYNC', 'Forcing complete data refresh');
 
-    // Notify all subscribers to refresh their data
     await Promise.all([
       this.notifySubscribers('chains'),
       this.notifySubscribers('sessions'),
@@ -168,11 +163,9 @@ class RealTimeSyncService {
   }
 
   /**
-   * Clear all cache layers immediately - critical for delete operations
+   * Clear storage-level caches without touching broader UI state.
    */
   async clearAllCaches(storage?: MomentumStorage): Promise<void> {
-    // MomentumStorage implementations may maintain internal caches (e.g. schema verification).
-    // Keep this operation narrowly scoped: clear storage-level caches only.
     if (storage) {
       try {
         storage.clearCache();
@@ -213,13 +206,8 @@ class RealTimeSyncService {
   ): Promise<Chain[]> {
     logger.info('REALTIME_SYNC', 'Starting delete operation', { chainId });
 
-    // Perform database operation
     await storage.softDeleteChain(chainId);
-
-    // Get fresh data with forced cache bypass
     const freshChains = await storage.getActiveChains();
-
-    // Trigger real-time sync with additional cache clearing
     await this.syncAfterOperation('chains', 'delete', freshChains);
 
     return freshChains;
@@ -239,7 +227,6 @@ class RealTimeSyncService {
       failed: [] as { id: string; error: string }[],
     };
 
-    // ENHANCED: Process each chain individually with better error handling
     for (const chainId of chainIds) {
       try {
         logger.debug('REALTIME_SYNC', 'Restoring chain', { chainId });
@@ -259,17 +246,14 @@ class RealTimeSyncService {
       }
     }
 
-    // Get fresh data immediately with forced cache bypass
     logger.debug(
       'REALTIME_SYNC',
       'Fetching fresh chains after restore operation',
     );
     const freshChains = await storage.getActiveChains();
 
-    // Trigger real-time sync with fresh data
     await this.syncAfterOperation('chains', 'restore', freshChains);
 
-    // Log operation summary
     logger.info('REALTIME_SYNC', 'Restore operation completed', {
       total: chainIds.length,
       successful: results.successful.length,
@@ -277,14 +261,12 @@ class RealTimeSyncService {
       failures: results.failed,
     });
 
-    // Throw error if all operations failed
     if (results.failed.length === chainIds.length) {
       throw new Error(
         `All restore operations failed: ${results.failed.map((f) => f.error).join('; ')}`,
       );
     }
 
-    // Log partial failures but don't throw error
     if (results.failed.length > 0) {
       logger.warn('REALTIME_SYNC', 'Partial restore failure', {
         failedCount: results.failed.length,
@@ -307,15 +289,11 @@ class RealTimeSyncService {
       chainIds,
     });
 
-    // Perform database operations
     for (const chainId of chainIds) {
       await storage.permanentlyDeleteChain(chainId);
     }
 
-    // Get fresh data immediately
     const freshChains = await storage.getActiveChains();
-
-    // Trigger real-time sync
     await this.syncAfterOperation('chains', 'delete', freshChains);
 
     return freshChains;
@@ -332,23 +310,16 @@ class RealTimeSyncService {
       chainCount: chains.length,
     });
 
-    // Perform database operation
     await storage.saveChains(chains);
-
-    // Get fresh active chains
     const freshChains = await storage.getActiveChains();
-
-    // Trigger real-time sync
     await this.syncAfterOperation('chains', 'update', freshChains);
 
     return freshChains;
   }
 }
 
-// Singleton instance
 export const realTimeSyncService = new RealTimeSyncService();
 
-// Auto-enable in development for better debugging
 if (isDev) {
   realTimeSyncService.setEnabled(true);
 

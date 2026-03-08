@@ -44,7 +44,6 @@ export interface UsePetDomainReturn {
   isLoading: boolean;
   hasPet: boolean;
 
-  // Actions
   createPet: (name: string) => Promise<PetState>;
   feedPet: () => Promise<FeedResult | null>;
   onTaskCompleted: (
@@ -68,13 +67,11 @@ export function usePetDomain(): UsePetDomainReturn {
   const [mood, setMood] = useState<PetMood>('neutral');
   const decayIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load pet state on mount
   const loadPet = useCallback(async () => {
     try {
       setIsLoading(true);
       const savedPet = await storage.getPetState();
       if (savedPet) {
-        // Apply decay since last session
         const decayedState = calculateDecay(savedPet, new Date());
         const updatedPet = { ...savedPet, ...decayedState };
         setPet(updatedPet);
@@ -93,7 +90,6 @@ export function usePetDomain(): UsePetDomainReturn {
     }
   }, [storage]);
 
-  // Create new pet
   const createPet = useCallback(
     async (name: string): Promise<PetState> => {
       const mobileOptions = isTauriMobile
@@ -112,7 +108,6 @@ export function usePetDomain(): UsePetDomainReturn {
     [storage],
   );
 
-  // Feed the pet (manual action)
   const feedPet = useCallback(async (): Promise<FeedResult | null> => {
     if (!pet) return null;
 
@@ -142,7 +137,6 @@ export function usePetDomain(): UsePetDomainReturn {
     return { hungerReduced, newHunger, happinessGained };
   }, [pet, storage]);
 
-  // Handle task completion (called from SessionsDomain)
   const onTaskCompleted = useCallback(
     async (
       taskDuration: number,
@@ -152,7 +146,6 @@ export function usePetDomain(): UsePetDomainReturn {
 
       const reward = calculateTaskReward(pet, taskDuration, wasSuccessful);
 
-      // Calculate new experience (handle level up)
       let newExperience = pet.experience + reward.xpGained;
       if (reward.leveledUp) {
         newExperience = newExperience - getXpForLevel(pet.level);
@@ -192,7 +185,6 @@ export function usePetDomain(): UsePetDomainReturn {
     [pet, storage],
   );
 
-  // Update pet position (for dragging when expanded)
   const updatePosition = useCallback(
     async (x: number, y: number) => {
       if (!pet) return;
@@ -204,7 +196,6 @@ export function usePetDomain(): UsePetDomainReturn {
     [pet, storage],
   );
 
-  // Update minimized position (for dragging when minimized)
   const updateMinimizedPosition = useCallback(
     async (x: number, y: number) => {
       if (!pet) return;
@@ -216,7 +207,6 @@ export function usePetDomain(): UsePetDomainReturn {
     [pet, storage],
   );
 
-  // Toggle visibility
   const toggleVisibility = useCallback(async () => {
     if (!pet) return;
 
@@ -225,7 +215,6 @@ export function usePetDomain(): UsePetDomainReturn {
     setPet(updatedPet);
   }, [pet, storage]);
 
-  // Show pet (make visible)
   const showPet = useCallback(async () => {
     if (!pet || pet.isVisible) return;
 
@@ -234,44 +223,38 @@ export function usePetDomain(): UsePetDomainReturn {
     setPet(updatedPet);
   }, [pet, storage]);
 
-  // Minimize pet - minimize at the current expanded position
   const minimize = useCallback(async () => {
     if (!pet || pet.isMinimized) return;
 
-    // Minimize at current position for seamless experience
     const updatedPet = {
       ...pet,
       isMinimized: true,
-      minimizedPosition: { ...pet.position }, // Minimize at current position
+      minimizedPosition: { ...pet.position },
     };
     await storage.savePetState(updatedPet);
     setPet(updatedPet);
     logger.info('PET', 'Pet minimized');
   }, [pet, storage]);
 
-  // Expand pet (restore from minimized) - expand at the minimized position
   const expand = useCallback(async () => {
     if (!pet || !pet.isMinimized) return;
 
-    // Expand at the current minimized position for a seamless experience
     const updatedPet = {
       ...pet,
       isMinimized: false,
-      position: { ...pet.minimizedPosition }, // Expand at minimized position
+      position: { ...pet.minimizedPosition },
     };
     await storage.savePetState(updatedPet);
     setPet(updatedPet);
     logger.info('PET', 'Pet expanded');
   }, [pet, storage]);
 
-  // Setup decay interval
   useEffect(() => {
     if (!pet) return;
 
     const runDecay = async () => {
       const decayedState = calculateDecay(pet, new Date());
 
-      // Only update if there's actual change
       if (
         decayedState.hunger !== pet.hunger ||
         decayedState.happiness !== pet.happiness ||
@@ -282,7 +265,6 @@ export function usePetDomain(): UsePetDomainReturn {
         setPet(updatedPet);
         setMood(calculateMood(updatedPet));
 
-        // Log warnings
         if (updatedPet.hunger > 80 && pet.hunger <= 80) {
           logger.warn('PET', 'Pet is starving!', { hunger: updatedPet.hunger });
         }
@@ -303,7 +285,6 @@ export function usePetDomain(): UsePetDomainReturn {
     };
   }, [pet, storage]);
 
-  // Load on mount
   useEffect(() => {
     loadPet();
   }, [loadPet]);
@@ -314,7 +295,6 @@ export function usePetDomain(): UsePetDomainReturn {
     isLoading,
     hasPet: !!pet,
 
-    // Actions
     createPet,
     feedPet,
     onTaskCompleted,

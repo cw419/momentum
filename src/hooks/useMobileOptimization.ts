@@ -37,11 +37,8 @@ export const useMobileOptimization = () => {
     const isDesktop = width > 1024;
     const orientation = width > height ? 'landscape' : 'portrait';
 
-    // 检测触摸支持
     const touchSupport =
       'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-    // 检测虚拟键盘（简单方法：检测高度变化）
     const isKeyboardVisible = height < window.screen.height * 0.75;
 
     setMobileInfo({
@@ -56,12 +53,10 @@ export const useMobileOptimization = () => {
     });
   }, []);
 
-  // 添加iOS Safari特定修复
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!/iPad|iPhone|iPod/.test(navigator.userAgent)) return;
 
-    // 修复 iOS Safari 的 viewport 问题：不要禁用缩放（可访问性）。
     const viewport = document.querySelector('meta[name="viewport"]');
     if (viewport) {
       viewport.setAttribute(
@@ -70,7 +65,6 @@ export const useMobileOptimization = () => {
       );
     }
 
-    // 修复 iOS Safari 的 100vh 问题
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -92,19 +86,14 @@ export const useMobileOptimization = () => {
   }, []);
 
   useEffect(() => {
-    // 初始检测
     updateMobileInfo();
-
-    // 监听窗口大小变化
     window.addEventListener('resize', updateMobileInfo);
 
-    // 监听屏幕方向变化
     const handleOrientationChange = () => {
       setTimeout(updateMobileInfo, 100);
     };
     window.addEventListener('orientationchange', handleOrientationChange);
 
-    // 监听虚拟键盘
     const handleVisualViewportChange = () => {
       if (window.visualViewport) {
         const isKeyboardVisible =
@@ -135,11 +124,9 @@ export const useMobileOptimization = () => {
     };
   }, [updateMobileInfo]);
 
-  // 添加移动端优化的CSS类
   useEffect(() => {
     const body = document.body;
 
-    // 移除所有相关类
     body.classList.remove(
       'mobile-device',
       'tablet-device',
@@ -150,7 +137,6 @@ export const useMobileOptimization = () => {
       'touch-device',
     );
 
-    // 添加当前状态的类
     if (mobileInfo.isMobile) body.classList.add('mobile-device');
     if (mobileInfo.isTablet) body.classList.add('tablet-device');
     if (mobileInfo.isDesktop) body.classList.add('desktop-device');
@@ -186,7 +172,6 @@ export const useTouchOptimization = () => {
     type InitialTouch = { x: number; y: number; time: number };
     type TouchTrackingElement = HTMLElement & { _initialTouch?: InitialTouch };
 
-    // 防止双击缩放
     let lastTouchEnd = 0;
     const preventZoom = (e: TouchEvent) => {
       const now = new Date().getTime();
@@ -198,10 +183,8 @@ export const useTouchOptimization = () => {
 
     document.addEventListener('touchend', preventZoom, { passive: false });
 
-    // 精确的长按控制：只阻止非交互元素的长按，允许滚动
     const preventSelectiveLongPress = (e: TouchEvent) => {
       if (e.target instanceof HTMLElement) {
-        // 检查是否为交互元素或滚动容器
         const isInteractive = e.target.matches(
           'input, textarea, select, button, [role="button"], [tabindex], a, .mobile-optimized-slider',
         );
@@ -210,12 +193,9 @@ export const useTouchOptimization = () => {
           '.overflow-y-auto, .overflow-auto, .chain-editor-scroll-container, [data-scrollable="true"]',
         );
 
-        // 只在非交互且非滚动元素上阻止长按
         if (!isInteractive && !isScrollable) {
-          // 检查是否为垂直滑动手势
           const touch = e.touches[0];
           if (touch) {
-            // 记录初始触摸位置，用于后续判断
             const target = e.target as TouchTrackingElement;
             target._initialTouch = {
               x: touch.clientX,
@@ -223,7 +203,6 @@ export const useTouchOptimization = () => {
               time: Date.now(),
             };
 
-            // 延迟阻止，给滚动手势一个机会
             setTimeout(() => {
               const initialTouch = target._initialTouch;
               if (
@@ -232,7 +211,6 @@ export const useTouchOptimization = () => {
                 Math.abs(touch.clientX - initialTouch.x) < 10 &&
                 Math.abs(touch.clientY - initialTouch.y) < 10
               ) {
-                // 只在静止状态下阻止长按
                 e.preventDefault();
               }
             }, 200);
