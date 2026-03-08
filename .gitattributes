@@ -1,0 +1,9 @@
+# Generated reports — exclude from Linguist language stats
+reports/**          linguist-generated
+coverage/**         linguist-generated
+
+# Lock files
+package-lock.json   linguist-generated
+
+# Legacy test artifacts
+tools/experiments/archive/** linguist-generated
