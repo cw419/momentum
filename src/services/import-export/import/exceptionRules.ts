@@ -1,5 +1,5 @@
 import type { ExceptionRule, ExceptionRuleType } from '../../../types';
-import { isRecord } from './coercions';
+import { isRecord } from '../../../serialization/primitives';
 
 type ExceptionRuleImportFields = 'name' | 'type' | 'description';
 export type ExceptionRuleImportData = Pick<

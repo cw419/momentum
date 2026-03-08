@@ -1,19 +1,20 @@
-import type { Chain, GroupChain, UnitChain } from '../../../types';
+import type { Chain, ChainType } from '../../../types';
 import type { Database, Json } from '../../../lib/database.types';
+import { decodeChain, sanitizeBool, sanitizeInt, sanitizeIsoDate, sanitizeString, sanitizeStringArray } from '../../../serialization';
 
 type ChainRow = Database['public']['Tables']['chains']['Row'];
 type ChainInsert = Database['public']['Tables']['chains']['Insert'];
 
-function toStringArray(value: Json): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === 'string');
+function toPersistedStringArray(value: Json): string[] {
+  return sanitizeStringArray(value);
 }
 
 export function mapChainRowToChain(row: ChainRow): Chain {
-  const common = {
+  return decodeChain({
     id: row.id,
     name: row.name,
     parentId: row.parent_id || undefined,
+    type: (row.type as ChainType | null | undefined) ?? undefined,
     sortOrder: row.sort_order,
     trigger: row.trigger,
     duration: row.duration,
@@ -23,44 +24,28 @@ export function mapChainRowToChain(row: ChainRow): Chain {
     totalCompletions: row.total_completions,
     totalFailures: row.total_failures,
     auxiliaryFailures: row.auxiliary_failures,
-    exceptions: toStringArray(row.exceptions),
-    auxiliaryExceptions: toStringArray(row.auxiliary_exceptions),
+    exceptions: toPersistedStringArray(row.exceptions),
+    auxiliaryExceptions: toPersistedStringArray(row.auxiliary_exceptions),
     auxiliarySignal: row.auxiliary_signal,
     auxiliaryDuration: row.auxiliary_duration,
     auxiliaryCompletionTrigger: row.auxiliary_completion_trigger,
     isDurationless: row.is_durationless ?? false,
     minimumDuration: row.minimum_duration ?? undefined,
     taskRepeatCount: row.task_repeat_count ?? undefined,
-    timeLimitExceptions: toStringArray(row.time_limit_exceptions),
-    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
-    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
-    lastCompletedAt: row.last_completed_at
-      ? new Date(row.last_completed_at)
-      : undefined,
-  };
-
-  if (row.type === 'group') {
-    const result = {
-      ...common,
-      type: 'group',
-      timeLimitHours: row.time_limit_hours ?? undefined,
-      groupStartedAt: row.group_started_at
-        ? new Date(row.group_started_at)
-        : undefined,
-      groupExpiresAt: row.group_expires_at
-        ? new Date(row.group_expires_at)
-        : undefined,
-      isTaskGroup: row.is_task_group ?? undefined,
-      groupRepeatCount: row.group_repeat_count ?? undefined,
-    } satisfies GroupChain;
-    return result;
-  }
-
-  const result = {
-    ...common,
-    type: (row.type ?? 'unit') as UnitChain['type'],
-  } satisfies UnitChain;
-  return result;
+    timeLimitExceptions: toPersistedStringArray(row.time_limit_exceptions),
+    deletedAt: row.deleted_at,
+    createdAt: row.created_at,
+    lastCompletedAt: row.last_completed_at,
+    ...(row.type === 'group'
+      ? {
+          timeLimitHours: row.time_limit_hours ?? undefined,
+          groupStartedAt: row.group_started_at,
+          groupExpiresAt: row.group_expires_at,
+          isTaskGroup: row.is_task_group ?? undefined,
+          groupRepeatCount: row.group_repeat_count ?? undefined,
+        }
+      : {}),
+  });
 }
 
 export function buildChainRow(
@@ -68,42 +53,6 @@ export function buildChainRow(
   userId: string,
   includeNewColumns: boolean,
 ): ChainInsert {
-  const sanitizeString = (value: unknown, fallback: string = ''): string => {
-    if (typeof value === 'string') return value;
-    if (value == null) return fallback;
-    return String(value);
-  };
-
-  const sanitizeInt = (value: unknown, fallback: number): number => {
-    const num = typeof value === 'number' ? value : Number(value);
-    if (!Number.isFinite(num)) return fallback;
-    return Math.trunc(num);
-  };
-
-  const sanitizeBool = (value: unknown, fallback: boolean): boolean => {
-    if (typeof value === 'boolean') return value;
-    return fallback;
-  };
-
-  const sanitizeStringArray = (value: unknown): string[] => {
-    if (!Array.isArray(value)) return [];
-    return value.filter((v) => typeof v === 'string');
-  };
-
-  const sanitizeIsoDate = (value: unknown): string | null => {
-    if (value == null) return null;
-    if (value instanceof Date && !Number.isNaN(value.getTime()))
-      return value.toISOString();
-
-    if (typeof value === 'string') {
-      const parsed = new Date(value);
-      if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
-      return null;
-    }
-
-    return null;
-  };
-
   let parentId = chain.parentId || null;
   if (parentId === chain.id) {
     parentId = null;

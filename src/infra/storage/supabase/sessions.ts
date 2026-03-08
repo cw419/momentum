@@ -8,7 +8,7 @@ import {
   markCapabilitiesMissing,
 } from './schemaCapabilities';
 import { formatSupabaseError } from './supabaseError';
-import { mapActiveSessionRow } from './sessionMapper';
+import { mapActiveSessionRow, mapScheduledSessionRow } from './sessionMapper';
 
 type ActiveSessionRow = Database['public']['Tables']['active_sessions']['Row'];
 type ActiveSessionInsert =
@@ -154,12 +154,7 @@ export async function getScheduledSessions(
   if (error) return [];
   if (!data) return [];
 
-  return data.map((session) => ({
-    chainId: session.chain_id,
-    scheduledAt: new Date(session.scheduled_at),
-    expiresAt: new Date(session.expires_at),
-    auxiliarySignal: session.auxiliary_signal,
-  }));
+  return data.map(mapScheduledSessionRow);
 }
 
 export async function saveScheduledSessions(

@@ -1,7 +1,7 @@
 import type { Chain, DeletedChain } from '../../../../types';
 import { toError } from '../../../../utils/errorMessage';
 import { logger } from '../../../../utils/logger';
-import { mapChainRowToChain } from '../mappers';
+import { mapChainRowToChain } from '../chainMapper';
 import type { SupabaseStorageContext } from '../types';
 import { isMissingDeletedAtColumnError } from './internal';
 

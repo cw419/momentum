@@ -1,33 +1,13 @@
 import type { Chain, DeletedChain } from '../../types';
+import { decodeChain, type SerializedChain } from '../../serialization';
 import { collectDescendantIds } from './chainHierarchy';
 import { STORAGE_KEYS } from './keys';
-
-interface RawChainData {
-  auxiliaryStreak?: number;
-  auxiliaryFailures?: number;
-  auxiliaryExceptions?: unknown[];
-  deletedAt?: string | null;
-  createdAt: string;
-  lastCompletedAt?: string;
-}
 
 export function getChains(): Chain[] {
   const data = localStorage.getItem(STORAGE_KEYS.CHAINS);
   if (!data) return [];
 
-  return JSON.parse(data).map(
-    (chain: RawChainData & Record<string, unknown>) => ({
-      ...chain,
-      auxiliaryStreak: chain.auxiliaryStreak || 0,
-      auxiliaryFailures: chain.auxiliaryFailures || 0,
-      auxiliaryExceptions: chain.auxiliaryExceptions || [],
-      deletedAt: chain.deletedAt ? new Date(chain.deletedAt) : null,
-      createdAt: new Date(chain.createdAt),
-      lastCompletedAt: chain.lastCompletedAt
-        ? new Date(chain.lastCompletedAt)
-        : undefined,
-    }),
-  );
+  return (JSON.parse(data) as SerializedChain[]).map(decodeChain);
 }
 
 export function saveChains(chains: Chain[]): void {

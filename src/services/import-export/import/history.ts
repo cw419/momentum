@@ -4,7 +4,7 @@ import {
   parseTruthyDateOrNow,
   toNumber,
   toOptionalStringFromTruthy,
-} from './coercions';
+} from '../../../serialization/primitives';
 
 function mapImportedCompletionHistoryEntry(
   raw: unknown,

@@ -8,7 +8,6 @@ import type {
   RSIPStabilityPhase,
   RSIPTaskLink,
 } from '../../../types';
-import type { ImportTranslator } from './types';
 import {
   getTrimmedNonEmptyString,
   isRecord,
@@ -19,7 +18,8 @@ import {
   toOptionalBoolean,
   toOptionalNumber,
   toOptionalString,
-} from './coercions';
+} from '../../../serialization/primitives';
+import type { ImportTranslator } from './types';
 import { generateId } from './id';
 
 const RSIP_STABILITY_PHASES: RSIPStabilityPhase[] = ['E0', 'E1', 'E2'];

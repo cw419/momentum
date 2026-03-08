@@ -1,5 +1,4 @@
 import type { Chain } from '../../../types';
-import type { ImportTranslator } from './types';
 import {
   isRecord,
   pickNonNullish,
@@ -9,7 +8,8 @@ import {
   toOptionalTruthyBoolean,
   toStringArray,
   toStringWithDefault,
-} from './coercions';
+} from '../../../serialization/primitives';
+import type { ImportTranslator } from './types';
 import { generateId } from './id';
 
 const allowedChainTypes = new Set([

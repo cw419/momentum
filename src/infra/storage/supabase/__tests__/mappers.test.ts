@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Chain } from '../../../../types';
-import { buildChainRow, mapChainRowToChain } from '../mappers';
+import { buildChainRow, mapChainRowToChain } from '../chainMapper';
 
 function createGroupChain(overrides: Partial<Chain> = {}): Chain {
   return {
@@ -27,7 +27,7 @@ function createGroupChain(overrides: Partial<Chain> = {}): Chain {
   } as Chain;
 }
 
-describe('supabase/mappers', () => {
+describe('supabase/chainMapper', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });

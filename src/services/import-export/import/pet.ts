@@ -1,5 +1,9 @@
 import type { PetStage, PetState } from '../../../types/pet';
-import { isRecord, parseTruthyDateOrNow, toNumber } from './coercions';
+import {
+  isRecord,
+  parseTruthyDateOrNow,
+  toNumber,
+} from '../../../serialization/primitives';
 import { generateId } from './id';
 
 const PET_STAGES: PetStage[] = [

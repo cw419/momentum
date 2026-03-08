@@ -1,4 +1,12 @@
 import type { ActiveSession } from '../../../types';
+import { decodeActiveSession, decodeScheduledSession } from '../../../serialization';
+
+export type ScheduledSessionRowLike = {
+  chain_id: string;
+  scheduled_at: string;
+  expires_at: string;
+  auxiliary_signal: string | null;
+};
 
 type ActiveSessionRowLike = {
   id: string;
@@ -12,16 +20,27 @@ type ActiveSessionRowLike = {
   forward_elapsed_time?: number | null;
 };
 
+export function mapScheduledSessionRow(
+  row: ScheduledSessionRowLike,
+) {
+  return decodeScheduledSession({
+    chainId: row.chain_id,
+    scheduledAt: row.scheduled_at,
+    expiresAt: row.expires_at,
+    auxiliarySignal: row.auxiliary_signal,
+  });
+}
+
 export function mapActiveSessionRow(row: ActiveSessionRowLike): ActiveSession {
-  return {
+  return decodeActiveSession({
     id: row.id,
     chainId: row.chain_id,
-    startedAt: new Date(row.started_at),
+    startedAt: row.started_at,
     duration: row.duration,
     isPaused: row.is_paused,
-    pausedAt: row.paused_at ? new Date(row.paused_at) : undefined,
+    pausedAt: row.paused_at,
     totalPausedTime: row.total_paused_time,
     isForwardTimer: row.is_forward_timer ?? false,
     forwardElapsedTime: row.forward_elapsed_time ?? 0,
-  };
+  });
 }

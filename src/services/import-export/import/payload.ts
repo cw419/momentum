@@ -1,5 +1,5 @@
 import type { ImportTranslator } from './types';
-import { isRecord } from './coercions';
+import { isRecord } from '../../../serialization/primitives';
 
 export function parseImportPayload(
   json: string,

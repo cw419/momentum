@@ -7,34 +7,30 @@ import type {
   RSIPRunRecord,
   RSIPTaskLink,
 } from '../../types';
+import {
+  decodeRSIPExecutionRecord,
+  decodeRSIPLibraryEntry,
+  decodeRSIPMeta,
+  decodeRSIPNode,
+  decodeRSIPNodeGroup,
+  decodeRSIPRunRecord,
+  decodeRSIPTaskLink,
+  toIsoString,
+  type SerializedRSIPExecutionRecord,
+  type SerializedRSIPLibraryEntry,
+  type SerializedRSIPMeta,
+  type SerializedRSIPNode,
+  type SerializedRSIPNodeGroup,
+  type SerializedRSIPRunRecord,
+  type SerializedRSIPTaskLink,
+} from '../../serialization';
 import { STORAGE_KEYS } from './keys';
-
-interface RawNodeData {
-  createdAt: string;
-}
 
 export function getRSIPNodes(): RSIPNode[] {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_NODES);
   if (!data) return [];
 
-  return JSON.parse(data).map(
-    (node: RawNodeData & Record<string, unknown>) => ({
-      ...node,
-      createdAt: new Date(node.createdAt),
-      phaseStartedAt:
-        typeof node.phaseStartedAt === 'string'
-          ? new Date(node.phaseStartedAt)
-          : undefined,
-      lastExecutedAt:
-        typeof node.lastExecutedAt === 'string'
-          ? new Date(node.lastExecutedAt)
-          : undefined,
-      lastViolatedAt:
-        typeof node.lastViolatedAt === 'string'
-          ? new Date(node.lastViolatedAt)
-          : undefined,
-    }),
-  );
+  return (JSON.parse(data) as SerializedRSIPNode[]).map(decodeRSIPNode);
 }
 
 export function saveRSIPNodes(nodes: RSIPNode[]): void {
@@ -63,28 +59,7 @@ export function getRSIPMeta(): RSIPMeta {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_META);
   if (!data) return {};
 
-  const parsed = JSON.parse(data) as {
-    lastAddedAt?: string;
-    allowMultiplePerDay?: boolean;
-    lastTreeOpenedAt?: string;
-    treeOpenStreak?: number;
-    dailyTreeOpenRequired?: boolean;
-    currentRunNumber?: number;
-    currentRunStartedAt?: string;
-  };
-  return {
-    lastAddedAt: parsed.lastAddedAt ? new Date(parsed.lastAddedAt) : undefined,
-    allowMultiplePerDay: !!parsed.allowMultiplePerDay,
-    lastTreeOpenedAt: parsed.lastTreeOpenedAt
-      ? new Date(parsed.lastTreeOpenedAt)
-      : undefined,
-    treeOpenStreak: parsed.treeOpenStreak ?? 0,
-    dailyTreeOpenRequired: parsed.dailyTreeOpenRequired ?? false,
-    currentRunNumber: parsed.currentRunNumber,
-    currentRunStartedAt: parsed.currentRunStartedAt
-      ? new Date(parsed.currentRunStartedAt)
-      : undefined,
-  } as RSIPMeta;
+  return decodeRSIPMeta(JSON.parse(data) as SerializedRSIPMeta);
 }
 
 export function saveRSIPMeta(meta: RSIPMeta): void {
@@ -92,38 +67,25 @@ export function saveRSIPMeta(meta: RSIPMeta): void {
     STORAGE_KEYS.RSIP_META,
     JSON.stringify({
       ...meta,
-      lastAddedAt: meta.lastAddedAt
-        ? meta.lastAddedAt.toISOString()
-        : undefined,
+      lastAddedAt: meta.lastAddedAt ? toIsoString(meta.lastAddedAt) : undefined,
       lastTreeOpenedAt: meta.lastTreeOpenedAt
-        ? meta.lastTreeOpenedAt.toISOString()
+        ? toIsoString(meta.lastTreeOpenedAt)
         : undefined,
       currentRunStartedAt: meta.currentRunStartedAt
-        ? meta.currentRunStartedAt.toISOString()
+        ? toIsoString(meta.currentRunStartedAt)
         : undefined,
       allowMultiplePerDay: !!meta.allowMultiplePerDay,
     }),
   );
 }
 
-function parseDate<T extends Record<string, unknown>>(
-  value: T,
-  key: keyof T,
-): Date | undefined {
-  const raw = value[key];
-  if (typeof raw !== 'string') return undefined;
-  const date = new Date(raw);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}
-
 export function getRSIPGroups(): RSIPNodeGroup[] {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_GROUPS);
   if (!data) return [];
 
-  return (JSON.parse(data) as Record<string, unknown>[]).map((group) => ({
-    ...(group as unknown as RSIPNodeGroup),
-    createdAt: parseDate(group, 'createdAt') ?? new Date(),
-  }));
+  return (JSON.parse(data) as SerializedRSIPNodeGroup[]).map(
+    decodeRSIPNodeGroup,
+  );
 }
 
 export function saveRSIPGroups(groups: RSIPNodeGroup[]): void {
@@ -134,10 +96,9 @@ export function getRSIPPolicyLibrary(): RSIPLibraryEntry[] {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_POLICY_LIBRARY);
   if (!data) return [];
 
-  return (JSON.parse(data) as Record<string, unknown>[]).map((entry) => ({
-    ...(entry as unknown as RSIPLibraryEntry),
-    lastActiveAt: parseDate(entry, 'lastActiveAt') ?? new Date(),
-  }));
+  return (JSON.parse(data) as SerializedRSIPLibraryEntry[]).map(
+    decodeRSIPLibraryEntry,
+  );
 }
 
 export function saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): void {
@@ -158,11 +119,9 @@ export function getRSIPRunHistory(): RSIPRunRecord[] {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_RUN_HISTORY);
   if (!data) return [];
 
-  return (JSON.parse(data) as Record<string, unknown>[]).map((record) => ({
-    ...(record as unknown as RSIPRunRecord),
-    startedAt: parseDate(record, 'startedAt') ?? new Date(),
-    endedAt: parseDate(record, 'endedAt'),
-  }));
+  return (JSON.parse(data) as SerializedRSIPRunRecord[]).map(
+    decodeRSIPRunRecord,
+  );
 }
 
 export function saveRSIPRunHistory(records: RSIPRunRecord[]): void {
@@ -177,10 +136,7 @@ export function getRSIPTaskLinks(): RSIPTaskLink[] {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_TASK_LINKS);
   if (!data) return [];
 
-  return (JSON.parse(data) as Record<string, unknown>[]).map((link) => ({
-    ...(link as unknown as RSIPTaskLink),
-    updatedAt: parseDate(link, 'updatedAt') ?? new Date(),
-  }));
+  return (JSON.parse(data) as SerializedRSIPTaskLink[]).map(decodeRSIPTaskLink);
 }
 
 export function saveRSIPTaskLinks(links: RSIPTaskLink[]): void {
@@ -191,10 +147,9 @@ export function getRSIPExecutionRecords(): RSIPExecutionRecord[] {
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_EXECUTION_RECORDS);
   if (!data) return [];
 
-  return (JSON.parse(data) as Record<string, unknown>[]).map((record) => ({
-    ...(record as unknown as RSIPExecutionRecord),
-    executedAt: parseDate(record, 'executedAt') ?? new Date(),
-  }));
+  return (JSON.parse(data) as SerializedRSIPExecutionRecord[]).map(
+    decodeRSIPExecutionRecord,
+  );
 }
 
 export function appendRSIPExecutionRecord(record: RSIPExecutionRecord): void {

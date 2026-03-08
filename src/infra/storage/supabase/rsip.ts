@@ -5,12 +5,20 @@
   RSIPNode,
   RSIPNodeGroup,
   RSIPRunRecord,
-  RSIPStabilityPhase,
   RSIPTaskLink,
 } from '../../../types';
 import type { SupabaseStorageContext } from './types';
 import type { Database } from '../../../lib/database.types';
 import { buildRSIPNodeRows } from './rsipPayloadBuilder';
+import {
+  mapRSIPExecutionRecordRow,
+  mapRSIPGroupRow,
+  mapRSIPLibraryEntryRow,
+  mapRSIPMetaRow,
+  mapRSIPNodeRow,
+  mapRSIPRunRecordRow,
+  mapRSIPTaskLinkRow,
+} from './rsipMapper';
 import {
   cacheMissingCapabilitiesFromError,
   hasKnownMissingCapabilities,
@@ -18,7 +26,6 @@ import {
   markCapabilitiesAvailable,
 } from './schemaCapabilities';
 
-type RSIPNodeRow = Database['public']['Tables']['rsip_nodes']['Row'];
 type RSIPMetaRow = Database['public']['Tables']['rsip_meta']['Row'];
 
 type SupabaseLikeError = {
@@ -121,13 +128,6 @@ function isMissingRSIPMetaStrictColumns(error: SupabaseLikeError): boolean {
   );
 }
 
-function asDate(value: unknown): Date | undefined {
-  if (typeof value !== 'string') return undefined;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return undefined;
-  return parsed;
-}
-
 async function replaceUserScopedRows(
   ctx: SupabaseStorageContext,
   table: string,
@@ -222,34 +222,7 @@ export async function getRSIPNodes(
 
   if (error) return [];
 
-  return (data || []).map((row: RSIPNodeRow) => {
-    return {
-      id: row.id,
-      parentId: row.parent_id || undefined,
-      title: row.title,
-      rule: row.rule,
-      sortOrder: row.sort_order,
-      createdAt: new Date(row.created_at),
-      useTimer: row.use_timer ?? false,
-      timerMinutes: row.timer_minutes ?? undefined,
-      emoji: row.emoji ?? undefined,
-      type: row.type ?? undefined,
-      groupId: row.group_id ?? undefined,
-      reinforcementLevel: row.reinforcement_level ?? undefined,
-      maxReinforcementLevel: row.max_reinforcement_level ?? undefined,
-      cumulativeExecutionDays: row.cumulative_execution_days ?? undefined,
-      isPassive: row.is_passive ?? undefined,
-      splitFromGoal: row.split_from_goal ?? undefined,
-      stabilityPhase: (row.stability_phase as RSIPStabilityPhase) ?? 'E0',
-      phaseStartedAt: asDate(row.phase_started_at),
-      lastExecutedAt: asDate(row.last_executed_at),
-      lastViolatedAt: asDate(row.last_violated_at),
-      consecutiveExecutions: row.consecutive_executions ?? 0,
-      consecutiveViolations: row.consecutive_violations ?? 0,
-      totalExecutions: row.total_executions ?? 0,
-      totalViolations: row.total_violations ?? 0,
-    };
-  });
+  return (data || []).map(mapRSIPNodeRow);
 }
 
 export async function saveRSIPNodes(
@@ -345,18 +318,7 @@ export async function getRSIPMeta(
     .limit(1);
   if (error || !data || data.length === 0) return {};
 
-  const row = data[0] as RSIPMetaRow;
-  return {
-    lastAddedAt: row.last_added_at ? new Date(row.last_added_at) : undefined,
-    allowMultiplePerDay: !!row.allow_multiple_per_day,
-    lastTreeOpenedAt: row.last_tree_opened_at
-      ? new Date(row.last_tree_opened_at)
-      : undefined,
-    dailyTreeOpenRequired: row.daily_tree_open_required ?? false,
-    treeOpenStreak: row.tree_open_streak ?? 0,
-    currentRunNumber: row.current_run_number ?? undefined,
-    currentRunStartedAt: asDate(row.current_run_started_at),
-  };
+  return mapRSIPMetaRow(data[0] as RSIPMetaRow);
 }
 
 export async function saveRSIPMeta(
@@ -442,13 +404,7 @@ export async function getRSIPGroups(
     errorLabel: 'rsip groups',
   });
 
-  return rows.map((row) => ({
-    id: String(row.id),
-    title: String(row.title ?? ''),
-    faultTolerance: Number(row.fault_tolerance ?? 0),
-    emoji: (row.emoji as string | null) ?? undefined,
-    createdAt: asDate(row.created_at) ?? new Date(),
-  }));
+  return rows.map(mapRSIPGroupRow);
 }
 
 export async function saveRSIPGroups(
@@ -482,21 +438,7 @@ export async function getRSIPPolicyLibrary(
     errorLabel: 'rsip policy library',
   });
 
-  return rows.map((row) => ({
-    id: String(row.id),
-    title: String(row.title ?? ''),
-    rule: String(row.rule ?? ''),
-    type: (row.type as string | null) ?? undefined,
-    emoji: (row.emoji as string | null) ?? undefined,
-    cumulativeExecutionDays: Number(row.cumulative_execution_days ?? 0),
-    internalizationProgress: Number(row.internalization_progress ?? 0),
-    lastActiveAt: asDate(row.last_active_at) ?? new Date(),
-    timesUsed: Number(row.times_used ?? 0),
-    useTimer: Boolean(row.use_timer ?? false),
-    timerMinutes:
-      row.timer_minutes == null ? undefined : Number(row.timer_minutes),
-    isPassive: Boolean(row.is_passive ?? false),
-  }));
+  return rows.map(mapRSIPLibraryEntryRow);
 }
 
 export async function saveRSIPPolicyLibrary(
@@ -538,15 +480,7 @@ export async function getRSIPRunHistory(
     errorLabel: 'rsip run history',
   });
 
-  return rows.map((row) => ({
-    runNumber: Number(row.run_number ?? 0),
-    startedAt: asDate(row.started_at) ?? new Date(),
-    endedAt: asDate(row.ended_at),
-    maxNodeCount: Number(row.max_node_count ?? 0),
-    durationDays: Number(row.duration_days ?? 0),
-    collapseReason: (row.collapse_reason as string | null) ?? undefined,
-    collapseNodeTitle: (row.collapse_node_title as string | null) ?? undefined,
-  }));
+  return rows.map(mapRSIPRunRecordRow);
 }
 
 export async function saveRSIPRunHistory(
@@ -585,18 +519,7 @@ export async function getRSIPTaskLinks(
 
   if (!userId) return [];
 
-  return rows.map((row) => ({
-    id: String(row.id),
-    userId,
-    rsipNodeId: String(row.rsip_node_id),
-    chainId: String(row.chain_id),
-    chainKind: (row.chain_kind as 'group' | 'unit') ?? 'unit',
-    triggerEvent: row.trigger_event as RSIPTaskLink['triggerEvent'],
-    effect: row.effect as RSIPTaskLink['effect'],
-    automation: (row.automation as RSIPTaskLink['automation']) ?? 'confirm',
-    isActive: Boolean(row.is_active ?? true),
-    updatedAt: asDate(row.updated_at) ?? new Date(),
-  }));
+  return rows.map((row) => mapRSIPTaskLinkRow(row, userId));
 }
 
 export async function saveRSIPTaskLinks(
@@ -638,18 +561,7 @@ export async function getRSIPExecutionRecords(
 
   if (!userId) return [];
 
-  return rows.map((row) => ({
-    id: String(row.id),
-    userId,
-    nodeId: String(row.node_id),
-    executedAt: asDate(row.executed_at) ?? new Date(),
-    status: (row.status as RSIPExecutionRecord['status']) ?? 'pending',
-    notes: (row.notes as string | null) ?? undefined,
-    reasonCode: (row.reason_code as string | null) ?? undefined,
-    repairHint: (row.repair_hint as string | null) ?? undefined,
-    sourceChainId: (row.source_chain_id as string | null) ?? undefined,
-    sourceEvent: (row.source_event as string | null) ?? undefined,
-  }));
+  return rows.map((row) => mapRSIPExecutionRecordRow(row, userId));
 }
 
 export async function appendRSIPExecutionRecord(

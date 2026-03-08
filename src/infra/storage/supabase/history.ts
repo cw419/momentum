@@ -1,35 +1,13 @@
 import type { CompletionHistory } from '../../../types';
 import type { SupabaseClient, SupabaseStorageContext } from './types';
-import type { Database } from '../../../lib/database.types';
-
-type CompletionHistoryRow =
-  Database['public']['Tables']['completion_history']['Row'];
-type CompletionHistoryInsert =
-  Database['public']['Tables']['completion_history']['Insert'];
-
-type CompletionHistorySelectRow = Pick<
-  CompletionHistoryRow,
-  | 'chain_id'
-  | 'completed_at'
-  | 'duration'
-  | 'was_successful'
-  | 'reason_for_failure'
-  | 'actual_duration'
-  | 'is_forward_timed'
-  | 'description'
-  | 'notes'
->;
-
-type CompletionHistoryBasicRow = Pick<
-  CompletionHistoryRow,
-  | 'chain_id'
-  | 'completed_at'
-  | 'duration'
-  | 'was_successful'
-  | 'reason_for_failure'
-  | 'description'
-  | 'notes'
->;
+import {
+  buildCompletionHistoryRowsBasic,
+  buildCompletionHistoryRowsWithNewFields,
+  mapBasicCompletionHistoryRow,
+  mapCompletionHistoryRow,
+  type CompletionHistoryBasicRow,
+  type CompletionHistorySelectRow,
+} from './historyMapper';
 
 const COMPLETION_HISTORY_CONFLICT_TARGET = 'user_id,chain_id,completed_at';
 const COMPLETION_HISTORY_CHUNK_SIZE = 500;
@@ -57,38 +35,6 @@ function isMissingTimingColumns(error: {
   );
 }
 
-function mapCompletionHistory(
-  history: CompletionHistorySelectRow,
-): CompletionHistory {
-  return {
-    chainId: history.chain_id,
-    completedAt: new Date(history.completed_at),
-    duration: history.duration,
-    wasSuccessful: history.was_successful,
-    reasonForFailure: history.reason_for_failure || undefined,
-    actualDuration: history.actual_duration ?? history.duration,
-    isForwardTimed: history.is_forward_timed ?? false,
-    description: history.description || undefined,
-    notes: history.notes || undefined,
-  };
-}
-
-function mapBasicCompletionHistory(
-  history: CompletionHistoryBasicRow,
-): CompletionHistory {
-  return {
-    chainId: history.chain_id,
-    completedAt: new Date(history.completed_at),
-    duration: history.duration,
-    wasSuccessful: history.was_successful,
-    reasonForFailure: history.reason_for_failure || undefined,
-    actualDuration: history.duration,
-    isForwardTimed: false,
-    description: history.description || undefined,
-    notes: history.notes || undefined,
-  };
-}
-
 function chunk<T>(items: T[], size: number): T[][] {
   if (items.length <= size) return [items];
   const chunks: T[][] = [];
@@ -96,40 +42,6 @@ function chunk<T>(items: T[], size: number): T[][] {
     chunks.push(items.slice(i, i + size));
   }
   return chunks;
-}
-
-function toRowsWithNewFields(
-  userId: string,
-  items: CompletionHistory[],
-): CompletionHistoryInsert[] {
-  return items.map((history) => ({
-    chain_id: history.chainId,
-    completed_at: history.completedAt.toISOString(),
-    duration: history.duration,
-    was_successful: history.wasSuccessful,
-    reason_for_failure: history.reasonForFailure ?? null,
-    actual_duration: history.actualDuration ?? history.duration,
-    is_forward_timed: history.isForwardTimed ?? false,
-    description: history.description ?? null,
-    notes: history.notes ?? null,
-    user_id: userId,
-  }));
-}
-
-function toRowsBasic(
-  userId: string,
-  items: CompletionHistory[],
-): CompletionHistoryInsert[] {
-  return items.map((history) => ({
-    chain_id: history.chainId,
-    completed_at: history.completedAt.toISOString(),
-    duration: history.duration,
-    was_successful: history.wasSuccessful,
-    reason_for_failure: history.reasonForFailure ?? null,
-    description: history.description ?? null,
-    notes: history.notes ?? null,
-    user_id: userId,
-  }));
 }
 
 async function insertCompletionHistoryLegacy(
@@ -161,11 +73,11 @@ async function insertCompletionHistoryLegacy(
 
   const legacyResult = await client
     .from('completion_history')
-    .insert(toRowsWithNewFields(userId, newHistory));
+    .insert(buildCompletionHistoryRowsWithNewFields(userId, newHistory));
   if (legacyResult.error && isMissingTimingColumns(legacyResult.error)) {
     await client
       .from('completion_history')
-      .insert(toRowsBasic(userId, newHistory));
+      .insert(buildCompletionHistoryRowsBasic(userId, newHistory));
   }
 }
 
@@ -189,7 +101,7 @@ export async function getCompletionHistory(
     .order('completed_at', { ascending: false });
 
   if (!error && data) {
-    return (data as CompletionHistorySelectRow[]).map(mapCompletionHistory);
+    return (data as CompletionHistorySelectRow[]).map(mapCompletionHistoryRow);
   }
 
   if (error && !isMissingTimingColumns(error)) return [];
@@ -203,7 +115,7 @@ export async function getCompletionHistory(
   if (basicError || !basicData) return [];
 
   return (basicData as CompletionHistoryBasicRow[]).map(
-    mapBasicCompletionHistory,
+    mapBasicCompletionHistoryRow,
   );
 }
 
@@ -223,8 +135,8 @@ export async function saveCompletionHistory(
   for (const currentChunk of chunk(history, COMPLETION_HISTORY_CHUNK_SIZE)) {
     const rows =
       mode === 'new'
-        ? toRowsWithNewFields(user.id, currentChunk)
-        : toRowsBasic(user.id, currentChunk);
+        ? buildCompletionHistoryRowsWithNewFields(user.id, currentChunk)
+        : buildCompletionHistoryRowsBasic(user.id, currentChunk);
     let { error } = await client.from('completion_history').upsert(rows, {
       onConflict: COMPLETION_HISTORY_CONFLICT_TARGET,
       ignoreDuplicates: true,
@@ -236,7 +148,7 @@ export async function saveCompletionHistory(
       mode = 'basic';
       ({ error } = await client
         .from('completion_history')
-        .upsert(toRowsBasic(user.id, currentChunk), {
+        .upsert(buildCompletionHistoryRowsBasic(user.id, currentChunk), {
           onConflict: COMPLETION_HISTORY_CONFLICT_TARGET,
           ignoreDuplicates: true,
         }));

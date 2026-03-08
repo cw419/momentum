@@ -2,7 +2,7 @@ import type { Chain } from '../../../../types';
 import type { Database } from '../../../../lib/database.types';
 import { toError } from '../../../../utils/errorMessage';
 import { logger } from '../../../../utils/logger';
-import { buildChainRow } from '../mappers';
+import { buildChainRow } from '../chainMapper';
 import {
   cacheMissingCapabilitiesFromError,
   hasKnownMissingCapabilities,
