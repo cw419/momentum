@@ -56,18 +56,60 @@ describe('reactPerformanceMonitor', () => {
     expect(logger.warn).toHaveBeenCalledTimes(2);
   });
 
+  it('tracks per-component render metrics and resets them', async () => {
+    const { monitor } = await loadMonitor(true);
+
+    monitor.trackComponentRender('Dashboard', 'mount', 12);
+    monitor.trackComponentRender('Dashboard', 'update', 18);
+    monitor.trackComponentRender('RSIP', 'mount', 9);
+
+    expect(monitor.getComponentStats()).toEqual({
+      Dashboard: {
+        renderCount: 2,
+        totalDuration: 30,
+        maxDuration: 18,
+        lastDuration: 18,
+        avgDuration: 15,
+        lastPhase: 'update',
+      },
+      RSIP: {
+        renderCount: 1,
+        totalDuration: 9,
+        maxDuration: 9,
+        lastDuration: 9,
+        avgDuration: 9,
+        lastPhase: 'mount',
+      },
+    });
+
+    monitor.reset();
+
+    expect(monitor.getComponentStats()).toEqual({});
+    expect(monitor.getStats().totalRenders).toBe(0);
+  });
+
   it('generates report and emits recommendation warnings when thresholds are exceeded', async () => {
     const { monitor, logger } = await loadMonitor(true);
 
-    monitor.trackRender('HeavyComponent', 25);
     monitor.trackTreeBuild(12);
     monitor.trackCacheMiss();
+    monitor.trackComponentRender('HeavyComponent', 'mount', 25);
 
     const report = monitor.generateReport();
 
     expect(report.totalRenders).toBe(1);
     expect(report.totalTreeBuilds).toBe(1);
     expect(report.cacheHitRate).toBe('0.0');
+    expect(report.components).toEqual({
+      HeavyComponent: {
+        renderCount: 1,
+        totalDuration: 25,
+        maxDuration: 25,
+        lastDuration: 25,
+        avgDuration: 25,
+        lastPhase: 'mount',
+      },
+    });
     expect(logger.group).toHaveBeenCalledTimes(1);
     expect(logger.warn.mock.calls.length).toBeGreaterThanOrEqual(4);
   });

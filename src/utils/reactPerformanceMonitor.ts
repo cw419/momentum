@@ -2,8 +2,8 @@
  * Performance report utility to track React optimization improvements
  */
 
-import { performanceLogger } from './performanceLogger';
 import { isDev } from './env';
+import { performanceLogger } from './performanceLogger';
 
 interface PerformanceMetrics {
   renderTimes: number[];
@@ -12,6 +12,15 @@ interface PerformanceMetrics {
   cacheMisses: number;
   totalRenders: number;
   totalTreeBuilds: number;
+}
+
+export interface ComponentRenderMetrics {
+  renderCount: number;
+  totalDuration: number;
+  maxDuration: number;
+  lastDuration: number;
+  avgDuration: number;
+  lastPhase: string;
 }
 
 class ReactPerformanceMonitor {
@@ -23,6 +32,8 @@ class ReactPerformanceMonitor {
     totalRenders: 0,
     totalTreeBuilds: 0,
   };
+
+  private componentMetrics = new Map<string, ComponentRenderMetrics>();
 
   /**
    * Track a component render time
@@ -36,6 +47,31 @@ class ReactPerformanceMonitor {
         `[PERF] Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`,
       );
     }
+  }
+
+  trackComponentRender(
+    componentName: string,
+    phase: string,
+    renderTime: number,
+  ) {
+    this.trackRender(componentName, renderTime);
+
+    const previous = this.componentMetrics.get(componentName);
+    const totalDuration = (previous?.totalDuration ?? 0) + renderTime;
+    const renderCount = (previous?.renderCount ?? 0) + 1;
+
+    this.componentMetrics.set(componentName, {
+      renderCount,
+      totalDuration,
+      maxDuration: Math.max(previous?.maxDuration ?? 0, renderTime),
+      lastDuration: renderTime,
+      avgDuration: totalDuration / renderCount,
+      lastPhase: phase,
+    });
+  }
+
+  getComponentStats(): Record<string, ComponentRenderMetrics> {
+    return Object.fromEntries(this.componentMetrics.entries());
   }
 
   /**
@@ -109,6 +145,7 @@ class ReactPerformanceMonitor {
       cacheHitRate: cacheHitRate.toFixed(1),
       cacheHits: this.metrics.cacheHits,
       cacheMisses: this.metrics.cacheMisses,
+      components: this.getComponentStats(),
     };
   }
 
@@ -137,6 +174,16 @@ class ReactPerformanceMonitor {
       performanceLogger.log(`  • Cache hit rate: ${stats.cacheHitRate}%`);
       performanceLogger.log(`  • Cache hits: ${stats.cacheHits}`);
       performanceLogger.log(`  • Cache misses: ${stats.cacheMisses}`);
+
+      const componentEntries = Object.entries(stats.components);
+      if (componentEntries.length > 0) {
+        performanceLogger.log('🧩 Component Render Breakdown:');
+        for (const [name, componentStats] of componentEntries) {
+          performanceLogger.log(
+            `  • ${name}: ${componentStats.renderCount} renders, avg ${componentStats.avgDuration.toFixed(2)}ms, max ${componentStats.maxDuration.toFixed(2)}ms`,
+          );
+        }
+      }
 
       // Performance recommendations
       if (parseFloat(stats.avgRenderTime) > 16) {
@@ -173,6 +220,7 @@ class ReactPerformanceMonitor {
       totalRenders: 0,
       totalTreeBuilds: 0,
     };
+    this.componentMetrics.clear();
   }
 }
 

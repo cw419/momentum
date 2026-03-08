@@ -1,26 +1,24 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppShellViewProps } from '../types';
+import type {
+  AppShellAppViewModel,
+  AppShellDashboardViewModel,
+  AppShellPetViewModel,
+  AppShellRsipViewModel,
+  AppShellSessionViewModel,
+  AppShellViewProps,
+} from '../types';
 import { AppShellView } from '../AppShellView';
 import {
-  createAppState,
   createGroupChain,
   createPetState,
   createUnitChain,
 } from '../../../test/factories';
 
-const queryOptimizerMock = vi.hoisted(() => ({
-  memoizedBuildChainTree: vi.fn(() => []),
-}));
-
 vi.mock('../../../i18n', () => ({
   useI18n: () => ({
     tr: (_zh: string, en: string) => en,
   }),
-}));
-
-vi.mock('../../../utils/queryOptimizer', () => ({
-  queryOptimizer: queryOptimizerMock,
 }));
 
 vi.mock('../../../components/Dashboard', () => ({
@@ -82,36 +80,43 @@ vi.mock('../../../components/pet/PetWidget', () => ({
   ),
 }));
 
-function createProps(
-  overrides: Partial<AppShellViewProps> = {},
-): AppShellViewProps {
+interface AppShellViewOverrides {
+  app?: Partial<AppShellAppViewModel>;
+  dashboard?: Partial<AppShellDashboardViewModel>;
+  rsip?: Partial<AppShellRsipViewModel>;
+  session?: Partial<AppShellSessionViewModel>;
+  pet?: Partial<AppShellPetViewModel>;
+}
+
+function createProps(overrides: AppShellViewOverrides = {}): AppShellViewProps {
   const chain = createUnitChain({
     id: 'chain-1',
     name: 'Chain One',
     duration: 25,
   });
-  const state = createAppState({
-    chains: [chain],
-    activeSession: {
-      chainId: chain.id,
-      startedAt: new Date('2026-02-01T10:00:00.000Z'),
-      duration: 25,
-      isPaused: false,
-      totalPausedTime: 0,
-    },
-    viewingChainId: chain.id,
-    currentView: 'dashboard',
+  const groupChain = createGroupChain({
+    id: 'group-1',
+    name: 'Group One',
   });
 
-  return {
-    state,
+  const app: AppShellAppViewModel = {
     isInitialized: true,
     isLoadingData: false,
-    showAuxiliaryJudgment: null,
-    setShowAuxiliaryJudgment: vi.fn(),
-    showBettingModal: false,
-    pendingChainId: null,
-    currentSessionId: null,
+    currentView: 'dashboard',
+    hasActiveSession: true,
+    onNavigateToView: vi.fn(),
+    ...overrides.app,
+  };
+
+  const dashboard: AppShellDashboardViewModel = {
+    chains: [chain, groupChain],
+    chainsRevision: 1,
+    scheduledSessions: [],
+    editingChain: null,
+    editorParentId: chain.id,
+    viewingChain: chain,
+    viewingGroupNode: null,
+    completionHistory: [],
     handleCreateChain: vi.fn(),
     handleCreateTaskGroup: vi.fn(),
     handleEditChain: vi.fn(),
@@ -119,54 +124,113 @@ function createProps(
     handleViewChainDetail: vi.fn(),
     handleBackToDashboard: vi.fn(),
     openRSIP: vi.fn(),
-    saveRSIPNodes: vi.fn(),
-    saveRSIPMeta: vi.fn(),
     handleScheduleChain: vi.fn(),
     handleStartChain: vi.fn(async () => undefined),
     handleCancelScheduledSession: vi.fn(),
     handleCompleteBooking: vi.fn(),
-    handleCompleteSession: vi.fn(),
-    handleInterruptSession: vi.fn(),
-    handlePauseSession: vi.fn(),
-    handleResumeSession: vi.fn(),
     handleDeleteChain: vi.fn(async () => undefined),
     handleRestoreChains: vi.fn(async () => undefined),
     handlePermanentDeleteChains: vi.fn(async () => undefined),
-    handleAuxiliaryJudgmentFailure: vi.fn(),
-    handleAuxiliaryJudgmentAllow: vi.fn(),
     handleImportChains: vi.fn(async () => undefined),
     handleImportUnits: vi.fn(async () => undefined),
     handleUpdateTaskRepeatCount: vi.fn(async () => undefined),
     handleReorderUnit: vi.fn(async () => undefined),
+    ...overrides.dashboard,
+  };
+
+  const rsip: AppShellRsipViewModel = {
+    nodes: [],
+    meta: {},
+    groups: [],
+    policyLibrary: [],
+    runHistory: [],
+    executionRecords: [],
+    taskLinks: [],
+    chains: dashboard.chains,
+    onBack: dashboard.handleBackToDashboard,
+    saveNodes: vi.fn(),
+    saveMeta: vi.fn(),
+    saveGroups: vi.fn(),
+    saveTaskLinks: vi.fn(),
+    markExecuted: vi.fn(async () => []),
+    markViolated: vi.fn(async () => []),
+    reinforceNode: vi.fn(async () => []),
+    restoreFromLibrary: vi.fn(async () => null),
+    createGroup: vi.fn(async () => ({
+      id: 'rsip-group-1',
+      title: 'Group',
+      emoji: 'A',
+      faultTolerance: 1,
+      createdAt: new Date('2026-02-01T00:00:00.000Z'),
+    })),
+    upsertTaskLinks: vi.fn(async () => []),
+    getTaskActions: vi.fn(() => []),
+    handleStartChain: dashboard.handleStartChain,
+    handleScheduleChain: dashboard.handleScheduleChain,
+    ...overrides.rsip,
+  };
+
+  const session: AppShellSessionViewModel = {
+    activeSession: {
+      chainId: chain.id,
+      startedAt: new Date('2026-02-01T10:00:00.000Z'),
+      duration: 25,
+      isPaused: false,
+      totalPausedTime: 0,
+    },
+    activeChain: chain,
+    auxiliaryJudgmentChain: null,
+    clearAuxiliaryJudgment: vi.fn(),
+    bettingModal: {
+      isOpen: false,
+      sessionId: null,
+      chainName: null,
+      taskDuration: 0,
+    },
+    handleCompleteSession: vi.fn(),
+    handleInterruptSession: vi.fn(),
+    handlePauseSession: vi.fn(),
+    handleResumeSession: vi.fn(),
     handleBetPlaced: vi.fn(async () => undefined),
     handleBetCancelled: vi.fn(async () => undefined),
-    petDomain: {
-      pet: createPetState({ name: 'Momo' }),
-      mood: 'happy',
-      isLoading: false,
-      hasPet: true,
-      createPet: vi.fn(async () => createPetState()),
-      feedPet: vi.fn(async () => null),
-      onTaskCompleted: vi.fn(async () => null),
-      updatePosition: vi.fn(async () => undefined),
-      updateMinimizedPosition: vi.fn(async () => undefined),
-      toggleVisibility: vi.fn(async () => undefined),
-      showPet: vi.fn(async () => undefined),
-      minimize: vi.fn(async () => undefined),
-      expand: vi.fn(async () => undefined),
-    },
-    ...overrides,
+    handleAuxiliaryJudgmentFailure: vi.fn(),
+    handleAuxiliaryJudgmentAllow: vi.fn(),
+    ...overrides.session,
+  };
+
+  const pet: AppShellPetViewModel = {
+    pet: createPetState({ name: 'Momo' }),
+    mood: 'happy',
+    isLoading: false,
+    hasPet: true,
+    createPet: vi.fn(async () => createPetState()),
+    feedPet: vi.fn(async () => null),
+    onTaskCompleted: vi.fn(async () => null),
+    updatePosition: vi.fn(async () => undefined),
+    updateMinimizedPosition: vi.fn(async () => undefined),
+    toggleVisibility: vi.fn(async () => undefined),
+    showPet: vi.fn(async () => undefined),
+    minimize: vi.fn(async () => undefined),
+    expand: vi.fn(async () => undefined),
+    ...overrides.pet,
+  };
+
+  return {
+    app,
+    dashboard,
+    rsip,
+    session,
+    pet,
   };
 }
 
 describe('AppShellView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    queryOptimizerMock.memoizedBuildChainTree.mockReturnValue([]);
   });
 
   it('renders initialization screen when app is not initialized', () => {
-    render(<AppShellView {...createProps({ isInitialized: false })} />);
+    render(<AppShellView {...createProps({ app: { isInitialized: false } })} />);
     expect(screen.getByText('INITIALIZING APPLICATION')).toBeInTheDocument();
   });
 
@@ -185,15 +249,24 @@ describe('AppShellView', () => {
   });
 
   it('renders auxiliary judgment and betting modal branches', async () => {
-    const setShowAuxiliaryJudgment = vi.fn();
+    const clearAuxiliaryJudgment = vi.fn();
     render(
       <AppShellView
         {...createProps({
-          showAuxiliaryJudgment: 'chain-1',
-          setShowAuxiliaryJudgment,
-          showBettingModal: true,
-          pendingChainId: 'chain-1',
-          currentSessionId: 'session-1',
+          session: {
+            auxiliaryJudgmentChain: createUnitChain({
+              id: 'chain-1',
+              name: 'Chain One',
+              duration: 25,
+            }),
+            clearAuxiliaryJudgment,
+            bettingModal: {
+              isOpen: true,
+              sessionId: 'session-1',
+              chainName: 'Chain One',
+              taskDuration: 25,
+            },
+          },
         })}
       />,
     );
@@ -204,15 +277,13 @@ describe('AppShellView', () => {
     );
 
     fireEvent.click(screen.getByText('cancel-aux'));
-    expect(setShowAuxiliaryJudgment).toHaveBeenCalledWith(null);
+    expect(clearAuxiliaryJudgment).toHaveBeenCalledTimes(1);
   });
 
   it('renders editor and taskgroup-editor views', async () => {
     const editorProps = createProps({
-      state: createAppState({
-        chains: [createUnitChain({ id: 'chain-1' })],
-        currentView: 'editor',
-      }),
+      app: { currentView: 'editor' },
+      dashboard: { editorParentId: 'chain-1' },
     });
 
     const { rerender } = render(<AppShellView {...editorProps} />);
@@ -222,10 +293,8 @@ describe('AppShellView', () => {
     rerender(
       <AppShellView
         {...createProps({
-          state: createAppState({
-            chains: [createUnitChain({ id: 'chain-1' })],
-            currentView: 'taskgroup-editor',
-          }),
+          app: { currentView: 'taskgroup-editor' },
+          dashboard: { editorParentId: 'chain-1' },
         })}
       />,
     );
@@ -235,16 +304,19 @@ describe('AppShellView', () => {
 
   it('renders focus/detail/group/rsip views when required state is available', async () => {
     const chain = createUnitChain({ id: 'chain-1', parentId: undefined });
-    queryOptimizerMock.memoizedBuildChainTree.mockReturnValue([
-      { id: 'chain-1', type: 'group' },
-    ]);
+    const groupChain = createGroupChain({ id: 'group-1' });
+    const groupNode = {
+      ...groupChain,
+      children: [],
+      depth: 0,
+    };
 
     const { rerender } = render(
       <AppShellView
         {...createProps({
-          state: createAppState({
-            chains: [chain],
-            currentView: 'focus',
+          app: { currentView: 'focus' },
+          dashboard: { chains: [chain] },
+          session: {
             activeSession: {
               chainId: chain.id,
               startedAt: new Date(),
@@ -252,7 +324,8 @@ describe('AppShellView', () => {
               isPaused: false,
               totalPausedTime: 0,
             },
-          }),
+            activeChain: chain,
+          },
         })}
       />,
     );
@@ -262,11 +335,11 @@ describe('AppShellView', () => {
     rerender(
       <AppShellView
         {...createProps({
-          state: createAppState({
+          app: { currentView: 'detail' },
+          dashboard: {
             chains: [chain],
-            currentView: 'detail',
-            viewingChainId: chain.id,
-          }),
+            viewingChain: chain,
+          },
         })}
       />,
     );
@@ -276,11 +349,11 @@ describe('AppShellView', () => {
     rerender(
       <AppShellView
         {...createProps({
-          state: createAppState({
-            chains: [{ ...chain, type: 'group' }],
-            currentView: 'group',
-            viewingChainId: chain.id,
-          }),
+          app: { currentView: 'group' },
+          dashboard: {
+            chains: [groupChain],
+            viewingGroupNode: groupNode,
+          },
         })}
       />,
     );
@@ -290,10 +363,8 @@ describe('AppShellView', () => {
     rerender(
       <AppShellView
         {...createProps({
-          state: createAppState({
-            chains: [chain],
-            currentView: 'rsip',
-          }),
+          app: { currentView: 'rsip' },
+          dashboard: { chains: [chain] },
         })}
       />,
     );
@@ -305,11 +376,11 @@ describe('AppShellView', () => {
     const { rerender, container } = render(
       <AppShellView
         {...createProps({
-          state: createAppState({
-            chains: [],
-            currentView: 'focus',
+          app: { currentView: 'focus' },
+          session: {
             activeSession: null,
-          }),
+            activeChain: null,
+          },
         })}
       />,
     );
@@ -318,25 +389,22 @@ describe('AppShellView', () => {
     rerender(
       <AppShellView
         {...createProps({
-          state: createAppState({
-            chains: [],
-            currentView: 'detail',
-            viewingChainId: 'missing',
-          }),
+          app: { currentView: 'detail' },
+          dashboard: {
+            viewingChain: null,
+          },
         })}
       />,
     );
     expect(container.querySelector('[data-testid="chain-detail"]')).toBeNull();
 
-    queryOptimizerMock.memoizedBuildChainTree.mockReturnValue([]);
     rerender(
       <AppShellView
         {...createProps({
-          state: createAppState({
-            chains: [createGroupChain({ id: 'chain-1' })],
-            currentView: 'group',
-            viewingChainId: 'chain-1',
-          }),
+          app: { currentView: 'group' },
+          dashboard: {
+            viewingGroupNode: null,
+          },
         })}
       />,
     );

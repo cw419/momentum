@@ -1,7 +1,10 @@
+import type { BetPlacementResult } from '../../domain/betting';
+import type { UsePetDomainReturn } from '../../hooks/domains/usePetDomain';
 import type {
-  AppState,
+  ActiveSession,
   Chain,
   ChainDraft,
+  ChainTreeNode,
   CompletionHistory,
   ExceptionRule,
   RSIPExecutionRecord,
@@ -11,17 +14,12 @@ import type {
   RSIPNodeGroup,
   RSIPRunRecord,
   RSIPTaskLink,
+  ScheduledSession,
   ViewState,
 } from '../../types';
-import type { BetPlacementResult } from '../../domain/betting';
-import type {
-  FeedResult,
-  PetMood,
-  PetState,
-  TaskCompletionReward,
-} from '../../types/pet';
+import type { PetState } from '../../types/pet';
 
-interface ImportChainsOptions {
+export interface ImportChainsOptions {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
@@ -34,7 +32,7 @@ interface ImportChainsOptions {
   exceptionRules?: ExceptionRule[];
 }
 
-interface RSIPExecutionActionOptions {
+export interface RSIPExecutionActionOptions {
   reinforce?: boolean;
   reasonCode?: string;
   repairHint?: string;
@@ -42,7 +40,7 @@ interface RSIPExecutionActionOptions {
   sourceEvent?: string;
 }
 
-interface RSIPViolationActionOptions {
+export interface RSIPViolationActionOptions {
   reasonCode?: string;
   repairHint?: string;
   sourceChainId?: string;
@@ -50,82 +48,37 @@ interface RSIPViolationActionOptions {
   collapseReason?: string;
 }
 
-export interface AppShellViewProps {
-  state: AppState;
+export interface AppShellAppViewModel {
   isInitialized: boolean;
   isLoadingData: boolean;
+  currentView: ViewState;
+  hasActiveSession: boolean;
+  onNavigateToView: (view: ViewState) => void;
+}
 
-  showAuxiliaryJudgment: string | null;
-  setShowAuxiliaryJudgment: (chainId: string | null) => void;
-
-  showBettingModal: boolean;
-  pendingChainId: string | null;
-  currentSessionId: string | null;
-
+export interface AppShellDashboardViewModel {
+  chains: Chain[];
+  chainsRevision: number;
+  scheduledSessions: ScheduledSession[];
+  editingChain: Chain | null;
+  editorParentId: string | null;
+  viewingChain: Chain | null;
+  viewingGroupNode: ChainTreeNode | null;
+  completionHistory: CompletionHistory[];
   handleCreateChain: (parentId?: string | null) => void;
   handleCreateTaskGroup: () => void;
   handleEditChain: (chainId: string) => void;
   handleSaveChain: (chainData: ChainDraft, isCopy?: boolean) => void;
-
   handleViewChainDetail: (chainId: string) => void;
   handleBackToDashboard: () => void;
-
   openRSIP: () => void;
-  saveRSIPNodes: (nodes: RSIPNode[]) => void;
-  saveRSIPMeta: (meta: RSIPMeta) => void;
-  saveRSIPGroups: (groups: RSIPNodeGroup[]) => void;
-  saveRSIPPolicyLibrary: (entries: RSIPLibraryEntry[]) => void;
-  saveRSIPRunHistory: (records: RSIPRunRecord[]) => void;
-  saveRSIPTaskLinks: (links: RSIPTaskLink[]) => void;
-  markRSIPExecuted: (
-    nodeId: string,
-    nodes: RSIPNode[],
-    notes?: string,
-    options?: RSIPExecutionActionOptions,
-  ) => Promise<RSIPNode[]>;
-  markRSIPViolated: (
-    nodeId: string,
-    nodes: RSIPNode[],
-    notes?: string,
-    options?: RSIPViolationActionOptions,
-  ) => Promise<RSIPNode[]>;
-  reinforceRSIPNode: (
-    nodeId: string,
-    nodes: RSIPNode[],
-    levelDelta?: number,
-  ) => Promise<RSIPNode[]>;
-  restoreRSIPFromLibrary: (
-    entryId: string,
-    parentId?: string,
-  ) => Promise<RSIPNode | null>;
-  createRSIPGroup: (
-    title: string,
-    faultTolerance: number,
-    emoji?: string,
-  ) => Promise<RSIPNodeGroup>;
-  upsertRSIPTaskLinks: (links: RSIPTaskLink[]) => Promise<RSIPTaskLink[]>;
-  getRSIPTaskActions: (rsipNodeId: string) => RSIPTaskLink[];
-
   handleScheduleChain: (chainId: string) => void;
   handleStartChain: (chainId: string) => Promise<void>;
   handleCancelScheduledSession: (chainId: string) => void;
   handleCompleteBooking: (chainId: string) => void;
-
-  handleCompleteSession: (description?: string, notes?: string) => void;
-  handleInterruptSession: (reason?: string) => void;
-  handlePauseSession: () => void;
-  handleResumeSession: () => void;
-
   handleDeleteChain: (chainId: string) => Promise<void>;
   handleRestoreChains: (chainIds: string[]) => Promise<void>;
   handlePermanentDeleteChains: (chainIds: string[]) => Promise<void>;
-
-  handleAuxiliaryJudgmentFailure: (chainId: string) => void;
-  handleAuxiliaryJudgmentAllow: (
-    chainId: string,
-    exceptionRule: string,
-  ) => void;
-
   handleImportChains: (
     importedChains: Chain[],
     options?: ImportChainsOptions,
@@ -144,28 +97,86 @@ export interface AppShellViewProps {
     unitId: string,
     direction: 'up' | 'down',
   ) => Promise<void>;
+}
 
+export interface AppShellRsipViewModel {
+  nodes: RSIPNode[];
+  meta: RSIPMeta;
+  groups: RSIPNodeGroup[];
+  policyLibrary: RSIPLibraryEntry[];
+  runHistory: RSIPRunRecord[];
+  executionRecords: RSIPExecutionRecord[];
+  taskLinks: RSIPTaskLink[];
+  chains: Chain[];
+  onBack: () => void;
+  saveNodes: (nodes: RSIPNode[]) => void;
+  saveMeta: (meta: RSIPMeta) => void;
+  saveGroups: (groups: RSIPNodeGroup[]) => void;
+  saveTaskLinks: (links: RSIPTaskLink[]) => void;
+  markExecuted: (
+    nodeId: string,
+    nodes: RSIPNode[],
+    notes?: string,
+    options?: RSIPExecutionActionOptions,
+  ) => Promise<RSIPNode[]>;
+  markViolated: (
+    nodeId: string,
+    nodes: RSIPNode[],
+    notes?: string,
+    options?: RSIPViolationActionOptions,
+  ) => Promise<RSIPNode[]>;
+  reinforceNode: (
+    nodeId: string,
+    nodes: RSIPNode[],
+    levelDelta?: number,
+  ) => Promise<RSIPNode[]>;
+  restoreFromLibrary: (
+    entryId: string,
+    parentId?: string,
+  ) => Promise<RSIPNode | null>;
+  createGroup: (
+    title: string,
+    faultTolerance: number,
+    emoji?: string,
+  ) => Promise<RSIPNodeGroup>;
+  upsertTaskLinks: (links: RSIPTaskLink[]) => Promise<RSIPTaskLink[]>;
+  getTaskActions: (rsipNodeId: string) => RSIPTaskLink[];
+  handleStartChain: (chainId: string) => Promise<void>;
+  handleScheduleChain: (chainId: string) => void;
+}
+
+export interface AppShellBettingModalViewModel {
+  isOpen: boolean;
+  sessionId: string | null;
+  chainName: string | null;
+  taskDuration: number;
+}
+
+export interface AppShellSessionViewModel {
+  activeSession: ActiveSession | null;
+  activeChain: Chain | null;
+  auxiliaryJudgmentChain: Chain | null;
+  clearAuxiliaryJudgment: () => void;
+  bettingModal: AppShellBettingModalViewModel;
+  handleCompleteSession: (description?: string, notes?: string) => void;
+  handleInterruptSession: (reason?: string) => void;
+  handlePauseSession: () => void;
+  handleResumeSession: () => void;
   handleBetPlaced: (betResult: BetPlacementResult) => Promise<void>;
   handleBetCancelled: () => Promise<void>;
+  handleAuxiliaryJudgmentFailure: (chainId: string) => void;
+  handleAuxiliaryJudgmentAllow: (
+    chainId: string,
+    exceptionRule: string,
+  ) => void;
+}
 
-  onNavigateToView: (view: ViewState) => void;
+export type AppShellPetViewModel = UsePetDomainReturn;
 
-  petDomain: {
-    pet: PetState | null;
-    mood: PetMood;
-    isLoading: boolean;
-    hasPet: boolean;
-    createPet: (name: string) => Promise<PetState>;
-    feedPet: () => Promise<FeedResult | null>;
-    onTaskCompleted: (
-      duration: number,
-      wasSuccessful: boolean,
-    ) => Promise<TaskCompletionReward | null>;
-    updatePosition: (x: number, y: number) => Promise<void>;
-    updateMinimizedPosition: (x: number, y: number) => Promise<void>;
-    toggleVisibility: () => Promise<void>;
-    showPet: () => Promise<void>;
-    minimize: () => Promise<void>;
-    expand: () => Promise<void>;
-  };
+export interface AppShellViewProps {
+  app: AppShellAppViewModel;
+  dashboard: AppShellDashboardViewModel;
+  rsip: AppShellRsipViewModel;
+  session: AppShellSessionViewModel;
+  pet: AppShellPetViewModel;
 }

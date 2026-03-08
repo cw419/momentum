@@ -38,7 +38,7 @@ import {
   getXpForLevel,
 } from '../../utils/petLogic';
 
-interface UsePetDomainReturn {
+export interface UsePetDomainReturn {
   pet: PetState | null;
   mood: PetMood;
   isLoading: boolean;

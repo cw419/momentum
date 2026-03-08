@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
 import { Dashboard } from '../../components/Dashboard';
-import { useI18n } from '../../i18n';
 import { MobileBottomNav } from '../../components/mobile/MobileBottomNav';
+import { useI18n } from '../../i18n';
 import { isTauriMobile } from '../../utils/platform';
-import { queryOptimizer } from '../../utils/queryOptimizer';
+import { AppShellProfiler } from './AppShellProfiler';
 import { LoadingFallback } from './LoadingFallback';
 import type { AppShellViewProps } from './types';
 import {
@@ -19,79 +19,41 @@ import {
 } from './lazyViews';
 
 export function AppShellView({
-  state,
-  isInitialized,
-  isLoadingData,
-  showAuxiliaryJudgment,
-  setShowAuxiliaryJudgment,
-  showBettingModal,
-  pendingChainId,
-  currentSessionId,
-  handleCreateChain,
-  handleCreateTaskGroup,
-  handleEditChain,
-  handleSaveChain,
-  handleViewChainDetail,
-  handleBackToDashboard,
-  openRSIP,
-  saveRSIPNodes,
-  saveRSIPMeta,
-  saveRSIPGroups,
-  saveRSIPTaskLinks,
-  markRSIPExecuted,
-  markRSIPViolated,
-  reinforceRSIPNode,
-  restoreRSIPFromLibrary,
-  createRSIPGroup,
-  upsertRSIPTaskLinks,
-  getRSIPTaskActions,
-  handleScheduleChain,
-  handleStartChain,
-  handleCancelScheduledSession,
-  handleCompleteBooking,
-  handleCompleteSession,
-  handleInterruptSession,
-  handlePauseSession,
-  handleResumeSession,
-  handleDeleteChain,
-  handleRestoreChains,
-  handlePermanentDeleteChains,
-  handleAuxiliaryJudgmentFailure,
-  handleAuxiliaryJudgmentAllow,
-  handleImportChains,
-  handleImportUnits,
-  handleUpdateTaskRepeatCount,
-  handleReorderUnit,
-  handleBetPlaced,
-  handleBetCancelled,
-  onNavigateToView,
-  petDomain,
+  app,
+  dashboard,
+  rsip,
+  session,
+  pet,
 }: AppShellViewProps) {
   const { tr } = useI18n();
   const shouldShowPetWidget =
-    isInitialized && state.currentView === 'dashboard';
+    app.isInitialized && app.currentView === 'dashboard';
 
   const renderAuxiliaryJudgment = () => {
-    if (!showAuxiliaryJudgment) return null;
+    const auxiliaryJudgmentChain = session.auxiliaryJudgmentChain;
+    if (!auxiliaryJudgmentChain) return null;
 
     return (
       <Suspense fallback={null}>
         <AuxiliaryJudgment
-          chain={state.chains.find((c) => c.id === showAuxiliaryJudgment)!}
+          chain={auxiliaryJudgmentChain}
           onJudgmentFailure={() =>
-            handleAuxiliaryJudgmentFailure(showAuxiliaryJudgment)
+            session.handleAuxiliaryJudgmentFailure(auxiliaryJudgmentChain.id)
           }
           onJudgmentAllow={(exceptionRule) =>
-            handleAuxiliaryJudgmentAllow(showAuxiliaryJudgment, exceptionRule)
+            session.handleAuxiliaryJudgmentAllow(
+              auxiliaryJudgmentChain.id,
+              exceptionRule,
+            )
           }
-          onCancel={() => setShowAuxiliaryJudgment(null)}
+          onCancel={session.clearAuxiliaryJudgment}
         />
       </Suspense>
     );
   };
 
   const renderCurrentView = () => {
-    if (!isInitialized) {
+    if (!app.isInitialized) {
       return (
         <div className="bg-background flex min-h-screen items-center justify-center">
           <div className="text-center">
@@ -110,17 +72,17 @@ export function AppShellView({
     }
 
     const editorProps = {
-      chain: state.editingChain || undefined,
-      isEditing: !!state.editingChain,
-      initialParentId: state.viewingChainId || undefined,
-      onSave: handleSaveChain,
-      onCancel: handleBackToDashboard,
-      rsipNodes: state.rsipNodes,
-      rsipTaskLinks: state.rsipTaskLinks ?? [],
-      onUpsertRSIPTaskLinks: upsertRSIPTaskLinks,
+      chain: dashboard.editingChain ?? undefined,
+      isEditing: !!dashboard.editingChain,
+      initialParentId: dashboard.editorParentId ?? undefined,
+      onSave: dashboard.handleSaveChain,
+      onCancel: dashboard.handleBackToDashboard,
+      rsipNodes: rsip.nodes,
+      rsipTaskLinks: rsip.taskLinks,
+      onUpsertRSIPTaskLinks: rsip.upsertTaskLinks,
     };
 
-    switch (state.currentView) {
+    switch (app.currentView) {
       case 'editor':
         return (
           <Suspense fallback={<LoadingFallback />}>
@@ -136,41 +98,38 @@ export function AppShellView({
           </Suspense>
         );
 
-      case 'focus': {
-        const activeChain = state.chains.find(
-          (c) => c.id === state.activeSession?.chainId,
-        );
-        if (!state.activeSession || !activeChain) return null;
+      case 'focus':
+        if (!session.activeSession || !session.activeChain) return null;
 
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <FocusMode
-              session={state.activeSession}
-              chain={activeChain}
-              onComplete={handleCompleteSession}
-              onInterrupt={handleInterruptSession}
-              onPause={handlePauseSession}
-              onResume={handleResumeSession}
-            />
+            <AppShellProfiler id="focus-view">
+              <FocusMode
+                session={session.activeSession}
+                chain={session.activeChain}
+                onComplete={session.handleCompleteSession}
+                onInterrupt={session.handleInterruptSession}
+                onPause={session.handlePauseSession}
+                onResume={session.handleResumeSession}
+              />
+            </AppShellProfiler>
             {renderAuxiliaryJudgment()}
           </Suspense>
         );
-      }
 
       case 'detail': {
-        const viewingChain = state.chains.find(
-          (c) => c.id === state.viewingChainId,
-        );
-        if (!viewingChain) return null;
+        if (!dashboard.viewingChain) return null;
+
+        const viewingChain = dashboard.viewingChain;
 
         return (
           <Suspense fallback={<LoadingFallback />}>
             <ChainDetail
               chain={viewingChain}
-              history={state.completionHistory}
-              onBack={handleBackToDashboard}
-              onEdit={() => handleEditChain(viewingChain.id)}
-              onDelete={() => void handleDeleteChain(viewingChain.id)}
+              history={dashboard.completionHistory}
+              onBack={dashboard.handleBackToDashboard}
+              onEdit={() => dashboard.handleEditChain(viewingChain.id)}
+              onDelete={() => void dashboard.handleDeleteChain(viewingChain.id)}
             />
             {renderAuxiliaryJudgment()}
           </Suspense>
@@ -178,36 +137,26 @@ export function AppShellView({
       }
 
       case 'group': {
-        const viewingGroup = state.chains.find(
-          (c) => c.id === state.viewingChainId,
-        );
-        if (!viewingGroup) return null;
+        if (!dashboard.viewingGroupNode) return null;
 
-        const chainTree = queryOptimizer.memoizedBuildChainTree(
-          state.chains,
-          state.chainsRevision,
-        );
-        const groupNode = chainTree.find(
-          (node) => node.id === state.viewingChainId,
-        );
-        if (!groupNode) return null;
+        const viewingGroupNode = dashboard.viewingGroupNode;
 
         return (
           <Suspense fallback={<LoadingFallback />}>
             <GroupView
-              group={groupNode}
-              scheduledSessions={state.scheduledSessions}
-              availableUnits={state.chains}
-              onBack={handleBackToDashboard}
-              onStartChain={handleStartChain}
-              onScheduleChain={handleScheduleChain}
-              onViewDetail={handleViewChainDetail}
-              onEditChain={(chainId) => handleEditChain(chainId)}
-              onDeleteChain={handleDeleteChain}
-              onAddUnit={() => handleCreateChain(state.viewingChainId!)}
-              onImportUnits={handleImportUnits}
-              onUpdateTaskRepeatCount={handleUpdateTaskRepeatCount}
-              onReorderUnit={handleReorderUnit}
+              group={viewingGroupNode}
+              scheduledSessions={dashboard.scheduledSessions}
+              availableUnits={dashboard.chains}
+              onBack={dashboard.handleBackToDashboard}
+              onStartChain={dashboard.handleStartChain}
+              onScheduleChain={dashboard.handleScheduleChain}
+              onViewDetail={dashboard.handleViewChainDetail}
+              onEditChain={dashboard.handleEditChain}
+              onDeleteChain={dashboard.handleDeleteChain}
+              onAddUnit={() => dashboard.handleCreateChain(viewingGroupNode.id)}
+              onImportUnits={dashboard.handleImportUnits}
+              onUpdateTaskRepeatCount={dashboard.handleUpdateTaskRepeatCount}
+              onReorderUnit={dashboard.handleReorderUnit}
             />
             {renderAuxiliaryJudgment()}
           </Suspense>
@@ -217,63 +166,67 @@ export function AppShellView({
       case 'rsip':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <RSIPView
-              nodes={state.rsipNodes}
-              meta={state.rsipMeta}
-              groups={state.rsipGroups ?? []}
-              policyLibrary={state.rsipPolicyLibrary ?? []}
-              runHistory={state.rsipRunHistory ?? []}
-              executionRecords={state.rsipExecutionRecords ?? []}
-              taskLinks={state.rsipTaskLinks ?? []}
-              chains={state.chains}
-              onBack={handleBackToDashboard}
-              onSaveNodes={saveRSIPNodes}
-              onSaveMeta={saveRSIPMeta}
-              onSaveGroups={saveRSIPGroups}
-              onSaveTaskLinks={saveRSIPTaskLinks}
-              onMarkExecuted={markRSIPExecuted}
-              onMarkViolated={markRSIPViolated}
-              onReinforceNode={reinforceRSIPNode}
-              onRestoreFromLibrary={restoreRSIPFromLibrary}
-              onCreateGroup={createRSIPGroup}
-              onUpsertTaskLinks={upsertRSIPTaskLinks}
-              onGetTaskActions={getRSIPTaskActions}
-              onStartChain={handleStartChain}
-              onScheduleChain={handleScheduleChain}
-            />
+            <AppShellProfiler id="rsip-view">
+              <RSIPView
+                nodes={rsip.nodes}
+                meta={rsip.meta}
+                groups={rsip.groups}
+                policyLibrary={rsip.policyLibrary}
+                runHistory={rsip.runHistory}
+                executionRecords={rsip.executionRecords}
+                taskLinks={rsip.taskLinks}
+                chains={rsip.chains}
+                onBack={rsip.onBack}
+                onSaveNodes={rsip.saveNodes}
+                onSaveMeta={rsip.saveMeta}
+                onSaveGroups={rsip.saveGroups}
+                onSaveTaskLinks={rsip.saveTaskLinks}
+                onMarkExecuted={rsip.markExecuted}
+                onMarkViolated={rsip.markViolated}
+                onReinforceNode={rsip.reinforceNode}
+                onRestoreFromLibrary={rsip.restoreFromLibrary}
+                onCreateGroup={rsip.createGroup}
+                onUpsertTaskLinks={rsip.upsertTaskLinks}
+                onGetTaskActions={rsip.getTaskActions}
+                onStartChain={rsip.handleStartChain}
+                onScheduleChain={rsip.handleScheduleChain}
+              />
+            </AppShellProfiler>
           </Suspense>
         );
 
       default:
         return (
           <>
-            <Dashboard
-              chains={state.chains}
-              chainsRevision={state.chainsRevision}
-              scheduledSessions={state.scheduledSessions}
-              isLoading={isLoadingData}
-              onCreateChain={handleCreateChain}
-              onCreateTaskGroup={handleCreateTaskGroup}
-              onOpenRSIP={openRSIP}
-              onStartChain={handleStartChain}
-              onScheduleChain={handleScheduleChain}
-              onViewChainDetail={handleViewChainDetail}
-              onCancelScheduledSession={handleCancelScheduledSession}
-              onCompleteBooking={handleCompleteBooking}
-              onDeleteChain={handleDeleteChain}
-              onImportChains={handleImportChains}
-              onRestoreChains={handleRestoreChains}
-              onPermanentDeleteChains={handlePermanentDeleteChains}
-              history={state.completionHistory}
-              rsipNodes={state.rsipNodes}
-              rsipMeta={state.rsipMeta}
-              rsipGroups={state.rsipGroups}
-              rsipPolicyLibrary={state.rsipPolicyLibrary}
-              rsipRunHistory={state.rsipRunHistory}
-              rsipExecutionRecords={state.rsipExecutionRecords}
-              rsipTaskLinks={state.rsipTaskLinks}
-              petState={petDomain.pet}
-            />
+            <AppShellProfiler id="dashboard-view">
+              <Dashboard
+                chains={dashboard.chains}
+                chainsRevision={dashboard.chainsRevision}
+                scheduledSessions={dashboard.scheduledSessions}
+                isLoading={app.isLoadingData}
+                onCreateChain={dashboard.handleCreateChain}
+                onCreateTaskGroup={dashboard.handleCreateTaskGroup}
+                onOpenRSIP={dashboard.openRSIP}
+                onStartChain={dashboard.handleStartChain}
+                onScheduleChain={dashboard.handleScheduleChain}
+                onViewChainDetail={dashboard.handleViewChainDetail}
+                onCancelScheduledSession={dashboard.handleCancelScheduledSession}
+                onCompleteBooking={dashboard.handleCompleteBooking}
+                onDeleteChain={dashboard.handleDeleteChain}
+                onImportChains={dashboard.handleImportChains}
+                onRestoreChains={dashboard.handleRestoreChains}
+                onPermanentDeleteChains={dashboard.handlePermanentDeleteChains}
+                history={dashboard.completionHistory}
+                rsipNodes={rsip.nodes}
+                rsipMeta={rsip.meta}
+                rsipGroups={rsip.groups}
+                rsipPolicyLibrary={rsip.policyLibrary}
+                rsipRunHistory={rsip.runHistory}
+                rsipExecutionRecords={rsip.executionRecords}
+                rsipTaskLinks={rsip.taskLinks}
+                petState={pet.pet}
+              />
+            </AppShellProfiler>
             {renderAuxiliaryJudgment()}
           </>
         );
@@ -305,45 +258,44 @@ export function AppShellView({
 
       {shouldShowPetWidget && (
         <Suspense fallback={null}>
-          <PetWidget
-            pet={petDomain.pet}
-            mood={petDomain.mood}
-            isLoading={petDomain.isLoading}
-            hasPet={petDomain.hasPet}
-            onCreatePet={petDomain.createPet}
-            onFeedPet={petDomain.feedPet}
-            onUpdatePosition={petDomain.updatePosition}
-            onUpdateMinimizedPosition={petDomain.updateMinimizedPosition}
-            onToggleVisibility={petDomain.toggleVisibility}
-            onMinimize={petDomain.minimize}
-            onExpand={petDomain.expand}
-          />
+          <AppShellProfiler id="pet-widget">
+            <PetWidget
+              pet={pet.pet}
+              mood={pet.mood}
+              isLoading={pet.isLoading}
+              hasPet={pet.hasPet}
+              onCreatePet={pet.createPet}
+              onFeedPet={pet.feedPet}
+              onUpdatePosition={pet.updatePosition}
+              onUpdateMinimizedPosition={pet.updateMinimizedPosition}
+              onToggleVisibility={pet.toggleVisibility}
+              onMinimize={pet.minimize}
+              onExpand={pet.expand}
+            />
+          </AppShellProfiler>
         </Suspense>
       )}
 
-      {showBettingModal && pendingChainId && currentSessionId && (
+      {session.bettingModal.isOpen && session.bettingModal.sessionId && (
         <Suspense fallback={null}>
           <BettingModal
-            isOpen={showBettingModal}
-            onClose={handleBetCancelled}
-            onBetPlaced={handleBetPlaced}
-            sessionId={currentSessionId}
+            isOpen={session.bettingModal.isOpen}
+            onClose={session.handleBetCancelled}
+            onBetPlaced={session.handleBetPlaced}
+            sessionId={session.bettingModal.sessionId}
             chainName={
-              state.chains.find((c) => c.id === pendingChainId)?.name ||
-              tr('未知任务', 'Unknown Task')
+              session.bettingModal.chainName ?? tr('未知任务', 'Unknown Task')
             }
-            taskDuration={
-              state.chains.find((c) => c.id === pendingChainId)?.duration || 0
-            }
+            taskDuration={session.bettingModal.taskDuration}
           />
         </Suspense>
       )}
 
       {isTauriMobile && (
         <MobileBottomNav
-          currentView={state.currentView}
-          hasActiveSession={!!state.activeSession}
-          onNavigate={onNavigateToView}
+          currentView={app.currentView}
+          hasActiveSession={app.hasActiveSession}
+          onNavigate={app.onNavigateToView}
           onOpenSettings={() => {
             /* TODO: open AccountModal */
           }}

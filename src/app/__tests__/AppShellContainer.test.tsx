@@ -44,6 +44,16 @@ const handlers = vi.hoisted(() => ({
   openRSIP: vi.fn(),
   saveRSIPNodes: vi.fn(),
   saveRSIPMeta: vi.fn(),
+  saveRSIPGroups: vi.fn(),
+  saveRSIPTaskLinks: vi.fn(),
+  markRSIPExecuted: vi.fn(),
+  markRSIPViolated: vi.fn(),
+  reinforceRSIPNode: vi.fn(),
+  restoreRSIPFromLibrary: vi.fn(),
+  createRSIPGroup: vi.fn(),
+  upsertRSIPTaskLinks: vi.fn(),
+  getRsipTaskActions: vi.fn(),
+  handleTaskEventIntegration: vi.fn(),
   handleImportChains: vi.fn(),
   handleImportUnits: vi.fn(),
   handleUpdateTaskRepeatCount: vi.fn(),
@@ -120,22 +130,26 @@ vi.mock('../hooks/usePeriodicCleanup', () => ({
 
 vi.mock('../AppShellView', () => ({
   AppShellView: (props: {
-    isInitialized: boolean;
-    isLoadingData: boolean;
-    state: { currentView: string };
-    handleCreateChain: () => void;
-    handleDeleteChain: (id: string) => void;
-    openRSIP: () => void;
+    app: {
+      isInitialized: boolean;
+      isLoadingData: boolean;
+      currentView: string;
+    };
+    dashboard: {
+      handleCreateChain: () => void;
+      handleDeleteChain: (id: string) => void;
+      openRSIP: () => void;
+    };
   }) => (
     <div>
-      <div data-testid="initialized">{String(props.isInitialized)}</div>
-      <div data-testid="loading">{String(props.isLoadingData)}</div>
-      <div data-testid="view">{props.state.currentView}</div>
-      <button onClick={props.handleCreateChain}>create-chain</button>
-      <button onClick={() => props.handleDeleteChain('chain-1')}>
+      <div data-testid="initialized">{String(props.app.isInitialized)}</div>
+      <div data-testid="loading">{String(props.app.isLoadingData)}</div>
+      <div data-testid="view">{props.app.currentView}</div>
+      <button onClick={props.dashboard.handleCreateChain}>create-chain</button>
+      <button onClick={() => props.dashboard.handleDeleteChain('chain-1')}>
         delete-chain
       </button>
-      <button onClick={props.openRSIP}>open-rsip</button>
+      <button onClick={props.dashboard.openRSIP}>open-rsip</button>
     </div>
   ),
 }));
@@ -146,7 +160,21 @@ describe('AppShellContainer', () => {
 
     useStorageMock.mockReturnValue({ kind: 'local' });
     useSafeSaveChainsMock.mockReturnValue(vi.fn(async () => undefined));
-    usePetDomainMock.mockReturnValue({ onTaskCompleted: vi.fn() });
+    usePetDomainMock.mockReturnValue({
+      pet: null,
+      mood: 'neutral',
+      isLoading: false,
+      hasPet: false,
+      createPet: vi.fn(),
+      feedPet: vi.fn(),
+      onTaskCompleted: vi.fn(),
+      updatePosition: vi.fn(),
+      updateMinimizedPosition: vi.fn(),
+      toggleVisibility: vi.fn(),
+      showPet: vi.fn(),
+      minimize: vi.fn(),
+      expand: vi.fn(),
+    });
 
     useChainsDomainMock.mockReturnValue({
       handleCreateChain: handlers.handleCreateChain,
@@ -181,6 +209,16 @@ describe('AppShellContainer', () => {
       openRSIP: handlers.openRSIP,
       saveNodes: handlers.saveRSIPNodes,
       saveMeta: handlers.saveRSIPMeta,
+      saveGroups: handlers.saveRSIPGroups,
+      saveTaskLinks: handlers.saveRSIPTaskLinks,
+      markExecuted: handlers.markRSIPExecuted,
+      markViolated: handlers.markRSIPViolated,
+      reinforceNode: handlers.reinforceRSIPNode,
+      restoreFromLibrary: handlers.restoreRSIPFromLibrary,
+      createGroup: handlers.createRSIPGroup,
+      upsertTaskLinks: handlers.upsertRSIPTaskLinks,
+      getRsipTaskActions: handlers.getRsipTaskActions,
+      handleTaskEventIntegration: handlers.handleTaskEventIntegration,
     });
     useImportExportDomainMock.mockReturnValue({
       handleImportChains: handlers.handleImportChains,
@@ -195,7 +233,7 @@ describe('AppShellContainer', () => {
     useAppDataLoadMock.mockReturnValue({ isLoadingData: false });
   });
 
-  it('composes domain hooks into AppShellView behavior props', () => {
+  it('composes domain hooks into grouped AppShellView models', () => {
     render(<AppShellContainer />);
 
     expect(screen.getByTestId('initialized').textContent).toBe('true');

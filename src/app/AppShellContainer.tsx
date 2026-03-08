@@ -18,6 +18,13 @@ import { useViewValidation } from './hooks/useViewValidation';
 import { useViewUrlSync } from './hooks/useViewUrlSync';
 import { usePeriodicCleanup } from './hooks/usePeriodicCleanup';
 import { AppShellView } from './AppShellView';
+import {
+  buildAppViewModel,
+  buildDashboardViewModel,
+  buildPetViewModel,
+  buildRsipViewModel,
+  buildSessionViewModel,
+} from './app-shell/viewModelBuilders';
 
 function createInitialAppState(): AppState {
   return {
@@ -103,8 +110,6 @@ export default function AppShellContainer() {
     saveNodes: saveRSIPNodes,
     saveMeta: saveRSIPMeta,
     saveGroups: saveRSIPGroups,
-    savePolicyLibrary: saveRSIPPolicyLibrary,
-    saveRunHistory: saveRSIPRunHistory,
     saveTaskLinks: saveRSIPTaskLinks,
     markExecuted: markRSIPExecuted,
     markViolated: markRSIPViolated,
@@ -228,57 +233,94 @@ export default function AppShellContainer() {
     [setState],
   );
 
+  const app = buildAppViewModel({
+    isInitialized,
+    isLoadingData,
+    currentView: state.currentView,
+    hasActiveSession: !!state.activeSession,
+    onNavigateToView,
+  });
+
+  const dashboard = buildDashboardViewModel({
+    currentView: state.currentView,
+    chains: state.chains,
+    chainsRevision: state.chainsRevision,
+    scheduledSessions: state.scheduledSessions,
+    editingChain: state.editingChain,
+    viewingChainId: state.viewingChainId,
+    completionHistory: state.completionHistory,
+    handleCreateChain,
+    handleCreateTaskGroup,
+    handleEditChain,
+    handleSaveChain,
+    handleViewChainDetail,
+    handleBackToDashboard,
+    openRSIP,
+    handleScheduleChain,
+    handleStartChain,
+    handleCancelScheduledSession,
+    handleCompleteBooking,
+    handleDeleteChain,
+    handleRestoreChains,
+    handlePermanentDeleteChains,
+    handleImportChains,
+    handleImportUnits,
+    handleUpdateTaskRepeatCount,
+    handleReorderUnit,
+  });
+
+  const rsip = buildRsipViewModel({
+    nodes: state.rsipNodes,
+    meta: state.rsipMeta,
+    groups: state.rsipGroups ?? [],
+    policyLibrary: state.rsipPolicyLibrary ?? [],
+    runHistory: state.rsipRunHistory ?? [],
+    executionRecords: state.rsipExecutionRecords ?? [],
+    taskLinks: state.rsipTaskLinks ?? [],
+    chains: state.chains,
+    onBack: handleBackToDashboard,
+    saveNodes: saveRSIPNodes,
+    saveMeta: saveRSIPMeta,
+    saveGroups: saveRSIPGroups,
+    saveTaskLinks: saveRSIPTaskLinks,
+    markExecuted: markRSIPExecuted,
+    markViolated: markRSIPViolated,
+    reinforceNode: reinforceRSIPNode,
+    restoreFromLibrary: restoreRSIPFromLibrary,
+    createGroup: createRSIPGroup,
+    upsertTaskLinks: upsertRSIPTaskLinks,
+    getTaskActions: getRsipTaskActions,
+    handleStartChain,
+    handleScheduleChain,
+  });
+
+  const session = buildSessionViewModel({
+    chains: state.chains,
+    activeSession: state.activeSession,
+    showAuxiliaryJudgment,
+    clearAuxiliaryJudgment: () => setShowAuxiliaryJudgment(null),
+    showBettingModal,
+    pendingChainId,
+    currentSessionId,
+    handleCompleteSession,
+    handleInterruptSession,
+    handlePauseSession,
+    handleResumeSession,
+    handleBetPlaced,
+    handleBetCancelled,
+    handleAuxiliaryJudgmentFailure,
+    handleAuxiliaryJudgmentAllow,
+  });
+
+  const pet = buildPetViewModel(petDomain);
+
   return (
     <AppShellView
-      state={state}
-      isInitialized={isInitialized}
-      isLoadingData={isLoadingData}
-      showAuxiliaryJudgment={showAuxiliaryJudgment}
-      setShowAuxiliaryJudgment={setShowAuxiliaryJudgment}
-      showBettingModal={showBettingModal}
-      pendingChainId={pendingChainId}
-      currentSessionId={currentSessionId}
-      handleCreateChain={handleCreateChain}
-      handleCreateTaskGroup={handleCreateTaskGroup}
-      handleEditChain={handleEditChain}
-      handleSaveChain={handleSaveChain}
-      handleViewChainDetail={handleViewChainDetail}
-      handleBackToDashboard={handleBackToDashboard}
-      openRSIP={openRSIP}
-      saveRSIPNodes={saveRSIPNodes}
-      saveRSIPMeta={saveRSIPMeta}
-      saveRSIPGroups={saveRSIPGroups}
-      saveRSIPPolicyLibrary={saveRSIPPolicyLibrary}
-      saveRSIPRunHistory={saveRSIPRunHistory}
-      saveRSIPTaskLinks={saveRSIPTaskLinks}
-      markRSIPExecuted={markRSIPExecuted}
-      markRSIPViolated={markRSIPViolated}
-      reinforceRSIPNode={reinforceRSIPNode}
-      restoreRSIPFromLibrary={restoreRSIPFromLibrary}
-      createRSIPGroup={createRSIPGroup}
-      upsertRSIPTaskLinks={upsertRSIPTaskLinks}
-      getRSIPTaskActions={getRsipTaskActions}
-      handleScheduleChain={handleScheduleChain}
-      handleStartChain={handleStartChain}
-      handleCancelScheduledSession={handleCancelScheduledSession}
-      handleCompleteBooking={handleCompleteBooking}
-      handleCompleteSession={handleCompleteSession}
-      handleInterruptSession={handleInterruptSession}
-      handlePauseSession={handlePauseSession}
-      handleResumeSession={handleResumeSession}
-      handleDeleteChain={handleDeleteChain}
-      handleRestoreChains={handleRestoreChains}
-      handlePermanentDeleteChains={handlePermanentDeleteChains}
-      handleAuxiliaryJudgmentFailure={handleAuxiliaryJudgmentFailure}
-      handleAuxiliaryJudgmentAllow={handleAuxiliaryJudgmentAllow}
-      handleImportChains={handleImportChains}
-      handleImportUnits={handleImportUnits}
-      handleUpdateTaskRepeatCount={handleUpdateTaskRepeatCount}
-      handleReorderUnit={handleReorderUnit}
-      handleBetPlaced={handleBetPlaced}
-      handleBetCancelled={handleBetCancelled}
-      onNavigateToView={onNavigateToView}
-      petDomain={petDomain}
+      app={app}
+      dashboard={dashboard}
+      rsip={rsip}
+      session={session}
+      pet={pet}
     />
   );
 }
