@@ -5,12 +5,12 @@ import {
   serializeViewStateToSearch,
 } from '../viewUrlState';
 import {
+  appShellStore,
   selectCurrentView,
   selectEditingChain,
   selectViewingChainId,
-  uiStore,
-  useUIStore,
-} from '../../stores/uiStore';
+  useAppShellStore,
+} from '../../stores/appShellStore';
 
 interface UseViewUrlSyncParams {
   chains: Chain[];
@@ -32,9 +32,9 @@ export function useViewUrlSync({
     stateRef.current = { chains, activeSession };
   }, [chains, activeSession]);
 
-  const currentView = useUIStore(selectCurrentView);
-  const viewingChainId = useUIStore(selectViewingChainId);
-  const editingChain = useUIStore(selectEditingChain);
+  const currentView = useAppShellStore(selectCurrentView);
+  const viewingChainId = useAppShellStore(selectViewingChainId);
+  const editingChain = useAppShellStore(selectEditingChain);
 
   const isApplyingUrlRef = useRef(false);
   const hasProcessedInitialUrlRef = useRef(false);
@@ -42,7 +42,7 @@ export function useViewUrlSync({
   const applyViewStateFromUrl = useCallback(
     (next: UrlSyncedViewState) => {
       isApplyingUrlRef.current = true;
-      uiStore.setState({
+      appShellStore.setState({
         currentView: next.currentView,
         viewingChainId: next.viewingChainId,
         editingChain: next.editingChain,

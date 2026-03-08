@@ -17,12 +17,14 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
+import { resolveAppStateReader } from './appStateAccess';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorMessage';
 
 interface UseRulesDomainParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
@@ -31,11 +33,13 @@ interface UseRulesDomainParams {
 
 export function useRulesDomain({
   state,
+  getState,
   setState,
   storage,
   safelySaveChains,
   setShowAuxiliaryJudgment,
 }: UseRulesDomainParams) {
+  const readState = resolveAppStateReader({ state, getState });
   const persistChains = (
     chainId: string,
     updatedChains: AppState['chains'],
@@ -54,10 +58,11 @@ export function useRulesDomain({
   };
 
   const handleAuxiliaryJudgmentFailure = (chainId: string) => {
-    const updatedScheduledSessions = state.scheduledSessions.filter(
+    const currentState = readState();
+    const updatedScheduledSessions = currentState.scheduledSessions.filter(
       (session) => session.chainId !== chainId,
     );
-    const updatedChains = state.chains.map((chain) =>
+    const updatedChains = currentState.chains.map((chain) =>
       chain.id === chainId
         ? {
             ...chain,
@@ -90,10 +95,11 @@ export function useRulesDomain({
     chainId: string,
     exceptionRule: string,
   ) => {
-    const updatedScheduledSessions = state.scheduledSessions.filter(
+    const currentState = readState();
+    const updatedScheduledSessions = currentState.scheduledSessions.filter(
       (session) => session.chainId !== chainId,
     );
-    const updatedChains = state.chains.map((chain) =>
+    const updatedChains = currentState.chains.map((chain) =>
       chain.id === chainId
         ? {
             ...chain,

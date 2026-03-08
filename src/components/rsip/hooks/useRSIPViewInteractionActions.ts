@@ -30,6 +30,93 @@ interface UseRSIPViewInteractionActionsParams {
   >;
 }
 
+function getLinkedTaskActions(params: {
+  nodeId: string;
+  taskLinks: RSIPTaskLink[];
+  onGetTaskActions?: RSIPViewProps['onGetTaskActions'];
+}) {
+  return (
+    params.onGetTaskActions?.(params.nodeId) ??
+    params.taskLinks.filter(
+      (link) =>
+        link.rsipNodeId === params.nodeId &&
+        link.triggerEvent === 'rsip_mark_executed' &&
+        link.isActive,
+    )
+  );
+}
+
+function confirmLinkedTaskAction(params: {
+  automation: RSIPTaskLink['automation'];
+  language: string;
+  targetChainName: string;
+}) {
+  if (params.automation === 'auto') {
+    return true;
+  }
+
+  return window.confirm(
+    params.language.startsWith('zh')
+      ? `国策已执行，是否联动任务「${params.targetChainName}」？`
+      : `Policy executed. Trigger linked task "${params.targetChainName}"?`,
+  );
+}
+
+async function executeLinkedTaskEffect(params: {
+  link: RSIPTaskLink;
+  onStartChain?: RSIPViewProps['onStartChain'];
+  onScheduleChain?: RSIPViewProps['onScheduleChain'];
+}) {
+  if (params.link.effect === 'prompt_start_chain' && params.onStartChain) {
+    await params.onStartChain(params.link.chainId);
+    return;
+  }
+
+  if (
+    params.link.effect === 'prompt_schedule_chain' &&
+    params.onScheduleChain
+  ) {
+    params.onScheduleChain(params.link.chainId);
+  }
+}
+
+async function runLinkedTaskActions(params: {
+  linkedActions: RSIPTaskLink[];
+  chains: RSIPViewStateSlice['chains'];
+  language: string;
+  onStartChain?: RSIPViewProps['onStartChain'];
+  onScheduleChain?: RSIPViewProps['onScheduleChain'];
+}) {
+  for (const link of params.linkedActions) {
+    const targetChain = params.chains.find(
+      (chain) => chain.id === link.chainId,
+    );
+    if (!targetChain) {
+      logger.warn('RSIP', 'RSIP->task link skipped: missing target chain', {
+        linkId: link.id,
+        chainId: link.chainId,
+      });
+      continue;
+    }
+
+    if (
+      !confirmLinkedTaskAction({
+        automation: link.automation,
+        language: params.language,
+        targetChainName: targetChain.name,
+      })
+    ) {
+      continue;
+    }
+
+    await executeLinkedTaskEffect({
+      link,
+      onStartChain: params.onStartChain,
+      onScheduleChain: params.onScheduleChain,
+    });
+  }
+}
+
 export function useRSIPViewInteractionActions({
   state,
   props,
@@ -86,42 +173,18 @@ export function useRSIPViewInteractionActions({
         onSaveNodes(updatedNodes);
       }
 
-      const linkedActions =
-        onGetTaskActions?.(nodeId) ??
-        taskLinks.filter(
-          (link) =>
-            link.rsipNodeId === nodeId &&
-            link.triggerEvent === 'rsip_mark_executed' &&
-            link.isActive,
-        );
-
-      for (const link of linkedActions) {
-        const targetChain = chains.find((chain) => chain.id === link.chainId);
-        if (!targetChain) {
-          logger.warn('RSIP', 'RSIP->task link skipped: missing target chain', {
-            linkId: link.id,
-            chainId: link.chainId,
-          });
-          continue;
-        }
-
-        if (link.automation !== 'auto') {
-          const confirmed = window.confirm(
-            language.startsWith('zh')
-              ? `国策已执行，是否联动任务「${targetChain.name}」？`
-              : `Policy executed. Trigger linked task "${targetChain.name}"?`,
-          );
-          if (!confirmed) {
-            continue;
-          }
-        }
-
-        if (link.effect === 'prompt_start_chain' && onStartChain) {
-          await onStartChain(link.chainId);
-        } else if (link.effect === 'prompt_schedule_chain' && onScheduleChain) {
-          onScheduleChain(link.chainId);
-        }
-      }
+      const linkedActions = getLinkedTaskActions({
+        nodeId,
+        taskLinks,
+        onGetTaskActions,
+      });
+      await runLinkedTaskActions({
+        linkedActions,
+        chains,
+        language,
+        onStartChain,
+        onScheduleChain,
+      });
 
       return updatedNodes;
     },

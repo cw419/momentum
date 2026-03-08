@@ -2,6 +2,7 @@
 import type { AppState, ScheduledSession } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import type { SafelySaveChains } from '../useChainsDomain';
+import { resolveAppStateReader } from '../appStateAccess';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { logger } from '../../../utils/logger';
@@ -9,7 +10,8 @@ import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 
 interface CreateSchedulingHandlersParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
@@ -19,19 +21,22 @@ interface CreateSchedulingHandlersParams {
 
 export function createSchedulingHandlers({
   state,
+  getState,
   setState,
   storage,
   safelySaveChains,
   setShowAuxiliaryJudgment,
   tr,
 }: CreateSchedulingHandlersParams) {
+  const readState = resolveAppStateReader({ state, getState });
   const handleScheduleChain = (chainId: string) => {
-    const existingSchedule = state.scheduledSessions.find(
+    const currentState = readState();
+    const existingSchedule = currentState.scheduledSessions.find(
       (s) => s.chainId === chainId,
     );
     if (existingSchedule) return;
 
-    const chain = state.chains.find((c) => c.id === chainId);
+    const chain = currentState.chains.find((c) => c.id === chainId);
     if (!chain) return;
 
     const scheduledSession: ScheduledSession = {
@@ -43,9 +48,13 @@ export function createSchedulingHandlers({
 
     const updateStateAndSave = async () => {
       try {
-        const updatedSessions = [...state.scheduledSessions, scheduledSession];
+        const latestState = readState();
+        const updatedSessions = [
+          ...latestState.scheduledSessions,
+          scheduledSession,
+        ];
 
-        const updatedChains = state.chains.map((chain) =>
+        const updatedChains = latestState.chains.map((chain) =>
           chain.id === chainId
             ? { ...chain, auxiliaryStreak: chain.auxiliaryStreak + 1 }
             : chain,
@@ -84,13 +93,14 @@ export function createSchedulingHandlers({
   };
 
   const handleCompleteBooking = (chainId: string) => {
-    const chain = state.chains.find((c) => c.id === chainId);
+    const currentState = readState();
+    const chain = currentState.chains.find((c) => c.id === chainId);
     if (!chain) return;
 
-    const updatedScheduledSessions = state.scheduledSessions.filter(
+    const updatedScheduledSessions = currentState.scheduledSessions.filter(
       (session) => session.chainId !== chainId,
     );
-    const updatedChains = state.chains.map((c) =>
+    const updatedChains = currentState.chains.map((c) =>
       c.id === chainId ? { ...c, auxiliaryStreak: c.auxiliaryStreak + 1 } : c,
     );
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import type { AppState, ViewState } from '../types';
 import { useStorage } from '../storage/useStorage';
 import { useSafeSaveChains } from '../hooks/domains/useSafeSaveChains';
@@ -26,6 +26,9 @@ import {
   buildSessionViewModel,
 } from './app-shell/viewModelBuilders';
 import {
+  appShellStore,
+  createInitialAppState,
+  getAppStateSnapshot,
   selectActiveSessionId,
   selectCurrentSessionId,
   selectCurrentView,
@@ -34,48 +37,49 @@ import {
   selectShowAuxiliaryJudgment,
   selectShowBettingModal,
   selectViewingChainId,
-  uiStore,
-  useUIStore,
-} from '../stores/uiStore';
-
-function createInitialAppState(): AppState {
-  return {
-    chains: [],
-    chainsRevision: 0,
-    scheduledSessions: [],
-    activeSession: null,
-    completionHistory: [],
-    rsipNodes: [],
-    rsipMeta: {},
-    rsipGroups: [],
-    rsipPolicyLibrary: [],
-    rsipRunHistory: [],
-    rsipTaskLinks: [],
-    rsipExecutionRecords: [],
-    taskTimeStats: [],
-    exceptionRules: [],
-    ruleUsageRecords: [],
-  };
-}
+  useAppShellStore,
+} from '../stores/appShellStore';
 
 export default function AppShellContainer() {
-  const [state, setState] = useState<AppState>(() => createInitialAppState());
-
   const storage = useStorage();
   const safelySaveChains = useSafeSaveChains(storage);
-  const currentView = useUIStore(selectCurrentView);
-  const editingChain = useUIStore(selectEditingChain);
-  const viewingChainId = useUIStore(selectViewingChainId);
-  const showAuxiliaryJudgment = useUIStore(selectShowAuxiliaryJudgment);
-  const showBettingModal = useUIStore(selectShowBettingModal);
-  const pendingChainId = useUIStore(selectPendingChainId);
-  const currentSessionId = useUIStore(selectCurrentSessionId);
-  const activeSessionId = useUIStore(selectActiveSessionId);
+  const chains = useAppShellStore((state) => state.chains);
+  const chainsRevision = useAppShellStore((state) => state.chainsRevision);
+  const scheduledSessions = useAppShellStore((state) => state.scheduledSessions);
+  const activeSession = useAppShellStore((state) => state.activeSession);
+  const completionHistory = useAppShellStore(
+    (state) => state.completionHistory,
+  );
+  const rsipNodes = useAppShellStore((state) => state.rsipNodes);
+  const rsipMeta = useAppShellStore((state) => state.rsipMeta);
+  const rsipGroups = useAppShellStore((state) => state.rsipGroups);
+  const rsipPolicyLibrary = useAppShellStore(
+    (state) => state.rsipPolicyLibrary,
+  );
+  const rsipRunHistory = useAppShellStore((state) => state.rsipRunHistory);
+  const rsipTaskLinks = useAppShellStore((state) => state.rsipTaskLinks);
+  const rsipExecutionRecords = useAppShellStore(
+    (state) => state.rsipExecutionRecords,
+  );
+  const currentView = useAppShellStore(selectCurrentView);
+  const editingChain = useAppShellStore(selectEditingChain);
+  const viewingChainId = useAppShellStore(selectViewingChainId);
+  const showAuxiliaryJudgment = useAppShellStore(selectShowAuxiliaryJudgment);
+  const showBettingModal = useAppShellStore(selectShowBettingModal);
+  const pendingChainId = useAppShellStore(selectPendingChainId);
+  const currentSessionId = useAppShellStore(selectCurrentSessionId);
+  const activeSessionId = useAppShellStore(selectActiveSessionId);
 
   const resetAppState = useCallback(() => createInitialAppState(), []);
   const resetUIState = useCallback(() => {
-    uiStore.getState().resetAllUI();
+    appShellStore.getState().resetNavigationState();
   }, []);
+  const setState = useCallback(
+    (update: AppState | ((prev: AppState) => AppState)) => {
+      appShellStore.getState().updateAppState(update);
+    },
+    [],
+  );
 
   const { isInitialized } = useServiceLifecycle();
 
@@ -94,19 +98,19 @@ export default function AppShellContainer() {
   });
 
   useViewValidation({
-    chains: state.chains,
-    activeSession: state.activeSession,
+    chains,
+    activeSession,
     isInitialized,
   });
   useViewUrlSync({
-    chains: state.chains,
-    activeSession: state.activeSession,
+    chains,
+    activeSession,
     shouldLoadData,
     isLoadingData,
   });
 
   usePeriodicCleanup({
-    state,
+    getState: getAppStateSnapshot,
     setState,
     storage,
     isInitialized,
@@ -118,32 +122,32 @@ export default function AppShellContainer() {
     handleEditChain,
     handleSaveChain,
   } = useChainsDomain({
-    state,
+    getState: getAppStateSnapshot,
     setState,
     editingChain,
     storage,
     safelySaveChains,
     onNavigateToEditor: (parentId) => {
-      uiStore.setState({
+      appShellStore.setState({
         currentView: 'editor',
         editingChain: null,
         viewingChainId: parentId,
       });
     },
     onNavigateToTaskGroupEditor: () => {
-      uiStore.setState({
+      appShellStore.setState({
         currentView: 'taskgroup-editor',
         editingChain: null,
       });
     },
     onEditChain: (chain, isTaskGroup) => {
-      uiStore.setState({
+      appShellStore.setState({
         currentView: isTaskGroup ? 'taskgroup-editor' : 'editor',
         editingChain: chain,
       });
     },
     onNavigateToDashboard: () => {
-      uiStore.getState().navigateToDashboard();
+      appShellStore.getState().navigateToDashboard();
     },
   });
 
@@ -164,9 +168,9 @@ export default function AppShellContainer() {
   } = useRsipDomain({
     setState,
     storage,
-    getState: () => state,
+    getState: getAppStateSnapshot,
     onNavigateToRSIP: () => {
-      uiStore.getState().navigateToView('rsip');
+      appShellStore.getState().navigateToView('rsip');
     },
   });
 
@@ -182,27 +186,28 @@ export default function AppShellContainer() {
     handleCancelScheduledSession,
     handleCompleteBooking,
   } = useSessionsDomain({
-    state,
+    getState: getAppStateSnapshot,
     setState,
     storage,
     safelySaveChains,
     activeSessionId,
     setActiveSessionId: (sessionId) =>
-      uiStore.getState().setActiveSessionId(sessionId),
+      appShellStore.getState().setActiveSessionId(sessionId),
     pendingChainId,
-    setPendingChainId: (chainId) => uiStore.getState().setPendingChainId(chainId),
+    setPendingChainId: (chainId) =>
+      appShellStore.getState().setPendingChainId(chainId),
     currentSessionId,
     setCurrentSessionId: (sessionId) =>
-      uiStore.getState().setCurrentSessionId(sessionId),
+      appShellStore.getState().setCurrentSessionId(sessionId),
     setShowBettingModal: (isOpen) =>
-      uiStore.getState().setShowBettingModal(isOpen),
+      appShellStore.getState().setShowBettingModal(isOpen),
     setShowAuxiliaryJudgment: (chainId) =>
-      uiStore.getState().setShowAuxiliaryJudgment(chainId),
+      appShellStore.getState().setShowAuxiliaryJudgment(chainId),
     onNavigateToFocus: () => {
-      uiStore.getState().navigateToView('focus');
+      appShellStore.getState().navigateToView('focus');
     },
     onNavigateToDashboard: () => {
-      uiStore.getState().navigateToDashboard();
+      appShellStore.getState().navigateToDashboard();
     },
     onPetTaskCompleted: petDomain.onTaskCompleted,
     onRsipTaskEvent: async (payload) => {
@@ -212,25 +217,26 @@ export default function AppShellContainer() {
 
   const { handleBetPlaced, handleBetCancelled } = useBettingDomain({
     pendingChainId,
-    setPendingChainId: (chainId) => uiStore.getState().setPendingChainId(chainId),
+    setPendingChainId: (chainId) =>
+      appShellStore.getState().setPendingChainId(chainId),
     currentSessionId,
     setCurrentSessionId: (sessionId) =>
-      uiStore.getState().setCurrentSessionId(sessionId),
+      appShellStore.getState().setCurrentSessionId(sessionId),
     setActiveSessionId: (sessionId) =>
-      uiStore.getState().setActiveSessionId(sessionId),
+      appShellStore.getState().setActiveSessionId(sessionId),
     setShowBettingModal: (isOpen) =>
-      uiStore.getState().setShowBettingModal(isOpen),
+      appShellStore.getState().setShowBettingModal(isOpen),
     handleStartChain,
   });
 
   const { handleAuxiliaryJudgmentFailure, handleAuxiliaryJudgmentAllow } =
     useRulesDomain({
-      state,
+      getState: getAppStateSnapshot,
       setState,
       storage,
       safelySaveChains,
       setShowAuxiliaryJudgment: (chainId) =>
-        uiStore.getState().setShowAuxiliaryJudgment(chainId),
+        appShellStore.getState().setShowAuxiliaryJudgment(chainId),
     });
 
   const {
@@ -238,11 +244,11 @@ export default function AppShellContainer() {
     handleRestoreChains,
     handlePermanentDeleteChains,
   } = useRecycleBinDomain({
-    state,
+    getState: getAppStateSnapshot,
     setState,
     storage,
     onChainDeleted: (chainId, hasActiveSession) => {
-      const uiState = uiStore.getState();
+      const uiState = appShellStore.getState();
       if (!hasActiveSession) {
         uiState.navigateToDashboard();
         return;
@@ -265,18 +271,18 @@ export default function AppShellContainer() {
 
   const { handleImportUnits, handleUpdateTaskRepeatCount, handleReorderUnit } =
     useGroupDomain({
-      state,
+      getState: getAppStateSnapshot,
       setState,
       storage,
       safelySaveChains,
     });
 
   const handleViewChainDetail = (chainId: string) => {
-    const chain = state.chains.find((c) => c.id === chainId);
+    const chain = chains.find((c) => c.id === chainId);
     if (!chain) return;
 
     const viewType = chain.type === 'group' ? 'group' : 'detail';
-    uiStore.setState({
+    appShellStore.setState({
       currentView: viewType,
       viewingChainId: chainId,
       editingChain: null,
@@ -284,17 +290,17 @@ export default function AppShellContainer() {
   };
 
   const handleBackToDashboard = () => {
-    uiStore.getState().navigateToDashboard();
+    appShellStore.getState().navigateToDashboard();
   };
 
   const onNavigateToView = useCallback(
     (view: ViewState) => {
       if (view === 'dashboard') {
-        uiStore.getState().navigateToDashboard();
+        appShellStore.getState().navigateToDashboard();
         return;
       }
 
-      uiStore.getState().navigateToView(view);
+      appShellStore.getState().navigateToView(view);
     },
     [],
   );
@@ -303,18 +309,18 @@ export default function AppShellContainer() {
     isInitialized,
     isLoadingData,
     currentView,
-    hasActiveSession: !!state.activeSession,
+    hasActiveSession: !!activeSession,
     onNavigateToView,
   });
 
   const dashboard = buildDashboardViewModel({
     currentView,
-    chains: state.chains,
-    chainsRevision: state.chainsRevision,
-    scheduledSessions: state.scheduledSessions,
+    chains,
+    chainsRevision,
+    scheduledSessions,
     editingChain,
     viewingChainId,
-    completionHistory: state.completionHistory,
+    completionHistory,
     handleCreateChain,
     handleCreateTaskGroup,
     handleEditChain,
@@ -336,14 +342,14 @@ export default function AppShellContainer() {
   });
 
   const rsip = buildRsipViewModel({
-    nodes: state.rsipNodes,
-    meta: state.rsipMeta,
-    groups: state.rsipGroups ?? [],
-    policyLibrary: state.rsipPolicyLibrary ?? [],
-    runHistory: state.rsipRunHistory ?? [],
-    executionRecords: state.rsipExecutionRecords ?? [],
-    taskLinks: state.rsipTaskLinks ?? [],
-    chains: state.chains,
+    nodes: rsipNodes,
+    meta: rsipMeta,
+    groups: rsipGroups ?? [],
+    policyLibrary: rsipPolicyLibrary ?? [],
+    runHistory: rsipRunHistory ?? [],
+    executionRecords: rsipExecutionRecords ?? [],
+    taskLinks: rsipTaskLinks ?? [],
+    chains,
     onBack: handleBackToDashboard,
     saveNodes: saveRSIPNodes,
     saveMeta: saveRSIPMeta,
@@ -361,11 +367,11 @@ export default function AppShellContainer() {
   });
 
   const session = buildSessionViewModel({
-    chains: state.chains,
-    activeSession: state.activeSession,
+    chains,
+    activeSession,
     showAuxiliaryJudgment,
     clearAuxiliaryJudgment: () =>
-      uiStore.getState().setShowAuxiliaryJudgment(null),
+      appShellStore.getState().setShowAuxiliaryJudgment(null),
     showBettingModal,
     pendingChainId,
     currentSessionId,

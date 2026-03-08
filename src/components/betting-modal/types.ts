@@ -1,4 +1,4 @@
-export type LocalizedLanguage = 'zh' | 'en';
+type LocalizedLanguage = 'zh' | 'en';
 export type TranslationFn = (zh: string, en: string) => string;
 
 export interface BettingFormProps {

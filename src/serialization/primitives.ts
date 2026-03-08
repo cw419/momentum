@@ -118,20 +118,7 @@ export function parseTruthyDateOrNow(value: unknown): Date {
   return parseTruthyDateOrUndefined(value) ?? new Date();
 }
 
-export function toOptionalDate(value: unknown): Date | undefined {
-  return parseDateOrUndefined(value);
-}
-
-export function toDateWithFallback(value: unknown, fallback: Date): Date {
-  return parseDateOrUndefined(value) ?? fallback;
-}
-
 export function toIsoString(date: Date): string {
-  return date.toISOString();
-}
-
-export function toOptionalIsoString(date: Date | undefined | null): string | null {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
   return date.toISOString();
 }
 

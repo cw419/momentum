@@ -23,6 +23,7 @@ import { queryOptimizer } from '../../utils/queryOptimizer';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 import { useI18n } from '../../i18n';
+import { resolveAppStateReader } from './appStateAccess';
 import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 
@@ -98,7 +99,8 @@ export type SafelySaveChains = (
 ) => Promise<void>;
 
 interface UseChainsDomainParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   editingChain: Chain | null;
   storage: MomentumStorage;
@@ -111,6 +113,7 @@ interface UseChainsDomainParams {
 
 export function useChainsDomain({
   state,
+  getState,
   setState,
   editingChain,
   storage,
@@ -120,6 +123,7 @@ export function useChainsDomain({
   onEditChain = () => undefined,
   onNavigateToDashboard = () => undefined,
 }: UseChainsDomainParams) {
+  const readState = resolveAppStateReader({ state, getState });
   const { language, tr } = useI18n();
   const handleCreateChain = (parentId?: unknown) => {
     // React event handlers pass the event object as the first argument.
@@ -134,7 +138,7 @@ export function useChainsDomain({
   };
 
   const handleEditChain = (chainId: string) => {
-    const chain = state.chains.find((c) => c.id === chainId);
+    const chain = readState().chains.find((c) => c.id === chainId);
     if (chain) {
       const isTaskGroup = chain.type === 'group' || Boolean(chain.isTaskGroup);
       onEditChain(chain, isTaskGroup);
@@ -150,7 +154,7 @@ export function useChainsDomain({
       chainName: chainData.name,
       chainType: chainData.type,
       isCopy,
-      chainCount: state.chains.length,
+      chainCount: readState().chains.length,
     });
 
     try {
@@ -179,7 +183,7 @@ export function useChainsDomain({
         });
 
         const editingChainId = editingChain.id;
-        updatedActiveChains = state.chains.map((chain) =>
+        updatedActiveChains = readState().chains.map((chain) =>
           chain.id === editingChainId
             ? updateChainFromDraft(chain, chainData, normalizedParentId)
             : chain,
@@ -211,7 +215,7 @@ export function useChainsDomain({
           type: newChain.type === 'group' ? 'group' : 'unit',
         });
 
-        updatedActiveChains = [...state.chains, newChain];
+        updatedActiveChains = [...readState().chains, newChain];
         logger.debug('CHAINS', 'Added chain; updated active chains', {
           count: updatedActiveChains.length,
         });

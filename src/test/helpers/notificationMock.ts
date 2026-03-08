@@ -5,7 +5,7 @@ interface MockNotificationOptions {
   requestResult?: NotificationPermission;
 }
 
-export interface NotificationMockHandle {
+interface NotificationMockHandle {
   instances: Array<{
     title: string;
     options: NotificationOptions;
@@ -16,7 +16,7 @@ export interface NotificationMockHandle {
   restore(): void;
 }
 
-export function installNotificationMock(
+function installNotificationMock(
   options: MockNotificationOptions = {},
 ): NotificationMockHandle {
   const { initialPermission = 'default', requestResult = 'granted' } = options;

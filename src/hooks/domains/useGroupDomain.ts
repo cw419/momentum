@@ -21,11 +21,13 @@ import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { useI18n } from '../../i18n';
+import { resolveAppStateReader } from './appStateAccess';
 import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 
 interface UseGroupDomainParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
@@ -33,10 +35,12 @@ interface UseGroupDomainParams {
 
 export function useGroupDomain({
   state,
+  getState,
   setState,
   storage,
   safelySaveChains,
 }: UseGroupDomainParams) {
+  const readState = resolveAppStateReader({ state, getState });
   const { language, tr } = useI18n();
 
   const handleChainsOperationError = async (
@@ -106,7 +110,7 @@ export function useGroupDomain({
         // 复制模式：创建副本并加入任务群，原单元保持独立
         const copiesToAdd: Chain[] = [];
 
-        state.chains.forEach((chain) => {
+        readState().chains.forEach((chain) => {
           if (unitIds.includes(chain.id)) {
             const copy: Chain = {
               ...chain,
@@ -125,10 +129,10 @@ export function useGroupDomain({
           }
         });
 
-        updatedChains = [...state.chains, ...copiesToAdd];
+        updatedChains = [...readState().chains, ...copiesToAdd];
       } else {
         // 移动模式：更新选中单元的 parentId 为目标任务群的 ID
-        updatedChains = state.chains.map((chain) => {
+        updatedChains = readState().chains.map((chain) => {
           if (unitIds.includes(chain.id)) {
             return { ...chain, parentId: groupId };
           }
@@ -166,7 +170,7 @@ export function useGroupDomain({
     logger.debug('APP_SHELL', '开始更新任务重复次数', { chainId, repeatCount });
 
     try {
-      const updatedChains = state.chains.map((chain) => {
+      const updatedChains = readState().chains.map((chain) => {
         if (chain.id === chainId) {
           return { ...chain, taskRepeatCount: repeatCount };
         }
@@ -202,8 +206,8 @@ export function useGroupDomain({
     direction: 'up' | 'down',
   ) => {
     const chainTree = queryOptimizer.memoizedBuildChainTree(
-      state.chains,
-      state.chainsRevision,
+      readState().chains,
+      readState().chainsRevision,
     );
     const groupNode = chainTree.find((node) => node.id === groupId);
     if (!groupNode) return;
@@ -216,7 +220,7 @@ export function useGroupDomain({
 
     const a = groupNode.children[idx];
     const b = groupNode.children[targetIdx];
-    const updated = state.chains.map((ch) => {
+    const updated = readState().chains.map((ch) => {
       if (ch.id === a.id) return { ...ch, sortOrder: b.sortOrder };
       if (ch.id === b.id) return { ...ch, sortOrder: a.sortOrder };
       return ch;

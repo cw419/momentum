@@ -3,7 +3,7 @@ import { migrationCoordinator } from '../../services/migration';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorMessage';
 
-export type CompletionHistory = Awaited<
+type CompletionHistory = Awaited<
   ReturnType<MomentumStorage['getCompletionHistory']>
 >;
 

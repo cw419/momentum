@@ -8,25 +8,25 @@ export type NotificationPermissionState = 'default' | 'granted' | 'denied';
 
 export type NotificationTogglePlacement = 'topbar' | 'settings' | 'hidden';
 
-export interface NotificationCapabilities {
+interface NotificationCapabilities {
   supported: boolean;
   canRequestPermission: boolean;
   canShow: boolean;
   togglePlacement: NotificationTogglePlacement;
 }
 
-export interface WindowCapabilities {
+interface WindowCapabilities {
   canSetFullscreen: boolean;
   canMinimizeToTray: boolean;
   canFocus: boolean;
 }
 
-export interface FileCapabilities {
+interface FileCapabilities {
   canSaveFile: boolean;
   canOpenFile: boolean;
 }
 
-export interface HapticsCapabilities {
+interface HapticsCapabilities {
   canImpact: boolean;
   canNotification: boolean;
   canSelectionChanged: boolean;

@@ -14,6 +14,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
+import { resolveAppStateReader } from './appStateAccess';
 import { realTimeSyncService } from '../../services/RealTimeSyncService';
 import { logger } from '../../utils/logger';
 import { toast } from '../../utils/toast';
@@ -22,7 +23,8 @@ import { getSafeErrorDetailFromUnknown } from '../../utils/errorMessage';
 import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 
 interface UseRecycleBinDomainParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   onChainDeleted?: (chainId: string, hasActiveSession: boolean) => void;
@@ -30,10 +32,12 @@ interface UseRecycleBinDomainParams {
 
 export function useRecycleBinDomain({
   state,
+  getState,
   setState,
   storage,
   onChainDeleted,
 }: UseRecycleBinDomainParams) {
+  const readState = resolveAppStateReader({ state, getState });
   const { language, tr } = useI18n();
   const handleDeleteChain = async (chainId: string) => {
     try {
@@ -42,11 +46,14 @@ export function useRecycleBinDomain({
         chainId,
       );
 
-      const updatedScheduledSessions = state.scheduledSessions.filter(
+      const currentState = readState();
+      const updatedScheduledSessions = currentState.scheduledSessions.filter(
         (session) => session.chainId !== chainId,
       );
       const updatedActiveSession =
-        state.activeSession?.chainId === chainId ? null : state.activeSession;
+        currentState.activeSession?.chainId === chainId
+          ? null
+          : currentState.activeSession;
 
       storage.removeScheduledSession(chainId).catch((error) => {
         logger.error(

@@ -49,7 +49,7 @@ export function markCapabilitiesAvailable(
   );
 }
 
-export function extractMissingCapabilityName(
+function extractMissingCapabilityName(
   message: string,
   capabilityNames: readonly string[],
 ): string | null {

@@ -15,7 +15,7 @@ export interface NotificationPayload {
   silent?: boolean;
 }
 
-export interface NotificationAdapterCapabilities {
+interface NotificationAdapterCapabilities {
   canRequestPermission: boolean;
   canShow: boolean;
 }
@@ -27,7 +27,7 @@ export interface PlatformWindowAdapter {
   focus(): Promise<void>;
 }
 
-export interface WindowAdapterCapabilities {
+interface WindowAdapterCapabilities {
   canSetFullscreen: boolean;
   canMinimizeToTray: boolean;
   canFocus: boolean;
@@ -39,7 +39,7 @@ export interface PlatformFileAdapter {
   openFile(extensions: string[]): Promise<string | null>;
 }
 
-export interface FileAdapterCapabilities {
+interface FileAdapterCapabilities {
   canSaveFile: boolean;
   canOpenFile: boolean;
 }
@@ -54,7 +54,7 @@ export interface PlatformHapticsAdapter {
   selectionChanged(): Promise<void>;
 }
 
-export interface HapticsAdapterCapabilities {
+interface HapticsAdapterCapabilities {
   canImpact: boolean;
   canNotification: boolean;
   canSelectionChanged: boolean;

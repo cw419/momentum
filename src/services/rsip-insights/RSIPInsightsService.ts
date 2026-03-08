@@ -30,7 +30,7 @@ interface RSIPRiskNode {
   violationRate: number;
 }
 
-export interface RSIPRecommendation {
+interface RSIPRecommendation {
   id: string;
   kind: RSIPRecommendationKind;
   priority: RSIPRecommendationPriority;
@@ -40,7 +40,7 @@ export interface RSIPRecommendation {
   relatedNodeIds?: string[];
 }
 
-export interface RSIPInsightSummary {
+interface RSIPInsightSummary {
   activeNodeCount: number;
   strictNodeCount: number;
   passiveNodeRatio: number;
@@ -53,7 +53,7 @@ export interface RSIPInsightSummary {
   successRate14d: number | null;
 }
 
-export interface RSIPTrendSnapshot {
+interface RSIPTrendSnapshot {
   maxNodeTrend: RSIPTrendDirection;
   runDurationTrend: RSIPTrendDirection;
   collapseFrequency14d: number;
@@ -61,7 +61,7 @@ export interface RSIPTrendSnapshot {
   averageRunDurationDays: number;
 }
 
-export interface BuildRSIPInsightsInput {
+interface BuildRSIPInsightsInput {
   nodes: RSIPNode[];
   runHistory: RSIPRunRecord[];
   executionRecords: RSIPExecutionRecord[];
@@ -72,7 +72,7 @@ export interface BuildRSIPInsightsInput {
   locale?: string;
 }
 
-export interface RSIPInsightsResult {
+interface RSIPInsightsResult {
   summary: RSIPInsightSummary;
   trends: RSIPTrendSnapshot;
   riskNodes: RSIPRiskNode[];
@@ -162,6 +162,351 @@ function fallbackAlternative(
     locale,
     '替代方案：先降级为 10 分钟版本，持续 7 天。',
     'Fallback: reduce to a 10-minute version for 7 days.',
+  );
+}
+
+interface RecommendationContext {
+  input: BuildRSIPInsightsInput;
+  locale: RSIPInsightsLocale;
+  summary: RSIPInsightSummary;
+  trends: RSIPTrendSnapshot;
+  highRiskNodes: RSIPRiskNode[];
+  ruralFirstCandidates: RSIPRiskNode[];
+}
+
+function buildRuralFirstRecommendation(
+  context: RecommendationContext,
+): RSIPRecommendation | null {
+  const { highRiskNodes, locale, ruralFirstCandidates, trends } = context;
+  if (highRiskNodes.length === 0 && trends.collapseFrequency14d < 2) {
+    return null;
+  }
+
+  const primaryRisks = highRiskNodes.slice(0, 2);
+  const candidateTitles = ruralFirstCandidates
+    .slice(0, 3)
+    .map((item) => item.title);
+
+  return {
+    id: 'rural-first-reboot',
+    kind: 'rural_first',
+    priority: 'high',
+    title: localize(
+      locale,
+      '农村包围城市重启：先稳住低成本国策',
+      'Rural-first reboot: stabilize low-cost policies first',
+    ),
+    rationale: localize(
+      locale,
+      '近期违约/崩溃表明高成本中心节点不稳定，应从低成本、高成功率的边缘国策重建。',
+      'Recent violations/collapses suggest central high-cost nodes are unstable. Rebuild from low-cost, high-success edge policies.',
+    ),
+    actions: [
+      primaryRisks.length > 0
+        ? localize(
+            locale,
+            `临时冻结高风险节点：${joinList(
+              primaryRisks.map((node) => node.title),
+              locale,
+            )}`,
+            `Temporarily freeze high-risk nodes: ${joinList(
+              primaryRisks.map((node) => node.title),
+              locale,
+            )}`,
+          )
+        : localize(
+            locale,
+            '先冻结 1 个不稳定核心国策 3-7 天。',
+            'Freeze one unstable central policy for 3-7 days.',
+          ),
+      candidateTitles.length > 0
+        ? localize(
+            locale,
+            `优先推进这些低成本候选：${joinList(candidateTitles, locale)}`,
+            `Prioritize these low-cost candidates: ${joinList(candidateTitles, locale)}`,
+          )
+        : localize(
+            locale,
+            '优先推进 2-3 个 failure cost <= 2.5 的低成本国策。',
+            'Promote 2-3 low-cost policies with failure cost <= 2.5.',
+          ),
+      ...primaryRisks.map(
+        (node) => `${node.title}: ${fallbackAlternative(node.title, locale)}`,
+      ),
+    ],
+    relatedNodeIds: primaryRisks.map((node) => node.nodeId),
+  };
+}
+
+function buildSplitRecommendation(
+  context: RecommendationContext,
+): RSIPRecommendation | null {
+  const top = context.highRiskNodes[0];
+  if (!top) {
+    return null;
+  }
+
+  return {
+    id: 'split-high-risk',
+    kind: 'split',
+    priority: 'high',
+    title: localize(
+      context.locale,
+      `拆分高风险国策：${top.title}`,
+      `Split high-risk policy: ${top.title}`,
+    ),
+    rationale: localize(
+      context.locale,
+      '高失败成本叠加高违约频率，说明该国策粒度过大。',
+      'High failure cost combined with frequent violations indicates this policy is oversized.',
+    ),
+    actions: [
+      localize(
+        context.locale,
+        '使用拆分流程拆成 3-5 条微国策。',
+        'Use split workflow to break into 3-5 micro policies.',
+      ),
+      localize(
+        context.locale,
+        '至少包含 1 条被动护栏型国策。',
+        'Ensure at least one passive guardrail is included.',
+      ),
+      localize(
+        context.locale,
+        '确保每条子国策能在 10-20 分钟内执行。',
+        'Keep each sub-policy executable within 10-20 minutes.',
+      ),
+    ],
+    relatedNodeIds: [top.nodeId],
+  };
+}
+
+function buildGroupingRecommendation(
+  context: RecommendationContext,
+): RSIPRecommendation | null {
+  const ungroupedNodes = context.input.nodes.filter((node) => !node.groupId)
+    .length;
+  if (ungroupedNodes < 4 || context.input.groups.length > 0) {
+    return null;
+  }
+
+  return {
+    id: 'enable-groups',
+    kind: 'grouping',
+    priority: 'medium',
+    title: localize(
+      context.locale,
+      '建立国策组并配置容错',
+      'Create policy groups with fault tolerance',
+    ),
+    rationale: localize(
+      context.locale,
+      '节点多且未分组时，级联风险难以控制。',
+      'Many independent nodes without grouping make cascade risk harder to control.',
+    ),
+    actions: [
+      localize(
+        context.locale,
+        '先为相关分支建立 1-2 个国策组。',
+        'Create 1-2 policy groups for related branches.',
+      ),
+      localize(
+        context.locale,
+        '每组先从容错 = 1 开始。',
+        'Start with fault tolerance = 1 for each group.',
+      ),
+      localize(
+        context.locale,
+        '将高度相关的节点放入同一组。',
+        'Move high-correlation nodes into the same group.',
+      ),
+    ],
+  };
+}
+
+function buildReinforcementRecommendation(
+  context: RecommendationContext,
+): RSIPRecommendation | null {
+  const e2WithoutReinforcement = context.input.nodes.filter(
+    (node) =>
+      node.stabilityPhase === 'E2' && (node.reinforcementLevel ?? 0) === 0,
+  );
+  if (
+    e2WithoutReinforcement.length === 0 ||
+    (context.summary.successRate14d != null && context.summary.successRate14d < 0.6)
+  ) {
+    return null;
+  }
+
+  return {
+    id: 'reinforce-e2',
+    kind: 'reinforcement',
+    priority: 'medium',
+    title: localize(
+      context.locale,
+      '强化稳定 E2 节点',
+      'Reinforce stable E2 nodes',
+    ),
+    rationale: localize(
+      context.locale,
+      '稳定但未强化的节点，通过少量投入即可显著提高抗回滚能力。',
+      'Stable nodes without reinforcement can improve rollback resilience with small extra effort.',
+    ),
+    actions: [
+      localize(
+        context.locale,
+        `优先强化这些节点：${joinList(
+          e2WithoutReinforcement.slice(0, 3).map((node) => node.title),
+          context.locale,
+        )}`,
+        `Reinforce these nodes first: ${joinList(
+          e2WithoutReinforcement.slice(0, 3).map((node) => node.title),
+          context.locale,
+        )}`,
+      ),
+      localize(
+        context.locale,
+        '每成功执行一周增加 1 层强化。',
+        'Increase one reinforcement level per successful week.',
+      ),
+    ],
+    relatedNodeIds: e2WithoutReinforcement.map((node) => node.id),
+  };
+}
+
+function buildPassiveRecommendation(
+  context: RecommendationContext,
+): RSIPRecommendation | null {
+  if (
+    context.summary.passiveNodeRatio >= 0.2 ||
+    context.summary.violationCount14d === 0
+  ) {
+    return null;
+  }
+
+  return {
+    id: 'add-passive-guards',
+    kind: 'passive',
+    priority: 'medium',
+    title: localize(context.locale, '增加被动护栏', 'Add passive guardrails'),
+    rationale: localize(
+      context.locale,
+      '近期存在违约且被动国策覆盖率偏低，环境护栏可以降低摩擦。',
+      'Passive policy coverage is low while recent violations exist. Environment guardrails can reduce friction.',
+    ),
+    actions: [
+      localize(
+        context.locale,
+        '每条不稳定分支至少增加 1 条被动国策。',
+        'Add at least one passive policy for each unstable branch.',
+      ),
+      localize(
+        context.locale,
+        '优先使用自动化/环境改造，降低意志力负担。',
+        'Prefer automation/environment changes over willpower-heavy actions.',
+      ),
+      localize(
+        context.locale,
+        '显式标记被动节点，便于追踪。',
+        'Mark passive nodes explicitly for tracking.',
+      ),
+    ],
+  };
+}
+
+function buildAutomationRecommendation(
+  context: RecommendationContext,
+): RSIPRecommendation | null {
+  if (context.summary.linkCount !== 0) {
+    return null;
+  }
+
+  return {
+    id: 'configure-links',
+    kind: 'automation',
+    priority: 'low',
+    title: localize(
+      context.locale,
+      '启用 RSIP-任务流程联动',
+      'Enable RSIP-task process links',
+    ),
+    rationale: localize(
+      context.locale,
+      '当前未检测到活动链接，事件驱动同步可提升一致性与执行效率。',
+      'No active links detected. Event-driven synchronization improves consistency and execution speed.',
+    ),
+    actions: [
+      localize(
+        context.locale,
+        '先配置 task_completed -> mark_rsip_executed。',
+        'Start with task_completed -> mark_rsip_executed.',
+      ),
+      localize(
+        context.locale,
+        '关键任务再加 rsip_mark_executed -> prompt_start_chain。',
+        'Add rsip_mark_executed -> prompt_start_chain for key tasks.',
+      ),
+      localize(
+        context.locale,
+        'RSIP->任务侧初期保持 confirm 模式。',
+        'Keep RSIP->task side in confirm mode initially.',
+      ),
+    ],
+  };
+}
+
+function buildRebuildRecommendation(
+  context: RecommendationContext,
+): RSIPRecommendation | null {
+  if (
+    context.trends.maxNodeTrend !== 'down' &&
+    context.trends.runDurationTrend !== 'down'
+  ) {
+    return null;
+  }
+
+  return {
+    id: 'rebuild-from-library',
+    kind: 'rebuild',
+    priority: 'medium',
+    title: localize(
+      context.locale,
+      '使用国策库辅助重建',
+      'Use library-assisted rebuild',
+    ),
+    rationale: localize(
+      context.locale,
+      '轮次趋势下滑，优先恢复已验证国策，而不是只新增新国策。',
+      'Run trends are declining. Reintroduce proven policies from library instead of adding only new ones.',
+    ),
+    actions: [
+      localize(
+        context.locale,
+        '从国策库恢复 1-2 条高内化条目。',
+        'Restore 1-2 high-internalization entries from policy library.',
+      ),
+      localize(
+        context.locale,
+        '本周避免引入超过 1 条新的高风险国策。',
+        'Avoid introducing more than one new high-risk policy this week.',
+      ),
+    ],
+  };
+}
+
+function buildRecommendations(
+  context: RecommendationContext,
+): RSIPRecommendation[] {
+  return [
+    buildRuralFirstRecommendation(context),
+    buildSplitRecommendation(context),
+    buildGroupingRecommendation(context),
+    buildReinforcementRecommendation(context),
+    buildPassiveRecommendation(context),
+    buildAutomationRecommendation(context),
+    buildRebuildRecommendation(context),
+  ].filter((recommendation): recommendation is RSIPRecommendation =>
+    Boolean(recommendation),
   );
 }
 
@@ -284,272 +629,14 @@ export function buildRSIPInsights(
     })
     .slice(0, 5);
 
-  const recommendations: RSIPRecommendation[] = [];
-
-  if (highRiskNodes.length > 0 || trends.collapseFrequency14d >= 2) {
-    const primaryRisks = highRiskNodes.slice(0, 2);
-    const candidateTitles = ruralFirstCandidates
-      .slice(0, 3)
-      .map((item) => item.title);
-    recommendations.push({
-      id: 'rural-first-reboot',
-      kind: 'rural_first',
-      priority: 'high',
-      title: localize(
-        locale,
-        '农村包围城市重启：先稳住低成本国策',
-        'Rural-first reboot: stabilize low-cost policies first',
-      ),
-      rationale: localize(
-        locale,
-        '近期违约/崩溃表明高成本中心节点不稳定，应从低成本、高成功率的边缘国策重建。',
-        'Recent violations/collapses suggest central high-cost nodes are unstable. Rebuild from low-cost, high-success edge policies.',
-      ),
-      actions: [
-        primaryRisks.length > 0
-          ? localize(
-              locale,
-              `临时冻结高风险节点：${joinList(
-                primaryRisks.map((node) => node.title),
-                locale,
-              )}`,
-              `Temporarily freeze high-risk nodes: ${joinList(
-                primaryRisks.map((node) => node.title),
-                locale,
-              )}`,
-            )
-          : localize(
-              locale,
-              '先冻结 1 个不稳定核心国策 3-7 天。',
-              'Freeze one unstable central policy for 3-7 days.',
-            ),
-        candidateTitles.length > 0
-          ? localize(
-              locale,
-              `优先推进这些低成本候选：${joinList(candidateTitles, locale)}`,
-              `Prioritize these low-cost candidates: ${joinList(candidateTitles, locale)}`,
-            )
-          : localize(
-              locale,
-              '优先推进 2-3 个 failure cost <= 2.5 的低成本国策。',
-              'Promote 2-3 low-cost policies with failure cost <= 2.5.',
-            ),
-        ...primaryRisks.map(
-          (node) => `${node.title}: ${fallbackAlternative(node.title, locale)}`,
-        ),
-      ],
-      relatedNodeIds: primaryRisks.map((node) => node.nodeId),
-    });
-  }
-
-  if (highRiskNodes.length > 0) {
-    const top = highRiskNodes[0];
-    recommendations.push({
-      id: 'split-high-risk',
-      kind: 'split',
-      priority: 'high',
-      title: localize(
-        locale,
-        `拆分高风险国策：${top.title}`,
-        `Split high-risk policy: ${top.title}`,
-      ),
-      rationale: localize(
-        locale,
-        '高失败成本叠加高违约频率，说明该国策粒度过大。',
-        'High failure cost combined with frequent violations indicates this policy is oversized.',
-      ),
-      actions: [
-        localize(
-          locale,
-          '使用拆分流程拆成 3-5 条微国策。',
-          'Use split workflow to break into 3-5 micro policies.',
-        ),
-        localize(
-          locale,
-          '至少包含 1 条被动护栏型国策。',
-          'Ensure at least one passive guardrail is included.',
-        ),
-        localize(
-          locale,
-          '确保每条子国策能在 10-20 分钟内执行。',
-          'Keep each sub-policy executable within 10-20 minutes.',
-        ),
-      ],
-      relatedNodeIds: [top.nodeId],
-    });
-  }
-
-  const ungroupedNodes = input.nodes.filter((node) => !node.groupId).length;
-  if (ungroupedNodes >= 4 && input.groups.length === 0) {
-    recommendations.push({
-      id: 'enable-groups',
-      kind: 'grouping',
-      priority: 'medium',
-      title: localize(
-        locale,
-        '建立国策组并配置容错',
-        'Create policy groups with fault tolerance',
-      ),
-      rationale: localize(
-        locale,
-        '节点多且未分组时，级联风险难以控制。',
-        'Many independent nodes without grouping make cascade risk harder to control.',
-      ),
-      actions: [
-        localize(
-          locale,
-          '先为相关分支建立 1-2 个国策组。',
-          'Create 1-2 policy groups for related branches.',
-        ),
-        localize(
-          locale,
-          '每组先从容错 = 1 开始。',
-          'Start with fault tolerance = 1 for each group.',
-        ),
-        localize(
-          locale,
-          '将高度相关的节点放入同一组。',
-          'Move high-correlation nodes into the same group.',
-        ),
-      ],
-    });
-  }
-
-  const e2WithoutReinforcement = input.nodes.filter(
-    (node) =>
-      node.stabilityPhase === 'E2' && (node.reinforcementLevel ?? 0) === 0,
-  );
-  if (
-    e2WithoutReinforcement.length > 0 &&
-    (summary.successRate14d == null || summary.successRate14d >= 0.6)
-  ) {
-    recommendations.push({
-      id: 'reinforce-e2',
-      kind: 'reinforcement',
-      priority: 'medium',
-      title: localize(locale, '强化稳定 E2 节点', 'Reinforce stable E2 nodes'),
-      rationale: localize(
-        locale,
-        '稳定但未强化的节点，通过少量投入即可显著提高抗回滚能力。',
-        'Stable nodes without reinforcement can improve rollback resilience with small extra effort.',
-      ),
-      actions: [
-        localize(
-          locale,
-          `优先强化这些节点：${joinList(
-            e2WithoutReinforcement.slice(0, 3).map((node) => node.title),
-            locale,
-          )}`,
-          `Reinforce these nodes first: ${joinList(
-            e2WithoutReinforcement.slice(0, 3).map((node) => node.title),
-            locale,
-          )}`,
-        ),
-        localize(
-          locale,
-          '每成功执行一周增加 1 层强化。',
-          'Increase one reinforcement level per successful week.',
-        ),
-      ],
-      relatedNodeIds: e2WithoutReinforcement.map((node) => node.id),
-    });
-  }
-
-  if (summary.passiveNodeRatio < 0.2 && summary.violationCount14d > 0) {
-    recommendations.push({
-      id: 'add-passive-guards',
-      kind: 'passive',
-      priority: 'medium',
-      title: localize(locale, '增加被动护栏', 'Add passive guardrails'),
-      rationale: localize(
-        locale,
-        '近期存在违约且被动国策覆盖率偏低，环境护栏可以降低摩擦。',
-        'Passive policy coverage is low while recent violations exist. Environment guardrails can reduce friction.',
-      ),
-      actions: [
-        localize(
-          locale,
-          '每条不稳定分支至少增加 1 条被动国策。',
-          'Add at least one passive policy for each unstable branch.',
-        ),
-        localize(
-          locale,
-          '优先使用自动化/环境改造，降低意志力负担。',
-          'Prefer automation/environment changes over willpower-heavy actions.',
-        ),
-        localize(
-          locale,
-          '显式标记被动节点，便于追踪。',
-          'Mark passive nodes explicitly for tracking.',
-        ),
-      ],
-    });
-  }
-
-  if (summary.linkCount === 0) {
-    recommendations.push({
-      id: 'configure-links',
-      kind: 'automation',
-      priority: 'low',
-      title: localize(
-        locale,
-        '启用 RSIP-任务流程联动',
-        'Enable RSIP-task process links',
-      ),
-      rationale: localize(
-        locale,
-        '当前未检测到活动链接，事件驱动同步可提升一致性与执行效率。',
-        'No active links detected. Event-driven synchronization improves consistency and execution speed.',
-      ),
-      actions: [
-        localize(
-          locale,
-          '先配置 task_completed -> mark_rsip_executed。',
-          'Start with task_completed -> mark_rsip_executed.',
-        ),
-        localize(
-          locale,
-          '关键任务再加 rsip_mark_executed -> prompt_start_chain。',
-          'Add rsip_mark_executed -> prompt_start_chain for key tasks.',
-        ),
-        localize(
-          locale,
-          'RSIP->任务侧初期保持 confirm 模式。',
-          'Keep RSIP->task side in confirm mode initially.',
-        ),
-      ],
-    });
-  }
-
-  if (trends.maxNodeTrend === 'down' || trends.runDurationTrend === 'down') {
-    recommendations.push({
-      id: 'rebuild-from-library',
-      kind: 'rebuild',
-      priority: 'medium',
-      title: localize(
-        locale,
-        '使用国策库辅助重建',
-        'Use library-assisted rebuild',
-      ),
-      rationale: localize(
-        locale,
-        '轮次趋势下滑，优先恢复已验证国策，而不是只新增新国策。',
-        'Run trends are declining. Reintroduce proven policies from library instead of adding only new ones.',
-      ),
-      actions: [
-        localize(
-          locale,
-          '从国策库恢复 1-2 条高内化条目。',
-          'Restore 1-2 high-internalization entries from policy library.',
-        ),
-        localize(
-          locale,
-          '本周避免引入超过 1 条新的高风险国策。',
-          'Avoid introducing more than one new high-risk policy this week.',
-        ),
-      ],
-    });
-  }
+  const recommendations = buildRecommendations({
+    input,
+    locale,
+    summary,
+    trends,
+    highRiskNodes,
+    ruralFirstCandidates,
+  });
 
   return {
     summary,

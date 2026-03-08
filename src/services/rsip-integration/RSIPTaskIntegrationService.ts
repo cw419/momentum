@@ -1,6 +1,6 @@
 import type { RSIPTaskLink } from '../../types/rsipIntegration';
 
-export type RSIPIntegrationEvent = RSIPTaskLink['triggerEvent'];
+type RSIPIntegrationEvent = RSIPTaskLink['triggerEvent'];
 
 export interface RSIPTaskEventPayload {
   event: RSIPIntegrationEvent;
@@ -9,7 +9,7 @@ export interface RSIPTaskEventPayload {
   occurredAt?: Date;
 }
 
-export interface RSIPTaskEventLinkMatch {
+interface RSIPTaskEventLinkMatch {
   link: RSIPTaskLink;
   deduped: boolean;
 }

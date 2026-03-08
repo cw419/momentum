@@ -1,17 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
+import { resolveAppStateReader } from '../../hooks/domains/appStateAccess';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
 import { isSessionExpired } from '../../utils/time';
 import { systemNotificationService } from '../../services/platform/SystemNotificationService';
 import { isGroupExpired, resetGroupProgress } from '../../utils/timeLimit';
 import { soundManager } from '../../utils/soundManager';
-import { uiStore } from '../../stores/uiStore';
+import { appShellStore } from '../../stores/appShellStore';
 
 interface UsePeriodicCleanupParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   isInitialized: boolean;
@@ -24,14 +26,19 @@ interface UsePeriodicCleanupParams {
  */
 export function usePeriodicCleanup({
   state,
+  getState,
   setState,
   storage,
   isInitialized,
 }: UsePeriodicCleanupParams): void {
-  const stateRef = useRef(state);
+  const readState = useMemo(
+    () => resolveAppStateReader({ state, getState }),
+    [getState, state],
+  );
+  const stateRef = useRef<AppState>(readState());
   useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+    stateRef.current = readState();
+  }, [readState]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -99,7 +106,9 @@ export function usePeriodicCleanup({
         }
       }
 
-      uiStore.getState().setShowAuxiliaryJudgment(expiredSessions[0].chainId);
+      appShellStore
+        .getState()
+        .setShowAuxiliaryJudgment(expiredSessions[0].chainId);
 
       Promise.all(
         expiredSessions.map((session) =>

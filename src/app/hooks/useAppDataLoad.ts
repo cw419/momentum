@@ -15,7 +15,7 @@ import {
   persistCompletionHistoryTimingMigration,
   runDevDataMigration,
 } from './appDataLoadHelpers';
-import { uiStore } from '../../stores/uiStore';
+import { appShellStore } from '../../stores/appShellStore';
 
 interface UseAppDataLoadParams {
   storage: MomentumStorage;
@@ -226,7 +226,7 @@ export function useAppDataLoad({
             activeSession: null,
             completionHistory: [],
           }));
-          uiStore.getState().navigateToDashboard();
+          appShellStore.getState().navigateToDashboard();
           return;
         }
 
@@ -284,7 +284,7 @@ export function useAppDataLoad({
           rsipExecutionRecords,
           taskTimeStats,
         }));
-        uiStore
+        appShellStore
           .getState()
           .navigateToView(activeSession ? 'focus' : 'dashboard');
 

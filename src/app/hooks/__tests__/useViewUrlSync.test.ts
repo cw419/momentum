@@ -2,13 +2,16 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createUnitChain } from '../../../test/factories';
 import { useViewUrlSync } from '../useViewUrlSync';
-import { createInitialUIState, uiStore } from '../../../stores/uiStore';
+import {
+  appShellStore,
+  createInitialAppShellState,
+} from '../../../stores/appShellStore';
 
 describe('useViewUrlSync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.history.replaceState(null, '', '/');
-    uiStore.setState(createInitialUIState());
+    appShellStore.setState(createInitialAppShellState());
   });
 
   afterEach(() => {
@@ -28,9 +31,9 @@ describe('useViewUrlSync', () => {
       }),
     );
 
-    expect(uiStore.getState().currentView).toBe('detail');
-    expect(uiStore.getState().viewingChainId).toBe(chain.id);
-    expect(uiStore.getState().editingChain).toBeNull();
+    expect(appShellStore.getState().currentView).toBe('detail');
+    expect(appShellStore.getState().viewingChainId).toBe(chain.id);
+    expect(appShellStore.getState().editingChain).toBeNull();
   });
 
   it('removes invalid dashboard URL params via replaceState', () => {
@@ -67,7 +70,7 @@ describe('useViewUrlSync', () => {
     vi.runAllTimers();
     pushStateSpy.mockClear();
     act(() => {
-      uiStore.setState({
+      appShellStore.setState({
         currentView: 'detail',
         viewingChainId: chain.id,
         editingChain: null,
@@ -96,14 +99,14 @@ describe('useViewUrlSync', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
 
-    expect(uiStore.getState().currentView).toBe('detail');
-    expect(uiStore.getState().viewingChainId).toBe(chain.id);
+    expect(appShellStore.getState().currentView).toBe('detail');
+    expect(appShellStore.getState().viewingChainId).toBe(chain.id);
   });
 
   it('does not sync URL while data is still loading', () => {
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
     const chain = createUnitChain({ id: 'chain-loading' });
-    uiStore.setState({
+    appShellStore.setState({
       currentView: 'detail',
       viewingChainId: chain.id,
       editingChain: null,

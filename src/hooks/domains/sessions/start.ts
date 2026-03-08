@@ -3,6 +3,7 @@ import type { ActiveSession, AppState } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { hasStorageCapability } from '../../../storage/ports';
 import type { SafelySaveChains } from '../useChainsDomain';
+import { resolveAppStateReader } from '../appStateAccess';
 import {
   getNextUnitInGroup,
   incrementGroupCompletionCount,
@@ -23,7 +24,8 @@ type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];
 
 interface CreateStartChainHandlerParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
@@ -54,6 +56,7 @@ function buildActiveSession(params: {
 
 export function createStartChainHandler({
   state,
+  getState,
   setState,
   storage,
   safelySaveChains,
@@ -66,6 +69,7 @@ export function createStartChainHandler({
   onRsipTaskEvent,
   tr,
 }: CreateStartChainHandlerParams) {
+  const readState = resolveAppStateReader({ state, getState });
   function emitRsipTaskEvent(payload: RSIPTaskEventPayload): void {
     if (!onRsipTaskEvent) return;
     Promise.resolve(onRsipTaskEvent(payload)).catch((error) => {
@@ -79,12 +83,12 @@ export function createStartChainHandler({
   }
 
   function findChain(chainId: string): Chain | null {
-    return state.chains.find((chain) => chain.id === chainId) ?? null;
+    return readState().chains.find((chain) => chain.id === chainId) ?? null;
   }
 
   function findScheduledSession(chainId: string): ScheduledSession | null {
     return (
-      state.scheduledSessions.find((session) => session.chainId === chainId) ??
+      readState().scheduledSessions.find((session) => session.chainId === chainId) ??
       null
     );
   }
@@ -175,7 +179,7 @@ export function createStartChainHandler({
   }
 
   function resetExpiredGroup(groupId: string, groupName: string): void {
-    const updatedChains = state.chains.map((chain) =>
+    const updatedChains = readState().chains.map((chain) =>
       chain.id === groupId ? resetGroupProgress(chain) : chain,
     );
 
@@ -192,7 +196,7 @@ export function createStartChainHandler({
   }
 
   function startGroupTimerIfNeeded(groupId: string): void {
-    const updatedChains = state.chains.map((chain) =>
+    const updatedChains = readState().chains.map((chain) =>
       chain.id === groupId ? startGroupTimer(chain) : chain,
     );
     setState((prev) => ({
@@ -251,7 +255,10 @@ export function createStartChainHandler({
       `任务群 ${groupName} 所有子任务已完成，开始新一轮循环`,
     );
 
-    const updatedChains = incrementGroupCompletionCount(state.chains, groupId);
+    const updatedChains = incrementGroupCompletionCount(
+      readState().chains,
+      groupId,
+    );
     const updatedGroup = updatedChains.find((chain) => chain.id === groupId);
 
     if (updatedGroup) {
@@ -307,8 +314,8 @@ export function createStartChainHandler({
     }
 
     const chainTree = queryOptimizer.memoizedBuildChainTree(
-      state.chains,
-      state.chainsRevision,
+      readState().chains,
+      readState().chainsRevision,
     );
     const groupNode = chainTree.find((node) => node.id === groupChain.id);
     if (!groupNode) {
@@ -332,6 +339,7 @@ export function createStartChainHandler({
   }
 
   function startSingleChain(chain: Chain): void {
+    const currentState = readState();
     const existingScheduledSession = findScheduledSession(chain.id);
     const bettingSessionId =
       pendingChainId === chain.id ? currentSessionId : null;
@@ -341,17 +349,17 @@ export function createStartChainHandler({
       chain,
       bettingSessionId,
     });
-    const updatedScheduledSessions = state.scheduledSessions.filter(
+    const updatedScheduledSessions = currentState.scheduledSessions.filter(
       (session) => session.chainId !== chain.id,
     );
 
     const updatedChains = existingScheduledSession
-      ? state.chains.map((item) =>
+      ? currentState.chains.map((item) =>
           item.id === chain.id
             ? { ...item, auxiliaryStreak: item.auxiliaryStreak + 1 }
             : item,
         )
-      : state.chains;
+      : currentState.chains;
 
     if (existingScheduledSession) {
       void systemNotificationService.notifyTaskCompleted(

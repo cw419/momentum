@@ -14,7 +14,7 @@ interface PerformanceMetrics {
   totalTreeBuilds: number;
 }
 
-export interface ComponentRenderMetrics {
+interface ComponentRenderMetrics {
   renderCount: number;
   totalDuration: number;
   maxDuration: number;

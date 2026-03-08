@@ -2,16 +2,19 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createUnitChain } from '../../../test/factories';
 import { useViewValidation } from '../useViewValidation';
-import { createInitialUIState, uiStore } from '../../../stores/uiStore';
+import {
+  appShellStore,
+  createInitialAppShellState,
+} from '../../../stores/appShellStore';
 
 describe('useViewValidation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    uiStore.setState(createInitialUIState());
+    appShellStore.setState(createInitialAppShellState());
   });
 
   it('should redirect focus view to dashboard when active chain is missing', () => {
-    uiStore.getState().navigateToView('focus');
+    appShellStore.getState().navigateToView('focus');
     const { rerender } = renderHook(
       ({ chains, activeSession, isInitialized }) =>
         useViewValidation({ chains, activeSession, isInitialized }),
@@ -42,12 +45,12 @@ describe('useViewValidation', () => {
       isInitialized: true,
     });
 
-    expect(uiStore.getState().currentView).toBe('dashboard');
-    expect(uiStore.getState().viewingChainId).toBeNull();
+    expect(appShellStore.getState().currentView).toBe('dashboard');
+    expect(appShellStore.getState().viewingChainId).toBeNull();
   });
 
   it('should redirect detail/group view when viewing chain is missing', () => {
-    uiStore.setState({
+    appShellStore.setState({
       currentView: 'detail',
       viewingChainId: 'missing-chain',
     });
@@ -56,13 +59,13 @@ describe('useViewValidation', () => {
       useViewValidation({ chains: [], activeSession: null, isInitialized: true }),
     );
 
-    expect(uiStore.getState().currentView).toBe('dashboard');
-    expect(uiStore.getState().viewingChainId).toBeNull();
+    expect(appShellStore.getState().currentView).toBe('dashboard');
+    expect(appShellStore.getState().viewingChainId).toBeNull();
   });
 
   it('should keep current view when state is valid', () => {
     const chain = createUnitChain({ id: 'chain-1' });
-    uiStore.setState({
+    appShellStore.setState({
       currentView: 'group',
       viewingChainId: chain.id,
     });
@@ -75,7 +78,7 @@ describe('useViewValidation', () => {
       }),
     );
 
-    expect(uiStore.getState().currentView).toBe('group');
-    expect(uiStore.getState().viewingChainId).toBe(chain.id);
+    expect(appShellStore.getState().currentView).toBe('group');
+    expect(appShellStore.getState().viewingChainId).toBe(chain.id);
   });
 });

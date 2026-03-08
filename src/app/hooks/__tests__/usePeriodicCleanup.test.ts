@@ -11,7 +11,10 @@ import { isGroupExpired, resetGroupProgress } from '../../../utils/timeLimit';
 import { isSessionExpired } from '../../../utils/time';
 import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { soundManager } from '../../../utils/soundManager';
-import { createInitialUIState, uiStore } from '../../../stores/uiStore';
+import {
+  appShellStore,
+  createInitialAppShellState,
+} from '../../../stores/appShellStore';
 
 vi.mock('../../../utils/logger', () => ({
   logger: {
@@ -45,7 +48,7 @@ describe('usePeriodicCleanup', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-02-02T15:00:00.000Z'));
-    uiStore.setState(createInitialUIState());
+    appShellStore.setState(createInitialAppShellState());
   });
 
   afterEach(() => {
@@ -139,7 +142,9 @@ describe('usePeriodicCleanup', () => {
     expect(systemNotificationService.notifyScheduleFailed).toHaveBeenCalledWith(
       expiredChain.name,
     );
-    expect(uiStore.getState().showAuxiliaryJudgment).toBe(expiredChain.id);
+    expect(appShellStore.getState().showAuxiliaryJudgment).toBe(
+      expiredChain.id,
+    );
     expect(storage.removeScheduledSession).toHaveBeenCalledWith(expiredChain.id);
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
   });

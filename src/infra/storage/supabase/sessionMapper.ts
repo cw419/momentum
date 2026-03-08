@@ -1,7 +1,7 @@
 import type { ActiveSession } from '../../../types';
 import { decodeActiveSession, decodeScheduledSession } from '../../../serialization';
 
-export type ScheduledSessionRowLike = {
+type ScheduledSessionRowLike = {
   chain_id: string;
   scheduled_at: string;
   expires_at: string;

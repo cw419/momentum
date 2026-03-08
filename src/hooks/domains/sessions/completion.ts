@@ -3,6 +3,7 @@ import type { AppState, CompletionHistory } from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { hasStorageCapability } from '../../../storage/ports';
 import type { SafelySaveChains } from '../useChainsDomain';
+import { resolveAppStateReader } from '../appStateAccess';
 import {
   incrementGroupCompletionCount,
   isGroupFullyCompleted,
@@ -149,7 +150,8 @@ async function persistCompletionHistoryAndCleanupSupabase(
 }
 
 interface CreateCompletionHandlersParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
@@ -163,6 +165,7 @@ interface CreateCompletionHandlersParams {
 
 export function createCompletionHandlers({
   state,
+  getState,
   setState,
   storage,
   safelySaveChains,
@@ -173,6 +176,7 @@ export function createCompletionHandlers({
   onRsipTaskEvent,
   tr,
 }: CreateCompletionHandlersParams) {
+  const readState = resolveAppStateReader({ state, getState });
   function emitRsipTaskEvent(payload: RSIPTaskEventPayload): void {
     if (!onRsipTaskEvent) return;
     Promise.resolve(onRsipTaskEvent(payload)).catch((error) => {
@@ -243,10 +247,11 @@ export function createCompletionHandlers({
   }
 
   const handleCompleteSession = (description?: string, notes?: string) => {
-    const activeSession = state.activeSession;
+    const currentState = readState();
+    const activeSession = currentState.activeSession;
     if (!activeSession) return;
 
-    const chain = state.chains.find(
+    const chain = currentState.chains.find(
       (item) => item.id === activeSession.chainId,
     );
     if (!chain) return;
@@ -268,10 +273,13 @@ export function createCompletionHandlers({
       notes,
     };
 
-    const updatedHistory = [...state.completionHistory, completionRecord];
+    const updatedHistory = [
+      ...currentState.completionHistory,
+      completionRecord,
+    ];
 
     let updatedChains = updateChainsForSuccess(
-      state.chains,
+      currentState.chains,
       chain.id,
       completedAt,
     );
@@ -279,7 +287,7 @@ export function createCompletionHandlers({
       updatedChains,
       chain,
       tr,
-      state.chainsRevision + 1,
+      currentState.chainsRevision + 1,
     );
     updatedChains = groupCycleResult.updatedChains;
 
@@ -330,10 +338,11 @@ export function createCompletionHandlers({
   };
 
   const handleInterruptSession = (reason?: string) => {
-    const activeSession = state.activeSession;
+    const currentState = readState();
+    const activeSession = currentState.activeSession;
     if (!activeSession) return;
 
-    const chain = state.chains.find(
+    const chain = currentState.chains.find(
       (item) => item.id === activeSession.chainId,
     );
     if (!chain) return;
@@ -353,9 +362,12 @@ export function createCompletionHandlers({
       isForwardTimed: Boolean(chain.isDurationless),
     };
 
-    const updatedHistory = [...state.completionHistory, completionRecord];
+    const updatedHistory = [
+      ...currentState.completionHistory,
+      completionRecord,
+    ];
 
-    let updatedChains = updateChainsForFailure(state.chains, chain.id);
+    let updatedChains = updateChainsForFailure(currentState.chains, chain.id);
     if (chain.parentId && chain.type !== 'group') {
       logger.debug(
         'SESSIONS',

@@ -114,11 +114,14 @@ describe('useSessionsDomain', () => {
       }),
     );
 
-    expect(createPauseResumeHandlers).toHaveBeenCalledWith({
-      state,
-      setState,
-      storage,
-    });
+    expect(createPauseResumeHandlers).toHaveBeenCalledWith(
+      expect.objectContaining({
+        state,
+        getState: expect.any(Function),
+        setState,
+        storage,
+      }),
+    );
 
     expect(result).toEqual(
       expect.objectContaining({

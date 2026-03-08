@@ -18,13 +18,15 @@ import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
 import type { RSIPTaskEventPayload } from '../../services/rsip-integration/RSIPTaskIntegrationService';
 import { useI18n } from '../../i18n';
+import { resolveAppStateReader } from './appStateAccess';
 import { createCompletionHandlers } from './sessions/completion';
 import { createPauseResumeHandlers } from './sessions/pauseResume';
 import { createSchedulingHandlers } from './sessions/scheduling';
 import { createStartChainHandler } from './sessions/start';
 
 interface UseSessionsDomainParams {
-  state: AppState;
+  state?: AppState;
+  getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
@@ -49,6 +51,7 @@ interface UseSessionsDomainParams {
 
 export function useSessionsDomain({
   state,
+  getState,
   setState,
   storage,
   safelySaveChains,
@@ -66,6 +69,7 @@ export function useSessionsDomain({
   onRsipTaskEvent,
 }: UseSessionsDomainParams) {
   const { tr } = useI18n();
+  const readState = resolveAppStateReader({ state, getState });
 
   const {
     handleScheduleChain,
@@ -73,6 +77,7 @@ export function useSessionsDomain({
     handleCompleteBooking,
   } = createSchedulingHandlers({
     state,
+    getState: readState,
     setState,
     storage,
     safelySaveChains,
@@ -82,6 +87,7 @@ export function useSessionsDomain({
 
   const handleStartChain = createStartChainHandler({
     state,
+    getState: readState,
     setState,
     storage,
     safelySaveChains,
@@ -98,6 +104,7 @@ export function useSessionsDomain({
   const { handleCompleteSession, handleInterruptSession } =
     createCompletionHandlers({
       state,
+      getState: readState,
       setState,
       storage,
       safelySaveChains,
@@ -110,7 +117,7 @@ export function useSessionsDomain({
     });
 
   const { handlePauseSession, handleResumeSession } = createPauseResumeHandlers(
-    { state, setState, storage },
+    { state, getState: readState, setState, storage },
   );
 
   return {

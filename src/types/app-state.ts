@@ -25,12 +25,16 @@ export type ViewState =
   | 'rsip'
   | 'taskgroup-editor';
 
-export interface AppState {
+export interface TaskRuntimeState {
   chains: Chain[];
   chainsRevision: number;
   scheduledSessions: ScheduledSession[];
   activeSession: ActiveSession | null;
   completionHistory: CompletionHistory[];
+  taskTimeStats: TaskTimeStats[];
+}
+
+export interface RsipState {
   // RSIP
   rsipNodes: RSIPNode[];
   rsipMeta: RSIPMeta;
@@ -39,9 +43,12 @@ export interface AppState {
   rsipPolicyLibrary?: RSIPLibraryEntry[]; // 国策库
   rsipRunHistory?: RSIPRunRecord[]; // 轮次历史
   rsipTaskLinks?: RSIPTaskLink[]; // 国策-任务映射
-  // 任务用时统计
-  taskTimeStats: TaskTimeStats[];
+}
+
+export interface RuleState {
   // 例外规则系统
   exceptionRules: ExceptionRule[];
   ruleUsageRecords: RuleUsageRecord[];
 }
+
+export interface AppState extends TaskRuntimeState, RsipState, RuleState {}

@@ -149,7 +149,7 @@ export interface StorageCapabilities {
   cloudSync: boolean;
 }
 
-export type StorageCapability = keyof StorageCapabilities;
+type StorageCapability = keyof StorageCapabilities;
 
 export interface StorageCapabilityProvider {
   kind: 'local' | 'supabase';

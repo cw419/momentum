@@ -145,7 +145,7 @@ export interface AppShellRsipViewModel {
   handleScheduleChain: (chainId: string) => void;
 }
 
-export interface AppShellBettingModalViewModel {
+interface AppShellBettingModalViewModel {
   isOpen: boolean;
   sessionId: string | null;
   chainName: string | null;
