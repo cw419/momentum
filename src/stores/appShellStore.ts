@@ -2,7 +2,6 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import type {
   AppState,
-  Chain,
   RsipState,
   RuleState,
   TaskRuntimeState,
@@ -16,7 +15,7 @@ interface NavigationState {
   currentSessionId: string | null;
   activeSessionId: string | null;
   currentView: ViewState;
-  editingChain: Chain | null;
+  editingChainId: string | null;
   viewingChainId: string | null;
 }
 
@@ -26,7 +25,7 @@ interface NavigationActions {
   setPendingChainId: (chainId: string | null) => void;
   setCurrentSessionId: (sessionId: string | null) => void;
   setActiveSessionId: (sessionId: string | null) => void;
-  setEditingChain: (chain: Chain | null) => void;
+  setEditingChainId: (id: string | null) => void;
   setViewingChainId: (chainId: string | null) => void;
   navigateToView: (view: ViewState) => void;
   navigateToDashboard: () => void;
@@ -78,7 +77,7 @@ export function createInitialNavigationState(): NavigationState {
     currentSessionId: null,
     activeSessionId: null,
     currentView: 'dashboard',
-    editingChain: null,
+    editingChainId: null,
     viewingChainId: null,
   };
 }
@@ -151,14 +150,14 @@ export function createAppShellStore(
       setPendingChainId: (chainId) => set({ pendingChainId: chainId }),
       setCurrentSessionId: (sessionId) => set({ currentSessionId: sessionId }),
       setActiveSessionId: (sessionId) => set({ activeSessionId: sessionId }),
-      setEditingChain: (chain) => set({ editingChain: chain }),
+      setEditingChainId: (id) => set({ editingChainId: id }),
       setViewingChainId: (chainId) => set({ viewingChainId: chainId }),
       navigateToView: (view) =>
         set({
           currentView: view,
           ...(view === 'dashboard'
             ? {
-                editingChain: null,
+                editingChainId: null,
                 viewingChainId: null,
               }
             : {}),
@@ -166,7 +165,7 @@ export function createAppShellStore(
       navigateToDashboard: () =>
         set({
           currentView: 'dashboard',
-          editingChain: null,
+          editingChainId: null,
           viewingChainId: null,
         }),
       openBettingFlow: (chainId, sessionId) =>
@@ -230,8 +229,8 @@ export const selectActiveSessionId = (state: AppShellStore): string | null =>
   state.activeSessionId;
 export const selectCurrentView = (state: AppShellStore): ViewState =>
   state.currentView;
-export const selectEditingChain = (state: AppShellStore): Chain | null =>
-  state.editingChain;
+export const selectEditingChainId = (state: AppShellStore): string | null =>
+  state.editingChainId;
 export const selectViewingChainId = (state: AppShellStore): string | null =>
   state.viewingChainId;
 

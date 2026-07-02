@@ -38,7 +38,7 @@ interface BuildDashboardViewModelInputs {
   chains: Chain[];
   chainsRevision: number;
   scheduledSessions: ScheduledSession[];
-  editingChain: Chain | null;
+  editingChainId: string | null;
   viewingChainId: string | null;
   completionHistory: CompletionHistory[];
   handleCreateChain: (parentId?: string | null) => void;
@@ -165,6 +165,7 @@ export function buildAppViewModel(
 export function buildDashboardViewModel(
   inputs: BuildDashboardViewModelInputs,
 ): AppShellDashboardViewModel {
+  const editingChain = findChainById(inputs.chains, inputs.editingChainId);
   const viewingChain = findChainById(inputs.chains, inputs.viewingChainId);
   const viewingGroupNode =
     inputs.currentView === 'group' && inputs.viewingChainId
@@ -177,7 +178,7 @@ export function buildDashboardViewModel(
     chains: inputs.chains,
     chainsRevision: inputs.chainsRevision,
     scheduledSessions: inputs.scheduledSessions,
-    editingChain: inputs.editingChain,
+    editingChain: editingChain,
     editorParentId: inputs.viewingChainId,
     viewingChain,
     viewingGroupNode,

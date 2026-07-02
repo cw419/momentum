@@ -7,7 +7,7 @@ import {
 import {
   appShellStore,
   selectCurrentView,
-  selectEditingChain,
+  selectEditingChainId,
   selectViewingChainId,
   useAppShellStore,
 } from '../../stores/appShellStore';
@@ -34,7 +34,7 @@ export function useViewUrlSync({
 
   const currentView = useAppShellStore(selectCurrentView);
   const viewingChainId = useAppShellStore(selectViewingChainId);
-  const editingChain = useAppShellStore(selectEditingChain);
+  const editingChainId = useAppShellStore(selectEditingChainId);
 
   const isApplyingUrlRef = useRef(false);
   const hasProcessedInitialUrlRef = useRef(false);
@@ -45,7 +45,7 @@ export function useViewUrlSync({
       appShellStore.setState({
         currentView: next.currentView,
         viewingChainId: next.viewingChainId,
-        editingChain: next.editingChain,
+        editingChainId: next.editingChainId,
       });
 
       setTimeout(() => {
@@ -96,7 +96,7 @@ export function useViewUrlSync({
     const nextSearch = serializeViewStateToSearch({
       currentView,
       viewingChainId,
-      editingChainId: editingChain?.id ?? null,
+      editingChainId,
       activeSessionChainId: activeSession?.chainId ?? null,
     });
 
@@ -107,7 +107,7 @@ export function useViewUrlSync({
   }, [
     currentView,
     viewingChainId,
-    editingChain?.id,
+    editingChainId,
     activeSession?.chainId,
     shouldLoadData,
     isLoadingData,

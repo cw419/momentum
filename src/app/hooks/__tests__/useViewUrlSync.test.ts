@@ -33,7 +33,7 @@ describe('useViewUrlSync', () => {
 
     expect(appShellStore.getState().currentView).toBe('detail');
     expect(appShellStore.getState().viewingChainId).toBe(chain.id);
-    expect(appShellStore.getState().editingChain).toBeNull();
+    expect(appShellStore.getState().editingChainId).toBeNull();
   });
 
   it('removes invalid dashboard URL params via replaceState', () => {
@@ -73,7 +73,7 @@ describe('useViewUrlSync', () => {
       appShellStore.setState({
         currentView: 'detail',
         viewingChainId: chain.id,
-        editingChain: null,
+        editingChainId: null,
       });
     });
 

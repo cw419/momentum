@@ -102,7 +102,7 @@ interface UseChainsDomainParams {
   state?: AppState;
   getState?: () => AppState;
   setState: Dispatch<SetStateAction<AppState>>;
-  editingChain: Chain | null;
+  editingChainId: string | null;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
   onNavigateToEditor?: (parentId: string | null) => void;
@@ -115,7 +115,7 @@ export function useChainsDomain({
   state,
   getState,
   setState,
-  editingChain,
+  editingChainId,
   storage,
   safelySaveChains,
   onNavigateToEditor = () => undefined,
@@ -150,7 +150,7 @@ export function useChainsDomain({
     isCopy: boolean = false,
   ) => {
     logger.debug('CHAINS', 'Starting to save chain data', {
-      chainId: editingChain?.id ?? null,
+      chainId: editingChainId,
       chainName: chainData.name,
       chainType: chainData.type,
       isCopy,
@@ -177,12 +177,11 @@ export function useChainsDomain({
       let updatedActiveChains: Chain[];
       const normalizedParentId = normalizeOptionalParentId(chainData.parentId);
 
-      if (editingChain && !isCopy) {
+      if (editingChainId && !isCopy) {
         logger.debug('CHAINS', 'Editing existing chain', {
-          chainId: editingChain.id,
+          chainId: editingChainId,
         });
 
-        const editingChainId = editingChain.id;
         updatedActiveChains = readState().chains.map((chain) =>
           chain.id === editingChainId
             ? updateChainFromDraft(chain, chainData, normalizedParentId)

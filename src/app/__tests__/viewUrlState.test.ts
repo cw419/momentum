@@ -35,7 +35,7 @@ describe('viewUrlState', () => {
     expect(state).toEqual({
       currentView: 'dashboard',
       viewingChainId: null,
-      editingChain: null,
+      editingChainId: null,
     });
   });
 
@@ -82,7 +82,7 @@ describe('viewUrlState', () => {
     });
 
     expect(state.currentView).toBe('taskgroup-editor');
-    expect(state.editingChain?.id).toBe('group-1');
+    expect(state.editingChainId).toBe('group-1');
     expect(state.viewingChainId).toBeNull();
   });
 
@@ -114,7 +114,7 @@ describe('viewUrlState', () => {
     expect(invalid).toEqual({
       currentView: 'dashboard',
       viewingChainId: null,
-      editingChain: null,
+      editingChainId: null,
     });
 
     const rsip = parseViewStateFromSearch({
@@ -125,7 +125,7 @@ describe('viewUrlState', () => {
     expect(rsip).toEqual({
       currentView: 'rsip',
       viewingChainId: null,
-      editingChain: null,
+      editingChainId: null,
     });
   });
 
@@ -137,7 +137,7 @@ describe('viewUrlState', () => {
     });
     expect(parentState.currentView).toBe('editor');
     expect(parentState.viewingChainId).toBe('parent-1');
-    expect(parentState.editingChain).toBeNull();
+    expect(parentState.editingChainId).toBeNull();
 
     const missingEdit = parseViewStateFromSearch({
       search: '?view=taskgroup-editor&edit=missing',

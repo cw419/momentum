@@ -148,7 +148,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
         onNavigateToEditor,
@@ -170,7 +170,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
         onNavigateToEditor,
@@ -191,7 +191,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
         onNavigateToTaskGroupEditor,
@@ -214,7 +214,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
         onEditChain,
@@ -243,7 +243,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
         onEditChain,
@@ -266,7 +266,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
         onEditChain,
@@ -288,7 +288,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage: createLocalStorageMock(),
         safelySaveChains: vi.fn(async () => undefined),
         onEditChain,
@@ -324,7 +324,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage,
         safelySaveChains,
         onNavigateToDashboard,
@@ -410,7 +410,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: null,
+        editingChainId: null,
         storage,
         safelySaveChains,
       }),
@@ -461,7 +461,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -564,7 +564,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -603,7 +603,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -639,7 +639,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -688,7 +688,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -738,7 +738,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -787,7 +787,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -866,7 +866,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),
@@ -910,7 +910,7 @@ describe('useChainsDomain', () => {
       useChainsDomain({
         state: stateRef.getState(),
         setState: stateRef.setState,
-        editingChain: editing,
+        editingChainId: editing.id,
         storage,
         safelySaveChains,
       }),

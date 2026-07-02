@@ -20,14 +20,14 @@ describe('uiStore', () => {
   it('navigates back to dashboard and clears editor/detail state', () => {
     const chain = createUnitChain({ id: 'chain-1' });
 
-    store.getState().setEditingChain(chain);
+    store.getState().setEditingChainId(chain.id);
     store.getState().setViewingChainId(chain.id);
     store.getState().navigateToView('editor');
 
     store.getState().navigateToDashboard();
 
     expect(store.getState().currentView).toBe('dashboard');
-    expect(store.getState().editingChain).toBeNull();
+    expect(store.getState().editingChainId).toBeNull();
     expect(store.getState().viewingChainId).toBeNull();
   });
 
@@ -54,7 +54,7 @@ describe('uiStore', () => {
 
     store.getState().setShowAuxiliaryJudgment('aux-1');
     store.getState().setActiveSessionId('active-1');
-    store.getState().setEditingChain(chain);
+    store.getState().setEditingChainId(chain.id);
     store.getState().setViewingChainId(chain.id);
     store.getState().navigateToView('group');
 

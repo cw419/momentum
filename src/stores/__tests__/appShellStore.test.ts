@@ -27,7 +27,7 @@ describe('appShellStore', () => {
     const store = createAppShellStore();
     const chain = createGroupChain({ id: 'group-1' });
 
-    store.getState().setEditingChain(chain);
+    store.getState().setEditingChainId(chain.id);
     store.getState().navigateToView('group');
     store.getState().updateAppState((prev) => ({
       ...prev,
@@ -36,7 +36,7 @@ describe('appShellStore', () => {
     }));
 
     expect(store.getState().currentView).toBe('group');
-    expect(store.getState().editingChain).toEqual(chain);
+    expect(store.getState().editingChainId).toBe(chain.id);
     expect(store.getState().chains).toEqual([chain]);
     expect(store.getState().chainsRevision).toBe(1);
   });

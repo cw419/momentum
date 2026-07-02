@@ -3,7 +3,7 @@ import type { ActiveSession, Chain, ViewState } from '../types';
 type UrlSyncedViewState = {
   currentView: ViewState;
   viewingChainId: string | null;
-  editingChain: Chain | null;
+  editingChainId: string | null;
 };
 
 const VALID_VIEWS: ReadonlySet<ViewState> = new Set([
@@ -17,7 +17,7 @@ const VALID_VIEWS: ReadonlySet<ViewState> = new Set([
 ]);
 
 function dashboardState(): UrlSyncedViewState {
-  return { currentView: 'dashboard', viewingChainId: null, editingChain: null };
+  return { currentView: 'dashboard', viewingChainId: null, editingChainId: null };
 }
 
 function parseViewParam(rawView: string | null): ViewState | null {
@@ -39,7 +39,7 @@ function parseDetailOrGroupView(
   return {
     currentView: chain.type === 'group' ? 'group' : 'detail',
     viewingChainId: chainId,
-    editingChain: null,
+    editingChainId: null,
   };
 }
 
@@ -57,7 +57,7 @@ function parseEditorView(
     return {
       currentView: isTaskGroup ? 'taskgroup-editor' : 'editor',
       viewingChainId: null,
-      editingChain: chain,
+      editingChainId: chain.id,
     };
   }
 
@@ -65,7 +65,7 @@ function parseEditorView(
   return {
     currentView: view,
     viewingChainId: parentId || null,
-    editingChain: null,
+    editingChainId: null,
   };
 }
 
@@ -117,12 +117,12 @@ export function parseViewStateFromSearch(input: {
   if (!view || view === 'dashboard') return dashboardState();
 
   if (view === 'rsip') {
-    return { currentView: 'rsip', viewingChainId: null, editingChain: null };
+    return { currentView: 'rsip', viewingChainId: null, editingChainId: null };
   }
 
   if (view === 'focus') {
     return input.activeSession
-      ? { currentView: 'focus', viewingChainId: null, editingChain: null }
+      ? { currentView: 'focus', viewingChainId: null, editingChainId: null }
       : dashboardState();
   }
 
