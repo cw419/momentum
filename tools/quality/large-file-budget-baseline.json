@@ -12,23 +12,27 @@
     },
     {
       "file": "src/infra/storage/supabase/rsip.ts",
-      "lines": 650
-    },
-    {
-      "file": "src/services/rsip-insights/RSIPInsightsService.ts",
-      "lines": 562
+      "lines": 553
     },
     {
       "file": "src/components/Dashboard.tsx",
-      "lines": 491
+      "lines": 492
     },
     {
       "file": "src/infra/storage/supabase/SupabaseStorage.ts",
-      "lines": 435
+      "lines": 424
+    },
+    {
+      "file": "src/app/AppShellContainer.tsx",
+      "lines": 404
     },
     {
       "file": "src/hooks/domains/sessions/start.ts",
-      "lines": 396
+      "lines": 404
+    },
+    {
+      "file": "src/hooks/domains/sessions/completion.ts",
+      "lines": 401
     },
     {
       "file": "src/components/ImportExportModalParts.tsx",
@@ -37,10 +41,6 @@
     {
       "file": "src/components/focus-mode/hooks/useExceptionRuleFlow.ts",
       "lines": 391
-    },
-    {
-      "file": "src/hooks/domains/sessions/completion.ts",
-      "lines": 390
     },
     {
       "file": "src/services/import-export/import/rsip.ts",
@@ -52,42 +52,38 @@
     },
     {
       "file": "src/components/AccountModal.tsx",
-      "lines": 377
+      "lines": 380
     },
     {
       "file": "src/components/useBettingModal.ts",
-      "lines": 374
+      "lines": 377
+    },
+    {
+      "file": "src/infra/storage/supabase/sessions.ts",
+      "lines": 373
     },
     {
       "file": "src/components/RuleSelectionDialog.tsx",
       "lines": 372
     },
     {
-      "file": "src/app/app-shell/AppShellView.tsx",
-      "lines": 359
-    },
-    {
-      "file": "src/services/RealTimeSyncService.ts",
-      "lines": 359
-    },
-    {
       "file": "src/components/group-view/GroupViewView.tsx",
       "lines": 357
     },
     {
+      "file": "src/components/rsip/hooks/useRSIPViewInteractionActions.ts",
+      "lines": 357
+    },
+    {
       "file": "src/components/ImportExportModalContainer.tsx",
-      "lines": 353
-    },
-    {
-      "file": "src/infra/storage/supabase/chains/mutations.ts",
-      "lines": 353
-    },
-    {
-      "file": "src/components/AuxiliaryJudgment.tsx",
-      "lines": 345
+      "lines": 354
     },
     {
       "file": "src/hooks/domains/useImportExportDomain.ts",
+      "lines": 347
+    },
+    {
+      "file": "src/components/AuxiliaryJudgment.tsx",
       "lines": 345
     },
     {
@@ -103,16 +99,20 @@
       "lines": 339
     },
     {
-      "file": "src/hooks/domains/usePetDomain.ts",
-      "lines": 329
-    },
-    {
-      "file": "src/infra/storage/supabase/sessions.ts",
-      "lines": 318
+      "file": "src/services/RealTimeSyncService.ts",
+      "lines": 330
     },
     {
       "file": "src/app/hooks/useAppDataLoad.ts",
-      "lines": 315
+      "lines": 328
+    },
+    {
+      "file": "src/infra/storage/supabase/chains/mutations.ts",
+      "lines": 324
+    },
+    {
+      "file": "src/hooks/domains/usePetDomain.ts",
+      "lines": 309
     },
     {
       "file": "src/components/chain-editor/sections/MainChainSettingsSection.tsx",
@@ -121,6 +121,10 @@
     {
       "file": "src/components/ImportUnitsModal.tsx",
       "lines": 308
+    },
+    {
+      "file": "src/app/app-shell/AppShellView.tsx",
+      "lines": 307
     }
   ]
 }

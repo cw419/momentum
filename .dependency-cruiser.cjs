@@ -25,6 +25,22 @@ module.exports = {
       from: { path: '^src/components/' },
       to: { path: '^src/infra/storage/supabase/' },
     },
+    {
+      name: 'no-component-direct-storage',
+      comment:
+        'UI components must go through domain hooks — never import the storage adapter directly.',
+      severity: 'error',
+      from: { path: '^src/components/' },
+      to: { path: '^src/storage/' },
+    },
+    {
+      name: 'no-app-to-storage',
+      comment:
+        'AppShell must use domain hooks, not bypass them by importing storage or infra directly.',
+      severity: 'error',
+      from: { path: '^src/app/' },
+      to: { path: '^src/(storage|infra)/' },
+    },
   ],
   options: {
     doNotFollow: {

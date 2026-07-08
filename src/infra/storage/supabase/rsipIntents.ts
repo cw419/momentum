@@ -3,15 +3,16 @@ import { buildRSIPNodeRows } from './rsipPayloadBuilder';
 import {
   cacheMissingCapabilitiesFromError,
   hasKnownMissingCapabilities,
-  isMissingSchemaCapabilityError,
   markCapabilitiesAvailable,
 } from './schemaCapabilities';
 import type { SupabaseStorageContext } from './types';
-
-type SupabaseLikeError = {
-  code?: string;
-  message?: string;
-};
+import {
+  isMissingRSIPNodeStrictColumns,
+  isSchemaMissing,
+  RSIP_NODE_STRICT_CAPABILITIES,
+  RSIP_NODES_TABLE,
+  type SupabaseLikeError,
+} from './rsipNodeCapabilities';
 
 type UpsertClient = {
   from: (tableName: string) => {
@@ -32,54 +33,6 @@ type UpsertClient = {
     ) => Promise<{ error: SupabaseLikeError | null }>;
   };
 };
-
-const RSIP_NODES_TABLE = 'rsip_nodes';
-const RSIP_NODE_STRICT_CAPABILITIES = [
-  'emoji',
-  'type',
-  'group_id',
-  'reinforcement_level',
-  'max_reinforcement_level',
-  'cumulative_execution_days',
-  'is_passive',
-  'split_from_goal',
-  'stability_phase',
-  'phase_started_at',
-  'last_executed_at',
-  'last_violated_at',
-  'consecutive_executions',
-  'consecutive_violations',
-  'total_executions',
-  'total_violations',
-] as const;
-
-function isSchemaMissing(error: SupabaseLikeError): boolean {
-  return isMissingSchemaCapabilityError(error);
-}
-
-function isMissingRSIPNodeStrictColumns(error: SupabaseLikeError): boolean {
-  const message = error.message ?? '';
-
-  return (
-    isSchemaMissing(error) ||
-    message.includes('emoji') ||
-    message.includes('type') ||
-    message.includes('group_id') ||
-    message.includes('reinforcement_level') ||
-    message.includes('max_reinforcement_level') ||
-    message.includes('cumulative_execution_days') ||
-    message.includes('is_passive') ||
-    message.includes('split_from_goal') ||
-    message.includes('stability_phase') ||
-    message.includes('phase_started_at') ||
-    message.includes('last_executed_at') ||
-    message.includes('last_violated_at') ||
-    message.includes('consecutive_executions') ||
-    message.includes('consecutive_violations') ||
-    message.includes('total_executions') ||
-    message.includes('total_violations')
-  );
-}
 
 export async function upsertRSIPNode(
   ctx: SupabaseStorageContext,
