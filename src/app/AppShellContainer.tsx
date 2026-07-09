@@ -32,6 +32,10 @@ import {
   getAppStateSnapshot,
   useAppShellStore,
 } from '../stores/appShellStore';
+import {
+  navigationStore,
+  useNavigationStore,
+} from '../stores/navigationStore';
 
 export default function AppShellContainer() {
   const storage = useStorage();
@@ -61,7 +65,7 @@ export default function AppShellContainer() {
     );
 
   const { currentView, editingChainId, viewingChainId, showAuxiliaryJudgment, showBettingModal, pendingChainId, currentSessionId, activeSessionId } =
-    useAppShellStore(
+    useNavigationStore(
       useShallow((s) => ({
         currentView: s.currentView,
         editingChainId: s.editingChainId,
@@ -76,7 +80,7 @@ export default function AppShellContainer() {
 
   const resetAppState = useCallback(() => createInitialAppState(), []);
   const resetUIState = useCallback(() => {
-    appShellStore.getState().resetNavigationState();
+    navigationStore.getState().resetNavigationState();
   }, []);
   const setState = useCallback(
     (update: AppState | ((prev: AppState) => AppState)) => {
@@ -132,26 +136,26 @@ export default function AppShellContainer() {
     storage,
     safelySaveChains,
     onNavigateToEditor: (parentId) => {
-      appShellStore.setState({
+      navigationStore.setState({
         currentView: 'editor',
         editingChainId: null,
         viewingChainId: parentId,
       });
     },
     onNavigateToTaskGroupEditor: () => {
-      appShellStore.setState({
+      navigationStore.setState({
         currentView: 'taskgroup-editor',
         editingChainId: null,
       });
     },
     onEditChain: (chain, isTaskGroup) => {
-      appShellStore.setState({
+      navigationStore.setState({
         currentView: isTaskGroup ? 'taskgroup-editor' : 'editor',
         editingChainId: chain.id,
       });
     },
     onNavigateToDashboard: () => {
-      appShellStore.getState().navigateToDashboard();
+      navigationStore.getState().navigateToDashboard();
     },
   });
 
@@ -174,7 +178,7 @@ export default function AppShellContainer() {
     storage,
     getState: getAppStateSnapshot,
     onNavigateToRSIP: () => {
-      appShellStore.getState().navigateToView('rsip');
+      navigationStore.getState().navigateToView('rsip');
     },
   });
 
@@ -196,22 +200,22 @@ export default function AppShellContainer() {
     safelySaveChains,
     activeSessionId,
     setActiveSessionId: (sessionId) =>
-      appShellStore.getState().setActiveSessionId(sessionId),
+      navigationStore.getState().setActiveSessionId(sessionId),
     pendingChainId,
     setPendingChainId: (chainId) =>
-      appShellStore.getState().setPendingChainId(chainId),
+      navigationStore.getState().setPendingChainId(chainId),
     currentSessionId,
     setCurrentSessionId: (sessionId) =>
-      appShellStore.getState().setCurrentSessionId(sessionId),
+      navigationStore.getState().setCurrentSessionId(sessionId),
     setShowBettingModal: (isOpen) =>
-      appShellStore.getState().setShowBettingModal(isOpen),
+      navigationStore.getState().setShowBettingModal(isOpen),
     setShowAuxiliaryJudgment: (chainId) =>
-      appShellStore.getState().setShowAuxiliaryJudgment(chainId),
+      navigationStore.getState().setShowAuxiliaryJudgment(chainId),
     onNavigateToFocus: () => {
-      appShellStore.getState().navigateToView('focus');
+      navigationStore.getState().navigateToView('focus');
     },
     onNavigateToDashboard: () => {
-      appShellStore.getState().navigateToDashboard();
+      navigationStore.getState().navigateToDashboard();
     },
     onPetTaskCompleted: petDomain.onTaskCompleted,
     onRsipTaskEvent: async (payload) => {
@@ -222,14 +226,14 @@ export default function AppShellContainer() {
   const { handleBetPlaced, handleBetCancelled } = useBettingDomain({
     pendingChainId,
     setPendingChainId: (chainId) =>
-      appShellStore.getState().setPendingChainId(chainId),
+      navigationStore.getState().setPendingChainId(chainId),
     currentSessionId,
     setCurrentSessionId: (sessionId) =>
-      appShellStore.getState().setCurrentSessionId(sessionId),
+      navigationStore.getState().setCurrentSessionId(sessionId),
     setActiveSessionId: (sessionId) =>
-      appShellStore.getState().setActiveSessionId(sessionId),
+      navigationStore.getState().setActiveSessionId(sessionId),
     setShowBettingModal: (isOpen) =>
-      appShellStore.getState().setShowBettingModal(isOpen),
+      navigationStore.getState().setShowBettingModal(isOpen),
     handleStartChain,
   });
 
@@ -240,7 +244,7 @@ export default function AppShellContainer() {
       storage,
       safelySaveChains,
       setShowAuxiliaryJudgment: (chainId) =>
-        appShellStore.getState().setShowAuxiliaryJudgment(chainId),
+        navigationStore.getState().setShowAuxiliaryJudgment(chainId),
     });
 
   const {
@@ -252,17 +256,17 @@ export default function AppShellContainer() {
     setState,
     storage,
     onChainDeleted: (chainId, hasActiveSession) => {
-      const uiState = appShellStore.getState();
+      const nav = navigationStore.getState();
       if (!hasActiveSession) {
-        uiState.navigateToDashboard();
+        nav.navigateToDashboard();
         return;
       }
 
-      if (uiState.viewingChainId === chainId) {
-        uiState.setViewingChainId(null);
+      if (nav.viewingChainId === chainId) {
+        nav.setViewingChainId(null);
       }
-      if (uiState.editingChainId === chainId) {
-        uiState.setEditingChainId(null);
+      if (nav.editingChainId === chainId) {
+        nav.setEditingChainId(null);
       }
     },
   });
@@ -286,7 +290,7 @@ export default function AppShellContainer() {
     if (!chain) return;
 
     const viewType = chain.type === 'group' ? 'group' : 'detail';
-    appShellStore.setState({
+    navigationStore.setState({
       currentView: viewType,
       viewingChainId: chainId,
       editingChainId: null,
@@ -294,17 +298,17 @@ export default function AppShellContainer() {
   };
 
   const handleBackToDashboard = () => {
-    appShellStore.getState().navigateToDashboard();
+    navigationStore.getState().navigateToDashboard();
   };
 
   const onNavigateToView = useCallback(
     (view: ViewState) => {
       if (view === 'dashboard') {
-        appShellStore.getState().navigateToDashboard();
+        navigationStore.getState().navigateToDashboard();
         return;
       }
 
-      appShellStore.getState().navigateToView(view);
+      navigationStore.getState().navigateToView(view);
     },
     [],
   );
@@ -375,7 +379,7 @@ export default function AppShellContainer() {
     activeSession,
     showAuxiliaryJudgment,
     clearAuxiliaryJudgment: () =>
-      appShellStore.getState().setShowAuxiliaryJudgment(null),
+      navigationStore.getState().setShowAuxiliaryJudgment(null),
     showBettingModal,
     pendingChainId,
     currentSessionId,

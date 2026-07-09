@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import type { ActiveSession, Chain } from '../../types';
 import {
-  appShellStore,
+  navigationStore,
   selectCurrentView,
   selectViewingChainId,
-  useAppShellStore,
-} from '../../stores/appShellStore';
+  useNavigationStore,
+} from '../../stores/navigationStore';
 
 interface UseViewValidationParams {
   chains: Chain[];
@@ -22,8 +22,8 @@ export function useViewValidation({
   activeSession,
   isInitialized,
 }: UseViewValidationParams): void {
-  const currentView = useAppShellStore(selectCurrentView);
-  const viewingChainId = useAppShellStore(selectViewingChainId);
+  const currentView = useNavigationStore(selectCurrentView);
+  const viewingChainId = useNavigationStore(selectViewingChainId);
   const activeSessionChainId = activeSession?.chainId ?? null;
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function useViewValidation({
     if (currentView === 'focus') {
       const activeChain = chains.find((c) => c.id === activeSessionChainId);
       if (!activeSessionChainId || !activeChain) {
-        appShellStore.getState().navigateToDashboard();
+        navigationStore.getState().navigateToDashboard();
       }
     }
   }, [chains, currentView, activeSessionChainId, isInitialized]);
@@ -41,7 +41,7 @@ export function useViewValidation({
     if (currentView === 'detail' || currentView === 'group') {
       const viewingChain = chains.find((c) => c.id === viewingChainId);
       if (!viewingChain) {
-        appShellStore.getState().navigateToDashboard();
+        navigationStore.getState().navigateToDashboard();
       }
     }
   }, [chains, currentView, viewingChainId, isInitialized]);

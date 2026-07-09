@@ -12,9 +12,9 @@ import { isSessionExpired } from '../../../utils/time';
 import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { soundManager } from '../../../utils/soundManager';
 import {
-  appShellStore,
-  createInitialAppShellState,
-} from '../../../stores/appShellStore';
+  navigationStore,
+  createInitialNavigationState,
+} from '../../../stores/navigationStore';
 
 vi.mock('../../../utils/logger', () => ({
   logger: {
@@ -48,7 +48,7 @@ describe('usePeriodicCleanup', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-02-02T15:00:00.000Z'));
-    appShellStore.setState(createInitialAppShellState());
+    navigationStore.setState(createInitialNavigationState());
   });
 
   afterEach(() => {
@@ -142,7 +142,7 @@ describe('usePeriodicCleanup', () => {
     expect(systemNotificationService.notifyScheduleFailed).toHaveBeenCalledWith(
       expiredChain.name,
     );
-    expect(appShellStore.getState().showAuxiliaryJudgment).toBe(
+    expect(navigationStore.getState().showAuxiliaryJudgment).toBe(
       expiredChain.id,
     );
     expect(storage.removeScheduledSession).toHaveBeenCalledWith(expiredChain.id);

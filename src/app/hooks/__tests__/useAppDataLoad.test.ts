@@ -13,9 +13,9 @@ import { isSessionExpired } from '../../../utils/time';
 import { runWhenIdle } from '../../../utils/runWhenIdle';
 import { useAppDataLoad } from '../useAppDataLoad';
 import {
-  appShellStore,
-  createInitialAppShellState,
-} from '../../../stores/appShellStore';
+  navigationStore,
+  createInitialNavigationState,
+} from '../../../stores/navigationStore';
 
 vi.mock('../../../utils/env', () => ({
   isDev: false,
@@ -54,7 +54,7 @@ vi.mock('../../../utils/time', () => ({
 describe('useAppDataLoad', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    appShellStore.setState(createInitialAppShellState());
+    navigationStore.setState(createInitialNavigationState());
     vi.mocked(migrateCompletionHistoryForTiming).mockImplementation(
       (history) => ({
         updatedHistory: history,
@@ -171,7 +171,7 @@ describe('useAppDataLoad', () => {
     expect(next.scheduledSessions).toEqual([activeSessionBooking]);
     expect(next.activeSession).toEqual(activeSession);
     expect(next.completionHistory).toEqual(migratedHistory);
-    expect(appShellStore.getState().currentView).toBe('focus');
+    expect(navigationStore.getState().currentView).toBe('focus');
   });
 
   it('should skip data load when supabase user is not authenticated', async () => {
@@ -204,7 +204,7 @@ describe('useAppDataLoad', () => {
       id: 'circular-1',
       parentId: 'circular-1',
     });
-    appShellStore.getState().navigateToView('focus');
+    navigationStore.getState().navigateToView('focus');
     const storage = createLocalStorageMock({
       getActiveChains: vi.fn(async () => [circular]),
       getScheduledSessions: vi.fn(async () => []),
@@ -241,7 +241,7 @@ describe('useAppDataLoad', () => {
       prev: ReturnType<typeof createAppState>,
     ) => ReturnType<typeof createAppState>;
     const next = stateUpdater(createAppState());
-    expect(appShellStore.getState().currentView).toBe('dashboard');
+    expect(navigationStore.getState().currentView).toBe('dashboard');
     expect(next.scheduledSessions).toEqual([]);
     expect(next.activeSession).toBeNull();
     expect(next.completionHistory).toEqual([]);

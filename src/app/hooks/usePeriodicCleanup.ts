@@ -9,7 +9,7 @@ import { isSessionExpired } from '../../utils/time';
 import { systemNotificationService } from '../../services/platform/SystemNotificationService';
 import { isGroupExpired, resetGroupProgress } from '../../utils/timeLimit';
 import { soundManager } from '../../utils/soundManager';
-import { appShellStore } from '../../stores/appShellStore';
+import { navigationStore } from '../../stores/navigationStore';
 
 interface UsePeriodicCleanupParams {
   state?: AppState;
@@ -106,7 +106,7 @@ export function usePeriodicCleanup({
         }
       }
 
-      appShellStore
+      navigationStore
         .getState()
         .setShowAuxiliaryJudgment(expiredSessions[0].chainId);
 

@@ -3,78 +3,58 @@ import { createGroupChain } from '../../test/factories';
 import { createAppState } from '../../test/factories/appStateFactory';
 import {
   appShellStore,
-  createInitialAppShellState,
+  createInitialAppState,
   createAppShellStore,
-  selectBettingModal,
 } from '../appShellStore';
 
 describe('appShellStore', () => {
-  const resetStore = () => {
-    appShellStore.getState().resetAllAppShellState();
-  };
-
   beforeEach(() => {
-    resetStore();
+    appShellStore.getState().resetAppState();
   });
 
-  it('creates the documented initial app shell state', () => {
+  it('creates the documented initial app state', () => {
     const store = createAppShellStore();
 
-    expect(store.getState()).toMatchObject(createInitialAppShellState());
+    expect(store.getState()).toMatchObject(createInitialAppState());
   });
 
-  it('updates app data without clobbering navigation state', () => {
+  it('updateAppState merges data fields without touching other state', () => {
     const store = createAppShellStore();
     const chain = createGroupChain({ id: 'group-1' });
 
-    store.getState().setEditingChainId(chain.id);
-    store.getState().navigateToView('group');
     store.getState().updateAppState((prev) => ({
       ...prev,
       chains: [chain],
       chainsRevision: prev.chainsRevision + 1,
     }));
 
-    expect(store.getState().currentView).toBe('group');
-    expect(store.getState().editingChainId).toBe(chain.id);
     expect(store.getState().chains).toEqual([chain]);
     expect(store.getState().chainsRevision).toBe(1);
   });
 
-  it('opens and closes the betting flow atomically', () => {
-    const store = createAppShellStore();
-
-    store.getState().openBettingFlow('chain-2', 'session-2');
-
-    expect(selectBettingModal(store.getState())).toEqual({
-      isOpen: true,
-      pendingChainId: 'chain-2',
-      currentSessionId: 'session-2',
-    });
-
-    store.getState().closeBettingFlow();
-
-    expect(selectBettingModal(store.getState())).toEqual({
-      isOpen: false,
-      pendingChainId: null,
-      currentSessionId: null,
-    });
-  });
-
-  it('resets both app data and navigation state back to defaults', () => {
+  it('resetAppState returns data fields to defaults', () => {
     const state = createAppState({
       chains: [createGroupChain({ id: 'group-2' })],
       chainsRevision: 3,
     });
-    const store = createAppShellStore({
-      ...state,
-      currentView: 'group',
-      viewingChainId: 'group-2',
-      showAuxiliaryJudgment: 'group-2',
+    const store = createAppShellStore(state);
+
+    store.getState().resetAppState();
+
+    expect(store.getState()).toMatchObject(createInitialAppState());
+  });
+
+  it('replaceAppState overwrites data fields', () => {
+    const store = createAppShellStore();
+    const chain = createGroupChain({ id: 'group-3' });
+
+    store.getState().replaceAppState({
+      ...createInitialAppState(),
+      chains: [chain],
+      chainsRevision: 5,
     });
 
-    store.getState().resetAllAppShellState();
-
-    expect(store.getState()).toMatchObject(createInitialAppShellState());
+    expect(store.getState().chains).toEqual([chain]);
+    expect(store.getState().chainsRevision).toBe(5);
   });
 });

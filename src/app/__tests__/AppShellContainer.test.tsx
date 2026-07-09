@@ -3,8 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AppShellContainer from '../AppShellContainer';
 import {
   appShellStore,
-  createInitialAppShellState,
+  createInitialAppState,
 } from '../../stores/appShellStore';
+import {
+  navigationStore,
+  createInitialNavigationState,
+} from '../../stores/navigationStore';
 
 const useStorageMock = vi.hoisted(() => vi.fn());
 const useSafeSaveChainsMock = vi.hoisted(() => vi.fn());
@@ -161,7 +165,8 @@ vi.mock('../AppShellView', () => ({
 describe('AppShellContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    appShellStore.setState(createInitialAppShellState());
+    appShellStore.getState().resetAppState();
+    navigationStore.setState(createInitialNavigationState());
 
     useStorageMock.mockReturnValue({ kind: 'local' });
     useSafeSaveChainsMock.mockReturnValue(vi.fn(async () => undefined));
@@ -257,11 +262,8 @@ describe('AppShellContainer', () => {
     expect(usePeriodicCleanupMock).toHaveBeenCalledTimes(1);
   });
 
-  it('reads navigation state from the app shell store', () => {
-    appShellStore.setState({
-      ...appShellStore.getState(),
-      currentView: 'rsip',
-    });
+  it('reads navigation state from the navigation store', () => {
+    navigationStore.setState({ currentView: 'rsip' });
 
     render(<AppShellContainer />);
 

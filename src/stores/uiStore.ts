@@ -1,35 +1,32 @@
 import {
-  createAppShellStore,
+  createNavigationStore,
   createInitialNavigationState,
   selectBettingModal,
-} from './appShellStore';
+} from './navigationStore';
 import type {
-  AppShellStore,
-  AppShellStoreApi,
-  AppShellStoreState,
-} from './appShellStore';
+  NavigationStore,
+  NavigationStoreApi,
+} from './navigationStore';
 
-type UIStore = AppShellStore & { resetAllUI: () => void };
-type UIStoreApi = Omit<AppShellStoreApi, 'getState'> & {
+type UIStore = NavigationStore & { resetAllUI: () => void };
+type UIStoreApi = Omit<NavigationStoreApi, 'getState'> & {
   getState: () => UIStore;
 };
 
-function addLegacyUiAliases(state: AppShellStore): UIStore {
-  return {
-    ...state,
-    resetAllUI: state.resetNavigationState,
-  };
-}
-
-function withLegacyUiAliases(store: AppShellStoreApi): UIStoreApi {
+function withLegacyUiAliases(store: NavigationStoreApi): UIStoreApi {
   return {
     ...store,
-    getState: () => addLegacyUiAliases(store.getState()),
+    getState: () => ({
+      ...store.getState(),
+      resetAllUI: store.getState().resetNavigationState,
+    }),
   };
 }
 
-export function createUIStore(initialState?: Partial<AppShellStoreState>) {
-  return withLegacyUiAliases(createAppShellStore(initialState));
+export function createUIStore(
+  initialState?: Partial<Parameters<typeof createNavigationStore>[0]>,
+) {
+  return withLegacyUiAliases(createNavigationStore(initialState));
 }
 
 export const createInitialUIState = createInitialNavigationState;

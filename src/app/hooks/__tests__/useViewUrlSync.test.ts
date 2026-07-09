@@ -1,17 +1,17 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createUnitChain } from '../../../test/factories';
 import { useViewUrlSync } from '../useViewUrlSync';
 import {
-  appShellStore,
-  createInitialAppShellState,
-} from '../../../stores/appShellStore';
+  navigationStore,
+  createInitialNavigationState,
+} from '../../../stores/navigationStore';
 
 describe('useViewUrlSync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.history.replaceState(null, '', '/');
-    appShellStore.setState(createInitialAppShellState());
+    navigationStore.setState(createInitialNavigationState());
   });
 
   afterEach(() => {
@@ -31,9 +31,9 @@ describe('useViewUrlSync', () => {
       }),
     );
 
-    expect(appShellStore.getState().currentView).toBe('detail');
-    expect(appShellStore.getState().viewingChainId).toBe(chain.id);
-    expect(appShellStore.getState().editingChainId).toBeNull();
+    expect(navigationStore.getState().currentView).toBe('detail');
+    expect(navigationStore.getState().viewingChainId).toBe(chain.id);
+    expect(navigationStore.getState().editingChainId).toBeNull();
   });
 
   it('removes invalid dashboard URL params via replaceState', () => {
@@ -70,7 +70,7 @@ describe('useViewUrlSync', () => {
     vi.runAllTimers();
     pushStateSpy.mockClear();
     act(() => {
-      appShellStore.setState({
+      navigationStore.setState({
         currentView: 'detail',
         viewingChainId: chain.id,
         editingChainId: null,
@@ -99,17 +99,16 @@ describe('useViewUrlSync', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
 
-    expect(appShellStore.getState().currentView).toBe('detail');
-    expect(appShellStore.getState().viewingChainId).toBe(chain.id);
+    expect(navigationStore.getState().currentView).toBe('detail');
+    expect(navigationStore.getState().viewingChainId).toBe(chain.id);
   });
 
   it('does not sync URL while data is still loading', () => {
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
     const chain = createUnitChain({ id: 'chain-loading' });
-    appShellStore.setState({
+    navigationStore.setState({
       currentView: 'detail',
       viewingChainId: chain.id,
-      editingChain: null,
     });
 
     renderHook(() =>
