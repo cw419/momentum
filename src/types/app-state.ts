@@ -35,14 +35,13 @@ export interface TaskRuntimeState {
 }
 
 export interface RsipState {
-  // RSIP
   rsipNodes: RSIPNode[];
   rsipMeta: RSIPMeta;
-  rsipExecutionRecords?: RSIPExecutionRecord[]; // 定式执行记录（严格模式）
-  rsipGroups?: RSIPNodeGroup[]; // 国策组
-  rsipPolicyLibrary?: RSIPLibraryEntry[]; // 国策库
-  rsipRunHistory?: RSIPRunRecord[]; // 轮次历史
-  rsipTaskLinks?: RSIPTaskLink[]; // 国策-任务映射
+  rsipExecutionRecords: RSIPExecutionRecord[];
+  rsipGroups: RSIPNodeGroup[];
+  rsipPolicyLibrary: RSIPLibraryEntry[];
+  rsipRunHistory: RSIPRunRecord[];
+  rsipTaskLinks: RSIPTaskLink[];
 }
 
 export interface RuleState {

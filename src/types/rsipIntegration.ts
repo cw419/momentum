@@ -26,3 +26,10 @@ export interface RSIPTaskLink {
   isActive: boolean;
   updatedAt: Date;
 }
+
+export interface RSIPTaskEventPayload {
+  event: RSIPTaskLinkTriggerEvent;
+  chainId: string;
+  chainKind: RSIPTaskLinkChainKind;
+  occurredAt?: Date;
+}

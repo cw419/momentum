@@ -3,6 +3,7 @@ import type { RSIPViewProps } from '../../RSIPView.types';
 import { useI18n } from '../../../i18n';
 import type { RSIPMode, RSIPTreeNode } from '../../../types';
 import { buildRSIPTree } from '../../../utils/rsipTree';
+import { buildRSIPInsights } from '../../../services/rsip-insights/RSIPInsightsService';
 import { getSplitTemplates } from '../rsipViewHelpers';
 import type { RSIPViewStateSlice } from './useRSIPViewModel.types';
 
@@ -12,9 +13,19 @@ export function useRSIPViewState({
   groups = [],
   taskLinks = [],
   chains = [],
+  runHistory = [],
+  executionRecords = [],
+  policyLibrary = [],
 }: Pick<
   RSIPViewProps,
-  'nodes' | 'meta' | 'groups' | 'taskLinks' | 'chains'
+  | 'nodes'
+  | 'meta'
+  | 'groups'
+  | 'taskLinks'
+  | 'chains'
+  | 'runHistory'
+  | 'executionRecords'
+  | 'policyLibrary'
 >): RSIPViewStateSlice {
   const { language, tr } = useI18n();
   const tree = useMemo<RSIPTreeNode[]>(() => buildRSIPTree(nodes), [nodes]);
@@ -69,6 +80,20 @@ export function useRSIPViewState({
     return last.toDateString() !== new Date().toDateString();
   }, [meta.allowMultiplePerDay, meta.lastAddedAt]);
 
+  const insights = useMemo(
+    () =>
+      buildRSIPInsights({
+        nodes,
+        runHistory,
+        executionRecords,
+        groups,
+        taskLinks,
+        policyLibrary,
+        locale: language,
+      }),
+    [nodes, runHistory, executionRecords, groups, taskLinks, policyLibrary, language],
+  );
+
   return {
     language,
     tr,
@@ -82,6 +107,7 @@ export function useRSIPViewState({
     isStrictMode,
     hasOpenedToday,
     canAddToday,
+    insights,
     selectedParentId,
     setSelectedParentId,
     selectedGroupId,

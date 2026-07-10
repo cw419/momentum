@@ -98,14 +98,7 @@ export function RSIPView(props: RSIPViewProps) {
         )}
 
         {activeTab === 'insights' && (
-          <RSIPInsightsPanel
-            nodes={props.nodes}
-            runHistory={props.runHistory ?? []}
-            executionRecords={props.executionRecords ?? []}
-            groups={props.groups ?? []}
-            taskLinks={props.taskLinks ?? []}
-            policyLibrary={props.policyLibrary ?? []}
-          />
+          <RSIPInsightsPanel insights={model.insights} />
         )}
 
         {model.violationDialogNode && (

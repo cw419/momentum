@@ -18,7 +18,7 @@ import {
 } from '../../../utils/timeLimit';
 import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
-import type { RSIPTaskEventPayload } from '../../../services/rsip-integration/RSIPTaskIntegrationService';
+import type { RSIPTaskEventPayload } from '../../../types';
 
 type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];

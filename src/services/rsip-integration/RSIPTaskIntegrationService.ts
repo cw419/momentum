@@ -1,17 +1,39 @@
-import type { RSIPTaskLink } from '../../types/rsipIntegration';
+import type { RSIPTaskLink, RSIPTaskEventPayload } from '../../types/rsipIntegration';
+
+export type { RSIPTaskEventPayload } from '../../types/rsipIntegration';
 
 type RSIPIntegrationEvent = RSIPTaskLink['triggerEvent'];
-
-export interface RSIPTaskEventPayload {
-  event: RSIPIntegrationEvent;
-  chainId: string;
-  chainKind: RSIPTaskLink['chainKind'];
-  occurredAt?: Date;
-}
 
 interface RSIPTaskEventLinkMatch {
   link: RSIPTaskLink;
   deduped: boolean;
+}
+
+/**
+ * 插入顺序的有界 Set。容量满时驱逐最老的条目，防止无界内存增长。
+ */
+class BoundedSet<T> {
+  private readonly store = new Map<T, null>();
+
+  constructor(private readonly maxSize: number) {}
+
+  has(value: T): boolean {
+    return this.store.has(value);
+  }
+
+  add(value: T): void {
+    if (this.store.size >= this.maxSize) {
+      const oldest = this.store.keys().next().value;
+      if (oldest !== undefined) {
+        this.store.delete(oldest);
+      }
+    }
+    this.store.set(value, null);
+  }
+
+  clear(): void {
+    this.store.clear();
+  }
 }
 
 function toDateValue(value: Date | string | number | undefined): number {
@@ -56,7 +78,7 @@ function isRsipToTaskEffect(effect: RSIPTaskLink['effect']): boolean {
 }
 
 export class RSIPTaskIntegrationService {
-  private readonly processedEventKeys = new Set<string>();
+  private readonly processedEventKeys = new BoundedSet<string>(1000);
 
   resolveLatestLinks(links: RSIPTaskLink[]): RSIPTaskLink[] {
     const map = new Map<string, RSIPTaskLink>();
@@ -122,6 +144,11 @@ export class RSIPTaskIntegrationService {
         link.triggerEvent === 'rsip_mark_executed' &&
         isRsipToTaskEffect(link.effect),
     );
+  }
+
+  /** 清空去重缓存，主要供测试用例的 beforeEach 调用。 */
+  reset(): void {
+    this.processedEventKeys.clear();
   }
 }
 

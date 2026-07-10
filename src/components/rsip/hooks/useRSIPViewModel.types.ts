@@ -10,6 +10,7 @@ import type {
 } from '../../../types';
 import type { RSIPViewProps } from '../../RSIPView.types';
 import type { SplitDraftItem } from '../rsipViewHelpers';
+import type { RSIPInsightsResult } from '../../../services/rsip-insights/rsipInsightsTypes';
 
 export interface RSIPViewStateSlice {
   language: string;
@@ -24,6 +25,7 @@ export interface RSIPViewStateSlice {
   isStrictMode: boolean;
   hasOpenedToday: boolean;
   canAddToday: boolean;
+  insights: RSIPInsightsResult;
   selectedParentId?: string;
   setSelectedParentId: (id: string | undefined) => void;
   selectedGroupId?: string;

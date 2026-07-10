@@ -1,22 +1,8 @@
-﻿import { useMemo } from 'react';
-import type {
-  RSIPExecutionRecord,
-  RSIPLibraryEntry,
-  RSIPNode,
-  RSIPNodeGroup,
-  RSIPRunRecord,
-  RSIPTaskLink,
-} from '../../types';
 import { useI18n } from '../../i18n';
-import { buildRSIPInsights } from '../../services/rsip-insights/RSIPInsightsService';
+import type { RSIPInsightsResult } from '../../services/rsip-insights/rsipInsightsTypes';
 
 interface RSIPInsightsPanelProps {
-  nodes: RSIPNode[];
-  runHistory: RSIPRunRecord[];
-  executionRecords: RSIPExecutionRecord[];
-  groups: RSIPNodeGroup[];
-  taskLinks: RSIPTaskLink[];
-  policyLibrary: RSIPLibraryEntry[];
+  insights: RSIPInsightsResult;
 }
 
 function priorityClass(priority: 'high' | 'medium' | 'low'): string {
@@ -29,15 +15,8 @@ function priorityClass(priority: 'high' | 'medium' | 'low'): string {
   return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
 }
 
-export function RSIPInsightsPanel({
-  nodes,
-  runHistory,
-  executionRecords,
-  groups,
-  taskLinks,
-  policyLibrary,
-}: RSIPInsightsPanelProps) {
-  const { language, tr } = useI18n();
+export function RSIPInsightsPanel({ insights }: RSIPInsightsPanelProps) {
+  const { tr } = useI18n();
 
   const toPercent = (value: number | null): string => {
     if (value == null) return tr('无数据', 'N/A');
@@ -58,28 +37,6 @@ export function RSIPInsightsPanel({
     if (value === 'medium') return tr('中', 'Medium');
     return tr('低', 'Low');
   };
-
-  const insights = useMemo(
-    () =>
-      buildRSIPInsights({
-        nodes,
-        runHistory,
-        executionRecords,
-        groups,
-        taskLinks,
-        policyLibrary,
-        locale: language,
-      }),
-    [
-      executionRecords,
-      groups,
-      language,
-      nodes,
-      policyLibrary,
-      runHistory,
-      taskLinks,
-    ],
-  );
 
   return (
     <div className="space-y-6">

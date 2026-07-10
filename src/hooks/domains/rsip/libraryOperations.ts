@@ -82,7 +82,7 @@ export function createLibraryOperations({
       return null;
     }
 
-    const entry = (state.rsipPolicyLibrary ?? []).find(
+    const entry = state.rsipPolicyLibrary.find(
       (item) => item.id === entryId,
     );
     if (!entry) {
@@ -117,7 +117,7 @@ export function createLibraryOperations({
       lastActiveAt: now,
       timesUsed: entry.timesUsed + 1,
     };
-    const updatedLibrary = (state.rsipPolicyLibrary ?? []).map((item) =>
+    const updatedLibrary = state.rsipPolicyLibrary.map((item) =>
       item.id === entryId ? updatedEntry : item,
     );
     await saveFns.upsertLibraryEntry(updatedEntry, updatedLibrary);

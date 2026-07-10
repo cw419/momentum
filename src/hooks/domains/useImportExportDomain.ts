@@ -293,23 +293,23 @@ export function useImportExportDomain({
           ? { ...prev.rsipMeta, ...options.rsipMeta }
           : prev.rsipMeta,
         rsipGroups: appendIfNonEmpty(
-          prev.rsipGroups ?? [],
+          prev.rsipGroups,
           options?.rsipGroups,
         ),
         rsipPolicyLibrary: appendIfNonEmpty(
-          prev.rsipPolicyLibrary ?? [],
+          prev.rsipPolicyLibrary,
           options?.rsipPolicyLibrary,
         ),
         rsipRunHistory: appendIfNonEmpty(
-          prev.rsipRunHistory ?? [],
+          prev.rsipRunHistory,
           options?.rsipRunHistory,
         ),
         rsipExecutionRecords: appendIfNonEmpty(
-          prev.rsipExecutionRecords ?? [],
+          prev.rsipExecutionRecords,
           options?.rsipExecutionRecords,
         ),
         rsipTaskLinks: appendIfNonEmpty(
-          prev.rsipTaskLinks ?? [],
+          prev.rsipTaskLinks,
           options?.rsipTaskLinks,
         ),
       }));

@@ -41,7 +41,7 @@ export function useRsipDomain({
   ) => {
     setState((prev) => ({
       ...prev,
-      rsipExecutionRecords: [...(prev.rsipExecutionRecords ?? []), record],
+      rsipExecutionRecords: [...prev.rsipExecutionRecords, record],
     }));
 
     try {

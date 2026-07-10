@@ -15,7 +15,7 @@ import { systemNotificationService } from '../../../services/platform/SystemNoti
 import { emitPointsChanged } from '../../../utils/pointsEvents';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
-import type { RSIPTaskEventPayload } from '../../../services/rsip-integration/RSIPTaskIntegrationService';
+import type { RSIPTaskEventPayload } from '../../../types';
 
 type Chain = AppState['chains'][number];
 type ActiveSession = NonNullable<AppState['activeSession']>;
