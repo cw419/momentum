@@ -121,6 +121,7 @@ describe('createCompletionHandlers', () => {
     const safelySaveChains = vi.fn(async () => undefined);
     const setActiveSessionId = vi.fn();
     const onNavigateToDashboard = vi.fn();
+    const taskLifecycleEvents = { publish: vi.fn() };
 
     vi.mocked(queryOptimizer.memoizedBuildChainTree).mockReturnValue([
       { id: group.id, type: 'group', name: group.name },
@@ -142,6 +143,7 @@ describe('createCompletionHandlers', () => {
       activeSessionId: null,
       setActiveSessionId,
       onNavigateToDashboard,
+      taskLifecycleEvents,
       tr,
     });
 
@@ -206,6 +208,20 @@ describe('createCompletionHandlers', () => {
       'Group completed a cycle',
     );
     expect(emitPointsChanged).not.toHaveBeenCalled();
+    expect(taskLifecycleEvents.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'task_completed',
+        chainId: chain.id,
+        chainKind: 'unit',
+      }),
+    );
+    expect(taskLifecycleEvents.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'group_cycle_completed',
+        chainId: group.id,
+        chainKind: 'group',
+      }),
+    );
   });
 
   it('should skip group cycle checks when completed chain has no parent group', async () => {
@@ -869,6 +885,7 @@ describe('createCompletionHandlers', () => {
     });
     const safelySaveChains = vi.fn(async () => undefined);
     const onNavigateToDashboard = vi.fn();
+    const taskLifecycleEvents = { publish: vi.fn() };
 
     vi.mocked(resetGroupCompletionCount).mockImplementation((chains) => chains);
 
@@ -880,6 +897,7 @@ describe('createCompletionHandlers', () => {
       activeSessionId: null,
       setActiveSessionId: vi.fn(),
       onNavigateToDashboard,
+      taskLifecycleEvents,
       tr,
     });
 
@@ -916,6 +934,13 @@ describe('createCompletionHandlers', () => {
     expect(
       (vi.mocked(logger.debug).mock.calls.at(-1)?.[1] ?? '').length,
     ).toBeGreaterThan(0);
+    expect(taskLifecycleEvents.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'task_interrupted',
+        chainId: chain.id,
+        chainKind: 'unit',
+      }),
+    );
   });
 
   it('should use default interrupt reason when reason is not provided', async () => {

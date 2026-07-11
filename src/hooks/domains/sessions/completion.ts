@@ -15,7 +15,8 @@ import { systemNotificationService } from '../../../services/platform/SystemNoti
 import { emitPointsChanged } from '../../../utils/pointsEvents';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
-import type { RSIPTaskEventPayload } from '../../../types';
+import type { TaskLifecycleEvent } from '../../../types';
+import type { TaskLifecycleEventPublisher } from '../../../services/task-lifecycle/TaskLifecycleEventBus';
 
 type Chain = AppState['chains'][number];
 type ActiveSession = NonNullable<AppState['activeSession']>;
@@ -159,7 +160,7 @@ interface CreateCompletionHandlersParams {
   setActiveSessionId: (sessionId: string | null) => void;
   onNavigateToDashboard?: () => void;
   onPetTaskCompleted?: (duration: number, wasSuccessful: boolean) => void;
-  onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
+  taskLifecycleEvents?: TaskLifecycleEventPublisher;
   tr: (zh: string, en: string) => string;
 }
 
@@ -173,20 +174,12 @@ export function createCompletionHandlers({
   setActiveSessionId,
   onNavigateToDashboard,
   onPetTaskCompleted,
-  onRsipTaskEvent,
+  taskLifecycleEvents,
   tr,
 }: CreateCompletionHandlersParams) {
   const readState = resolveAppStateReader({ state, getState });
-  function emitRsipTaskEvent(payload: RSIPTaskEventPayload): void {
-    if (!onRsipTaskEvent) return;
-    Promise.resolve(onRsipTaskEvent(payload)).catch((error) => {
-      logger.warn(
-        'SESSIONS',
-        'RSIP integration event handler failed',
-        { ...payload },
-        normalizeUnknownError(error),
-      );
-    });
+  function publishTaskLifecycleEvent(payload: TaskLifecycleEvent): void {
+    taskLifecycleEvents?.publish(payload);
   }
 
   function persistChains(
@@ -311,16 +304,16 @@ export function createCompletionHandlers({
       onPetTaskCompleted(actualDuration, true);
     }
 
-    emitRsipTaskEvent({
-      event: 'task_completed',
+    publishTaskLifecycleEvent({
+      type: 'task_completed',
       chainId: chain.id,
       chainKind: chain.type === 'group' ? 'group' : 'unit',
       occurredAt: completedAt,
     });
 
     if (groupCycleResult.completedGroupId) {
-      emitRsipTaskEvent({
-        event: 'group_cycle_completed',
+      publishTaskLifecycleEvent({
+        type: 'group_cycle_completed',
         chainId: groupCycleResult.completedGroupId,
         chainKind: 'group',
         occurredAt: completedAt,
@@ -379,8 +372,8 @@ export function createCompletionHandlers({
     persistChains(updatedChains, '中断任务时保存链条数据失败');
     persistCompletionHistoryAndCleanup(completionRecord, 'interrupt');
 
-    emitRsipTaskEvent({
-      event: 'task_interrupted',
+    publishTaskLifecycleEvent({
+      type: 'task_interrupted',
       chainId: chain.id,
       chainKind: chain.type === 'group' ? 'group' : 'unit',
       occurredAt: completionRecord.completedAt,

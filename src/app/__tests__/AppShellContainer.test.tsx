@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AppShellContainer from '../AppShellContainer';
 import {
@@ -21,6 +21,7 @@ const useRsipDomainMock = vi.hoisted(() => vi.fn());
 const useImportExportDomainMock = vi.hoisted(() => vi.fn());
 const useGroupDomainMock = vi.hoisted(() => vi.fn());
 const usePetDomainMock = vi.hoisted(() => vi.fn());
+const subscribeTaskLifecycleMock = vi.hoisted(() => vi.fn());
 
 const useAppDataLoadMock = vi.hoisted(() => vi.fn());
 const useAuthControllerMock = vi.hoisted(() => vi.fn());
@@ -112,6 +113,12 @@ vi.mock('../../hooks/domains/usePetDomain', () => ({
   usePetDomain: usePetDomainMock,
 }));
 
+vi.mock('../../services/task-lifecycle/TaskLifecycleEventBus', () => ({
+  taskLifecycleEventBus: {
+    subscribe: subscribeTaskLifecycleMock,
+  },
+}));
+
 vi.mock('../hooks/useAppDataLoad', () => ({
   useAppDataLoad: useAppDataLoadMock,
 }));
@@ -167,6 +174,7 @@ describe('AppShellContainer', () => {
     vi.clearAllMocks();
     appShellStore.getState().resetAppState();
     navigationStore.setState(createInitialNavigationState());
+    subscribeTaskLifecycleMock.mockReturnValue(vi.fn());
 
     useStorageMock.mockReturnValue({ kind: 'local' });
     useSafeSaveChainsMock.mockReturnValue(vi.fn(async () => undefined));
@@ -268,5 +276,32 @@ describe('AppShellContainer', () => {
     render(<AppShellContainer />);
 
     expect(screen.getByTestId('view').textContent).toBe('rsip');
+  });
+
+  it('adapts generic task lifecycle events to the RSIP domain subscriber', async () => {
+    render(<AppShellContainer />);
+    const listener = subscribeTaskLifecycleMock.mock.calls[0]?.[0] as (event: {
+      type: 'task_completed';
+      chainId: string;
+      chainKind: 'unit';
+      occurredAt: Date;
+    }) => Promise<void>;
+    const occurredAt = new Date('2026-07-11T10:00:00.000Z');
+
+    await act(() =>
+      listener({
+        type: 'task_completed',
+        chainId: 'chain-1',
+        chainKind: 'unit',
+        occurredAt,
+      }),
+    );
+
+    expect(handlers.handleTaskEventIntegration).toHaveBeenCalledWith({
+      event: 'task_completed',
+      chainId: 'chain-1',
+      chainKind: 'unit',
+      occurredAt,
+    });
   });
 });

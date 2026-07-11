@@ -499,9 +499,9 @@ describe('createStartChainHandler', () => {
       stateRef.getState().chains.find((item) => item.id === group.id)
         ?.totalFailures,
     ).toBe(resetGroup.totalFailures);
-    expect(stateRef.getState().chains.find((item) => item.id === untouched.id)).toEqual(
-      untouched,
-    );
+    expect(
+      stateRef.getState().chains.find((item) => item.id === untouched.id),
+    ).toEqual(untouched);
     expect(stateRef.getState().chainsRevision).toBe(6);
     expect(systemNotificationService.notifyTaskFailed).toHaveBeenCalledWith(
       group.name,
@@ -774,7 +774,7 @@ describe('createStartChainHandler', () => {
     );
   });
 
-  it('should emit exact group cycle payload and warn when RSIP task event handler rejects', async () => {
+  it('should publish the exact group cycle lifecycle event', async () => {
     vi.useFakeTimers();
 
     const group = createGroupChain({
@@ -789,9 +789,7 @@ describe('createStartChainHandler', () => {
     const storage = createLocalStorageMock({
       getActiveChains: vi.fn(async () => [incremented]),
     });
-    const onRsipTaskEvent = vi.fn(async () => {
-      throw new Error('rsip event failed');
-    });
+    const taskLifecycleEvents = { publish: vi.fn() };
 
     vi.mocked(queryOptimizer.memoizedBuildChainTree).mockReturnValue([
       { id: group.id, type: 'group', name: group.name, children: [] },
@@ -809,7 +807,7 @@ describe('createStartChainHandler', () => {
       currentSessionId: null,
       setCurrentSessionId: vi.fn(),
       setShowBettingModal: vi.fn(),
-      onRsipTaskEvent,
+      taskLifecycleEvents,
       tr,
     });
 
@@ -817,22 +815,12 @@ describe('createStartChainHandler', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(onRsipTaskEvent).toHaveBeenCalledWith(
+    expect(taskLifecycleEvents.publish).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: 'group_cycle_completed',
+        type: 'group_cycle_completed',
         chainId: group.id,
         chainKind: 'group',
       }),
-    );
-    expect(logger.warn).toHaveBeenCalledWith(
-      'SESSIONS',
-      'RSIP integration event handler failed',
-      expect.objectContaining({
-        event: 'group_cycle_completed',
-        chainId: group.id,
-        chainKind: 'group',
-      }),
-      expect.any(Error),
     );
   });
 
@@ -1216,7 +1204,9 @@ describe('createStartChainHandler', () => {
 
     expect(stateRef.getState().scheduledSessions).toEqual([otherSchedule]);
     expect(storage.removeScheduledSession).not.toHaveBeenCalled();
-    expect(systemNotificationService.notifyTaskCompleted).not.toHaveBeenCalled();
+    expect(
+      systemNotificationService.notifyTaskCompleted,
+    ).not.toHaveBeenCalled();
     expect(safelySaveChains).not.toHaveBeenCalled();
   });
 

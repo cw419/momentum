@@ -1,5 +1,9 @@
 ﻿import type { Dispatch, SetStateAction } from 'react';
-import type { ActiveSession, AppState } from '../../../types';
+import type {
+  ActiveSession,
+  AppState,
+  TaskLifecycleEvent,
+} from '../../../types';
 import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { hasStorageCapability } from '../../../storage/ports';
 import type { SafelySaveChains } from '../useChainsDomain';
@@ -18,7 +22,7 @@ import {
 } from '../../../utils/timeLimit';
 import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
-import type { RSIPTaskEventPayload } from '../../../types';
+import type { TaskLifecycleEventPublisher } from '../../../services/task-lifecycle/TaskLifecycleEventBus';
 
 type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];
@@ -35,7 +39,7 @@ interface CreateStartChainHandlerParams {
   setCurrentSessionId: (sessionId: string | null) => void;
   setShowBettingModal: (isOpen: boolean) => void;
   onNavigateToFocus?: () => void;
-  onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
+  taskLifecycleEvents?: TaskLifecycleEventPublisher;
   tr: (zh: string, en: string) => string;
 }
 
@@ -66,20 +70,12 @@ export function createStartChainHandler({
   setCurrentSessionId,
   setShowBettingModal,
   onNavigateToFocus,
-  onRsipTaskEvent,
+  taskLifecycleEvents,
   tr,
 }: CreateStartChainHandlerParams) {
   const readState = resolveAppStateReader({ state, getState });
-  function emitRsipTaskEvent(payload: RSIPTaskEventPayload): void {
-    if (!onRsipTaskEvent) return;
-    Promise.resolve(onRsipTaskEvent(payload)).catch((error) => {
-      logger.warn(
-        'SESSIONS',
-        'RSIP integration event handler failed',
-        { ...payload },
-        normalizeUnknownError(error),
-      );
-    });
+  function publishTaskLifecycleEvent(payload: TaskLifecycleEvent): void {
+    taskLifecycleEvents?.publish(payload);
   }
 
   function findChain(chainId: string): Chain | null {
@@ -88,8 +84,9 @@ export function createStartChainHandler({
 
   function findScheduledSession(chainId: string): ScheduledSession | null {
     return (
-      readState().scheduledSessions.find((session) => session.chainId === chainId) ??
-      null
+      readState().scheduledSessions.find(
+        (session) => session.chainId === chainId,
+      ) ?? null
     );
   }
 
@@ -281,8 +278,8 @@ export function createStartChainHandler({
         chainsRevision: prev.chainsRevision + 1,
       }));
 
-      emitRsipTaskEvent({
-        event: 'group_cycle_completed',
+      publishTaskLifecycleEvent({
+        type: 'group_cycle_completed',
         chainId: groupId,
         chainKind: 'group',
         occurredAt: new Date(),

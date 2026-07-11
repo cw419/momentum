@@ -36,6 +36,31 @@ describe('supabase/rsipIntents', () => {
     );
   });
 
+  it('surfaces missing migrated node columns without retrying', async () => {
+    const ctx = createMockContext();
+    const upsert = vi.fn().mockReturnValue({
+      error: createSupabaseError(
+        'PGRST204',
+        "Could not find the 'consecutive_executions' column",
+      ),
+    });
+    ctx.mockClient.from = vi.fn().mockReturnValue({ upsert });
+
+    await expect(
+      upsertRSIPNode(ctx, {
+        id: 'node-1',
+        title: 'Node',
+        rule: 'Rule',
+        sortOrder: 0,
+        createdAt: new Date('2026-03-07T00:00:00.000Z'),
+      }),
+    ).rejects.toThrow('Failed to upsert RSIP node');
+
+    expect(upsert).toHaveBeenCalledTimes(1);
+    expect(upsert.mock.calls[0]?.[0]).toHaveProperty('consecutive_executions');
+    expect(ctx.markSchemaCapabilityMissing).not.toHaveBeenCalled();
+  });
+
   it('removes multiple RSIP nodes in one delete call', async () => {
     const ctx = createMockContext();
     const eq = vi.fn().mockResolvedValue({ error: null });

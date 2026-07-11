@@ -62,12 +62,19 @@ export interface RSIPViewActionSlice {
   handleApplySplitTemplate: (templateKey: string) => void;
   handleAddSplitRow: () => void;
   handleSubmitSplit: () => void;
-  handleMarkExecuted: (nodeId: string, reinforce?: boolean) => Promise<RSIPNode[]>;
-  handleTaskLinkUpsert: (nextLinks: RSIPTaskLink[]) => Promise<void>;
-  handleRestoreFromLibrary: (entryId: string, parentId?: string) => Promise<void>;
-  calculateConstraintPower: (
+  handleMarkExecuted: (
     nodeId: string,
-  ) => { descendantCount: number; failureCost: number };
+    reinforce?: boolean,
+  ) => Promise<RSIPNode[]>;
+  handleTaskLinkUpsert: (nextLinks: RSIPTaskLink[]) => Promise<void>;
+  handleRestoreFromLibrary: (
+    entryId: string,
+    parentId?: string,
+  ) => Promise<void>;
+  calculateConstraintPower: (nodeId: string) => {
+    descendantCount: number;
+    failureCost: number;
+  };
   openViolationDialog: (node: RSIPNode) => void;
   violationDialogNode: RSIPNode | null;
   violationDescendants: RSIPNode[];
@@ -81,6 +88,23 @@ export interface RSIPViewActionSlice {
   onReinforceNode: RSIPViewProps['onReinforceNode'];
 }
 
+export interface UseRSIPViewInteractionActionsParams {
+  state: RSIPViewStateSlice;
+  props: Pick<
+    RSIPViewProps,
+    | 'policyLibrary'
+    | 'onSaveNodes'
+    | 'onSaveTaskLinks'
+    | 'onMarkExecuted'
+    | 'onMarkViolated'
+    | 'onReinforceNode'
+    | 'onRestoreFromLibrary'
+    | 'onUpsertTaskLinks'
+    | 'onGetTaskActions'
+    | 'onStartChain'
+    | 'onScheduleChain'
+  >;
+}
+
 export interface RSIPViewModel
-  extends RSIPViewStateSlice,
-    RSIPViewActionSlice {}
+  extends RSIPViewStateSlice, RSIPViewActionSlice {}

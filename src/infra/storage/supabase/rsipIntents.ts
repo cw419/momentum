@@ -1,15 +1,8 @@
 import type { RSIPLibraryEntry, RSIPNode, RSIPRunRecord } from '../../../types';
 import { buildRSIPNodeRows } from './rsipPayloadBuilder';
-import {
-  cacheMissingCapabilitiesFromError,
-  hasKnownMissingCapabilities,
-  markCapabilitiesAvailable,
-} from './schemaCapabilities';
 import type { SupabaseStorageContext } from './types';
 import {
-  isMissingRSIPNodeStrictColumns,
   isSchemaMissing,
-  RSIP_NODE_STRICT_CAPABILITIES,
   RSIP_NODES_TABLE,
   type SupabaseLikeError,
 } from './rsipNodeCapabilities';
@@ -21,7 +14,10 @@ type UpsertClient = {
       options?: { onConflict?: string },
     ) => Promise<{ error: SupabaseLikeError | null }>;
     delete: () => {
-      in: (column: string, values: string[]) => {
+      in: (
+        column: string,
+        values: string[],
+      ) => {
         eq: (
           column: string,
           value: string,
@@ -44,50 +40,13 @@ export async function upsertRSIPNode(
   }
 
   const client = ctx.getClient() as unknown as UpsertClient;
-  const shouldSkipStrictColumns = hasKnownMissingCapabilities(
-    ctx,
-    RSIP_NODES_TABLE,
-    RSIP_NODE_STRICT_CAPABILITIES,
-  );
-  const strictRow = buildRSIPNodeRows([node], user.id, { strict: true })[0];
-  const basicRow = buildRSIPNodeRows([node], user.id, { strict: false })[0];
-  const primaryRow = shouldSkipStrictColumns ? basicRow : strictRow;
+  const row = buildRSIPNodeRows([node], user.id)[0];
 
   const { error } = await client
     .from(RSIP_NODES_TABLE)
-    .upsert(primaryRow, { onConflict: 'id' });
-  if (!error) {
-    if (!shouldSkipStrictColumns) {
-      markCapabilitiesAvailable(
-        ctx,
-        RSIP_NODES_TABLE,
-        RSIP_NODE_STRICT_CAPABILITIES,
-      );
-    }
-    return;
-  }
-
-  if (primaryRow === basicRow) {
+    .upsert(row, { onConflict: 'id' });
+  if (error) {
     throw new Error(`Failed to upsert RSIP node: ${error.message}`);
-  }
-
-  if (!isMissingRSIPNodeStrictColumns(error)) {
-    throw new Error(`Failed to upsert RSIP node: ${error.message}`);
-  }
-
-  cacheMissingCapabilitiesFromError(
-    ctx,
-    RSIP_NODES_TABLE,
-    RSIP_NODE_STRICT_CAPABILITIES,
-    error,
-    { markAllOnSchemaError: true },
-  );
-
-  const { error: fallbackError } = await client
-    .from(RSIP_NODES_TABLE)
-    .upsert(basicRow, { onConflict: 'id' });
-  if (fallbackError) {
-    throw new Error(`Failed to upsert RSIP node: ${fallbackError.message}`);
   }
 }
 

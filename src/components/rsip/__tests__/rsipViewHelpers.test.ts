@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import { getSplitTemplates } from '../rsipViewHelpers';
 import {
-  getFallbackUpdatedNodesForExecuted,
-  getFallbackUpdatedNodesForViolation,
-  getSplitTemplates,
-} from '../rsipViewHelpers';
+  markNodeExecutedFallback,
+  markNodeViolatedFallback,
+} from '../../../hooks/domains/rsip/viewInteractionRules';
 import type { RSIPNode } from '../../../types';
 
 function createNode(overrides: Partial<RSIPNode> = {}): RSIPNode {
@@ -31,7 +31,7 @@ describe('rsipViewHelpers', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-07T09:00:00.000Z'));
 
-    const [updated] = getFallbackUpdatedNodesForExecuted(
+    const [updated] = markNodeExecutedFallback(
       [
         createNode({
           id: 'node-1',
@@ -51,11 +51,13 @@ describe('rsipViewHelpers', () => {
       totalExecutions: 4,
       cumulativeExecutionDays: 1,
     });
-    expect(updated.phaseStartedAt).toEqual(new Date('2026-03-07T09:00:00.000Z'));
+    expect(updated.phaseStartedAt).toEqual(
+      new Date('2026-03-07T09:00:00.000Z'),
+    );
   });
 
   it('removes the violated node and its descendants in fallback mode', () => {
-    const remaining = getFallbackUpdatedNodesForViolation(
+    const remaining = markNodeViolatedFallback(
       [
         createNode({ id: 'root' }),
         createNode({ id: 'child', parentId: 'root' }),

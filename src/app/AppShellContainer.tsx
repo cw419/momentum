@@ -17,6 +17,7 @@ import { useServiceLifecycle } from './hooks/useServiceLifecycle';
 import { useViewValidation } from './hooks/useViewValidation';
 import { useViewUrlSync } from './hooks/useViewUrlSync';
 import { usePeriodicCleanup } from './hooks/usePeriodicCleanup';
+import { useTaskLifecycleIntegration } from './hooks/useTaskLifecycleIntegration';
 import { AppShellView } from './AppShellView';
 import {
   buildAppViewModel,
@@ -32,10 +33,7 @@ import {
   getAppStateSnapshot,
   useAppShellStore,
 } from '../stores/appShellStore';
-import {
-  navigationStore,
-  useNavigationStore,
-} from '../stores/navigationStore';
+import { navigationStore, useNavigationStore } from '../stores/navigationStore';
 
 export default function AppShellContainer() {
   const storage = useStorage();
@@ -181,7 +179,7 @@ export default function AppShellContainer() {
       navigationStore.getState().navigateToView('rsip');
     },
   });
-
+  useTaskLifecycleIntegration(handleTaskEventIntegration);
   const petDomain = usePetDomain();
 
   const {
@@ -218,9 +216,6 @@ export default function AppShellContainer() {
       navigationStore.getState().navigateToDashboard();
     },
     onPetTaskCompleted: petDomain.onTaskCompleted,
-    onRsipTaskEvent: async (payload) => {
-      await handleTaskEventIntegration(payload);
-    },
   });
 
   const { handleBetPlaced, handleBetCancelled } = useBettingDomain({
@@ -301,17 +296,14 @@ export default function AppShellContainer() {
     navigationStore.getState().navigateToDashboard();
   };
 
-  const onNavigateToView = useCallback(
-    (view: ViewState) => {
-      if (view === 'dashboard') {
-        navigationStore.getState().navigateToDashboard();
-        return;
-      }
+  const onNavigateToView = useCallback((view: ViewState) => {
+    if (view === 'dashboard') {
+      navigationStore.getState().navigateToDashboard();
+      return;
+    }
 
-      navigationStore.getState().navigateToView(view);
-    },
-    [],
-  );
+    navigationStore.getState().navigateToView(view);
+  }, []);
 
   const app = buildAppViewModel({
     isInitialized,

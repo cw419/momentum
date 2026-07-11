@@ -14,6 +14,7 @@ import {
   createLocalStorageMock,
 } from '../../../test/factories';
 import { logger } from '../../../utils/logger';
+import { rsipTaskIntegrationService } from '../../../services/rsip-integration/RSIPTaskIntegrationService';
 
 vi.mock('../../../utils/logger', () => ({
   logger: {
@@ -100,6 +101,7 @@ function createTaskLink(overrides: Partial<RSIPTaskLink> = {}): RSIPTaskLink {
 describe('useRsipDomain', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    rsipTaskIntegrationService.reset();
   });
 
   it('optimistically updates rsipNodes before persistence resolves', async () => {
@@ -850,7 +852,9 @@ describe('useRsipDomain', () => {
       storage: createLocalStorageMock(),
     });
     const groups = [createGroup({ id: 'provided-group', faultTolerance: 3 })];
-    const nodes = [createNode({ id: 'provided-node', groupId: 'provided-group' })];
+    const nodes = [
+      createNode({ id: 'provided-node', groupId: 'provided-group' }),
+    ];
 
     expect(domain.isGroupAlive('provided-group', nodes, groups)).toBe(true);
     expect(domain.isGroupAlive('missing-group', nodes, groups)).toBe(false);
@@ -907,7 +911,9 @@ describe('useRsipDomain', () => {
       timesUsed: 3,
       lastActiveAt: new Date('2026-03-07T16:00:00.000Z'),
     });
-    expect(created.find((entry) => entry.id === 'new-library-node')).toMatchObject({
+    expect(
+      created.find((entry) => entry.id === 'new-library-node'),
+    ).toMatchObject({
       cumulativeExecutionDays: 15,
       internalizationProgress: 25,
       timesUsed: 1,
@@ -995,7 +1001,10 @@ describe('useRsipDomain', () => {
 
     expect(await domain.restoreFromLibrary('missing-entry')).toBeNull();
 
-    const restored = await domain.restoreFromLibrary('restore-entry', 'parent-1');
+    const restored = await domain.restoreFromLibrary(
+      'restore-entry',
+      'parent-1',
+    );
 
     expect(restored).toMatchObject({
       id: 'restored-node-id',
@@ -1011,7 +1020,9 @@ describe('useRsipDomain', () => {
       totalViolations: 0,
     });
     expect(stateRef.getState().rsipNodes).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 'restored-node-id' })]),
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'restored-node-id' }),
+      ]),
     );
     expect(stateRef.getState().rsipPolicyLibrary?.[0]).toMatchObject({
       id: 'restore-entry',
@@ -1070,13 +1081,15 @@ describe('useRsipDomain', () => {
 
     expect(sameMeta).toEqual(stateRef.getState().rsipMeta);
     expect(storage.saveRSIPMeta).not.toHaveBeenCalled();
-    expect(reinforced.find((node) => node.id === 'reinforce-target')).toMatchObject(
-      {
-        reinforcementLevel: 3,
-        maxReinforcementLevel: 3,
-      },
-    );
-    expect(reinforced.find((node) => node.id === 'not-reinforced')).toMatchObject({
+    expect(
+      reinforced.find((node) => node.id === 'reinforce-target'),
+    ).toMatchObject({
+      reinforcementLevel: 3,
+      maxReinforcementLevel: 3,
+    });
+    expect(
+      reinforced.find((node) => node.id === 'not-reinforced'),
+    ).toMatchObject({
       reinforcementLevel: 5,
     });
   });
@@ -1189,7 +1202,9 @@ describe('useRsipDomain', () => {
     const merged = await domain.upsertTaskLinks([incoming]);
 
     expect(merged).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 'incoming-link' })]),
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'incoming-link' }),
+      ]),
     );
     expect(domain.getRsipTaskActions('node-1')).toEqual([
       expect.objectContaining({
@@ -1287,7 +1302,9 @@ describe('useRsipDomain', () => {
       occurredAt: new Date('2026-03-07T18:00:00.000Z'),
     });
 
-    expect(executed.find((node) => node.id === 'integration-node')).toMatchObject({
+    expect(
+      executed.find((node) => node.id === 'integration-node'),
+    ).toMatchObject({
       stabilityPhase: 'E1',
       totalExecutions: 7,
       consecutiveExecutions: 7,

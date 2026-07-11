@@ -1,6 +1,3 @@
-import type { RSIPNode } from '../../types';
-import { getDescendantIds } from '../../utils/rsipTree';
-
 export interface SplitDraftItem {
   id: string;
   title: string;
@@ -78,51 +75,4 @@ export function getSplitTemplates(
       ],
     },
   };
-}
-
-export function getFallbackUpdatedNodesForExecuted(
-  nodes: RSIPNode[],
-  nodeId: string,
-): RSIPNode[] {
-  const now = new Date();
-
-  return nodes.map((node) => {
-    if (node.id !== nodeId) {
-      return node;
-    }
-
-    const consecutiveExecutions = (node.consecutiveExecutions ?? 0) + 1;
-    const totalExecutions = (node.totalExecutions ?? 0) + 1;
-    const cumulativeExecutionDays = (node.cumulativeExecutionDays ?? 0) + 1;
-
-    let stabilityPhase = node.stabilityPhase ?? 'E0';
-    let phaseStartedAt = node.phaseStartedAt;
-
-    if (stabilityPhase === 'E0' && consecutiveExecutions >= 7) {
-      stabilityPhase = 'E1';
-      phaseStartedAt = now;
-    } else if (stabilityPhase === 'E1' && consecutiveExecutions >= 21) {
-      stabilityPhase = 'E2';
-      phaseStartedAt = now;
-    }
-
-    return {
-      ...node,
-      stabilityPhase,
-      phaseStartedAt,
-      cumulativeExecutionDays,
-      consecutiveExecutions,
-      consecutiveViolations: 0,
-      totalExecutions,
-      lastExecutedAt: now,
-    };
-  });
-}
-
-export function getFallbackUpdatedNodesForViolation(
-  nodes: RSIPNode[],
-  nodeId: string,
-): RSIPNode[] {
-  const idsToDelete = new Set([nodeId, ...getDescendantIds(nodes, nodeId)]);
-  return nodes.filter((node) => !idsToDelete.has(node.id));
 }

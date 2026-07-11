@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   RSIPTaskIntegrationService,
+  rsipTaskIntegrationService,
   type RSIPTaskEventPayload,
 } from '../RSIPTaskIntegrationService';
 import type { RSIPTaskLink } from '../../../types';
@@ -21,6 +22,10 @@ function createLink(overrides: Partial<RSIPTaskLink> = {}): RSIPTaskLink {
 }
 
 describe('RSIPTaskIntegrationService', () => {
+  beforeEach(() => {
+    rsipTaskIntegrationService.reset();
+  });
+
   it('applies last-write-wins when links conflict on unique key', () => {
     const service = new RSIPTaskIntegrationService();
     const oldLink = createLink({
@@ -74,5 +79,23 @@ describe('RSIPTaskIntegrationService', () => {
     const result = service.getRsipToTaskLinks(links, 'rsip-node-1');
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('action-1');
+  });
+
+  it('resets module singleton event deduplication between consumers', () => {
+    const link = createLink({ id: 'singleton-link' });
+    const payload: RSIPTaskEventPayload = {
+      event: 'task_completed',
+      chainId: 'chain-1',
+      chainKind: 'unit',
+      occurredAt: new Date('2026-02-08T12:00:00.000Z'),
+    };
+
+    rsipTaskIntegrationService.matchTaskEventLinks([link], payload);
+    rsipTaskIntegrationService.reset();
+
+    expect(
+      rsipTaskIntegrationService.matchTaskEventLinks([link], payload)[0]
+        .deduped,
+    ).toBe(false);
   });
 });

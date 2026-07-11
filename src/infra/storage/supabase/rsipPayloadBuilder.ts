@@ -1,4 +1,4 @@
-import type { RSIPNode } from '../../../types';
+import type { RSIPNode, RSIPStabilityPhase } from '../../../types';
 
 type RSIPNodeBasePayload = {
   id: string;
@@ -12,7 +12,7 @@ type RSIPNodeBasePayload = {
   user_id: string;
 };
 
-type RSIPNodeStrictPayload = RSIPNodeBasePayload & {
+type RSIPNodePayload = RSIPNodeBasePayload & {
   emoji: string | null;
   type: string | null;
   group_id: string | null;
@@ -21,7 +21,7 @@ type RSIPNodeStrictPayload = RSIPNodeBasePayload & {
   cumulative_execution_days: number;
   is_passive: boolean;
   split_from_goal: string | null;
-  stability_phase: string;
+  stability_phase: RSIPStabilityPhase;
   phase_started_at: string | null;
   last_executed_at: string | null;
   last_violated_at: string | null;
@@ -51,7 +51,7 @@ function buildBaseNodePayload(
 function buildStrictNodePayload(
   node: RSIPNode,
   userId: string,
-): RSIPNodeStrictPayload {
+): RSIPNodePayload {
   return {
     ...buildBaseNodePayload(node, userId),
     emoji: node.emoji ?? null,
@@ -76,19 +76,6 @@ function buildStrictNodePayload(
 export function buildRSIPNodeRows(
   nodes: RSIPNode[],
   userId: string,
-  options: { strict: true },
-): RSIPNodeStrictPayload[];
-export function buildRSIPNodeRows(
-  nodes: RSIPNode[],
-  userId: string,
-  options: { strict: false },
-): RSIPNodeBasePayload[];
-export function buildRSIPNodeRows(
-  nodes: RSIPNode[],
-  userId: string,
-  options: { strict: boolean },
-): Array<RSIPNodeBasePayload | RSIPNodeStrictPayload> {
-  return options.strict
-    ? nodes.map((node) => buildStrictNodePayload(node, userId))
-    : nodes.map((node) => buildBaseNodePayload(node, userId));
+): RSIPNodePayload[] {
+  return nodes.map((node) => buildStrictNodePayload(node, userId));
 }

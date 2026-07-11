@@ -16,7 +16,10 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import type { SafelySaveChains } from './useChainsDomain';
-import type { RSIPTaskEventPayload } from '../../services/rsip-integration/RSIPTaskIntegrationService';
+import {
+  taskLifecycleEventBus,
+  type TaskLifecycleEventPublisher,
+} from '../../services/task-lifecycle/TaskLifecycleEventBus';
 import { useI18n } from '../../i18n';
 import { resolveAppStateReader } from './appStateAccess';
 import { createCompletionHandlers } from './sessions/completion';
@@ -46,7 +49,7 @@ interface UseSessionsDomainParams {
 
   // Pet system callback (optional)
   onPetTaskCompleted?: (duration: number, wasSuccessful: boolean) => void;
-  onRsipTaskEvent?: (payload: RSIPTaskEventPayload) => void | Promise<void>;
+  taskLifecycleEvents?: TaskLifecycleEventPublisher;
 }
 
 export function useSessionsDomain({
@@ -66,7 +69,7 @@ export function useSessionsDomain({
   onNavigateToFocus,
   onNavigateToDashboard,
   onPetTaskCompleted,
-  onRsipTaskEvent,
+  taskLifecycleEvents = taskLifecycleEventBus,
 }: UseSessionsDomainParams) {
   const { tr } = useI18n();
   const readState = resolveAppStateReader({ state, getState });
@@ -97,7 +100,7 @@ export function useSessionsDomain({
     setCurrentSessionId,
     setShowBettingModal,
     onNavigateToFocus,
-    onRsipTaskEvent,
+    taskLifecycleEvents,
     tr,
   });
 
@@ -112,7 +115,7 @@ export function useSessionsDomain({
       setActiveSessionId,
       onNavigateToDashboard,
       onPetTaskCompleted,
-      onRsipTaskEvent,
+      taskLifecycleEvents,
       tr,
     });
 

@@ -31,8 +31,8 @@ describe('buildRSIPNodeRows', () => {
     },
   ];
 
-  it('builds strict payload with all columns', () => {
-    const rows = buildRSIPNodeRows(nodes, 'user-1', { strict: true });
+  it('builds the complete migrated-schema payload', () => {
+    const rows = buildRSIPNodeRows(nodes, 'user-1');
     expect(rows).toHaveLength(1);
 
     const row = rows[0] as Record<string, unknown>;
@@ -44,13 +44,25 @@ describe('buildRSIPNodeRows', () => {
     expect(row).toHaveProperty('split_from_goal', '早睡早起');
   });
 
-  it('builds basic payload without strict-only columns', () => {
-    const rows = buildRSIPNodeRows(nodes, 'user-1', { strict: false });
+  it('includes complete-schema defaults for optional node fields', () => {
+    const rows = buildRSIPNodeRows(
+      [
+        {
+          id: 'minimal',
+          title: 'Minimal',
+          rule: 'Rule',
+          sortOrder: 0,
+          createdAt: new Date('2026-02-07T00:00:00.000Z'),
+        },
+      ],
+      'user-1',
+    );
     expect(rows).toHaveLength(1);
 
     const row = rows[0] as Record<string, unknown>;
-    expect(row).not.toHaveProperty('consecutive_executions');
-    expect(row).not.toHaveProperty('stability_phase');
+    expect(row).toHaveProperty('consecutive_executions', 0);
+    expect(row).toHaveProperty('stability_phase', 'E0');
+    expect(row).toHaveProperty('group_id', null);
     expect(row.user_id).toBe('user-1');
   });
 });

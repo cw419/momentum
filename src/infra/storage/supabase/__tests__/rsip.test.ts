@@ -294,21 +294,13 @@ describe('rsip.ts', () => {
       );
     });
 
-    it('should fallback to basic payload when strict columns are missing', async () => {
+    it('should surface missing migrated columns without retrying a reduced payload', async () => {
       const ctx = createMockContext();
-
-      let callCount = 0;
-      const upsert = vi.fn().mockImplementation((_data: unknown[]) => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            error: createSupabaseError(
-              'PGRST204',
-              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache",
-            ),
-          };
-        }
-        return { error: null };
+      const upsert = vi.fn().mockReturnValue({
+        error: createSupabaseError(
+          'PGRST204',
+          "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache",
+        ),
       });
 
       ctx.mockClient.from = vi.fn().mockReturnValue({
@@ -331,83 +323,45 @@ describe('rsip.ts', () => {
         },
       ];
 
+      await expect(saveRSIPNodes(ctx, nodes)).rejects.toThrow(
+        'Failed to save RSIP nodes',
+      );
+      expect(upsert).toHaveBeenCalledTimes(1);
+      expect(ctx.markSchemaCapabilityMissing).not.toHaveBeenCalled();
+    });
+
+    it('should always write complete node columns on subsequent saves', async () => {
+      const ctx = createMockContext();
+      const upsert = vi.fn().mockReturnValue({ error: null });
+
+      ctx.mockClient.from = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            data: [],
+            error: null,
+          }),
+        }),
+        upsert,
+      });
+
+      const nodes: RSIPNode[] = [
+        {
+          id: 'rsip-1',
+          title: 'Test',
+          rule: 'Test rule',
+          sortOrder: 1,
+          createdAt: new Date(),
+        },
+      ];
+
+      await saveRSIPNodes(ctx, nodes);
       await saveRSIPNodes(ctx, nodes);
 
       expect(upsert).toHaveBeenCalledTimes(2);
-      expect(ctx.markSchemaCapabilityMissing).toHaveBeenCalledWith(
-        'rsip_nodes',
-        'consecutive_executions',
-      );
-
-      const firstPayload = upsert.mock.calls[0]?.[0] as Record<
-        string,
-        unknown
-      >[];
-      const secondPayload = upsert.mock.calls[1]?.[0] as Record<
-        string,
-        unknown
-      >[];
-
-      expect(firstPayload[0]).toHaveProperty('consecutive_executions');
-      expect(secondPayload[0]).not.toHaveProperty('consecutive_executions');
-    });
-
-    it('should skip strict upsert after detecting legacy schema', async () => {
-      const ctx = createMockContext();
-
-      const upsert = vi.fn().mockImplementation(() => {
-        const currentCall = upsert.mock.calls.length;
-
-        // 1st call: strict payload fails due to missing columns
-        if (currentCall === 1) {
-          return {
-            error: createSupabaseError(
-              'PGRST204',
-              "Could not find the 'consecutive_executions' column of 'rsip_nodes' in the schema cache",
-            ),
-          };
-        }
-
-        // all subsequent calls succeed
-        return { error: null };
-      });
-
-      ctx.mockClient.from = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            data: [],
-            error: null,
-          }),
-        }),
-        upsert,
-      });
-
-      const nodes: RSIPNode[] = [
-        {
-          id: 'rsip-1',
-          title: 'Test',
-          rule: 'Test rule',
-          sortOrder: 1,
-          createdAt: new Date(),
-        },
-      ];
-
-      await saveRSIPNodes(ctx, nodes);
-      await saveRSIPNodes(ctx, nodes);
-
-      // First save: strict upsert fails then fallback succeeds (2 calls)
-      // Second save: should only use basic payload (1 call)
-      expect(upsert).toHaveBeenCalledTimes(3);
-      expect(ctx.isSchemaCapabilityMissing).toHaveBeenCalledWith(
-        'rsip_nodes',
-        'consecutive_executions',
-      );
-
-      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<
-        string,
-        unknown
-      >[];
-      expect(payloadThirdCall[0]).not.toHaveProperty('consecutive_executions');
+      for (const [payload] of upsert.mock.calls) {
+        expect(payload[0]).toHaveProperty('consecutive_executions');
+      }
+      expect(ctx.isSchemaCapabilityMissing).not.toHaveBeenCalled();
     });
 
     it('should map all fields correctly for upsert', async () => {
@@ -638,27 +592,14 @@ describe('rsip.ts', () => {
       expect(upsertData.allow_multiple_per_day).toBe(true);
     });
 
-    it('should skip strict meta upsert after detecting legacy schema', async () => {
+    it('should surface missing migrated meta columns without retrying', async () => {
       const ctx = createMockContext();
-
-      const upsert = vi
-        .fn()
-        .mockImplementation((data: Record<string, unknown>) => {
-          const currentCall = upsert.mock.calls.length;
-
-          if (currentCall === 1) {
-            // strict payload includes additional fields and fails on legacy schema
-            expect(data).toHaveProperty('last_tree_opened_at');
-            return {
-              error: createSupabaseError(
-                'PGRST204',
-                "Could not find the 'last_tree_opened_at' column of 'rsip_meta'",
-              ),
-            };
-          }
-
-          return { error: null };
-        });
+      const upsert = vi.fn().mockReturnValue({
+        error: createSupabaseError(
+          'PGRST204',
+          "Could not find the 'last_tree_opened_at' column of 'rsip_meta'",
+        ),
+      });
 
       ctx.mockClient.from = vi.fn().mockReturnValue({ upsert });
 
@@ -670,26 +611,12 @@ describe('rsip.ts', () => {
         treeOpenStreak: 3,
       };
 
-      await saveRSIPMeta(ctx, meta);
-      await saveRSIPMeta(ctx, meta);
-
-      // First save: strict upsert fails then fallback succeeds (2 calls)
-      // Second save: should only use basic payload (1 call)
-      expect(upsert).toHaveBeenCalledTimes(3);
-      expect(ctx.markSchemaCapabilityMissing).toHaveBeenCalledWith(
-        'rsip_meta',
-        'last_tree_opened_at',
+      await expect(saveRSIPMeta(ctx, meta)).rejects.toThrow(
+        'Failed to save RSIP meta',
       );
-      expect(ctx.isSchemaCapabilityMissing).toHaveBeenCalledWith(
-        'rsip_meta',
-        'last_tree_opened_at',
-      );
-
-      const payloadThirdCall = upsert.mock.calls[2]?.[0] as Record<
-        string,
-        unknown
-      >;
-      expect(payloadThirdCall).not.toHaveProperty('last_tree_opened_at');
+      expect(upsert).toHaveBeenCalledTimes(1);
+      expect(upsert.mock.calls[0]?.[0]).toHaveProperty('last_tree_opened_at');
+      expect(ctx.markSchemaCapabilityMissing).not.toHaveBeenCalled();
     });
 
     it('should throw error when upsert fails', async () => {
