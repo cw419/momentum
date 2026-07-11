@@ -68,6 +68,19 @@ describe('quality lane tooling', () => {
     expect(packageJson.scripts['quality:comment-debt']).toMatch(
       /^node tools\/quality\/comment-debt\.mjs$/,
     );
+
+    const requiredChecks = packageJson.scripts['quality:ci:required']
+      ?.split('&&')
+      .map((command) => command.trim());
+    expect(requiredChecks).toEqual(expect.any(Array));
+    expect(requiredChecks).toContain('npm run quality:jscpd');
+    expect(requiredChecks).toContain('npm run quality:debt-gate:core');
+
+    const jscpdIndex = requiredChecks?.indexOf('npm run quality:jscpd') ?? -1;
+    const debtGateIndex =
+      requiredChecks?.indexOf('npm run quality:debt-gate:core') ?? -1;
+    expect(jscpdIndex).toBeGreaterThanOrEqual(0);
+    expect(jscpdIndex).toBeLessThan(debtGateIndex);
   });
 
   it('defines the info and nightly lanes in terms of leaf checks instead of nested aggregators', async () => {

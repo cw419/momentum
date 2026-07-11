@@ -43,7 +43,7 @@
     "quality:test:mutation-hotspots": "node tools/quality/mutation-hotspots.mjs",
     "quality:test:audit": "npm run quality:test:lint && npm run quality:test:lint-budget && npm run quality:test:assertions && npm run quality:test:runtime && npm run quality:test:coverage-hotspots && npm run quality:test:mutation-hotspots",
     "quality:arch-gate": "depcruise src --config .dependency-cruiser.cjs --output-type err",
-    "quality:ci:required": "npm run format:check && npm run lint && npm run lint:css && npm run lint:md && npm run lint:spell && npm run lint:spell:docs && npm run typecheck && npm run quality:type-coverage && npm run quality:debt-gate:core && npm run quality:arch-gate && npm run test:coverage && npm run build",
+    "quality:ci:required": "npm run format:check && npm run lint && npm run lint:css && npm run lint:md && npm run lint:spell && npm run lint:spell:docs && npm run typecheck && npm run quality:type-coverage && npm run quality:jscpd && npm run quality:debt-gate:core && npm run quality:arch-gate && npm run test:coverage && npm run build",
     "quality:ci:info": "node tools/quality/lane-runner.mjs info",
     "quality:ci:nightly": "node tools/quality/lane-runner.mjs nightly",
     "security:semgrep": "node tools/quality/run-ps.mjs tools/quality/semgrep.ps1",
