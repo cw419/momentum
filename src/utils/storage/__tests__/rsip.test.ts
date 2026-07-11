@@ -83,12 +83,8 @@ describe('storage/rsip', () => {
     const [node, fallbackNode] = getRSIPNodes();
 
     expect(node.phaseStartedAt).toEqual(new Date('2026-02-02T00:00:00.000Z'));
-    expect(node.lastExecutedAt).toEqual(
-      new Date('2026-02-03T00:00:00.000Z'),
-    );
-    expect(node.lastViolatedAt).toEqual(
-      new Date('2026-02-04T00:00:00.000Z'),
-    );
+    expect(node.lastExecutedAt).toEqual(new Date('2026-02-03T00:00:00.000Z'));
+    expect(node.lastViolatedAt).toEqual(new Date('2026-02-04T00:00:00.000Z'));
     expect(fallbackNode.phaseStartedAt).toBeUndefined();
     expect(fallbackNode.lastExecutedAt).toBeUndefined();
     expect(fallbackNode.lastViolatedAt).toBeUndefined();
@@ -108,7 +104,7 @@ describe('storage/rsip', () => {
     expect(localStorage.getItem(STORAGE_KEYS.RSIP_NODES)).toContain('node-2');
   });
 
-  it('upserts and removes RSIP nodes incrementally', () => {
+  it('inserts, updates, and removes RSIP nodes incrementally', () => {
     saveRSIPNodes([
       {
         id: 'node-1',
@@ -259,7 +255,7 @@ describe('storage/rsip', () => {
     );
   });
 
-  it('upserts RSIP policy library entries incrementally', () => {
+  it('inserts or updates RSIP policy library entries incrementally', () => {
     saveRSIPPolicyLibrary([
       {
         id: 'library-1',

@@ -62,8 +62,7 @@ export function computeSummary(
   return {
     activeNodeCount: nodes.length,
     strictNodeCount,
-    passiveNodeRatio:
-      nodes.length > 0 ? round(passiveCount / nodes.length) : 0,
+    passiveNodeRatio: nodes.length > 0 ? round(passiveCount / nodes.length) : 0,
     reinforcementCoverage:
       nodes.length > 0 ? round(reinforcedCount / nodes.length) : 0,
     policyLibrarySize,

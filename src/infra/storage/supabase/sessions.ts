@@ -46,7 +46,11 @@ function hasKnownMissingForwardTimerCapabilities(
 function markForwardTimerCapabilitiesMissing(
   ctx: SupabaseStorageContext,
 ): void {
-  markCapabilitiesMissing(ctx, ACTIVE_SESSIONS_TABLE, FORWARD_TIMER_CAPABILITIES);
+  markCapabilitiesMissing(
+    ctx,
+    ACTIVE_SESSIONS_TABLE,
+    FORWARD_TIMER_CAPABILITIES,
+  );
 }
 
 function markForwardTimerCapabilitiesAvailable(

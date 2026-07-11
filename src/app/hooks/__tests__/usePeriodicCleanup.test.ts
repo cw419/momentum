@@ -145,7 +145,9 @@ describe('usePeriodicCleanup', () => {
     expect(navigationStore.getState().showAuxiliaryJudgment).toBe(
       expiredChain.id,
     );
-    expect(storage.removeScheduledSession).toHaveBeenCalledWith(expiredChain.id);
+    expect(storage.removeScheduledSession).toHaveBeenCalledWith(
+      expiredChain.id,
+    );
     expect(setState).toHaveBeenCalledWith(expect.any(Function));
   });
 

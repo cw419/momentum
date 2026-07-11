@@ -12,7 +12,7 @@ describe('supabase/rsipIntents', () => {
     vi.clearAllMocks();
   });
 
-  it('upserts a single RSIP node with onConflict id', async () => {
+  it('inserts or updates a single RSIP node with onConflict id', async () => {
     const ctx = createMockContext();
     const upsert = vi.fn().mockReturnValue({ error: null });
 
@@ -75,7 +75,7 @@ describe('supabase/rsipIntents', () => {
     expect(eq).toHaveBeenCalledWith('user_id', 'test-user-123');
   });
 
-  it('upserts RSIP library entries against the composite key', async () => {
+  it('inserts or updates RSIP library entries against the composite key', async () => {
     const ctx = createMockContext();
     const upsert = vi.fn().mockReturnValue({ error: null });
 

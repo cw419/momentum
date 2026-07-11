@@ -50,7 +50,10 @@ export function RSIPSplitModeSection({
     <div className="bento-card mb-8">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
-          {tr('拆分模式（零散牛皮糖）', 'Split mode (shatter oversized policies)')}
+          {tr(
+            '拆分模式（零散牛皮糖）',
+            'Split mode (shatter oversized policies)',
+          )}
         </h3>
         <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
           <input

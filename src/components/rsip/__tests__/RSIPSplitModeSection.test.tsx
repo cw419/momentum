@@ -32,12 +32,17 @@ describe('RSIPSplitModeSection', () => {
     );
 
     fireEvent.click(screen.getByLabelText('Enable'));
-    fireEvent.change(screen.getByPlaceholderText('Goal, e.g. Sleep early and wake early'), {
-      target: { value: 'Updated goal' },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Goal, e.g. Sleep early and wake early'),
+      {
+        target: { value: 'Updated goal' },
+      },
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Sleep template' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add sub-policy' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Create split policies' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Create split policies' }),
+    );
 
     expect(setSplitMode).toHaveBeenCalledWith(false);
     expect(setSplitGoal).toHaveBeenCalledWith('Updated goal');

@@ -41,7 +41,9 @@ export function createGroupOperations({
       return false;
     }
 
-    const aliveCount = allNodes.filter((item) => item.groupId === groupId).length;
+    const aliveCount = allNodes.filter(
+      (item) => item.groupId === groupId,
+    ).length;
     if (aliveCount === 0) {
       return false;
     }

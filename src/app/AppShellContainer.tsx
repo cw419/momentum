@@ -38,43 +38,63 @@ import { navigationStore, useNavigationStore } from '../stores/navigationStore';
 export default function AppShellContainer() {
   const storage = useStorage();
   const safelySaveChains = useSafeSaveChains(storage);
-  const { chains, chainsRevision, scheduledSessions, activeSession, completionHistory } =
-    useAppShellStore(
-      useShallow((s) => ({
-        chains: s.chains,
-        chainsRevision: s.chainsRevision,
-        scheduledSessions: s.scheduledSessions,
-        activeSession: s.activeSession,
-        completionHistory: s.completionHistory,
-      })),
-    );
+  const {
+    chains,
+    chainsRevision,
+    scheduledSessions,
+    activeSession,
+    completionHistory,
+  } = useAppShellStore(
+    useShallow((s) => ({
+      chains: s.chains,
+      chainsRevision: s.chainsRevision,
+      scheduledSessions: s.scheduledSessions,
+      activeSession: s.activeSession,
+      completionHistory: s.completionHistory,
+    })),
+  );
 
-  const { rsipNodes, rsipMeta, rsipGroups, rsipPolicyLibrary, rsipRunHistory, rsipTaskLinks, rsipExecutionRecords } =
-    useAppShellStore(
-      useShallow((s) => ({
-        rsipNodes: s.rsipNodes,
-        rsipMeta: s.rsipMeta,
-        rsipGroups: s.rsipGroups,
-        rsipPolicyLibrary: s.rsipPolicyLibrary,
-        rsipRunHistory: s.rsipRunHistory,
-        rsipTaskLinks: s.rsipTaskLinks,
-        rsipExecutionRecords: s.rsipExecutionRecords,
-      })),
-    );
+  const {
+    rsipNodes,
+    rsipMeta,
+    rsipGroups,
+    rsipPolicyLibrary,
+    rsipRunHistory,
+    rsipTaskLinks,
+    rsipExecutionRecords,
+  } = useAppShellStore(
+    useShallow((s) => ({
+      rsipNodes: s.rsipNodes,
+      rsipMeta: s.rsipMeta,
+      rsipGroups: s.rsipGroups,
+      rsipPolicyLibrary: s.rsipPolicyLibrary,
+      rsipRunHistory: s.rsipRunHistory,
+      rsipTaskLinks: s.rsipTaskLinks,
+      rsipExecutionRecords: s.rsipExecutionRecords,
+    })),
+  );
 
-  const { currentView, editingChainId, viewingChainId, showAuxiliaryJudgment, showBettingModal, pendingChainId, currentSessionId, activeSessionId } =
-    useNavigationStore(
-      useShallow((s) => ({
-        currentView: s.currentView,
-        editingChainId: s.editingChainId,
-        viewingChainId: s.viewingChainId,
-        showAuxiliaryJudgment: s.showAuxiliaryJudgment,
-        showBettingModal: s.showBettingModal,
-        pendingChainId: s.pendingChainId,
-        currentSessionId: s.currentSessionId,
-        activeSessionId: s.activeSessionId,
-      })),
-    );
+  const {
+    currentView,
+    editingChainId,
+    viewingChainId,
+    showAuxiliaryJudgment,
+    showBettingModal,
+    pendingChainId,
+    currentSessionId,
+    activeSessionId,
+  } = useNavigationStore(
+    useShallow((s) => ({
+      currentView: s.currentView,
+      editingChainId: s.editingChainId,
+      viewingChainId: s.viewingChainId,
+      showAuxiliaryJudgment: s.showAuxiliaryJudgment,
+      showBettingModal: s.showBettingModal,
+      pendingChainId: s.pendingChainId,
+      currentSessionId: s.currentSessionId,
+      activeSessionId: s.activeSessionId,
+    })),
+  );
 
   const resetAppState = useCallback(() => createInitialAppState(), []);
   const resetUIState = useCallback(() => {

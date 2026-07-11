@@ -82,9 +82,7 @@ export function createLibraryOperations({
       return null;
     }
 
-    const entry = state.rsipPolicyLibrary.find(
-      (item) => item.id === entryId,
-    );
+    const entry = state.rsipPolicyLibrary.find((item) => item.id === entryId);
     if (!entry) {
       return null;
     }

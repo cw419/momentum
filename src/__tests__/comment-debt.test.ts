@@ -6,7 +6,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const tempDirs: string[] = [];
 
 async function makeTempDir() {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'momentum-comment-debt-'));
+  const dir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'momentum-comment-debt-'),
+  );
   tempDirs.push(dir);
   return dir;
 }
@@ -14,7 +16,9 @@ async function makeTempDir() {
 describe('comment debt tooling', () => {
   afterEach(async () => {
     await Promise.all(
-      tempDirs.splice(0).map((dir) => fs.rm(dir, { recursive: true, force: true })),
+      tempDirs
+        .splice(0)
+        .map((dir) => fs.rm(dir, { recursive: true, force: true })),
     );
     vi.restoreAllMocks();
   });
@@ -45,7 +49,8 @@ describe('comment debt tooling', () => {
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
-    const { runCommentDebt } = await import('../../tools/quality/comment-debt.mjs');
+    const { runCommentDebt } =
+      await import('../../tools/quality/comment-debt.mjs');
 
     const result = runCommentDebt({
       repoRoot: tempDir,
@@ -58,9 +63,9 @@ describe('comment debt tooling', () => {
     expect(result.hardViolationCount).toBe(3);
     expect(result.softCommentLineCount).toBe(1);
     expect(result.hardViolations.map((entry) => entry.line)).toEqual([5, 6, 7]);
-    expect(result.hardViolations.every((entry) => entry.file === 'src/sample.ts')).toBe(
-      true,
-    );
+    expect(
+      result.hardViolations.every((entry) => entry.file === 'src/sample.ts'),
+    ).toBe(true);
   });
 
   it('reports soft-budget regressions without failing when hard violations are absent', async () => {
@@ -96,7 +101,8 @@ describe('comment debt tooling', () => {
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
-    const { runCommentDebt } = await import('../../tools/quality/comment-debt.mjs');
+    const { runCommentDebt } =
+      await import('../../tools/quality/comment-debt.mjs');
 
     const result = runCommentDebt({
       repoRoot: tempDir,
@@ -135,7 +141,8 @@ describe('comment debt tooling', () => {
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
-    const { runCommentDebt } = await import('../../tools/quality/comment-debt.mjs');
+    const { runCommentDebt } =
+      await import('../../tools/quality/comment-debt.mjs');
 
     const result = runCommentDebt({
       repoRoot: tempDir,

@@ -17,7 +17,11 @@ const VALID_VIEWS: ReadonlySet<ViewState> = new Set([
 ]);
 
 function dashboardState(): UrlSyncedViewState {
-  return { currentView: 'dashboard', viewingChainId: null, editingChainId: null };
+  return {
+    currentView: 'dashboard',
+    viewingChainId: null,
+    editingChainId: null,
+  };
 }
 
 function parseViewParam(rawView: string | null): ViewState | null {

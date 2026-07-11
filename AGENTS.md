@@ -20,9 +20,10 @@ This file is the primary operating guide for coding agents working in this repos
 ### Three-Layer Architecture
 
 1. UI Layer (`src/components/`, `src/app/`)
-   - Pure presentational components.
+   - Views and sections are pure presentational components.
    - Never access Supabase directly.
-   - Use `useStorage()` for data operations.
+   - Containers, controllers, and domain hooks may use the public `useStorage()`, `useStorageMode()`, and `src/storage/ports.ts` APIs for data operations.
+   - Never import concrete adapters or other storage internals from UI/AppShell code.
 2. Domain Logic Layer (`src/hooks/domains/`)
    - Business logic and state transitions.
    - Key hooks include: `useChainsDomain`, `useSessionsDomain`, `useBettingDomain`, `useRulesDomain`, `useRecycleBinDomain`, `useRsipDomain`, `useGroupDomain`, `useImportExportDomain`, `useCheckinDomain`, `usePetDomain`, `useSafeSaveChains`.

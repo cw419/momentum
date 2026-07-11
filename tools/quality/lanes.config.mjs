@@ -181,9 +181,9 @@ export const QUALITY_LANES = Object.freeze({
     summaryJsonPath: 'reports/quality/nightly-summary.json',
     summaryMarkdownPath: 'reports/quality/nightly-summary.md',
     logsDir: 'reports/quality/nightly-logs',
-    checks: QUALITY_CHECKS.filter((check) => check.lanes.includes('nightly')).map(
-      (check) => check.id,
-    ),
+    checks: QUALITY_CHECKS.filter((check) =>
+      check.lanes.includes('nightly'),
+    ).map((check) => check.id),
   },
 });
 
@@ -196,7 +196,9 @@ export function getLaneChecks(laneId) {
   return lane.checks.map((checkId) => {
     const check = QUALITY_CHECKS.find((entry) => entry.id === checkId);
     if (!check) {
-      throw new Error(`Unknown quality check "${checkId}" in lane "${laneId}".`);
+      throw new Error(
+        `Unknown quality check "${checkId}" in lane "${laneId}".`,
+      );
     }
     return check;
   });

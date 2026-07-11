@@ -20,9 +20,7 @@ import {
 
 const RSIP_STABILITY_PHASES: readonly RSIPStabilityPhase[] = ['E0', 'E1', 'E2'];
 
-function parseStabilityPhase(
-  value: unknown,
-): RSIPStabilityPhase | undefined {
+function parseStabilityPhase(value: unknown): RSIPStabilityPhase | undefined {
   return typeof value === 'string' &&
     RSIP_STABILITY_PHASES.includes(value as RSIPStabilityPhase)
     ? (value as RSIPStabilityPhase)
@@ -170,18 +168,9 @@ export function decodeRSIPMeta(raw: SerializedRSIPMeta): RSIPMeta {
       typeof raw.phaseDistribution === 'object' &&
       !Array.isArray(raw.phaseDistribution)
         ? {
-            E0: toNumber(
-              (raw.phaseDistribution as { E0?: unknown }).E0,
-              0,
-            ),
-            E1: toNumber(
-              (raw.phaseDistribution as { E1?: unknown }).E1,
-              0,
-            ),
-            E2: toNumber(
-              (raw.phaseDistribution as { E2?: unknown }).E2,
-              0,
-            ),
+            E0: toNumber((raw.phaseDistribution as { E0?: unknown }).E0, 0),
+            E1: toNumber((raw.phaseDistribution as { E1?: unknown }).E1, 0),
+            E2: toNumber((raw.phaseDistribution as { E2?: unknown }).E2, 0),
           }
         : undefined,
     currentRunNumber: toOptionalNumber(raw.currentRunNumber),
@@ -234,9 +223,7 @@ export function decodeRSIPRunRecord(
   };
 }
 
-export function decodeRSIPTaskLink(
-  raw: SerializedRSIPTaskLink,
-): RSIPTaskLink {
+export function decodeRSIPTaskLink(raw: SerializedRSIPTaskLink): RSIPTaskLink {
   return {
     id: raw.id,
     userId: raw.userId,

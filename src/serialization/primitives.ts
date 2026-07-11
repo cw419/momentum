@@ -28,10 +28,7 @@ export function toStringWithDefault(value: unknown, fallback: string): string {
   return String(value);
 }
 
-export function sanitizeString(
-  value: unknown,
-  fallback: string = '',
-): string {
+export function sanitizeString(value: unknown, fallback: string = ''): string {
   if (typeof value === 'string') return value;
   if (value == null) return fallback;
   return String(value);
@@ -41,9 +38,7 @@ export function toOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-export function toOptionalStringFromTruthy(
-  value: unknown,
-): string | undefined {
+export function toOptionalStringFromTruthy(value: unknown): string | undefined {
   if (!value) return undefined;
   return String(value);
 }

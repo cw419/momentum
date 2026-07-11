@@ -50,9 +50,7 @@ export function removeRSIPNodes(nodeIds: string[]): void {
   }
 
   const nodeIdSet = new Set(nodeIds);
-  saveRSIPNodes(
-    getRSIPNodes().filter((node) => !nodeIdSet.has(node.id)),
-  );
+  saveRSIPNodes(getRSIPNodes().filter((node) => !nodeIdSet.has(node.id)));
 }
 
 export function getRSIPMeta(): RSIPMeta {

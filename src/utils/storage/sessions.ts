@@ -25,7 +25,9 @@ export function saveScheduledSessions(sessions: ScheduledSession[]): void {
 
 export function setScheduledSession(session: ScheduledSession): void {
   const sessions = getScheduledSessions();
-  const nextSessions = sessions.filter((item) => item.chainId !== session.chainId);
+  const nextSessions = sessions.filter(
+    (item) => item.chainId !== session.chainId,
+  );
   nextSessions.push(session);
   saveScheduledSessions(nextSessions);
 }

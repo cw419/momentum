@@ -9,7 +9,8 @@ import {
   DAY_MS,
   LOOKBACK_DAYS,
 } from './rsipStatsCalculator';
-import { buildRecommendations, toLocale } from './rsipRecommender';
+import { toLocale } from './rsipLocalization';
+import { buildRecommendations } from './rsipRecommender';
 
 export type { BuildRSIPInsightsInput, RSIPInsightsResult };
 

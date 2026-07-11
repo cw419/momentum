@@ -39,21 +39,18 @@ export function useViewUrlSync({
   const isApplyingUrlRef = useRef(false);
   const hasProcessedInitialUrlRef = useRef(false);
 
-  const applyViewStateFromUrl = useCallback(
-    (next: UrlSyncedViewState) => {
-      isApplyingUrlRef.current = true;
-      navigationStore.setState({
-        currentView: next.currentView,
-        viewingChainId: next.viewingChainId,
-        editingChainId: next.editingChainId,
-      });
+  const applyViewStateFromUrl = useCallback((next: UrlSyncedViewState) => {
+    isApplyingUrlRef.current = true;
+    navigationStore.setState({
+      currentView: next.currentView,
+      viewingChainId: next.viewingChainId,
+      editingChainId: next.editingChainId,
+    });
 
-      setTimeout(() => {
-        isApplyingUrlRef.current = false;
-      }, 0);
-    },
-    [],
-  );
+    setTimeout(() => {
+      isApplyingUrlRef.current = false;
+    }, 0);
+  }, []);
 
   useEffect(() => {
     if (!shouldLoadData) {

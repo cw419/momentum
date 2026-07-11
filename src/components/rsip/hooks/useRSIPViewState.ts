@@ -91,7 +91,15 @@ export function useRSIPViewState({
         policyLibrary,
         locale: language,
       }),
-    [nodes, runHistory, executionRecords, groups, taskLinks, policyLibrary, language],
+    [
+      nodes,
+      runHistory,
+      executionRecords,
+      groups,
+      taskLinks,
+      policyLibrary,
+      language,
+    ],
   );
 
   return {

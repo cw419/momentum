@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  rsipMetaRowSchema,
-  rsipNodeRowSchema,
-} from '../rsipRowSchema';
+import { rsipMetaRowSchema, rsipNodeRowSchema } from '../rsipRowSchema';
 
 const validNodeRow = {
   id: 'node-1',

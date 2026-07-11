@@ -292,10 +292,7 @@ export function useImportExportDomain({
         rsipMeta: options?.rsipMeta
           ? { ...prev.rsipMeta, ...options.rsipMeta }
           : prev.rsipMeta,
-        rsipGroups: appendIfNonEmpty(
-          prev.rsipGroups,
-          options?.rsipGroups,
-        ),
+        rsipGroups: appendIfNonEmpty(prev.rsipGroups, options?.rsipGroups),
         rsipPolicyLibrary: appendIfNonEmpty(
           prev.rsipPolicyLibrary,
           options?.rsipPolicyLibrary,

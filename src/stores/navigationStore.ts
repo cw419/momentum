@@ -44,9 +44,7 @@ export function createInitialNavigationState(): NavigationState {
   };
 }
 
-export function createNavigationStore(
-  initialState?: Partial<NavigationState>,
-) {
+export function createNavigationStore(initialState?: Partial<NavigationState>) {
   const initial: NavigationState = {
     ...createInitialNavigationState(),
     ...initialState,

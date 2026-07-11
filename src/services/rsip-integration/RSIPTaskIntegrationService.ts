@@ -1,4 +1,7 @@
-import type { RSIPTaskLink, RSIPTaskEventPayload } from '../../types/rsipIntegration';
+import type {
+  RSIPTaskLink,
+  RSIPTaskEventPayload,
+} from '../../types/rsipIntegration';
 
 export type { RSIPTaskEventPayload } from '../../types/rsipIntegration';
 

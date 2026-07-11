@@ -1,40 +1,19 @@
 import type {
   RecommendationContext,
-  RSIPInsightsLocale,
   RSIPRecommendation,
 } from './rsipInsightsTypes';
+import { joinList, localize } from './rsipLocalization';
 import {
   buildRuralFirstRecommendation,
   buildSplitRecommendation,
 } from './rsipHighRiskRecommenders';
 
-export function toLocale(locale?: string): RSIPInsightsLocale {
-  if (typeof locale === 'string' && locale.toLowerCase().startsWith('zh')) {
-    return 'zh';
-  }
-  return 'en';
-}
-
-export function localize(
-  locale: RSIPInsightsLocale,
-  zh: string,
-  en: string,
-): string {
-  return locale === 'zh' ? zh : en;
-}
-
-export function joinList(
-  values: string[],
-  locale: RSIPInsightsLocale,
-): string {
-  return values.join(locale === 'zh' ? '、' : ', ');
-}
-
 function buildGroupingRecommendation(
   context: RecommendationContext,
 ): RSIPRecommendation | null {
-  const ungroupedNodes = context.input.nodes.filter((node) => !node.groupId)
-    .length;
+  const ungroupedNodes = context.input.nodes.filter(
+    (node) => !node.groupId,
+  ).length;
   if (ungroupedNodes < 4 || context.input.groups.length > 0) {
     return null;
   }
@@ -138,11 +117,7 @@ function buildPassiveRecommendation(
     id: 'add-passive-guards',
     kind: 'passive',
     priority: 'medium',
-    title: localize(
-      context.locale,
-      '增加被动护栏',
-      'Add passive guardrails',
-    ),
+    title: localize(context.locale, '增加被动护栏', 'Add passive guardrails'),
     rationale: localize(
       context.locale,
       '近期存在违约且被动国策覆盖率偏低，环境护栏可以降低摩擦。',

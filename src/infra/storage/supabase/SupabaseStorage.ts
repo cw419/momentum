@@ -339,8 +339,7 @@ export class SupabaseStorage implements MomentumStorage {
       if (hasChanges) {
         await this.saveCompletionHistory(updatedHistory);
       }
-    } catch {
-    }
+    } catch {}
   }
   getCurrentUser(): Promise<Result<AuthUser | null, AppError>> {
     return authApi.getCurrentUser();

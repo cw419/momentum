@@ -1163,7 +1163,7 @@ describe('useRsipDomain', () => {
     randomUUIDMock.mockRestore();
   });
 
-  it('upserts task links and returns RSIP task actions for rsip_mark_executed prompts', async () => {
+  it('inserts or updates task links and returns RSIP task actions for rsip_mark_executed prompts', async () => {
     const existing = createTaskLink({
       id: 'existing-link',
       rsipNodeId: 'node-1',

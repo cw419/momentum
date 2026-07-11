@@ -95,12 +95,10 @@ export function createAppShellStore(initialState?: Partial<AppState>) {
     updateAppState: (update) =>
       set((prev) => {
         const current = extractAppState(prev);
-        const next =
-          typeof update === 'function' ? update(current) : update;
+        const next = typeof update === 'function' ? update(current) : update;
         return { ...prev, ...next };
       }),
-    replaceAppState: (nextState) =>
-      set((prev) => ({ ...prev, ...nextState })),
+    replaceAppState: (nextState) => set((prev) => ({ ...prev, ...nextState })),
     resetAppState: () => set(createInitialAppState()),
   }));
 }

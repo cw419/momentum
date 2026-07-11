@@ -12,7 +12,12 @@ const LARGE_FILE_SCRIPT_PATH = path.join(
   'quality',
   'large-file-budget.mjs',
 );
-const SEMGREP_SCRIPT_PATH = path.join(REPO_ROOT, 'tools', 'quality', 'semgrep.ps1');
+const SEMGREP_SCRIPT_PATH = path.join(
+  REPO_ROOT,
+  'tools',
+  'quality',
+  'semgrep.ps1',
+);
 const SQLFLUFF_SCRIPT_PATH = path.join(
   REPO_ROOT,
   'tools',
@@ -31,7 +36,9 @@ async function makeTempDir() {
 describe('quality lane tooling', () => {
   afterEach(async () => {
     await Promise.all(
-      tempDirs.splice(0).map((dir) => fs.rm(dir, { recursive: true, force: true })),
+      tempDirs
+        .splice(0)
+        .map((dir) => fs.rm(dir, { recursive: true, force: true })),
     );
     vi.restoreAllMocks();
   });
@@ -64,7 +71,8 @@ describe('quality lane tooling', () => {
   });
 
   it('defines the info and nightly lanes in terms of leaf checks instead of nested aggregators', async () => {
-    const { getLaneChecks } = await import('../../tools/quality/lanes.config.mjs');
+    const { getLaneChecks } =
+      await import('../../tools/quality/lanes.config.mjs');
 
     const infoChecks = getLaneChecks('info');
     const scripts = infoChecks.map((check: { script: string }) => check.script);
@@ -95,7 +103,8 @@ describe('quality lane tooling', () => {
   });
 
   it('wires comment debt into the smell-audit lane', async () => {
-    const { getLaneChecks } = await import('../../tools/quality/lanes.config.mjs');
+    const { getLaneChecks } =
+      await import('../../tools/quality/lanes.config.mjs');
 
     const smellAuditChecks = getLaneChecks('smell-audit');
     const smellAuditScripts = smellAuditChecks.map(
@@ -151,7 +160,11 @@ describe('quality lane tooling', () => {
         seen.push(check.id);
 
         if (check.id === 'pass-check') {
-          await fs.writeFile(freshReportPath, JSON.stringify({ ok: true }), 'utf8');
+          await fs.writeFile(
+            freshReportPath,
+            JSON.stringify({ ok: true }),
+            'utf8',
+          );
           return { exitCode: 0, stdout: 'ok', stderr: '' };
         }
 
@@ -179,10 +192,12 @@ describe('quality lane tooling', () => {
       'blocked-check',
     ]);
     expect(result.exitCode).toBe(1);
-    expect(result.results.map((entry: { id: string; status: string }) => ({
-      id: entry.id,
-      status: entry.status,
-    }))).toEqual([
+    expect(
+      result.results.map((entry: { id: string; status: string }) => ({
+        id: entry.id,
+        status: entry.status,
+      })),
+    ).toEqual([
       { id: 'pass-check', status: 'pass' },
       { id: 'fail-check', status: 'fail' },
       { id: 'stale-check', status: 'stale' },
@@ -232,9 +247,8 @@ describe('quality lane tooling', () => {
   });
 
   it('ratchets the large-file budget against the checked-in baseline', async () => {
-    const { loadLargeFileBudgetBaseline, evaluateLargeFileBudget } = await import(
-      '../../tools/quality/large-file-budget.mjs'
-    );
+    const { loadLargeFileBudgetBaseline, evaluateLargeFileBudget } =
+      await import('../../tools/quality/large-file-budget.mjs');
 
     const baseline = await loadLargeFileBudgetBaseline();
     const report = evaluateLargeFileBudget({

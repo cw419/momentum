@@ -65,9 +65,9 @@ describe('serialization/primitives', () => {
       Date,
     );
     expect(parseDateOrUndefined('bad')).toBeUndefined();
-    expect(parseTruthyDateOrUndefined('2026-03-08T00:00:00.000Z')).toBeInstanceOf(
-      Date,
-    );
+    expect(
+      parseTruthyDateOrUndefined('2026-03-08T00:00:00.000Z'),
+    ).toBeInstanceOf(Date);
     expect(parseTruthyDateOrUndefined(0)).toBeUndefined();
     expect(parseTruthyDateOrNow('bad')).toBeInstanceOf(Date);
   });
@@ -80,9 +80,9 @@ describe('serialization/primitives', () => {
     expect(sanitizeBool(undefined, true)).toBe(true);
     expect(sanitizeBool(false, true)).toBe(false);
     expect(sanitizeStringArray(['a', 2, null])).toEqual(['a']);
-    expect(
-      sanitizeIsoDate(new Date('2026-03-08T00:00:00.000Z')),
-    ).toBe('2026-03-08T00:00:00.000Z');
+    expect(sanitizeIsoDate(new Date('2026-03-08T00:00:00.000Z'))).toBe(
+      '2026-03-08T00:00:00.000Z',
+    );
     expect(sanitizeIsoDate('bad')).toBeNull();
   });
 });

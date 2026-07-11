@@ -14,7 +14,8 @@ import type {
 } from './ports';
 
 export interface MomentumStorage
-  extends ChainStore,
+  extends
+    ChainStore,
     SessionStore,
     HistoryStore,
     RsipStore,

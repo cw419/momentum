@@ -210,7 +210,9 @@ export function AppShellView({
                 onStartChain={dashboard.handleStartChain}
                 onScheduleChain={dashboard.handleScheduleChain}
                 onViewChainDetail={dashboard.handleViewChainDetail}
-                onCancelScheduledSession={dashboard.handleCancelScheduledSession}
+                onCancelScheduledSession={
+                  dashboard.handleCancelScheduledSession
+                }
                 onCompleteBooking={dashboard.handleCompleteBooking}
                 onDeleteChain={dashboard.handleDeleteChain}
                 onImportChains={dashboard.handleImportChains}

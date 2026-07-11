@@ -1,5 +1,8 @@
 import type { ActiveSession } from '../../../types';
-import { decodeActiveSession, decodeScheduledSession } from '../../../serialization';
+import {
+  decodeActiveSession,
+  decodeScheduledSession,
+} from '../../../serialization';
 
 type ScheduledSessionRowLike = {
   chain_id: string;
@@ -20,9 +23,7 @@ type ActiveSessionRowLike = {
   forward_elapsed_time?: number | null;
 };
 
-export function mapScheduledSessionRow(
-  row: ScheduledSessionRowLike,
-) {
+export function mapScheduledSessionRow(row: ScheduledSessionRowLike) {
   return decodeScheduledSession({
     chainId: row.chain_id,
     scheduledAt: row.scheduled_at,

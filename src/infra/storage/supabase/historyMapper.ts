@@ -44,9 +44,11 @@ function toSerializedCompletionHistory(
     wasSuccessful: row.was_successful,
     reasonForFailure: row.reason_for_failure,
     actualDuration:
-      'actual_duration' in row ? row.actual_duration ?? undefined : undefined,
+      'actual_duration' in row ? (row.actual_duration ?? undefined) : undefined,
     isForwardTimed:
-      'is_forward_timed' in row ? row.is_forward_timed ?? undefined : undefined,
+      'is_forward_timed' in row
+        ? (row.is_forward_timed ?? undefined)
+        : undefined,
     description: row.description,
     notes: row.notes,
   };

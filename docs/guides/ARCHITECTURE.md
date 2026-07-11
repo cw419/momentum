@@ -51,13 +51,13 @@ graph TD
 
 ### 层级职责
 
-| 层级               | 目录                                  | 职责               | 规则                         |
-| ------------------ | ------------------------------------- | ------------------ | ---------------------------- |
-| **UI**             | `src/components/`, `src/app/`         | 纯展示、用户交互   | 禁止直接访问存储             |
-| **Domain**         | `src/hooks/domains/`, `src/services/` | 业务逻辑、状态管理 | 通过 `useStorage()` 访问数据 |
-| **Infrastructure** | `src/storage/`, `src/infra/`          | 数据持久化         | 实现 `MomentumStorage` 接口  |
-| **Platform**       | `src/utils/platform-adapters/`        | 平台适配           | 检测环境，桥接原生 API       |
-| **Tauri Backend**  | `src-tauri/`                          | 原生功能（Rust）   | 桌面/移动端原生能力          |
+| 层级               | 目录                                  | 职责               | 规则                                           |
+| ------------------ | ------------------------------------- | ------------------ | ---------------------------------------------- |
+| **UI**             | `src/components/`, `src/app/`         | 展示、交互与编排   | View 禁止访问存储；Container 只用公开契约/Hook |
+| **Domain**         | `src/hooks/domains/`, `src/services/` | 业务逻辑、状态管理 | 依赖 `MomentumStorage` 契约                    |
+| **Infrastructure** | `src/storage/`, `src/infra/`          | 数据持久化         | 实现 `MomentumStorage` 接口                    |
+| **Platform**       | `src/utils/platform-adapters/`        | 平台适配           | 检测环境，桥接原生 API                         |
+| **Tauri Backend**  | `src-tauri/`                          | 原生功能（Rust）   | 桌面/移动端原生能力                            |
 
 ---
 
@@ -74,6 +74,12 @@ ChainEditorContainer.tsx ←→ ChainEditorView.tsx
 ```
 
 **目标**：每个文件 < 300 行
+
+容器、控制器和领域 Hook 可以通过 `useStorage()`、`useStorageMode()` 与
+`src/storage/ports.ts` 取得公开存储契约。View 和 section 组件只接收 props；所有
+UI/AppShell 代码都禁止导入 `src/infra/storage/supabase/`、
+`localStorageAdapter` 或其他存储内部模块。`.dependency-cruiser.cjs` 对生产代码执行
+这条边界，测试夹具由测试规则单独治理。
 
 ### 存储抽象
 

@@ -1,8 +1,8 @@
 /**
  * MomentumStorage.contract.test.ts
  *
- * Shared behavioural contract for every MomentumStorage implementation.
- * runStorageContract() runs the same behavioural cases against every adapter
+ * Shared behavior contract for every MomentumStorage implementation.
+ * runStorageContract() runs the same behavior cases against every adapter
  * so regressions surface regardless of which store introduces them.
  *
  * Adapters under test:
@@ -44,8 +44,8 @@ import { createPetState } from '../../test/factories/petStateFactory';
 function makeScheduledSession(chainId: string): ScheduledSession {
   return {
     chainId,
-    scheduledAt:     new Date('2026-01-10T08:00:00.000Z'),
-    expiresAt:       new Date('2026-01-10T09:00:00.000Z'),
+    scheduledAt: new Date('2026-01-10T08:00:00.000Z'),
+    expiresAt: new Date('2026-01-10T09:00:00.000Z'),
     auxiliarySignal: 'put-on-headphones',
   };
 }
@@ -53,9 +53,9 @@ function makeScheduledSession(chainId: string): ScheduledSession {
 function makeActiveSession(chainId: string): ActiveSession {
   return {
     chainId,
-    startedAt:       new Date('2026-01-10T09:00:00.000Z'),
-    duration:        1500,
-    isPaused:        false,
+    startedAt: new Date('2026-01-10T09:00:00.000Z'),
+    duration: 1500,
+    isPaused: false,
     totalPausedTime: 0,
   };
 }
@@ -63,8 +63,8 @@ function makeActiveSession(chainId: string): ActiveSession {
 function makeHistory(chainId: string): CompletionHistory {
   return {
     chainId,
-    completedAt:   new Date('2026-01-10T10:00:00.000Z'),
-    duration:      30,
+    completedAt: new Date('2026-01-10T10:00:00.000Z'),
+    duration: 30,
     wasSuccessful: true,
   };
 }
@@ -72,8 +72,8 @@ function makeHistory(chainId: string): CompletionHistory {
 function makeRsipNode(id: string): RSIPNode {
   return {
     id,
-    title:     'RSIP node ' + id,
-    rule:      'Execute daily',
+    title: 'RSIP node ' + id,
+    rule: 'Execute daily',
     sortOrder: 0,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -88,21 +88,21 @@ function notSupported(message: string) {
 // ---------------------------------------------------------------------------
 
 class InMemoryStorage implements MomentumStorage {
-  readonly kind        = 'local' as const;
+  readonly kind = 'local' as const;
   readonly capabilities = LOCAL_STORAGE_CAPABILITIES;
 
-  private chainMap             = new Map<string, Chain>();
-  private sessionMap           = new Map<string, ScheduledSession>();
+  private chainMap = new Map<string, Chain>();
+  private sessionMap = new Map<string, ScheduledSession>();
   private activeSession: ActiveSession | null = null;
-  private history: CompletionHistory[]        = [];
-  private rsipNodes: RSIPNode[]               = [];
-  private rsipMeta: RSIPMeta                  = {};
-  private rsipGroups: RSIPNodeGroup[]         = [];
+  private history: CompletionHistory[] = [];
+  private rsipNodes: RSIPNode[] = [];
+  private rsipMeta: RSIPMeta = {};
+  private rsipGroups: RSIPNodeGroup[] = [];
   private rsipPolicyLibrary: RSIPLibraryEntry[] = [];
-  private rsipRunHistory: RSIPRunRecord[]       = [];
-  private rsipTaskLinks: RSIPTaskLink[]         = [];
+  private rsipRunHistory: RSIPRunRecord[] = [];
+  private rsipTaskLinks: RSIPTaskLink[] = [];
   private rsipExecutionRecords: RSIPExecutionRecord[] = [];
-  private taskStatsMap         = new Map<string, TaskTimeStats>();
+  private taskStatsMap = new Map<string, TaskTimeStats>();
   private pet: PetState | null = null;
 
   reset(): void {
@@ -164,7 +164,10 @@ class InMemoryStorage implements MomentumStorage {
     const cutoff = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
     let count = 0;
     for (const [id, chain] of this.chainMap) {
-      if (chain.deletedAt instanceof Date && chain.deletedAt.getTime() < cutoff) {
+      if (
+        chain.deletedAt instanceof Date &&
+        chain.deletedAt.getTime() < cutoff
+      ) {
         this.chainMap.delete(id);
         count++;
       }
@@ -215,43 +218,73 @@ class InMemoryStorage implements MomentumStorage {
 
   // RsipStore ------------------------------------------------------------
 
-  async getRSIPNodes(): Promise<RSIPNode[]>         { return [...this.rsipNodes]; }
-  async saveRSIPNodes(n: RSIPNode[]): Promise<void> { this.rsipNodes = [...n]; }
+  async getRSIPNodes(): Promise<RSIPNode[]> {
+    return [...this.rsipNodes];
+  }
+  async saveRSIPNodes(n: RSIPNode[]): Promise<void> {
+    this.rsipNodes = [...n];
+  }
 
   async upsertRSIPNode(node: RSIPNode): Promise<void> {
     const i = this.rsipNodes.findIndex((n) => n.id === node.id);
     if (i >= 0) this.rsipNodes[i] = node;
-    else        this.rsipNodes.push(node);
+    else this.rsipNodes.push(node);
   }
 
   async removeRSIPNodes(ids: string[]): Promise<void> {
     this.rsipNodes = this.rsipNodes.filter((n) => !ids.includes(n.id));
   }
 
-  async getRSIPMeta(): Promise<RSIPMeta>         { return { ...this.rsipMeta }; }
-  async saveRSIPMeta(m: RSIPMeta): Promise<void> { this.rsipMeta = { ...m }; }
+  async getRSIPMeta(): Promise<RSIPMeta> {
+    return { ...this.rsipMeta };
+  }
+  async saveRSIPMeta(m: RSIPMeta): Promise<void> {
+    this.rsipMeta = { ...m };
+  }
 
-  async getRSIPGroups(): Promise<RSIPNodeGroup[]>         { return [...this.rsipGroups]; }
-  async saveRSIPGroups(g: RSIPNodeGroup[]): Promise<void> { this.rsipGroups = [...g]; }
+  async getRSIPGroups(): Promise<RSIPNodeGroup[]> {
+    return [...this.rsipGroups];
+  }
+  async saveRSIPGroups(g: RSIPNodeGroup[]): Promise<void> {
+    this.rsipGroups = [...g];
+  }
 
-  async getRSIPPolicyLibrary(): Promise<RSIPLibraryEntry[]>          { return [...this.rsipPolicyLibrary]; }
-  async saveRSIPPolicyLibrary(e: RSIPLibraryEntry[]): Promise<void>  { this.rsipPolicyLibrary = [...e]; }
+  async getRSIPPolicyLibrary(): Promise<RSIPLibraryEntry[]> {
+    return [...this.rsipPolicyLibrary];
+  }
+  async saveRSIPPolicyLibrary(e: RSIPLibraryEntry[]): Promise<void> {
+    this.rsipPolicyLibrary = [...e];
+  }
 
   async upsertRSIPLibraryEntry(entry: RSIPLibraryEntry): Promise<void> {
     const i = this.rsipPolicyLibrary.findIndex((e) => e.id === entry.id);
     if (i >= 0) this.rsipPolicyLibrary[i] = entry;
-    else        this.rsipPolicyLibrary.push(entry);
+    else this.rsipPolicyLibrary.push(entry);
   }
 
-  async getRSIPRunHistory(): Promise<RSIPRunRecord[]>          { return [...this.rsipRunHistory]; }
-  async saveRSIPRunHistory(r: RSIPRunRecord[]): Promise<void>  { this.rsipRunHistory = [...r]; }
-  async appendRSIPRunRecord(r: RSIPRunRecord): Promise<void>   { this.rsipRunHistory.push(r); }
+  async getRSIPRunHistory(): Promise<RSIPRunRecord[]> {
+    return [...this.rsipRunHistory];
+  }
+  async saveRSIPRunHistory(r: RSIPRunRecord[]): Promise<void> {
+    this.rsipRunHistory = [...r];
+  }
+  async appendRSIPRunRecord(r: RSIPRunRecord): Promise<void> {
+    this.rsipRunHistory.push(r);
+  }
 
-  async getRSIPTaskLinks(): Promise<RSIPTaskLink[]>          { return [...this.rsipTaskLinks]; }
-  async saveRSIPTaskLinks(l: RSIPTaskLink[]): Promise<void>  { this.rsipTaskLinks = [...l]; }
+  async getRSIPTaskLinks(): Promise<RSIPTaskLink[]> {
+    return [...this.rsipTaskLinks];
+  }
+  async saveRSIPTaskLinks(l: RSIPTaskLink[]): Promise<void> {
+    this.rsipTaskLinks = [...l];
+  }
 
-  async getRSIPExecutionRecords(): Promise<RSIPExecutionRecord[]>         { return [...this.rsipExecutionRecords]; }
-  async appendRSIPExecutionRecord(r: RSIPExecutionRecord): Promise<void>  { this.rsipExecutionRecords.push(r); }
+  async getRSIPExecutionRecords(): Promise<RSIPExecutionRecord[]> {
+    return [...this.rsipExecutionRecords];
+  }
+  async appendRSIPExecutionRecord(r: RSIPExecutionRecord): Promise<void> {
+    this.rsipExecutionRecords.push(r);
+  }
 
   // TaskTimeStatsStore ---------------------------------------------------
 
@@ -268,14 +301,17 @@ class InMemoryStorage implements MomentumStorage {
     return this.taskStatsMap.get(chainId)?.lastCompletionTime ?? null;
   }
 
-  async updateTaskTimeStats(chainId: string, actualDuration: number): Promise<void> {
+  async updateTaskTimeStats(
+    chainId: string,
+    actualDuration: number,
+  ): Promise<void> {
     const prev = this.taskStatsMap.get(chainId);
     if (prev) {
       const totalCompletions = prev.totalCompletions + 1;
-      const totalTime        = prev.totalTime + actualDuration;
+      const totalTime = prev.totalTime + actualDuration;
       this.taskStatsMap.set(chainId, {
         ...prev,
-        lastCompletionTime:    actualDuration,
+        lastCompletionTime: actualDuration,
         totalCompletions,
         totalTime,
         averageCompletionTime: totalTime / totalCompletions,
@@ -283,9 +319,9 @@ class InMemoryStorage implements MomentumStorage {
     } else {
       this.taskStatsMap.set(chainId, {
         chainId,
-        lastCompletionTime:    actualDuration,
-        totalCompletions:      1,
-        totalTime:             actualDuration,
+        lastCompletionTime: actualDuration,
+        totalCompletions: 1,
+        totalTime: actualDuration,
         averageCompletionTime: actualDuration,
       });
     }
@@ -302,42 +338,82 @@ class InMemoryStorage implements MomentumStorage {
 
   // AuthGateway — local-mode stubs (same semantics as localStorageAdapter)
 
-  async getCurrentUser()        { return ok(null); }
-  async waitForAuthentication() { return ok({ user: null, isAuthenticated: false }); }
-  async isUserAuthenticated()   { return ok(false); }
-  async signUp()  { return notSupported('Auth not supported in local mode'); }
-  async signIn()  { return notSupported('Auth not supported in local mode'); }
-  async signOut() { return notSupported('Auth not supported in local mode'); }
-  onAuthStateChange() { return ok(() => undefined); }
+  async getCurrentUser() {
+    return ok(null);
+  }
+  async waitForAuthentication() {
+    return ok({ user: null, isAuthenticated: false });
+  }
+  async isUserAuthenticated() {
+    return ok(false);
+  }
+  async signUp() {
+    return notSupported('Auth not supported in local mode');
+  }
+  async signIn() {
+    return notSupported('Auth not supported in local mode');
+  }
+  async signOut() {
+    return notSupported('Auth not supported in local mode');
+  }
+  onAuthStateChange() {
+    return ok(() => undefined);
+  }
 
   // UserSettingsGateway — not supported
 
-  async getGamblingSettings()   { return notSupported('UserSettings not supported'); }
-  async toggleGamblingMode()    { return notSupported('UserSettings not supported'); }
-  async isGamblingModeEnabled() { return ok(false); }
+  async getGamblingSettings() {
+    return notSupported('UserSettings not supported');
+  }
+  async toggleGamblingMode() {
+    return notSupported('UserSettings not supported');
+  }
+  async isGamblingModeEnabled() {
+    return ok(false);
+  }
 
   // BettingGateway — not supported
 
-  async createBettingSession()    { return notSupported('Betting not supported'); }
-  async deleteBettingSession()    { return notSupported('Betting not supported'); }
-  async completeTaskWithBetting() { return notSupported('Betting not supported'); }
-  async placeBet()                { return notSupported('Betting not supported'); }
-  async getUserAvailablePoints()  { return notSupported('Betting not supported'); }
-  async getTodayBetAmount()       { return notSupported('Betting not supported'); }
+  async createBettingSession() {
+    return notSupported('Betting not supported');
+  }
+  async deleteBettingSession() {
+    return notSupported('Betting not supported');
+  }
+  async completeTaskWithBetting() {
+    return notSupported('Betting not supported');
+  }
+  async placeBet() {
+    return notSupported('Betting not supported');
+  }
+  async getUserAvailablePoints() {
+    return notSupported('Betting not supported');
+  }
+  async getTodayBetAmount() {
+    return notSupported('Betting not supported');
+  }
 
   // CheckinGateway — not supported
 
-  async performDailyCheckin() { return notSupported('Checkin not supported'); }
-  async getUserCheckinStats() { return notSupported('Checkin not supported'); }
+  async performDailyCheckin() {
+    return notSupported('Checkin not supported');
+  }
+  async getUserCheckinStats() {
+    return notSupported('Checkin not supported');
+  }
 
   // PetStore
 
-  async getPetState(): Promise<PetState | null>    { return this.pet; }
-  async savePetState(pet: PetState): Promise<void> { this.pet = pet; }
+  async getPetState(): Promise<PetState | null> {
+    return this.pet;
+  }
+  async savePetState(pet: PetState): Promise<void> {
+    this.pet = pet;
+  }
 }
 
 // ---------------------------------------------------------------------------
-// runStorageContract — shared behavioural contract
+// runStorageContract — shared behavior contract
 // ---------------------------------------------------------------------------
 
 function runStorageContract(
@@ -405,7 +481,10 @@ function runStorageContract(
       it('getActiveChains excludes soft-deleted chains', async () => {
         await storage.saveChains([
           createUnitChain({ id: 'active' }),
-          createUnitChain({ id: 'deleted', deletedAt: new Date('2025-01-01T00:00:00.000Z') }),
+          createUnitChain({
+            id: 'deleted',
+            deletedAt: new Date('2025-01-01T00:00:00.000Z'),
+          }),
         ]);
         const active = await storage.getActiveChains();
         expect(active).toHaveLength(1);
@@ -416,7 +495,7 @@ function runStorageContract(
         await storage.saveChains([createUnitChain({ id: 'target' })]);
         await storage.softDeleteChain('target');
 
-        const active  = await storage.getActiveChains();
+        const active = await storage.getActiveChains();
         const deleted = await storage.getDeletedChains();
 
         expect(active).toHaveLength(0);
@@ -430,7 +509,7 @@ function runStorageContract(
         await storage.softDeleteChain('target');
         await storage.restoreChain('target');
 
-        const active  = await storage.getActiveChains();
+        const active = await storage.getActiveChains();
         const deleted = await storage.getDeletedChains();
 
         expect(active).toHaveLength(1);
@@ -447,11 +526,11 @@ function runStorageContract(
       });
 
       it('cleanupExpiredDeletedChains removes only chains deleted before cutoff', async () => {
-        const old    = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days ago
-        const recent = new Date(Date.now() - 5  * 24 * 60 * 60 * 1000); // 5 days ago
+        const old = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days ago
+        const recent = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
 
         await storage.saveChains([
-          createUnitChain({ id: 'old-del',    deletedAt: old }),
+          createUnitChain({ id: 'old-del', deletedAt: old }),
           createUnitChain({ id: 'recent-del', deletedAt: recent }),
           createUnitChain({ id: 'active' }),
         ]);
@@ -488,9 +567,12 @@ function runStorageContract(
         expect(all[0].auxiliarySignal).toBe('put-on-headphones');
       });
 
-      it('setScheduledSession upserts — same chainId does not create duplicates', async () => {
-        const first  = makeScheduledSession('chain-1');
-        const second = { ...makeScheduledSession('chain-1'), auxiliarySignal: 'ring-bell' };
+      it('setScheduledSession inserts or updates — same chainId does not create duplicates', async () => {
+        const first = makeScheduledSession('chain-1');
+        const second = {
+          ...makeScheduledSession('chain-1'),
+          auxiliarySignal: 'ring-bell',
+        };
 
         await storage.setScheduledSession(first);
         await storage.setScheduledSession(second);
@@ -571,12 +653,19 @@ function runStorageContract(
 
         const all = await storage.getCompletionHistory();
         expect(all).toHaveLength(3);
-        expect(all.map((r) => r.chainId)).toEqual(['c-first', 'c-second', 'c-third']);
+        expect(all.map((r) => r.chainId)).toEqual([
+          'c-first',
+          'c-second',
+          'c-third',
+        ]);
       });
 
       it('saveCompletionHistory replaces all existing records', async () => {
         await storage.appendCompletionHistory(makeHistory('old'));
-        await storage.saveCompletionHistory([makeHistory('new-1'), makeHistory('new-2')]);
+        await storage.saveCompletionHistory([
+          makeHistory('new-1'),
+          makeHistory('new-2'),
+        ]);
 
         const all = await storage.getCompletionHistory();
         expect(all).toHaveLength(2);
@@ -601,7 +690,9 @@ function runStorageContract(
       });
 
       it('getLastCompletionTime returns null when no stats exist', async () => {
-        await expect(storage.getLastCompletionTime('unknown')).resolves.toBeNull();
+        await expect(
+          storage.getLastCompletionTime('unknown'),
+        ).resolves.toBeNull();
       });
 
       it('getTaskAverageTime returns null when no stats exist', async () => {
@@ -611,7 +702,9 @@ function runStorageContract(
       it('updateTaskTimeStats creates stats for new chainId', async () => {
         await storage.updateTaskTimeStats('chain-1', 60);
 
-        await expect(storage.getLastCompletionTime('chain-1')).resolves.toBe(60);
+        await expect(storage.getLastCompletionTime('chain-1')).resolves.toBe(
+          60,
+        );
         await expect(storage.getTaskAverageTime('chain-1')).resolves.toBe(60);
 
         const all = await storage.getTaskTimeStats();
@@ -622,7 +715,9 @@ function runStorageContract(
         await storage.updateTaskTimeStats('chain-1', 40);
         await storage.updateTaskTimeStats('chain-1', 80);
 
-        await expect(storage.getLastCompletionTime('chain-1')).resolves.toBe(80);
+        await expect(storage.getLastCompletionTime('chain-1')).resolves.toBe(
+          80,
+        );
         await expect(storage.getTaskAverageTime('chain-1')).resolves.toBe(60);
       });
 
@@ -660,8 +755,12 @@ function runStorageContract(
       });
 
       it('savePetState overwrites the previous state', async () => {
-        await storage.savePetState(createPetState({ id: 'pet-1', name: 'Old' }));
-        await storage.savePetState(createPetState({ id: 'pet-1', name: 'New' }));
+        await storage.savePetState(
+          createPetState({ id: 'pet-1', name: 'Old' }),
+        );
+        await storage.savePetState(
+          createPetState({ id: 'pet-1', name: 'New' }),
+        );
 
         const loaded = await storage.getPetState();
         expect(loaded?.name).toBe('New');
@@ -697,7 +796,10 @@ function runStorageContract(
 
       it('upsertRSIPNode updates an existing node', async () => {
         await storage.upsertRSIPNode(makeRsipNode('n-1'));
-        await storage.upsertRSIPNode({ ...makeRsipNode('n-1'), title: 'Updated' });
+        await storage.upsertRSIPNode({
+          ...makeRsipNode('n-1'),
+          title: 'Updated',
+        });
 
         const all = await storage.getRSIPNodes();
         expect(all).toHaveLength(1);
@@ -705,7 +807,11 @@ function runStorageContract(
       });
 
       it('removeRSIPNodes removes the specified nodes', async () => {
-        await storage.saveRSIPNodes([makeRsipNode('n-1'), makeRsipNode('n-2'), makeRsipNode('n-3')]);
+        await storage.saveRSIPNodes([
+          makeRsipNode('n-1'),
+          makeRsipNode('n-2'),
+          makeRsipNode('n-3'),
+        ]);
         await storage.removeRSIPNodes(['n-1', 'n-3']);
 
         const all = await storage.getRSIPNodes();

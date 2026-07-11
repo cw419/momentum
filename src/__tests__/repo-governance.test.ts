@@ -1,4 +1,11 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import {
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -22,6 +29,12 @@ const EXCEPTION_RULE_MIGRATION_PATH = path.join(
   'src',
   'services',
   'ExceptionRuleMigration.ts',
+);
+const ARCHITECTURE_VIOLATION_FIXTURE_PATH = path.join(
+  REPO_ROOT,
+  'src',
+  'components',
+  '__architecture_violation_fixture__.ts',
 );
 
 const COMPATIBILITY_FACADE_ALLOWLIST = [
@@ -58,29 +71,32 @@ function extractNpmRunCommands(workflow: string): string[] {
 
 function detectCompatibilityFacades(): string[] {
   const roots = ['src/components', 'src/services'];
-  return [...new Set(
-    roots
-      .flatMap((root) => {
-        const absoluteRoot = path.join(REPO_ROOT, root);
-        return readdirSync(absoluteRoot).map((entry) =>
-          path.join(absoluteRoot, entry),
-        );
-      })
-      .filter((absolutePath) => statSync(absolutePath).isFile())
-      .map((absolutePath) => {
-        const content = readFile(absolutePath);
-        return {
-          content,
-          relPath: normalizePath(path.relative(REPO_ROOT, absolutePath)),
-        };
-      })
-      .filter(
-        ({ content }) =>
-          COMPATIBILITY_FACADE_PATTERNS.some((pattern) => pattern.test(content)) &&
-          /export\s+.*from\s+['"][.]{1,2}\//.test(content),
-      )
-      .map(({ relPath }) => relPath),
-  )].sort();
+  return [
+    ...new Set(
+      roots
+        .flatMap((root) => {
+          const absoluteRoot = path.join(REPO_ROOT, root);
+          return readdirSync(absoluteRoot).map((entry) =>
+            path.join(absoluteRoot, entry),
+          );
+        })
+        .filter((absolutePath) => statSync(absolutePath).isFile())
+        .map((absolutePath) => {
+          const content = readFile(absolutePath);
+          return {
+            content,
+            relPath: normalizePath(path.relative(REPO_ROOT, absolutePath)),
+          };
+        })
+        .filter(
+          ({ content }) =>
+            COMPATIBILITY_FACADE_PATTERNS.some((pattern) =>
+              pattern.test(content),
+            ) && /export\s+.*from\s+['"][.]{1,2}\//.test(content),
+        )
+        .map(({ relPath }) => relPath),
+    ),
+  ].sort();
 }
 
 describe('repo governance', () => {
@@ -94,10 +110,46 @@ describe('repo governance', () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.scripts['quality:ci:required']).toEqual(expect.any(String));
+    expect(packageJson.scripts['quality:ci:required']).toEqual(
+      expect.any(String),
+    );
     expect(packageJson.scripts['quality:ci:info']).toEqual(expect.any(String));
-    expect(packageJson.scripts['quality:ci:nightly']).toEqual(expect.any(String));
+    expect(packageJson.scripts['quality:ci:nightly']).toEqual(
+      expect.any(String),
+    );
   });
+
+  it('fails the architecture gate when UI imports Supabase infrastructure', () => {
+    const packageJson = JSON.parse(readFile(PACKAGE_JSON_PATH)) as {
+      scripts: Record<string, string>;
+    };
+
+    expect(packageJson.scripts['quality:arch-gate']).toMatch(
+      /--output-type\s+err(?:\s|$)/,
+    );
+
+    writeFileSync(
+      ARCHITECTURE_VIOLATION_FIXTURE_PATH,
+      "import '../infra/storage/supabase/SupabaseStorage';\n",
+      'utf8',
+    );
+
+    try {
+      const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+      const result = spawnSync(npmCommand, ['run', 'quality:arch-gate'], {
+        cwd: REPO_ROOT,
+        encoding: 'utf8',
+        shell: process.platform === 'win32',
+      });
+      const output = `${result.stdout}${result.stderr}`;
+
+      expect(result.status).not.toBe(0);
+      expect(output).toContain('no-component-to-supabase-infra');
+      expect(output).toContain('__architecture_violation_fixture__.ts');
+    } finally {
+      rmSync(ARCHITECTURE_VIOLATION_FIXTURE_PATH, { force: true });
+    }
+  }, 15_000);
 
   it('codeql workflow uses the security-extended query suite', () => {
     const workflow = readFile(CODEQL_WORKFLOW_PATH);

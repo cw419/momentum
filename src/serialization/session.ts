@@ -37,7 +37,9 @@ export function decodeScheduledSession(
   };
 }
 
-export function decodeActiveSession(raw: SerializedActiveSession): ActiveSession {
+export function decodeActiveSession(
+  raw: SerializedActiveSession,
+): ActiveSession {
   return {
     id: raw.id,
     chainId: raw.chainId,

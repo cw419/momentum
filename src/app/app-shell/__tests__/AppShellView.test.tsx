@@ -230,7 +230,9 @@ describe('AppShellView', () => {
   });
 
   it('renders initialization screen when app is not initialized', () => {
-    render(<AppShellView {...createProps({ app: { isInitialized: false } })} />);
+    render(
+      <AppShellView {...createProps({ app: { isInitialized: false } })} />,
+    );
     expect(screen.getByText('INITIALIZING APPLICATION')).toBeInTheDocument();
   });
 

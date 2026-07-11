@@ -305,7 +305,10 @@ describe('useChainsDomain', () => {
   it('should create a new chain and persist via safelySaveChains', async () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('new-chain-id');
     const existing = createUnitChain({ id: 'existing-1', name: 'Existing' });
-    const anotherActive = createUnitChain({ id: 'existing-2', name: 'Existing 2' });
+    const anotherActive = createUnitChain({
+      id: 'existing-2',
+      name: 'Existing 2',
+    });
     const deleted = createUnitChain({
       id: 'deleted-1',
       name: 'Deleted',
@@ -923,7 +926,9 @@ describe('useChainsDomain', () => {
       );
     });
 
-    expect(toast.error).toHaveBeenCalledWith('保存失败，请重试（详情见控制台）');
+    expect(toast.error).toHaveBeenCalledWith(
+      '保存失败，请重试（详情见控制台）',
+    );
     expect(logger.error).toHaveBeenNthCalledWith(
       2,
       'CHAINS',

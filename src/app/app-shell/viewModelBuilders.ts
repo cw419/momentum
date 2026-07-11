@@ -169,9 +169,9 @@ export function buildDashboardViewModel(
   const viewingChain = findChainById(inputs.chains, inputs.viewingChainId);
   const viewingGroupNode =
     inputs.currentView === 'group' && inputs.viewingChainId
-      ? queryOptimizer
+      ? (queryOptimizer
           .memoizedBuildChainTree(inputs.chains, inputs.chainsRevision)
-          .find((node) => node.id === inputs.viewingChainId) ?? null
+          .find((node) => node.id === inputs.viewingChainId) ?? null)
       : null;
 
   return {
@@ -236,7 +236,10 @@ export function buildRsipViewModel(
 export function buildSessionViewModel(
   inputs: BuildSessionViewModelInputs,
 ): AppShellSessionViewModel {
-  const activeChain = findChainById(inputs.chains, inputs.activeSession?.chainId);
+  const activeChain = findChainById(
+    inputs.chains,
+    inputs.activeSession?.chainId,
+  );
   const auxiliaryJudgmentChain = findChainById(
     inputs.chains,
     inputs.showAuxiliaryJudgment,

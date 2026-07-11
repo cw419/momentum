@@ -11,8 +11,7 @@ module.exports = {
     },
     {
       name: 'no-storage-to-domain-hooks',
-      comment:
-        'Storage implementations must not import React domain hooks.',
+      comment: 'Storage implementations must not import React domain hooks.',
       severity: 'error',
       from: { path: '^src/(storage|infra)/' },
       to: { path: '^src/hooks/domains/' },
@@ -26,23 +25,40 @@ module.exports = {
       to: { path: '^src/infra/storage/supabase/' },
     },
     {
-      name: 'no-component-direct-storage',
+      name: 'no-component-storage-implementation',
       comment:
-        'UI components must go through domain hooks — never import the storage adapter directly.',
+        'UI may use public storage ports and context hooks, but never concrete adapters or storage internals.',
       severity: 'error',
       from: { path: '^src/components/' },
-      to: { path: '^src/storage/' },
+      to: {
+        path: '^src/storage/',
+        pathNot: '^src/storage/(ports|useStorage|useStorageMode)[.](?:ts|tsx)$',
+      },
     },
     {
-      name: 'no-app-to-storage',
+      name: 'no-app-to-supabase-infra',
       comment:
-        'AppShell must use domain hooks, not bypass them by importing storage or infra directly.',
+        'Application coordinators must use the storage abstraction, never Supabase infrastructure.',
       severity: 'error',
       from: { path: '^src/app/' },
-      to: { path: '^src/(storage|infra)/' },
+      to: { path: '^src/infra/storage/supabase/' },
+    },
+    {
+      name: 'no-app-storage-implementation',
+      comment:
+        'Application coordinators may use public storage ports and context hooks, but never concrete adapters or storage internals.',
+      severity: 'error',
+      from: { path: '^src/app/' },
+      to: {
+        path: '^src/storage/',
+        pathNot: '^src/storage/(ports|useStorage|useStorageMode)[.](?:ts|tsx)$',
+      },
     },
   ],
   options: {
+    exclude: {
+      path: ['(^|/)__tests__/', '[.](?:spec|test)[.](?:js|jsx|ts|tsx)$'],
+    },
     doNotFollow: {
       path: 'node_modules',
     },

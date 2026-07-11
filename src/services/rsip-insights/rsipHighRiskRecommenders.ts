@@ -3,7 +3,7 @@ import type {
   RSIPInsightsLocale,
   RSIPRecommendation,
 } from './rsipInsightsTypes';
-import { joinList, localize } from './rsipRecommender';
+import { joinList, localize } from './rsipLocalization';
 
 function fallbackAlternative(
   nodeTitle: string,

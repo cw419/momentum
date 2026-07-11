@@ -1,9 +1,7 @@
 import type { AppState } from '../../types';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
-import {
-  rsipTaskIntegrationService,
-} from '../../services/rsip-integration/RSIPTaskIntegrationService';
+import { rsipTaskIntegrationService } from '../../services/rsip-integration/RSIPTaskIntegrationService';
 import { ensureDate } from './rsip/helpers';
 import { createGroupOperations } from './rsip/groupOperations';
 import { createLibraryOperations } from './rsip/libraryOperations';
@@ -173,11 +171,7 @@ export function useRsipDomain({
     try {
       await storage.removeRSIPNodes(nodeIds);
     } catch (error) {
-      logPersistenceError(
-        'Failed to remove RSIP nodes',
-        { nodeIds },
-        error,
-      );
+      logPersistenceError('Failed to remove RSIP nodes', { nodeIds }, error);
     }
   };
 

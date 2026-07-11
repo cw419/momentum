@@ -98,7 +98,11 @@ export function useRSIPViewCreationActions({
       ) ?? undefined;
 
     if (onCreateGroup) {
-      const group = await onCreateGroup(titleInput.trim(), faultTolerance, emoji);
+      const group = await onCreateGroup(
+        titleInput.trim(),
+        faultTolerance,
+        emoji,
+      );
       setSelectedGroupId(group.id);
       return;
     }

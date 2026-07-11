@@ -15,7 +15,9 @@ export function getPetState(): PetState | null {
     createdAt: parseTruthyDateOrNow(serialized.createdAt),
     lastFedAt: parseTruthyDateOrNow(serialized.lastFedAt),
     lastInteractedAt: parseTruthyDateOrNow(serialized.lastInteractedAt),
-    lastDecayCalculatedAt: parseTruthyDateOrNow(serialized.lastDecayCalculatedAt),
+    lastDecayCalculatedAt: parseTruthyDateOrNow(
+      serialized.lastDecayCalculatedAt,
+    ),
   };
 }
 

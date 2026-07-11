@@ -10,7 +10,11 @@ import path, { extname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const DEFAULT_SOURCE_ROOT = 'src';
-const DEFAULT_REPORT_PATH = join('reports', 'quality', 'large-file-budget.json');
+const DEFAULT_REPORT_PATH = join(
+  'reports',
+  'quality',
+  'large-file-budget.json',
+);
 const DEFAULT_BASELINE_PATH = join(
   'tools',
   'quality',
@@ -113,7 +117,10 @@ export function collectLargeFiles({
   const resolvedRepoRoot = path.resolve(repoRoot);
   const resolvedSourceRoot = path.resolve(resolvedRepoRoot, sourceRoot);
 
-  if (!existsSync(resolvedSourceRoot) || !statSync(resolvedSourceRoot).isDirectory()) {
+  if (
+    !existsSync(resolvedSourceRoot) ||
+    !statSync(resolvedSourceRoot).isDirectory()
+  ) {
     throw new Error(`Source directory "${resolvedSourceRoot}" not found.`);
   }
 
@@ -182,8 +189,12 @@ export function evaluateLargeFileBudget({
   const baselineMap = new Map(
     baseline.offenders.map((entry) => [entry.file, entry.lines]),
   );
-  const currentMap = new Map(offenders.map((entry) => [entry.file, entry.lines]));
-  const newOffenders = offenders.filter((entry) => !baselineMap.has(entry.file));
+  const currentMap = new Map(
+    offenders.map((entry) => [entry.file, entry.lines]),
+  );
+  const newOffenders = offenders.filter(
+    (entry) => !baselineMap.has(entry.file),
+  );
   const grownOffenders = offenders
     .filter((entry) => {
       const baselineLines = baselineMap.get(entry.file);
@@ -224,7 +235,11 @@ export function evaluateLargeFileBudget({
 
 function writeBudgetReport(reportPath, report) {
   mkdirSync(path.dirname(reportPath), { recursive: true });
-  writeFileSync(`${reportPath}`, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  writeFileSync(
+    `${reportPath}`,
+    `${JSON.stringify(report, null, 2)}\n`,
+    'utf8',
+  );
 }
 
 function logRatchetFailure(report) {
@@ -314,7 +329,9 @@ export function runLargeFileBudget({
   const report = {
     generatedAt: new Date().toISOString(),
     sourceRoot:
-      normalizePath(path.basename(path.resolve(resolvedRepoRoot, sourceRoot))) || 'src',
+      normalizePath(
+        path.basename(path.resolve(resolvedRepoRoot, sourceRoot)),
+      ) || 'src',
     ...evaluation,
   };
 

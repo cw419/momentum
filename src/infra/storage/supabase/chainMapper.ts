@@ -1,6 +1,13 @@
 import type { Chain, ChainType } from '../../../types';
 import type { Database, Json } from '../../../lib/database.types';
-import { decodeChain, sanitizeBool, sanitizeInt, sanitizeIsoDate, sanitizeString, sanitizeStringArray } from '../../../serialization';
+import {
+  decodeChain,
+  sanitizeBool,
+  sanitizeInt,
+  sanitizeIsoDate,
+  sanitizeString,
+  sanitizeStringArray,
+} from '../../../serialization';
 import { logger } from '../../../utils/logger';
 import { chainRowSchema } from './chains/chainRowSchema';
 
@@ -16,7 +23,9 @@ export function mapChainRowToChain(row: ChainRow): Chain {
   if (!parseResult.success) {
     logger.warn('CHAIN_MAPPER', 'Chain row failed schema validation', {
       chainId: typeof row?.id === 'string' ? row.id : undefined,
-      issues: parseResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+      issues: parseResult.error.issues.map(
+        (i) => `${i.path.join('.')}: ${i.message}`,
+      ),
     });
   }
 

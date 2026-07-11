@@ -1,7 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { QUALITY_LANES, getLaneChecks, getLaneConfig } from './lanes.config.mjs';
+import {
+  QUALITY_LANES,
+  getLaneChecks,
+  getLaneConfig,
+} from './lanes.config.mjs';
 
 function normalizePath(filePath) {
   return filePath.replace(/\\/g, '/');
@@ -167,7 +171,9 @@ export async function runLane({
   const resolvedRepoRoot = path.resolve(repoRoot);
   const resolvedSummaryJsonPath = path.resolve(
     resolvedRepoRoot,
-    summaryJsonPath ?? laneConfig?.summaryJsonPath ?? 'reports/quality/summary.json',
+    summaryJsonPath ??
+      laneConfig?.summaryJsonPath ??
+      'reports/quality/summary.json',
   );
   const resolvedSummaryMarkdownPath = path.resolve(
     resolvedRepoRoot,
@@ -190,7 +196,9 @@ export async function runLane({
       path.resolve(resolvedRepoRoot, reportPath),
     );
 
-    await Promise.all(resolvedReports.map((reportPath) => removeOutput(reportPath)));
+    await Promise.all(
+      resolvedReports.map((reportPath) => removeOutput(reportPath)),
+    );
 
     const execution = await executeCheck(check, {
       repoRoot: resolvedRepoRoot,
@@ -221,7 +229,9 @@ export async function runLane({
     if (execution.stderr) process.stderr.write(execution.stderr);
 
     const reportFreshness = await Promise.all(
-      resolvedReports.map((reportPath) => readFreshness(reportPath, checkStartMs)),
+      resolvedReports.map((reportPath) =>
+        readFreshness(reportPath, checkStartMs),
+      ),
     );
     const status = getResultStatus(execution, reportFreshness);
 
@@ -255,7 +265,10 @@ export async function runLane({
   };
 
   await Promise.all([
-    writeTextFile(resolvedSummaryJsonPath, `${JSON.stringify(summary, null, 2)}\n`),
+    writeTextFile(
+      resolvedSummaryJsonPath,
+      `${JSON.stringify(summary, null, 2)}\n`,
+    ),
     writeTextFile(resolvedSummaryMarkdownPath, renderSummaryMarkdown(summary)),
   ]);
 

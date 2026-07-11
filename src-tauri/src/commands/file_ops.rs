@@ -17,8 +17,7 @@ pub async fn save_file(
     match path {
         Some(file_path) => {
             let pb = PathBuf::from(file_path.to_string());
-            std::fs::write(&pb, data.as_bytes())
-                .map_err(|e| e.to_string())?;
+            std::fs::write(&pb, data.as_bytes()).map_err(|e| e.to_string())?;
             Ok(true)
         }
         None => Ok(false),
@@ -41,8 +40,7 @@ pub async fn open_file(
     match path {
         Some(file_path) => {
             let pb = PathBuf::from(file_path.to_string());
-            let content = std::fs::read_to_string(&pb)
-                .map_err(|e| e.to_string())?;
+            let content = std::fs::read_to_string(&pb).map_err(|e| e.to_string())?;
             Ok(Some(content))
         }
         None => Ok(None),

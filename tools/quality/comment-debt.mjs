@@ -107,7 +107,10 @@ function stripLineComment(rawLine) {
 }
 
 function isIgnoredComment(rawLine, text) {
-  return rawLine.startsWith('///') || IGNORED_COMMENT_PATTERNS.some((pattern) => pattern.test(text));
+  return (
+    rawLine.startsWith('///') ||
+    IGNORED_COMMENT_PATTERNS.some((pattern) => pattern.test(text))
+  );
 }
 
 function isHardComment(text) {
@@ -128,7 +131,10 @@ export function collectCommentDebt({
   const resolvedRepoRoot = path.resolve(repoRoot);
   const resolvedSourceRoot = path.resolve(resolvedRepoRoot, sourceRoot);
 
-  if (!existsSync(resolvedSourceRoot) || !statSync(resolvedSourceRoot).isDirectory()) {
+  if (
+    !existsSync(resolvedSourceRoot) ||
+    !statSync(resolvedSourceRoot).isDirectory()
+  ) {
     throw new Error(`Source directory "${resolvedSourceRoot}" not found.`);
   }
 
@@ -168,14 +174,18 @@ export function collectCommentDebt({
   return {
     hardViolations,
     hardViolationCount: hardViolations.length,
-    softCommentLineCount: files.reduce((total, entry) => total + entry.count, 0),
+    softCommentLineCount: files.reduce(
+      (total, entry) => total + entry.count,
+      0,
+    ),
     files,
   };
 }
 
 export function loadCommentDebtBaseline({
   repoRoot = process.cwd(),
-  baselinePath = process.env.COMMENT_DEBT_BASELINE_PATH ?? DEFAULT_BASELINE_PATH,
+  baselinePath = process.env.COMMENT_DEBT_BASELINE_PATH ??
+    DEFAULT_BASELINE_PATH,
 } = {}) {
   const resolvedRepoRoot = path.resolve(repoRoot);
   const resolvedBaselinePath = path.resolve(resolvedRepoRoot, baselinePath);
@@ -193,7 +203,11 @@ export function loadCommentDebtBaseline({
   };
 }
 
-export function evaluateCommentDebtBudget({ softCommentLineCount, files, baseline }) {
+export function evaluateCommentDebtBudget({
+  softCommentLineCount,
+  files,
+  baseline,
+}) {
   if (!baseline) {
     return {
       mode: 'absolute',
@@ -264,7 +278,8 @@ export function runCommentDebt({
   repoRoot = process.cwd(),
   sourceRoot = process.env.COMMENT_DEBT_SOURCE_ROOT ?? DEFAULT_SOURCE_ROOT,
   reportPath = DEFAULT_REPORT_PATH,
-  baselinePath = process.env.COMMENT_DEBT_BASELINE_PATH ?? DEFAULT_BASELINE_PATH,
+  baselinePath = process.env.COMMENT_DEBT_BASELINE_PATH ??
+    DEFAULT_BASELINE_PATH,
 } = {}) {
   const resolvedRepoRoot = path.resolve(repoRoot);
   const resolvedReportPath = path.resolve(resolvedRepoRoot, reportPath);
@@ -283,7 +298,10 @@ export function runCommentDebt({
   });
   const report = {
     generatedAt: new Date().toISOString(),
-    sourceRoot: toDisplayPath(resolvedRepoRoot, path.resolve(resolvedRepoRoot, sourceRoot)),
+    sourceRoot: toDisplayPath(
+      resolvedRepoRoot,
+      path.resolve(resolvedRepoRoot, sourceRoot),
+    ),
     ...snapshot,
     softBudget,
   };

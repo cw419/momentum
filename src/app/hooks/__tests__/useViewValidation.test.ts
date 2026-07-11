@@ -56,7 +56,11 @@ describe('useViewValidation', () => {
     });
 
     renderHook(() =>
-      useViewValidation({ chains: [], activeSession: null, isInitialized: true }),
+      useViewValidation({
+        chains: [],
+        activeSession: null,
+        isInitialized: true,
+      }),
     );
 
     expect(navigationStore.getState().currentView).toBe('dashboard');

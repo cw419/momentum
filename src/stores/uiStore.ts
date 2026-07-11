@@ -3,10 +3,7 @@ import {
   createInitialNavigationState,
   selectBettingModal,
 } from './navigationStore';
-import type {
-  NavigationStore,
-  NavigationStoreApi,
-} from './navigationStore';
+import type { NavigationStore, NavigationStoreApi } from './navigationStore';
 
 type UIStore = NavigationStore & { resetAllUI: () => void };
 type UIStoreApi = Omit<NavigationStoreApi, 'getState'> & {

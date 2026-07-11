@@ -89,13 +89,17 @@ function getCommonChainFields(raw: SerializedChainBase) {
     minimumDuration: toOptionalNumber(raw.minimumDuration),
     taskRepeatCount: toOptionalNumber(raw.taskRepeatCount),
     deletedAt:
-      raw.deletedAt == null ? null : (parseDateOrUndefined(raw.deletedAt) ?? null),
+      raw.deletedAt == null
+        ? null
+        : (parseDateOrUndefined(raw.deletedAt) ?? null),
     createdAt: parseTruthyDateOrNow(raw.createdAt),
     lastCompletedAt: parseDateOrUndefined(raw.lastCompletedAt),
   };
 }
 
-function getUnitChainType(type: ChainType | null | undefined): UnitChain['type'] {
+function getUnitChainType(
+  type: ChainType | null | undefined,
+): UnitChain['type'] {
   return type != null && UNIT_CHAIN_TYPES.has(type)
     ? (type as UnitChain['type'])
     : 'unit';
@@ -111,7 +115,8 @@ export function decodeChain(raw: SerializedChain): Chain {
       timeLimitHours: toOptionalNumber(raw.timeLimitHours),
       groupStartedAt: parseDateOrUndefined(raw.groupStartedAt),
       groupExpiresAt: parseDateOrUndefined(raw.groupExpiresAt),
-      isTaskGroup: raw.isTaskGroup == null ? undefined : Boolean(raw.isTaskGroup),
+      isTaskGroup:
+        raw.isTaskGroup == null ? undefined : Boolean(raw.isTaskGroup),
       groupRepeatCount: toOptionalNumber(raw.groupRepeatCount),
     } satisfies GroupChain;
     return result;

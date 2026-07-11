@@ -16,11 +16,7 @@ vi.mock('../RSIPModeSwitch', () => ({
 }));
 
 vi.mock('../RSIPDailyReminder', () => ({
-  RSIPDailyReminder: ({
-    onRecordOpened,
-  }: {
-    onRecordOpened: () => void;
-  }) => (
+  RSIPDailyReminder: ({ onRecordOpened }: { onRecordOpened: () => void }) => (
     <button type="button" onClick={onRecordOpened}>
       daily-reminder
     </button>
@@ -47,11 +43,7 @@ vi.mock('../RSIPForm', () => ({
 }));
 
 vi.mock('../RSIPSplitModeSection', () => ({
-  RSIPSplitModeSection: ({
-    onAddSplitRow,
-  }: {
-    onAddSplitRow: () => void;
-  }) => (
+  RSIPSplitModeSection: ({ onAddSplitRow }: { onAddSplitRow: () => void }) => (
     <button type="button" onClick={onAddSplitRow}>
       split-section
     </button>
@@ -205,7 +197,11 @@ describe('RSIPTreeTab', () => {
       expect.objectContaining({ id: 'node-1' }),
     );
     expect(model.handleMarkExecuted).toHaveBeenCalledWith('node-1');
-    expect(model.onReinforceNode).toHaveBeenCalledWith('node-1', model.nodes, 1);
+    expect(model.onReinforceNode).toHaveBeenCalledWith(
+      'node-1',
+      model.nodes,
+      1,
+    );
     expect(model.handleTaskLinkUpsert).toHaveBeenCalledWith([]);
   });
 });

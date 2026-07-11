@@ -1,5 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { createGroupChain, createPetState, createUnitChain } from '../../../test/factories';
+import {
+  createGroupChain,
+  createPetState,
+  createUnitChain,
+} from '../../../test/factories';
 import {
   buildAppViewModel,
   buildDashboardViewModel,

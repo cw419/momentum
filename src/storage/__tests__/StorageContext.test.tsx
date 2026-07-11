@@ -173,40 +173,36 @@ describe('StorageProvider', () => {
     expect(screen.getByTestId('choice-pending').textContent).toBe('true');
   });
 
-  it(
-    'switches to supabase mode and persists mode choice',
-    async () => {
-      supabaseConfiguredRef.value = true;
-      isTauriRef.value = true;
+  it('switches to supabase mode and persists mode choice', async () => {
+    supabaseConfiguredRef.value = true;
+    isTauriRef.value = true;
 
-      render(
-        <StorageProvider>
-          <StorageConsumer />
-          <StorageModeConsumer />
-        </StorageProvider>,
-      );
+    render(
+      <StorageProvider>
+        <StorageConsumer />
+        <StorageModeConsumer />
+      </StorageProvider>,
+    );
 
-      fireEvent.click(screen.getByTestId('switch-supabase'));
+    fireEvent.click(screen.getByTestId('switch-supabase'));
 
-      await waitFor(
-        () => {
-          expect(screen.queryByTestId('storage-kind')?.textContent).toBe(
-            'supabase',
-          );
-        },
-        { timeout: 10000 },
-      );
+    await waitFor(
+      () => {
+        expect(screen.queryByTestId('storage-kind')?.textContent).toBe(
+          'supabase',
+        );
+      },
+      { timeout: 10000 },
+    );
 
-      expect(screen.getByTestId('storage-mode').textContent).toBe('supabase');
-      expect(localPreferencesMock.setStorageMode).toHaveBeenCalledWith(
-        'supabase',
-      );
-      expect(
-        localPreferencesMock.setStorageModeHintDismissed,
-      ).toHaveBeenCalledWith(true);
-    },
-    15000,
-  );
+    expect(screen.getByTestId('storage-mode').textContent).toBe('supabase');
+    expect(localPreferencesMock.setStorageMode).toHaveBeenCalledWith(
+      'supabase',
+    );
+    expect(
+      localPreferencesMock.setStorageModeHintDismissed,
+    ).toHaveBeenCalledWith(true);
+  }, 15000);
 
   it('shows toast and keeps local mode when switching to supabase without config', () => {
     supabaseConfiguredRef.value = false;
