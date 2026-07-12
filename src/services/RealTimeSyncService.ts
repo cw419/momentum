@@ -3,6 +3,12 @@ import type { Chain } from '../types';
 import { logger } from '../utils/logger';
 import { toError } from '../utils/errorMessage';
 import { isDev } from '../utils/env';
+import {
+  deleteChainWithSync,
+  permanentlyDeleteChainsWithSync,
+  restoreChainsWithSync,
+  saveChainsWithSync,
+} from './realTimeSyncOperations';
 
 type RealTimeSyncDataType = 'chains' | 'sessions' | 'history';
 type RealTimeSyncOperationType = 'create' | 'update' | 'delete' | 'restore';
@@ -204,13 +210,9 @@ class RealTimeSyncService {
     storage: MomentumStorage,
     chainId: string,
   ): Promise<Chain[]> {
-    logger.info('REALTIME_SYNC', 'Starting delete operation', { chainId });
-
-    await storage.softDeleteChain(chainId);
-    const freshChains = await storage.getActiveChains();
-    await this.syncAfterOperation('chains', 'delete', freshChains);
-
-    return freshChains;
+    return deleteChainWithSync(storage, chainId, (operation, chains) =>
+      this.syncAfterOperation('chains', operation, chains),
+    );
   }
 
   /**
@@ -220,62 +222,9 @@ class RealTimeSyncService {
     storage: MomentumStorage,
     chainIds: string[],
   ): Promise<Chain[]> {
-    logger.info('REALTIME_SYNC', 'Starting restore operation', { chainIds });
-
-    const results = {
-      successful: [] as string[],
-      failed: [] as { id: string; error: string }[],
-    };
-
-    for (const chainId of chainIds) {
-      try {
-        logger.debug('REALTIME_SYNC', 'Restoring chain', { chainId });
-        await storage.restoreChain(chainId);
-        results.successful.push(chainId);
-        logger.debug('REALTIME_SYNC', 'Successfully restored chain', {
-          chainId,
-        });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        results.failed.push({ id: chainId, error: errorMessage });
-        logger.warn('REALTIME_SYNC', 'Failed to restore chain', {
-          chainId,
-          errorMessage,
-        });
-      }
-    }
-
-    logger.debug(
-      'REALTIME_SYNC',
-      'Fetching fresh chains after restore operation',
+    return restoreChainsWithSync(storage, chainIds, (operation, chains) =>
+      this.syncAfterOperation('chains', operation, chains),
     );
-    const freshChains = await storage.getActiveChains();
-
-    await this.syncAfterOperation('chains', 'restore', freshChains);
-
-    logger.info('REALTIME_SYNC', 'Restore operation completed', {
-      total: chainIds.length,
-      successful: results.successful.length,
-      failed: results.failed.length,
-      failures: results.failed,
-    });
-
-    if (results.failed.length === chainIds.length) {
-      throw new Error(
-        `All restore operations failed: ${results.failed.map((f) => f.error).join('; ')}`,
-      );
-    }
-
-    if (results.failed.length > 0) {
-      logger.warn('REALTIME_SYNC', 'Partial restore failure', {
-        failedCount: results.failed.length,
-        total: chainIds.length,
-        failures: results.failed,
-      });
-    }
-
-    return freshChains;
   }
 
   /**
@@ -285,18 +234,12 @@ class RealTimeSyncService {
     storage: MomentumStorage,
     chainIds: string[],
   ): Promise<Chain[]> {
-    logger.info('REALTIME_SYNC', 'Starting permanent delete operation', {
+    return permanentlyDeleteChainsWithSync(
+      storage,
       chainIds,
-    });
-
-    for (const chainId of chainIds) {
-      await storage.permanentlyDeleteChain(chainId);
-    }
-
-    const freshChains = await storage.getActiveChains();
-    await this.syncAfterOperation('chains', 'delete', freshChains);
-
-    return freshChains;
+      (operation, chains) =>
+        this.syncAfterOperation('chains', operation, chains),
+    );
   }
 
   /**
@@ -306,15 +249,9 @@ class RealTimeSyncService {
     storage: MomentumStorage,
     chains: Chain[],
   ): Promise<Chain[]> {
-    logger.debug('REALTIME_SYNC', 'Starting save operation', {
-      chainCount: chains.length,
-    });
-
-    await storage.saveChains(chains);
-    const freshChains = await storage.getActiveChains();
-    await this.syncAfterOperation('chains', 'update', freshChains);
-
-    return freshChains;
+    return saveChainsWithSync(storage, chains, (operation, freshChains) =>
+      this.syncAfterOperation('chains', operation, freshChains),
+    );
   }
 }
 

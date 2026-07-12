@@ -271,9 +271,13 @@ describe('quality lane tooling', () => {
       await import('../../tools/quality/large-file-budget.mjs');
 
     const baseline = await loadLargeFileBudgetBaseline();
+    if (!baseline || baseline.offenders.length === 0) {
+      throw new Error('Expected a checked-in large-file baseline');
+    }
+    const existingOffender = baseline.offenders[0];
     const report = evaluateLargeFileBudget({
       largeFiles: [
-        { file: 'src/components/RSIPView.tsx', lines: 879 },
+        existingOffender,
         { file: 'src/new/LargeFile.ts', lines: 301 },
       ],
       baseline,

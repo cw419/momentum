@@ -8,21 +8,13 @@ import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { hasStorageCapability } from '../../../storage/ports';
 import type { SafelySaveChains } from '../useChainsDomain';
 import { resolveAppStateReader } from '../appStateAccess';
-import {
-  getNextUnitInGroup,
-  incrementGroupCompletionCount,
-} from '../../../utils/chainTree';
 import { logger } from '../../../utils/logger';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
-import {
-  isGroupExpired,
-  resetGroupProgress,
-  startGroupTimer,
-} from '../../../utils/timeLimit';
 import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 import type { TaskLifecycleEventPublisher } from '../../../services/task-lifecycle/TaskLifecycleEventBus';
-import { notifyTaskCompleted, notifyTaskFailed } from './sessionNotifications';
+import { notifyTaskCompleted } from './sessionNotifications';
+import { createGroupStartFlow } from './groupStartFlow';
 
 type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];
@@ -175,163 +167,6 @@ export function createStartChainHandler({
     }
   }
 
-  function resetExpiredGroup(groupId: string, groupName: string): void {
-    const updatedChains = readState().chains.map((chain) =>
-      chain.id === groupId ? resetGroupProgress(chain) : chain,
-    );
-
-    setState((prev) => ({
-      ...prev,
-      chains: updatedChains,
-      chainsRevision: prev.chainsRevision + 1,
-    }));
-
-    notifyTaskFailed(groupName, tr('任务群已超时', 'Group has expired'));
-  }
-
-  function startGroupTimerIfNeeded(groupId: string): void {
-    const updatedChains = readState().chains.map((chain) =>
-      chain.id === groupId ? startGroupTimer(chain) : chain,
-    );
-    setState((prev) => ({
-      ...prev,
-      chains: updatedChains,
-      chainsRevision: prev.chainsRevision + 1,
-    }));
-  }
-
-  function scheduleStartFirstUnitInNextCycle(params: {
-    groupId: string;
-    groupName: string;
-    nextCycleNumber: number;
-  }): void {
-    setTimeout(() => {
-      storage
-        .getActiveChains()
-        .then((freshChains) => {
-          const newTree = queryOptimizer.memoizedBuildChainTree(freshChains);
-          let newGroupNode: (typeof newTree)[number] | null = null;
-          for (const node of newTree) {
-            if (node.id === params.groupId) {
-              newGroupNode = node;
-              break;
-            }
-          }
-          const firstUnit = newGroupNode
-            ? getNextUnitInGroup(newGroupNode)
-            : null;
-          if (!firstUnit) return;
-
-          logger.debug(
-            'SESSIONS',
-            `任务群 ${params.groupName} 开始新一轮（第${params.nextCycleNumber}轮），从 ${firstUnit.name} 开始`,
-          );
-
-          return handleStartChain(firstUnit.id);
-        })
-        .catch((error) => {
-          logger.error(
-            'SESSIONS',
-            'Failed to start next cycle first unit',
-            { chainId: params.groupId },
-            normalizeUnknownError(error),
-          );
-        });
-    }, 100);
-  }
-
-  async function completeGroupCycle(
-    groupId: string,
-    groupName: string,
-  ): Promise<void> {
-    logger.debug(
-      'SESSIONS',
-      `任务群 ${groupName} 所有子任务已完成，开始新一轮循环`,
-    );
-
-    const updatedChains = incrementGroupCompletionCount(
-      readState().chains,
-      groupId,
-    );
-    const updatedGroup = updatedChains.find((chain) => chain.id === groupId);
-
-    if (updatedGroup) {
-      notifyTaskCompleted(
-        updatedGroup.name,
-        updatedGroup.totalCompletions,
-        tr(
-          `第${updatedGroup.totalCompletions}轮已完成，正在开始第${updatedGroup.totalCompletions + 1}轮`,
-          `Cycle ${updatedGroup.totalCompletions} completed. Starting cycle ${updatedGroup.totalCompletions + 1}.`,
-        ),
-      );
-    }
-
-    try {
-      await safelySaveChains(updatedChains);
-      queryOptimizer.onDataChange('chains');
-      setState((prev) => ({
-        ...prev,
-        chains: updatedChains,
-        chainsRevision: prev.chainsRevision + 1,
-      }));
-
-      publishTaskLifecycleEvent({
-        type: 'group_cycle_completed',
-        chainId: groupId,
-        chainKind: 'group',
-        occurredAt: new Date(),
-      });
-
-      scheduleStartFirstUnitInNextCycle({
-        groupId,
-        groupName,
-        nextCycleNumber: (updatedGroup?.totalCompletions ?? 0) + 1,
-      });
-    } catch (error) {
-      logger.error(
-        'SESSIONS',
-        '保存任务群完成计数失败',
-        undefined,
-        normalizeUnknownError(error),
-      );
-    }
-  }
-
-  async function startGroupChain(groupChain: Chain): Promise<void> {
-    if (isGroupExpired(groupChain)) {
-      resetExpiredGroup(groupChain.id, groupChain.name);
-      return;
-    }
-
-    if (groupChain.timeLimitHours && !groupChain.groupStartedAt) {
-      startGroupTimerIfNeeded(groupChain.id);
-    }
-
-    const chainTree = queryOptimizer.memoizedBuildChainTree(
-      readState().chains,
-      readState().chainsRevision,
-    );
-    const groupNode = chainTree.find((node) => node.id === groupChain.id);
-    if (!groupNode) {
-      logger.error('SESSIONS', '无法找到任务群节点', {
-        chainId: groupChain.id,
-      });
-      return;
-    }
-
-    const nextUnit = getNextUnitInGroup(groupNode);
-    if (nextUnit) {
-      logger.debug(
-        'SESSIONS',
-        `任务群 ${groupChain.name} 开始下一个任务 ${nextUnit.name}`,
-      );
-      await handleStartChain(nextUnit.id);
-      return;
-    }
-
-    await completeGroupCycle(groupChain.id, groupChain.name);
-  }
-
   function startSingleChain(chain: Chain): void {
     const currentState = readState();
     const existingScheduledSession = findScheduledSession(chain.id);
@@ -378,6 +213,16 @@ export function createStartChainHandler({
     }));
     onNavigateToFocus?.();
   }
+
+  const startGroupChain = createGroupStartFlow({
+    readState,
+    setState,
+    storage,
+    safelySaveChains,
+    startChain: (chainId) => handleStartChain(chainId),
+    publishTaskLifecycleEvent,
+    tr,
+  });
 
   async function handleStartChain(chainId: string): Promise<void> {
     if (await maybeStartBettingSession(chainId)) return;

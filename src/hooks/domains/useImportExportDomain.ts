@@ -14,20 +14,7 @@
  * 3. 用户身份验证（Supabase 模式）
  */
 import type { Dispatch, SetStateAction } from 'react';
-import type {
-  AppState,
-  Chain,
-  CompletionHistory,
-  ExceptionRule,
-  RSIPExecutionRecord,
-  RSIPLibraryEntry,
-  RSIPMeta,
-  RSIPNode,
-  RSIPNodeGroup,
-  RSIPRunRecord,
-  RSIPTaskLink,
-} from '../../types';
-import type { PetState } from '../../types/pet';
+import type { AppState, Chain } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { hasStorageCapability } from '../../storage/ports';
 import type { SafelySaveChains } from './useChainsDomain';
@@ -35,29 +22,17 @@ import { useI18n } from '../../i18n';
 import { logger } from '../../utils/logger';
 import { queryOptimizer } from '../../utils/queryOptimizer';
 import { normalizeUnknownError } from '../../utils/errors/normalizeError';
-
-interface ImportChainsOptions {
-  history?: CompletionHistory[];
-  rsipNodes?: RSIPNode[];
-  rsipMeta?: RSIPMeta;
-  rsipGroups?: RSIPNodeGroup[];
-  rsipPolicyLibrary?: RSIPLibraryEntry[];
-  rsipRunHistory?: RSIPRunRecord[];
-  rsipExecutionRecords?: RSIPExecutionRecord[];
-  rsipTaskLinks?: RSIPTaskLink[];
-  petState?: PetState;
-  exceptionRules?: ExceptionRule[];
-}
+import {
+  mergeImportedState,
+  persistImportedData,
+  reloadStateAfterImportFailure,
+  type ImportChainsOptions,
+} from './importPersistence';
 
 interface UseImportExportDomainParams {
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
   setState: Dispatch<SetStateAction<AppState>>;
-}
-
-function appendIfNonEmpty<T>(existing: T[], incoming: T[] | undefined): T[] {
-  if (!incoming || incoming.length === 0) return existing;
-  return [...existing, ...incoming];
 }
 
 export function useImportExportDomain({
@@ -135,110 +110,6 @@ export function useImportExportDomain({
     );
   }
 
-  async function persistImportedHistory(
-    history: CompletionHistory[] | undefined,
-  ): Promise<void> {
-    if (!history || history.length === 0) return;
-
-    if (canUseAuth) {
-      await storage.saveCompletionHistory(history);
-      return;
-    }
-
-    const existing = await storage.getCompletionHistory();
-    await storage.saveCompletionHistory([...existing, ...history]);
-  }
-
-  async function persistImportedRsipNodes(
-    nodes: RSIPNode[] | undefined,
-  ): Promise<void> {
-    if (!nodes || nodes.length === 0) return;
-
-    const existingNodes = await storage.getRSIPNodes();
-    await storage.saveRSIPNodes([...existingNodes, ...nodes]);
-  }
-
-  async function persistImportedRsipMeta(
-    meta: RSIPMeta | undefined,
-  ): Promise<void> {
-    if (!meta) return;
-
-    const existingMeta = await storage.getRSIPMeta();
-    await storage.saveRSIPMeta({ ...existingMeta, ...meta });
-  }
-
-  async function persistImportedRsipGroups(
-    groups: RSIPNodeGroup[] | undefined,
-  ): Promise<void> {
-    if (!groups || groups.length === 0) return;
-    const existing = await storage.getRSIPGroups();
-    await storage.saveRSIPGroups([...existing, ...groups]);
-  }
-
-  async function persistImportedRsipLibrary(
-    entries: RSIPLibraryEntry[] | undefined,
-  ): Promise<void> {
-    if (!entries || entries.length === 0) return;
-    const existing = await storage.getRSIPPolicyLibrary();
-    await storage.saveRSIPPolicyLibrary([...existing, ...entries]);
-  }
-
-  async function persistImportedRsipRunHistory(
-    records: RSIPRunRecord[] | undefined,
-  ): Promise<void> {
-    if (!records || records.length === 0) return;
-    const existing = await storage.getRSIPRunHistory();
-    await storage.saveRSIPRunHistory([...existing, ...records]);
-  }
-
-  async function persistImportedRsipExecutionRecords(
-    records: RSIPExecutionRecord[] | undefined,
-  ): Promise<void> {
-    if (!records || records.length === 0) return;
-    for (const record of records) {
-      await storage.appendRSIPExecutionRecord(record);
-    }
-  }
-
-  async function persistImportedRsipTaskLinks(
-    links: RSIPTaskLink[] | undefined,
-  ): Promise<void> {
-    if (!links || links.length === 0) return;
-    const existing = await storage.getRSIPTaskLinks();
-    await storage.saveRSIPTaskLinks([...existing, ...links]);
-  }
-
-  async function persistImportedPetState(
-    petState: PetState | undefined,
-  ): Promise<void> {
-    if (!petState) return;
-    await storage.savePetState(petState);
-  }
-
-  async function reloadStateAfterImportFailure(): Promise<void> {
-    const currentChains = await storage.getChains();
-    const currentRsipNodes = await storage.getRSIPNodes();
-    const currentRsipMeta = await storage.getRSIPMeta();
-    const currentRsipGroups = await storage.getRSIPGroups();
-    const currentRsipPolicyLibrary = await storage.getRSIPPolicyLibrary();
-    const currentRsipRunHistory = await storage.getRSIPRunHistory();
-    const currentRsipTaskLinks = await storage.getRSIPTaskLinks();
-    const currentRsipExecutionRecords = await storage.getRSIPExecutionRecords();
-
-    setState((prev) => ({
-      ...prev,
-      chains: currentChains,
-      chainsRevision: prev.chainsRevision + 1,
-      rsipNodes: currentRsipNodes,
-      rsipMeta: currentRsipMeta,
-      rsipGroups: currentRsipGroups,
-      rsipPolicyLibrary: currentRsipPolicyLibrary,
-      rsipRunHistory: currentRsipRunHistory,
-      rsipTaskLinks: currentRsipTaskLinks,
-      rsipExecutionRecords: currentRsipExecutionRecords,
-    }));
-  }
-
   const handleImportChains = async (
     importedChains: Chain[],
     options?: ImportChainsOptions,
@@ -268,48 +139,13 @@ export function useImportExportDomain({
       await safelySaveChains(updatedChains);
       queryOptimizer.onDataChange('chains');
 
-      await persistImportedHistory(options?.history);
-      await persistImportedRsipNodes(options?.rsipNodes);
-      await persistImportedRsipMeta(options?.rsipMeta);
-      await persistImportedRsipGroups(options?.rsipGroups);
-      await persistImportedRsipLibrary(options?.rsipPolicyLibrary);
-      await persistImportedRsipRunHistory(options?.rsipRunHistory);
-      await persistImportedRsipExecutionRecords(options?.rsipExecutionRecords);
-      await persistImportedRsipTaskLinks(options?.rsipTaskLinks);
-      await persistImportedPetState(options?.petState);
+      await persistImportedData({ storage, canUseAuth, options });
 
       logger.info('APP_SHELL', '导入数据保存成功，更新 UI 状态');
 
-      setState((prev) => ({
-        ...prev,
-        chains: updatedChains,
-        chainsRevision: prev.chainsRevision + 1,
-        completionHistory: appendIfNonEmpty(
-          prev.completionHistory,
-          options?.history,
-        ),
-        rsipNodes: appendIfNonEmpty(prev.rsipNodes, options?.rsipNodes),
-        rsipMeta: options?.rsipMeta
-          ? { ...prev.rsipMeta, ...options.rsipMeta }
-          : prev.rsipMeta,
-        rsipGroups: appendIfNonEmpty(prev.rsipGroups, options?.rsipGroups),
-        rsipPolicyLibrary: appendIfNonEmpty(
-          prev.rsipPolicyLibrary,
-          options?.rsipPolicyLibrary,
-        ),
-        rsipRunHistory: appendIfNonEmpty(
-          prev.rsipRunHistory,
-          options?.rsipRunHistory,
-        ),
-        rsipExecutionRecords: appendIfNonEmpty(
-          prev.rsipExecutionRecords,
-          options?.rsipExecutionRecords,
-        ),
-        rsipTaskLinks: appendIfNonEmpty(
-          prev.rsipTaskLinks,
-          options?.rsipTaskLinks,
-        ),
-      }));
+      setState((previous) =>
+        mergeImportedState(previous, updatedChains, options),
+      );
 
       logger.info('APP_SHELL', '导入完成，UI 状态更新完成');
     } catch (error) {
@@ -325,7 +161,7 @@ export function useImportExportDomain({
       );
 
       try {
-        await reloadStateAfterImportFailure();
+        await reloadStateAfterImportFailure(storage, setState);
       } catch (reloadError) {
         logger.error(
           'IMPORT',

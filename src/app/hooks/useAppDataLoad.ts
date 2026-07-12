@@ -16,6 +16,7 @@ import {
   runDevDataMigration,
 } from './appDataLoadHelpers';
 import { navigationStore } from '../../stores/navigationStore';
+import { loadAppDataSnapshot } from './appDataSnapshot';
 
 interface UseAppDataLoadParams {
   storage: MomentumStorage;
@@ -66,9 +67,9 @@ export function useAppDataLoad({
           });
         });
 
-        const [
+        const {
           chains,
-          allScheduledSessions,
+          scheduledSessions: allScheduledSessions,
           activeSession,
           completionHistory,
           rsipNodes,
@@ -79,116 +80,7 @@ export function useAppDataLoad({
           rsipTaskLinks,
           rsipExecutionRecords,
           taskTimeStats,
-        ] = await Promise.all([
-          storage.getActiveChains().catch((error) => {
-            logger.error(
-              'APP_SHELL',
-              'Failed to load chain data',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getScheduledSessions().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load scheduled sessions',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getActiveSession().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load active session',
-              undefined,
-              toError(error),
-            );
-            return null;
-          }),
-          storage.getCompletionHistory().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load completion history',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getRSIPNodes().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load RSIP nodes',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getRSIPMeta().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load RSIP meta',
-              undefined,
-              toError(error),
-            );
-            return {};
-          }),
-          storage.getRSIPGroups().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load RSIP groups',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getRSIPPolicyLibrary().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load RSIP policy library',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getRSIPRunHistory().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load RSIP run history',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getRSIPTaskLinks().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load RSIP task links',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getRSIPExecutionRecords().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load RSIP execution records',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-          storage.getTaskTimeStats().catch((error) => {
-            logger.warn(
-              'APP_SHELL',
-              'Failed to load task time stats',
-              undefined,
-              toError(error),
-            );
-            return [];
-          }),
-        ]);
+        } = await loadAppDataSnapshot(storage);
 
         const scheduledSessions = allScheduledSessions.filter(
           (session) => !isSessionExpired(session.expiresAt),

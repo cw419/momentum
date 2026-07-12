@@ -4,11 +4,7 @@ import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import { hasStorageCapability } from '../../../storage/ports';
 import type { SafelySaveChains } from '../useChainsDomain';
 import { resolveAppStateReader } from '../appStateAccess';
-import {
-  incrementGroupCompletionCount,
-  isGroupFullyCompleted,
-  resetGroupCompletionCount,
-} from '../../../utils/chainTree';
+import { resetGroupCompletionCount } from '../../../utils/chainTree';
 import { forwardTimerManager } from '../../../utils/forwardTimer';
 import { logger } from '../../../utils/logger';
 import { emitPointsChanged } from '../../../utils/pointsEvents';
@@ -17,106 +13,12 @@ import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 import type { TaskLifecycleEvent } from '../../../types';
 import type { TaskLifecycleEventPublisher } from '../../../services/task-lifecycle/TaskLifecycleEventBus';
 import { notifyTaskCompleted } from './sessionNotifications';
-
-type Chain = AppState['chains'][number];
-type ActiveSession = NonNullable<AppState['activeSession']>;
-
-function computeActualDuration(
-  activeSession: ActiveSession,
-  chain: Chain,
-): number {
-  if (!chain.isDurationless) return activeSession.duration;
-
-  const sessionId = `${activeSession.chainId}_${activeSession.startedAt.getTime()}`;
-  const elapsedSeconds = forwardTimerManager.stopTimer(sessionId);
-  return Math.ceil(elapsedSeconds / 60);
-}
-
-function updateChainsForSuccess(
-  chains: AppState['chains'],
-  chainId: string,
-  completedAt: Date,
-): AppState['chains'] {
-  return chains.map((chain) => {
-    if (chain.id !== chainId) return chain;
-
-    return {
-      ...chain,
-      currentStreak: chain.currentStreak + 1,
-      totalCompletions: chain.totalCompletions + 1,
-      lastCompletedAt: completedAt,
-    };
-  });
-}
-
-function updateChainsForFailure(
-  chains: AppState['chains'],
-  chainId: string,
-): AppState['chains'] {
-  return chains.map((chain) => {
-    if (chain.id !== chainId) return chain;
-
-    return {
-      ...chain,
-      currentStreak: 0,
-      totalFailures: chain.totalFailures + 1,
-    };
-  });
-}
-
-interface GroupCycleIncrementResult {
-  updatedChains: AppState['chains'];
-  completedGroupId?: string;
-}
-
-function maybeIncrementGroupCycleCompletion(
-  chains: AppState['chains'],
-  completedChain: Chain,
-  tr: (zh: string, en: string) => string,
-  chainsRevision?: number,
-): GroupCycleIncrementResult {
-  if (!completedChain.parentId || completedChain.type === 'group')
-    return { updatedChains: chains };
-
-  const chainTree = queryOptimizer.memoizedBuildChainTree(
-    chains,
-    chainsRevision,
-  );
-  const groupNode = chainTree.find(
-    (node) => node.id === completedChain.parentId,
-  );
-  if (!groupNode || groupNode.type !== 'group') {
-    return { updatedChains: chains };
-  }
-  if (!isGroupFullyCompleted(groupNode)) {
-    return { updatedChains: chains };
-  }
-
-  logger.debug(
-    'SESSIONS',
-    `任务群 ${groupNode.name} 已完成所有任务，增加完成计数`,
-  );
-  const updatedChains = incrementGroupCompletionCount(
-    chains,
-    completedChain.parentId,
-  );
-
-  const parentChain = updatedChains.find(
-    (chain) => chain.id === completedChain.parentId,
-  );
-  if (parentChain) {
-    notifyTaskCompleted(
-      parentChain.name,
-      parentChain.currentStreak,
-      tr('任务群完成一轮', 'Group completed a cycle'),
-    );
-  }
-
-  return {
-    updatedChains,
-    completedGroupId: completedChain.parentId,
-  };
-}
+import {
+  computeActualDuration,
+  maybeIncrementGroupCycleCompletion,
+  updateChainsForFailure,
+  updateChainsForSuccess,
+} from './completionState';
 
 async function persistCompletionHistoryAndCleanupSupabase(
   storage: MomentumStorage,
