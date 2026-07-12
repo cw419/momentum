@@ -2,7 +2,7 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import type { ViewState } from '../types';
 
-export interface NavigationState {
+interface NavigationState {
   showAuxiliaryJudgment: string | null;
   showBettingModal: boolean;
   pendingChainId: string | null;
@@ -13,7 +13,7 @@ export interface NavigationState {
   viewingChainId: string | null;
 }
 
-export interface NavigationActions {
+interface NavigationActions {
   setShowAuxiliaryJudgment: (chainId: string | null) => void;
   setShowBettingModal: (isOpen: boolean) => void;
   setPendingChainId: (chainId: string | null) => void;

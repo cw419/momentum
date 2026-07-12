@@ -3,6 +3,7 @@ import {
   systemNotificationService,
   type SystemNotificationState,
 } from '../services/platform/SystemNotificationService';
+import { fireAndForget } from '../utils/fireAndForget';
 
 export function useSystemNotificationState(): SystemNotificationState {
   const [state, setState] = useState<SystemNotificationState>(
@@ -11,7 +12,9 @@ export function useSystemNotificationState(): SystemNotificationState {
 
   useEffect(() => {
     const unsubscribe = systemNotificationService.subscribe(setState);
-    void systemNotificationService.init();
+    fireAndForget(systemNotificationService.init(), {
+      label: 'system-notification-initialization',
+    });
     return unsubscribe;
   }, []);
 

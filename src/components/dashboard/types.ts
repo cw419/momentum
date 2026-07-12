@@ -13,7 +13,7 @@ import type {
 } from '../../types';
 import type { PetState } from '../../types/pet';
 
-export interface DashboardImportOptions {
+interface DashboardImportOptions {
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;

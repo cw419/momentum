@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FeedResult, PetMood, PetState } from '../../../../types/pet';
 import { toast } from '../../../../utils/toast';
 import { getPlatformCapabilityCenter } from '../../../../utils/platform-capabilities/center';
+import { fireAndForget } from '../../../../utils/fireAndForget';
 
 export function usePetWidgetController(params: {
   pet: PetState | null;
@@ -61,7 +62,7 @@ export function usePetWidgetController(params: {
     try {
       const result = await onFeedPet();
       if (result && result.hungerReduced > 0) {
-        void capabilityCenter.haptics.notification('success');
+        fireAndForget(capabilityCenter.haptics.notification('success'));
         toast.success(
           tr(
             `喂食成功！饱食度+${Math.round(result.hungerReduced)}`,
@@ -104,7 +105,7 @@ export function usePetWidgetController(params: {
       const touch = event.touches[0];
       setIsDragging(true);
       hasDraggedRef.current = false;
-      void capabilityCenter.haptics.impact('light');
+      fireAndForget(capabilityCenter.haptics.impact('light'));
 
       const currentPos = pet.isMinimized ? pet.minimizedPosition : pet.position;
       dragRef.current = {

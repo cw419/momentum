@@ -5,6 +5,7 @@ import { systemNotificationService } from '../../../services/platform/SystemNoti
 import { forwardTimerManager } from '../../../utils/forwardTimer';
 import { soundManager } from '../../../utils/soundManager';
 import { useI18n } from '../../../i18n';
+import { fireAndForget } from '../../../utils/fireAndForget';
 
 interface UseFocusTimersParams {
   session: ActiveSession;
@@ -129,9 +130,12 @@ export function useFocusTimers({
       ) {
         hasShownWarningRef.current = true;
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        void systemNotificationService.notifyTaskWarning(
-          chain.name,
-          tr(`${minutes}分钟`, `${minutes} min`),
+        fireAndForget(
+          systemNotificationService.notifyTaskWarning(
+            chain.name,
+            tr(`${minutes}分钟`, `${minutes} min`),
+          ),
+          { label: 'task-warning-notification' },
         );
       }
 

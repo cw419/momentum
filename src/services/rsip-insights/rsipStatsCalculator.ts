@@ -26,7 +26,13 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export interface ComputedRiskData {
+function getPhaseWeight(phase: RSIPNode['stabilityPhase']): number {
+  if (phase === 'E2') return 3;
+  if (phase === 'E1') return 2;
+  return 1;
+}
+
+interface ComputedRiskData {
   riskNodes: RSIPRiskNode[];
   highRiskNodes: RSIPRiskNode[];
   ruralFirstCandidates: RSIPRiskNode[];
@@ -120,8 +126,7 @@ export function computeRiskNodes(
 
   const riskNodes = nodes
     .map((node) => {
-      const phaseWeight =
-        node.stabilityPhase === 'E2' ? 3 : node.stabilityPhase === 'E1' ? 2 : 1;
+      const phaseWeight = getPhaseWeight(node.stabilityPhase);
       const reinforcementMultiplier =
         (node.reinforcementLevel ?? 0) > 0 ? 0.3 : 1;
       const failureCost = round(

@@ -204,7 +204,8 @@ export function toExportedRSIPRunRecord(
 export function toExportedRSIPExecutionRecord(
   record: RSIPExecutionRecord,
 ): ExportedRSIPExecutionRecord {
-  const { executedAt, userId: _ignoredUserId, ...rest } = record;
+  const { executedAt, ...rest } = record;
+  Reflect.deleteProperty(rest, 'userId');
   return {
     ...rest,
     executedAt: executedAt.toISOString(),
@@ -214,7 +215,8 @@ export function toExportedRSIPExecutionRecord(
 export function toExportedRSIPTaskLink(
   link: RSIPTaskLink,
 ): ExportedRSIPTaskLink {
-  const { updatedAt, userId: _ignoredUserId, ...rest } = link;
+  const { updatedAt, ...rest } = link;
+  Reflect.deleteProperty(rest, 'userId');
   return {
     ...rest,
     updatedAt: updatedAt.toISOString(),

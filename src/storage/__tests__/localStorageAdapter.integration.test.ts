@@ -50,8 +50,9 @@ describe('localStorageAdapter integration', () => {
   });
 
   it('cleans up expired deleted chains', async () => {
-    const oldDate = new Date('2025-12-01T00:00:00.000Z');
-    const recentDate = new Date('2026-02-01T00:00:00.000Z');
+    const dayMs = 24 * 60 * 60 * 1000;
+    const oldDate = new Date(Date.now() - 31 * dayMs);
+    const recentDate = new Date(Date.now() - 29 * dayMs);
 
     await localStorageAdapter.saveChains([
       createUnitChain({ id: 'old-deleted', deletedAt: oldDate }),

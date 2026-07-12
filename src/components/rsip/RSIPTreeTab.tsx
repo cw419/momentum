@@ -6,6 +6,7 @@ import { RSIPSplitModeSection } from './RSIPSplitModeSection';
 import { RSIPStrictModeCard } from './RSIPStrictModeCard';
 import { RSIPTaskLinkPanel } from './RSIPTaskLinkPanel';
 import type { RSIPViewModel } from './hooks/useRSIPViewModel';
+import { fireAndForget } from '../../utils/fireAndForget';
 
 interface RSIPTreeTabProps {
   model: RSIPViewModel;
@@ -51,7 +52,11 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
         setSelectedGroupId={model.setSelectedGroupId}
         createIsPassive={model.createIsPassive}
         setCreateIsPassive={model.setCreateIsPassive}
-        onCreateGroup={() => void model.handleCreateGroup()}
+        onCreateGroup={() =>
+          fireAndForget(model.handleCreateGroup(), {
+            label: 'create-rsip-group',
+          })
+        }
         onAdd={model.handleAddSingle}
         language={model.language}
         tr={model.tr}
@@ -101,7 +106,11 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
                   node={node}
                   descendantCount={descendantCount}
                   failureCost={failureCost}
-                  onMarkExecuted={() => void model.handleMarkExecuted(node.id)}
+                  onMarkExecuted={() =>
+                    fireAndForget(model.handleMarkExecuted(node.id), {
+                      label: 'mark-rsip-node-executed',
+                    })
+                  }
                   onMarkViolated={() => model.openViolationDialog(node)}
                   onReinforce={
                     model.onReinforceNode
@@ -110,7 +119,10 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
                           if (!reinforceNode) {
                             return;
                           }
-                          void reinforceNode(node.id, model.nodes, 1);
+                          fireAndForget(
+                            reinforceNode(node.id, model.nodes, 1),
+                            { label: 'reinforce-rsip-node' },
+                          );
                         }
                       : undefined
                   }

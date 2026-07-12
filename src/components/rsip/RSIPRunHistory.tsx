@@ -6,6 +6,11 @@ interface RSIPRunHistoryProps {
   records: RSIPRunRecord[];
 }
 
+function formatCollapseNodeTitle(title: string | undefined, language: string) {
+  if (!title) return '';
+  return language.startsWith('zh') ? `（${title}）` : ` (${title})`;
+}
+
 export function RSIPRunHistory({ records }: RSIPRunHistoryProps) {
   const { language, tr } = useI18n();
 
@@ -110,11 +115,7 @@ export function RSIPRunHistory({ records }: RSIPRunHistoryProps) {
               <p className="mt-1 text-sm text-red-600 dark:text-red-300">
                 {tr('崩溃原因：', 'Collapse reason:')}
                 {record.collapseReason}
-                {record.collapseNodeTitle
-                  ? language.startsWith('zh')
-                    ? `（${record.collapseNodeTitle}）`
-                    : ` (${record.collapseNodeTitle})`
-                  : ''}
+                {formatCollapseNodeTitle(record.collapseNodeTitle, language)}
               </p>
             )}
           </div>

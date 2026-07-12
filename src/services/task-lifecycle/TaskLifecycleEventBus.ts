@@ -1,6 +1,7 @@
 import type { TaskLifecycleEvent } from '../../types';
 import { normalizeUnknownError } from '../../utils/errors/normalizeError';
 import { logger } from '../../utils/logger';
+import { fireAndForget } from '../../utils/fireAndForget';
 
 type TaskLifecycleEventListener = (
   event: TaskLifecycleEvent,
@@ -20,16 +21,19 @@ export class TaskLifecycleEventBus implements TaskLifecycleEventPublisher {
 
   publish(event: TaskLifecycleEvent): void {
     for (const listener of this.listeners) {
-      void Promise.resolve()
-        .then(() => listener(event))
-        .catch((error) => {
-          logger.warn(
-            'TASK_LIFECYCLE',
-            'Task lifecycle event listener failed',
-            { ...event },
-            normalizeUnknownError(error),
-          );
-        });
+      fireAndForget(
+        Promise.resolve()
+          .then(() => listener(event))
+          .catch((error) => {
+            logger.warn(
+              'TASK_LIFECYCLE',
+              'Task lifecycle event listener failed',
+              { ...event },
+              normalizeUnknownError(error),
+            );
+          }),
+        { label: 'task-lifecycle-listener' },
+      );
     }
   }
 

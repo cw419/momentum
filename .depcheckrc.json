@@ -21,6 +21,7 @@
     "type-coverage",
     "ts-prune",
     "depcheck",
+    "dependency-cruiser",
     "license-checker",
     "npm-run-all2",
     "@tauri-apps/cli"

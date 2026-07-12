@@ -46,6 +46,14 @@ export function RSIPSplitModeSection({
   canAddToday,
   tr,
 }: RSIPSplitModeSectionProps) {
+  const updateSplitItem = (itemId: string, patch: Partial<SplitDraftItem>) => {
+    setSplitItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === itemId ? { ...item, ...patch } : item,
+      ),
+    );
+  };
+
   return (
     <div className="bento-card mb-8">
       <div className="mb-3 flex items-center justify-between">
@@ -105,13 +113,7 @@ export function RSIPSplitModeSection({
               <input
                 value={item.title}
                 onChange={(event) =>
-                  setSplitItems((prev) =>
-                    prev.map((current) =>
-                      current.id === item.id
-                        ? { ...current, title: event.target.value }
-                        : current,
-                    ),
-                  )
+                  updateSplitItem(item.id, { title: event.target.value })
                 }
                 placeholder={tr('子国策标题', 'Sub-policy title')}
                 className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 md:col-span-4"
@@ -119,13 +121,7 @@ export function RSIPSplitModeSection({
               <input
                 value={item.rule}
                 onChange={(event) =>
-                  setSplitItems((prev) =>
-                    prev.map((current) =>
-                      current.id === item.id
-                        ? { ...current, rule: event.target.value }
-                        : current,
-                    ),
-                  )
+                  updateSplitItem(item.id, { rule: event.target.value })
                 }
                 placeholder={tr('子国策规则', 'Sub-policy rule')}
                 className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 md:col-span-6"
@@ -135,13 +131,9 @@ export function RSIPSplitModeSection({
                   type="checkbox"
                   checked={item.isPassive}
                   onChange={(event) =>
-                    setSplitItems((prev) =>
-                      prev.map((current) =>
-                        current.id === item.id
-                          ? { ...current, isPassive: event.target.checked }
-                          : current,
-                      ),
-                    )
+                    updateSplitItem(item.id, {
+                      isPassive: event.target.checked,
+                    })
                   }
                 />
                 {tr('被动', 'Passive')}

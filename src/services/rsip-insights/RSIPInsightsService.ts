@@ -12,8 +12,6 @@ import {
 import { toLocale } from './rsipLocalization';
 import { buildRecommendations } from './rsipRecommender';
 
-export type { BuildRSIPInsightsInput, RSIPInsightsResult };
-
 export function buildRSIPInsights(
   input: BuildRSIPInsightsInput,
 ): RSIPInsightsResult {

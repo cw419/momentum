@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ChainTreeNode, ScheduledSession } from '../../../types';
 import { getTimeRemaining } from '../../../utils/time';
 import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
+import { fireAndForget } from '../../../utils/fireAndForget';
 
 function getNotificationThreshold(durationMinutes: number) {
   if (durationMinutes <= 3) return null;
@@ -40,14 +41,20 @@ export function useGroupCardScheduleCountdown(params: {
       ) {
         setHasShownWarning(true);
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        void systemNotificationService.notifyScheduleWarning(
-          group.name,
-          tr(`${minutes}分钟`, `${minutes} min`),
+        fireAndForget(
+          systemNotificationService.notifyScheduleWarning(
+            group.name,
+            tr(`${minutes}分钟`, `${minutes} min`),
+          ),
+          { label: 'group-schedule-warning-notification' },
         );
       }
 
       if (remaining <= 0) {
-        void systemNotificationService.notifyScheduleFailed(group.name);
+        fireAndForget(
+          systemNotificationService.notifyScheduleFailed(group.name),
+          { label: 'group-schedule-failed-notification' },
+        );
       }
     };
 

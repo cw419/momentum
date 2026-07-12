@@ -15,7 +15,7 @@ interface AppShellStateActions {
   resetAppState: () => void;
 }
 
-export type AppShellStore = AppState & AppShellStateActions;
+type AppShellStore = AppState & AppShellStateActions;
 
 export function createInitialAppState(): AppState {
   return {

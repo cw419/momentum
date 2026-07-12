@@ -8,8 +8,8 @@ import type {
 } from '../../types';
 
 export type RSIPTrendDirection = 'up' | 'down' | 'flat' | 'insufficient_data';
-export type RSIPRecommendationPriority = 'high' | 'medium' | 'low';
-export type RSIPRecommendationKind =
+type RSIPRecommendationPriority = 'high' | 'medium' | 'low';
+type RSIPRecommendationKind =
   | 'rural_first'
   | 'split'
   | 'grouping'

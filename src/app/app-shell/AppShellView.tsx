@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Dashboard } from '../../components/Dashboard';
 import { MobileBottomNav } from '../../components/mobile/MobileBottomNav';
 import { useI18n } from '../../i18n';
+import { fireAndForget as runAsync } from '../../utils/fireAndForget';
 import { isTauriMobile } from '../../utils/platform';
 import { AppShellProfiler } from './AppShellProfiler';
 import { LoadingFallback } from './LoadingFallback';
@@ -119,8 +120,7 @@ export function AppShellView({
 
       case 'detail': {
         if (!dashboard.viewingChain) return null;
-
-        const viewingChain = dashboard.viewingChain;
+        const { viewingChain, handleDeleteChain } = dashboard;
 
         return (
           <Suspense fallback={<LoadingFallback />}>
@@ -129,7 +129,7 @@ export function AppShellView({
               history={dashboard.completionHistory}
               onBack={dashboard.handleBackToDashboard}
               onEdit={() => dashboard.handleEditChain(viewingChain.id)}
-              onDelete={() => void dashboard.handleDeleteChain(viewingChain.id)}
+              onDelete={() => runAsync(handleDeleteChain(viewingChain.id))}
             />
             {renderAuxiliaryJudgment()}
           </Suspense>

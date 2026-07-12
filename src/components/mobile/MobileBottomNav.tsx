@@ -9,6 +9,12 @@ interface MobileBottomNavProps {
   onOpenSettings: () => void;
 }
 
+function getTabColorClass(isActive: boolean, disabled: boolean): string {
+  if (isActive) return 'text-indigo-600 dark:text-indigo-400';
+  if (disabled) return 'text-gray-300 dark:text-gray-600';
+  return 'text-gray-500 dark:text-gray-400';
+}
+
 export function MobileBottomNav({
   currentView,
   hasActiveSession,
@@ -67,7 +73,8 @@ export function MobileBottomNav({
       <div className="flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const disabled = 'disabled' in tab && tab.disabled;
+          const disabled = Boolean('disabled' in tab && tab.disabled);
+          const colorClass = getTabColorClass(tab.isActive, disabled);
           return (
             <button
               key={tab.id}
@@ -76,13 +83,7 @@ export function MobileBottomNav({
               disabled={disabled}
               aria-label={tab.label}
               aria-current={tab.isActive ? 'page' : undefined}
-              className={`flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-colors ${
-                tab.isActive
-                  ? 'text-indigo-600 dark:text-indigo-400'
-                  : disabled
-                    ? 'text-gray-300 dark:text-gray-600'
-                    : 'text-gray-500 dark:text-gray-400'
-              }`}
+              className={`flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-colors ${colorClass}`}
             >
               <Icon size={20} aria-hidden="true" />
               <span className="text-[10px] font-medium">{tab.label}</span>

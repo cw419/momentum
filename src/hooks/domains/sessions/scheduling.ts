@@ -4,10 +4,10 @@ import type { MomentumStorage } from '../../../storage/MomentumStorage';
 import type { SafelySaveChains } from '../useChainsDomain';
 import { resolveAppStateReader } from '../appStateAccess';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
-import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { logger } from '../../../utils/logger';
 import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
+import { notifyTaskCompleted } from './sessionNotifications';
 
 interface CreateSchedulingHandlersParams {
   state?: AppState;
@@ -129,7 +129,7 @@ export function createSchedulingHandlers({
       chainsRevision: prev.chainsRevision + 1,
     }));
 
-    void systemNotificationService.notifyTaskCompleted(
+    notifyTaskCompleted(
       chain.name,
       chain.auxiliaryStreak + 1,
       tr('预约已完成', 'Schedule completed'),

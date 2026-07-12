@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
+import { fireAndForget } from '../../../utils/fireAndForget';
 
 interface UseRSIPTimersResult {
   now: number;
@@ -31,9 +32,12 @@ export function useRSIPTimers(
           return copy;
         });
 
-        void systemNotificationService.notifyTimerCompleted(
-          tr('计时完成', 'Timer complete'),
-          tr('RSIP 定式计时已结束', 'RSIP timer has ended'),
+        fireAndForget(
+          systemNotificationService.notifyTimerCompleted(
+            tr('计时完成', 'Timer complete'),
+            tr('RSIP 定式计时已结束', 'RSIP timer has ended'),
+          ),
+          { label: 'rsip-timer-completed-notification' },
         );
       }
     });
@@ -56,7 +60,9 @@ export function useRSIPTimers(
   const handleStartTimer = useCallback((nodeId: string, minutes: number) => {
     const endsAt = Date.now() + minutes * 60 * 1000;
     setActiveTimers((prev) => ({ ...prev, [nodeId]: endsAt }));
-    void systemNotificationService.requestPermission('feature');
+    fireAndForget(systemNotificationService.requestPermission('feature'), {
+      label: 'rsip-notification-permission',
+    });
   }, []);
 
   const handleStopTimerRequest = useCallback((_nodeId: string) => {

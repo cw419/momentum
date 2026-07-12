@@ -75,6 +75,13 @@ describe('quality lane tooling', () => {
     expect(requiredChecks).toEqual(expect.any(Array));
     expect(requiredChecks).toContain('npm run quality:jscpd');
     expect(requiredChecks).toContain('npm run quality:debt-gate:core');
+    expect(requiredChecks).toContain('npm run quality:ts-prune:strict');
+    expect(requiredChecks).toContain('npm run quality:sonar:report');
+    expect(requiredChecks).toContain('npm run quality:large-files');
+    expect(requiredChecks).toContain('npm run test:coverage');
+    expect(requiredChecks).toContain('npm run test:integration');
+    expect(requiredChecks).toContain('npm run test:db');
+    expect(requiredChecks).toContain('npm run quality:rust');
 
     const jscpdIndex = requiredChecks?.indexOf('npm run quality:jscpd') ?? -1;
     const debtGateIndex =

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { isDev } from '../../utils/env';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
+import { fireAndForget } from '../../utils/fireAndForget';
 import { forwardTimerManager } from '../../utils/forwardTimer';
 import { ruleStateManager } from '../../services/RuleStateManager';
 import { migrationCoordinator } from '../../services/migration';
@@ -53,8 +54,10 @@ export function useServiceLifecycle(): ServiceLifecycleResult {
           );
         });
 
-      void migrationCoordinator.runStartupMigrations();
-      void checkForUpdates();
+      fireAndForget(migrationCoordinator.runStartupMigrations(), {
+        label: 'startup-migrations',
+      });
+      fireAndForget(checkForUpdates(), { label: 'updater-check' });
     };
 
     const requestIdleCallbackFn = window.requestIdleCallback;

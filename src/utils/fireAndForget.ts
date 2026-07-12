@@ -10,10 +10,10 @@ function toError(value: unknown): Error {
 }
 
 export function fireAndForget(
-  promise: Promise<unknown>,
+  promise: PromiseLike<unknown> | void,
   options?: FireAndForgetOptions,
 ): void {
-  promise.catch((error) => {
+  Promise.resolve(promise).catch((error) => {
     options?.onError?.(error);
     logger.warn(
       'ASYNC',

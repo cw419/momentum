@@ -7,7 +7,7 @@ import type {
 } from '../../../types';
 import { getDescendantCount, getDescendantIds } from '../../../utils/rsipTree';
 
-export type ViolationGroupAssessment =
+type ViolationGroupAssessment =
   | { status: 'none' }
   | { status: 'tolerated' | 'collapse'; groupTitle: string };
 

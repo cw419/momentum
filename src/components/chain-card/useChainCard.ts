@@ -12,6 +12,7 @@ import { soundManager } from '../../utils/soundManager';
 import { isDev } from '../../utils/env';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorMessage';
+import { fireAndForget } from '../../utils/fireAndForget';
 import { useI18n } from '../../i18n';
 
 interface UseChainCardOptions {
@@ -145,15 +146,21 @@ export function useChainCard({
       ) {
         setHasShownWarning(true);
         const minutes = Math.max(1, Math.ceil(remaining / 60));
-        void systemNotificationService.notifyScheduleWarning(
-          chain.name,
-          tr(`${minutes}分钟`, `${minutes} min`),
+        fireAndForget(
+          systemNotificationService.notifyScheduleWarning(
+            chain.name,
+            tr(`${minutes}分钟`, `${minutes} min`),
+          ),
+          { label: 'schedule-warning-notification' },
         );
       }
 
       if (remaining <= 0) {
         // 预约失败通知
-        void systemNotificationService.notifyScheduleFailed(chain.name);
+        fireAndForget(
+          systemNotificationService.notifyScheduleFailed(chain.name),
+          { label: 'schedule-failed-notification' },
+        );
 
         // Play sound when timer reaches 0, but only once per session
         if (

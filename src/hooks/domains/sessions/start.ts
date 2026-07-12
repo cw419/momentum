@@ -13,7 +13,6 @@ import {
   incrementGroupCompletionCount,
 } from '../../../utils/chainTree';
 import { logger } from '../../../utils/logger';
-import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
 import { queryOptimizer } from '../../../utils/queryOptimizer';
 import {
   isGroupExpired,
@@ -23,6 +22,7 @@ import {
 import { toast } from '../../../utils/toast';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 import type { TaskLifecycleEventPublisher } from '../../../services/task-lifecycle/TaskLifecycleEventBus';
+import { notifyTaskCompleted, notifyTaskFailed } from './sessionNotifications';
 
 type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];
@@ -186,10 +186,7 @@ export function createStartChainHandler({
       chainsRevision: prev.chainsRevision + 1,
     }));
 
-    void systemNotificationService.notifyTaskFailed(
-      groupName,
-      tr('任务群已超时', 'Group has expired'),
-    );
+    notifyTaskFailed(groupName, tr('任务群已超时', 'Group has expired'));
   }
 
   function startGroupTimerIfNeeded(groupId: string): void {
@@ -259,7 +256,7 @@ export function createStartChainHandler({
     const updatedGroup = updatedChains.find((chain) => chain.id === groupId);
 
     if (updatedGroup) {
-      void systemNotificationService.notifyTaskCompleted(
+      notifyTaskCompleted(
         updatedGroup.name,
         updatedGroup.totalCompletions,
         tr(
@@ -359,7 +356,7 @@ export function createStartChainHandler({
       : currentState.chains;
 
     if (existingScheduledSession) {
-      void systemNotificationService.notifyTaskCompleted(
+      notifyTaskCompleted(
         chain.name,
         chain.auxiliaryStreak + 1,
         tr('预约已完成', 'Schedule completed'),

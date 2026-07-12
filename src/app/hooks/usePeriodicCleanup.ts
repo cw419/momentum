@@ -4,6 +4,7 @@ import type { AppState } from '../../types';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { resolveAppStateReader } from '../../hooks/domains/appStateAccess';
 import { logger } from '../../utils/logger';
+import { fireAndForget } from '../../utils/fireAndForget';
 import { toError } from '../../utils/errorHandling';
 import { isSessionExpired } from '../../utils/time';
 import { systemNotificationService } from '../../services/platform/SystemNotificationService';
@@ -102,7 +103,10 @@ export function usePeriodicCleanup({
       for (const session of expiredSessions) {
         const chain = current.chains.find((c) => c.id === session.chainId);
         if (chain) {
-          void systemNotificationService.notifyScheduleFailed(chain.name);
+          fireAndForget(
+            systemNotificationService.notifyScheduleFailed(chain.name),
+            { label: 'expired-schedule-notification' },
+          );
         }
       }
 
