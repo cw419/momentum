@@ -35,5 +35,3 @@ export const chainRowSchema = z.object({
   last_completed_at: z.string().nullable().optional(),
   user_id: z.string(),
 });
-
-export type ChainRowParsed = z.infer<typeof chainRowSchema>;

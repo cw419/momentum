@@ -17,12 +17,12 @@ function toDirection(values: number[]): RSIPTrendDirection {
   return delta > 0 ? 'up' : 'down';
 }
 
-export function average(values: number[]): number {
+function average(values: number[]): number {
   if (values.length === 0) return 0;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-export function round(value: number): number {
+function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 

@@ -298,9 +298,7 @@ export function AppShellView({
           currentView={app.currentView}
           hasActiveSession={app.hasActiveSession}
           onNavigate={app.onNavigateToView}
-          onOpenSettings={() => {
-            /* TODO: open AccountModal */
-          }}
+          onOpenSettings={() => undefined}
         />
       )}
     </div>

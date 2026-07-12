@@ -9,19 +9,16 @@ import {
 } from './schemaCapabilities';
 import { formatSupabaseError } from './supabaseError';
 import { mapActiveSessionRow, mapScheduledSessionRow } from './sessionMapper';
-
 type ActiveSessionRow = Database['public']['Tables']['active_sessions']['Row'];
 type ActiveSessionInsert =
   Database['public']['Tables']['active_sessions']['Insert'];
 type ScheduledSessionInsert =
   Database['public']['Tables']['scheduled_sessions']['Insert'];
-
 const ACTIVE_SESSIONS_TABLE = 'active_sessions';
 const FORWARD_TIMER_CAPABILITIES = [
   'is_forward_timer',
   'forward_elapsed_time',
 ] as const;
-
 function isMissingUniqueConstraint(error: {
   code?: string;
   message?: string;
@@ -32,7 +29,6 @@ function isMissingUniqueConstraint(error: {
       true
   );
 }
-
 function hasKnownMissingForwardTimerCapabilities(
   ctx: SupabaseStorageContext,
 ): boolean {

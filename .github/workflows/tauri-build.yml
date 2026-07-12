@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Validate tag version matches tauri.conf.json
         if: startsWith(github.ref, 'refs/tags/v')
@@ -38,15 +38,15 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: npm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
 
       - name: Rust cache
-        uses: swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
         with:
           workspaces: src-tauri -> target
 
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload artifacts (Windows)
         if: matrix.target == 'windows'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: windows-artifacts
           path: |
@@ -114,7 +114,7 @@ jobs:
 
       - name: Upload artifacts (macOS)
         if: matrix.target == 'macos'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: macos-artifacts
           path: |
@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload artifacts (Linux)
         if: matrix.target == 'linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linux-artifacts
           path: |
@@ -135,7 +135,7 @@ jobs:
   build-android:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Validate tag version matches tauri.conf.json
         if: startsWith(github.ref, 'refs/tags/v')
@@ -149,19 +149,19 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: npm
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
           java-version: 17
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         with:
           packages: 'tools platform-tools'
 
@@ -174,12 +174,12 @@ jobs:
           echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Setup Rust with Android targets
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
       - name: Rust cache
-        uses: swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
         with:
           workspaces: src-tauri -> target
 
@@ -230,7 +230,7 @@ jobs:
           ls -la "$APK_DIR/" 2>/dev/null || echo "APK dir not found"
 
       - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: android-artifacts
           path: |
@@ -244,7 +244,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: artifacts
           merge-multiple: true
@@ -254,11 +254,14 @@ jobs:
 
       - name: Generate latest.json for updater
         shell: bash
+        env:
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${RELEASE_TAG#v}"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          REPO="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
+          REPO="https://github.com/${REPOSITORY}/releases/download/${RELEASE_TAG}"
 
           require_file() {
             local label="$1"
@@ -305,7 +308,7 @@ jobs:
           cat > artifacts/latest.json << ENDJSON
           {
             "version": "$VERSION",
-            "notes": "Momentum ${{ github.ref_name }}",
+            "notes": "Momentum $RELEASE_TAG",
             "pub_date": "$PUB_DATE",
             "platforms": {
               "windows-x86_64": { "signature": "$WIN_SIG", "url": "$WIN_URL" },
@@ -319,7 +322,7 @@ jobs:
           cat artifacts/latest.json
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           draft: false
           name: 'Momentum ${{ github.ref_name }}'

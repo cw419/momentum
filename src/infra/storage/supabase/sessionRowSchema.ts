@@ -18,8 +18,3 @@ export const activeSessionRowSchema = z.object({
   is_forward_timer: z.boolean().nullable().optional(),
   forward_elapsed_time: z.number().nullable().optional(),
 });
-
-export type ScheduledSessionRowParsed = z.infer<
-  typeof scheduledSessionRowSchema
->;
-export type ActiveSessionRowParsed = z.infer<typeof activeSessionRowSchema>;

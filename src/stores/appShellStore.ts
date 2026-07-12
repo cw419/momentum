@@ -15,10 +15,7 @@ interface AppShellStateActions {
   resetAppState: () => void;
 }
 
-/** @deprecated Use AppState directly; AppShellStoreState is now identical. */
-export type AppShellStoreState = AppState;
 export type AppShellStore = AppState & AppShellStateActions;
-export type AppShellStoreApi = ReturnType<typeof createAppShellStore>;
 
 export function createInitialAppState(): AppState {
   return {
@@ -39,12 +36,6 @@ export function createInitialAppState(): AppState {
     ruleUsageRecords: [],
   };
 }
-
-/**
- * @deprecated Use createInitialAppState() + createInitialNavigationState() separately.
- * Kept for test backward-compatibility.
- */
-export { createInitialAppState as createInitialAppShellState };
 
 function extractTaskRuntimeState(state: AppState): TaskRuntimeState {
   return {

@@ -16,10 +16,3 @@ export const completionHistorySelectRowSchema = completionHistoryBase.extend({
 });
 
 export const completionHistoryBasicRowSchema = completionHistoryBase;
-
-export type CompletionHistorySelectRowParsed = z.infer<
-  typeof completionHistorySelectRowSchema
->;
-export type CompletionHistoryBasicRowParsed = z.infer<
-  typeof completionHistoryBasicRowSchema
->;

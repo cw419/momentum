@@ -97,17 +97,6 @@ export function useNavigationStore<T>(
   return useStore(navigationStore, selector);
 }
 
-export const selectShowAuxiliaryJudgment = (
-  state: NavigationStore,
-): string | null => state.showAuxiliaryJudgment;
-export const selectShowBettingModal = (state: NavigationStore): boolean =>
-  state.showBettingModal;
-export const selectPendingChainId = (state: NavigationStore): string | null =>
-  state.pendingChainId;
-export const selectCurrentSessionId = (state: NavigationStore): string | null =>
-  state.currentSessionId;
-export const selectActiveSessionId = (state: NavigationStore): string | null =>
-  state.activeSessionId;
 export const selectCurrentView = (state: NavigationStore): ViewState =>
   state.currentView;
 export const selectEditingChainId = (state: NavigationStore): string | null =>
