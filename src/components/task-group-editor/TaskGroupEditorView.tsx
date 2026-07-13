@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { Hash } from 'lucide-react';
+import type { CSSProperties } from 'react';
 
 import { ResponsiveContainer } from '../ResponsiveContainer';
 import { BackButton } from '../BackButton';
@@ -10,6 +11,8 @@ import { BookingSettingsSection } from './BookingSettingsSection';
 import { ActionButtons } from './ActionButtons';
 import type { TaskGroupEditorViewProps } from './types';
 import { RSIPTaskLinkPanel } from '../rsip/RSIPTaskLinkPanel';
+
+type EditorSurfaceStyle = CSSProperties & { '--keyboard-height': string };
 
 export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> =
   React.memo(
@@ -24,8 +27,6 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> =
       isCustomAuxiliaryDuration,
       auxiliaryCompletionTrigger,
       errors,
-      mobileInfo,
-      isKeyboardVisible,
       keyboardHeight,
       onNameChange,
       onDescriptionChange,
@@ -44,17 +45,18 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> =
       const canEditRsipLinks = Boolean(
         chain?.id && rsipNodes && rsipTaskLinks && onUpsertRSIPTaskLinks,
       );
+      const editorStyle: EditorSurfaceStyle = {
+        '--keyboard-height': `${keyboardHeight}px`,
+      };
 
       return (
         <div
-          className={`bg-background min-h-screen overflow-x-hidden ${isKeyboardVisible ? 'keyboard-active' : ''}`}
-          style={{
-            paddingBottom: isKeyboardVisible ? `${keyboardHeight}px` : '0',
-          }}
+          className="editor-surface bg-background overflow-x-hidden"
+          style={editorStyle}
         >
           <ResponsiveContainer
             maxWidth="4xl"
-            className={`py-4 md:py-6 ${mobileInfo.isMobile ? 'px-4' : ''}`}
+            className="editor-scroll-region py-4 md:py-6"
           >
             <header className="mb-8 flex animate-fade-in items-center justify-between md:mb-10">
               <div className="flex items-center space-x-4">
@@ -158,7 +160,6 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> =
 
               <ActionButtons
                 isEditing={isEditing}
-                mobileInfo={mobileInfo}
                 onCancel={onCancel}
                 tr={tr}
               />

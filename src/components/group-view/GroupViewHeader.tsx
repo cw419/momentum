@@ -20,16 +20,16 @@ type Props = Pick<
 
 export function GroupViewHeader(props: Props) {
   return (
-    <header className="mb-12 flex animate-fade-in items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <header className="mb-12 flex animate-fade-in flex-col items-stretch gap-6 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 items-center gap-3 md:space-x-4">
         <BackButton
           onClick={props.onBack}
           label={props.tr('返回', 'Back')}
           className="rounded-2xl p-3 text-gray-400 transition-colors hover:bg-white/50 hover:text-[#161615] dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
         />
-        <div className="flex items-center space-x-4">
+        <div className="flex min-w-0 items-center gap-3 md:space-x-4">
           <div
-            className={`h-16 w-16 rounded-3xl ${props.typeConfig.bgColor} flex items-center justify-center`}
+            className={`h-12 w-12 shrink-0 rounded-2xl md:h-16 md:w-16 md:rounded-3xl ${props.typeConfig.bgColor} flex items-center justify-center`}
           >
             <Icon
               name={props.typeConfig.icon}
@@ -37,9 +37,9 @@ export function GroupViewHeader(props: Props) {
               className={props.typeConfig.color}
             />
           </div>
-          <div>
-            <div className="mb-2 flex items-center space-x-3">
-              <h1 className="font-chinese text-4xl font-bold text-[#161615] dark:text-slate-100 md:text-5xl">
+          <div className="min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-2 md:space-x-3">
+              <h1 className="break-words font-chinese text-3xl font-bold text-[#161615] dark:text-slate-100 md:text-5xl">
                 {props.group.name}
               </h1>
               {props.group.totalCompletions > 0 && (
@@ -53,7 +53,7 @@ export function GroupViewHeader(props: Props) {
                 </div>
               )}
             </div>
-            <p className="font-mono text-sm uppercase tracking-wider text-gray-500">
+            <p className="font-mono text-sm uppercase text-gray-500 md:tracking-wider">
               {props.typeConfig.name} · {props.unitProgress.completed}/
               {props.unitProgress.total} {props.tr('已完成', 'completed')}
               {props.group.totalCompletions > 0 && (
@@ -67,24 +67,24 @@ export function GroupViewHeader(props: Props) {
           </div>
         </div>
       </div>
-      <div className="flex items-center space-x-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:flex md:items-center">
         <button
           onClick={props.onAddUnit}
-          className="flex items-center space-x-2 rounded-2xl bg-gray-100 px-4 py-3 font-chinese font-medium text-gray-700 transition duration-300 hover:scale-105 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-gray-100 px-3 py-3 font-chinese text-sm font-medium text-gray-700 transition duration-300 hover:scale-105 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 md:px-4 md:text-base"
         >
           <Plus size={16} />
           <span>{props.tr('添加单元', 'Add unit')}</span>
         </button>
         <button
           onClick={() => props.setShowImportModal(true)}
-          className="flex items-center space-x-2 rounded-2xl bg-blue-100 px-4 py-3 font-chinese font-medium text-blue-700 transition duration-300 hover:scale-105 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-blue-100 px-3 py-3 font-chinese text-sm font-medium text-blue-700 transition duration-300 hover:scale-105 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 md:px-4 md:text-base"
         >
           <Import size={16} />
           <span>{props.tr('导入单元', 'Import units')}</span>
         </button>
         <button
           onClick={() => props.onEditChain(props.group.id)}
-          className="flex items-center space-x-2 rounded-2xl bg-gray-100 px-4 py-3 font-chinese font-medium text-gray-700 transition duration-300 hover:scale-105 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-gray-100 px-3 py-3 font-chinese text-sm font-medium text-gray-700 transition duration-300 hover:scale-105 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 md:px-4 md:text-base"
           title={props.tr('编辑任务群', 'Edit group')}
         >
           <Pencil size={16} />
@@ -92,7 +92,7 @@ export function GroupViewHeader(props: Props) {
         </button>
         <button
           onClick={() => props.onStartChain(props.group.id)}
-          className="gradient-primary flex items-center space-x-2 rounded-2xl px-6 py-3 font-chinese font-medium text-white shadow-lg transition duration-300 hover:scale-105 hover:shadow-xl"
+          className="gradient-primary flex items-center justify-center gap-2 rounded-2xl px-3 py-3 font-chinese text-sm font-medium text-white shadow-lg transition duration-300 hover:scale-105 hover:shadow-xl md:px-6 md:text-base"
         >
           <Play size={16} />
           <span>

@@ -1,7 +1,6 @@
 import { Bell, Calendar, CheckCircle, Hourglass } from 'lucide-react';
-import { PureDOMSlider } from '../../PureDOMSlider';
+import { NumericSliderField } from '../../shared/NumericSliderField';
 import { SettingSection } from '../../SettingSection';
-import { SliderContainer } from '../../SliderContainer';
 import type { ChainEditorFormModel } from '../hooks/useChainEditorForm';
 import {
   AUXILIARY_DURATION_PRESETS,
@@ -134,35 +133,23 @@ export function AuxiliaryChainSettingsSection({
             </select>
 
             {form.isCustomAuxiliaryDuration && (
-              <SliderContainer
+              <NumericSliderField
+                id="auxiliary-duration-slider"
                 label={tr('自定义预约时长', 'Custom booking duration')}
                 description={tr(
                   '设置预约阶段的持续时间',
                   'Set how long the booking phase lasts',
                 )}
-                orientation="horizontal"
-                showKeyboardInput={true}
-                keyboardInputProps={{
-                  value: form.auxiliaryDuration,
-                  onChange: form.setAuxiliaryDuration,
-                  min: 1,
-                  max: 120,
-                  unit: tr('分钟', 'min'),
-                  placeholder: tr('输入时长', 'Enter duration'),
-                }}
-              >
-                <PureDOMSlider
-                  id="auxiliary-duration-slider"
-                  name="auxiliaryDurationSlider"
-                  min={1}
-                  max={120}
-                  initialValue={form.auxiliaryDuration}
-                  onValueChange={form.setAuxiliaryDuration}
-                  valueFormatter={(v) => tr(`${v}分钟`, `${v} min`)}
-                  debounceMs={50}
-                  showValue={true}
-                />
-              </SliderContainer>
+                value={form.auxiliaryDuration}
+                onChange={form.setAuxiliaryDuration}
+                min={1}
+                max={120}
+                unit={tr('分钟', 'min')}
+                formatValue={(nextValue) =>
+                  tr(`${nextValue}分钟`, `${nextValue} min`)
+                }
+                debounceMs={50}
+              />
             )}
           </div>
         </div>

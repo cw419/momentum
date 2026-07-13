@@ -49,8 +49,6 @@ export function useChainCard({
 
   // Refs
   const lastPlayedExpiresAtRef = useRef<number | null>(null);
-  const deleteDialogRef = useRef<HTMLDivElement>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   // Memoized values
   const typeConfig = useMemo(
@@ -59,33 +57,6 @@ export function useChainCard({
   );
 
   const isScheduled = scheduledSession && timeRemaining > 0;
-
-  // Focus management for delete confirmation dialog
-  useEffect(() => {
-    if (showDeleteConfirm && deleteDialogRef.current) {
-      previouslyFocusedRef.current = document.activeElement as HTMLElement;
-      const cancelButton = deleteDialogRef.current.querySelector(
-        '[data-cancel-button]',
-      ) as HTMLElement;
-      cancelButton?.focus();
-    } else if (!showDeleteConfirm && previouslyFocusedRef.current) {
-      previouslyFocusedRef.current.focus();
-      previouslyFocusedRef.current = null;
-    }
-  }, [showDeleteConfirm]);
-
-  useEffect(() => {
-    if (!showDeleteConfirm) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowDeleteConfirm(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showDeleteConfirm]);
 
   // 获取上次完成时间（仅对无时长任务）
   useEffect(() => {
@@ -219,9 +190,6 @@ export function useChainCard({
     typeConfig,
     language,
     tr,
-
-    // Refs
-    deleteDialogRef,
 
     // Handlers
     handleToggleMenu,

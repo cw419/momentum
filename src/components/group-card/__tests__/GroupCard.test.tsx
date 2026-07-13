@@ -21,9 +21,6 @@ const countdownMock = vi.hoisted(() => ({
 
 vi.mock('../../../utils/chainTree', () => chainTreeMock);
 vi.mock('../hooks/useGroupCardScheduleCountdown', () => countdownMock);
-vi.mock('../hooks/useDialogFocusRestore', () => ({
-  useDialogFocusRestore: vi.fn(),
-}));
 vi.mock('../../../i18n', () => ({
   useI18n: () => ({
     language: 'en',

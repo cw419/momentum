@@ -42,7 +42,11 @@ if ((result.status ?? 1) !== 0) {
   process.exit(result.status ?? 1);
 }
 
-const findings = (result.stdout ?? '').trim();
+const findings = (result.stdout ?? '')
+  .split(/\r?\n/u)
+  .filter((line) => line.trim().length > 0)
+  .filter((line) => !line.endsWith('(used in module)'))
+  .join('\n');
 if (findings.length > 0) {
   console.error('[ts-prune-hard] Unused exports found:');
   console.error(findings);

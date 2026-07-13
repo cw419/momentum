@@ -206,22 +206,22 @@ export function DashboardView({
               tr={tr}
             />
             <DashboardChainsSection
-            topLevelChains={topLevelChains}
-            recycleBinCount={recycleBinCount}
-            getScheduledSession={getScheduledSession}
-            onStartChain={onStartChain}
-            onScheduleChain={onScheduleChain}
-            onViewChainDetail={onViewChainDetail}
-            onCancelScheduledSession={onCancelScheduledSession}
-            onCompleteBooking={onCompleteBooking}
-            onDeleteChain={onDeleteChain}
-            onShowRecycleBin={showRecycleBinModal}
-            onShowImportExport={showImportExportModal}
-            onOpenRSIP={onOpenRSIP}
-            onCreateChain={onCreateChain}
-            onCreateTaskGroup={onCreateTaskGroup}
-            tr={tr}
-          />
+              topLevelChains={topLevelChains}
+              recycleBinCount={recycleBinCount}
+              getScheduledSession={getScheduledSession}
+              onStartChain={onStartChain}
+              onScheduleChain={onScheduleChain}
+              onViewChainDetail={onViewChainDetail}
+              onCancelScheduledSession={onCancelScheduledSession}
+              onCompleteBooking={onCompleteBooking}
+              onDeleteChain={onDeleteChain}
+              onShowRecycleBin={showRecycleBinModal}
+              onShowImportExport={showImportExportModal}
+              onOpenRSIP={onOpenRSIP}
+              onCreateChain={onCreateChain}
+              onCreateTaskGroup={onCreateTaskGroup}
+              tr={tr}
+            />
           </>
         )}
       </div>

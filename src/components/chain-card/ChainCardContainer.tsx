@@ -28,7 +28,6 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(
       typeConfig,
       language,
       tr,
-      deleteDialogRef,
       handleToggleMenu,
       handleShowDeleteConfirm,
       handleConfirmDelete,
@@ -56,7 +55,6 @@ export const ChainCard: React.FC<ChainCardProps> = React.memo(
         onShowDeleteConfirm={handleShowDeleteConfirm}
         onConfirmDelete={handleConfirmDelete}
         onCancelDelete={handleCancelDelete}
-        deleteDialogRef={deleteDialogRef}
       />
     );
   },

@@ -73,7 +73,7 @@ const enableCustomDurationSlider = async () => {
   });
 
   return (await screen.findByRole('slider', {
-    name: /durationSlider/i,
+    name: /自定义时长/i,
   })) as HTMLInputElement;
 };
 
@@ -159,7 +159,7 @@ describe('ChainEditor响应式布局测试', () => {
         // 移动端：按钮应有最小触摸高度（通过 className 表达，避免依赖 JSDOM 布局）
         if (viewport.width <= 768) {
           await waitFor(() => {
-            expect(saveButton).toHaveClass('min-h-[48px]');
+            expect(saveButton).toHaveClass('min-h-12');
           });
         }
       });
@@ -178,8 +178,7 @@ describe('ChainEditor响应式布局测试', () => {
         rerender(<ChainEditor {...mockProps} />);
 
         const durationSlider = await enableCustomDurationSlider();
-        expect(durationSlider).toHaveClass('w-full');
-        expect(durationSlider).toHaveClass('mobile-optimized-slider');
+        expect(durationSlider).toHaveClass('numeric-slider-field__range');
         expect(durationSlider).toHaveAttribute('min', '1');
         expect(durationSlider).toHaveAttribute('max', '300');
       }
@@ -203,11 +202,8 @@ describe('ChainEditor响应式布局测试', () => {
 
       const durationSlider = await enableCustomDurationSlider();
 
-      await waitFor(() => {
-        expect(durationSlider).toHaveClass('min-h-[44px]');
-      });
-
-      expect(document.querySelector('.touch-target')).toBeInTheDocument();
+      expect(durationSlider).toHaveClass('numeric-slider-field__range');
+      expect(durationSlider).toHaveAttribute('step', '1');
     });
   });
 

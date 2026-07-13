@@ -1,4 +1,3 @@
-import type React from 'react';
 import { Layers, Minus } from 'lucide-react';
 import type { ChainTreeNode } from '../../../types';
 import { DeleteConfirmDialogShell } from '../../shared/DeleteConfirmDialogShell';
@@ -7,21 +6,18 @@ export function GroupDeleteConfirmDialog({
   isOpen,
   group,
   tr,
-  deleteDialogRef,
   onCancel,
   onConfirm,
 }: {
   isOpen: boolean;
   group: ChainTreeNode;
   tr: (zh: string, en: string) => string;
-  deleteDialogRef: React.RefObject<HTMLDivElement>;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
   return (
     <DeleteConfirmDialogShell
       isOpen={isOpen}
-      dialogRef={deleteDialogRef}
       titleId="group-delete-dialog-title"
       descriptionId="group-delete-dialog-description"
       headerIcon={

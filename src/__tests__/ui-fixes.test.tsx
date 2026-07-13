@@ -133,16 +133,16 @@ describe('UI Fixes and Improvements', () => {
       expect(dialog).toHaveStyle({ maxWidth: 'min(640px, 100vw - 2rem)' });
     });
 
-    test('ResponsiveContainer should prevent overflow', () => {
+    test('ResponsiveContainer should use a stable width mapping', () => {
       const { container } = render(
-        <ResponsiveContainer preventOverflow={true}>
+        <ResponsiveContainer maxWidth="2xl">
           <div style={{ width: '2000px' }}>Wide content</div>
         </ResponsiveContainer>,
       );
 
       const containerElement = container.firstChild as HTMLElement;
-      expect(containerElement).toHaveClass('overflow-x-hidden');
-      expect(containerElement).toHaveStyle({ maxWidth: '100vw' });
+      expect(containerElement).toHaveClass('max-w-2xl', 'w-full');
+      expect(containerElement).not.toHaveAttribute('style');
     });
   });
 
@@ -226,19 +226,21 @@ describe('UI Fixes and Improvements', () => {
   describe('Responsive Design', () => {
     test('ResponsiveContainer should adapt to different screen sizes', () => {
       const { rerender } = render(
-        <ResponsiveContainer maxWidth="max-w-2xl">
+        <ResponsiveContainer maxWidth="2xl">
           <div>Content</div>
         </ResponsiveContainer>,
       );
 
       // Test different max widths
       rerender(
-        <ResponsiveContainer maxWidth="max-w-4xl">
+        <ResponsiveContainer maxWidth="4xl">
           <div>Content</div>
         </ResponsiveContainer>,
       );
 
-      // Should not throw errors and render correctly
+      expect(screen.getByText('Content').parentElement).toHaveClass(
+        'max-w-4xl',
+      );
       expect(screen.getByText('Content')).toBeInTheDocument();
     });
 

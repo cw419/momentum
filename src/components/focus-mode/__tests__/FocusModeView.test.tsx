@@ -120,7 +120,9 @@ describe('FocusModeView', () => {
     await user.click(screen.getByRole('button', { name: /Enter fullscreen/i }));
 
     // 中断按钮需长按 700ms 才触发
-    const interruptButton = screen.getByRole('button', { name: /Hold to interrupt/i });
+    const interruptButton = screen.getByRole('button', {
+      name: /Hold to interrupt/i,
+    });
     fireEvent.pointerDown(interruptButton);
     vi.advanceTimersByTime(700);
 
@@ -142,5 +144,48 @@ describe('FocusModeView', () => {
     expect(screen.getByText('mock-completion-dialog')).toBeInTheDocument();
     expect(screen.getByText('mock-interrupt-dialog')).toBeInTheDocument();
     expect(screen.getByText('mock-feedback')).toBeInTheDocument();
+  });
+
+  it('renders timed and durationless minimum-duration branches', () => {
+    const timedProps = createProps();
+    const { rerender } = renderView(timedProps);
+
+    expect(screen.getByText('15:00')).toBeInTheDocument();
+    expect(screen.getByText('15 min / 30 min')).toBeInTheDocument();
+
+    const durationlessProps = createProps({
+      chain: createUnitChain({
+        id: 'chain-1',
+        name: 'Deep Work',
+        isDurationless: true,
+        minimumDuration: 10,
+      }),
+      isDurationless: true,
+      elapsedSeconds: 125,
+      minimumCountdown: 475,
+      hasReachedMinimum: false,
+    });
+    rerender(
+      <I18nProvider>
+        <FocusModeView {...durationlessProps} />
+      </I18nProvider>,
+    );
+
+    expect(screen.getByText('02:05')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Need 7m 55s to reach the minimum duration/),
+    ).toBeInTheDocument();
+  });
+
+  it('hides the long-press interrupt action while paused', () => {
+    renderView(
+      createProps({
+        session: createSession({ isPaused: true }),
+      }),
+    );
+
+    expect(
+      screen.queryByRole('button', { name: /Hold to interrupt/i }),
+    ).not.toBeInTheDocument();
   });
 });

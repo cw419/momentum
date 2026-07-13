@@ -1,4 +1,3 @@
-import type React from 'react';
 import { Calendar, Flame, Settings, Trash2, TrendingUp } from 'lucide-react';
 import type { Chain, ChainTreeNode } from '../../../types';
 import { DeleteConfirmDialogShell } from '../../shared/DeleteConfirmDialogShell';
@@ -8,7 +7,6 @@ export function ChainDeleteConfirmModal({
   chain,
   language: _language,
   tr,
-  deleteDialogRef,
   onCancel,
   onConfirm,
 }: {
@@ -16,7 +14,6 @@ export function ChainDeleteConfirmModal({
   chain: Chain | ChainTreeNode;
   language: 'zh' | 'en';
   tr: (zh: string, en: string) => string;
-  deleteDialogRef: React.RefObject<HTMLDivElement>;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -32,7 +29,6 @@ export function ChainDeleteConfirmModal({
   return (
     <DeleteConfirmDialogShell
       isOpen={isOpen}
-      dialogRef={deleteDialogRef}
       titleId="delete-dialog-title"
       descriptionId="delete-dialog-description"
       headerIcon={

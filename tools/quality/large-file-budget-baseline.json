@@ -11,14 +11,6 @@
       "lines": 309
     },
     {
-      "file": "src/components/chain-editor/sections/MainChainSettingsSection.tsx",
-      "lines": 308
-    },
-    {
-      "file": "src/components/ImportUnitsModal.tsx",
-      "lines": 308
-    },
-    {
       "file": "src/app/app-shell/AppShellView.tsx",
       "lines": 307
     }

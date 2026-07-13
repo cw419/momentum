@@ -78,6 +78,7 @@ describe('quality lane tooling', () => {
     expect(requiredChecks).toContain('npm run quality:ts-prune:strict');
     expect(requiredChecks).toContain('npm run quality:sonar:report');
     expect(requiredChecks).toContain('npm run quality:large-files');
+    expect(requiredChecks).toContain('npm run quality:css-structure');
     expect(requiredChecks).toContain('npm run test:coverage');
     expect(requiredChecks).toContain('npm run test:integration');
     expect(requiredChecks).toContain('npm run test:db');

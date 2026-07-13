@@ -4,8 +4,7 @@ import App from './App';
 import { StorageProvider } from './storage/StorageContext';
 import { I18nProvider } from './i18n';
 import './index.css';
-import './styles/mobile-optimizations.css';
-import './styles/mobile-touch-optimization.css';
+import './styles/editor-responsive.css';
 import './styles/rsip-canvas.css';
 
 // Web Vitals 性能监控

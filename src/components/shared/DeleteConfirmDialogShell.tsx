@@ -4,7 +4,6 @@ import { DialogShell } from './DialogShell';
 
 interface DeleteConfirmDialogShellProps {
   isOpen: boolean;
-  dialogRef: { current: HTMLDivElement | null };
   titleId: string;
   descriptionId: string;
   title: React.ReactNode;
@@ -20,7 +19,6 @@ interface DeleteConfirmDialogShellProps {
 
 export function DeleteConfirmDialogShell({
   isOpen,
-  dialogRef,
   titleId,
   descriptionId,
   title,
@@ -41,7 +39,6 @@ export function DeleteConfirmDialogShell({
       descriptionId={descriptionId}
       role="alertdialog"
       onClose={onCancel}
-      dialogRef={dialogRef}
       className="w-full max-w-lg animate-scale-in overflow-y-auto rounded-3xl border border-gray-200/60 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-slate-600/60 dark:bg-slate-800/95 sm:p-8"
     >
       <div className="mb-8 text-center">

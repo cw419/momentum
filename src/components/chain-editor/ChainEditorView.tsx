@@ -9,20 +9,16 @@ import { BasicInfoSection } from './sections/BasicInfoSection';
 import { MainChainSettingsSection } from './sections/MainChainSettingsSection';
 import { TaskDescriptionSection } from './sections/TaskDescriptionSection';
 import { useI18n } from '../../i18n';
+import type { CSSProperties } from 'react';
 
-interface MobileInfo {
-  isMobile: boolean;
-  touchSupport: boolean;
-}
+type EditorSurfaceStyle = CSSProperties & { '--keyboard-height': string };
 
 interface ChainEditorViewProps {
   chain?: Chain;
   isEditing: boolean;
   onCancel: () => void;
   form: ChainEditorFormModel;
-  mobileInfo: MobileInfo;
   keyboardHeight: number;
-  isKeyboardVisible: boolean;
   rsipNodes?: RSIPNode[];
   rsipTaskLinks?: RSIPTaskLink[];
   onUpsertRSIPTaskLinks?: (links: RSIPTaskLink[]) => void | Promise<unknown>;
@@ -33,9 +29,7 @@ export function ChainEditorView({
   isEditing,
   onCancel,
   form,
-  mobileInfo,
   keyboardHeight,
-  isKeyboardVisible,
   rsipNodes,
   rsipTaskLinks,
   onUpsertRSIPTaskLinks,
@@ -44,18 +38,19 @@ export function ChainEditorView({
   const canEditRsipLinks = Boolean(
     chain?.id && rsipNodes && rsipTaskLinks && onUpsertRSIPTaskLinks,
   );
+  const editorStyle: EditorSurfaceStyle = {
+    '--keyboard-height': `${keyboardHeight}px`,
+  };
 
   return (
     <div
-      className={`chain-editor-container bg-background performance-layer min-h-screen overflow-x-hidden ${
-        isKeyboardVisible ? 'keyboard-active' : ''
-      }`}
-      style={{ paddingBottom: isKeyboardVisible ? `${keyboardHeight}px` : '0' }}
+      className="editor-surface bg-background performance-layer overflow-x-hidden"
+      style={editorStyle}
       data-scrollable="true"
     >
       <ResponsiveContainer
         maxWidth="4xl"
-        className={`chain-editor-scroll-container py-4 md:py-6 ${mobileInfo.isMobile ? 'px-4' : ''}`}
+        className="editor-scroll-region py-4 md:py-6"
         data-scrollable="true"
       >
         <ChainEditorHeader isEditing={isEditing} onCancel={onCancel} />
@@ -98,11 +93,8 @@ export function ChainEditorView({
             isEditing={isEditing}
             onCancel={onCancel}
             form={form}
-            mobileInfo={mobileInfo}
           />
         </form>
-
-        {isKeyboardVisible && <div className="keyboard-buffer"></div>}
       </ResponsiveContainer>
     </div>
   );

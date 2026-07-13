@@ -4,11 +4,7 @@
 
 import { useState, useCallback } from 'react';
 import type { Chain, ChainDraft } from '../types';
-import {
-  useMobileOptimization,
-  useTouchOptimization,
-  useVirtualKeyboardAdaptation,
-} from '../hooks/useMobileOptimization';
+import { useVirtualKeyboard } from '../hooks/useVirtualKeyboard';
 import { isDev } from '../utils/env';
 import { logger } from '../utils/logger';
 import { useI18n } from '../i18n';
@@ -58,10 +54,7 @@ export function useTaskGroupEditor({
   );
   const [errors, setErrors] = useState<TaskGroupEditorFormErrors>({});
 
-  // Mobile optimization hooks
-  const mobileInfo = useMobileOptimization();
-  useTouchOptimization();
-  const { keyboardHeight, isKeyboardVisible } = useVirtualKeyboardAdaptation();
+  const { keyboardHeight } = useVirtualKeyboard();
 
   const handleAuxiliarySignalSelect = useCallback(
     (value: string) => {
@@ -264,10 +257,7 @@ export function useTaskGroupEditor({
     setAuxiliaryDuration,
     handleAuxiliaryCompletionTriggerChange,
     handleSubmit,
-    // Mobile info
-    mobileInfo,
     keyboardHeight,
-    isKeyboardVisible,
     // Constants
     AUXILIARY_SIGNAL_TEMPLATES,
     AUXILIARY_DURATION_PRESETS,

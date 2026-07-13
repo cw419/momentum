@@ -47,9 +47,7 @@ export const TaskGroupEditorContainer: React.FC<
     setAuxiliaryDuration,
     handleAuxiliaryCompletionTriggerChange,
     handleSubmit,
-    mobileInfo,
     keyboardHeight,
-    isKeyboardVisible,
   } = useTaskGroupEditor({
     chain,
     initialParentId,
@@ -68,8 +66,6 @@ export const TaskGroupEditorContainer: React.FC<
       isCustomAuxiliaryDuration={isCustomAuxiliaryDuration}
       auxiliaryCompletionTrigger={auxiliaryCompletionTrigger}
       errors={errors}
-      mobileInfo={mobileInfo}
-      isKeyboardVisible={isKeyboardVisible}
       keyboardHeight={keyboardHeight}
       onNameChange={handleNameChange}
       onDescriptionChange={handleDescriptionChange}

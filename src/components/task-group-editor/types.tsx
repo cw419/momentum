@@ -8,11 +8,6 @@ export interface FormErrors {
   auxiliaryCompletionTrigger?: string;
 }
 
-export interface MobileInfo {
-  isMobile: boolean;
-  touchSupport: boolean;
-}
-
 export interface TaskGroupEditorViewProps {
   // Data
   chain?: Chain;
@@ -28,9 +23,6 @@ export interface TaskGroupEditorViewProps {
   auxiliaryCompletionTrigger: string;
   errors: FormErrors;
 
-  // Mobile state
-  mobileInfo: MobileInfo;
-  isKeyboardVisible: boolean;
   keyboardHeight: number;
 
   // Handlers

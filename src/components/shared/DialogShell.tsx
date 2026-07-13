@@ -52,7 +52,7 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
   ).filter((element) => element.getAttribute('aria-hidden') !== 'true');
 }
 
-export interface DialogShellProps {
+interface DialogShellProps {
   children: ReactNode;
   titleId: string;
   onClose: () => void;

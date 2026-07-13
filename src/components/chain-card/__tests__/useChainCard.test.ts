@@ -1,4 +1,3 @@
-import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChainTreeNode, ScheduledSession } from '../../../types';
@@ -251,17 +250,9 @@ describe('useChainCard', () => {
     });
   });
 
-  it('handles menu/delete actions, escape close, and focus restore', async () => {
+  it('handles menu and delete state transitions', () => {
     const onDelete = vi.fn();
     const chain = createChain();
-    const previouslyFocused = document.createElement('button');
-    const dialog = document.createElement('div');
-    const cancelButton = document.createElement('button');
-    cancelButton.setAttribute('data-cancel-button', 'true');
-    dialog.appendChild(cancelButton);
-    document.body.appendChild(previouslyFocused);
-    document.body.appendChild(dialog);
-    previouslyFocused.focus();
 
     const { result } = renderHook(() =>
       useChainCard({
@@ -271,10 +262,6 @@ describe('useChainCard', () => {
     );
 
     act(() => {
-      (
-        result.current
-          .deleteDialogRef as React.MutableRefObject<HTMLDivElement | null>
-      ).current = dialog;
       result.current.handleToggleMenu();
     });
     expect(result.current.showMenu).toBe(true);
@@ -284,19 +271,6 @@ describe('useChainCard', () => {
     });
     expect(result.current.showDeleteConfirm).toBe(true);
     expect(result.current.showMenu).toBe(false);
-
-    await waitFor(() => {
-      expect(document.activeElement).toBe(cancelButton);
-    });
-
-    act(() => {
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    });
-
-    await waitFor(() => {
-      expect(result.current.showDeleteConfirm).toBe(false);
-    });
-    expect(document.activeElement).toBe(previouslyFocused);
 
     act(() => {
       result.current.handleShowDeleteConfirm();
@@ -310,8 +284,5 @@ describe('useChainCard', () => {
       result.current.handleCancelDelete();
     });
     expect(result.current.showDeleteConfirm).toBe(false);
-
-    document.body.removeChild(dialog);
-    document.body.removeChild(previouslyFocused);
   });
 });

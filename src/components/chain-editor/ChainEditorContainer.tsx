@@ -1,9 +1,5 @@
 import type { Chain, ChainDraft, RSIPNode, RSIPTaskLink } from '../../types';
-import {
-  useMobileOptimization,
-  useTouchOptimization,
-  useVirtualKeyboardAdaptation,
-} from '../../hooks/useMobileOptimization';
+import { useVirtualKeyboard } from '../../hooks/useVirtualKeyboard';
 import { useChainEditorForm } from './hooks/useChainEditorForm';
 import { ChainEditorView } from './ChainEditorView';
 
@@ -35,9 +31,7 @@ export function ChainEditor({
     onSave,
   });
 
-  const mobileInfo = useMobileOptimization();
-  useTouchOptimization();
-  const { keyboardHeight, isKeyboardVisible } = useVirtualKeyboardAdaptation();
+  const { keyboardHeight } = useVirtualKeyboard();
 
   return (
     <ChainEditorView
@@ -45,9 +39,7 @@ export function ChainEditor({
       isEditing={isEditing}
       onCancel={onCancel}
       form={form}
-      mobileInfo={mobileInfo}
       keyboardHeight={keyboardHeight}
-      isKeyboardVisible={isKeyboardVisible}
       rsipNodes={rsipNodes}
       rsipTaskLinks={rsipTaskLinks}
       onUpsertRSIPTaskLinks={onUpsertRSIPTaskLinks}

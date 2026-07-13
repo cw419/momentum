@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
@@ -37,7 +36,6 @@ describe('ChainCardView delete modal', () => {
     const user = userEvent.setup();
     const onConfirmDelete = vi.fn();
     const onCancelDelete = vi.fn();
-    const deleteDialogRef = React.createRef<HTMLDivElement>();
 
     render(
       <div data-testid="transformed" style={{ transform: 'translateY(12px)' }}>
@@ -66,7 +64,6 @@ describe('ChainCardView delete modal', () => {
           onShowDeleteConfirm={() => {}}
           onConfirmDelete={onConfirmDelete}
           onCancelDelete={onCancelDelete}
-          deleteDialogRef={deleteDialogRef}
         />
       </div>,
     );

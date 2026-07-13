@@ -22,6 +22,18 @@ interface RecommendItem {
   urgency: Urgency;
 }
 
+function getUrgency(isAtRisk: boolean, isActive: boolean): Urgency {
+  if (isAtRisk) return 'at-risk';
+  if (isActive) return 'active';
+  return 'new';
+}
+
+function getBaseScore(isAtRisk: boolean, isActive: boolean): number {
+  if (isAtRisk) return 3000;
+  if (isActive) return 1000;
+  return 0;
+}
+
 function computeRecommendations(chains: ChainTreeNode[]): RecommendItem[] {
   const now = Date.now();
   const MS_20H = 20 * 60 * 60 * 1000;
@@ -35,10 +47,10 @@ function computeRecommendations(chains: ChainTreeNode[]): RecommendItem[] {
       const isAtRisk =
         chain.currentStreak > 0 && lastMs !== null && now - lastMs > MS_20H;
       const isActive = chain.currentStreak > 0;
-      const urgency: Urgency = isAtRisk ? 'at-risk' : isActive ? 'active' : 'new';
+      const urgency = getUrgency(isAtRisk, isActive);
 
       // 排序分数：危险条纹 > 活跃条纹 > 新任务
-      const baseScore = isAtRisk ? 3000 : isActive ? 1000 : 0;
+      const baseScore = getBaseScore(isAtRisk, isActive);
       const streakBonus = chain.currentStreak * 10;
       return { chain, urgency, score: baseScore + streakBonus };
     });
@@ -51,30 +63,35 @@ function computeRecommendations(chains: ChainTreeNode[]): RecommendItem[] {
 
 const urgencyConfig: Record<
   Urgency,
-  { label: (tr: DashboardRecommendSectionProps['tr']) => string; icon: React.ReactNode; color: string }
+  {
+    label: (tr: DashboardRecommendSectionProps['tr']) => string;
+    icon: React.ReactNode;
+    color: string;
+  }
 > = {
   'at-risk': {
     label: (tr) => tr('条纹快断了！', 'Streak at risk!'),
     icon: <AlertTriangle size={13} aria-hidden="true" />,
-    color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/40',
+    color:
+      'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/40',
   },
   active: {
     label: (tr) => tr('保持势头', 'Keep the streak'),
     icon: <Flame size={13} aria-hidden="true" />,
-    color: 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700/40',
+    color:
+      'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700/40',
   },
   new: {
     label: (tr) => tr('新任务', 'New chain'),
     icon: <Sparkles size={13} aria-hidden="true" />,
-    color: 'text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700',
+    color:
+      'text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700',
   },
 };
 
-const DashboardRecommendSectionComponent: React.FC<DashboardRecommendSectionProps> = ({
-  chains,
-  onStartChain,
-  tr,
-}) => {
+const DashboardRecommendSectionComponent: React.FC<
+  DashboardRecommendSectionProps
+> = ({ chains, onStartChain, tr }) => {
   const recommendations = computeRecommendations(chains);
   if (recommendations.length === 0) return null;
 
@@ -85,7 +102,10 @@ const DashboardRecommendSectionComponent: React.FC<DashboardRecommendSectionProp
   if (!hasActiveChains) return null;
 
   return (
-    <section className="mb-10 animate-fade-in" aria-label={tr('今日推荐', 'Today\'s picks')}>
+    <section
+      className="mb-10 animate-fade-in"
+      aria-label={tr('今日推荐', "Today's picks")}
+    >
       <div className="mb-3 flex items-center gap-2">
         <Zap size={15} className="text-primary-500" aria-hidden="true" />
         <h2 className="font-chinese text-sm font-semibold text-gray-600 dark:text-slate-400">
@@ -130,5 +150,7 @@ const DashboardRecommendSectionComponent: React.FC<DashboardRecommendSectionProp
   );
 };
 
-export const DashboardRecommendSection = React.memo(DashboardRecommendSectionComponent);
+export const DashboardRecommendSection = React.memo(
+  DashboardRecommendSectionComponent,
+);
 DashboardRecommendSection.displayName = 'DashboardRecommendSection';

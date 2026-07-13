@@ -118,7 +118,7 @@ describe('ChainCardView behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'More options' }));
     expect(onToggleMenu).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete chain' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete chain' }));
     expect(onShowDeleteConfirm).toHaveBeenCalledTimes(1);
   });
 

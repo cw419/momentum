@@ -240,7 +240,7 @@ describe('RuleSelectionDialog', () => {
       await user.clear(durationInput);
       await user.type(durationInput, '30');
 
-      expect(durationInput).toHaveValue(30);
+      await waitFor(() => expect(durationInput).toHaveValue(30));
     });
 
     it('should show unlimited time option', async () => {

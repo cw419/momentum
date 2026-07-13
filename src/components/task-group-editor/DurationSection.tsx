@@ -1,8 +1,7 @@
 import React from 'react';
 import { Hourglass } from 'lucide-react';
 
-import { SliderContainer } from '../SliderContainer';
-import { PureDOMSlider } from '../PureDOMSlider';
+import { NumericSliderField } from '../shared/NumericSliderField';
 import { AUXILIARY_DURATION_PRESETS } from '../chain-editor/constants';
 
 interface DurationSectionProps {
@@ -69,35 +68,23 @@ const DurationSectionComponent: React.FC<DurationSectionProps> = ({
       </select>
 
       {isCustomAuxiliaryDuration && (
-        <SliderContainer
+        <NumericSliderField
+          id="auxiliary-duration-slider"
           label={tr('自定义预约时长', 'Custom booking duration')}
           description={tr(
             '设置预约阶段的持续时间',
             'Set how long the booking phase lasts',
           )}
-          orientation="horizontal"
-          showKeyboardInput={true}
-          keyboardInputProps={{
-            value: auxiliaryDuration,
-            onChange: onAuxiliaryDurationChange,
-            min: 1,
-            max: 120,
-            unit: tr('分钟', 'min'),
-            placeholder: tr('输入时长', 'Enter duration'),
-          }}
-        >
-          <PureDOMSlider
-            id="auxiliary-duration-slider"
-            name="auxiliaryDurationSlider"
-            min={1}
-            max={120}
-            initialValue={auxiliaryDuration}
-            onValueChange={onAuxiliaryDurationChange}
-            valueFormatter={(v) => tr(`${v}分钟`, `${v} min`)}
-            debounceMs={50}
-            showValue={true}
-          />
-        </SliderContainer>
+          value={auxiliaryDuration}
+          onChange={onAuxiliaryDurationChange}
+          min={1}
+          max={120}
+          unit={tr('分钟', 'min')}
+          formatValue={(nextValue) =>
+            tr(`${nextValue}分钟`, `${nextValue} min`)
+          }
+          debounceMs={50}
+        />
       )}
 
       <p className="text-xs leading-relaxed text-gray-500">

@@ -42,7 +42,4 @@ export interface ChainCardViewProps {
   onShowDeleteConfirm: () => void;
   onConfirmDelete: () => void;
   onCancelDelete: () => void;
-
-  // Refs
-  deleteDialogRef: React.RefObject<HTMLDivElement>;
 }
