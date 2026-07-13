@@ -225,6 +225,51 @@
   animation: scale-in 0.2s ease-out forwards;
 }
 
+/* 呼吸圆环 — 无时长任务专注状态 */
+@keyframes breatheRing {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.animate-breathe-ring {
+  animation: breatheRing 4s ease-in-out infinite;
+}
+
+/* 里程碑火焰光晕 — 条纹达到 7/30/100 时 */
+@keyframes milestoneGlow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0px transparent);
+  }
+  50% {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
+  }
+}
+.animate-milestone-glow {
+  animation: milestoneGlow 2s ease-in-out infinite;
+}
+
+/* 任务完成庆祝弹跳 */
+@keyframes completionPop {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  80% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-completion-pop {
+  animation: completionPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 专注模式 — 暂停状态过渡 */
+.focus-paused {
+  filter: brightness(0.65) saturate(0.7);
+  transition: filter 0.4s ease;
+}
+.focus-running {
+  filter: brightness(1) saturate(1);
+  transition: filter 0.4s ease;
+}
+
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react';
 import { isDev } from '../../utils/env';
 import { lazyWithChunkRecovery } from '../../utils/lazyWithChunkRecovery';
+import { ChainCardSkeleton } from './ChainCardSkeleton';
 import { DashboardChainsSection } from './DashboardChainsSection';
 import { DashboardEmptyState } from './DashboardEmptyState';
 import { DashboardHero } from './DashboardHero';
+import { DashboardRecommendSection } from './DashboardRecommendSection';
 import { DashboardTopBar } from './DashboardTopBar';
 import type { DashboardProps } from './types';
 import type { DashboardController } from './useDashboardController';
@@ -178,20 +180,11 @@ export function DashboardView({
         </div>
 
         {isLoading && (
-          <div className="animate-slide-up py-20 text-center">
-            <div className="bento-card mx-auto max-w-lg">
-              <div className="gradient-primary mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl shadow-2xl">
-                <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-white/30 border-t-white" />
-              </div>
-              <h2 className="mb-4 font-chinese text-3xl font-bold text-gray-900 dark:text-slate-100">
-                {tr('正在加载任务链...', 'Loading task chains…')}
-              </h2>
-              <p className="leading-relaxed text-gray-700 dark:text-slate-300">
-                {tr(
-                  '正在从云端同步你的数据',
-                  'Syncing your data from the cloud',
-                )}
-              </p>
+          <div className="animate-slide-up py-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <ChainCardSkeleton />
+              <ChainCardSkeleton />
+              <ChainCardSkeleton />
             </div>
           </div>
         )}
@@ -206,7 +199,13 @@ export function DashboardView({
         )}
 
         {!isLoading && chains.length !== 0 && (
-          <DashboardChainsSection
+          <>
+            <DashboardRecommendSection
+              chains={topLevelChains}
+              onStartChain={onStartChain}
+              tr={tr}
+            />
+            <DashboardChainsSection
             topLevelChains={topLevelChains}
             recycleBinCount={recycleBinCount}
             getScheduledSession={getScheduledSession}
@@ -223,6 +222,7 @@ export function DashboardView({
             onCreateTaskGroup={onCreateTaskGroup}
             tr={tr}
           />
+          </>
         )}
       </div>
 

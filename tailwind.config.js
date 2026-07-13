@@ -48,6 +48,9 @@ export default {
         'slide-up': 'slideUp 0.8s ease-out forwards',
         'scale-in': 'scaleIn 0.5s ease-out forwards',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'breathe-ring': 'breatheRing 4s ease-in-out infinite',
+        'milestone-glow': 'milestoneGlow 2s ease-in-out infinite',
+        'completion-pop': 'completionPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
       },
       backdropBlur: {
         xs: '2px',

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import type {
   ActiveSession,
   Chain,
@@ -15,6 +16,8 @@ import {
   Maximize,
   X,
 } from 'lucide-react';
+import { TimerRing } from './TimerRing';
+import { useLongPress } from '../../hooks/useLongPress';
 import {
   formatDuration,
   formatElapsedTime,
@@ -109,10 +112,15 @@ export function FocusModeView({
   const elapsedWholeMinutes = Math.floor(
     (session.duration * 60 - timeRemaining) / 60,
   );
-  const interruptLabel = tr('中断任务', 'Interrupt');
+  const interruptLabel = tr('长按中断', 'Hold to interrupt');
+
+  const { isActive: isLongPressing, handlers: longPressHandlers } = useLongPress({
+    onLongPress: useCallback(() => { onInterruptClick(); }, [onInterruptClick]),
+    delay: 700,
+  });
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--surface-canvas)] px-4 py-20 sm:px-6">
+    <main className={`relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--surface-canvas)] px-4 py-20 sm:px-6 ${session.isPaused ? 'focus-paused' : 'focus-running'}`}>
       <div className="absolute right-4 top-4 z-20 flex items-center space-x-2">
         {!isFullscreen ? (
           <button
@@ -158,13 +166,24 @@ export function FocusModeView({
         </header>
 
         <section className="mb-12 text-center sm:mb-16" aria-live="polite">
-          <div className="mb-8 font-mono text-[clamp(4rem,15vw,9rem)] font-light leading-none tracking-tight text-gray-950 [font-variant-numeric:tabular-nums] dark:text-white">
-            {isDurationless
-              ? formatElapsedTime(elapsedSeconds)
-              : formatDuration(timeRemaining)}
+          {/* 计时器 + 呼吸圆环 */}
+          <div className="relative mb-8 flex items-center justify-center py-4">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+              <TimerRing
+                progress={progress}
+                isDurationless={isDurationless}
+                isPaused={session.isPaused}
+                className="h-[min(300px,72vw)] w-[min(300px,72vw)]"
+              />
+            </div>
+            <div className="relative z-10 px-8 font-mono text-[clamp(4rem,15vw,9rem)] font-light leading-none tracking-tight text-gray-950 [font-variant-numeric:tabular-nums] dark:text-white">
+              {isDurationless
+                ? formatElapsedTime(elapsedSeconds)
+                : formatDuration(timeRemaining)}
+            </div>
           </div>
 
-          <div className="mx-auto mb-6 h-2 w-full max-w-2xl overflow-hidden rounded-full bg-gray-200 dark:bg-slate-800">
+          <div className="mx-auto mb-6 h-1.5 w-full max-w-2xl overflow-hidden rounded-full bg-gray-200 dark:bg-slate-800">
             <div
               className="h-full rounded-full bg-primary-600 transition-[width] duration-1000 ease-out dark:bg-primary-400"
               style={{ width: `${progress}%` }}
@@ -249,13 +268,18 @@ export function FocusModeView({
         <div className="fixed bottom-4 right-4 z-30 sm:bottom-6 sm:right-6">
           <button
             type="button"
-            onClick={onInterruptClick}
+            {...longPressHandlers}
             aria-label={interruptLabel}
-            className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-[var(--surface-raised)] px-3 py-2 text-red-700 transition-colors hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+            className="focus-ring relative flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-xl border border-red-200 bg-[var(--surface-raised)] px-3 py-2 text-red-700 transition-colors dark:border-red-900/60 dark:text-red-300"
             title={interruptLabel}
           >
-            <AlertTriangle size={18} aria-hidden="true" />
-            <span className="hidden text-sm font-medium sm:inline">
+            {/* 长按进度填充 */}
+            <span
+              className={`absolute inset-0 origin-left bg-red-400/20 dark:bg-red-500/20 transition-transform ${isLongPressing ? 'duration-[700ms] scale-x-100' : 'duration-75 scale-x-0'}`}
+              aria-hidden="true"
+            />
+            <AlertTriangle size={18} aria-hidden="true" className="relative z-10" />
+            <span className="relative z-10 hidden text-sm font-medium sm:inline">
               {interruptLabel}
             </span>
           </button>

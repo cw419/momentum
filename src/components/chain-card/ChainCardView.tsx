@@ -14,6 +14,7 @@ import {
   Bell,
   Check,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 import {
   formatDuration,
@@ -68,6 +69,12 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(
       language === 'zh'
         ? `${chain.totalCompletions} 次完成`
         : `${chain.totalCompletions} ${completionUnit}`;
+
+    const STREAK_MILESTONES = [7, 30, 100, 365];
+    const isMilestone =
+      chain.currentStreak > 0 && STREAK_MILESTONES.includes(chain.currentStreak);
+    const isZeroStreak = chain.currentStreak === 0;
+    const isZeroAuxStreak = chain.auxiliaryStreak === 0;
 
     return (
       <div className="relative">
@@ -154,23 +161,41 @@ export const ChainCardView: React.FC<ChainCardViewProps> = React.memo(
           {/* Stats */}
           <div className="mb-6 grid grid-cols-2 gap-4">
             <div className="rounded-2xl border border-primary-200/50 bg-gradient-to-br from-primary-500/10 to-primary-600/5 p-4 text-center dark:border-primary-400/30 dark:from-primary-500/20 dark:to-primary-600/10">
-              <div className="mb-2 flex items-center justify-center space-x-2 text-primary-500">
-                <Flame size={18} />
-                <span className="font-mono text-3xl font-bold">
-                  #{chain.currentStreak}
-                </span>
-              </div>
+              {isZeroStreak ? (
+                <div className="flex flex-col items-center justify-center gap-1 py-0.5">
+                  <Sparkles size={18} className="text-primary-400 dark:text-primary-500" aria-hidden="true" />
+                  <span className="font-chinese text-xs font-semibold text-primary-600 dark:text-primary-400">
+                    {tr('开始第一链', 'Start first chain')}
+                  </span>
+                </div>
+              ) : (
+                <div className={`mb-2 flex items-center justify-center space-x-2 text-primary-500 ${isMilestone ? 'animate-milestone-glow' : ''}`}>
+                  <Flame size={18} aria-hidden="true" />
+                  <span className="font-mono text-3xl font-bold">
+                    #{chain.currentStreak}
+                  </span>
+                </div>
+              )}
               <div className="font-chinese text-xs font-medium text-gray-600 dark:text-slate-400">
                 {tr('主链记录', 'Main streak')}
               </div>
             </div>
             <div className="rounded-2xl border border-blue-200/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 text-center dark:border-blue-400/30 dark:from-blue-500/20 dark:to-blue-600/10">
-              <div className="mb-2 flex items-center justify-center space-x-2 text-blue-500">
-                <Calendar size={18} />
-                <span className="font-mono text-3xl font-bold">
-                  #{chain.auxiliaryStreak}
-                </span>
-              </div>
+              {isZeroAuxStreak ? (
+                <div className="flex flex-col items-center justify-center gap-1 py-0.5">
+                  <Calendar size={18} className="text-blue-400 dark:text-blue-500" aria-hidden="true" />
+                  <span className="font-chinese text-xs font-semibold text-blue-500 dark:text-blue-400">
+                    {tr('尚无预约', 'No bookings yet')}
+                  </span>
+                </div>
+              ) : (
+                <div className="mb-2 flex items-center justify-center space-x-2 text-blue-500">
+                  <Calendar size={18} aria-hidden="true" />
+                  <span className="font-mono text-3xl font-bold">
+                    #{chain.auxiliaryStreak}
+                  </span>
+                </div>
+              )}
               <div className="font-chinese text-xs font-medium text-gray-600 dark:text-slate-400">
                 {tr('预约链记录', 'Booking streak')}
               </div>

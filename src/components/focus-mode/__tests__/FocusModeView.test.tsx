@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../i18n';
 import { createUnitChain } from '../../../test/factories';
 import type { ActiveSession } from '../../../types';
@@ -106,14 +106,23 @@ describe('FocusModeView', () => {
     localStorage.setItem('language', 'en');
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('should trigger fullscreen and interrupt handlers when session is active', async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const props = createProps();
 
     renderView(props);
 
     await user.click(screen.getByRole('button', { name: /Enter fullscreen/i }));
-    await user.click(screen.getByRole('button', { name: /Interrupt/i }));
+
+    // 中断按钮需长按 700ms 才触发
+    const interruptButton = screen.getByRole('button', { name: /Hold to interrupt/i });
+    fireEvent.pointerDown(interruptButton);
+    vi.advanceTimersByTime(700);
 
     expect(props.onEnterFullscreen).toHaveBeenCalledTimes(1);
     expect(props.onInterruptClick).toHaveBeenCalledTimes(1);
