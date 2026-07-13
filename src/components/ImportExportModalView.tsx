@@ -11,6 +11,7 @@ import {
   ImportButton,
   ExportTab,
 } from './ImportExportModalParts';
+import { DialogShell } from './shared/DialogShell';
 
 interface ImportExportModalViewProps {
   chainsCount: number;
@@ -62,49 +63,45 @@ export const ImportExportModalView: React.FC<ImportExportModalViewProps> = ({
     importStatus === 'importing';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="import-export-modal-title"
-        className="max-h-[90vh] w-full max-w-2xl animate-scale-in overflow-y-auto rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-slate-600 dark:bg-slate-800"
-        style={{ overscrollBehavior: 'contain' }}
-      >
-        <ModalHeader onClose={onClose} tr={tr} />
-        <TabNavigation
-          activeTab={activeTab}
+    <DialogShell
+      titleId="import-export-modal-title"
+      onClose={onClose}
+      className="w-full max-w-2xl animate-scale-in overflow-y-auto rounded-3xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-600 dark:bg-slate-800 sm:p-6"
+    >
+      <ModalHeader onClose={onClose} tr={tr} />
+      <TabNavigation
+        activeTab={activeTab}
+        chainsCount={chainsCount}
+        onTabChange={onTabChange}
+        tr={tr}
+      />
+
+      {activeTab === 'export' && chainsCount > 0 && (
+        <ExportTab
           chainsCount={chainsCount}
-          onTabChange={onTabChange}
+          onExport={onExport}
+          language={language}
           tr={tr}
         />
+      )}
 
-        {activeTab === 'export' && chainsCount > 0 && (
-          <ExportTab
-            chainsCount={chainsCount}
-            onExport={onExport}
-            language={language}
-            tr={tr}
-          />
-        )}
-
-        {(activeTab === 'import' || chainsCount === 0) && (
-          <ImportTab
-            importData={importData}
-            importStatus={importStatus}
-            importError={importError}
-            importOptions={importOptions}
-            isImportDisabled={isImportDisabled}
-            isImporting={isImporting}
-            onImportDataChange={onImportDataChange}
-            onImportOptionsChange={onImportOptionsChange}
-            onFileUpload={onFileUpload}
-            onOpenFile={onOpenFile}
-            onImport={onImport}
-            tr={tr}
-          />
-        )}
-      </div>
-    </div>
+      {(activeTab === 'import' || chainsCount === 0) && (
+        <ImportTab
+          importData={importData}
+          importStatus={importStatus}
+          importError={importError}
+          importOptions={importOptions}
+          isImportDisabled={isImportDisabled}
+          isImporting={isImporting}
+          onImportDataChange={onImportDataChange}
+          onImportOptionsChange={onImportOptionsChange}
+          onFileUpload={onFileUpload}
+          onOpenFile={onOpenFile}
+          onImport={onImport}
+          tr={tr}
+        />
+      )}
+    </DialogShell>
   );
 };
 

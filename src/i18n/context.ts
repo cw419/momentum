@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { Language } from './translations';
+import type { Language, TranslationKey } from './translations';
 
 export type TranslationParams = Record<
   string,
@@ -10,7 +10,8 @@ export interface I18nContextValue {
   language: Language;
   locale: string;
   setLanguage: (language: Language) => void;
-  t: (key: string, params?: TranslationParams) => string;
+  t: (key: TranslationKey, params?: TranslationParams) => string;
+  /** @deprecated Add a semantic translation key and use t(). */
   tr: (zh: string, en: string) => string;
 }
 

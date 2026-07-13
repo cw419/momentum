@@ -1,7 +1,9 @@
+import type { TranslationKey } from '../../i18n';
+
 interface AccountModalLanguageSectionProps {
   language: 'en' | 'zh';
   setLanguage: (language: 'en' | 'zh') => void;
-  t: (key: string) => string;
+  t: (key: TranslationKey) => string;
 }
 
 export function AccountModalLanguageSection({

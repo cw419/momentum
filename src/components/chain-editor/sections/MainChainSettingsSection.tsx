@@ -16,13 +16,11 @@ import {
 } from '../constants';
 import { useI18n } from '../../../i18n';
 
-interface MainChainSettingsSectionProps {
-  form: ChainEditorFormModel;
-}
-
 export function MainChainSettingsSection({
   form,
-}: MainChainSettingsSectionProps) {
+}: {
+  form: ChainEditorFormModel;
+}) {
   const { language, tr } = useI18n();
 
   return (
@@ -34,16 +32,19 @@ export function MainChainSettingsSection({
         'Configure the main task execution settings',
       )}
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="bento-card animate-scale-in border-l-4 border-l-primary-500 p-4 md:p-5">
+      <div className="grid grid-cols-1 divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 bg-white/90 shadow-sm dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800/80 md:grid-cols-2 md:divide-x md:divide-y-0">
+        <div className="animate-scale-in p-5 md:p-6">
           <div className="mb-3 flex items-center gap-3">
             <Crown className="text-primary-500" size={18} />
             <div className="min-w-0">
               <h4 className="font-chinese text-base font-semibold text-gray-900 dark:text-slate-100">
                 {tr('神圣座位', 'Sacred Seat')}
               </h4>
-              <p className="font-mono text-[11px] text-gray-500">
-                {tr('神圣座位触发器', 'SACRED SEAT TRIGGER')}
+              <p className="font-chinese text-sm text-gray-500 dark:text-slate-400">
+                {tr(
+                  '选择开始这项任务的明确信号',
+                  'Choose a clear signal that starts this task',
+                )}
               </p>
             </div>
           </div>
@@ -87,11 +88,7 @@ export function MainChainSettingsSection({
           )}
         </div>
 
-        <div
-          className={`bento-card animate-scale-in border-l-4 p-4 md:p-5 ${
-            form.isDurationless ? 'border-l-purple-500' : 'border-l-primary-500'
-          }`}
-        >
+        <div className="animate-scale-in p-5 md:p-6">
           <div className="mb-3 flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
               <Clock className="text-primary-500" size={20} />
@@ -99,8 +96,11 @@ export function MainChainSettingsSection({
                 <h4 className="font-chinese text-base font-semibold text-gray-900 dark:text-slate-100">
                   {tr('任务时长', 'Task duration')}
                 </h4>
-                <p className="font-mono text-[11px] text-gray-500">
-                  {tr('任务时长', 'TASK DURATION')}
+                <p className="font-chinese text-sm text-gray-500 dark:text-slate-400">
+                  {tr(
+                    '设置一个可执行的时间边界',
+                    'Set a practical time boundary',
+                  )}
                 </p>
               </div>
             </div>

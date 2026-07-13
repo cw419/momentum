@@ -73,25 +73,9 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
   const { detectDuplicates, results: searchResults } = search;
 
   useEffect(() => {
-    let focusTimer: ReturnType<typeof setTimeout> | undefined;
-
     if (isOpen) {
       startMonitoring();
       void loadRules();
-
-      focusTimer = setTimeout(() => {
-        const input = searchInputRef.current;
-        if (!input) return;
-
-        const active = document.activeElement;
-        const shouldFocus =
-          !active ||
-          active === document.body ||
-          active === document.documentElement;
-        if (shouldFocus) {
-          input.focus();
-        }
-      }, 100);
     } else {
       stopMonitoring();
       setSearchQuery('');
@@ -99,7 +83,6 @@ export const RuleSelectionDialog: React.FC<RuleSelectionDialogProps> = ({
     }
 
     return () => {
-      if (focusTimer) clearTimeout(focusTimer);
       stopMonitoring();
     };
   }, [isOpen, loadRules, setRuleError, startMonitoring, stopMonitoring]);

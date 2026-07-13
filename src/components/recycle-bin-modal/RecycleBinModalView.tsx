@@ -7,6 +7,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { EmptyState } from './components/EmptyState';
 import { Header } from './components/Header';
 import { LoadingState } from './components/LoadingState';
+import { DialogShell } from '../shared/DialogShell';
 
 interface RecycleBinModalViewProps {
   isOpen: boolean;
@@ -79,12 +80,11 @@ const RecycleBinModalViewComponent: React.FC<RecycleBinModalViewProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="recycle-bin-modal-title"
-        className="flex max-h-[95vh] w-full max-w-7xl flex-col rounded-3xl bg-white shadow-2xl dark:bg-slate-800"
+    <>
+      <DialogShell
+        titleId="recycle-bin-modal-title"
+        onClose={onClose}
+        className="flex w-full max-w-7xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-800"
       >
         <Header
           deletedChainsCount={deletedChains.length}
@@ -93,7 +93,7 @@ const RecycleBinModalViewComponent: React.FC<RecycleBinModalViewProps> = ({
           onClose={onClose}
         />
         <div className="flex flex-1 flex-col overflow-hidden">{content}</div>
-      </div>
+      </DialogShell>
 
       {showConfirmDialog && (
         <ConfirmDialog
@@ -103,7 +103,7 @@ const RecycleBinModalViewComponent: React.FC<RecycleBinModalViewProps> = ({
           onCancel={onCancelConfirm}
         />
       )}
-    </div>
+    </>
   );
 };
 

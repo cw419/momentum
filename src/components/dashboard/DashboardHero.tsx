@@ -1,34 +1,31 @@
 import React from 'react';
-import { Rocket } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface DashboardHeroProps {
   language: 'zh' | 'en';
+  nextStepLabel: string;
   tr: (zh: string, en: string) => string;
 }
 
 const DashboardHeroComponent: React.FC<DashboardHeroProps> = ({
   language,
+  nextStepLabel,
   tr,
 }) => (
   <header
     data-testid="dashboard-hero"
-    className="mb-16 animate-fade-in text-center"
+    className="mb-10 max-w-4xl animate-fade-in border-b border-gray-200/80 pb-8 text-left dark:border-slate-700/80 md:mb-12 md:pb-10"
   >
-    <div className="mb-6 flex items-center justify-center space-x-4">
-      <div className="gradient-primary flex h-16 w-16 items-center justify-center rounded-3xl shadow-xl">
-        <Rocket className="text-white" size={24} />
-      </div>
-      <div>
-        <h1 className="mb-2 font-chinese text-5xl font-bold text-gray-900 dark:text-slate-100 md:text-6xl">
-          Momentum
-        </h1>
-        <p className="font-mono text-sm uppercase tracking-wider text-gray-600 dark:text-slate-400">
-          {tr('CTDP 协议', 'CTDP Protocol')}
-        </p>
-      </div>
+    <div className="mb-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
+      <span className="h-px w-8 bg-primary-500" aria-hidden="true" />
+      <span>{tr('CTDP 协议', 'CTDP Protocol')}</span>
     </div>
 
-    <p className="mx-auto max-w-3xl font-chinese text-lg leading-relaxed text-gray-700 dark:text-slate-300">
+    <h1 className="mb-4 font-chinese text-4xl font-bold tracking-tight text-gray-950 dark:text-slate-50 sm:text-5xl md:text-6xl">
+      Momentum
+    </h1>
+
+    <p className="max-w-3xl font-chinese text-base leading-7 text-gray-600 dark:text-slate-300 sm:text-lg sm:leading-8">
       {language === 'zh' ? (
         <>
           基于链式时延协议理论，通过
@@ -55,6 +52,10 @@ const DashboardHeroComponent: React.FC<DashboardHeroProps> = ({
         </>
       )}
     </p>
+    <div className="mt-5 flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-slate-400">
+      <ArrowRight size={16} aria-hidden="true" />
+      <span>{nextStepLabel}</span>
+    </div>
   </header>
 );
 

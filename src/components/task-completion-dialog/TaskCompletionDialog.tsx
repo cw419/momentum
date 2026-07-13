@@ -5,6 +5,7 @@ import { TaskCompletionDialogFooter } from './components/TaskCompletionDialogFoo
 import { TaskCompletionDialogHeader } from './components/TaskCompletionDialogHeader';
 import { TaskDescriptionSection } from './components/TaskDescriptionSection';
 import { useTaskCompletionDialog } from './hooks/useTaskCompletionDialog';
+import { DialogShell } from '../shared/DialogShell';
 
 interface TaskCompletionDialogProps {
   isOpen: boolean;
@@ -55,51 +56,49 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
   const disableComplete = isDurationless && !description.trim();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="task-completion-dialog-title"
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-gray-800"
-      >
-        <TaskCompletionDialogHeader
-          chainName={chainName}
+    <DialogShell
+      titleId="task-completion-dialog-title"
+      onClose={handleCancel}
+      initialFocusRef={descriptionInputRef}
+      className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-gray-800"
+    >
+      <TaskCompletionDialogHeader
+        chainName={chainName}
+        tr={tr}
+        onCancel={handleCancel}
+      />
+
+      <div className="flex-1 space-y-4 overflow-y-auto p-6">
+        <TaskDescriptionSection
           tr={tr}
-          onCancel={handleCancel}
+          isDurationless={isDurationless}
+          description={description}
+          onDescriptionChange={setDescription}
+          onDescriptionKeyDown={handleDescriptionKeyDown}
+          descriptionInputRef={descriptionInputRef}
+          recentDescriptions={recentDescriptions}
+          showQuickFill={showQuickFill}
+          onToggleQuickFill={toggleQuickFill}
+          onQuickFill={handleQuickFill}
         />
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-6">
-          <TaskDescriptionSection
-            tr={tr}
-            isDurationless={isDurationless}
-            description={description}
-            onDescriptionChange={setDescription}
-            onDescriptionKeyDown={handleDescriptionKeyDown}
-            descriptionInputRef={descriptionInputRef}
-            recentDescriptions={recentDescriptions}
-            showQuickFill={showQuickFill}
-            onToggleQuickFill={toggleQuickFill}
-            onQuickFill={handleQuickFill}
-          />
-
-          <NotesSection
-            tr={tr}
-            isVisible={isNotesVisible}
-            notes={notes}
-            onNotesChange={setNotes}
-            onNotesKeyDown={handleNotesKeyDown}
-            notesTextareaRef={notesTextareaRef}
-            onShowNotes={showNotes}
-          />
-        </div>
-
-        <TaskCompletionDialogFooter
+        <NotesSection
           tr={tr}
-          disableComplete={disableComplete}
-          onCancel={handleCancel}
-          onSubmit={handleSubmit}
+          isVisible={isNotesVisible}
+          notes={notes}
+          onNotesChange={setNotes}
+          onNotesKeyDown={handleNotesKeyDown}
+          notesTextareaRef={notesTextareaRef}
+          onShowNotes={showNotes}
         />
       </div>
-    </div>
+
+      <TaskCompletionDialogFooter
+        tr={tr}
+        disableComplete={disableComplete}
+        onCancel={handleCancel}
+        onSubmit={handleSubmit}
+      />
+    </DialogShell>
   );
 };

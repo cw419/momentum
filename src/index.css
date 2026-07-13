@@ -3,12 +3,34 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --surface-canvas: oklch(97% 0.012 275);
+    --surface-raised: oklch(99% 0.006 275);
+    --surface-subtle: oklch(94% 0.018 275);
+    --border-subtle: oklch(87% 0.024 275);
+    --text-strong: oklch(23% 0.025 275);
+    --text-muted: oklch(47% 0.03 275);
+    --accent: oklch(55% 0.2 276);
+    --accent-strong: oklch(47% 0.21 276);
+  }
+
+  .dark {
+    --surface-canvas: oklch(15% 0.018 275);
+    --surface-raised: oklch(20% 0.022 275);
+    --surface-subtle: oklch(24% 0.025 275);
+    --border-subtle: oklch(32% 0.03 275);
+    --text-strong: oklch(94% 0.012 275);
+    --text-muted: oklch(72% 0.025 275);
+    --accent: oklch(68% 0.17 276);
+    --accent-strong: oklch(76% 0.13 276);
+  }
+
   body {
     font-family:
       -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto,
       'Helvetica Neue', sans-serif;
-    background-color: #f2f2f7;
-    color: #1c1c1e;
+    background-color: var(--surface-canvas);
+    color: var(--text-strong);
     @apply antialiased selection:bg-gray-900 selection:text-white dark:bg-[#0F0F12] dark:text-[#F2F2F7] dark:selection:bg-white dark:selection:text-black;
   }
 
@@ -22,44 +44,32 @@
   .bg-background {
     background:
       radial-gradient(
-        1200px 520px at 12% 6%,
-        rgba(99, 102, 241, 0.1),
-        rgba(255, 255, 255, 0) 60%
+        900px 420px at 8% -8%,
+        color-mix(in oklch, var(--accent) 10%, transparent),
+        transparent 68%
       ),
-      radial-gradient(
-        900px 520px at 90% 10%,
-        rgba(56, 189, 248, 0.08),
-        rgba(255, 255, 255, 0) 62%
-      ),
-      linear-gradient(180deg, #f8f9ff 0%, #f3f5fb 48%, #eef0f6 100%);
+      var(--surface-canvas);
   }
 
   .dark .bg-background {
     background:
       radial-gradient(
-        1200px 520px at 12% 6%,
-        rgba(99, 102, 241, 0.18),
-        rgba(15, 23, 42, 0) 62%
+        900px 420px at 8% -8%,
+        color-mix(in oklch, var(--accent) 12%, transparent),
+        transparent 68%
       ),
-      radial-gradient(
-        900px 520px at 90% 10%,
-        rgba(56, 189, 248, 0.12),
-        rgba(15, 23, 42, 0) 64%
-      ),
-      linear-gradient(180deg, #05080f 0%, #0b1220 52%, #05080f 100%);
+      var(--surface-canvas);
   }
 
   .bento-card {
     position: relative;
     width: 100%;
     padding: 1.5rem;
-    border-radius: 1.5rem;
-    border: 1px solid rgba(17, 24, 39, 0.08);
-    background-color: rgba(255, 255, 255, 0.86);
-    box-shadow:
-      0 18px 46px -38px rgba(15, 23, 42, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(14px);
+    border-radius: 1.25rem;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--surface-raised);
+    box-shadow: 0 14px 36px -32px
+      color-mix(in oklch, var(--text-strong) 35%, transparent);
     transition:
       box-shadow 220ms ease,
       transform 220ms ease,
@@ -68,26 +78,21 @@
   }
 
   .dark .bento-card {
-    border-color: rgba(148, 163, 184, 0.16);
-    background-color: rgba(30, 41, 59, 0.72);
-    box-shadow:
-      0 24px 80px -56px rgba(0, 0, 0, 0.92),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-color: var(--border-subtle);
+    background-color: var(--surface-raised);
+    box-shadow: none;
   }
 
   .bento-card.cursor-pointer:hover {
-    transform: translateY(-2px);
-    border-color: rgba(99, 102, 241, 0.24);
-    box-shadow:
-      0 22px 60px -44px rgba(15, 23, 42, 0.26),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    transform: translateY(-1px);
+    border-color: color-mix(in oklch, var(--accent) 34%, var(--border-subtle));
+    box-shadow: 0 18px 42px -34px
+      color-mix(in oklch, var(--text-strong) 42%, transparent);
   }
 
   .dark .bento-card.cursor-pointer:hover {
-    border-color: rgba(129, 140, 248, 0.26);
-    box-shadow:
-      0 30px 96px -64px rgba(0, 0, 0, 0.96),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-color: color-mix(in oklch, var(--accent) 38%, var(--border-subtle));
+    box-shadow: none;
   }
 }
 

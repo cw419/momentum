@@ -19,7 +19,6 @@ interface UseRecycleBinModalOptions {
 
 export function useRecycleBinModal({
   isOpen,
-  onClose,
   onRestore,
   onPermanentDelete,
 }: UseRecycleBinModalOptions) {
@@ -31,22 +30,6 @@ export function useRecycleBinModal({
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] =
     useState<ConfirmDialogState | null>(null);
-
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !showConfirmDialog) {
-        onClose();
-      }
-    },
-    [onClose, showConfirmDialog],
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen, handleKeyDown]);
 
   const loadDeletedChains = useCallback(async () => {
     setIsLoading(true);

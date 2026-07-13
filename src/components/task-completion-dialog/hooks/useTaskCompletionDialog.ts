@@ -62,17 +62,6 @@ export function useTaskCompletionDialog(params: {
     };
   }, [isOpen, chainId, storage]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const timer = window.setTimeout(() => {
-      descriptionInputRef.current?.focus();
-    }, 100);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [isOpen]);
-
   const sanitizeInput = useCallback((input: string): string => {
     return input
       .replace(/</g, '&lt;')
@@ -147,12 +136,9 @@ export function useTaskCompletionDialog(params: {
       } else if (event.key === 'Enter') {
         event.preventDefault();
         handleSubmit();
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
-        handleCancel();
       }
     },
-    [description, handleCancel, handleSubmit, recentDescriptions, showNotes],
+    [description, handleSubmit, recentDescriptions, showNotes],
   );
 
   const handleNotesKeyDown = useCallback(
@@ -160,12 +146,9 @@ export function useTaskCompletionDialog(params: {
       if (event.key === 'Enter' && event.ctrlKey) {
         event.preventDefault();
         handleSubmit();
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
-        handleCancel();
       }
     },
-    [handleCancel, handleSubmit],
+    [handleSubmit],
   );
 
   return {

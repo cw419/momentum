@@ -38,7 +38,9 @@ export const NotificationToggle: React.FC<NotificationToggleProps> = ({
         ) : (
           <BellOff size={16} className="text-gray-400" />
         )}
-        <span className="font-chinese text-sm">
+        <span
+          className={`font-chinese text-sm ${placement === 'topbar' ? 'hidden sm:inline' : ''}`}
+        >
           {tr('系统通知', 'System notifications')}
         </span>
       </div>

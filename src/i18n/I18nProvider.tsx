@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { translations, type Language } from './translations';
+import {
+  translations,
+  type Language,
+  type TranslationKey,
+} from './translations';
 import {
   I18nContext,
   type I18nContextValue,
@@ -123,7 +127,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [locale]);
 
   const t = useCallback(
-    (key: string, params?: TranslationParams) => {
+    (key: TranslationKey, params?: TranslationParams) => {
       const dict = translations[language];
       const fallbackDict = translations.en;
       const template = dict[key] ?? fallbackDict[key] ?? key;

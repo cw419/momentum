@@ -34,20 +34,22 @@ export function FocusModeControls({
   return (
     <>
       {!session.isPaused && (
-        <div className="flex items-center justify-center space-x-4">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           {isDurationless ? (
             <>
               <button
+                type="button"
                 onClick={onPauseClick}
-                className="flex items-center space-x-2 rounded-2xl bg-yellow-500/90 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-yellow-500"
+                className="focus-ring flex min-h-12 items-center gap-2 rounded-xl border border-gray-300 bg-[var(--surface-raised)] px-5 py-3 font-chinese font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-950 dark:border-slate-600 dark:text-slate-200 dark:hover:text-white"
               >
                 <Settings size={16} />
                 <span>{tr('暂停', 'Pause')}</span>
               </button>
               {(!chain.minimumDuration || chain.minimumDuration === 0) && (
                 <button
+                  type="button"
                   onClick={onEarlyCompleteClick}
-                  className="flex items-center space-x-2 rounded-3xl bg-green-600 px-8 py-4 font-chinese text-white shadow-lg transition duration-300 hover:bg-green-700"
+                  className="focus-ring flex min-h-12 items-center gap-2 rounded-xl bg-gray-950 px-7 py-3 font-chinese font-semibold text-white transition-colors hover:bg-green-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-green-300"
                 >
                   <CheckCircle size={20} />
                   <span>{tr('完成任务', 'Complete')}</span>
@@ -58,16 +60,18 @@ export function FocusModeControls({
                 <>
                   {!hasReachedMinimum ? (
                     <button
+                      type="button"
                       onClick={onEarlyCompleteClick}
-                      className="flex items-center space-x-2 rounded-2xl bg-orange-500 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-orange-600"
+                      className="focus-ring flex min-h-12 items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-chinese font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
                     >
                       <CheckCircle size={16} />
                       <span>{tr('提前完成', 'Complete early')}</span>
                     </button>
                   ) : (
                     <button
+                      type="button"
                       onClick={onEarlyCompleteClick}
-                      className="flex items-center space-x-2 rounded-3xl bg-green-600 px-8 py-4 font-chinese text-white shadow-lg transition duration-300 hover:bg-green-700"
+                      className="focus-ring flex min-h-12 items-center gap-2 rounded-xl bg-gray-950 px-7 py-3 font-chinese font-semibold text-white transition-colors hover:bg-green-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-green-300"
                     >
                       <CheckCircle size={20} />
                       <span>{tr('完成任务', 'Complete')}</span>
@@ -79,15 +83,17 @@ export function FocusModeControls({
           ) : (
             <>
               <button
+                type="button"
                 onClick={onPauseClick}
-                className="flex items-center space-x-2 rounded-2xl bg-yellow-500/90 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-yellow-500"
+                className="focus-ring flex min-h-12 items-center gap-2 rounded-xl border border-gray-300 bg-[var(--surface-raised)] px-5 py-3 font-chinese font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-950 dark:border-slate-600 dark:text-slate-200 dark:hover:text-white"
               >
                 <Settings size={16} />
                 <span>{tr('暂停', 'Pause')}</span>
               </button>
               <button
+                type="button"
                 onClick={onEarlyCompleteClick}
-                className="flex items-center space-x-2 rounded-2xl bg-green-600 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-green-700"
+                className="focus-ring flex min-h-12 items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-chinese font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
               >
                 <CheckCircle size={16} />
                 <span>{tr('提前完成', 'Complete early')}</span>
@@ -98,7 +104,7 @@ export function FocusModeControls({
       )}
 
       {session.isPaused && (
-        <div className="flex flex-col items-center justify-center space-y-4">
+        <div className="flex flex-col items-center justify-center gap-4">
           <div className="font-chinese text-gray-700 dark:text-gray-300">
             {autoResumeAt
               ? tr(
@@ -110,17 +116,19 @@ export function FocusModeControls({
                   `Paused for ${Math.floor(elapsedPauseTime / 60)}m ${elapsedPauseTime % 60}s`,
                 )}
           </div>
-          <div className="flex items-center justify-center space-x-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <button
+              type="button"
               onClick={onResumeNow}
-              className="rounded-2xl bg-green-600 px-6 py-3 font-chinese text-white transition duration-300 hover:bg-green-700"
+              className="focus-ring min-h-12 rounded-xl bg-gray-950 px-6 py-3 font-chinese font-semibold text-white transition-colors hover:bg-green-700 dark:bg-slate-100 dark:text-slate-950"
             >
               {tr('继续', 'Resume')}
             </button>
             {autoResumeAt && (
               <button
+                type="button"
                 onClick={onCancelAutoResume}
-                className="rounded-2xl bg-gray-200 px-6 py-3 font-chinese text-gray-900 transition duration-300 hover:bg-gray-300 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500"
+                className="focus-ring min-h-12 rounded-xl border border-gray-300 bg-[var(--surface-raised)] px-6 py-3 font-chinese text-gray-800 transition-colors hover:bg-gray-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
               >
                 {tr('取消自动继续', 'Cancel auto-resume')}
               </button>

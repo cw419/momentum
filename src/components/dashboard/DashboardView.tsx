@@ -130,7 +130,11 @@ export function DashboardView({
           settingsButtonText={t('settings.button')}
           onShowAccountModal={showAccount}
         />
-        <DashboardHero language={language} tr={tr} />
+        <DashboardHero
+          language={language}
+          nextStepLabel={t('dashboard.hero.nextStep')}
+          tr={tr}
+        />
 
         {isChoicePending && (
           <section className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-6 shadow-sm dark:border-blue-800/60 dark:bg-blue-900/20">

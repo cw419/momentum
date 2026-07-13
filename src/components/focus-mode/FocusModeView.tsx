@@ -109,16 +109,17 @@ export function FocusModeView({
   const elapsedWholeMinutes = Math.floor(
     (session.duration * 60 - timeRemaining) / 60,
   );
+  const interruptLabel = tr('中断任务', 'Interrupt');
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-[#161615] dark:via-black dark:to-[#161615]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--surface-canvas)] px-4 py-20 sm:px-6">
       <div className="absolute right-4 top-4 z-20 flex items-center space-x-2">
         {!isFullscreen ? (
           <button
             type="button"
             onClick={onEnterFullscreen}
             aria-label={tr('进入全屏', 'Enter fullscreen')}
-            className="rounded-2xl border border-white/20 bg-white/10 p-3 text-gray-600 backdrop-blur-sm transition duration-300 hover:bg-white/20 dark:text-gray-300"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-950 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300 dark:hover:text-white"
             title={tr('进入全屏 (F11)', 'Enter fullscreen (F11)')}
           >
             <Maximize size={20} aria-hidden="true" />
@@ -128,7 +129,7 @@ export function FocusModeView({
             type="button"
             onClick={onExitFullscreen}
             aria-label={tr('退出全屏', 'Exit fullscreen')}
-            className="rounded-2xl border border-white/20 bg-white/10 p-3 text-gray-600 backdrop-blur-sm transition duration-300 hover:bg-white/20 dark:text-gray-300"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-950 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300 dark:hover:text-white"
             title={tr('退出全屏 (ESC)', 'Exit fullscreen (ESC)')}
           >
             <X size={20} aria-hidden="true" />
@@ -136,45 +137,41 @@ export function FocusModeView({
         )}
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-500/5 dark:from-primary-500/5 dark:via-transparent dark:to-primary-500/5"></div>
-      <div className="absolute left-1/4 top-1/4 h-96 w-96 animate-pulse-slow rounded-full bg-primary-500/10 blur-3xl dark:bg-primary-500/10"></div>
-      <div
-        className="absolute bottom-1/4 right-1/4 h-96 w-96 animate-pulse-slow rounded-full bg-primary-500/5 blur-3xl dark:bg-primary-500/5"
-        style={{ animationDelay: '1s' }}
-      ></div>
-
-      <div className="relative z-10 animate-fade-in text-center">
-        <div className="mb-12">
-          <div className="mb-6 flex items-center justify-center space-x-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-primary-500/30 bg-primary-500/20 backdrop-blur-sm dark:border-primary-500/30 dark:bg-primary-500/20">
-              <Flame className="text-primary-500" size={32} />
+      <div className="relative z-10 w-full max-w-5xl animate-fade-in">
+        <header className="mb-12 border-b border-gray-200 pb-6 dark:border-slate-700 sm:mb-16">
+          <div className="flex items-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-900/30">
+              <Flame
+                className="text-primary-600 dark:text-primary-300"
+                size={22}
+              />
             </div>
-            <div className="text-left">
-              <h1 className="mb-2 font-chinese text-5xl font-light text-gray-900 dark:text-white md:text-6xl">
+            <div className="min-w-0 text-left">
+              <h1 className="truncate font-chinese text-2xl font-semibold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
                 {chain.name}
               </h1>
-              <p className="font-mono text-lg tracking-wider text-gray-600 dark:text-gray-400">
+              <p className="mt-1 truncate font-chinese text-sm text-gray-500 dark:text-gray-400">
                 {getTriggerLabel(chain.trigger, language)}
               </p>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="mb-16">
-          <div className="mb-8 font-mono text-8xl font-light tracking-wider text-gray-900 dark:text-white md:text-9xl">
+        <section className="mb-12 text-center sm:mb-16" aria-live="polite">
+          <div className="mb-8 font-mono text-[clamp(4rem,15vw,9rem)] font-light leading-none tracking-tight text-gray-950 [font-variant-numeric:tabular-nums] dark:text-white">
             {isDurationless
               ? formatElapsedTime(elapsedSeconds)
               : formatDuration(timeRemaining)}
           </div>
 
-          <div className="mx-auto mb-6 h-3 w-96 max-w-full rounded-full border border-gray-300 bg-gray-200 backdrop-blur-sm dark:border-white/20 dark:bg-white/10">
+          <div className="mx-auto mb-6 h-2 w-full max-w-2xl overflow-hidden rounded-full bg-gray-200 dark:bg-slate-800">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg transition-[width] duration-1000 ease-out"
+              className="h-full rounded-full bg-primary-600 transition-[width] duration-1000 ease-out dark:bg-primary-400"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
 
-          <div className="flex items-center justify-center space-x-6 text-gray-600 dark:text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center space-x-2">
               <Clock className="text-primary-500" size={16} />
               <span className="font-mono">
@@ -231,7 +228,7 @@ export function FocusModeView({
                 </div>
               </div>
             )}
-        </div>
+        </section>
 
         <FocusModeControls
           session={session}
@@ -249,15 +246,18 @@ export function FocusModeView({
       </div>
 
       {!session.isPaused && (
-        <div className="fixed bottom-6 right-6 z-30">
+        <div className="fixed bottom-4 right-4 z-30 sm:bottom-6 sm:right-6">
           <button
             type="button"
             onClick={onInterruptClick}
-            aria-label={tr('中断任务', 'Interrupt')}
-            className="flex h-16 w-16 transform items-center justify-center rounded-full border-2 border-red-400 bg-red-500 text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-red-600 hover:shadow-xl"
-            title={tr('中断任务', 'Interrupt')}
+            aria-label={interruptLabel}
+            className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-[var(--surface-raised)] px-3 py-2 text-red-700 transition-colors hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+            title={interruptLabel}
           >
-            <AlertTriangle size={24} aria-hidden="true" />
+            <AlertTriangle size={18} aria-hidden="true" />
+            <span className="hidden text-sm font-medium sm:inline">
+              {interruptLabel}
+            </span>
           </button>
         </div>
       )}
@@ -291,6 +291,6 @@ export function FocusModeView({
       />
 
       <UserFeedbackDisplay />
-    </div>
+    </main>
   );
 }
