@@ -83,4 +83,18 @@ describe('CSS structure quality gate', () => {
 
     expect(result.status).toBe(0);
   });
+
+  it('rejects editor surfaces that create implicit vertical scroll containers', async () => {
+    const riskyClasses = ['editor-surface', 'overflow-x-hidden'].join(' ');
+    const fixture = await createFixture(
+      '.editor-surface { min-height: 100dvh; }',
+      `export const view = <div className="${riskyClasses}" />;`,
+    );
+
+    const result = runFixture(fixture);
+    const output = `${result.stdout}${result.stderr}`;
+
+    expect(result.status).toBe(1);
+    expect(output).toContain('editor-scroll-container-risk');
+  });
 });

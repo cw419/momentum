@@ -44,7 +44,7 @@ export function ChainEditorView({
 
   return (
     <div
-      className="editor-surface bg-background performance-layer overflow-x-hidden"
+      className="editor-surface bg-background performance-layer overflow-x-clip"
       style={editorStyle}
       data-scrollable="true"
     >

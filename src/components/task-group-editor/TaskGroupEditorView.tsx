@@ -51,7 +51,7 @@ export const TaskGroupEditorView: React.FC<TaskGroupEditorViewProps> =
 
       return (
         <div
-          className="editor-surface bg-background overflow-x-hidden"
+          className="editor-surface bg-background overflow-x-clip"
           style={editorStyle}
         >
           <ResponsiveContainer

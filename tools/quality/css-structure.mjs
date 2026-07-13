@@ -15,6 +15,8 @@ const DEFAULT_REPORT_PATH = path.join(
 const SOURCE_EXTENSIONS = new Set(['.html', '.js', '.jsx', '.ts', '.tsx']);
 const INTERACTIVE_ELEMENT_PATTERN =
   /^(?:button|input|textarea|select|form)(?=$|[\s.#:[>+~])/i;
+const CLASS_ATTRIBUTE_PATTERN =
+  /className\s*=\s*(?:"([^"]*)"|'([^']*)'|\{`([\s\S]*?)`\})/g;
 
 async function collectFiles(root, predicate) {
   const entries = await fs.readdir(root, { withFileTypes: true });
@@ -62,8 +64,37 @@ function isClassReferenced(className, sourceText) {
   return new RegExp(`(^|[^\\w-])${escaped}([^\\w-]|$)`).test(sourceText);
 }
 
-export function analyzeCssStructure(stylesheets, sourceText) {
+function getLineNumber(text, index) {
+  return text.slice(0, index).split('\n').length;
+}
+
+function findEditorScrollContainerRisks(sourceFiles) {
   const violations = [];
+
+  for (const sourceFile of sourceFiles) {
+    CLASS_ATTRIBUTE_PATTERN.lastIndex = 0;
+    for (const match of sourceFile.source.matchAll(CLASS_ATTRIBUTE_PATTERN)) {
+      const classNames = (match[1] ?? match[2] ?? match[3] ?? '').split(/\s+/);
+      if (
+        classNames.includes('editor-surface') &&
+        classNames.includes('overflow-x-hidden')
+      ) {
+        violations.push({
+          code: 'editor-scroll-container-risk',
+          message:
+            'Use overflow-x-clip on editor-surface to avoid creating an implicit vertical scroll container',
+          file: sourceFile.file,
+          line: getLineNumber(sourceFile.source, match.index ?? 0),
+        });
+      }
+    }
+  }
+
+  return violations;
+}
+
+export function analyzeCssStructure(stylesheets, sourceText, sourceFiles = []) {
+  const violations = findEditorScrollContainerRisks(sourceFiles);
   const selectors = new Map();
   const classDefinitions = new Map();
 
@@ -135,19 +166,28 @@ export async function runCssStructureAudit({
   reportPath = DEFAULT_REPORT_PATH,
 } = {}) {
   const cssFiles = await collectFiles(cssRoot, (file) => file.endsWith('.css'));
-  const sourceFiles = await collectFiles(sourceRoot, (file) =>
+  const sourcePaths = await collectFiles(sourceRoot, (file) =>
     SOURCE_EXTENSIONS.has(path.extname(file)),
   );
-  const [stylesheets, sourceParts] = await Promise.all([
+  const [stylesheets, sourceFiles] = await Promise.all([
     Promise.all(
       cssFiles.map(async (file) => ({
         file: path.relative(REPO_ROOT, file).replaceAll('\\', '/'),
         css: await fs.readFile(file, 'utf8'),
       })),
     ),
-    Promise.all(sourceFiles.map((file) => fs.readFile(file, 'utf8'))),
+    Promise.all(
+      sourcePaths.map(async (file) => ({
+        file: path.relative(REPO_ROOT, file).replaceAll('\\', '/'),
+        source: await fs.readFile(file, 'utf8'),
+      })),
+    ),
   ]);
-  const report = analyzeCssStructure(stylesheets, sourceParts.join('\n'));
+  const report = analyzeCssStructure(
+    stylesheets,
+    sourceFiles.map(({ source }) => source).join('\n'),
+    sourceFiles,
+  );
   await fs.mkdir(path.dirname(reportPath), { recursive: true });
   await fs.writeFile(
     reportPath,
