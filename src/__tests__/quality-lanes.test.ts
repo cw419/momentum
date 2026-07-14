@@ -79,9 +79,14 @@ describe('quality lane tooling', () => {
     expect(requiredChecks).toContain('npm run quality:sonar:report');
     expect(requiredChecks).toContain('npm run quality:large-files');
     expect(requiredChecks).toContain('npm run quality:css-structure');
+    expect(requiredChecks).toContain('npm run quality:test:lint');
+    expect(requiredChecks).toContain('npm run quality:test:lint-budget');
+    expect(requiredChecks).toContain('npm run quality:test:assertions');
     expect(requiredChecks).toContain('npm run test:coverage');
-    expect(requiredChecks).toContain('npm run test:integration');
-    expect(requiredChecks).toContain('npm run test:db');
+    expect(requiredChecks).toContain('npm run quality:test:coverage-hotspots');
+    expect(requiredChecks).toContain('npm run test:mutation:critical');
+    expect(requiredChecks).not.toContain('npm run test:integration');
+    expect(requiredChecks).not.toContain('npm run test:db');
     expect(requiredChecks).toContain('npm run quality:rust');
 
     const jscpdIndex = requiredChecks?.indexOf('npm run quality:jscpd') ?? -1;
@@ -115,12 +120,35 @@ describe('quality lane tooling', () => {
     expect(nightlyScripts).not.toContain('quality:debt-gate');
     expect(nightlyScripts).not.toContain('quality:structural-budget');
     expect(nightlyScripts).toContain('test:mutation');
-    expect(nightlyScripts).toContain('quality:test:mutation-hotspots');
+    expect(nightlyScripts).toContain('quality:test:mutation-hotspots:required');
     expect(nightlyScripts).toContain('quality:jscpd');
     expect(nightlyScripts).toContain('quality:debt-gate:core');
     expect(nightlyScripts).toContain('quality:large-files');
     expect(nightlyScripts).toContain('quality:depcheck');
     expect(nightlyScripts).toContain('security:semgrep');
+  });
+
+  it('binds coverage reports to the current commit and coverage configuration', async () => {
+    const { createCoverageMetadata, assertFreshCoverageMetadata } =
+      await import('../../tools/quality/coverage-metadata.mjs');
+
+    const metadata = await createCoverageMetadata(REPO_ROOT);
+
+    await expect(
+      assertFreshCoverageMetadata(REPO_ROOT, metadata),
+    ).resolves.toBeUndefined();
+    await expect(
+      assertFreshCoverageMetadata(REPO_ROOT, {
+        ...metadata,
+        headSha: 'stale-head',
+      }),
+    ).rejects.toThrow(/Coverage report is stale/);
+    await expect(
+      assertFreshCoverageMetadata(REPO_ROOT, {
+        ...metadata,
+        workspaceHash: 'stale-worktree',
+      }),
+    ).rejects.toThrow(/source or test files changed/);
   });
 
   it('wires comment debt into the smell-audit lane', async () => {

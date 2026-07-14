@@ -187,17 +187,49 @@ describe('CacheCore', () => {
   });
 
   describe('lifecycle', () => {
-    it('should start and stop cleanup interval', () => {
-      cache.start();
-      cache.stop();
-      // No error should occur
+    it('should remove expired entries while cleanup is running', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-02-06T10:00:00.000Z'));
+      const lifecycleCache = new CacheCore({
+        defaultTTL: 50,
+        cleanupInterval: 100,
+      });
+      lifecycleCache.set('expired', 'value');
+
+      lifecycleCache.start();
+      vi.advanceTimersByTime(101);
+
+      expect(lifecycleCache.getKeys()).toEqual([]);
+      lifecycleCache.stop();
     });
 
-    it('should not start multiple cleanup intervals', () => {
-      cache.start();
-      cache.start();
-      cache.stop();
-      // No error should occur
+    it('should stop removing expired entries after cleanup is stopped', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-02-06T10:00:00.000Z'));
+      const lifecycleCache = new CacheCore({
+        defaultTTL: 50,
+        cleanupInterval: 100,
+      });
+      lifecycleCache.set('expired', 'value');
+
+      lifecycleCache.start();
+      lifecycleCache.stop();
+      vi.advanceTimersByTime(101);
+
+      expect(lifecycleCache.getKeys()).toEqual(['expired']);
+    });
+
+    it('should keep a single cleanup interval when start is called twice', () => {
+      vi.useFakeTimers();
+      const lifecycleCache = new CacheCore({ cleanupInterval: 100 });
+      const clearExpired = vi.spyOn(lifecycleCache, 'clearExpired');
+
+      lifecycleCache.start();
+      lifecycleCache.start();
+      vi.advanceTimersByTime(300);
+
+      expect(clearExpired).toHaveBeenCalledTimes(3);
+      lifecycleCache.stop();
     });
   });
 

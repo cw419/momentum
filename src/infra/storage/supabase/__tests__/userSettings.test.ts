@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { expectErr, expectOk } from '../../../../test/utils/resultAssertions';
 import {
   getGamblingSettings,
   isGamblingModeEnabled,
   toggleGamblingMode,
 } from '../userSettings';
-import { createMockContext, createSupabaseError } from '../testHelpers';
+import { createMockContext, createSupabaseError } from './testHelpers';
 
 vi.mock('../../../../utils/logger', () => ({
   logger: {
@@ -25,10 +26,8 @@ describe('userSettings.ts', () => {
 
       const result = await getGamblingSettings(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return default settings when no record exists', async () => {
@@ -46,12 +45,10 @@ describe('userSettings.ts', () => {
 
       const result = await getGamblingSettings(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.gambling_mode_enabled).toBe(false);
-        expect(result.value.daily_bet_limit).toBeNull();
-        expect(result.value.max_single_bet).toBeNull();
-      }
+      const value = expectOk(result);
+      expect(value.gambling_mode_enabled).toBe(false);
+      expect(value.daily_bet_limit).toBeNull();
+      expect(value.max_single_bet).toBeNull();
     });
 
     it('should use maybeSingle for nullable-safe reads', async () => {
@@ -101,12 +98,10 @@ describe('userSettings.ts', () => {
 
       const result = await getGamblingSettings(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.gambling_mode_enabled).toBe(true);
-        expect(result.value.daily_bet_limit).toBe(1000);
-        expect(result.value.max_single_bet).toBe(200);
-      }
+      const value = expectOk(result);
+      expect(value.gambling_mode_enabled).toBe(true);
+      expect(value.daily_bet_limit).toBe(1000);
+      expect(value.max_single_bet).toBe(200);
     });
 
     it('should return error on other database errors', async () => {
@@ -124,10 +119,8 @@ describe('userSettings.ts', () => {
 
       const result = await getGamblingSettings(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
     });
 
     it('should handle null values in settings', async () => {
@@ -150,12 +143,10 @@ describe('userSettings.ts', () => {
 
       const result = await getGamblingSettings(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.gambling_mode_enabled).toBe(false);
-        expect(result.value.daily_bet_limit).toBeNull();
-        expect(result.value.max_single_bet).toBeNull();
-      }
+      const value = expectOk(result);
+      expect(value.gambling_mode_enabled).toBe(false);
+      expect(value.daily_bet_limit).toBeNull();
+      expect(value.max_single_bet).toBeNull();
     });
 
     it('should handle exceptions gracefully', async () => {
@@ -166,10 +157,8 @@ describe('userSettings.ts', () => {
 
       const result = await getGamblingSettings(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('UNKNOWN');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('UNKNOWN');
     });
   });
 
@@ -179,10 +168,8 @@ describe('userSettings.ts', () => {
 
       const result = await isGamblingModeEnabled(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return true when gambling mode is enabled', async () => {
@@ -204,10 +191,8 @@ describe('userSettings.ts', () => {
 
       const result = await isGamblingModeEnabled(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(true);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(true);
     });
 
     it('should return false when gambling mode is disabled', async () => {
@@ -229,10 +214,8 @@ describe('userSettings.ts', () => {
 
       const result = await isGamblingModeEnabled(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(false);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(false);
     });
 
     it('should return false when no settings exist', async () => {
@@ -250,10 +233,8 @@ describe('userSettings.ts', () => {
 
       const result = await isGamblingModeEnabled(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(false);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(false);
     });
   });
 
@@ -263,10 +244,8 @@ describe('userSettings.ts', () => {
 
       const result = await toggleGamblingMode(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should enable gambling mode when currently disabled', async () => {
@@ -303,13 +282,11 @@ describe('userSettings.ts', () => {
 
       const result = await toggleGamblingMode(ctx);
 
-      expect(result.ok).toBe(true);
+      const value = expectOk(result);
       expect(upsertCalled).toBe(true);
       expect(upsertData.gambling_mode_enabled).toBe(true);
-      if (result.ok) {
-        expect(result.value.success).toBe(true);
-        expect(result.value.message).toContain('enabled');
-      }
+      expect(value.success).toBe(true);
+      expect(value.message).toContain('enabled');
     });
 
     it('should disable gambling mode when currently enabled', async () => {
@@ -344,14 +321,12 @@ describe('userSettings.ts', () => {
 
       const result = await toggleGamblingMode(ctx);
 
-      expect(result.ok).toBe(true);
+      const value = expectOk(result);
       expect(upsertData.gambling_mode_enabled).toBe(false);
       expect(upsertData.daily_bet_limit).toBe(1000);
       expect(upsertData.max_single_bet).toBe(200);
-      if (result.ok) {
-        expect(result.value.success).toBe(true);
-        expect(result.value.message).toContain('disabled');
-      }
+      expect(value.success).toBe(true);
+      expect(value.message).toContain('disabled');
     });
 
     it('should return failure result when upsert fails', async () => {
@@ -381,11 +356,9 @@ describe('userSettings.ts', () => {
 
       const result = await toggleGamblingMode(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.success).toBe(false);
-        expect(result.value.message).toContain('Upsert failed');
-      }
+      const value = expectOk(result);
+      expect(value.success).toBe(false);
+      expect(value.message).toContain('Upsert failed');
     });
 
     it('should propagate error when getting current settings fails', async () => {
@@ -403,10 +376,8 @@ describe('userSettings.ts', () => {
 
       const result = await toggleGamblingMode(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
     });
 
     it('should handle exceptions gracefully', async () => {
@@ -431,10 +402,8 @@ describe('userSettings.ts', () => {
 
       const result = await toggleGamblingMode(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('UNKNOWN');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('UNKNOWN');
     });
   });
 });

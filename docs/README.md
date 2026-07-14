@@ -73,6 +73,7 @@
 
 - `npm test`：CI 冒烟子集（`vitest.ci.config.ts`）
 - `npm run test:all`：全量单元（`vitest.config.ts`）
-- `npm run test:integration`：集成（`vitest.integration.config.ts`）
-- `npm run test:db`：DB（`vitest.db.config.ts`）
+- `npm run test:integration`：真实存储/API/SDK 路径集成测试，仅在 HTTP 边界使用 MSW
+- `npm run test:coverage`：单元与集成合并的全生产源文件覆盖率
+- `npm run test:mutation:critical`：关键领域逻辑变异门禁
 - `npm run test:performance`：性能（`vitest.performance.config.ts`）

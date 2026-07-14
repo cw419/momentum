@@ -5,7 +5,7 @@ import {
   upsertRSIPLibraryEntry,
   upsertRSIPNode,
 } from '../rsipIntents';
-import { createMockContext, createSupabaseError } from '../testHelpers';
+import { createMockContext, createSupabaseError } from './testHelpers';
 
 describe('supabase/rsipIntents', () => {
   beforeEach(() => {

@@ -8,7 +8,7 @@ import {
   createMockContext,
   createMockQueryBuilder,
   createSupabaseError,
-} from '../testHelpers';
+} from './testHelpers';
 import type { CompletionHistory } from '../../../../types';
 
 vi.mock('../../../../utils/logger', () => ({
@@ -187,12 +187,14 @@ describe('history.ts', () => {
       expect(ctx.mockClient.from).not.toHaveBeenCalled();
     });
 
-    it('should return early when history is empty', async () => {
-      const ctx = createMockContext();
+    it('should clear persisted history when the replacement is empty', async () => {
+      const queryBuilder = createMockQueryBuilder();
+      const ctx = createMockContext({ queryBuilder });
 
       await saveCompletionHistory(ctx, []);
 
-      expect(ctx.mockClient.from).not.toHaveBeenCalled();
+      expect(queryBuilder.delete).toHaveBeenCalledTimes(1);
+      expect(queryBuilder.eq).toHaveBeenCalledWith('user_id', 'test-user-123');
     });
 
     it('should upsert mapped rows with conflict target', async () => {
@@ -201,6 +203,9 @@ describe('history.ts', () => {
       let upsertOptions: unknown = null;
 
       ctx.mockClient.from = vi.fn().mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ data: null, error: null }),
+        }),
         upsert: vi
           .fn()
           .mockImplementation((data: unknown[], options: unknown) => {
@@ -248,6 +253,9 @@ describe('history.ts', () => {
       let callCount = 0;
       let secondCallRow: Record<string, unknown> | null = null;
       ctx.mockClient.from = vi.fn().mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ data: null, error: null }),
+        }),
         upsert: vi.fn().mockImplementation((data: unknown[]) => {
           callCount++;
           if (callCount === 1) {
@@ -300,6 +308,9 @@ describe('history.ts', () => {
       });
 
       ctx.mockClient.from = vi.fn().mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ data: null, error: null }),
+        }),
         upsert,
         select: vi.fn().mockReturnValue({ eq: selectEq }),
         insert,
@@ -330,6 +341,9 @@ describe('history.ts', () => {
       const ctx = createMockContext();
       let upsertedData: unknown[] = [];
       ctx.mockClient.from = vi.fn().mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ data: null, error: null }),
+        }),
         upsert: vi.fn().mockImplementation((data: unknown[]) => {
           upsertedData = data;
           return { data: null, error: null };

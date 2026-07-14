@@ -15,7 +15,7 @@ import {
   createMockQueryBuilder,
   createSupabaseError,
   TEST_USER_ID,
-} from '../testHelpers';
+} from './testHelpers';
 import type { Chain } from '../../../../types';
 import { logger } from '../../../../utils/logger';
 

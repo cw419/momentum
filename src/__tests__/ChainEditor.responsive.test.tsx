@@ -156,12 +156,8 @@ describe('ChainEditor响应式布局测试', () => {
         expect(saveButton).toBeInTheDocument();
         expect(cancelButton).toBeInTheDocument();
 
-        // 移动端：按钮应有最小触摸高度（通过 className 表达，避免依赖 JSDOM 布局）
-        if (viewport.width <= 768) {
-          await waitFor(() => {
-            expect(saveButton).toHaveClass('min-h-12');
-          });
-        }
+        // 所有视口都保留最小触摸高度，避免响应式样式缩小点击目标。
+        expect(saveButton).toHaveClass('min-h-12');
       });
     });
   });

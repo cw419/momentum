@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChainTreeNode } from '../../../types';
 import { GroupView } from '../GroupViewContainer';
@@ -27,37 +28,30 @@ vi.mock('../../../i18n', () => ({
   }),
 }));
 
-vi.mock('../GroupViewView', () => ({
-  GroupViewView: (props: {
+vi.mock('../GroupViewHeader', () => ({
+  GroupViewHeader: () => null,
+}));
+
+vi.mock('../GroupOverview', () => ({
+  GroupOverview: () => null,
+}));
+
+vi.mock('../GroupUnitList', () => ({
+  GroupUnitList: (props: {
     getScheduledSession: (chainId: string) => unknown;
     handleOpenRepeatModal: (unit: ChainTreeNode) => void;
-    setRepeatCount: (value: number) => void;
-    handleUpdateRepeatCount: () => void;
-    availableUnits: Array<{ id: string }>;
+    group: ChainTreeNode;
   }) => (
     <div>
       <div data-testid="scheduled-found">
         {props.getScheduledSession('unit-1') ? 'yes' : 'no'}
       </div>
       <button
-        onClick={() =>
-          props.handleOpenRepeatModal({
-            id: 'unit-1',
-            taskRepeatCount: 2,
-          } as ChainTreeNode)
-        }
+        type="button"
+        onClick={() => props.handleOpenRepeatModal(props.group.children[0])}
       >
         open-repeat
       </button>
-      <button
-        onClick={() => {
-          props.setRepeatCount(6);
-          props.handleUpdateRepeatCount();
-        }}
-      >
-        confirm-repeat
-      </button>
-      <div data-testid="unit-count">{props.availableUnits.length}</div>
     </div>
   ),
 }));
@@ -83,7 +77,14 @@ function createGroupNode(): ChainTreeNode {
     auxiliaryCompletionTrigger: '',
     timeLimitExceptions: [],
     createdAt: new Date('2026-02-06T00:00:00.000Z'),
-    children: [],
+    children: [
+      {
+        id: 'unit-1',
+        name: 'Unit',
+        type: 'unit',
+        taskRepeatCount: 2,
+      } as ChainTreeNode,
+    ],
     depth: 0,
   };
 }
@@ -103,7 +104,8 @@ describe('GroupViewContainer', () => {
     });
   });
 
-  it('maps scheduled sessions and handles repeat-count update workflow', () => {
+  it('maps scheduled sessions and saves the repeat count entered in the real modal', async () => {
+    const user = userEvent.setup();
     const onUpdateTaskRepeatCount = vi.fn();
     render(
       <GroupView
@@ -131,13 +133,21 @@ describe('GroupViewContainer', () => {
     );
 
     expect(screen.getByTestId('scheduled-found').textContent).toBe('yes');
-    expect(screen.getByTestId('unit-count').textContent).toBe('1');
 
-    fireEvent.click(screen.getByText('open-repeat'));
-    act(() => {
-      fireEvent.click(screen.getByText('confirm-repeat'));
-    });
+    await user.click(screen.getByRole('button', { name: 'open-repeat' }));
+    expect(
+      screen.getByRole('heading', { name: 'Set repeat count' }),
+    ).toBeInTheDocument();
 
-    expect(onUpdateTaskRepeatCount).toHaveBeenCalledWith('unit-1', 2);
+    const repeatCountInput = screen.getByRole('spinbutton');
+    expect(repeatCountInput).toHaveValue(2);
+    fireEvent.change(repeatCountInput, { target: { value: '6' } });
+    expect(repeatCountInput).toHaveValue(6);
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onUpdateTaskRepeatCount).toHaveBeenCalledWith('unit-1', 6);
+    expect(
+      screen.queryByRole('heading', { name: 'Set repeat count' }),
+    ).not.toBeInTheDocument();
   });
 });

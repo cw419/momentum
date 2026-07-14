@@ -119,12 +119,11 @@ export async function getCompletionHistory(
   );
 }
 
-export async function saveCompletionHistory(
+async function persistCompletionHistory(
   ctx: SupabaseStorageContext,
+  userId: string,
   history: CompletionHistory[],
 ): Promise<void> {
-  const user = await ctx.getCurrentUser();
-  if (!user) return;
   if (history.length === 0) return;
 
   const client = ctx.getClient();
@@ -135,8 +134,8 @@ export async function saveCompletionHistory(
   for (const currentChunk of chunk(history, COMPLETION_HISTORY_CHUNK_SIZE)) {
     const rows =
       mode === 'new'
-        ? buildCompletionHistoryRowsWithNewFields(user.id, currentChunk)
-        : buildCompletionHistoryRowsBasic(user.id, currentChunk);
+        ? buildCompletionHistoryRowsWithNewFields(userId, currentChunk)
+        : buildCompletionHistoryRowsBasic(userId, currentChunk);
     let { error } = await client.from('completion_history').upsert(rows, {
       onConflict: COMPLETION_HISTORY_CONFLICT_TARGET,
       ignoreDuplicates: true,
@@ -148,7 +147,7 @@ export async function saveCompletionHistory(
       mode = 'basic';
       ({ error } = await client
         .from('completion_history')
-        .upsert(buildCompletionHistoryRowsBasic(user.id, currentChunk), {
+        .upsert(buildCompletionHistoryRowsBasic(userId, currentChunk), {
           onConflict: COMPLETION_HISTORY_CONFLICT_TARGET,
           ignoreDuplicates: true,
         }));
@@ -157,7 +156,7 @@ export async function saveCompletionHistory(
 
     if (isMissingUniqueConstraint(error)) {
       // Legacy schema: no UNIQUE index for ON CONFLICT. Fallback to best-effort insert.
-      await insertCompletionHistoryLegacy(client, user.id, history);
+      await insertCompletionHistoryLegacy(client, userId, history);
       return;
     }
 
@@ -166,9 +165,28 @@ export async function saveCompletionHistory(
   }
 }
 
+export async function saveCompletionHistory(
+  ctx: SupabaseStorageContext,
+  history: CompletionHistory[],
+): Promise<void> {
+  const user = await ctx.getCurrentUser();
+  if (!user) return;
+
+  const { error } = await ctx
+    .getClient()
+    .from('completion_history')
+    .delete()
+    .eq('user_id', user.id);
+  if (error) return;
+
+  await persistCompletionHistory(ctx, user.id, history);
+}
+
 export async function appendCompletionHistory(
   ctx: SupabaseStorageContext,
   record: CompletionHistory,
 ): Promise<void> {
-  await saveCompletionHistory(ctx, [record]);
+  const user = await ctx.getCurrentUser();
+  if (!user) return;
+  await persistCompletionHistory(ctx, user.id, [record]);
 }

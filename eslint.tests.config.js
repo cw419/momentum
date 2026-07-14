@@ -34,8 +34,14 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       'prefer-const': 'off',
-      'vitest/expect-expect': 'off',
+      'vitest/expect-expect': [
+        'error',
+        {
+          assertFunctionNames: ['expect', 'assert', 'expectOk', 'expectErr'],
+        },
+      ],
       'vitest/no-commented-out-tests': 'error',
+      'vitest/no-conditional-expect': 'error',
       'vitest/no-conditional-tests': 'error',
       'vitest/no-disabled-tests': 'warn',
       'vitest/no-focused-tests': 'error',

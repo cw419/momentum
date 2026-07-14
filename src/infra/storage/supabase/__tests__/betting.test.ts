@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { expectErr, expectOk } from '../../../../test/utils/resultAssertions';
 import {
   createBettingSession,
   deleteBettingSession,
@@ -11,7 +12,7 @@ import {
   createMockContext,
   createMockQueryBuilder,
   createSupabaseError,
-} from '../testHelpers';
+} from './testHelpers';
 import type { BetPlacementRequest } from '../../../../domain/betting';
 
 vi.mock('../../../../utils/logger', () => ({
@@ -33,10 +34,8 @@ describe('betting.ts', () => {
 
       const result = await createBettingSession(ctx, 'chain-1', 30);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return session id on success', async () => {
@@ -54,10 +53,8 @@ describe('betting.ts', () => {
 
       const result = await createBettingSession(ctx, 'chain-1', 30);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe('session-123');
-      }
+      const value = expectOk(result);
+      expect(value).toBe('session-123');
     });
 
     it('should return error when insert fails', async () => {
@@ -75,10 +72,8 @@ describe('betting.ts', () => {
 
       const result = await createBettingSession(ctx, 'chain-1', 30);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
     });
 
     it('should return error when id is missing from response', async () => {
@@ -96,10 +91,8 @@ describe('betting.ts', () => {
 
       const result = await createBettingSession(ctx, 'chain-1', 30);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toContain('missing id');
-      }
+      const error = expectErr(result);
+      expect(error.message).toContain('missing id');
     });
 
     it('should handle exceptions gracefully', async () => {
@@ -110,10 +103,8 @@ describe('betting.ts', () => {
 
       const result = await createBettingSession(ctx, 'chain-1', 30);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('UNKNOWN');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('UNKNOWN');
     });
   });
 
@@ -123,10 +114,8 @@ describe('betting.ts', () => {
 
       const result = await deleteBettingSession(ctx, 'session-1');
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return success when delete succeeds', async () => {
@@ -160,10 +149,8 @@ describe('betting.ts', () => {
 
       const result = await deleteBettingSession(ctx, 'session-1');
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
     });
   });
 
@@ -199,10 +186,8 @@ describe('betting.ts', () => {
 
       const result = await completeTaskWithBetting(ctx, 'session-1', false);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
     });
 
     it('should handle null completion notes', async () => {
@@ -232,10 +217,8 @@ describe('betting.ts', () => {
 
       const result = await placeBet(ctx, betRequest);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return failure result when write session creation fails', async () => {
@@ -251,11 +234,9 @@ describe('betting.ts', () => {
 
       const result = await placeBet(ctx, betRequest);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.success).toBe(false);
-        expect(result.value.error_code).toBe('WRITE_SESSION_CREATION_FAILED');
-      }
+      const value = expectOk(result);
+      expect(value.success).toBe(false);
+      expect(value.error_code).toBe('WRITE_SESSION_CREATION_FAILED');
     });
 
     it('should place bet successfully', async () => {
@@ -292,11 +273,9 @@ describe('betting.ts', () => {
 
       const result = await placeBet(ctx, betRequest);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.success).toBe(true);
-        expect(result.value.bet_id).toBe('bet-123');
-      }
+      const value = expectOk(result);
+      expect(value.success).toBe(true);
+      expect(value.bet_id).toBe('bet-123');
     });
 
     it('should return failure result when place_task_bet fails', async () => {
@@ -326,11 +305,9 @@ describe('betting.ts', () => {
 
       const result = await placeBet(ctx, betRequest);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.success).toBe(false);
-        expect(result.value.message).toContain('Not enough points');
-      }
+      const value = expectOk(result);
+      expect(value.success).toBe(false);
+      expect(value.message).toContain('Not enough points');
     });
 
     it('should handle exception and complete write session', async () => {
@@ -370,10 +347,8 @@ describe('betting.ts', () => {
 
       const result = await getUserAvailablePoints(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return points on success', async () => {
@@ -391,10 +366,8 @@ describe('betting.ts', () => {
 
       const result = await getUserAvailablePoints(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(1500);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(1500);
     });
 
     it('should return 0 when user has no points record', async () => {
@@ -412,10 +385,8 @@ describe('betting.ts', () => {
 
       const result = await getUserAvailablePoints(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(0);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(0);
     });
 
     it('should return error on other database errors', async () => {
@@ -433,10 +404,8 @@ describe('betting.ts', () => {
 
       const result = await getUserAvailablePoints(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
     });
 
     it('should return 0 when total_points is null', async () => {
@@ -454,10 +423,8 @@ describe('betting.ts', () => {
 
       const result = await getUserAvailablePoints(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(0);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(0);
     });
   });
 
@@ -467,10 +434,8 @@ describe('betting.ts', () => {
 
       const result = await getTodayBetAmount(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(0);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(0);
     });
 
     it('should calculate today bet amount correctly', async () => {
@@ -497,10 +462,8 @@ describe('betting.ts', () => {
 
       const result = await getTodayBetAmount(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(125);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(125);
     });
 
     it('should return error on database error', async () => {
@@ -522,10 +485,8 @@ describe('betting.ts', () => {
 
       const result = await getTodayBetAmount(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
     });
 
     it('should return 0 on exception', async () => {
@@ -536,10 +497,8 @@ describe('betting.ts', () => {
 
       const result = await getTodayBetAmount(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(0);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(0);
     });
 
     it('should handle empty transaction list', async () => {
@@ -561,10 +520,8 @@ describe('betting.ts', () => {
 
       const result = await getTodayBetAmount(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe(0);
-      }
+      const value = expectOk(result);
+      expect(value).toBe(0);
     });
   });
 });

@@ -10,32 +10,6 @@ global.console = {
   error: vi.fn(),
 };
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-})();
-
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-});
-
-// Mock sessionStorage
-Object.defineProperty(window, 'sessionStorage', {
-  value: localStorageMock,
-});
-
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -74,5 +48,6 @@ global.IntersectionObserver =
 afterEach(() => {
   vi.useRealTimers();
   vi.clearAllMocks();
-  localStorageMock.clear();
+  localStorage.clear();
+  sessionStorage.clear();
 });

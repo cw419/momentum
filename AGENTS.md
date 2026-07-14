@@ -125,33 +125,32 @@ These commands auto-skip if the underlying tool is not installed.
 - CI-smoke subset: `npm test` (uses `vitest.ci.config.ts`)
 - Unit suite: `npm run test:all` (uses `vitest.config.ts`)
 - Integration suite: `npm run test:integration` (uses `vitest.integration.config.ts`)
-- "DB" suite: `npm run test:db` (uses `vitest.db.config.ts`)
 - Performance suite: `npm run test:performance` (uses `vitest.performance.config.ts`)
 - Watch: `npm run test:watch` (CI subset) or `npm run test:all:watch`
-- Coverage: `npm run test:coverage`
+- Coverage: `npm run test:coverage` (unit + integration, all production TS/TSX)
+- Critical mutation gate: `npm run test:mutation:critical`
 
 ### Test File Conventions
 
 - Unit: `src/**/*.{test,spec}.{js,ts,jsx,tsx}` and `src/**/__tests__/**/*.{js,ts,jsx,tsx}`
-  - Excludes `*.integration.test.*`, `*.db.test.*`, `*.performance.test.*`
+  - Excludes `*.integration.test.*` and `*.performance.test.*`
 - Integration: `*.integration.test.*` or `src/**/__tests__/**/*.integration.*`
-- DB: `*.db.test.*` or `src/**/__tests__/**/*.db.*`
 - Performance: `*.performance.test.*` or `src/**/__tests__/**/*.performance.*`
 
 ### Test Harness Notes
 
-- Shared setup: `src/test/setup.ts` (mocks storage APIs, suppresses `console.*`)
+- Shared setup: `src/test/setup.ts` (uses independent native JSDOM `localStorage` / `sessionStorage`, suppresses `console.*`)
 - Integration setup: `src/test/setup.integration.ts`
   - Uses MSW handlers: `src/test/mocks/supabaseMocks.ts`
-  - Mocks `import.meta.env` for Supabase config
-  - Uses fake timers; advance timers when needed
-- DB setup: `src/test/setup.db.ts`
-  - Uses in-memory helpers: `src/test/utils/testDatabase.ts`
-  - Mocks `src/lib/supabase.ts` to use a test client (no real Supabase required)
+  - Runs the real Supabase storage/API/mapper/SDK path; MSW is the external HTTP boundary
+  - Fake timers are opt-in per test and must be restored by that test
 
 ### When Adding or Changing Tests
 
 - Prefer unit tests unless behavior depends on storage/network boundaries.
+- Never mock the module under test. Mock external I/O, time, browser, and platform boundaries instead.
+- A local core dependency may be mocked in a composition test only when it has direct behavior coverage of its own.
+- Mock call counts are supporting evidence, not the only behavioral assertion.
 - If you add a new Supabase REST/RPC call used in integration tests, update `src/test/mocks/supabaseMocks.ts`.
 - If you add or rename a storage method on `MomentumStorage`, update both implementations and add coverage in the relevant suite.
 

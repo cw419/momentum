@@ -98,8 +98,9 @@ npm run lint:sql           # requires sqlfluff installed (recommended: pipx inst
 
 - Smoke subset (CI-safe): `npm test`
 - Full unit suite: `npm run test:all`
-- Integration suite: `npm run test:integration`
-- DB suite: `npm run test:db`
+- Integration suite: `npm run test:integration` (real storage/API/SDK path with HTTP mocked by MSW)
+- Full-source unit + integration coverage: `npm run test:coverage`
+- Critical mutation gate: `npm run test:mutation:critical`
 - Performance suite: `npm run test:performance`
 
 ## Database / Supabase Changes

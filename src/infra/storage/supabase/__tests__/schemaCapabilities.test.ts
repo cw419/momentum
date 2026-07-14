@@ -6,7 +6,7 @@ import {
   markCapabilitiesAvailable,
   markCapabilitiesMissing,
 } from '../schemaCapabilities';
-import { createMockContext, createSupabaseError } from '../testHelpers';
+import { createMockContext, createSupabaseError } from './testHelpers';
 
 const RSIP_NODE_CAPABILITIES = [
   'consecutive_executions',

@@ -263,21 +263,6 @@ describe('UI Fixes and Improvements', () => {
   });
 
   describe('Error Handling and Recovery', () => {
-    test('Should handle async operation failures gracefully', async () => {
-      const mockError = new Error('Network error');
-
-      // Mock a failing operation
-      const failingOperation = vi.fn().mockRejectedValue(mockError);
-
-      try {
-        await failingOperation();
-      } catch (error) {
-        expect(error).toBe(mockError);
-      }
-
-      expect(failingOperation).toHaveBeenCalled();
-    });
-
     test('Should provide user-friendly error messages', () => {
       render(<div className="error-message">创建规则失败，请重试</div>);
 

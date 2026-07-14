@@ -1,26 +1,16 @@
 import '@stryker-mutator/vitest-runner';
+import { FULL_MUTATION_SCOPE } from './tools/quality/mutation-scope.mjs';
 
 export default {
   testRunner: 'vitest',
-  reporters: ['clear-text', 'progress', 'html'],
-  mutate: [
-    'src/hooks/domains/sessions/*.ts',
-    'src/hooks/domains/use*Domain.ts',
-    'src/utils/storage/chains.ts',
-    'src/utils/storage/sessions.ts',
-    'src/utils/storage/rsip.ts',
-    'src/utils/storage/pet.ts',
-    'src/utils/chain-tree/groupOperations.ts',
-    'src/utils/chain-tree/treeBuilder.ts',
-    'src/domain/errors.ts',
-    'src/domain/result.ts',
-    'src/infra/storage/supabase/retry.ts',
-    'src/services/errorClassification/ErrorClassifiers.ts',
-    'src/services/enhanced-rule-validation/validators/typeMatch.ts',
-    'src/services/recovery/RecoveryStrategy.ts',
-    'src/utils/local-preferences/timerState.ts',
-    '!src/hooks/domains/**/__tests__/**',
-  ],
+  reporters: ['clear-text', 'progress', 'html', 'json'],
+  mutate: FULL_MUTATION_SCOPE,
+  htmlReporter: {
+    fileName: 'reports/mutation/mutation.html',
+  },
+  jsonReporter: {
+    fileName: 'reports/mutation/mutation.json',
+  },
   thresholds: {
     high: 90,
     low: 80,
@@ -30,5 +20,6 @@ export default {
     configFile: 'vitest.ci.config.ts',
   },
   timeoutMS: 60000,
+  concurrency: 4,
   tempDirName: '.stryker-tmp',
 };

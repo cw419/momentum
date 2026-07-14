@@ -21,6 +21,7 @@ export function PauseDurationCard({
         <input
           type="number"
           min="1"
+          aria-label={tr('暂停时长（分钟）', 'Pause duration in minutes')}
           value={durationMinutes ?? ''}
           onChange={(event) => {
             const raw = event.target.value;

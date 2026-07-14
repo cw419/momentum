@@ -11,7 +11,7 @@ import {
   createMockContext,
   createMockQueryBuilder,
   createSupabaseError,
-} from '../testHelpers';
+} from './testHelpers';
 import type { RSIPNode, RSIPMeta } from '../../../../types';
 
 vi.mock('../../../../utils/logger', () => ({

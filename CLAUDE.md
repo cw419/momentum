@@ -44,9 +44,9 @@ npm run test:watch       # Watch mode for smoke tests
 npm run test:all         # Run ALL tests (comprehensive)
 npm run test:all:watch   # Watch mode for all tests
 npm run test:integration # Integration tests only
-npm run test:db          # Database tests only
 npm run test:performance # Performance tests only
-npm run test:coverage    # Coverage report
+npm run test:coverage    # Unit + integration coverage for all production TS/TSX
+npm run test:mutation:critical # Required mutation gate for critical domain logic
 
 # Run a single test file
 npx vitest run src/path/to/file.test.ts
@@ -64,8 +64,8 @@ Notes:
 - This repo intentionally uses explicit `npm run ...` scripts (no pre-commit hooks) to keep local iteration unblocked.
 - `npm run security:semgrep` requires Semgrep installed (recommended: `pipx install semgrep`).
 - `npm run lint:sql` requires SQLFluff installed (recommended: `pipx install sqlfluff`).
-- Test configs: `vitest.ci.config.ts` (smoke/CI), `vitest.config.ts` (all), `vitest.integration.config.ts` (30s timeout), `vitest.db.config.ts` (60s timeout), `vitest.performance.config.ts` (benchmarks).
-- Test file naming: `*.test.ts(x)` (unit), `*.integration.test.ts(x)`, `*.db.test.ts(x)`, `*.performance.test.ts(x)`.
+- Test configs: `vitest.ci.config.ts` (smoke/CI), `vitest.config.ts` (all), `vitest.integration.config.ts` (30s timeout), `vitest.coverage.config.ts` (unit + integration coverage), `vitest.performance.config.ts` (benchmarks).
+- Test file naming: `*.test.ts(x)` (unit), `*.integration.test.ts(x)`, `*.performance.test.ts(x)`.
 - Tauri dev requires Rust toolchain (`rustup`). Tauri CLI is installed as npm devDependency (`@tauri-apps/cli`).
 - When `TAURI_ENV_PLATFORM` is set (by Tauri CLI), Vite config auto-disables PWA plugin to avoid Service Worker conflicts with WebView.
 

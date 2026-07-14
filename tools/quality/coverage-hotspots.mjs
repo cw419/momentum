@@ -1,111 +1,94 @@
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { createRequire } from 'node:module';
+import { assertFreshCoverageMetadata } from './coverage-metadata.mjs';
 
-const require = createRequire(import.meta.url);
 const repoRoot = process.cwd();
-const coveragePath = path.join(repoRoot, 'coverage', 'coverage-final.json');
+const coverageDirectory = path.join(repoRoot, 'coverage');
+const coveragePath = path.join(coverageDirectory, 'coverage-final.json');
+const metadataPath = path.join(coverageDirectory, 'metadata.json');
 const reportsDir = path.join(repoRoot, 'reports', 'quality');
 const outPath = path.join(reportsDir, 'test-coverage-hotspots.json');
 
 await fs.mkdir(reportsDir, { recursive: true });
 
-function resolvePackageBin(packageName, binName) {
-  const packageJsonPath = require.resolve(`${packageName}/package.json`);
-  const packageJson = require(packageJsonPath);
-  const binField = packageJson.bin;
-  const relativeBin =
-    typeof binField === 'string' ? binField : binField?.[binName];
-  if (!relativeBin) {
-    throw new Error(
-      `Unable to resolve bin "${binName}" from package "${packageName}"`,
-    );
-  }
-  return path.resolve(path.dirname(packageJsonPath), relativeBin);
+function normalizePath(filePath) {
+  return filePath.replace(/\\/g, '/');
 }
 
-async function ensureCoverage() {
-  try {
-    await fs.access(coveragePath);
-    return;
-  } catch {
-    // continue
-  }
+function isProductionSource(relativePath) {
+  return (
+    /^src\/.*\.(ts|tsx)$/.test(relativePath) &&
+    !/\.d\.ts$/.test(relativePath) &&
+    !/\.(test|spec)\.(ts|tsx)$/.test(relativePath) &&
+    !relativePath.includes('/__tests__/') &&
+    !relativePath.startsWith('src/test/') &&
+    relativePath !== 'src/lib/database.types.ts' &&
+    !/\.config\.(ts|tsx)$/.test(relativePath)
+  );
+}
 
-  const vitestBin = resolvePackageBin('vitest', 'vitest');
-  const run = spawnSync(
-    process.execPath,
-    [vitestBin, 'run', '--coverage', '--config', 'vitest.ci.config.ts'],
+function listProductionSources() {
+  const result = spawnSync(
+    'git',
+    ['ls-files', '--cached', '--others', '--exclude-standard', '--', 'src'],
     {
       cwd: repoRoot,
-      stdio: 'inherit',
+      encoding: 'utf8',
     },
   );
-
-  if (run.error) {
-    throw new Error(
-      `Failed to generate coverage report (${run.error.message})`,
-    );
+  if ((result.status ?? 1) !== 0) {
+    throw new Error(`Unable to list production sources: ${result.stderr}`);
   }
-
-  if ((run.status ?? 1) !== 0) {
-    throw new Error(
-      `Failed to generate coverage report (exit ${run.status ?? 'unknown'})`,
-    );
-  }
+  return result.stdout
+    .split(/\r?\n/)
+    .map(normalizePath)
+    .filter(Boolean)
+    .filter(isProductionSource)
+    .filter((relativePath) => existsSync(path.join(repoRoot, relativePath)))
+    .sort();
 }
 
 function pct(covered, total) {
   return total === 0 ? 100 : Number(((covered / total) * 100).toFixed(2));
 }
 
-function isTestFile(relPath) {
-  return (
-    /\.(test|spec)\.[cm]?[jt]sx?$/.test(relPath) ||
-    relPath.includes('/__tests__/')
-  );
-}
-
-await ensureCoverage();
-const raw = JSON.parse(await fs.readFile(coveragePath, 'utf8'));
-
-const files = [];
-
-for (const [filePath, coverage] of Object.entries(raw)) {
-  const relPath = path.relative(repoRoot, filePath).replace(/\\/g, '/');
-  if (!relPath.startsWith('src/')) continue;
-  if (isTestFile(relPath)) continue;
+function summarizeCoverage(relativePath, coverage) {
+  if (!coverage) {
+    return {
+      file: relativePath,
+      missingFromCoverage: true,
+      statements: 0,
+      branches: 0,
+      functions: 0,
+      uncoveredStatementCount: null,
+      uncoveredBranchCount: null,
+      uncoveredFunctionCount: null,
+      uncoveredLineCount: null,
+      uncoveredLines: [],
+    };
+  }
 
   const statementCounts = Object.values(coverage.s ?? {});
   const functionCounts = Object.values(coverage.f ?? {});
   const branchCounts = Object.values(coverage.b ?? {}).flatMap((hits) =>
     Array.isArray(hits) ? hits : [],
   );
-
-  const coveredStatements = statementCounts.filter(
-    (hits) => (hits ?? 0) > 0,
-  ).length;
-  const coveredFunctions = functionCounts.filter(
-    (hits) => (hits ?? 0) > 0,
-  ).length;
-  const coveredBranches = branchCounts.filter((hits) => (hits ?? 0) > 0).length;
-
-  const uncoveredLines = [];
-  const statementMap = coverage.statementMap ?? {};
-  for (const [id, loc] of Object.entries(statementMap)) {
-    const count = coverage.s?.[id] ?? 0;
-    if (count === 0 && loc?.start?.line) {
-      uncoveredLines.push(loc.start.line);
-    }
-  }
-
+  const coveredStatements = statementCounts.filter((hits) => hits > 0).length;
+  const coveredFunctions = functionCounts.filter((hits) => hits > 0).length;
+  const coveredBranches = branchCounts.filter((hits) => hits > 0).length;
+  const uncoveredLines = Object.entries(coverage.statementMap ?? {})
+    .filter(([id]) => (coverage.s?.[id] ?? 0) === 0)
+    .map(([, location]) => location?.start?.line)
+    .filter(Number.isInteger);
   const uniqueUncoveredLines = [...new Set(uncoveredLines)].sort(
-    (a, b) => a - b,
+    (left, right) => left - right,
   );
 
-  files.push({
-    file: relPath,
+  return {
+    file: relativePath,
+    missingFromCoverage: false,
     statements: pct(coveredStatements, statementCounts.length),
     branches: pct(coveredBranches, branchCounts.length),
     functions: pct(coveredFunctions, functionCounts.length),
@@ -114,29 +97,52 @@ for (const [filePath, coverage] of Object.entries(raw)) {
     uncoveredFunctionCount: functionCounts.length - coveredFunctions,
     uncoveredLineCount: uniqueUncoveredLines.length,
     uncoveredLines: uniqueUncoveredLines.slice(0, 30),
-  });
+  };
 }
 
-const hotspots = [...files].sort((a, b) => {
-  if (a.branches !== b.branches) return a.branches - b.branches;
-  if (a.statements !== b.statements) return a.statements - b.statements;
-  if (a.uncoveredBranchCount !== b.uncoveredBranchCount)
-    return b.uncoveredBranchCount - a.uncoveredBranchCount;
-  if (a.uncoveredStatementCount !== b.uncoveredStatementCount)
-    return b.uncoveredStatementCount - a.uncoveredStatementCount;
-  return a.file.localeCompare(b.file);
+const [rawCoverage, metadata] = await Promise.all([
+  fs.readFile(coveragePath, 'utf8').then(JSON.parse),
+  fs.readFile(metadataPath, 'utf8').then(JSON.parse),
+]);
+await assertFreshCoverageMetadata(repoRoot, metadata);
+
+const coverageByRelativePath = new Map(
+  Object.entries(rawCoverage).map(([absolutePath, coverage]) => [
+    normalizePath(path.relative(repoRoot, absolutePath)),
+    coverage,
+  ]),
+);
+const files = listProductionSources().map((relativePath) =>
+  summarizeCoverage(relativePath, coverageByRelativePath.get(relativePath)),
+);
+
+const hotspots = [...files].sort((left, right) => {
+  if (left.missingFromCoverage !== right.missingFromCoverage) {
+    return left.missingFromCoverage ? -1 : 1;
+  }
+  const leftUncovered =
+    (left.uncoveredStatementCount ?? 0) + (left.uncoveredBranchCount ?? 0);
+  const rightUncovered =
+    (right.uncoveredStatementCount ?? 0) + (right.uncoveredBranchCount ?? 0);
+  if (leftUncovered !== rightUncovered) return rightUncovered - leftUncovered;
+  if (left.branches !== right.branches) return left.branches - right.branches;
+  return left.file.localeCompare(right.file);
 });
 
 const payload = {
+  schemaVersion: 2,
   generatedAt: new Date().toISOString(),
-  sourceCoverage: path.relative(repoRoot, coveragePath).replace(/\\/g, '/'),
+  sourceCoverage: normalizePath(path.relative(repoRoot, coveragePath)),
+  sourceMetadata: metadata,
   fileCount: files.length,
+  missingFileCount: files.filter((file) => file.missingFromCoverage).length,
   top20: hotspots.slice(0, 20),
 };
 
-await fs.writeFile(outPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
-
-console.log(`[coverage-hotspots] analyzed ${files.length} files.`);
+await fs.writeFile(outPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 console.log(
-  `[coverage-hotspots] report: ${path.relative(repoRoot, outPath).replace(/\\/g, '/')}`,
+  `[coverage-hotspots] analyzed ${files.length} production files; ${payload.missingFileCount} missing from coverage.`,
+);
+console.log(
+  `[coverage-hotspots] report: ${normalizePath(path.relative(repoRoot, outPath))}`,
 );

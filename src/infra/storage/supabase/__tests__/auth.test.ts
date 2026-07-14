@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { expectErr, expectOk } from '../../../../test/utils/resultAssertions';
 import type { User } from '@supabase/supabase-js';
 
 interface LoadAuthOptions {
@@ -96,16 +97,12 @@ describe('supabase/auth', () => {
     const { mod } = await loadAuthModule({ supabaseValue: null });
 
     const currentUser = await mod.getCurrentUser();
-    expect(currentUser.ok).toBe(false);
-    if (!currentUser.ok) {
-      expect(currentUser.error.code).toBe('NOT_CONFIGURED');
-    }
+    const currentUserError = expectErr(currentUser);
+    expect(currentUserError.code).toBe('NOT_CONFIGURED');
 
     const authResult = await mod.waitForAuthentication();
-    expect(authResult.ok).toBe(false);
-    if (!authResult.ok) {
-      expect(authResult.error.code).toBe('NOT_CONFIGURED');
-    }
+    const authError = expectErr(authResult);
+    expect(authError.code).toBe('NOT_CONFIGURED');
   });
 
   it('maps supabase user fields when getCurrentUser succeeds', async () => {
@@ -120,26 +117,22 @@ describe('supabase/auth', () => {
     const { mod } = await loadAuthModule({ currentUser: rawUser });
     const result = await mod.getCurrentUser();
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value).toEqual({
-        id: 'user-42',
-        email: 'u42@example.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        lastSignInAt: '2026-02-06T06:00:00.000Z',
-        userMetadata: { tier: 'pro' },
-      });
-    }
+    const value = expectOk(result);
+    expect(value).toEqual({
+      id: 'user-42',
+      email: 'u42@example.com',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      lastSignInAt: '2026-02-06T06:00:00.000Z',
+      userMetadata: { tier: 'pro' },
+    });
   });
 
   it('returns null user when no user is available', async () => {
     const { mod } = await loadAuthModule({ currentUser: null });
     const result = await mod.getCurrentUser();
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value).toBeNull();
-    }
+    const value = expectOk(result);
+    expect(value).toBeNull();
   });
 
   it('maps waitForAuthentication result', async () => {
@@ -149,21 +142,17 @@ describe('supabase/auth', () => {
     });
 
     const result = await mod.waitForAuthentication(1234);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.isAuthenticated).toBe(true);
-      expect(result.value.user?.id).toBe('wait-user');
-    }
+    const value = expectOk(result);
+    expect(value.isAuthenticated).toBe(true);
+    expect(value.user?.id).toBe('wait-user');
   });
 
   it('returns false auth status when supabase is not configured', async () => {
     const { mod } = await loadAuthModule({ supabaseValue: null });
     const result = await mod.isUserAuthenticated();
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value).toBe(false);
-    }
+    const value = expectOk(result);
+    expect(value).toBe(false);
   });
 
   it('maps signIn/signUp/signOut errors to AppError codes', async () => {
@@ -174,22 +163,16 @@ describe('supabase/auth', () => {
     });
 
     const signInResult = await mod.signIn('a@example.com', 'secret');
-    expect(signInResult.ok).toBe(false);
-    if (!signInResult.ok) {
-      expect(signInResult.error.code).toBe('NETWORK');
-    }
+    const signInError = expectErr(signInResult);
+    expect(signInError.code).toBe('NETWORK');
 
     const signUpResult = await mod.signUp('a@example.com', 'secret');
-    expect(signUpResult.ok).toBe(false);
-    if (!signUpResult.ok) {
-      expect(signUpResult.error.code).toBe('NOT_CONFIGURED');
-    }
+    const signUpError = expectErr(signUpResult);
+    expect(signUpError.code).toBe('NOT_CONFIGURED');
 
     const signOutResult = await mod.signOut();
-    expect(signOutResult.ok).toBe(false);
-    if (!signOutResult.ok) {
-      expect(signOutResult.error.code).toBe('NOT_AUTHENTICATED');
-    }
+    const signOutError = expectErr(signOutResult);
+    expect(signOutError.code).toBe('NOT_AUTHENTICATED');
   });
 
   it('returns ok on successful signIn/signUp/signOut', async () => {
@@ -219,10 +202,8 @@ describe('supabase/auth', () => {
     });
     const result = await mod.signIn('user@example.com', 'pw');
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('UNKNOWN');
-    }
+    const error = expectErr(result);
+    expect(error.code).toBe('UNKNOWN');
   });
 
   it('handles auth state subscription and unsubscribe', async () => {
@@ -230,7 +211,7 @@ describe('supabase/auth', () => {
     const callback = vi.fn();
 
     const subscription = mod.onAuthStateChange(callback);
-    expect(subscription.ok).toBe(true);
+    const subscriptionValue = expectOk(subscription);
     expect(mocks.onAuthStateChange).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith(
       'SIGNED_IN',
@@ -242,9 +223,7 @@ describe('supabase/auth', () => {
       }),
     );
 
-    if (subscription.ok) {
-      subscription.value();
-    }
+    subscriptionValue();
     expect(mocks.unsubscribe).toHaveBeenCalledTimes(1);
   });
 
@@ -252,9 +231,7 @@ describe('supabase/auth', () => {
     const { mod } = await loadAuthModule({ supabaseValue: null });
     const result = mod.onAuthStateChange(vi.fn());
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('NOT_CONFIGURED');
-    }
+    const error = expectErr(result);
+    expect(error.code).toBe('NOT_CONFIGURED');
   });
 });

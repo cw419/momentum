@@ -303,19 +303,20 @@ describe('VirtualizedRuleList', () => {
       );
 
       const scrollContainer = document.querySelector('.overflow-auto');
-
-      if (scrollContainer) {
-        // Fire multiple scroll events rapidly
-        for (let i = 0; i < 10; i++) {
-          (scrollContainer as HTMLElement).scrollTop = i * 100;
-          fireEvent.scroll(scrollContainer);
-        }
-
-        // Should handle without performance issues
-        await waitFor(() => {
-          expect((scrollContainer as HTMLElement).scrollTop).toBeGreaterThan(0);
-        });
+      expect(scrollContainer).toBeInstanceOf(HTMLElement);
+      if (!scrollContainer) {
+        throw new Error('Expected virtualized list scroll container');
       }
+
+      // Fire multiple scroll events rapidly.
+      for (let i = 0; i < 10; i++) {
+        (scrollContainer as HTMLElement).scrollTop = i * 100;
+        fireEvent.scroll(scrollContainer);
+      }
+
+      await waitFor(() => {
+        expect((scrollContainer as HTMLElement).scrollTop).toBe(900);
+      });
     });
   });
 

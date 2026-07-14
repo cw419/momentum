@@ -270,45 +270,6 @@ describe('supabase/SupabaseStorage', () => {
     expect(chainsApiMocks.getChains).toHaveBeenCalledTimes(2);
   });
 
-  it('delegates RSIP intent writes to the RSIP intent API module', async () => {
-    const storage = new SupabaseStorage();
-    const node = {
-      id: 'node-1',
-      title: 'Node',
-      rule: 'Rule',
-      sortOrder: 0,
-      createdAt: new Date('2026-03-07T00:00:00.000Z'),
-    };
-    const entry = {
-      id: 'library-1',
-      title: 'Library',
-      rule: 'Rule',
-      cumulativeExecutionDays: 1,
-      internalizationProgress: 1,
-      lastActiveAt: new Date('2026-03-07T00:00:00.000Z'),
-      timesUsed: 1,
-    };
-    const run = {
-      runNumber: 1,
-      startedAt: new Date('2026-03-07T00:00:00.000Z'),
-      maxNodeCount: 1,
-      durationDays: 1,
-    };
-
-    await storage.upsertRSIPNode(node as never);
-    await storage.removeRSIPNodes(['node-1', 'node-2']);
-    await storage.upsertRSIPLibraryEntry(entry as never);
-    await storage.appendRSIPRunRecord(run as never);
-
-    expect(rsipIntentApiMocks.upsertRSIPNode).toHaveBeenCalledTimes(1);
-    expect(rsipIntentApiMocks.removeRSIPNodes).toHaveBeenCalledWith(
-      expect.anything(),
-      ['node-1', 'node-2'],
-    );
-    expect(rsipIntentApiMocks.upsertRSIPLibraryEntry).toHaveBeenCalledTimes(1);
-    expect(rsipIntentApiMocks.appendRSIPRunRecord).toHaveBeenCalledTimes(1);
-  });
-
   it('clears pending request after rejection so subsequent calls can retry', async () => {
     const storage = new SupabaseStorage();
     chainsApiMocks.getChains.mockRejectedValueOnce(new Error('boom'));
@@ -415,57 +376,5 @@ describe('supabase/SupabaseStorage', () => {
     await expect(
       storage.migrateCompletionHistoryForTiming(),
     ).resolves.toBeUndefined();
-  });
-
-  it('proxies auth, user settings, betting, and checkin calls to API modules', async () => {
-    const storage = new SupabaseStorage();
-
-    await storage.getCurrentUser();
-    await storage.waitForAuthentication(123);
-    await storage.isUserAuthenticated();
-    await storage.signUp('a@example.com', 'pw');
-    await storage.signIn('a@example.com', 'pw');
-    await storage.signOut();
-    storage.onAuthStateChange(vi.fn());
-
-    await storage.getGamblingSettings();
-    await storage.toggleGamblingMode();
-    await storage.isGamblingModeEnabled();
-
-    await storage.createBettingSession('chain-1', 45);
-    await storage.deleteBettingSession('session-1');
-    await storage.completeTaskWithBetting('session-1', true, 'good');
-    await storage.placeBet({ session_id: 'session-1', bet_amount: 10 });
-    await storage.getUserAvailablePoints();
-    await storage.getTodayBetAmount();
-
-    await storage.performDailyCheckin();
-    await storage.getUserCheckinStats();
-
-    expect(authApiMocks.getCurrentUser).toHaveBeenCalledTimes(1);
-    expect(authApiMocks.waitForAuthentication).toHaveBeenCalledWith(123);
-    expect(authApiMocks.signIn).toHaveBeenCalledWith('a@example.com', 'pw');
-    expect(userSettingsApiMocks.toggleGamblingMode).toHaveBeenCalledWith(
-      expect.any(Object),
-    );
-    expect(bettingApiMocks.createBettingSession).toHaveBeenCalledWith(
-      expect.any(Object),
-      'chain-1',
-      45,
-    );
-    expect(checkinApiMocks.performDailyCheckin).toHaveBeenCalledWith(
-      expect.any(Object),
-    );
-  });
-
-  it('uses storage utility for pet read/write', async () => {
-    const storage = new SupabaseStorage();
-    const pet = { id: 'pet-1' };
-
-    storageUtilsMocks.storage.getPetState.mockResolvedValueOnce(pet);
-    await expect(storage.getPetState()).resolves.toEqual(pet);
-
-    await storage.savePetState(pet as never);
-    expect(storageUtilsMocks.storage.savePetState).toHaveBeenCalledWith(pet);
   });
 });

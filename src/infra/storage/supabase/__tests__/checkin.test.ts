@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { expectErr, expectOk } from '../../../../test/utils/resultAssertions';
 import { performDailyCheckin, getUserCheckinStats } from '../checkin';
-import { createMockContext, createSupabaseError } from '../testHelpers';
+import { createMockContext, createSupabaseError } from './testHelpers';
 
 vi.mock('../../../../utils/logger', () => ({
   logger: {
@@ -21,10 +22,8 @@ describe('checkin.ts', () => {
 
       const result = await performDailyCheckin(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return checkin result on success', async () => {
@@ -46,12 +45,10 @@ describe('checkin.ts', () => {
 
       const result = await performDailyCheckin(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.success).toBe(true);
-        expect(result.value.points_earned).toBe(10);
-        expect(result.value.consecutive_days).toBe(5);
-      }
+      const value = expectOk(result);
+      expect(value.success).toBe(true);
+      expect(value.points_earned).toBe(10);
+      expect(value.consecutive_days).toBe(5);
     });
 
     it('should return error when rpc fails', async () => {
@@ -63,11 +60,9 @@ describe('checkin.ts', () => {
 
       const result = await performDailyCheckin(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-        expect(result.error.message).toContain('Check-in failed');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
+      expect(error.message).toContain('Check-in failed');
     });
 
     it('should handle already checked in case', async () => {
@@ -87,11 +82,9 @@ describe('checkin.ts', () => {
 
       const result = await performDailyCheckin(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.already_checked_in).toBe(true);
-        expect(result.value.points_earned).toBe(0);
-      }
+      const value = expectOk(result);
+      expect(value.already_checked_in).toBe(true);
+      expect(value.points_earned).toBe(0);
     });
 
     it('should handle exceptions gracefully', async () => {
@@ -102,10 +95,8 @@ describe('checkin.ts', () => {
 
       const result = await performDailyCheckin(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('UNKNOWN');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('UNKNOWN');
     });
 
     it('should call rpc with correct parameters', async () => {
@@ -137,10 +128,8 @@ describe('checkin.ts', () => {
 
       const result = await getUserCheckinStats(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('NOT_AUTHENTICATED');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('NOT_AUTHENTICATED');
     });
 
     it('should return checkin stats on success', async () => {
@@ -161,13 +150,11 @@ describe('checkin.ts', () => {
 
       const result = await getUserCheckinStats(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.total_points).toBe(500);
-        expect(result.value.current_streak).toBe(7);
-        expect(result.value.longest_streak).toBe(15);
-        expect(result.value.has_checked_in_today).toBe(true);
-      }
+      const value = expectOk(result);
+      expect(value.total_points).toBe(500);
+      expect(value.current_streak).toBe(7);
+      expect(value.longest_streak).toBe(15);
+      expect(value.has_checked_in_today).toBe(true);
     });
 
     it('should return error when rpc fails', async () => {
@@ -179,11 +166,9 @@ describe('checkin.ts', () => {
 
       const result = await getUserCheckinStats(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('STORAGE');
-        expect(result.error.message).toContain('Failed to get stats');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('STORAGE');
+      expect(error.message).toContain('Failed to get stats');
     });
 
     it('should handle user with no checkin history', async () => {
@@ -204,12 +189,10 @@ describe('checkin.ts', () => {
 
       const result = await getUserCheckinStats(ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value.total_checkins).toBe(0);
-        expect(result.value.last_checkin_date).toBeNull();
-        expect(result.value.has_checked_in_today).toBe(false);
-      }
+      const value = expectOk(result);
+      expect(value.total_checkins).toBe(0);
+      expect(value.last_checkin_date).toBeNull();
+      expect(value.has_checked_in_today).toBe(false);
     });
 
     it('should handle exceptions gracefully', async () => {
@@ -220,10 +203,8 @@ describe('checkin.ts', () => {
 
       const result = await getUserCheckinStats(ctx);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe('UNKNOWN');
-      }
+      const error = expectErr(result);
+      expect(error.code).toBe('UNKNOWN');
     });
 
     it('should call rpc with correct parameters', async () => {

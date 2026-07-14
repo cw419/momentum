@@ -7,6 +7,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost/',
+      },
+    },
     setupFiles: ['./src/test/setup.ts'],
     include: [
       'src/**/*.{test,spec}.{js,ts,jsx,tsx}',
@@ -24,6 +29,7 @@ export default defineConfig({
       '**/__tests__/**/*.performance.*',
       '**/__tests__/**/*-performance.*',
       '**/__tests__/**/helpers.ts',
+      '**/__tests__/**/testHelpers.ts',
     ],
     coverage: {
       provider: 'v8',

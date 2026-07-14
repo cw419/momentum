@@ -31,6 +31,39 @@ function DialogHarness({ onClose = vi.fn() }: { onClose?: () => void }) {
 }
 
 describe('DialogShell', () => {
+  it('does not steal focus after the user selects another dialog control', () => {
+    vi.useFakeTimers();
+    try {
+      function DelayedFocusDialog() {
+        const preferredFocusRef = useRef<HTMLInputElement>(null);
+        return (
+          <DialogShell
+            titleId="delayed-focus-title"
+            onClose={vi.fn()}
+            initialFocusRef={preferredFocusRef}
+            initialFocusDelayMs={100}
+          >
+            <h2 id="delayed-focus-title">Delayed focus</h2>
+            <input ref={preferredFocusRef} aria-label="Search" />
+            <input aria-label="Duration" />
+          </DialogShell>
+        );
+      }
+
+      render(<DelayedFocusDialog />);
+      const durationInput = screen.getByRole('textbox', {
+        name: 'Duration',
+      });
+      durationInput.focus();
+
+      vi.advanceTimersByTime(100);
+
+      expect(durationInput).toHaveFocus();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('traps focus, closes with Escape, restores focus, and unlocks the page', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();

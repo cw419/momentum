@@ -109,10 +109,11 @@ export function DialogShell({
       container;
     let focusTimer: number | undefined;
     if (initialFocusDelayMs > 0) {
-      focusTimer = window.setTimeout(
-        () => initialTarget?.focus(),
-        initialFocusDelayMs,
-      );
+      focusTimer = window.setTimeout(() => {
+        if (!container?.contains(document.activeElement)) {
+          initialTarget?.focus();
+        }
+      }, initialFocusDelayMs);
     } else {
       initialTarget?.focus();
     }

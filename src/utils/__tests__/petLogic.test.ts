@@ -159,17 +159,28 @@ describe('petLogic', () => {
   });
 
   describe('mappings and display helpers', () => {
-    it('should return non-empty emoji for each stage and mood', () => {
-      expect(
-        ['egg', 'baby', 'child', 'teen', 'adult', 'elder'].map((stage) =>
-          getStageEmoji(stage as never),
-        ),
-      ).toEqual(expect.arrayContaining([expect.any(String)]));
-      expect(
-        ['ecstatic', 'happy', 'neutral', 'sad', 'depressed'].map((mood) =>
-          getMoodEmoji(mood as never),
-        ),
-      ).toEqual(expect.arrayContaining([expect.any(String)]));
+    it.each([
+      ['egg', '🥒'],
+      ['baby', '🐣'],
+      ['child', '🐥'],
+      ['teen', '🐤'],
+      ['adult', '🐔'],
+      ['elder', '🦅'],
+    ] as const)(
+      'should map the %s stage to its exact emoji',
+      (stage, emoji) => {
+        expect(getStageEmoji(stage)).toBe(emoji);
+      },
+    );
+
+    it.each([
+      ['ecstatic', '🤩'],
+      ['happy', '😊'],
+      ['neutral', '😐'],
+      ['sad', '😢'],
+      ['depressed', '😭'],
+    ] as const)('should map the %s mood to its exact emoji', (mood, emoji) => {
+      expect(getMoodEmoji(mood)).toBe(emoji);
     });
 
     it('should provide stage names in both languages', () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChainTreeNode, ScheduledSession } from '../../../types';
 import { getTimeRemaining } from '../../../utils/time';
 import { systemNotificationService } from '../../../services/platform/SystemNotificationService';
@@ -19,7 +19,8 @@ export function useGroupCardScheduleCountdown(params: {
   const { scheduledSession, group, nextUnit, tr } = params;
 
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [hasShownWarning, setHasShownWarning] = useState(false);
+  const warnedScheduleRef = useRef<string | null>(null);
+  const failedScheduleRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!scheduledSession) return;
@@ -28,6 +29,7 @@ export function useGroupCardScheduleCountdown(params: {
       ? nextUnit.auxiliaryDuration
       : group.auxiliaryDuration;
     const notificationThreshold = getNotificationThreshold(durationForWarning);
+    const scheduleKey = `${scheduledSession.chainId}:${scheduledSession.scheduledAt.getTime()}`;
 
     const updateTimer = () => {
       const remaining = getTimeRemaining(scheduledSession.expiresAt);
@@ -37,9 +39,9 @@ export function useGroupCardScheduleCountdown(params: {
         notificationThreshold &&
         remaining <= notificationThreshold &&
         remaining > 0 &&
-        !hasShownWarning
+        warnedScheduleRef.current !== scheduleKey
       ) {
-        setHasShownWarning(true);
+        warnedScheduleRef.current = scheduleKey;
         const minutes = Math.max(1, Math.ceil(remaining / 60));
         fireAndForget(
           systemNotificationService.notifyScheduleWarning(
@@ -50,7 +52,8 @@ export function useGroupCardScheduleCountdown(params: {
         );
       }
 
-      if (remaining <= 0) {
+      if (remaining <= 0 && failedScheduleRef.current !== scheduleKey) {
+        failedScheduleRef.current = scheduleKey;
         fireAndForget(
           systemNotificationService.notifyScheduleFailed(group.name),
           { label: 'group-schedule-failed-notification' },
@@ -61,18 +64,7 @@ export function useGroupCardScheduleCountdown(params: {
     updateTimer();
     const interval = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(interval);
-  }, [
-    group.auxiliaryDuration,
-    group.name,
-    hasShownWarning,
-    nextUnit,
-    scheduledSession,
-    tr,
-  ]);
-
-  useEffect(() => {
-    setHasShownWarning(false);
-  }, [scheduledSession?.chainId, scheduledSession?.scheduledAt]);
+  }, [group.auxiliaryDuration, group.name, nextUnit, scheduledSession, tr]);
 
   return { timeRemaining };
 }

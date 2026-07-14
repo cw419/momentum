@@ -235,7 +235,7 @@ npm run dev
 npm test              # CI 冒烟测试
 npm run test:all      # 全量单元测试
 npm run test:integration  # 集成测试
-npm run test:db       # 数据库测试
 npm run test:performance  # 性能测试
-npm run test:coverage # 覆盖率报告
+npm run test:coverage # 单元 + 集成的全生产源码覆盖率
+npm run test:mutation:critical # 关键领域逻辑变异门禁
 ```

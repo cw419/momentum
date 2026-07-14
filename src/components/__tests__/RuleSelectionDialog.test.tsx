@@ -77,6 +77,11 @@ const renderWithI18n = (ui: React.ReactElement) => {
   return render(ui, { wrapper: I18nProvider });
 };
 
+const getSearchInput = () => screen.getByRole('textbox', { name: '搜索规则' });
+
+const getPauseDurationInput = () =>
+  screen.getByRole('spinbutton', { name: '暂停时长（分钟）' });
+
 describe('RuleSelectionDialog', () => {
   const mockedRuleManager = exceptionRuleManager as Mocked<
     typeof exceptionRuleManager
@@ -172,7 +177,7 @@ describe('RuleSelectionDialog', () => {
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
       expect(screen.getByText('暂停时长设置')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('输入分钟')).toHaveValue(15);
+      expect(getPauseDurationInput()).toHaveValue(15);
       expect(
         screen.getByRole('checkbox', { name: '无限时间' }),
       ).toBeInTheDocument();
@@ -191,8 +196,7 @@ describe('RuleSelectionDialog', () => {
     it('should render search input', () => {
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
-      const searchInput =
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      const searchInput = getSearchInput();
       expect(searchInput).toBeInTheDocument();
     });
 
@@ -200,8 +204,7 @@ describe('RuleSelectionDialog', () => {
       const user = userEvent.setup();
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
-      const searchInput =
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      const searchInput = getSearchInput();
       await user.type(searchInput, '新规则');
 
       expect(screen.getByText('创建新规则: "新规则"')).toBeInTheDocument();
@@ -214,9 +217,7 @@ describe('RuleSelectionDialog', () => {
         renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
         vi.advanceTimersByTime(150);
-        expect(
-          screen.getByPlaceholderText('搜索规则或输入新规则名称...'),
-        ).toHaveFocus();
+        expect(getSearchInput()).toHaveFocus();
       } finally {
         vi.useRealTimers();
       }
@@ -227,7 +228,7 @@ describe('RuleSelectionDialog', () => {
     it('should select 15 minutes by default', () => {
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
-      const durationInput = screen.getByPlaceholderText('输入分钟');
+      const durationInput = getPauseDurationInput();
       expect(durationInput).toHaveValue(15);
       expect(durationInput).toBeEnabled();
     });
@@ -236,11 +237,12 @@ describe('RuleSelectionDialog', () => {
       const user = userEvent.setup();
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
-      const durationInput = screen.getByPlaceholderText('输入分钟');
+      await waitFor(() => expect(getSearchInput()).toHaveFocus());
+      const durationInput = getPauseDurationInput();
       await user.clear(durationInput);
       await user.type(durationInput, '30');
 
-      await waitFor(() => expect(durationInput).toHaveValue(30));
+      expect(durationInput).toHaveValue(30);
     });
 
     it('should show unlimited time option', async () => {
@@ -248,7 +250,7 @@ describe('RuleSelectionDialog', () => {
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
       const checkbox = screen.getByRole('checkbox', { name: '无限时间' });
-      const durationInput = screen.getByPlaceholderText('输入分钟');
+      const durationInput = getPauseDurationInput();
 
       await user.click(checkbox);
       expect(checkbox).toBeChecked();
@@ -261,8 +263,7 @@ describe('RuleSelectionDialog', () => {
       const user = userEvent.setup();
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
-      const searchInput =
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      const searchInput = getSearchInput();
       await user.type(searchInput, '新规则');
 
       const createButton = screen.getByText('创建新规则: "新规则"');
@@ -293,8 +294,7 @@ describe('RuleSelectionDialog', () => {
         expect(screen.getByText('上厕所')).toBeInTheDocument();
       });
 
-      const searchInput =
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      const searchInput = getSearchInput();
       await user.type(searchInput, '上厕所');
 
       const createButton = screen.getByText('创建新规则: "上厕所"');
@@ -347,18 +347,18 @@ describe('RuleSelectionDialog', () => {
         />,
       );
 
-      // Change pause duration first
-      const durationInput = screen.getByPlaceholderText('输入分钟');
+      const searchInput = getSearchInput();
+      await waitFor(() => expect(searchInput).toHaveFocus());
+      const ruleName = await screen.findByText('上厕所');
+
+      const durationInput = getPauseDurationInput();
+      await user.click(durationInput);
       await user.clear(durationInput);
       await user.type(durationInput, '30');
+      expect(durationInput).toHaveValue(30);
 
-      // Then select a rule
-      await waitFor(() => {
-        const ruleButton = screen.getByText('上厕所').closest('button');
-        expect(ruleButton).toBeInTheDocument();
-      });
-
-      const ruleButton = screen.getByText('上厕所').closest('button');
+      const ruleButton = ruleName.closest('button');
+      expect(ruleButton).toBeInTheDocument();
       await user.click(ruleButton!);
 
       expect(mockOnRuleSelected).toHaveBeenCalledWith(
@@ -379,8 +379,7 @@ describe('RuleSelectionDialog', () => {
       );
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
-      const searchInput =
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      const searchInput = getSearchInput();
       await user.type(searchInput, '新规则');
 
       const createButton = screen.getByText('创建新规则: "新规则"');
@@ -398,8 +397,7 @@ describe('RuleSelectionDialog', () => {
       );
       renderWithI18n(<RuleSelectionDialog {...defaultProps} />);
 
-      const searchInput =
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      const searchInput = getSearchInput();
       await user.type(searchInput, '新规则');
 
       const createButton = screen.getByText('创建新规则: "新规则"');
@@ -443,7 +441,7 @@ describe('RuleSelectionDialog', () => {
         expect(screen.getByLabelText('关闭对话框')).toHaveFocus();
 
         await user.tab();
-        expect(screen.getByPlaceholderText('输入分钟')).toHaveFocus();
+        expect(getPauseDurationInput()).toHaveFocus();
 
         await user.tab();
         expect(
@@ -451,9 +449,7 @@ describe('RuleSelectionDialog', () => {
         ).toHaveFocus();
 
         await user.tab();
-        expect(
-          screen.getByPlaceholderText('搜索规则或输入新规则名称...'),
-        ).toHaveFocus();
+        expect(getSearchInput()).toHaveFocus();
       } finally {
         vi.useRealTimers();
       }
@@ -467,8 +463,7 @@ describe('RuleSelectionDialog', () => {
       );
 
       // Open dialog and add some search text
-      const searchInput =
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...');
+      const searchInput = getSearchInput();
       fireEvent.change(searchInput, { target: { value: 'test' } });
 
       // Close dialog
@@ -478,9 +473,7 @@ describe('RuleSelectionDialog', () => {
       rerender(<RuleSelectionDialog {...defaultProps} isOpen={true} />);
 
       // Search input should be cleared
-      expect(
-        screen.getByPlaceholderText('搜索规则或输入新规则名称...'),
-      ).toHaveValue('');
+      expect(getSearchInput()).toHaveValue('');
     });
   });
 });

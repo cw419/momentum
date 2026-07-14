@@ -1,12 +1,18 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 
 const REPORTS_DIR = 'reports/quality';
 const REPORT_PATH = join(REPORTS_DIR, 'test-lint-budget.json');
+const BASELINE_PATH = 'tools/quality/test-lint-baseline.json';
 
 const MAX_TEST_LINT_WARNINGS = Number(process.env.MAX_TEST_LINT_WARNINGS ?? 20);
 const MAX_TEST_LINT_ERRORS = Number(process.env.MAX_TEST_LINT_ERRORS ?? 0);
+const baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
+const MAX_CONDITIONAL_EXPECT_WARNINGS = Number(
+  process.env.MAX_CONDITIONAL_EXPECT_WARNINGS ??
+    baseline.conditionalExpectWarnings,
+);
 
 function resolveEslintCommand() {
   const localScript = resolve(
@@ -107,7 +113,16 @@ function main() {
   }
 
   const dedupedMessages = dedupeMessages(parsed);
-  const warningCount = dedupedMessages.filter((m) => m.severity === 1).length;
+  const conditionalExpectWarningCount = dedupedMessages.filter(
+    (message) =>
+      message.severity === 1 &&
+      message.ruleId === 'vitest/no-conditional-expect',
+  ).length;
+  const warningCount = dedupedMessages.filter(
+    (message) =>
+      message.severity === 1 &&
+      message.ruleId !== 'vitest/no-conditional-expect',
+  ).length;
   const errorCount = dedupedMessages.filter((m) => m.severity === 2).length;
 
   const warningsByRule = dedupedMessages
@@ -129,8 +144,10 @@ function main() {
       {
         generatedAt: new Date().toISOString(),
         maxWarnings: MAX_TEST_LINT_WARNINGS,
+        maxConditionalExpectWarnings: MAX_CONDITIONAL_EXPECT_WARNINGS,
         maxErrors: MAX_TEST_LINT_ERRORS,
         warnings: warningCount,
+        conditionalExpectWarnings: conditionalExpectWarningCount,
         errors: errorCount,
         filesScanned: parsed.length,
         uniqueMessages: dedupedMessages.length,
@@ -143,12 +160,13 @@ function main() {
   );
 
   console.log(
-    `[test-lint-budget] warnings: ${warningCount} (max ${MAX_TEST_LINT_WARNINGS}), errors: ${errorCount} (max ${MAX_TEST_LINT_ERRORS})`,
+    `[test-lint-budget] warnings: ${warningCount} (max ${MAX_TEST_LINT_WARNINGS}), conditional expects: ${conditionalExpectWarningCount} (max ${MAX_CONDITIONAL_EXPECT_WARNINGS}), errors: ${errorCount} (max ${MAX_TEST_LINT_ERRORS})`,
   );
   console.log(`[test-lint-budget] report: ${REPORT_PATH}`);
 
   if (
     warningCount > MAX_TEST_LINT_WARNINGS ||
+    conditionalExpectWarningCount > MAX_CONDITIONAL_EXPECT_WARNINGS ||
     errorCount > MAX_TEST_LINT_ERRORS
   ) {
     console.error('[test-lint-budget] FAILED');

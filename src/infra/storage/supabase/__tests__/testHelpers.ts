@@ -1,6 +1,6 @@
-import { vi } from 'vitest';
-import type { SupabaseStorageContext } from './types';
 import type { User } from '@supabase/supabase-js';
+import { vi } from 'vitest';
+import type { SupabaseStorageContext } from '../types';
 
 export const TEST_USER_ID = 'test-user-123';
 

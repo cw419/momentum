@@ -21,6 +21,7 @@ export function SearchBar({
       <input
         ref={searchInputRef}
         type="text"
+        aria-label={tr('搜索规则', 'Search rules')}
         placeholder={tr(
           '搜索规则或输入新规则名称...',
           'Search rules or type a new rule name...',

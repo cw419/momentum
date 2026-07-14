@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAllKeys, getRaw, remove, setRaw } from '../raw';
 
 describe('local-preferences/raw', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('gets/sets/removes raw values', () => {
@@ -17,50 +21,40 @@ describe('local-preferences/raw', () => {
   });
 
   it('collects all keys via localStorage key(index)', () => {
-    const storage = window.localStorage as unknown as {
-      key: (index: number) => string | null;
-      length: number;
-    };
-
-    storage.key = vi.fn((index: number) => ['k1', 'k2'][index] ?? null);
-    Object.defineProperty(storage, 'length', { configurable: true, value: 2 });
+    localStorage.setItem('k1', 'value-1');
+    localStorage.setItem('k2', 'value-2');
 
     expect(getAllKeys()).toEqual(['k1', 'k2']);
   });
 
   it('returns safe fallbacks when localStorage throws', () => {
+    localStorage.setItem('existing', 'value');
+    const storagePrototype = Object.getPrototypeOf(localStorage) as Storage;
     const getItemSpy = vi
-      .spyOn(window.localStorage, 'getItem')
+      .spyOn(storagePrototype, 'getItem')
       .mockImplementation(() => {
         throw new Error('blocked');
       });
     const setItemSpy = vi
-      .spyOn(window.localStorage, 'setItem')
+      .spyOn(storagePrototype, 'setItem')
       .mockImplementation(() => {
         throw new Error('blocked');
       });
     const removeItemSpy = vi
-      .spyOn(window.localStorage, 'removeItem')
+      .spyOn(storagePrototype, 'removeItem')
       .mockImplementation(() => {
         throw new Error('blocked');
       });
-
-    const storage = window.localStorage as unknown as {
-      key: (index: number) => string | null;
-      length: number;
-    };
-    storage.key = () => {
+    vi.spyOn(storagePrototype, 'key').mockImplementation(() => {
       throw new Error('blocked');
-    };
-    Object.defineProperty(storage, 'length', { configurable: true, value: 1 });
+    });
 
     expect(getRaw('x')).toBeNull();
     expect(() => setRaw('x', 'y')).not.toThrow();
     expect(() => remove('x')).not.toThrow();
     expect(getAllKeys()).toEqual([]);
-
-    getItemSpy.mockRestore();
-    setItemSpy.mockRestore();
-    removeItemSpy.mockRestore();
+    expect(getItemSpy).toHaveBeenCalled();
+    expect(setItemSpy).toHaveBeenCalled();
+    expect(removeItemSpy).toHaveBeenCalled();
   });
 });

@@ -8,6 +8,7 @@ import {
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { extractWorkflowRunBlocks } from '../test/utils/workflowRunBlocks';
 
 const REPO_ROOT = process.cwd();
 const PACKAGE_JSON_PATH = path.join(REPO_ROOT, 'package.json');
@@ -102,36 +103,6 @@ function readWorkflowSources(): Array<{ file: string; source: string }> {
       file,
       source: readFile(path.join(WORKFLOWS_DIR, file)),
     }));
-}
-
-function extractRunBlocks(workflow: string): string[] {
-  const lines = workflow.split(/\r?\n/);
-  const blocks: string[] = [];
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index] ?? '';
-    const runMatch = /^(\s*)(?:-\s+)?run:\s*(.*)$/.exec(line);
-    if (!runMatch) continue;
-
-    const indent = runMatch[1]?.length ?? 0;
-    const inlineCommand = runMatch[2] ?? '';
-    if (!/^[>|][+-]?$/.test(inlineCommand)) {
-      blocks.push(inlineCommand);
-      continue;
-    }
-
-    const blockLines: string[] = [];
-    while (index + 1 < lines.length) {
-      const nextLine = lines[index + 1] ?? '';
-      const nextIndent = nextLine.match(/^\s*/)?.[0].length ?? 0;
-      if (nextLine.trim() && nextIndent <= indent) break;
-      blockLines.push(nextLine);
-      index += 1;
-    }
-    blocks.push(blockLines.join('\n'));
-  }
-
-  return blocks;
 }
 
 function detectCompatibilityFacades(): string[] {
@@ -250,7 +221,7 @@ describe('repo governance', () => {
 
   it('keeps GitHub context expressions out of shell command bodies', () => {
     const unsafeRunBlocks = readWorkflowSources().flatMap(({ file, source }) =>
-      extractRunBlocks(source)
+      extractWorkflowRunBlocks(source)
         .filter((runBlock) => /\$\{\{\s*github\./.test(runBlock))
         .map((runBlock) => `${file}: ${runBlock.trim()}`),
     );
@@ -267,7 +238,7 @@ describe('repo governance', () => {
         '      echo "${{ github.ref_name }}"',
       ].join('\n');
 
-      expect(extractRunBlocks(workflow)).toEqual([
+      expect(extractWorkflowRunBlocks(workflow)).toEqual([
         '      echo "${{ github.ref_name }}"',
       ]);
     },

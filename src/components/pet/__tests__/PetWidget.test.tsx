@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import type { ComponentProps } from 'react';
@@ -257,9 +257,11 @@ describe('PetWidget', () => {
     renderWidget({ pet, hasPet: true });
 
     const expandBtn = screen.getByRole('button', { name: /Expand pet/i });
-    expandBtn.dispatchEvent(new Event('touchstart', { bubbles: true }));
-    // onTouchStart is a React synthetic event, verify the handler is wired
-    expect(expandBtn).toBeInTheDocument();
+    fireEvent.touchStart(expandBtn, {
+      touches: [{ clientX: 10, clientY: 20 }],
+    });
+
+    expect(handleTouchStart).toHaveBeenCalledTimes(1);
   });
 
   it('should bind onTouchStart on expanded pet drag handle', () => {
@@ -277,6 +279,10 @@ describe('PetWidget', () => {
     const dragHandle = screen.getByRole('button', {
       name: /Drag to move pet/i,
     });
-    expect(dragHandle).toBeInTheDocument();
+    fireEvent.touchStart(dragHandle, {
+      touches: [{ clientX: 10, clientY: 20 }],
+    });
+
+    expect(handleTouchStart).toHaveBeenCalledTimes(1);
   });
 });

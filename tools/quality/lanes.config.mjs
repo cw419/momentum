@@ -135,7 +135,14 @@ export const QUALITY_CHECKS = Object.freeze([
     id: 'mutation-hotspots',
     label: 'Mutation hotspots',
     script: 'quality:test:mutation-hotspots',
-    lanes: ['info', 'nightly'],
+    lanes: ['info'],
+    reports: ['reports/quality/test-mutation-hotspots.json'],
+  },
+  {
+    id: 'mutation-hotspots-required',
+    label: 'Mutation hotspots freshness gate',
+    script: 'quality:test:mutation-hotspots:required',
+    lanes: ['nightly'],
     reports: ['reports/quality/test-mutation-hotspots.json'],
   },
 ]);

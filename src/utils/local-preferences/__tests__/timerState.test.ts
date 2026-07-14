@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOCAL_STORAGE_KEYS } from '../keys';
 
 const loggerMock = vi.hoisted(() => ({
@@ -65,6 +65,10 @@ describe('local-preferences/timerState', () => {
     loggerMock.warn.mockReset();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('gets, sets and clears timer state by session id', () => {
     const sessionId = 'session-1';
     const payload = {
@@ -85,18 +89,19 @@ describe('local-preferences/timerState', () => {
   });
 
   it('returns safe fallbacks and logs warnings when storage operations throw', () => {
+    const storagePrototype = Object.getPrototypeOf(localStorage) as Storage;
     const getItemSpy = vi
-      .spyOn(window.localStorage, 'getItem')
+      .spyOn(storagePrototype, 'getItem')
       .mockImplementation(() => {
         throw new Error('blocked get');
       });
     const setItemSpy = vi
-      .spyOn(window.localStorage, 'setItem')
+      .spyOn(storagePrototype, 'setItem')
       .mockImplementation(() => {
         throw new Error('blocked set');
       });
     const removeItemSpy = vi
-      .spyOn(window.localStorage, 'removeItem')
+      .spyOn(storagePrototype, 'removeItem')
       .mockImplementation(() => {
         throw new Error('blocked remove');
       });
@@ -127,10 +132,9 @@ describe('local-preferences/timerState', () => {
       { sessionId: 'session-2' },
       expect.any(Error),
     ]);
-
-    getItemSpy.mockRestore();
-    setItemSpy.mockRestore();
-    removeItemSpy.mockRestore();
+    expect(getItemSpy).toHaveBeenCalled();
+    expect(setItemSpy).toHaveBeenCalled();
+    expect(removeItemSpy).toHaveBeenCalled();
   });
 
   it('collects timer keys via standard storage API and object fallback', () => {

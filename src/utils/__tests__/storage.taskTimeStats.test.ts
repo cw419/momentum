@@ -295,20 +295,20 @@ describe('Storage TaskTimeStats Functions', () => {
       const saveCall = mockLocalStorage.setItem.mock.calls.find(
         (call) => call[0] === 'momentum_completion_history',
       );
+      expect(saveCall).toBeDefined();
+      if (!saveCall) throw new Error('Expected migrated history to be saved');
 
-      if (saveCall) {
-        const savedData = JSON.parse(saveCall[1]);
-        expect(savedData[0]).toMatchObject({
-          chainId: 'chain-1',
-          actualDuration: 30,
-          isForwardTimed: true,
-        });
-        expect(savedData[1]).toMatchObject({
-          chainId: 'chain-2',
-          actualDuration: 15,
-          isForwardTimed: false,
-        });
-      }
+      const savedData = JSON.parse(saveCall[1]);
+      expect(savedData[0]).toMatchObject({
+        chainId: 'chain-1',
+        actualDuration: 30,
+        isForwardTimed: true,
+      });
+      expect(savedData[1]).toMatchObject({
+        chainId: 'chain-2',
+        actualDuration: 15,
+        isForwardTimed: false,
+      });
     });
 
     test('应该不修改已有用时数据的记录', () => {
