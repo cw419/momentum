@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
 import type {
   AppState,
@@ -39,6 +39,16 @@ function createStateContainer(initialState: AppState) {
     getState: () => state,
     setState,
   };
+}
+
+function createDeferred() {
+  let resolve!: () => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
 }
 
 function createNode(overrides: Partial<RSIPNode> = {}): RSIPNode {
@@ -104,7 +114,12 @@ describe('useRsipDomain', () => {
     rsipTaskIntegrationService.reset();
   });
 
-  it('optimistically updates rsipNodes before persistence resolves', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('commits rsipNodes only after persistence resolves', async () => {
     const stateRef = createStateContainer(createBaseState());
 
     let resolveSave!: () => void;
@@ -124,19 +139,24 @@ describe('useRsipDomain', () => {
 
     const pending = domain.saveNodes(nodes);
 
-    expect(stateRef.getState().rsipNodes).toEqual(nodes);
+    expect(stateRef.getState().rsipNodes).toEqual([]);
 
     resolveSave();
     await pending;
 
+    expect(stateRef.getState().rsipNodes).toBe(nodes);
     expect(storage.saveRSIPNodes).toHaveBeenCalledWith(nodes);
   });
 
-  it('does not throw when persistence fails', async () => {
-    const stateRef = createStateContainer(createBaseState());
+  it('rejects and rolls back nodes when persistence fails', async () => {
+    const originalNodes = [createNode({ id: 'existing-node' })];
+    const stateRef = createStateContainer(
+      createBaseState({ rsipNodes: originalNodes }),
+    );
+    const failure = new Error('persist failed');
 
     const storage = createLocalStorageMock({
-      saveRSIPNodes: vi.fn().mockRejectedValue(new Error('persist failed')),
+      saveRSIPNodes: vi.fn().mockRejectedValue(failure),
     });
 
     const domain = useRsipDomain({ setState: stateRef.setState, storage });
@@ -145,8 +165,8 @@ describe('useRsipDomain', () => {
       createNode({ id: 'rsip-1', title: 'Test', rule: 'Test rule' }),
     ];
 
-    await expect(domain.saveNodes(nodes)).resolves.toBeUndefined();
-    expect(stateRef.getState().rsipNodes).toEqual(nodes);
+    await expect(domain.saveNodes(nodes)).rejects.toBe(failure);
+    expect(stateRef.getState().rsipNodes).toBe(originalNodes);
     expect(logger.error).toHaveBeenCalledWith(
       'RSIP',
       'Failed to save RSIP nodes',
@@ -155,11 +175,111 @@ describe('useRsipDomain', () => {
     );
   });
 
-  it('should open RSIP view and optimistically persist meta', async () => {
-    const stateRef = createStateContainer(createBaseState());
+  it('does not let an older failed save roll back a newer same-reference commit', async () => {
+    const originalNodes = [createNode({ id: 'original-node' })];
+    const sharedNodes = [createNode({ id: 'shared-node' })];
+    const firstSave = createDeferred();
+    const stateRef = createStateContainer(
+      createBaseState({ rsipNodes: originalNodes }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi
+        .fn()
+        .mockReturnValueOnce(firstSave.promise)
+        .mockResolvedValueOnce(undefined),
+    });
+    const domain = useRsipDomain({ setState: stateRef.setState, storage });
+
+    const olderPending = domain.saveNodes(sharedNodes);
+    const latestPending = domain.saveNodes(sharedNodes);
+
+    await vi.waitFor(() => {
+      expect(storage.saveRSIPNodes).toHaveBeenCalledTimes(1);
+    });
+
+    const failure = new Error('older request failed');
+    const olderRejection = expect(olderPending).rejects.toBe(failure);
+    firstSave.reject(failure);
+    await olderRejection;
+    await latestPending;
+
+    expect(stateRef.getState().rsipNodes).toBe(sharedNodes);
+    expect(storage.saveRSIPNodes).toHaveBeenNthCalledWith(1, sharedNodes);
+    expect(storage.saveRSIPNodes).toHaveBeenNthCalledWith(2, sharedNodes);
+  });
+
+  it('keeps the original slice when two queued saves both reject', async () => {
+    const originalNodes = [createNode({ id: 'original-node' })];
+    const firstNodes = [createNode({ id: 'first-node' })];
+    const secondNodes = [createNode({ id: 'second-node' })];
+    const firstSave = createDeferred();
+    const secondSave = createDeferred();
+    void secondSave.promise.catch(() => undefined);
+    const stateRef = createStateContainer(
+      createBaseState({ rsipNodes: originalNodes }),
+    );
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi
+        .fn()
+        .mockReturnValueOnce(firstSave.promise)
+        .mockReturnValueOnce(secondSave.promise),
+    });
+    const domain = useRsipDomain({ setState: stateRef.setState, storage });
+
+    const firstPending = domain.saveNodes(firstNodes);
+    const secondPending = domain.saveNodes(secondNodes);
+    const firstFailure = new Error('first save failed');
+    const secondFailure = new Error('second save failed first');
+    const firstRejection = expect(firstPending).rejects.toBe(firstFailure);
+    const secondRejection = expect(secondPending).rejects.toBe(secondFailure);
+
+    secondSave.reject(secondFailure);
+    firstSave.reject(firstFailure);
+    await Promise.all([firstRejection, secondRejection]);
+
+    expect(storage.saveRSIPNodes).toHaveBeenNthCalledWith(1, firstNodes);
+    expect(storage.saveRSIPNodes).toHaveBeenNthCalledWith(2, secondNodes);
+    expect(stateRef.getState().rsipNodes).toBe(originalNodes);
+  });
+
+  it('keeps a committed first-node save when run initialization bookkeeping fails', async () => {
+    const originalMeta: RSIPMeta = { allowMultiplePerDay: false };
+    const stateRef = createStateContainer(
+      createBaseState({ rsipNodes: [], rsipMeta: originalMeta }),
+    );
+    const nodes = [createNode({ id: 'first-node' })];
+    const metaFailure = new Error('run initialization failed');
+    const storage = createLocalStorageMock({
+      saveRSIPNodes: vi.fn(async () => undefined),
+      saveRSIPMeta: vi.fn().mockRejectedValue(metaFailure),
+    });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+
+    await expect(domain.saveNodes(nodes)).resolves.toBeUndefined();
+
+    expect(stateRef.getState().rsipNodes).toBe(nodes);
+    expect(stateRef.getState().rsipMeta).toBe(originalMeta);
+    expect(logger.error).toHaveBeenCalledWith(
+      'RSIP',
+      'Failed to save RSIP meta',
+      { meta: expect.objectContaining({ currentRunNumber: 1 }) },
+      metaFailure,
+    );
+  });
+
+  it('opens RSIP and rolls meta back when persistence fails', async () => {
+    const originalMeta: RSIPMeta = { allowMultiplePerDay: true };
+    const stateRef = createStateContainer(
+      createBaseState({ rsipMeta: originalMeta }),
+    );
+    const failure = new Error('meta persist failed');
     const storage = createLocalStorageMock({
       saveRSIPMeta: vi.fn(async () => {
-        throw new Error('meta persist failed');
+        throw failure;
       }),
     });
     const onNavigateToRSIP = vi.fn();
@@ -173,8 +293,8 @@ describe('useRsipDomain', () => {
     expect(onNavigateToRSIP).toHaveBeenCalledTimes(1);
 
     const meta: RSIPMeta = { allowMultiplePerDay: false, treeOpenStreak: 2 };
-    await expect(domain.saveMeta(meta)).resolves.toBeUndefined();
-    expect(stateRef.getState().rsipMeta).toEqual(meta);
+    await expect(domain.saveMeta(meta)).rejects.toBe(failure);
+    expect(stateRef.getState().rsipMeta).toBe(originalMeta);
     expect(logger.error).toHaveBeenCalledWith(
       'RSIP',
       'Failed to save RSIP meta',
@@ -667,7 +787,7 @@ describe('useRsipDomain', () => {
     });
   });
 
-  it('optimistically saves groups, policy library, and run history while logging persistence failures', async () => {
+  it('rejects and rolls back groups, policy library, and run history on persistence failures', async () => {
     const groups = [createGroup({ id: 'group-save' })];
     const library = [createLibraryEntry({ id: 'library-save' })];
     const history = [
@@ -679,16 +799,36 @@ describe('useRsipDomain', () => {
         durationDays: 1,
       },
     ];
-    const stateRef = createStateContainer(createBaseState());
+    const originalGroups = [createGroup({ id: 'original-group' })];
+    const originalLibrary = [createLibraryEntry({ id: 'original-library' })];
+    const originalHistory = [
+      {
+        runNumber: 0,
+        startedAt: new Date('2026-01-01T00:00:00.000Z'),
+        endedAt: new Date('2026-01-02T00:00:00.000Z'),
+        maxNodeCount: 2,
+        durationDays: 1,
+      },
+    ];
+    const stateRef = createStateContainer(
+      createBaseState({
+        rsipGroups: originalGroups,
+        rsipPolicyLibrary: originalLibrary,
+        rsipRunHistory: originalHistory,
+      }),
+    );
+    const groupsFailure = new Error('groups failed');
+    const libraryFailure = new Error('library failed');
+    const historyFailure = new Error('history failed');
     const storage = createLocalStorageMock({
       saveRSIPGroups: vi.fn(async () => {
-        throw new Error('groups failed');
+        throw groupsFailure;
       }),
       saveRSIPPolicyLibrary: vi.fn(async () => {
-        throw new Error('library failed');
+        throw libraryFailure;
       }),
       saveRSIPRunHistory: vi.fn(async () => {
-        throw new Error('history failed');
+        throw historyFailure;
       }),
     });
     const domain = useRsipDomain({
@@ -697,13 +837,15 @@ describe('useRsipDomain', () => {
       getState: stateRef.getState,
     });
 
-    await domain.saveGroups(groups);
-    await domain.savePolicyLibrary(library);
-    await domain.saveRunHistory(history);
+    await expect(domain.saveGroups(groups)).rejects.toBe(groupsFailure);
+    await expect(domain.savePolicyLibrary(library)).rejects.toBe(
+      libraryFailure,
+    );
+    await expect(domain.saveRunHistory(history)).rejects.toBe(historyFailure);
 
-    expect(stateRef.getState().rsipGroups).toEqual(groups);
-    expect(stateRef.getState().rsipPolicyLibrary).toEqual(library);
-    expect(stateRef.getState().rsipRunHistory).toEqual(history);
+    expect(stateRef.getState().rsipGroups).toBe(originalGroups);
+    expect(stateRef.getState().rsipPolicyLibrary).toBe(originalLibrary);
+    expect(stateRef.getState().rsipRunHistory).toBe(originalHistory);
     expect(logger.error).toHaveBeenCalledWith(
       'RSIP',
       'Failed to save RSIP groups',
@@ -724,7 +866,7 @@ describe('useRsipDomain', () => {
     );
   });
 
-  it('normalizes task links before saving and logs persistence failures', async () => {
+  it('normalizes task links but rejects and rolls back on persistence failure', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-07T15:00:00.000Z'));
     const latestLink = createTaskLink({
@@ -739,10 +881,14 @@ describe('useRsipDomain', () => {
       rsipNodeId: 'node-1',
       updatedAt: new Date('invalid'),
     });
-    const stateRef = createStateContainer(createBaseState());
+    const originalLinks = [createTaskLink({ id: 'original-link' })];
+    const stateRef = createStateContainer(
+      createBaseState({ rsipTaskLinks: originalLinks }),
+    );
+    const failure = new Error('links failed');
     const storage = createLocalStorageMock({
       saveRSIPTaskLinks: vi.fn(async () => {
-        throw new Error('links failed');
+        throw failure;
       }),
     });
     const domain = useRsipDomain({
@@ -751,17 +897,18 @@ describe('useRsipDomain', () => {
       getState: stateRef.getState,
     });
 
-    await domain.saveTaskLinks([latestLink, staleDuplicate]);
+    const pendingSave = domain.saveTaskLinks([latestLink, staleDuplicate]);
 
-    expect(stateRef.getState().rsipTaskLinks).toHaveLength(1);
-    expect(stateRef.getState().rsipTaskLinks?.[0]).toMatchObject({
-      id: 'link-stale',
-      chainId: 'chain-1',
-      rsipNodeId: 'node-1',
-    });
-    expect(stateRef.getState().rsipTaskLinks?.[0]?.updatedAt).toEqual(
-      new Date('2026-03-07T15:00:00.000Z'),
-    );
+    await expect(pendingSave).rejects.toBe(failure);
+    expect(storage.saveRSIPTaskLinks).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: 'link-stale',
+        chainId: 'chain-1',
+        rsipNodeId: 'node-1',
+        updatedAt: new Date('2026-03-07T15:00:00.000Z'),
+      }),
+    ]);
+    expect(stateRef.getState().rsipTaskLinks).toBe(originalLinks);
     expect(logger.error).toHaveBeenCalledWith(
       'RSIP',
       'Failed to save RSIP task links',
@@ -1094,7 +1241,7 @@ describe('useRsipDomain', () => {
     });
   });
 
-  it('reinforces E2 executions, appends records beside existing state, and logs append failures', async () => {
+  it('keeps a committed execution when its post-commit audit record fails', async () => {
     const stateRef = createStateContainer(
       createBaseState({
         rsipExecutionRecords: [
@@ -1146,14 +1293,14 @@ describe('useRsipDomain', () => {
       maxReinforcementLevel: 2,
       totalExecutions: 22,
     });
-    expect(stateRef.getState().rsipExecutionRecords).toHaveLength(2);
-    expect(stateRef.getState().rsipExecutionRecords?.[1]).toMatchObject({
-      id: 'new-record-id',
-      nodeId: 'reinforced-e2',
-      status: 'executed',
-      notes: 'reinforced execution',
-      reasonCode: 'manual_execution',
+    expect(stateRef.getState().rsipNodes[0]).toMatchObject({
+      id: 'reinforced-e2',
+      reinforcementLevel: 2,
+      totalExecutions: 22,
     });
+    expect(stateRef.getState().rsipExecutionRecords).toEqual([
+      expect.objectContaining({ id: 'existing-record' }),
+    ]);
     expect(logger.error).toHaveBeenCalledWith(
       'RSIP',
       'Failed to append RSIP execution record',

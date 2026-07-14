@@ -18,7 +18,11 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
       <div className="mb-6">
         <RSIPModeSwitch
           mode={model.currentMode}
-          onModeChange={model.handleModeChange}
+          onModeChange={(mode) =>
+            fireAndForget(model.handleModeChange(mode), {
+              label: 'change-rsip-mode',
+            })
+          }
         />
       </div>
 
@@ -26,7 +30,11 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
         <RSIPDailyReminder
           hasOpenedToday={model.hasOpenedToday}
           treeOpenStreak={model.meta.treeOpenStreak ?? 0}
-          onRecordOpened={model.handleRecordTreeOpened}
+          onRecordOpened={() =>
+            fireAndForget(model.handleRecordTreeOpened(), {
+              label: 'record-rsip-tree-opened',
+            })
+          }
         />
       )}
 
@@ -57,7 +65,11 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
             label: 'create-rsip-group',
           })
         }
-        onAdd={model.handleAddSingle}
+        onAdd={() =>
+          fireAndForget(model.handleAddSingle(), {
+            label: 'add-rsip-node',
+          })
+        }
         language={model.language}
         tr={model.tr}
       />
@@ -72,7 +84,11 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
         splitTemplateKeys={model.splitTemplateKeys}
         onApplySplitTemplate={model.handleApplySplitTemplate}
         onAddSplitRow={model.handleAddSplitRow}
-        onSubmitSplit={model.handleSubmitSplit}
+        onSubmitSplit={() =>
+          fireAndForget(model.handleSubmitSplit(), {
+            label: 'submit-rsip-split',
+          })
+        }
         canAddToday={model.canAddToday}
         tr={model.tr}
       />

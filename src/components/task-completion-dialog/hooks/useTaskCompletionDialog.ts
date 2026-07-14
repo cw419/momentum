@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStorage } from '../../../storage/useStorage';
 import { logger } from '../../../utils/logger';
 import { toError } from '../../../utils/errorMessage';
@@ -15,7 +15,10 @@ export function useTaskCompletionDialog(params: {
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [isNotesVisible, setIsNotesVisible] = useState(false);
-  const [recentDescriptions, setRecentDescriptions] = useState<string[]>([]);
+  const [recentDescriptionsState, setRecentDescriptionsState] = useState<{
+    chainId: string;
+    descriptions: string[];
+  }>({ chainId: '', descriptions: [] });
   const [showQuickFill, setShowQuickFill] = useState(false);
 
   const descriptionInputRef = useRef<HTMLInputElement>(null);
@@ -38,14 +41,21 @@ export function useTaskCompletionDialog(params: {
             (a, b) =>
               new Date(b.completedAt).getTime() -
               new Date(a.completedAt).getTime(),
-          )
-          .slice(0, 5);
+          );
 
         const descriptions = chainHistory
           .map((h) => h.description!)
           .filter(Boolean);
-        const uniqueDescriptions = Array.from(new Set(descriptions));
-        if (isActive) setRecentDescriptions(uniqueDescriptions);
+        const uniqueDescriptions = Array.from(new Set(descriptions)).slice(
+          0,
+          5,
+        );
+        if (isActive) {
+          setRecentDescriptionsState({
+            chainId,
+            descriptions: uniqueDescriptions,
+          });
+        }
       } catch (error) {
         logger.error(
           'TASK_COMPLETION',
@@ -61,6 +71,14 @@ export function useTaskCompletionDialog(params: {
       isActive = false;
     };
   }, [isOpen, chainId, storage]);
+
+  const recentDescriptions = useMemo(
+    () =>
+      isOpen && recentDescriptionsState.chainId === chainId
+        ? recentDescriptionsState.descriptions
+        : [],
+    [chainId, isOpen, recentDescriptionsState],
+  );
 
   const sanitizeInput = useCallback((input: string): string => {
     return input

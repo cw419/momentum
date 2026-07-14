@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DeletedChain } from '../../../types';
 import { useStorage } from '../../../storage/useStorage';
 import { useI18n } from '../../../i18n';
@@ -13,8 +13,8 @@ import { formatDeletedTime } from './timeFormat';
 interface UseRecycleBinModalOptions {
   isOpen: boolean;
   onClose: () => void;
-  onRestore: (chainIds: string[]) => void;
-  onPermanentDelete: (chainIds: string[]) => void;
+  onRestore: (chainIds: string[]) => AsyncOrSyncVoid;
+  onPermanentDelete: (chainIds: string[]) => AsyncOrSyncVoid;
 }
 
 export function useRecycleBinModal({
@@ -30,14 +30,19 @@ export function useRecycleBinModal({
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] =
     useState<ConfirmDialogState | null>(null);
+  const loadRequestIdRef = useRef(0);
+  const operationInFlightRef = useRef(false);
 
   const loadDeletedChains = useCallback(async () => {
+    const requestId = ++loadRequestIdRef.current;
     setIsLoading(true);
     try {
       const chains = await storage.getDeletedChains();
+      if (requestId !== loadRequestIdRef.current) return;
       setDeletedChains(chains);
       setSelectedChains(new Set());
     } catch (error) {
+      if (requestId !== loadRequestIdRef.current) return;
       logger.error(
         'RECYCLE_BIN',
         '加载已删除链条失败',
@@ -51,13 +56,22 @@ export function useRecycleBinModal({
         ),
       );
     } finally {
-      setIsLoading(false);
+      if (requestId === loadRequestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [storage, tr]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      loadRequestIdRef.current += 1;
+      setIsLoading(false);
+      return;
+    }
     void loadDeletedChains();
+    return () => {
+      loadRequestIdRef.current += 1;
+    };
   }, [isOpen, loadDeletedChains]);
 
   const handleSelectChain = useCallback(
@@ -140,8 +154,9 @@ export function useRecycleBinModal({
   }, [selectedChains, deletedChains]);
 
   const handleConfirmAction = useCallback(async () => {
-    if (!showConfirmDialog) return;
+    if (!showConfirmDialog || operationInFlightRef.current) return;
 
+    operationInFlightRef.current = true;
     setIsLoading(true);
     try {
       const dialog = showConfirmDialog;
@@ -152,10 +167,8 @@ export function useRecycleBinModal({
 
       const operationResult = await performRecycleBinOperation({
         dialog,
-        onRestore: onRestore as (chainIds: string[]) => AsyncOrSyncVoid,
-        onPermanentDelete: onPermanentDelete as (
-          chainIds: string[],
-        ) => AsyncOrSyncVoid,
+        onRestore,
+        onPermanentDelete,
         language,
         tr,
       });
@@ -192,6 +205,7 @@ export function useRecycleBinModal({
             ),
       );
     } finally {
+      operationInFlightRef.current = false;
       setIsLoading(false);
       setShowConfirmDialog(null);
       setSelectedChains(new Set());

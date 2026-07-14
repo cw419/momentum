@@ -10,12 +10,27 @@ import { createRunOperations } from './rsip/runOperations';
 import { createTaskLinkOperations } from './rsip/taskLinkOperations';
 import type { SaveFns, UseRsipDomainParams } from './rsip/types';
 
+const sliceWriteQueuesBySetter = new WeakMap<
+  UseRsipDomainParams['setState'],
+  Map<keyof AppState, Promise<void>>
+>();
+
 function logPersistenceError(
   message: string,
   context: Record<string, unknown>,
   error: unknown,
 ) {
   logger.error('RSIP', message, context, toError(error));
+}
+
+async function ignoreLoggedPostCommitFailure(
+  operation: Promise<unknown>,
+): Promise<void> {
+  try {
+    await operation;
+  } catch {
+    return;
+  }
 }
 
 export function useRsipDomain({
@@ -25,9 +40,60 @@ export function useRsipDomain({
   onNavigateToRSIP,
 }: UseRsipDomainParams) {
   const readState = (): AppState | null => getState?.() ?? null;
+  let sliceWriteQueues = sliceWriteQueuesBySetter.get(setState);
+  if (!sliceWriteQueues) {
+    sliceWriteQueues = new Map();
+    sliceWriteQueuesBySetter.set(setState, sliceWriteQueues);
+  }
 
-  const setSlice = <K extends keyof AppState>(key: K, value: AppState[K]) => {
-    setState((prev) => ({ ...prev, [key]: value }));
+  const persistThenCommitSlice = async <K extends keyof AppState>(
+    key: K,
+    value: AppState[K],
+    persist: () => Promise<void>,
+  ) => {
+    const previousWrite = sliceWriteQueues.get(key) ?? Promise.resolve();
+    const currentWrite = previousWrite
+      .catch(() => undefined)
+      .then(async () => {
+        await persist();
+        setState((current) => ({ ...current, [key]: value }));
+      });
+    sliceWriteQueues.set(key, currentWrite);
+
+    try {
+      await currentWrite;
+    } finally {
+      if (sliceWriteQueues.get(key) === currentWrite) {
+        sliceWriteQueues.delete(key);
+      }
+    }
+  };
+
+  const persistThenAppendExecutionRecord = async (
+    record: Parameters<SaveFns['appendExecutionRecord']>[0],
+  ) => {
+    const key = 'rsipExecutionRecords';
+    const previousWrite = sliceWriteQueues.get(key) ?? Promise.resolve();
+    const currentWrite = previousWrite
+      .catch(() => undefined)
+      .then(async () => {
+        await storage.appendRSIPExecutionRecord(record);
+        setState((current) => {
+          return {
+            ...current,
+            rsipExecutionRecords: [...current.rsipExecutionRecords, record],
+          };
+        });
+      });
+    sliceWriteQueues.set(key, currentWrite);
+
+    try {
+      await currentWrite;
+    } finally {
+      if (sliceWriteQueues.get(key) === currentWrite) {
+        sliceWriteQueues.delete(key);
+      }
+    }
   };
 
   const openRSIP = () => {
@@ -37,67 +103,71 @@ export function useRsipDomain({
   const appendExecutionRecord: SaveFns['appendExecutionRecord'] = async (
     record,
   ) => {
-    setState((prev) => ({
-      ...prev,
-      rsipExecutionRecords: [...prev.rsipExecutionRecords, record],
-    }));
-
     try {
-      await storage.appendRSIPExecutionRecord(record);
+      await persistThenAppendExecutionRecord(record);
     } catch (error) {
       logPersistenceError(
         'Failed to append RSIP execution record',
         { nodeId: record.nodeId, status: record.status },
         error,
       );
+      throw error;
     }
   };
 
   const saveMeta: SaveFns['saveMeta'] = async (meta) => {
-    setSlice('rsipMeta', meta);
     try {
-      await storage.saveRSIPMeta(meta);
+      await persistThenCommitSlice('rsipMeta', meta, () =>
+        storage.saveRSIPMeta(meta),
+      );
     } catch (error) {
       logPersistenceError('Failed to save RSIP meta', { meta }, error);
+      throw error;
     }
   };
 
   const saveGroups: SaveFns['saveGroups'] = async (groups) => {
-    setSlice('rsipGroups', groups);
     try {
-      await storage.saveRSIPGroups(groups);
+      await persistThenCommitSlice('rsipGroups', groups, () =>
+        storage.saveRSIPGroups(groups),
+      );
     } catch (error) {
       logPersistenceError(
         'Failed to save RSIP groups',
         { count: groups.length },
         error,
       );
+      throw error;
     }
   };
 
   const savePolicyLibrary: SaveFns['savePolicyLibrary'] = async (entries) => {
-    setSlice('rsipPolicyLibrary', entries);
     try {
-      await storage.saveRSIPPolicyLibrary(entries);
+      await persistThenCommitSlice('rsipPolicyLibrary', entries, () =>
+        storage.saveRSIPPolicyLibrary(entries),
+      );
     } catch (error) {
       logPersistenceError(
         'Failed to save RSIP policy library',
         { count: entries.length },
         error,
       );
+      throw error;
     }
   };
 
   const saveRunHistory: SaveFns['saveRunHistory'] = async (records) => {
-    setSlice('rsipRunHistory', records);
     try {
-      await storage.saveRSIPRunHistory(records);
+      await persistThenCommitSlice('rsipRunHistory', records, () =>
+        storage.saveRSIPRunHistory(records),
+      );
     } catch (error) {
       logPersistenceError(
         'Failed to save RSIP run history',
         { count: records.length },
         error,
       );
+      throw error;
     }
   };
 
@@ -109,15 +179,17 @@ export function useRsipDomain({
       })),
     );
 
-    setSlice('rsipTaskLinks', normalized);
     try {
-      await storage.saveRSIPTaskLinks(normalized);
+      await persistThenCommitSlice('rsipTaskLinks', normalized, () =>
+        storage.saveRSIPTaskLinks(normalized),
+      );
     } catch (error) {
       logPersistenceError(
         'Failed to save RSIP task links',
         { count: normalized.length },
         error,
       );
+      throw error;
     }
   };
 
@@ -125,15 +197,17 @@ export function useRsipDomain({
     record,
     nextHistory,
   ) => {
-    setSlice('rsipRunHistory', nextHistory);
     try {
-      await storage.appendRSIPRunRecord(record);
+      await persistThenCommitSlice('rsipRunHistory', nextHistory, () =>
+        storage.appendRSIPRunRecord(record),
+      );
     } catch (error) {
       logPersistenceError(
         'Failed to append RSIP run history',
         { runNumber: record.runNumber },
         error,
       );
+      throw error;
     }
   };
 
@@ -141,58 +215,69 @@ export function useRsipDomain({
     entry,
     nextEntries,
   ) => {
-    setSlice('rsipPolicyLibrary', nextEntries);
     try {
-      await storage.upsertRSIPLibraryEntry(entry);
+      await persistThenCommitSlice('rsipPolicyLibrary', nextEntries, () =>
+        storage.upsertRSIPLibraryEntry(entry),
+      );
     } catch (error) {
       logPersistenceError(
         'Failed to upsert RSIP library entry',
         { entryId: entry.id },
         error,
       );
+      throw error;
     }
   };
 
   const upsertNode: SaveFns['upsertNode'] = async (node, nextNodes) => {
-    setSlice('rsipNodes', nextNodes);
     try {
-      await storage.upsertRSIPNode(node);
+      await persistThenCommitSlice('rsipNodes', nextNodes, () =>
+        storage.upsertRSIPNode(node),
+      );
     } catch (error) {
       logPersistenceError(
         'Failed to upsert RSIP node',
         { nodeId: node.id },
         error,
       );
+      throw error;
     }
   };
 
   const removeNodes: SaveFns['removeNodes'] = async (nodeIds, nextNodes) => {
-    setSlice('rsipNodes', nextNodes);
     try {
-      await storage.removeRSIPNodes(nodeIds);
+      await persistThenCommitSlice('rsipNodes', nextNodes, () =>
+        storage.removeRSIPNodes(nodeIds),
+      );
     } catch (error) {
       logPersistenceError('Failed to remove RSIP nodes', { nodeIds }, error);
+      throw error;
     }
   };
 
   const saveNodes: SaveFns['saveNodes'] = async (nodes) => {
-    const previousState = readState();
-    setSlice('rsipNodes', nodes);
+    const writeContext: { previousState: AppState | null } = {
+      previousState: null,
+    };
 
     try {
-      await storage.saveRSIPNodes(nodes);
+      await persistThenCommitSlice('rsipNodes', nodes, () => {
+        writeContext.previousState = readState();
+        return storage.saveRSIPNodes(nodes);
+      });
     } catch (error) {
       logPersistenceError(
         'Failed to save RSIP nodes',
         { nodeCount: nodes.length },
         error,
       );
+      throw error;
     }
 
-    const previousCount = previousState?.rsipNodes.length ?? 0;
-    const meta = previousState?.rsipMeta;
+    const previousCount = writeContext.previousState?.rsipNodes.length ?? 0;
+    const meta = writeContext.previousState?.rsipMeta;
     if (previousCount === 0 && nodes.length > 0 && meta) {
-      await runOperations.startNewRun(meta);
+      await ignoreLoggedPostCommitFailure(runOperations.startNewRun(meta));
     }
   };
 

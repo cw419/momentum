@@ -85,10 +85,10 @@ interface BuildRsipViewModelInputs {
   taskLinks: RSIPTaskLink[];
   chains: Chain[];
   onBack: () => void;
-  saveNodes: (nodes: RSIPNode[]) => void;
-  saveMeta: (meta: RSIPMeta) => void;
-  saveGroups: (groups: RSIPNodeGroup[]) => void;
-  saveTaskLinks: (links: RSIPTaskLink[]) => void;
+  saveNodes: (nodes: RSIPNode[]) => Promise<void>;
+  saveMeta: (meta: RSIPMeta) => Promise<void>;
+  saveGroups: (groups: RSIPNodeGroup[]) => Promise<void>;
+  saveTaskLinks: (links: RSIPTaskLink[]) => Promise<void>;
   markExecuted: (
     nodeId: string,
     nodes: RSIPNode[],

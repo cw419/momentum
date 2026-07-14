@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StorageProvider } from '../StorageContext';
 import { useStorageMode } from '../useStorageMode';
@@ -185,15 +185,11 @@ describe('StorageProvider', () => {
     );
 
     fireEvent.click(screen.getByTestId('switch-supabase'));
+    await act(async () => {
+      await vi.dynamicImportSettled();
+    });
 
-    await waitFor(
-      () => {
-        expect(screen.queryByTestId('storage-kind')?.textContent).toBe(
-          'supabase',
-        );
-      },
-      { timeout: 10000 },
-    );
+    expect(screen.getByTestId('storage-kind').textContent).toBe('supabase');
 
     expect(screen.getByTestId('storage-mode').textContent).toBe('supabase');
     expect(localPreferencesMock.setStorageMode).toHaveBeenCalledWith(

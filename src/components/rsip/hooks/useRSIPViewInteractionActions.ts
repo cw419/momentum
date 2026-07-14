@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RSIPNode, RSIPTaskLink } from '../../../types';
 import { logger } from '../../../utils/logger';
 import type { RSIPViewProps } from '../../RSIPView.types';
@@ -124,36 +124,66 @@ export function useRSIPViewInteractionActions({
   const [violationDialogNode, setViolationDialogNode] =
     useState<RSIPNode | null>(null);
   const [violationGroupMessage, setViolationGroupMessage] = useState<string>();
+  const executionPendingIdsRef = useRef(new Set<string>());
+  const executionQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const latestNodesRef = useRef(nodes);
+  const violationSaveInFlightRef = useRef(false);
+  const violationAttemptIdRef = useRef(0);
+
+  useEffect(() => {
+    latestNodesRef.current = nodes;
+  }, [nodes]);
 
   const handleMarkExecuted = useCallback(
-    async (nodeId: string, reinforce = false) => {
-      let updatedNodes: RSIPNode[];
-      if (onMarkExecuted) {
-        updatedNodes = await onMarkExecuted(nodeId, nodes, undefined, {
-          reinforce,
-        });
-      } else {
-        updatedNodes = markNodeExecutedFallback(nodes, nodeId);
-        onSaveNodes(updatedNodes);
+    (nodeId: string, reinforce = false) => {
+      if (executionPendingIdsRef.current.has(nodeId)) {
+        return Promise.resolve(latestNodesRef.current);
       }
+      executionPendingIdsRef.current.add(nodeId);
 
-      const linkedActions =
-        onGetTaskActions?.(nodeId) ??
-        getActiveExecutionTaskLinks(nodeId, taskLinks);
-      await runLinkedTaskActions({
-        linkedActions,
-        chains,
-        language,
-        onStartChain,
-        onScheduleChain,
-      });
+      const execution = executionQueueRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          const currentNodes = latestNodesRef.current;
+          let updatedNodes: RSIPNode[];
+          if (onMarkExecuted) {
+            updatedNodes = await onMarkExecuted(
+              nodeId,
+              currentNodes,
+              undefined,
+              { reinforce },
+            );
+          } else {
+            updatedNodes = markNodeExecutedFallback(currentNodes, nodeId);
+            await onSaveNodes(updatedNodes);
+          }
 
-      return updatedNodes;
+          latestNodesRef.current = updatedNodes;
+          const linkedActions =
+            onGetTaskActions?.(nodeId) ??
+            getActiveExecutionTaskLinks(nodeId, taskLinks);
+          await runLinkedTaskActions({
+            linkedActions,
+            chains,
+            language,
+            onStartChain,
+            onScheduleChain,
+          });
+
+          return updatedNodes;
+        })
+        .finally(() => {
+          executionPendingIdsRef.current.delete(nodeId);
+        });
+      executionQueueRef.current = execution.then(
+        () => undefined,
+        () => undefined,
+      );
+      return execution;
     },
     [
       chains,
       language,
-      nodes,
       onGetTaskActions,
       onMarkExecuted,
       onSaveNodes,
@@ -165,6 +195,7 @@ export function useRSIPViewInteractionActions({
 
   const openViolationDialog = useCallback(
     (node: RSIPNode) => {
+      violationAttemptIdRef.current += 1;
       setViolationDialogNode(node);
       const assessment = assessViolationGroup(node, groups);
       if (assessment.status === 'none') {
@@ -189,6 +220,7 @@ export function useRSIPViewInteractionActions({
   );
 
   const closeViolationDialog = useCallback(() => {
+    violationAttemptIdRef.current += 1;
     setViolationDialogNode(null);
     setViolationGroupMessage(undefined);
   }, []);
@@ -198,18 +230,31 @@ export function useRSIPViewInteractionActions({
       if (!violationDialogNode) {
         return;
       }
-
-      if (onMarkViolated) {
-        await onMarkViolated(violationDialogNode.id, nodes, undefined, {
-          reasonCode: payload.reasonCode,
-          repairHint: payload.repairHint,
-          collapseReason: payload.reasonCode,
-        });
-      } else {
-        onSaveNodes(markNodeViolatedFallback(nodes, violationDialogNode.id));
+      if (violationSaveInFlightRef.current) {
+        return;
       }
 
-      closeViolationDialog();
+      const attemptId = violationAttemptIdRef.current;
+      violationSaveInFlightRef.current = true;
+      try {
+        if (onMarkViolated) {
+          await onMarkViolated(violationDialogNode.id, nodes, undefined, {
+            reasonCode: payload.reasonCode,
+            repairHint: payload.repairHint,
+            collapseReason: payload.reasonCode,
+          });
+        } else {
+          await onSaveNodes(
+            markNodeViolatedFallback(nodes, violationDialogNode.id),
+          );
+        }
+
+        if (attemptId === violationAttemptIdRef.current) {
+          closeViolationDialog();
+        }
+      } finally {
+        violationSaveInFlightRef.current = false;
+      }
     },
     [
       closeViolationDialog,
@@ -232,7 +277,7 @@ export function useRSIPViewInteractionActions({
         return;
       }
 
-      onSaveNodes([
+      await onSaveNodes([
         ...nodes,
         createNodeFromLibraryEntry(
           entry,
@@ -251,7 +296,7 @@ export function useRSIPViewInteractionActions({
         await onUpsertTaskLinks(nextLinks);
         return;
       }
-      onSaveTaskLinks?.(nextLinks);
+      await onSaveTaskLinks?.(nextLinks);
     },
     [onSaveTaskLinks, onUpsertTaskLinks],
   );

@@ -205,7 +205,7 @@ describe('RealTimeSyncService', () => {
     expect(callback).toHaveBeenCalledTimes(2);
   });
 
-  it('restoreWithSync reports partial failures but returns fresh data', async () => {
+  it('restoreWithSync refreshes data but rejects a partial failure', async () => {
     const { service, loggerMock } = await loadService();
     const storage = createStorageMock({
       restoreChain: vi
@@ -215,12 +215,11 @@ describe('RealTimeSyncService', () => {
       getActiveChains: vi.fn().mockResolvedValue([{ id: 'chain-ok' }]),
     });
 
-    const result = await service.restoreWithSync(storage, [
-      'chain-ok',
-      'chain-bad',
-    ]);
-    expect(result).toEqual([{ id: 'chain-ok' }]);
+    await expect(
+      service.restoreWithSync(storage, ['chain-ok', 'chain-bad']),
+    ).rejects.toThrow('Partial restore failure: restore failed');
     expect(storage.restoreChain).toHaveBeenCalledTimes(2);
+    expect(storage.getActiveChains).toHaveBeenCalledTimes(1);
     expect(loggerMock.warn).toHaveBeenCalled();
   });
 

@@ -6,12 +6,13 @@
 import React from 'react';
 import { RecycleBinModalView } from './RecycleBinModalView';
 import { useRecycleBinModal } from './useRecycleBinModal';
+import type { AsyncOrSyncVoid } from './recycle-bin-modal/types';
 
 interface RecycleBinModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRestore: (chainIds: string[]) => void;
-  onPermanentDelete: (chainIds: string[]) => void;
+  onRestore: (chainIds: string[]) => AsyncOrSyncVoid;
+  onPermanentDelete: (chainIds: string[]) => AsyncOrSyncVoid;
 }
 
 export const RecycleBinModalContainer: React.FC<RecycleBinModalProps> =

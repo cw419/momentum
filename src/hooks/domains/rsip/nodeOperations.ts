@@ -31,6 +31,16 @@ interface CreateNodeOperationsParams {
   ) => Promise<RSIPMeta>;
 }
 
+async function ignoreLoggedPostCommitFailure(
+  operation: Promise<unknown>,
+): Promise<void> {
+  try {
+    await operation;
+  } catch {
+    return;
+  }
+}
+
 export function createNodeOperations({
   readState,
   saveFns,
@@ -124,8 +134,10 @@ export function createNodeOperations({
     if (updatedNode) {
       await saveFns.upsertNode(updatedNode, updatedNodes);
     }
-    await saveFns.appendExecutionRecord(
-      buildExecutionRecord(nodeId, 'executed', notes, options),
+    await ignoreLoggedPostCommitFailure(
+      saveFns.appendExecutionRecord(
+        buildExecutionRecord(nodeId, 'executed', notes, options),
+      ),
     );
     return updatedNodes;
   };
@@ -164,8 +176,10 @@ export function createNodeOperations({
       if (updatedNode) {
         await saveFns.upsertNode(updatedNode, updatedNodes);
       }
-      await saveFns.appendExecutionRecord(
-        buildExecutionRecord(nodeId, 'violated', notes, options),
+      await ignoreLoggedPostCommitFailure(
+        saveFns.appendExecutionRecord(
+          buildExecutionRecord(nodeId, 'violated', notes, options),
+        ),
       );
       return updatedNodes;
     }
@@ -211,8 +225,10 @@ export function createNodeOperations({
     }
 
     await saveFns.removeNodes(removedNodeIds, updatedNodes);
-    await saveFns.appendExecutionRecord(
-      buildExecutionRecord(nodeId, 'violated', notes, options),
+    await ignoreLoggedPostCommitFailure(
+      saveFns.appendExecutionRecord(
+        buildExecutionRecord(nodeId, 'violated', notes, options),
+      ),
     );
 
     const collapsedRootNode = targetNode.parentId == null;
@@ -220,11 +236,13 @@ export function createNodeOperations({
       triggeredGroupCollapse || collapsedRootNode || updatedNodes.length === 0;
 
     if (shouldRecordCollapse) {
-      await recordCollapse(
-        state?.rsipMeta ?? {},
-        options?.collapseReason ?? options?.reasonCode ?? notes,
-        targetNode.title,
-        nodes.length,
+      await ignoreLoggedPostCommitFailure(
+        recordCollapse(
+          state?.rsipMeta ?? {},
+          options?.collapseReason ?? options?.reasonCode ?? notes,
+          targetNode.title,
+          nodes.length,
+        ),
       );
     }
 

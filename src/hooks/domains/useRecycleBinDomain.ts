@@ -130,9 +130,13 @@ export function useRecycleBinDomain({
         chainsRevision: prev.chainsRevision + 1,
       }));
     } catch (error) {
-      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
-
       const rawMessage = error instanceof Error ? error.message : '';
+      logger.error(
+        'RECYCLE_BIN',
+        'Restore failed',
+        { chainIds },
+        normalizeUnknownError(error),
+      );
       if (
         rawMessage.includes('Partial restore failure') ||
         rawMessage.includes('failed to restore')
@@ -144,38 +148,17 @@ export function useRecycleBinDomain({
             chains: currentChains,
             chainsRevision: prev.chainsRevision + 1,
           }));
-
-          toast.warning(
-            tr(
-              '部分链条恢复可能失败，请检查回收箱确认结果。',
-              'Some chains may have failed to restore. Please check the recycle bin.',
-            ),
-          );
-        } catch {
-          toast.warning(
-            tr(
-              '恢复操作遇到问题，请刷新页面查看最新状态。',
-              'Restore encountered an issue. Refresh to see the latest status.',
-            ),
+        } catch (recoveryError) {
+          logger.error(
+            'RECYCLE_BIN',
+            'Failed to reload chains after restore failure',
+            { chainIds },
+            normalizeUnknownError(recoveryError),
           );
         }
-        return;
+        throw error;
       }
-
-      logger.error(
-        'RECYCLE_BIN',
-        'Restore failed',
-        { chainIds },
-        normalizeUnknownError(error),
-      );
-      toast.error(
-        safeDetail
-          ? tr(`恢复失败: ${safeDetail}`, `Restore failed: ${safeDetail}`)
-          : tr(
-              '恢复失败，请重试（详情见控制台）',
-              'Restore failed. Check the console for details, then try again.',
-            ),
-      );
+      throw error;
     }
   };
 
@@ -192,24 +175,13 @@ export function useRecycleBinDomain({
         chainsRevision: prev.chainsRevision + 1,
       }));
     } catch (error) {
-      const safeDetail = getSafeErrorDetailFromUnknown(error, language);
       logger.error(
         'RECYCLE_BIN',
         'Permanent delete failed',
         { chainIds },
         normalizeUnknownError(error),
       );
-      toast.error(
-        safeDetail
-          ? tr(
-              `永久删除失败: ${safeDetail}`,
-              `Permanent delete failed: ${safeDetail}`,
-            )
-          : tr(
-              '永久删除失败，请重试（详情见控制台）',
-              'Permanent delete failed. Check the console for details, then try again.',
-            ),
-      );
+      throw error;
     }
   };
 

@@ -69,6 +69,9 @@ export async function restoreChainsWithSync(
       total: chainIds.length,
       failures: failed,
     });
+    throw new Error(
+      `Partial restore failure: ${failed.map((item) => item.error).join('; ')}`,
+    );
   }
   return freshChains;
 }

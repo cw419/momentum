@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RSIPNode, RSIPTreeNode } from '../../../types';
+import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
+import { logger } from '../../../utils/logger';
 
 interface UseRSIPReparentParams {
   nodes: RSIPNode[];
   tree: RSIPTreeNode[];
   nodesById: Map<string, RSIPNode>;
-  onSaveNodes: (nodes: RSIPNode[]) => void;
+  onSaveNodes: (nodes: RSIPNode[]) => void | Promise<void>;
   tr: (zh: string, en: string) => string;
 }
 
@@ -40,6 +42,8 @@ export function useRSIPReparent({
   const [hoveredChainIds, setHoveredChainIds] = useState<Set<string>>(
     new Set(),
   );
+  const saveAttemptIdRef = useRef(0);
+  const saveInFlightRef = useRef(false);
 
   const reparentingTitle = useMemo(() => {
     if (!reparentingId) return null;
@@ -57,6 +61,7 @@ export function useRSIPReparent({
   const handleHoverEnd = useCallback(() => setHoveredId(null), []);
 
   const toggleReparenting = useCallback((nodeId: string) => {
+    saveAttemptIdRef.current += 1;
     setPinnedId(nodeId);
     setRelationError(null);
     setReparentingId((prev) => (prev === nodeId ? null : nodeId));
@@ -112,6 +117,28 @@ export function useRSIPReparent({
 
   const commitReparent = useCallback(
     (childId: string, parentId?: string) => {
+      const pendingSaveError = tr(
+        '上一次父子关系保存仍在进行，请稍后重试。',
+        'A previous reparent save is still in progress. Try again when it finishes.',
+      );
+      if (!nodesById.has(childId)) {
+        setRelationError(
+          tr(
+            '要移动的节点已不存在，请刷新后重试。',
+            'The node to move no longer exists. Refresh and try again.',
+          ),
+        );
+        return;
+      }
+      if (parentId && !nodesById.has(parentId)) {
+        setRelationError(
+          tr(
+            '所选父节点已不存在，请重新选择。',
+            'The selected parent no longer exists. Choose another parent.',
+          ),
+        );
+        return;
+      }
       if (childId === parentId) {
         setRelationError(
           tr(
@@ -133,19 +160,71 @@ export function useRSIPReparent({
           return;
         }
       }
+      if (saveInFlightRef.current) {
+        setRelationError(pendingSaveError);
+        return;
+      }
 
       const updated = nodes.map((n) =>
         n.id === childId ? { ...n, parentId: parentId || undefined } : n,
       );
-      onSaveNodes(updated);
-      setPinnedId(childId);
-      setReparentingId(null);
-      setRelationError(null);
+      const saveAttemptId = ++saveAttemptIdRef.current;
+      const finishPendingSave = () => {
+        saveInFlightRef.current = false;
+        if (saveAttemptId !== saveAttemptIdRef.current) {
+          setRelationError((current) =>
+            current === pendingSaveError ? null : current,
+          );
+        }
+      };
+      const handleSaved = () => {
+        if (saveAttemptId !== saveAttemptIdRef.current) return;
+        setPinnedId(childId);
+        setReparentingId(null);
+        setRelationError(null);
+      };
+      const handleSaveError = (error: unknown) => {
+        logger.error(
+          'RSIP',
+          'Failed to reparent RSIP node',
+          { childId, parentId },
+          normalizeUnknownError(error),
+        );
+        if (saveAttemptId !== saveAttemptIdRef.current) return;
+        setRelationError(
+          tr(
+            '保存父子关系失败，请重试。',
+            'Could not save the new parent. Try again.',
+          ),
+        );
+      };
+
+      try {
+        const saveResult = onSaveNodes(updated);
+        if (saveResult) {
+          saveInFlightRef.current = true;
+          void saveResult.then(
+            () => {
+              finishPendingSave();
+              handleSaved();
+            },
+            (error: unknown) => {
+              finishPendingSave();
+              handleSaveError(error);
+            },
+          );
+          return;
+        }
+        handleSaved();
+      } catch (error) {
+        handleSaveError(error);
+      }
     },
-    [getDescendantsFromTree, nodes, onSaveNodes, tr],
+    [getDescendantsFromTree, nodes, nodesById, onSaveNodes, tr],
   );
 
   const cancelReparent = useCallback(() => {
+    saveAttemptIdRef.current += 1;
     setReparentingId(null);
     setRelationError(null);
   }, []);

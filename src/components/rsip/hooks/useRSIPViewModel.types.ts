@@ -55,13 +55,13 @@ export interface RSIPViewStateSlice {
 }
 
 export interface RSIPViewActionSlice {
-  handleModeChange: (mode: RSIPMode) => void;
-  handleRecordTreeOpened: () => void;
+  handleModeChange: (mode: RSIPMode) => Promise<void>;
+  handleRecordTreeOpened: () => Promise<void>;
   handleCreateGroup: () => Promise<void>;
-  handleAddSingle: () => void;
+  handleAddSingle: () => Promise<void>;
   handleApplySplitTemplate: (templateKey: string) => void;
   handleAddSplitRow: () => void;
-  handleSubmitSplit: () => void;
+  handleSubmitSplit: () => Promise<void>;
   handleMarkExecuted: (
     nodeId: string,
     reinforce?: boolean,

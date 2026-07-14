@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import type { RSIPNode, RSIPNodeGroup } from '../../../types';
+import { useCallback, useEffect, useRef } from 'react';
+import type { RSIPMeta, RSIPNode, RSIPNodeGroup } from '../../../types';
 import type { RSIPViewProps } from '../../RSIPView.types';
 import type {
   RSIPViewActionSlice,
@@ -52,33 +52,71 @@ export function useRSIPViewCreationActions({
     tr,
   } = state;
   const { onSaveMeta, onSaveNodes, onSaveGroups, onCreateGroup } = props;
+  const nodeCreationInFlightRef = useRef(false);
+  const groupCreationInFlightRef = useRef(false);
+  const metaSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const latestMetaRef = useRef(meta);
+  useEffect(() => {
+    latestMetaRef.current = meta;
+  }, [meta]);
+
+  const enqueueMetaUpdate = useCallback(
+    (update: (current: RSIPMeta) => RSIPMeta) => {
+      const queuedSave = metaSaveQueueRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          const previousMeta = latestMetaRef.current;
+          const nextMeta = update(previousMeta);
+          latestMetaRef.current = nextMeta;
+          try {
+            await onSaveMeta(nextMeta);
+          } catch (error) {
+            if (latestMetaRef.current === nextMeta) {
+              latestMetaRef.current = previousMeta;
+            }
+            throw error;
+          }
+        });
+      metaSaveQueueRef.current = queuedSave;
+      return queuedSave;
+    },
+    [onSaveMeta],
+  );
 
   const handleModeChange = useCallback(
     (mode: 'free' | 'strict') => {
-      onSaveMeta({ ...meta, allowMultiplePerDay: mode === 'free' });
+      return enqueueMetaUpdate((current) => ({
+        ...current,
+        allowMultiplePerDay: mode === 'free',
+      }));
     },
-    [meta, onSaveMeta],
+    [enqueueMetaUpdate],
   );
 
   const handleRecordTreeOpened = useCallback(() => {
     const now = new Date();
     const today = now.toDateString();
-    const lastOpened = meta.lastTreeOpenedAt
-      ? new Date(meta.lastTreeOpenedAt).toDateString()
-      : null;
+    return enqueueMetaUpdate((current) => {
+      const lastOpened = current.lastTreeOpenedAt
+        ? new Date(current.lastTreeOpenedAt).toDateString()
+        : null;
 
-    let treeOpenStreak = meta.treeOpenStreak ?? 0;
-    if (lastOpened !== today) {
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      treeOpenStreak =
-        lastOpened === yesterday.toDateString() ? treeOpenStreak + 1 : 1;
-    }
+      let treeOpenStreak = current.treeOpenStreak ?? 0;
+      if (lastOpened !== today) {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        treeOpenStreak =
+          lastOpened === yesterday.toDateString() ? treeOpenStreak + 1 : 1;
+      }
 
-    onSaveMeta({ ...meta, lastTreeOpenedAt: now, treeOpenStreak });
-  }, [meta, onSaveMeta]);
+      return { ...current, lastTreeOpenedAt: now, treeOpenStreak };
+    });
+  }, [enqueueMetaUpdate]);
 
   const handleCreateGroup = useCallback(async () => {
+    if (groupCreationInFlightRef.current) {
+      return;
+    }
     const titleInput = window.prompt(
       tr('请输入国策组名称', 'Enter policy group name'),
     );
@@ -90,20 +128,30 @@ export function useRSIPViewCreationActions({
       tr('请输入容错值（整数）', 'Enter fault tolerance (integer)'),
       '1',
     );
-    const faultTolerance = Number(toleranceInput ?? '1');
+    const parsedFaultTolerance = Number(toleranceInput ?? '1');
+    const faultTolerance = Number.isFinite(parsedFaultTolerance)
+      ? Math.max(0, Math.floor(parsedFaultTolerance))
+      : 1;
     const emoji =
-      window.prompt(
-        tr('可选：输入国策组 Emoji', 'Optional: input group emoji'),
-        '🧱',
-      ) ?? undefined;
+      window
+        .prompt(
+          tr('可选：输入国策组 Emoji', 'Optional: input group emoji'),
+          '🧱',
+        )
+        ?.trim() || undefined;
 
     if (onCreateGroup) {
-      const group = await onCreateGroup(
-        titleInput.trim(),
-        faultTolerance,
-        emoji,
-      );
-      setSelectedGroupId(group.id);
+      groupCreationInFlightRef.current = true;
+      try {
+        const group = await onCreateGroup(
+          titleInput.trim(),
+          faultTolerance,
+          emoji,
+        );
+        setSelectedGroupId(group.id);
+      } finally {
+        groupCreationInFlightRef.current = false;
+      }
       return;
     }
 
@@ -114,16 +162,26 @@ export function useRSIPViewCreationActions({
     const nextGroup: RSIPNodeGroup = {
       id: crypto.randomUUID(),
       title: titleInput.trim(),
-      faultTolerance: Math.max(0, Math.floor(faultTolerance)),
+      faultTolerance,
       emoji,
       createdAt: new Date(),
     };
-    onSaveGroups([...groups, nextGroup]);
-    setSelectedGroupId(nextGroup.id);
+    groupCreationInFlightRef.current = true;
+    try {
+      await onSaveGroups([...groups, nextGroup]);
+      setSelectedGroupId(nextGroup.id);
+    } finally {
+      groupCreationInFlightRef.current = false;
+    }
   }, [groups, onCreateGroup, onSaveGroups, setSelectedGroupId, tr]);
 
-  const handleAddSingle = useCallback(() => {
-    if (!canAddToday || !title.trim() || !rule.trim()) {
+  const handleAddSingle = useCallback(async () => {
+    if (
+      !canAddToday ||
+      !title.trim() ||
+      !rule.trim() ||
+      nodeCreationInFlightRef.current
+    ) {
       return;
     }
 
@@ -141,10 +199,18 @@ export function useRSIPViewCreationActions({
       emoji: createEmoji,
       isPassive: createIsPassive,
     };
-    onSaveNodes([...nodes, newNode]);
-    onSaveMeta({ ...meta, lastAddedAt: new Date() });
-    setTitle('');
-    setRule('');
+    nodeCreationInFlightRef.current = true;
+    try {
+      await onSaveNodes([...nodes, newNode]);
+      setTitle('');
+      setRule('');
+      await enqueueMetaUpdate((current) => ({
+        ...current,
+        lastAddedAt: new Date(),
+      }));
+    } finally {
+      nodeCreationInFlightRef.current = false;
+    }
   }, [
     canAddToday,
     createEmoji,
@@ -152,9 +218,8 @@ export function useRSIPViewCreationActions({
     createTimerMinutes,
     createType,
     createUseTimer,
-    meta,
+    enqueueMetaUpdate,
     nodes,
-    onSaveMeta,
     onSaveNodes,
     rule,
     selectedGroupId,
@@ -189,8 +254,8 @@ export function useRSIPViewCreationActions({
     ]);
   }, [setSplitItems]);
 
-  const handleSubmitSplit = useCallback(() => {
-    if (!canAddToday) {
+  const handleSubmitSplit = useCallback(async () => {
+    if (!canAddToday || nodeCreationInFlightRef.current) {
       return;
     }
 
@@ -217,17 +282,24 @@ export function useRSIPViewCreationActions({
       splitFromGoal: splitGoal.trim() || undefined,
     }));
 
-    onSaveNodes([...nodes, ...newNodes]);
-    onSaveMeta({ ...meta, lastAddedAt: new Date() });
-    setSplitItems([]);
-    setSplitGoal('');
+    nodeCreationInFlightRef.current = true;
+    try {
+      await onSaveNodes([...nodes, ...newNodes]);
+      setSplitItems([]);
+      setSplitGoal('');
+      await enqueueMetaUpdate((current) => ({
+        ...current,
+        lastAddedAt: new Date(),
+      }));
+    } finally {
+      nodeCreationInFlightRef.current = false;
+    }
   }, [
     canAddToday,
     createEmoji,
     createType,
-    meta,
+    enqueueMetaUpdate,
     nodes,
-    onSaveMeta,
     onSaveNodes,
     selectedGroupId,
     selectedParentId,

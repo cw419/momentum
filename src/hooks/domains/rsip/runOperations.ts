@@ -8,6 +8,16 @@ interface CreateRunOperationsParams {
   saveFns: Pick<SaveFns, 'appendRunRecord' | 'saveMeta'>;
 }
 
+async function ignoreLoggedPostCommitFailure(
+  operation: Promise<unknown>,
+): Promise<void> {
+  try {
+    await operation;
+  } catch {
+    return;
+  }
+}
+
 export function createRunOperations({
   readState,
   saveFns,
@@ -44,10 +54,10 @@ export function createRunOperations({
       currentRunStartedAt: now,
     };
 
-    await Promise.all([
+    await saveFns.saveMeta(nextMeta);
+    await ignoreLoggedPostCommitFailure(
       saveFns.appendRunRecord(record, nextHistory),
-      saveFns.saveMeta(nextMeta),
-    ]);
+    );
     return nextMeta;
   };
 

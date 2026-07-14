@@ -7,6 +7,16 @@ interface CreateLibraryOperationsParams {
   saveFns: Pick<SaveFns, 'saveNodes' | 'upsertLibraryEntry'>;
 }
 
+async function ignoreLoggedPostCommitFailure(
+  operation: Promise<unknown>,
+): Promise<void> {
+  try {
+    await operation;
+  } catch {
+    return;
+  }
+}
+
 export function createLibraryOperations({
   readState,
   saveFns,
@@ -118,7 +128,9 @@ export function createLibraryOperations({
     const updatedLibrary = state.rsipPolicyLibrary.map((item) =>
       item.id === entryId ? updatedEntry : item,
     );
-    await saveFns.upsertLibraryEntry(updatedEntry, updatedLibrary);
+    await ignoreLoggedPostCommitFailure(
+      saveFns.upsertLibraryEntry(updatedEntry, updatedLibrary),
+    );
 
     return node;
   };

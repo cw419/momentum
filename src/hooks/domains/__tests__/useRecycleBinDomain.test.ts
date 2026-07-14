@@ -336,7 +336,7 @@ describe('useRecycleBinDomain', () => {
     );
   });
 
-  it('should handle partial restore failure with warning and refresh', async () => {
+  it('should log, refresh, and propagate a partial restore failure', async () => {
     const chain = createUnitChain({ id: 'chain-restore' });
     const fallback = [createUnitChain({ id: 'fresh-chain' })];
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
@@ -356,22 +356,24 @@ describe('useRecycleBinDomain', () => {
     );
 
     await act(async () => {
-      await result.current.handleRestoreChains([chain.id]);
+      await expect(
+        result.current.handleRestoreChains([chain.id]),
+      ).rejects.toThrow('Partial restore failure');
     });
 
     expect(storage.getActiveChains).toHaveBeenCalledTimes(1);
     expect(stateRef.getState().chains).toEqual(fallback);
     expect(stateRef.getState().chainsRevision).toBe(1);
-    expect(toast.warning).toHaveBeenCalledWith(
-      'Some chains may have failed to restore. Please check the recycle bin.',
+    expect(logger.error).toHaveBeenCalledWith(
+      'RECYCLE_BIN',
+      'Restore failed',
+      { chainIds: [chain.id] },
+      expect.any(Error),
     );
-    expect(trMock).toHaveBeenCalledWith(
-      expect.stringMatching(/.+/),
-      'Some chains may have failed to restore. Please check the recycle bin.',
-    );
+    expect(toast.warning).not.toHaveBeenCalled();
   });
 
-  it('should show restore error for non-partial failures', async () => {
+  it('should log and propagate a non-partial restore failure', async () => {
     const chain = createUnitChain({ id: 'chain-restore-generic-error' });
     const stateRef = createStateContainer(createAppState({ chains: [chain] }));
     vi.mocked(realTimeSyncService.restoreWithSync).mockRejectedValue(
@@ -388,7 +390,9 @@ describe('useRecycleBinDomain', () => {
     );
 
     await act(async () => {
-      await result.current.handleRestoreChains([chain.id]);
+      await expect(
+        result.current.handleRestoreChains([chain.id]),
+      ).rejects.toThrow('restore request exploded');
     });
 
     expect(logger.error).toHaveBeenCalledWith(
@@ -397,13 +401,7 @@ describe('useRecycleBinDomain', () => {
       { chainIds: [chain.id] },
       expect.any(Error),
     );
-    expect(toast.error).toHaveBeenCalledWith(
-      'Restore failed. Check the console for details, then try again.',
-    );
-    expect(trMock).toHaveBeenCalledWith(
-      expect.stringMatching(/.+/),
-      'Restore failed. Check the console for details, then try again.',
-    );
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('should complete restore successfully', async () => {
@@ -428,7 +426,7 @@ describe('useRecycleBinDomain', () => {
     expect(stateRef.getState().chainsRevision).toBe(1);
   });
 
-  it('should show permanent delete error when sync service fails', async () => {
+  it('should log and propagate a permanent delete failure', async () => {
     const chain = createUnitChain({ id: 'chain-permanent' });
     vi.mocked(realTimeSyncService.permanentDeleteWithSync).mockRejectedValue(
       new Error('hard delete failed'),
@@ -446,22 +444,18 @@ describe('useRecycleBinDomain', () => {
     );
 
     await act(async () => {
-      await result.current.handlePermanentDeleteChains([chain.id]);
+      await expect(
+        result.current.handlePermanentDeleteChains([chain.id]),
+      ).rejects.toThrow('hard delete failed');
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      'Permanent delete failed: permission denied',
-    );
     expect(logger.error).toHaveBeenCalledWith(
       'RECYCLE_BIN',
       'Permanent delete failed',
       { chainIds: [chain.id] },
       expect.any(Error),
     );
-    expect(trMock).toHaveBeenCalledWith(
-      expect.stringContaining('permission denied'),
-      'Permanent delete failed: permission denied',
-    );
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('should complete permanent delete successfully', async () => {

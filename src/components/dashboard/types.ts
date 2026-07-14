@@ -44,8 +44,8 @@ export interface DashboardProps {
     chains: Chain[],
     options?: DashboardImportOptions,
   ) => Promise<void>;
-  onRestoreChains?: (chainIds: string[]) => void;
-  onPermanentDeleteChains?: (chainIds: string[]) => void;
+  onRestoreChains?: (chainIds: string[]) => void | Promise<void>;
+  onPermanentDeleteChains?: (chainIds: string[]) => void | Promise<void>;
   history?: CompletionHistory[];
   rsipNodes?: RSIPNode[];
   rsipMeta?: RSIPMeta;
