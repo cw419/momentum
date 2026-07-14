@@ -130,18 +130,21 @@ const hotspots = [...files].sort((left, right) => {
 });
 
 const payload = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   generatedAt: new Date().toISOString(),
   sourceCoverage: normalizePath(path.relative(repoRoot, coveragePath)),
   sourceMetadata: metadata,
   fileCount: files.length,
   missingFileCount: files.filter((file) => file.missingFromCoverage).length,
+  zeroExecutedFileCount: files.filter(
+    (file) => !file.missingFromCoverage && file.statements === 0,
+  ).length,
   top20: hotspots.slice(0, 20),
 };
 
 await fs.writeFile(outPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 console.log(
-  `[coverage-hotspots] analyzed ${files.length} production files; ${payload.missingFileCount} missing from coverage.`,
+  `[coverage-hotspots] analyzed ${files.length} production files; ${payload.missingFileCount} missing from coverage; ${payload.zeroExecutedFileCount} with zero executed statements.`,
 );
 console.log(
   `[coverage-hotspots] report: ${normalizePath(path.relative(repoRoot, outPath))}`,

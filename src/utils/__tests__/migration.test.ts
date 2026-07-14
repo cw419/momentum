@@ -25,22 +25,24 @@ describe('runMigration', () => {
     vi.clearAllMocks();
   });
 
-  it('deletes old default rules when matched', async () => {
-    const includesSpy = vi
-      .spyOn(Array.prototype, 'includes')
-      .mockReturnValue(true);
+  it('deletes only rules whose real names match the retired defaults', async () => {
     exceptionRuleManagerMock.getAllRules.mockResolvedValueOnce([
-      { id: 'old-1', name: 'legacy-default-rule' },
+      { id: 'old-1', name: '喝水' },
+      { id: 'custom-1', name: 'legacy-default-rule' },
     ]);
 
-    try {
-      await runMigration();
-      expect(exceptionRuleManagerMock.deleteRule).toHaveBeenCalledTimes(1);
-      expect(exceptionRuleManagerMock.deleteRule).toHaveBeenCalledWith('old-1');
-      expect(loggerMock.info).toHaveBeenCalled();
-    } finally {
-      includesSpy.mockRestore();
-    }
+    await runMigration();
+
+    expect(exceptionRuleManagerMock.deleteRule).toHaveBeenCalledTimes(1);
+    expect(exceptionRuleManagerMock.deleteRule).toHaveBeenCalledWith('old-1');
+    expect(exceptionRuleManagerMock.deleteRule).not.toHaveBeenCalledWith(
+      'custom-1',
+    );
+    expect(loggerMock.info).toHaveBeenCalledWith(
+      'MIGRATION',
+      'Old default rules deleted successfully.',
+      { count: 1 },
+    );
   });
 
   it('skips deletion when no old default rules are present', async () => {

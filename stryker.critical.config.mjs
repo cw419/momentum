@@ -14,7 +14,7 @@ export default {
     fileName: 'reports/mutation/critical.json',
   },
   thresholds: {
-    high: 90,
+    high: 100,
     low: CRITICAL_MUTATION_THRESHOLDS.minimumScore,
     break: CRITICAL_MUTATION_THRESHOLDS.minimumScore,
   },

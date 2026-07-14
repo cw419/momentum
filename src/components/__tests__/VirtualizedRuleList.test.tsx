@@ -295,29 +295,6 @@ describe('VirtualizedRuleList', () => {
       const ruleButtons = screen.getAllByRole('button');
       expect(ruleButtons.length).toBeLessThan(50);
     });
-
-    it('should throttle scroll events', async () => {
-      const largeRuleSet = mockSearchResults;
-      renderWithI18n(
-        <VirtualizedRuleList {...defaultProps} rules={largeRuleSet} />,
-      );
-
-      const scrollContainer = document.querySelector('.overflow-auto');
-      expect(scrollContainer).toBeInstanceOf(HTMLElement);
-      if (!scrollContainer) {
-        throw new Error('Expected virtualized list scroll container');
-      }
-
-      // Fire multiple scroll events rapidly.
-      for (let i = 0; i < 10; i++) {
-        (scrollContainer as HTMLElement).scrollTop = i * 100;
-        fireEvent.scroll(scrollContainer);
-      }
-
-      await waitFor(() => {
-        expect((scrollContainer as HTMLElement).scrollTop).toBe(900);
-      });
-    });
   });
 
   describe('accessibility', () => {

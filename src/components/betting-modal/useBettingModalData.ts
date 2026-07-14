@@ -11,7 +11,10 @@ import { logger } from '../../utils/logger';
 
 export function useBettingModalData(params: {
   isOpen: boolean;
-  storage: MomentumStorage;
+  storage: Pick<
+    MomentumStorage,
+    'getUserAvailablePoints' | 'getGamblingSettings' | 'getTodayBetAmount'
+  >;
   canUseBetting: boolean;
   language: Language;
   tr: (zh: string, en: string) => string;

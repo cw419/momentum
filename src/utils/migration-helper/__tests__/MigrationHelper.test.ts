@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockState = vi.hoisted(() => ({
   supabaseValue: {} as unknown,
@@ -33,6 +33,13 @@ const makeTable = (...columns: string[]) => ({
 });
 
 describe('MigrationHelper', () => {
+  beforeEach(() => {
+    mockState.supabaseValue = {};
+    mockState.getTableInfo.mockReset();
+    mockState.getSchemaStatus.mockReset();
+    mockState.loggerError.mockReset();
+  });
+
   it('returns false when Supabase is unavailable', async () => {
     mockState.supabaseValue = null;
     const helper = new MigrationHelper();
@@ -98,23 +105,18 @@ describe('MigrationHelper', () => {
   });
 
   it('generates SQL and report for missing migrations', async () => {
-    const helper = new MigrationHelper();
-
-    vi.spyOn(helper, 'getMigrationStatus').mockResolvedValue({
-      '20250730021823_winter_flame': true,
-      '20250801160754_peaceful_palace': true,
-      '20250801161456_fading_sunset': true,
-      '20250808000000_add_group_time_limit': false,
-      '20250808001000_add_durationless_flag': false,
-      '20250810000000_add_rsip_tables': false,
-    });
-
+    mockState.getTableInfo.mockImplementation(async (tableName: string) =>
+      tableName === 'chains' ? makeTable('id', 'parent_id', 'type') : null,
+    );
     mockState.getSchemaStatus.mockResolvedValue({
       migrationStatus: 'partial',
       recommendations: ['Apply missing migrations'],
     });
+    const helper = new MigrationHelper();
 
     const sql = await helper.generateMigrationSQL();
+    expect(sql).not.toContain('20250730021823_winter_flame');
+    expect(sql).not.toContain('20250801160754_peaceful_palace');
     expect(sql).toContain('20250808000000_add_group_time_limit');
     expect(sql).toContain('20250808001000_add_durationless_flag');
     expect(sql).toContain('20250810000000_add_rsip_tables');
@@ -122,6 +124,7 @@ describe('MigrationHelper', () => {
     const report = await helper.generateMigrationReport();
     expect(report).toContain('# ');
     expect(report).toContain('20250808000000_add_group_time_limit');
+    expect(report).toContain('Apply missing migrations');
     expect(report).toContain('```sql');
   });
 });

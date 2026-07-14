@@ -638,9 +638,49 @@ describe('SchemaChecker', () => {
 
       const status = await checker.getSchemaStatus();
 
-      // Should handle failures and continue processing
-      expect(status).toBeDefined();
-      expect(status.migrationStatus).toBeDefined();
+      expect(status).toEqual({
+        tablesExist: false,
+        missingTables: ['chains', 'scheduled_sessions'],
+        missingColumns: {
+          active_sessions: [
+            'chain_id',
+            'started_at',
+            'duration',
+            'is_paused',
+            'paused_at',
+            'total_paused_time',
+            'user_id',
+          ],
+          completion_history: [
+            'chain_id',
+            'completed_at',
+            'duration',
+            'was_successful',
+            'reason_for_failure',
+            'user_id',
+          ],
+          rsip_nodes: [
+            'user_id',
+            'parent_id',
+            'title',
+            'rule',
+            'sort_order',
+            'use_timer',
+            'timer_minutes',
+            'created_at',
+          ],
+          rsip_meta: ['user_id', 'last_added_at', 'allow_multiple_per_day'],
+        },
+        extraColumns: {
+          rsip_meta: ['id'],
+        },
+        migrationStatus: 'missing',
+        recommendations: [
+          '需要创建以下表: chains, scheduled_sessions',
+          '运行基础迁移脚本 20250730021823_winter_flame.sql',
+        ],
+      });
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(6);
     });
 
     test('should handle concurrent schema checks', async () => {

@@ -1,15 +1,17 @@
 export const CRITICAL_MUTATION_TARGETS = Object.freeze([
+  'src/components/betting-modal/betPlacementRules.ts',
   'src/hooks/domains/sessions/scheduling.ts',
   'src/hooks/domains/rsip/viewInteractionRules.ts',
 ]);
 
 export const CRITICAL_MUTATION_TEST_FILES = Object.freeze([
+  'src/components/betting-modal/betPlacementRules.test.ts',
   'src/hooks/domains/sessions/__tests__/scheduling.test.ts',
   'src/hooks/domains/rsip/__tests__/viewInteractionRules.test.ts',
 ]);
 
 export const CRITICAL_MUTATION_THRESHOLDS = Object.freeze({
-  minimumScore: 84,
+  minimumScore: 100,
   maximumNoCoverage: 0,
 });
 
@@ -19,6 +21,7 @@ export const SEMANTIC_MUTATION_ROOTS = Object.freeze([
 ]);
 
 export const SEMANTIC_MUTATION_FILES = Object.freeze([
+  'src/components/betting-modal/betPlacementRules.ts',
   'src/hooks/domains/appStateAccess.ts',
   'src/hooks/domains/importPersistence.ts',
   'src/hooks/domains/useSafeSaveChains.ts',

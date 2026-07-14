@@ -11,11 +11,15 @@ const outPath = path.join(reportsDir, 'test-runtime-budget.json');
 
 const CASE_BUDGET_MS = 2500;
 const FILE_BUDGET_MS = 9000;
+const BUILT_IN_EXEMPT_FILES = [
+  // Intentionally launches Dependency Cruiser against the complete source tree.
+  'src/__tests__/repo-governance.test.ts',
+];
 const envExemptFiles = (process.env.TEST_RUNTIME_BUDGET_EXEMPT ?? '')
   .split(',')
   .map((v) => v.trim())
   .filter(Boolean);
-const EXEMPT_FILES = new Set(envExemptFiles);
+const EXEMPT_FILES = new Set([...BUILT_IN_EXEMPT_FILES, ...envExemptFiles]);
 
 await fs.mkdir(reportsDir, { recursive: true });
 

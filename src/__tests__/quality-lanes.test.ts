@@ -129,8 +129,18 @@ describe('quality lane tooling', () => {
   });
 
   it('binds coverage reports to the current commit and coverage configuration', async () => {
-    const { createCoverageMetadata, assertFreshCoverageMetadata } =
-      await import('../../tools/quality/coverage-metadata.mjs');
+    const {
+      createCoverageMetadata,
+      assertFreshCoverageMetadata,
+      isCoverageWorkspaceFile,
+    } = await import('../../tools/quality/coverage-metadata.mjs');
+
+    expect(
+      isCoverageWorkspaceFile(
+        'src/components/__architecture_violation_fixture__.ts',
+      ),
+    ).toBe(false);
+    expect(isCoverageWorkspaceFile('src/components/NewFeature.tsx')).toBe(true);
 
     const metadata = await createCoverageMetadata(REPO_ROOT);
 

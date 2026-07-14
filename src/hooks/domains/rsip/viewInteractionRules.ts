@@ -25,26 +25,15 @@ export function getActiveExecutionTaskLinks(
 
 export function assessViolationGroup(
   node: RSIPNode,
-  nodes: RSIPNode[],
   groups: RSIPNodeGroup[],
 ): ViolationGroupAssessment {
-  if (!node.groupId) {
-    return { status: 'none' };
-  }
-
   const group = groups.find((item) => item.id === node.groupId);
   if (!group) {
     return { status: 'none' };
   }
 
-  const groupNodeCount = nodes.filter(
-    (item) => item.groupId === group.id,
-  ).length;
-  const survivorsAfterLoss = groupNodeCount - 1;
-  const minAlive = Math.max(0, groupNodeCount - group.faultTolerance);
-
   return {
-    status: survivorsAfterLoss >= minAlive ? 'tolerated' : 'collapse',
+    status: group.faultTolerance >= 1 ? 'tolerated' : 'collapse',
     groupTitle: group.title,
   };
 }
@@ -139,13 +128,13 @@ function getNextStabilityPhase(
   phase: RSIPStabilityPhase,
   consecutiveExecutions: number,
 ): RSIPStabilityPhase {
-  if (phase === 'E0' && consecutiveExecutions >= 7) {
-    return 'E1';
+  if (phase === 'E0') {
+    return consecutiveExecutions >= 7 ? 'E1' : 'E0';
   }
-  if (phase === 'E1' && consecutiveExecutions >= 21) {
-    return 'E2';
+  if (phase === 'E1') {
+    return consecutiveExecutions >= 21 ? 'E2' : 'E1';
   }
-  return phase;
+  return 'E2';
 }
 
 export function markNodeViolatedFallback(

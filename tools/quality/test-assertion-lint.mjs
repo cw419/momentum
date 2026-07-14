@@ -1,6 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import ts from 'typescript';
+import {
+  analyzeTestSource,
+  TEST_ASSERTION_RULES,
+} from './test-assertion-analyzer.mjs';
 
 const repoRoot = process.cwd();
 const reportsDir = path.join(repoRoot, 'reports', 'quality');
@@ -28,146 +31,25 @@ async function listTestFiles(directory) {
   return files;
 }
 
-function unwrapExpression(node) {
-  let current = node;
-  while (
-    ts.isParenthesizedExpression(current) ||
-    ts.isAsExpression(current) ||
-    ts.isTypeAssertionExpression(current) ||
-    ts.isNonNullExpression(current)
-  ) {
-    current = current.expression;
-  }
-  return current;
-}
-
-function isExpectCall(node) {
-  return (
-    ts.isCallExpression(node) &&
-    ts.isIdentifier(node.expression) &&
-    node.expression.text === 'expect'
-  );
-}
-
-function isViMockCall(node) {
-  return (
-    ts.isCallExpression(node) &&
-    ts.isPropertyAccessExpression(node.expression) &&
-    ts.isIdentifier(node.expression.expression) &&
-    node.expression.expression.text === 'vi' &&
-    node.expression.name.text === 'mock'
-  );
-}
-
-function sameExpression(left, right, sourceFile) {
-  return (
-    unwrapExpression(left).getText(sourceFile) ===
-    unwrapExpression(right).getText(sourceFile)
-  );
-}
-
-function lineOf(sourceFile, node) {
-  return (
-    sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1
-  );
-}
-
-function subjectNameForTest(filePath) {
-  return path.basename(filePath).replace(/\.(test|spec)\.[cm]?[jt]sx?$/, '');
-}
-
-function moduleBaseName(modulePath) {
-  return path.posix.basename(modulePath).replace(/\.[cm]?[jt]sx?$/, '');
-}
-
 const files = await listTestFiles(path.join(repoRoot, 'src'));
 const violations = [];
 
 for (const file of files) {
   const content = await fs.readFile(file, 'utf8');
   const relativeFile = normalizePath(path.relative(repoRoot, file));
-  const sourceFile = ts.createSourceFile(
-    file,
-    content,
-    ts.ScriptTarget.Latest,
-    true,
-    file.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
-  );
-  const subjectName = subjectNameForTest(file);
-
-  function addViolation(node, rule, detail) {
-    violations.push({
+  violations.push(
+    ...analyzeTestSource({ content, filePath: file }).map((violation) => ({
       file: relativeFile,
-      line: lineOf(sourceFile, node),
-      rule,
-      detail,
-    });
-  }
-
-  function visit(node) {
-    if (isViMockCall(node)) {
-      const moduleArgument = node.arguments[0];
-      if (
-        moduleArgument &&
-        ts.isStringLiteral(moduleArgument) &&
-        moduleBaseName(moduleArgument.text) === subjectName
-      ) {
-        addViolation(
-          node,
-          'no-direct-sut-mock',
-          `test mocks its own subject module ${moduleArgument.text}`,
-        );
-      }
-    }
-
-    if (
-      ts.isCallExpression(node) &&
-      ts.isPropertyAccessExpression(node.expression) &&
-      isExpectCall(node.expression.expression)
-    ) {
-      const expectCall = node.expression.expression;
-      const actual = expectCall.arguments[0];
-      const expected = node.arguments[0];
-      const matcher = node.expression.name.text;
-
-      if (matcher === 'toBeTruthy' || matcher === 'toBeFalsy') {
-        addViolation(node, 'no-ambiguous-boolean-assertion', matcher);
-      } else if (
-        actual &&
-        expected &&
-        ['toBe', 'toEqual', 'toStrictEqual'].includes(matcher) &&
-        sameExpression(actual, expected, sourceFile)
-      ) {
-        addViolation(node, 'no-self-equality', node.getText(sourceFile));
-      } else if (
-        actual &&
-        expected &&
-        matcher === 'toBe' &&
-        ((actual.kind === ts.SyntaxKind.TrueKeyword &&
-          expected.kind === ts.SyntaxKind.TrueKeyword) ||
-          (actual.kind === ts.SyntaxKind.FalseKeyword &&
-            expected.kind === ts.SyntaxKind.FalseKeyword))
-      ) {
-        addViolation(node, 'no-literal-tautology', node.getText(sourceFile));
-      }
-    }
-
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
+      ...violation,
+    })),
+  );
 }
 
 const payload = {
   schemaVersion: 2,
   generatedAt: new Date().toISOString(),
   totalTestFilesScanned: files.length,
-  rules: [
-    'no-ambiguous-boolean-assertion',
-    'no-self-equality',
-    'no-literal-tautology',
-    'no-direct-sut-mock',
-  ],
+  rules: TEST_ASSERTION_RULES,
   violationCount: violations.length,
   violations,
 };

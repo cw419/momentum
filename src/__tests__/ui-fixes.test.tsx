@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { RuleManagerView } from '../components/RuleManagerView';
 import { RuleSelectionDialog } from '../components/RuleSelectionDialog';
 import { ResponsiveContainer } from '../components/ResponsiveContainer';
@@ -204,25 +204,6 @@ describe('UI Fixes and Improvements', () => {
     });
   });
 
-  describe('Mobile Touch Optimization', () => {
-    test('Buttons should have minimum touch target size', () => {
-      render(<button className="touch-target">Test Button</button>);
-
-      const button = screen.getByRole('button');
-      const computedStyle = window.getComputedStyle(button);
-
-      // Check if touch target styles are applied
-      expect(button).toHaveClass('touch-target');
-    });
-
-    test('Touch feedback should be applied', () => {
-      render(<button className="touch-feedback">Test Button</button>);
-
-      const button = screen.getByRole('button');
-      expect(button).toHaveClass('touch-feedback');
-    });
-  });
-
   describe('Responsive Design', () => {
     test('ResponsiveContainer should adapt to different screen sizes', () => {
       const { rerender } = render(
@@ -244,85 +225,16 @@ describe('UI Fixes and Improvements', () => {
       expect(screen.getByText('Content')).toBeInTheDocument();
     });
 
-    test('Modal should be responsive on mobile', async () => {
-      // Mock mobile viewport
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 375,
-      });
-
+    test('RuleManagerView constrains its panel width to the viewport', async () => {
       const { container } = renderWithI18n(
         <RuleManagerView onClose={() => {}} />,
       );
       await screen.findByText('例外规则管理');
 
       const modal = container.querySelector('div[style*="100vw"]');
-      expect(modal).toBeInTheDocument();
-    });
-  });
-
-  describe('Error Handling and Recovery', () => {
-    test('Should provide user-friendly error messages', () => {
-      render(<div className="error-message">创建规则失败，请重试</div>);
-
-      expect(screen.getByText('创建规则失败，请重试')).toBeInTheDocument();
-    });
-  });
-
-  describe('Accessibility', () => {
-    test('Should support keyboard navigation', () => {
-      render(<button>Test Button</button>);
-
-      const button = screen.getByRole('button');
-
-      // Test keyboard focus
-      button.focus();
-      expect(document.activeElement).toBe(button);
-
-      // Test keyboard activation
-      fireEvent.keyDown(button, { key: 'Enter' });
-      fireEvent.keyDown(button, { key: ' ' });
-    });
-
-    test('Should have proper ARIA labels', () => {
-      render(<button aria-label="Close dialog">×</button>);
-
-      const button = screen.getByLabelText('Close dialog');
-      expect(button).toBeInTheDocument();
-    });
-  });
-
-  describe('Performance Metrics', () => {
-    test('Should track render performance', () => {
-      const renderFn = vi.fn(() => 'rendered');
-
-      const result = performanceMonitor.measureRender(
-        'test-component',
-        renderFn,
-      );
-
-      expect(result).toBe('rendered');
-      expect(renderFn).toHaveBeenCalled();
-    });
-
-    test('Should detect layout shifts', () => {
-      layoutStabilityMonitor.startMonitoring();
-
-      // Simulate layout shift by changing element size
-      const testElement = document.createElement('div');
-      testElement.style.width = '100px';
-      testElement.style.height = '100px';
-      document.body.appendChild(testElement);
-
-      // Change size to trigger potential layout shift
-      testElement.style.width = '200px';
-
-      const report = layoutStabilityMonitor.getStabilityReport();
-      expect(report).toBeDefined();
-
-      document.body.removeChild(testElement);
-      layoutStabilityMonitor.stopMonitoring();
+      expect(modal).toHaveStyle({
+        maxWidth: 'min(1152px, 100vw - 2rem)',
+      });
     });
   });
 });
@@ -338,25 +250,28 @@ describe('UI Integration Tests', () => {
     layoutStabilityMonitor.clearIssues();
   });
 
-  test('Complete rule creation flow should work without layout issues', async () => {
+  test('opens the chain-rule form while preserving overflow containment', async () => {
     const onClose = vi.fn();
 
     const { container } = renderWithI18n(<RuleManagerView onClose={onClose} />);
     await screen.findByText('例外规则管理');
 
-    // Test create button
     const createButton = screen.getByText('创建链专属规则');
     fireEvent.click(createButton);
 
-    await waitFor(() => {
-      expect(screen.getByText('规则名称 *')).toBeInTheDocument();
-    });
+    expect(
+      await screen.findByRole('heading', { name: '创建新规则' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('例如：上厕所、喝水、接电话'),
+    ).toBeInTheDocument();
 
     const overlay = container.querySelector('div.fixed.inset-0');
     expect(overlay).toHaveClass('overflow-x-hidden');
+    expect(onClose).not.toHaveBeenCalled();
   });
 
-  test('Rule selection dialog should handle all interactions smoothly', async () => {
+  test('invokes cancel without selecting a rule when the dialog closes', () => {
     const mockSessionContext = {
       sessionId: 'test-session',
       chainId: 'test-chain',
@@ -381,10 +296,10 @@ describe('UI Integration Tests', () => {
       />,
     );
 
-    // Test cancel button
     const cancelButton = screen.getByLabelText('关闭对话框');
     fireEvent.click(cancelButton);
 
-    expect(onCancel).toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onRuleSelected).not.toHaveBeenCalled();
   });
 });

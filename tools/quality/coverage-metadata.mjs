@@ -9,6 +9,14 @@ export const COVERAGE_CONFIG_FILES = Object.freeze([
   'src/test/setup.integration.ts',
 ]);
 
+const TRANSIENT_GOVERNANCE_FIXTURES = new Set([
+  'src/components/__architecture_violation_fixture__.ts',
+]);
+
+export function isCoverageWorkspaceFile(relativePath) {
+  return !TRANSIENT_GOVERNANCE_FIXTURES.has(relativePath.replace(/\\/g, '/'));
+}
+
 export function getHeadSha(repoRoot) {
   const result = spawnSync('git', ['rev-parse', 'HEAD'], {
     cwd: repoRoot,
@@ -49,6 +57,7 @@ export async function getCoverageWorkspaceHash(repoRoot) {
     .split('\0')
     .filter(Boolean)
     .map((file) => file.replace(/\\/g, '/'))
+    .filter(isCoverageWorkspaceFile)
     .sort();
   for (const relativePath of untrackedFiles) {
     hash.update(`\0${relativePath}\0`);

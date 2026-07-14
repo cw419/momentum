@@ -1,31 +1,14 @@
-/**
- * ChainEditor响应式测试套件
- * 测试各种设备和屏幕尺寸下的布局表现
- */
-
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChainEditor } from '../components/ChainEditor';
-import { Chain, ChainType } from '../types';
 import { I18nProvider } from '../i18n';
+import { Chain, ChainType } from '../types';
 
 const renderWithI18n = (ui: React.ReactElement) => {
   return render(ui, { wrapper: I18nProvider });
 };
 
-// 模拟不同的视口尺寸
-const viewports = [
-  { width: 320, height: 568, name: 'iPhone SE' },
-  { width: 375, height: 667, name: 'iPhone 8' },
-  { width: 414, height: 896, name: 'iPhone 11 Pro Max' },
-  { width: 768, height: 1024, name: 'iPad' },
-  { width: 1024, height: 768, name: 'iPad横屏' },
-  { width: 1280, height: 720, name: '桌面小屏' },
-  { width: 1920, height: 1080, name: '桌面大屏' },
-];
-
-// 模拟ResizeObserver
 class MockResizeObserver {
   observe = vi.fn();
   unobserve = vi.fn();
@@ -34,7 +17,6 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
-// 模拟window.visualViewport
 Object.defineProperty(window, 'visualViewport', {
   writable: true,
   value: {
@@ -44,24 +26,6 @@ Object.defineProperty(window, 'visualViewport', {
   },
 });
 
-// 设置视口大小的辅助函数
-const setViewport = (width: number, height: number) => {
-  Object.defineProperty(window, 'innerWidth', {
-    writable: true,
-    configurable: true,
-    value: width,
-  });
-  Object.defineProperty(window, 'innerHeight', {
-    writable: true,
-    configurable: true,
-    value: height,
-  });
-
-  // 触发resize事件
-  fireEvent(window, new Event('resize'));
-};
-
-// 检查横向滚动的辅助函数
 const enableCustomDurationSlider = async () => {
   const durationSelect = document.getElementById(
     'task-duration',
@@ -77,17 +41,6 @@ const enableCustomDurationSlider = async () => {
   })) as HTMLInputElement;
 };
 
-const checkHorizontalOverflow = () => {
-  const body = document.body;
-  const html = document.documentElement;
-
-  const scrollWidth = Math.max(body.scrollWidth, html.scrollWidth);
-  const clientWidth = html.clientWidth;
-
-  return scrollWidth > clientWidth;
-};
-
-// 测试用的Chain数据
 const mockChain: Chain = {
   id: 'test-chain',
   name: '测试链条',
@@ -115,225 +68,77 @@ const mockProps = {
   onCancel: vi.fn(),
 };
 
-describe('ChainEditor响应式布局测试', () => {
+describe('ChainEditor form behavior and accessibility', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.setItem('language', 'zh');
   });
 
-  describe('多视口尺寸测试', () => {
-    viewports.forEach((viewport) => {
-      test(`在${viewport.name}(${viewport.width}x${viewport.height})上无横向滚动`, async () => {
-        setViewport(viewport.width, viewport.height);
+  it('renders labeled controls with the current chain values', () => {
+    renderWithI18n(<ChainEditor {...mockProps} />);
 
-        renderWithI18n(<ChainEditor {...mockProps} />);
-
-        // 等待组件完全渲染
-        await waitFor(() => {
-          expect(
-            screen.getByRole('heading', { name: '编辑链条' }),
-          ).toBeInTheDocument();
-        });
-
-        // 检查是否有横向滚动
-        const hasHorizontalOverflow = checkHorizontalOverflow();
-        expect(hasHorizontalOverflow).toBe(false);
-      });
-
-      test(`在${viewport.name}上所有交互元素可访问`, async () => {
-        setViewport(viewport.width, viewport.height);
-
-        renderWithI18n(<ChainEditor {...mockProps} />);
-
-        // 检查主要交互元素是否存在且可点击
-        const nameInput = screen.getByLabelText(/链名称/i);
-        const typeSelect = screen.getByLabelText(/任务类型/i);
-        const saveButton = screen.getByRole('button', { name: /保存更改/i });
-        const cancelButton = screen.getByRole('button', { name: /取消/i });
-
-        expect(nameInput).toBeInTheDocument();
-        expect(typeSelect).toBeInTheDocument();
-        expect(saveButton).toBeInTheDocument();
-        expect(cancelButton).toBeInTheDocument();
-
-        // 所有视口都保留最小触摸高度，避免响应式样式缩小点击目标。
-        expect(saveButton).toHaveClass('min-h-12');
-      });
-    });
+    expect(screen.getByLabelText(/链名称/i)).toHaveValue('测试链条');
+    expect(screen.getByLabelText(/任务类型/i)).toHaveValue('unit');
+    expect(screen.getByRole('button', { name: /保存更改/i })).toHaveClass(
+      'min-h-12',
+    );
+    expect(screen.getByRole('button', { name: /取消/i })).toBeEnabled();
   });
 
-  describe('滑动块响应式测试', () => {
-    test('滑动块在不同容器宽度下正确适应', async () => {
-      const { rerender } = renderWithI18n(<ChainEditor {...mockProps} />);
+  it('submits edited form values through onSave', async () => {
+    const user = userEvent.setup();
+    renderWithI18n(<ChainEditor {...mockProps} />);
 
-      // 测试不同宽度
-      const widths = [320, 768, 1024, 1920];
+    const nameInput = screen.getByLabelText(/链名称/i);
+    await user.clear(nameInput);
+    await user.type(nameInput, '更新后的链条');
+    await user.click(screen.getByRole('button', { name: /保存更改/i }));
 
-      for (const width of widths) {
-        setViewport(width, 600);
-        rerender(<ChainEditor {...mockProps} />);
-
-        const durationSlider = await enableCustomDurationSlider();
-        expect(durationSlider).toHaveClass('numeric-slider-field__range');
-        expect(durationSlider).toHaveAttribute('min', '1');
-        expect(durationSlider).toHaveAttribute('max', '300');
-      }
-    });
-
-    test('滑动块在移动端有足够的触摸区域', async () => {
-      Object.defineProperty(window, 'ontouchstart', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-      Object.defineProperty(navigator, 'maxTouchPoints', {
-        value: 5,
-        writable: true,
-        configurable: true,
-      });
-
-      setViewport(375, 667); // iPhone尺寸
-
-      renderWithI18n(<ChainEditor {...mockProps} />);
-
-      const durationSlider = await enableCustomDurationSlider();
-
-      expect(durationSlider).toHaveClass('numeric-slider-field__range');
-      expect(durationSlider).toHaveAttribute('step', '1');
-    });
+    expect(mockProps.onSave).toHaveBeenCalledTimes(1);
+    expect(mockProps.onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: '更新后的链条',
+        type: 'unit',
+        duration: 25,
+      }),
+      false,
+    );
   });
 
-  describe('布局稳定性测试', () => {
-    test('内容加载时无明显布局偏移', async () => {
-      const { container } = renderWithI18n(<ChainEditor {...mockProps} />);
+  it('updates the custom duration slider and exposes its range semantics', async () => {
+    renderWithI18n(<ChainEditor {...mockProps} />);
 
-      // 记录初始布局
-      const initialRect = container.getBoundingClientRect();
+    const durationSlider = await enableCustomDurationSlider();
+    expect(durationSlider).toHaveClass('numeric-slider-field__range');
+    expect(durationSlider).toHaveAttribute('min', '1');
+    expect(durationSlider).toHaveAttribute('max', '300');
+    expect(durationSlider).toHaveAttribute('step', '1');
+    expect(durationSlider).toHaveAttribute('aria-valuemin', '1');
+    expect(durationSlider).toHaveAttribute('aria-valuemax', '300');
 
-      // 模拟内容加载完成
-      await waitFor(() => {
-        expect(
-          screen.getByRole('heading', { name: '编辑链条' }),
-        ).toBeInTheDocument();
-      });
+    fireEvent.change(durationSlider, { target: { value: '120' } });
 
-      // 检查布局是否稳定
-      const finalRect = container.getBoundingClientRect();
-
-      // 允许小幅度的布局调整（< 5px）
-      expect(Math.abs(finalRect.height - initialRect.height)).toBeLessThan(5);
-    });
-
-    test('屏幕方向变化时布局正确适应', async () => {
-      // 竖屏
-      setViewport(375, 667);
-      const { rerender } = renderWithI18n(<ChainEditor {...mockProps} />);
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole('heading', { name: '编辑链条' }),
-        ).toBeInTheDocument();
-      });
-
-      const portraitOverflow = checkHorizontalOverflow();
-      expect(portraitOverflow).toBe(false);
-
-      // 横屏
-      setViewport(667, 375);
-      rerender(<ChainEditor {...mockProps} />);
-
-      await waitFor(() => {
-        const landscapeOverflow = checkHorizontalOverflow();
-        expect(landscapeOverflow).toBe(false);
-      });
-    });
+    expect(durationSlider).toHaveValue('120');
+    expect(durationSlider).toHaveAttribute('aria-valuenow', '120');
   });
 
-  describe('性能测试', () => {
-    test('组件渲染时间在可接受范围内', async () => {
-      renderWithI18n(<ChainEditor {...mockProps} />);
+  it('moves keyboard focus from the name field to the type selector', async () => {
+    const user = userEvent.setup();
+    renderWithI18n(<ChainEditor {...mockProps} />);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('heading', { name: '编辑链条' }),
-        ).toBeInTheDocument();
-      });
-    });
+    screen.getByLabelText(/链名称/i).focus();
+    await user.tab();
 
-    test('滑动块交互响应时间正常', async () => {
-      renderWithI18n(<ChainEditor {...mockProps} />);
-
-      const durationSlider = await enableCustomDurationSlider();
-      fireEvent.change(durationSlider, { target: { value: '120' } });
-      expect(durationSlider).toHaveValue('120');
-    });
+    expect(screen.getByLabelText(/任务类型/i)).toHaveFocus();
   });
 
-  describe('可访问性测试', () => {
-    test('所有表单元素有正确的标签', async () => {
-      renderWithI18n(<ChainEditor {...mockProps} />);
+  it('invokes onCancel from the cancel action', async () => {
+    const user = userEvent.setup();
+    renderWithI18n(<ChainEditor {...mockProps} />);
 
-      // 检查主要表单元素
-      expect(screen.getByLabelText(/链名称/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/任务类型/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /取消/i }));
 
-      // 检查滑动块的可访问性
-      const durationSlider = await enableCustomDurationSlider();
-      expect(durationSlider).toHaveAttribute('aria-valuemin', '1');
-      expect(durationSlider).toHaveAttribute('aria-valuemax', '300');
-      expect(durationSlider).toHaveAttribute('aria-valuenow');
-    });
-
-    test('键盘导航正常工作', async () => {
-      const user = userEvent.setup();
-      renderWithI18n(<ChainEditor {...mockProps} />);
-
-      const nameInput = screen.getByLabelText(/链名称/i);
-      nameInput.focus();
-
-      // 测试Tab键导航
-      await user.tab();
-
-      const typeSelect = screen.getByLabelText(/任务类型/i);
-      expect(typeSelect).toHaveFocus();
-    });
-  });
-
-  describe('错误处理测试', () => {
-    test('网络错误时布局保持稳定', async () => {
-      // 模拟网络错误
-      const consoleError = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
-      renderWithI18n(<ChainEditor {...mockProps} />);
-
-      // 即使有错误，基本布局应该仍然存在
-      expect(
-        screen.getByRole('heading', { name: '编辑链条' }),
-      ).toBeInTheDocument();
-
-      consoleError.mockRestore();
-    });
-
-    test('极端数据时不会破坏布局', async () => {
-      const extremeChain = {
-        ...mockChain,
-        name: 'A'.repeat(1000), // 极长的名称
-        description: 'B'.repeat(5000), // 极长的描述
-      };
-
-      renderWithI18n(<ChainEditor {...mockProps} chain={extremeChain} />);
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole('heading', { name: '编辑链条' }),
-        ).toBeInTheDocument();
-      });
-
-      // 检查是否仍然没有横向滚动
-      const hasOverflow = checkHorizontalOverflow();
-      expect(hasOverflow).toBe(false);
-    });
+    expect(mockProps.onCancel).toHaveBeenCalledTimes(1);
+    expect(mockProps.onSave).not.toHaveBeenCalled();
   });
 });

@@ -221,15 +221,19 @@ describe('CacheCore', () => {
 
     it('should keep a single cleanup interval when start is called twice', () => {
       vi.useFakeTimers();
-      const lifecycleCache = new CacheCore({ cleanupInterval: 100 });
-      const clearExpired = vi.spyOn(lifecycleCache, 'clearExpired');
+      vi.setSystemTime(new Date('2026-02-06T10:00:00.000Z'));
+      const lifecycleCache = new CacheCore({
+        defaultTTL: 50,
+        cleanupInterval: 100,
+      });
+      lifecycleCache.set('expired', 'value');
 
       lifecycleCache.start();
       lifecycleCache.start();
-      vi.advanceTimersByTime(300);
-
-      expect(clearExpired).toHaveBeenCalledTimes(3);
       lifecycleCache.stop();
+      vi.advanceTimersByTime(101);
+
+      expect(lifecycleCache.getKeys()).toEqual(['expired']);
     });
   });
 

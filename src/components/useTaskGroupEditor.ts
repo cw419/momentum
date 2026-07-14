@@ -27,20 +27,43 @@ interface UseTaskGroupEditorProps {
   onSave: (chain: ChainDraft) => void;
 }
 
+function getInitialAuxiliarySignal(chain?: Chain) {
+  const savedSignal = chain?.auxiliarySignal;
+  if (!savedSignal) {
+    return {
+      auxiliarySignal: AUXILIARY_SIGNAL_TEMPLATES[0]?.value || '',
+      customAuxiliarySignal: '',
+    };
+  }
+
+  const isPreset = AUXILIARY_SIGNAL_TEMPLATES.some(
+    (template) => template.value === savedSignal,
+  );
+  return isPreset
+    ? { auxiliarySignal: savedSignal, customAuxiliarySignal: '' }
+    : {
+        auxiliarySignal: CUSTOM_AUXILIARY_SIGNAL_VALUE,
+        customAuxiliarySignal: savedSignal,
+      };
+}
+
 export function useTaskGroupEditor({
   chain,
   initialParentId,
   onSave,
 }: UseTaskGroupEditorProps) {
   const { language, tr } = useI18n();
+  const initialAuxiliarySignal = getInitialAuxiliarySignal(chain);
 
   // Form state
   const [name, setName] = useState(chain?.name || '');
   const [description, setDescription] = useState(chain?.description || '');
   const [auxiliarySignal, setAuxiliarySignal] = useState(
-    chain?.auxiliarySignal || AUXILIARY_SIGNAL_TEMPLATES[0]?.value || '',
+    initialAuxiliarySignal.auxiliarySignal,
   );
-  const [customAuxiliarySignal, setCustomAuxiliarySignal] = useState('');
+  const [customAuxiliarySignal, setCustomAuxiliarySignal] = useState(
+    initialAuxiliarySignal.customAuxiliarySignal,
+  );
   const [auxiliaryDuration, setAuxiliaryDuration] = useState(
     chain?.auxiliaryDuration || 15,
   );
@@ -196,7 +219,7 @@ export function useTaskGroupEditor({
         name: name.trim(),
         type: 'group',
         parentId: chain?.parentId || initialParentId,
-        sortOrder: chain?.sortOrder || Math.floor(Date.now() / 1000),
+        sortOrder: chain?.sortOrder ?? Math.floor(Date.now() / 1000),
         trigger: '任务群容器',
         duration: 0,
         isDurationless: true,

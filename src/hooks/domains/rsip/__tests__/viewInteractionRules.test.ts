@@ -83,13 +83,13 @@ describe('RSIP view interaction rules', () => {
     ];
 
     expect(
-      assessViolationGroup(nodes[2], nodes, [unrelatedGroup, targetGroup]),
+      assessViolationGroup(nodes[2], [unrelatedGroup, targetGroup]),
     ).toEqual({
       status: 'tolerated',
       groupTitle: 'Core',
     });
     expect(
-      assessViolationGroup(nodes[2], nodes, [
+      assessViolationGroup(nodes[2], [
         unrelatedGroup,
         { ...targetGroup, faultTolerance: 0 },
       ]),
@@ -104,15 +104,13 @@ describe('RSIP view interaction rules', () => {
       createdAt,
     };
 
-    expect(assessViolationGroup(node(), [node()], [group])).toEqual({
+    expect(assessViolationGroup(node(), [group])).toEqual({
       status: 'none',
     });
     expect(
-      assessViolationGroup(
-        node({ id: 'orphan', groupId: 'missing-group' }),
-        [node({ id: 'orphan', groupId: 'missing-group' })],
-        [group],
-      ),
+      assessViolationGroup(node({ id: 'orphan', groupId: 'missing-group' }), [
+        group,
+      ]),
     ).toEqual({ status: 'none' });
   });
 
@@ -222,6 +220,8 @@ describe('RSIP view interaction rules', () => {
     ['E0', 6, 'E1', true],
     ['E1', 19, 'E1', false],
     ['E1', 20, 'E2', true],
+    ['E2', 0, 'E2', false],
+    ['E2', 99, 'E2', false],
   ] as const)(
     'transitions %s after %i prior executions to %s',
     (stabilityPhase, priorExecutions, expectedPhase, phaseChanges) => {
