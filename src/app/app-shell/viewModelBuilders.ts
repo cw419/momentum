@@ -85,6 +85,7 @@ interface BuildRsipViewModelInputs {
   taskLinks: RSIPTaskLink[];
   chains: Chain[];
   onBack: () => void;
+  createNodes: (nodes: RSIPNode[], addedAt: Date) => Promise<void>;
   saveNodes: (nodes: RSIPNode[]) => Promise<void>;
   saveMeta: (meta: RSIPMeta) => Promise<void>;
   saveGroups: (groups: RSIPNodeGroup[]) => Promise<void>;
@@ -217,6 +218,7 @@ export function buildRsipViewModel(
     taskLinks: inputs.taskLinks,
     chains: inputs.chains,
     onBack: inputs.onBack,
+    createNodes: inputs.createNodes,
     saveNodes: inputs.saveNodes,
     saveMeta: inputs.saveMeta,
     saveGroups: inputs.saveGroups,

@@ -1,6 +1,7 @@
 import type { RSIPMeta } from '../../../types';
 import type { Database } from '../../../lib/database.types';
 import { mapRSIPMetaRow } from './rsipMapper';
+import { buildRSIPMetaRow } from './rsipPayloadBuilder';
 import type { SupabaseStorageContext } from './types';
 
 type RSIPMetaRow = Database['public']['Tables']['rsip_meta']['Row'];
@@ -31,19 +32,7 @@ export async function saveRSIPMeta(
   const { error } = await ctx
     .getClient()
     .from('rsip_meta')
-    .upsert(
-      {
-        user_id: user.id,
-        last_added_at: meta.lastAddedAt?.toISOString() ?? null,
-        allow_multiple_per_day: !!meta.allowMultiplePerDay,
-        last_tree_opened_at: meta.lastTreeOpenedAt?.toISOString() ?? null,
-        daily_tree_open_required: meta.dailyTreeOpenRequired ?? false,
-        tree_open_streak: meta.treeOpenStreak ?? 0,
-        current_run_number: meta.currentRunNumber ?? null,
-        current_run_started_at: meta.currentRunStartedAt?.toISOString() ?? null,
-      },
-      { onConflict: 'user_id' },
-    );
+    .upsert(buildRSIPMetaRow(meta, user.id), { onConflict: 'user_id' });
   if (error) {
     throw new Error(`Failed to save RSIP meta: ${error.message}`);
   }

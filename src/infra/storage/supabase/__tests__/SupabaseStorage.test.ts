@@ -55,6 +55,8 @@ const rsipApiMocks = vi.hoisted(() => ({
 }));
 
 const rsipIntentApiMocks = vi.hoisted(() => ({
+  createRSIPNodesWithMeta: vi.fn(),
+  archiveRSIPNodesAndRemove: vi.fn(),
   upsertRSIPNode: vi.fn(),
   removeRSIPNodes: vi.fn(),
   upsertRSIPLibraryEntry: vi.fn(),
@@ -170,6 +172,8 @@ describe('supabase/SupabaseStorage', () => {
     rsipApiMocks.getRSIPMeta.mockResolvedValue({});
     rsipApiMocks.saveRSIPMeta.mockResolvedValue(undefined);
     rsipIntentApiMocks.upsertRSIPNode.mockResolvedValue(undefined);
+    rsipIntentApiMocks.createRSIPNodesWithMeta.mockResolvedValue(undefined);
+    rsipIntentApiMocks.archiveRSIPNodesAndRemove.mockResolvedValue(undefined);
     rsipIntentApiMocks.removeRSIPNodes.mockResolvedValue(undefined);
     rsipIntentApiMocks.upsertRSIPLibraryEntry.mockResolvedValue(undefined);
     rsipIntentApiMocks.appendRSIPRunRecord.mockResolvedValue(undefined);
@@ -301,6 +305,42 @@ describe('supabase/SupabaseStorage', () => {
       storage.upsertChain({ id: 'chain-2' } as never),
     ]);
     expect(chainsApiMocks.upsertChain).toHaveBeenCalledTimes(2);
+  });
+
+  it('delegates compound RSIP writes to their atomic intent APIs', async () => {
+    const storage = new SupabaseStorage();
+    const node = {
+      id: 'node-1',
+      title: 'Node',
+      rule: 'Rule',
+      sortOrder: 0,
+      createdAt: new Date('2026-07-16T00:00:00.000Z'),
+    };
+    const entry = {
+      id: 'node-1',
+      title: 'Node',
+      rule: 'Rule',
+      cumulativeExecutionDays: 1,
+      internalizationProgress: 1.67,
+      lastActiveAt: new Date('2026-07-16T01:00:00.000Z'),
+      timesUsed: 1,
+    };
+
+    await storage.createRSIPNodesWithMeta([node], {
+      allowMultiplePerDay: true,
+    });
+    await storage.archiveRSIPNodesAndRemove(['node-1'], [entry]);
+
+    expect(rsipIntentApiMocks.createRSIPNodesWithMeta).toHaveBeenCalledWith(
+      expect.any(Object),
+      [node],
+      { allowMultiplePerDay: true },
+    );
+    expect(rsipIntentApiMocks.archiveRSIPNodesAndRemove).toHaveBeenCalledWith(
+      expect.any(Object),
+      ['node-1'],
+      [entry],
+    );
   });
 
   it('wires retryOperation and retryWithAuth through SupabaseStorage context', async () => {

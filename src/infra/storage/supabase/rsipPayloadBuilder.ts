@@ -1,4 +1,9 @@
-import type { RSIPNode, RSIPStabilityPhase } from '../../../types';
+import type {
+  RSIPLibraryEntry,
+  RSIPMeta,
+  RSIPNode,
+  RSIPStabilityPhase,
+} from '../../../types';
 
 type RSIPNodeBasePayload = {
   id: string;
@@ -78,4 +83,40 @@ export function buildRSIPNodeRows(
   userId: string,
 ): RSIPNodePayload[] {
   return nodes.map((node) => buildStrictNodePayload(node, userId));
+}
+
+export function buildRSIPMetaRow(meta: RSIPMeta, userId: string) {
+  return {
+    user_id: userId,
+    last_added_at: meta.lastAddedAt?.toISOString() ?? null,
+    allow_multiple_per_day: !!meta.allowMultiplePerDay,
+    last_tree_opened_at: meta.lastTreeOpenedAt?.toISOString() ?? null,
+    daily_tree_open_required: meta.dailyTreeOpenRequired ?? false,
+    tree_open_streak: meta.treeOpenStreak ?? 0,
+    current_run_number: meta.currentRunNumber ?? null,
+    current_run_started_at: meta.currentRunStartedAt?.toISOString() ?? null,
+  };
+}
+
+export function buildRSIPLibraryRows(
+  entries: RSIPLibraryEntry[],
+  userId: string,
+) {
+  const updatedAt = new Date().toISOString();
+  return entries.map((entry) => ({
+    id: entry.id,
+    user_id: userId,
+    title: entry.title,
+    rule: entry.rule,
+    type: entry.type ?? null,
+    emoji: entry.emoji ?? null,
+    cumulative_execution_days: entry.cumulativeExecutionDays,
+    internalization_progress: entry.internalizationProgress,
+    last_active_at: entry.lastActiveAt.toISOString(),
+    times_used: entry.timesUsed,
+    use_timer: entry.useTimer ?? false,
+    timer_minutes: entry.timerMinutes ?? null,
+    is_passive: entry.isPassive ?? false,
+    updated_at: updatedAt,
+  }));
 }

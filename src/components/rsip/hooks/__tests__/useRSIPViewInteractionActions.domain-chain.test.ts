@@ -27,8 +27,9 @@ function createStateContainer(initialState: AppState) {
   return { getState: () => state, setState };
 }
 
-describe('RSIP view execution storage failure chain', () => {
+describe('RSIP view storage failure chains', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -76,5 +77,69 @@ describe('RSIP view execution storage failure chain', () => {
     expect(stateRef.getState().rsipNodes).toBe(originalNodes);
     expect(storage.appendRSIPExecutionRecord).not.toHaveBeenCalled();
     expect(onStartChain).not.toHaveBeenCalled();
+  });
+
+  it('keeps nodes and library unchanged until the atomic violation intent succeeds', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-16T08:00:00.000Z'));
+    const node = createNode({ cumulativeExecutionDays: 12 });
+    const originalNodes = [node];
+    const originalLibrary: AppState['rsipPolicyLibrary'] = [];
+    const stateRef = createStateContainer(
+      createAppState({
+        rsipNodes: originalNodes,
+        rsipPolicyLibrary: originalLibrary,
+      }),
+    );
+    const failure = new Error('atomic violation response unavailable');
+    const archiveRSIPNodesAndRemove = vi
+      .fn()
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(undefined);
+    const storage = createLocalStorageMock({ archiveRSIPNodesAndRemove });
+    const domain = useRsipDomain({
+      setState: stateRef.setState,
+      storage,
+      getState: stateRef.getState,
+    });
+    const { result } = renderHook(() =>
+      useRSIPViewInteractionActions({
+        state: createState({ nodes: originalNodes }),
+        props: createProps(domain.saveNodes, {
+          onMarkViolated: domain.markViolated,
+        }),
+      }),
+    );
+
+    act(() => result.current.openViolationDialog(node));
+    await act(async () => {
+      await expect(
+        result.current.handleConfirmViolation({ reasonCode: 'missed' }),
+      ).rejects.toBe(failure);
+    });
+
+    expect(stateRef.getState().rsipNodes).toBe(originalNodes);
+    expect(stateRef.getState().rsipPolicyLibrary).toBe(originalLibrary);
+    expect(result.current.violationDialogNode).toBe(node);
+    expect(storage.upsertRSIPLibraryEntry).not.toHaveBeenCalled();
+    expect(storage.removeRSIPNodes).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.handleConfirmViolation({ reasonCode: 'missed' });
+    });
+
+    expect(stateRef.getState().rsipNodes).toEqual([]);
+    expect(stateRef.getState().rsipPolicyLibrary).toEqual([
+      expect.objectContaining({
+        id: node.id,
+        cumulativeExecutionDays: 12,
+        timesUsed: 1,
+      }),
+    ]);
+    expect(result.current.violationDialogNode).toBeNull();
+    expect(archiveRSIPNodesAndRemove).toHaveBeenCalledTimes(2);
+    expect(archiveRSIPNodesAndRemove.mock.calls[1]).toEqual(
+      archiveRSIPNodesAndRemove.mock.calls[0],
+    );
   });
 });

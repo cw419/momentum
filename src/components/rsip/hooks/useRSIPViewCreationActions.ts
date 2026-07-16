@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { RSIPMeta, RSIPNode, RSIPNodeGroup } from '../../../types';
+import type { RSIPMeta, RSIPNodeGroup } from '../../../types';
 import type { RSIPViewProps } from '../../RSIPView.types';
+import type { PendingNodeCreation } from './useRSIPCreationRecovery';
+import {
+  mergeCreatedRSIPNodes,
+  useRSIPCreationRecovery,
+} from './useRSIPCreationRecovery';
 import type {
   RSIPViewActionSlice,
   RSIPViewStateSlice,
@@ -10,7 +15,11 @@ interface UseRSIPViewCreationActionsParams {
   state: RSIPViewStateSlice;
   props: Pick<
     RSIPViewProps,
-    'onSaveMeta' | 'onSaveNodes' | 'onSaveGroups' | 'onCreateGroup'
+    | 'onCreateNodes'
+    | 'onSaveMeta'
+    | 'onSaveNodes'
+    | 'onSaveGroups'
+    | 'onCreateGroup'
   >;
 }
 
@@ -32,6 +41,7 @@ export function useRSIPViewCreationActions({
     groups,
     nodes,
     canAddToday,
+    isStrictMode,
     splitTemplates,
     selectedParentId,
     selectedGroupId,
@@ -51,11 +61,41 @@ export function useRSIPViewCreationActions({
     setSplitItems,
     tr,
   } = state;
-  const { onSaveMeta, onSaveNodes, onSaveGroups, onCreateGroup } = props;
+  const {
+    onCreateNodes,
+    onSaveMeta,
+    onSaveNodes,
+    onSaveGroups,
+    onCreateGroup,
+  } = props;
   const nodeCreationInFlightRef = useRef(false);
   const groupCreationInFlightRef = useRef(false);
   const metaSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const latestMetaRef = useRef(meta);
+  const singleDraftSignature = JSON.stringify({
+    title: title.trim(),
+    rule: rule.trim(),
+    selectedParentId,
+    selectedGroupId,
+    createUseTimer,
+    createTimerMinutes,
+    createType,
+    createEmoji,
+    createIsPassive,
+  });
+  const splitDraftSignature = JSON.stringify({
+    splitGoal: splitGoal.trim(),
+    items: splitItems.map((item) => ({
+      id: item.id,
+      title: item.title.trim(),
+      rule: item.rule.trim(),
+      isPassive: item.isPassive,
+    })),
+    selectedParentId,
+    selectedGroupId,
+    createType,
+    createEmoji,
+  });
   useEffect(() => {
     latestMetaRef.current = meta;
   }, [meta]);
@@ -112,6 +152,60 @@ export function useRSIPViewCreationActions({
       return { ...current, lastTreeOpenedAt: now, treeOpenStreak };
     });
   }, [enqueueMetaUpdate]);
+
+  const {
+    prepareCreation,
+    markCommitted,
+    isLatestDraft,
+    recordCommittedAddition,
+    hasCommittedStrictAdditionToday,
+  } = useRSIPCreationRecovery({
+    meta,
+    nodes,
+    isStrictMode,
+    singleDraftSignature,
+    splitDraftSignature,
+    enqueueMetaUpdate,
+  });
+
+  const persistNodeCreation = useCallback(
+    async (pending: PendingNodeCreation) => {
+      if (onCreateNodes) {
+        await onCreateNodes(
+          pending.createdNodes,
+          pending.createdNodes[0]?.createdAt ?? new Date(),
+        );
+      } else {
+        await onSaveNodes(mergeCreatedRSIPNodes(nodes, pending.createdNodes));
+      }
+
+      markCommitted(pending);
+      if (isLatestDraft(pending)) {
+        if (pending.kind === 'single') {
+          setTitle('');
+          setRule('');
+        } else {
+          setSplitItems([]);
+          setSplitGoal('');
+        }
+      }
+      if (!onCreateNodes) {
+        await recordCommittedAddition(pending.createdNodes);
+      }
+    },
+    [
+      isLatestDraft,
+      markCommitted,
+      nodes,
+      onCreateNodes,
+      onSaveNodes,
+      recordCommittedAddition,
+      setRule,
+      setSplitGoal,
+      setSplitItems,
+      setTitle,
+    ],
+  );
 
   const handleCreateGroup = useCallback(async () => {
     if (groupCreationInFlightRef.current) {
@@ -178,6 +272,7 @@ export function useRSIPViewCreationActions({
   const handleAddSingle = useCallback(async () => {
     if (
       !canAddToday ||
+      hasCommittedStrictAdditionToday() ||
       !title.trim() ||
       !rule.trim() ||
       nodeCreationInFlightRef.current
@@ -185,29 +280,29 @@ export function useRSIPViewCreationActions({
       return;
     }
 
-    const newNode: RSIPNode = {
-      id: crypto.randomUUID(),
-      parentId: selectedParentId || undefined,
-      groupId: selectedGroupId || undefined,
-      title: title.trim(),
-      rule: rule.trim(),
-      sortOrder: Math.floor(Date.now() / 1000),
-      createdAt: new Date(),
-      useTimer: createUseTimer,
-      timerMinutes: createUseTimer ? createTimerMinutes : undefined,
-      type: createType,
-      emoji: createEmoji,
-      isPassive: createIsPassive,
-    };
+    const pending = prepareCreation('single', singleDraftSignature, () => [
+      {
+        id: crypto.randomUUID(),
+        parentId: selectedParentId || undefined,
+        groupId: selectedGroupId || undefined,
+        title: title.trim(),
+        rule: rule.trim(),
+        sortOrder: Math.floor(Date.now() / 1000),
+        createdAt: new Date(),
+        useTimer: createUseTimer,
+        timerMinutes: createUseTimer ? createTimerMinutes : undefined,
+        type: createType,
+        emoji: createEmoji,
+        isPassive: createIsPassive,
+      },
+    ]);
+    if (pending.committed) {
+      return;
+    }
+
     nodeCreationInFlightRef.current = true;
     try {
-      await onSaveNodes([...nodes, newNode]);
-      setTitle('');
-      setRule('');
-      await enqueueMetaUpdate((current) => ({
-        ...current,
-        lastAddedAt: new Date(),
-      }));
+      await persistNodeCreation(pending);
     } finally {
       nodeCreationInFlightRef.current = false;
     }
@@ -218,14 +313,13 @@ export function useRSIPViewCreationActions({
     createTimerMinutes,
     createType,
     createUseTimer,
-    enqueueMetaUpdate,
-    nodes,
-    onSaveNodes,
+    hasCommittedStrictAdditionToday,
+    persistNodeCreation,
+    prepareCreation,
     rule,
     selectedGroupId,
     selectedParentId,
-    setRule,
-    setTitle,
+    singleDraftSignature,
     title,
   ]);
 
@@ -255,7 +349,11 @@ export function useRSIPViewCreationActions({
   }, [setSplitItems]);
 
   const handleSubmitSplit = useCallback(async () => {
-    if (!canAddToday || nodeCreationInFlightRef.current) {
+    if (
+      !canAddToday ||
+      hasCommittedStrictAdditionToday() ||
+      nodeCreationInFlightRef.current
+    ) {
       return;
     }
 
@@ -266,31 +364,30 @@ export function useRSIPViewCreationActions({
       return;
     }
 
-    const baseSort = Math.floor(Date.now() / 1000);
-    const createdAt = new Date();
-    const newNodes = validItems.map((item, index) => ({
-      id: crypto.randomUUID(),
-      parentId: selectedParentId || undefined,
-      groupId: selectedGroupId || undefined,
-      title: item.title.trim(),
-      rule: item.rule.trim(),
-      sortOrder: baseSort + index,
-      createdAt,
-      type: createType,
-      emoji: createEmoji,
-      isPassive: item.isPassive,
-      splitFromGoal: splitGoal.trim() || undefined,
-    }));
+    const pending = prepareCreation('split', splitDraftSignature, () => {
+      const baseSort = Math.floor(Date.now() / 1000);
+      const createdAt = new Date();
+      return validItems.map((item, index) => ({
+        id: crypto.randomUUID(),
+        parentId: selectedParentId || undefined,
+        groupId: selectedGroupId || undefined,
+        title: item.title.trim(),
+        rule: item.rule.trim(),
+        sortOrder: baseSort + index,
+        createdAt,
+        type: createType,
+        emoji: createEmoji,
+        isPassive: item.isPassive,
+        splitFromGoal: splitGoal.trim() || undefined,
+      }));
+    });
+    if (pending.committed) {
+      return;
+    }
 
     nodeCreationInFlightRef.current = true;
     try {
-      await onSaveNodes([...nodes, ...newNodes]);
-      setSplitItems([]);
-      setSplitGoal('');
-      await enqueueMetaUpdate((current) => ({
-        ...current,
-        lastAddedAt: new Date(),
-      }));
+      await persistNodeCreation(pending);
     } finally {
       nodeCreationInFlightRef.current = false;
     }
@@ -298,15 +395,14 @@ export function useRSIPViewCreationActions({
     canAddToday,
     createEmoji,
     createType,
-    enqueueMetaUpdate,
-    nodes,
-    onSaveNodes,
+    hasCommittedStrictAdditionToday,
+    persistNodeCreation,
+    prepareCreation,
     selectedGroupId,
     selectedParentId,
-    setSplitGoal,
-    setSplitItems,
     splitGoal,
     splitItems,
+    splitDraftSignature,
   ]);
 
   return {

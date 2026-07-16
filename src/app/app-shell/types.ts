@@ -109,6 +109,7 @@ export interface AppShellRsipViewModel {
   taskLinks: RSIPTaskLink[];
   chains: Chain[];
   onBack: () => void;
+  createNodes: (nodes: RSIPNode[], addedAt: Date) => Promise<void>;
   saveNodes: (nodes: RSIPNode[]) => Promise<void>;
   saveMeta: (meta: RSIPMeta) => Promise<void>;
   saveGroups: (groups: RSIPNodeGroup[]) => Promise<void>;

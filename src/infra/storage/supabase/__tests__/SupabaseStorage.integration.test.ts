@@ -3,7 +3,9 @@ import type { CompletionHistory, ScheduledSession } from '../../../../types';
 import { createUnitChain } from '../../../../test/factories/chainFactory';
 import { supabase } from '../../../../lib/supabase';
 import {
+  failSupabaseRpcRequests,
   failSupabaseTransportRequests,
+  getSupabaseRpcCalls,
   resetSupabaseMockState,
 } from '../../../../test/mocks/supabaseMocks';
 import { SupabaseStorage } from '../SupabaseStorage';
@@ -69,6 +71,87 @@ describe('SupabaseStorage HTTP boundary', () => {
     await expect(storage.softDeleteChain('missing')).rejects.toThrow(
       'User not authenticated',
     );
+    await expect(storage.createRSIPNodesWithMeta([], {})).rejects.toThrow(
+      'without a user',
+    );
+    expect(getSupabaseRpcCalls()).toEqual([]);
+  });
+
+  it('sends atomic RSIP intents through the SDK with canonical RPC arguments', async () => {
+    await authenticate();
+    const createdAt = new Date('2026-07-16T01:00:00.000Z');
+    const nodeId = '00000000-0000-4000-8000-000000000001';
+
+    await storage.createRSIPNodesWithMeta(
+      [
+        {
+          id: nodeId,
+          title: 'Atomic node',
+          rule: 'Persist node and metadata together',
+          sortOrder: 0,
+          createdAt,
+        },
+      ],
+      { lastAddedAt: createdAt, allowMultiplePerDay: false },
+    );
+    await storage.archiveRSIPNodesAndRemove(
+      [nodeId, nodeId],
+      [
+        {
+          id: nodeId,
+          title: 'Stale client archive',
+          rule: 'The server must ignore this snapshot',
+          cumulativeExecutionDays: 999,
+          internalizationProgress: 100,
+          lastActiveAt: createdAt,
+          timesUsed: 999,
+        },
+      ],
+    );
+
+    expect(getSupabaseRpcCalls()).toEqual([
+      {
+        name: 'create_rsip_nodes_with_meta',
+        args: {
+          p_intent_key: nodeId,
+          p_nodes: [
+            expect.objectContaining({
+              id: nodeId,
+              user_id: 'test-user-123',
+              title: 'Atomic node',
+            }),
+          ],
+          p_meta: expect.objectContaining({
+            user_id: 'test-user-123',
+            last_added_at: createdAt.toISOString(),
+          }),
+        },
+      },
+      {
+        name: 'archive_rsip_nodes_and_remove',
+        args: { p_intent_key: nodeId, p_node_ids: [nodeId] },
+      },
+    ]);
+  });
+
+  it('propagates an atomic RPC transport failure without split writes', async () => {
+    await authenticate();
+    failSupabaseRpcRequests('create_rsip_nodes_with_meta');
+
+    await expect(
+      storage.createRSIPNodesWithMeta(
+        [
+          {
+            id: '00000000-0000-4000-8000-000000000002',
+            title: 'Uncommitted node',
+            rule: 'Surface transport ambiguity',
+            sortOrder: 0,
+            createdAt: new Date('2026-07-16T03:00:00.000Z'),
+          },
+        ],
+        {},
+      ),
+    ).rejects.toThrow('Failed to create RSIP nodes with metadata');
   });
 
   it('round-trips chain rows through the SDK, mapper, and Date hydration', async () => {

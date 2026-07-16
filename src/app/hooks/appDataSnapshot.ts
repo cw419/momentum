@@ -1,16 +1,19 @@
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { toError } from '../../utils/errorMessage';
 import { logger } from '../../utils/logger';
+import { reconcileRSIPMetaWithNodes } from '../../utils/rsipDailyLimit';
 
 async function loadWithFallback<T>(params: {
   load: () => Promise<T>;
   fallback: T;
   message: string;
   level: 'error' | 'warn';
+  onError?: () => void;
 }): Promise<T> {
   try {
     return await params.load();
   } catch (error) {
+    params.onError?.();
     logger[params.level](
       'APP_SHELL',
       params.message,
@@ -22,6 +25,8 @@ async function loadWithFallback<T>(params: {
 }
 
 export async function loadAppDataSnapshot(storage: MomentumStorage) {
+  let didLoadRSIPNodes = true;
+  let didLoadRSIPMeta = true;
   const [
     chains,
     scheduledSessions,
@@ -65,12 +70,18 @@ export async function loadAppDataSnapshot(storage: MomentumStorage) {
       fallback: [],
       message: 'Failed to load RSIP nodes',
       level: 'warn',
+      onError: () => {
+        didLoadRSIPNodes = false;
+      },
     }),
     loadWithFallback({
       load: () => storage.getRSIPMeta(),
       fallback: {},
       message: 'Failed to load RSIP meta',
       level: 'warn',
+      onError: () => {
+        didLoadRSIPMeta = false;
+      },
     }),
     loadWithFallback({
       load: () => storage.getRSIPGroups(),
@@ -110,13 +121,25 @@ export async function loadAppDataSnapshot(storage: MomentumStorage) {
     }),
   ]);
 
+  const reconciledRSIPMeta = didLoadRSIPNodes
+    ? reconcileRSIPMetaWithNodes(rsipMeta, rsipNodes)
+    : rsipMeta;
+  if (didLoadRSIPMeta && reconciledRSIPMeta !== rsipMeta) {
+    await loadWithFallback({
+      load: () => storage.saveRSIPMeta(reconciledRSIPMeta),
+      fallback: undefined,
+      message: 'Failed to reconcile RSIP meta with committed nodes',
+      level: 'warn',
+    });
+  }
+
   return {
     chains,
     scheduledSessions,
     activeSession,
     completionHistory,
     rsipNodes,
-    rsipMeta,
+    rsipMeta: reconciledRSIPMeta,
     rsipGroups,
     rsipPolicyLibrary,
     rsipRunHistory,

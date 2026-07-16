@@ -36,6 +36,10 @@ import {
   upsertRSIPNode,
 } from './rsip';
 import {
+  archiveRSIPNodesAndRemove,
+  createRSIPNodesWithMeta,
+} from './rsipAtomicIntents';
+import {
   getActiveSession,
   getScheduledSessions,
   removeScheduledSession,
@@ -80,6 +84,8 @@ export const storage = {
   saveRSIPNodes,
   upsertRSIPNode,
   removeRSIPNodes,
+  createRSIPNodesWithMeta,
+  archiveRSIPNodesAndRemove,
 
   getRSIPMeta,
   saveRSIPMeta,

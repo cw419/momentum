@@ -12,7 +12,11 @@ const UUID_2 = '00000000-0000-4000-8000-000000000002';
 
 type CreationProps = Pick<
   RSIPViewProps,
-  'onSaveMeta' | 'onSaveNodes' | 'onSaveGroups' | 'onCreateGroup'
+  | 'onCreateNodes'
+  | 'onSaveMeta'
+  | 'onSaveNodes'
+  | 'onSaveGroups'
+  | 'onCreateGroup'
 >;
 
 function createProps(overrides: Partial<CreationProps> = {}): CreationProps {
@@ -312,6 +316,33 @@ describe('useRSIPViewCreationActions', () => {
     expect(setRule).toHaveBeenCalledWith('');
   });
 
+  it('uses the atomic creation callback without separate node or metadata writes', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
+    const onCreateNodes = vi.fn(async () => undefined);
+    const onSaveNodes = vi.fn();
+    const onSaveMeta = vi.fn();
+    const { result } = renderCreationActions(
+      { title: ' Atomic policy ', rule: ' Commit together ' },
+      { onCreateNodes, onSaveNodes, onSaveMeta },
+    );
+
+    await act(() => result.current.handleAddSingle());
+
+    expect(onCreateNodes).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: UUID_1,
+          title: 'Atomic policy',
+          rule: 'Commit together',
+          createdAt: NOW,
+        }),
+      ],
+      NOW,
+    );
+    expect(onSaveNodes).not.toHaveBeenCalled();
+    expect(onSaveMeta).not.toHaveBeenCalled();
+  });
+
   it('coalesces repeated single-node submissions while the full-state save is pending', async () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
     const deferred = createDeferred();
@@ -406,21 +437,175 @@ describe('useRSIPViewCreationActions', () => {
     expect(setRule).not.toHaveBeenCalled();
   });
 
-  it('clears a committed node draft even when the follow-up metadata save fails', async () => {
+  it('does not retry a committed node when the best-effort metadata save fails', async () => {
+    const randomUUID = vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
     const failure = new Error('meta save failed');
     const setTitle = vi.fn();
     const setRule = vi.fn();
+    const onSaveNodes = vi.fn(async () => undefined);
+    const onSaveMeta = vi.fn(() => Promise.reject(failure));
     const { result } = renderCreationActions(
       { title: 'Policy', rule: 'Rule', setTitle, setRule },
+      { onSaveNodes, onSaveMeta },
+    );
+
+    await expect(result.current.handleAddSingle()).resolves.toBeUndefined();
+    await expect(result.current.handleAddSingle()).resolves.toBeUndefined();
+
+    expect(randomUUID).toHaveBeenCalledOnce();
+    expect(onSaveNodes).toHaveBeenCalledOnce();
+    expect(onSaveMeta).toHaveBeenCalledOnce();
+    expect(setTitle).toHaveBeenCalledWith('');
+    expect(setRule).toHaveBeenCalledWith('');
+  });
+
+  it('blocks a different strict-mode draft after a committed fallback write', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
+    const onSaveNodes = vi.fn(async () => undefined);
+    const hook = renderCreationActions(
       {
-        onSaveNodes: vi.fn(async () => undefined),
-        onSaveMeta: vi.fn(() => Promise.reject(failure)),
+        meta: { allowMultiplePerDay: false },
+        isStrictMode: true,
+        title: 'First',
+        rule: 'First rule',
+      },
+      {
+        onSaveNodes,
+        onSaveMeta: vi.fn(() => Promise.reject(new Error('meta failed'))),
       },
     );
 
+    await hook.result.current.handleAddSingle();
+    act(() => {
+      hook.state.title = 'Second';
+      hook.state.rule = 'Second rule';
+      hook.rerender();
+    });
+    await hook.result.current.handleAddSingle();
+
+    expect(onSaveNodes).toHaveBeenCalledOnce();
+  });
+
+  it('reuses the same node identity when retrying an ambiguous atomic failure', async () => {
+    const randomUUID = vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
+    const failure = new Error('atomic response lost');
+    const onCreateNodes = vi
+      .fn<NonNullable<CreationProps['onCreateNodes']>>()
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(undefined);
+    const onSaveNodes = vi.fn();
+    const onSaveMeta = vi.fn();
+    const { result } = renderCreationActions(
+      { title: 'Policy', rule: 'Rule' },
+      { onCreateNodes, onSaveNodes, onSaveMeta },
+    );
+
     await expect(result.current.handleAddSingle()).rejects.toBe(failure);
-    expect(setTitle).toHaveBeenCalledWith('');
-    expect(setRule).toHaveBeenCalledWith('');
+    await expect(result.current.handleAddSingle()).resolves.toBeUndefined();
+
+    expect(randomUUID).toHaveBeenCalledOnce();
+    expect(onCreateNodes).toHaveBeenCalledTimes(2);
+    expect(onCreateNodes.mock.calls[1]).toEqual(onCreateNodes.mock.calls[0]);
+    expect(onSaveNodes).not.toHaveBeenCalled();
+    expect(onSaveMeta).not.toHaveBeenCalled();
+  });
+
+  it('stops fallback retries once a synchronized same-id node proves commit', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
+    const failure = new Error('replacement response lost');
+    const onSaveNodes = vi
+      .fn<NonNullable<CreationProps['onSaveNodes']>>()
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(undefined);
+    const hook = renderCreationActions(
+      { title: 'Original', rule: 'Original rule' },
+      { onSaveNodes, onSaveMeta: vi.fn(async () => undefined) },
+    );
+
+    await expect(hook.result.current.handleAddSingle()).rejects.toBe(failure);
+    const synchronizedNode = createNode({
+      id: UUID_1,
+      title: 'Edited after remote commit',
+      totalExecutions: 9,
+    });
+    act(() => {
+      hook.state.nodes = [synchronizedNode];
+      hook.rerender();
+    });
+
+    await expect(
+      hook.result.current.handleAddSingle(),
+    ).resolves.toBeUndefined();
+
+    expect(onSaveNodes).toHaveBeenCalledOnce();
+  });
+
+  it('resolves an ambiguous creation before accepting an edited replacement draft', async () => {
+    const randomUUID = vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
+    const failure = new Error('atomic response lost');
+    const onCreateNodes = vi
+      .fn<NonNullable<CreationProps['onCreateNodes']>>()
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(undefined);
+    const setTitle = vi.fn();
+    const setRule = vi.fn();
+    const hook = renderCreationActions(
+      {
+        title: 'Original',
+        rule: 'Original rule',
+        setTitle,
+        setRule,
+      },
+      { onCreateNodes },
+    );
+
+    await expect(hook.result.current.handleAddSingle()).rejects.toBe(failure);
+    act(() => {
+      hook.state.title = 'Replacement';
+      hook.state.rule = 'Replacement rule';
+      hook.rerender();
+    });
+    await expect(
+      hook.result.current.handleAddSingle(),
+    ).resolves.toBeUndefined();
+
+    expect(randomUUID).toHaveBeenCalledOnce();
+    expect(onCreateNodes).toHaveBeenCalledTimes(2);
+    expect(onCreateNodes.mock.calls[1]).toEqual(onCreateNodes.mock.calls[0]);
+    expect(setTitle).not.toHaveBeenCalled();
+    expect(setRule).not.toHaveBeenCalled();
+  });
+
+  it('does not clear a replacement draft edited while node persistence is pending', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
+    const deferred = createDeferred();
+    const setTitle = vi.fn();
+    const setRule = vi.fn();
+    const hook = renderCreationActions(
+      { title: 'Original', rule: 'Original rule', setTitle, setRule },
+      {
+        onSaveNodes: vi.fn(() => deferred.promise),
+        onSaveMeta: vi.fn(async () => undefined),
+      },
+    );
+
+    let submission!: Promise<void>;
+    act(() => {
+      submission = hook.result.current.handleAddSingle();
+    });
+    act(() => {
+      hook.state.title = 'Replacement';
+      hook.state.rule = 'Replacement rule';
+      hook.rerender();
+    });
+
+    await act(async () => {
+      deferred.resolve();
+      await submission;
+    });
+
+    expect(setTitle).not.toHaveBeenCalled();
+    expect(setRule).not.toHaveBeenCalled();
   });
 
   it('applies a split template with fresh row identities and leaves its source unchanged', () => {
@@ -634,10 +819,43 @@ describe('useRSIPViewCreationActions', () => {
     expect(onSaveMeta).toHaveBeenCalledOnce();
   });
 
-  it('clears committed split rows even when the follow-up metadata save fails', async () => {
+  it('atomically creates split nodes without invoking either fallback write', async () => {
+    vi.spyOn(crypto, 'randomUUID')
+      .mockReturnValueOnce(UUID_1)
+      .mockReturnValueOnce(UUID_2);
+    const onCreateNodes = vi.fn(async () => undefined);
+    const onSaveNodes = vi.fn();
+    const onSaveMeta = vi.fn();
+    const { result } = renderCreationActions(
+      {
+        splitItems: [
+          { id: 'row-1', title: 'First', rule: 'One', isPassive: false },
+          { id: 'row-2', title: 'Second', rule: 'Two', isPassive: true },
+        ],
+      },
+      { onCreateNodes, onSaveNodes, onSaveMeta },
+    );
+
+    await act(() => result.current.handleSubmitSplit());
+
+    expect(onCreateNodes).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ id: UUID_1, createdAt: NOW }),
+        expect.objectContaining({ id: UUID_2, createdAt: NOW }),
+      ],
+      NOW,
+    );
+    expect(onSaveNodes).not.toHaveBeenCalled();
+    expect(onSaveMeta).not.toHaveBeenCalled();
+  });
+
+  it('does not retry committed split rows when the metadata save fails', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
     const failure = new Error('meta save failed');
     const setSplitItems = vi.fn();
     const setSplitGoal = vi.fn();
+    const onSaveNodes = vi.fn(async () => undefined);
+    const onSaveMeta = vi.fn(() => Promise.reject(failure));
     const { result } = renderCreationActions(
       {
         splitGoal: 'Goal',
@@ -647,13 +865,14 @@ describe('useRSIPViewCreationActions', () => {
         setSplitItems,
         setSplitGoal,
       },
-      {
-        onSaveNodes: vi.fn(async () => undefined),
-        onSaveMeta: vi.fn(() => Promise.reject(failure)),
-      },
+      { onSaveNodes, onSaveMeta },
     );
 
-    await expect(result.current.handleSubmitSplit()).rejects.toBe(failure);
+    await expect(result.current.handleSubmitSplit()).resolves.toBeUndefined();
+    await expect(result.current.handleSubmitSplit()).resolves.toBeUndefined();
+
+    expect(onSaveNodes).toHaveBeenCalledOnce();
+    expect(onSaveMeta).toHaveBeenCalledOnce();
     expect(setSplitItems).toHaveBeenCalledWith([]);
     expect(setSplitGoal).toHaveBeenCalledWith('');
   });
