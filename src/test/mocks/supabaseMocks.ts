@@ -9,12 +9,6 @@ type TableName =
   | 'active_sessions'
   | 'completion_history';
 type JsonRow = Record<string, unknown>;
-type RpcName = 'create_rsip_nodes_with_meta' | 'archive_rsip_nodes_and_remove';
-
-export interface SupabaseRpcCall {
-  name: RpcName;
-  args: Record<string, unknown>;
-}
 
 const mockUser = {
   id: TEST_SUPABASE_USER_ID,
@@ -40,17 +34,10 @@ const tables: Record<TableName, Map<string, JsonRow>> = {
 
 let authenticated = false;
 let generatedId = 0;
-const rpcCalls: SupabaseRpcCall[] = [];
 let pendingFailure:
   | {
       method: string;
       table: TableName;
-      remaining: number;
-    }
-  | undefined;
-let pendingRpcFailure:
-  | {
-      name: RpcName;
       remaining: number;
     }
   | undefined;
@@ -59,20 +46,7 @@ export function resetSupabaseMockState(): void {
   for (const table of Object.values(tables)) table.clear();
   authenticated = false;
   generatedId = 0;
-  rpcCalls.length = 0;
   pendingFailure = undefined;
-  pendingRpcFailure = undefined;
-}
-
-export function getSupabaseRpcCalls(): SupabaseRpcCall[] {
-  return rpcCalls.map((call) => ({
-    name: call.name,
-    args: structuredClone(call.args),
-  }));
-}
-
-export function failSupabaseRpcRequests(name: RpcName, count = 1): void {
-  pendingRpcFailure = { name, remaining: count };
 }
 
 export function failSupabaseTransportRequests(
@@ -253,57 +227,6 @@ export const supabaseMockHandlers = [
     authenticated = false;
     return new HttpResponse(null, { status: 204 });
   }),
-  http.post(
-    `${TEST_SUPABASE_URL}/rest/v1/rpc/:functionName`,
-    async ({ params, request }) => {
-      const name = String(params.functionName) as RpcName;
-      if (
-        name !== 'create_rsip_nodes_with_meta' &&
-        name !== 'archive_rsip_nodes_and_remove'
-      ) {
-        return HttpResponse.json(
-          {
-            code: 'PGRST202',
-            message: `Unknown RPC: ${name}`,
-            details: null,
-            hint: null,
-          },
-          { status: 404 },
-        );
-      }
-
-      if (!authenticated) {
-        return HttpResponse.json(
-          {
-            code: '28000',
-            message: 'Authentication required',
-            details: null,
-            hint: null,
-          },
-          { status: 401 },
-        );
-      }
-
-      const args = (await request.json()) as Record<string, unknown>;
-      rpcCalls.push({ name, args });
-      if (pendingRpcFailure?.name === name) {
-        pendingRpcFailure.remaining -= 1;
-        if (pendingRpcFailure.remaining === 0) pendingRpcFailure = undefined;
-        return HttpResponse.error();
-      }
-
-      if (name === 'create_rsip_nodes_with_meta') {
-        return HttpResponse.json({
-          nodes: args.p_nodes,
-          meta: args.p_meta,
-        });
-      }
-      return HttpResponse.json({
-        removed_node_ids: args.p_node_ids,
-        library_entries: [],
-      });
-    },
-  ),
   ...createTableHandlers('chains'),
   ...createTableHandlers('scheduled_sessions'),
   ...createTableHandlers('active_sessions'),

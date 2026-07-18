@@ -1,4 +1,9 @@
-import type { RSIPMeta, RSIPNode, RSIPStabilityPhase } from '../../../types';
+import type {
+  RSIPLibraryEntry,
+  RSIPMeta,
+  RSIPNode,
+  RSIPStabilityPhase,
+} from '../../../types';
 import { getDescendantCount, getDescendantIds } from '../../../utils/rsipTree';
 import { buildExecutionRecord } from './helpers';
 import type {
@@ -12,8 +17,12 @@ interface CreateNodeOperationsParams {
   readState: ReadState;
   saveFns: Pick<
     SaveFns,
-    'appendExecutionRecord' | 'archiveAndRemoveNodes' | 'upsertNode'
+    'appendExecutionRecord' | 'removeNodes' | 'upsertNode'
   >;
+  archiveToLibrary: (
+    node: RSIPNode,
+    existingLibrary?: RSIPLibraryEntry[],
+  ) => Promise<RSIPLibraryEntry[]>;
   recordCollapse: (
     meta: RSIPMeta,
     reason?: string,
@@ -35,6 +44,7 @@ async function ignoreLoggedPostCommitFailure(
 export function createNodeOperations({
   readState,
   saveFns,
+  archiveToLibrary,
   recordCollapse,
 }: CreateNodeOperationsParams) {
   const reinforceNode = async (
@@ -205,10 +215,16 @@ export function createNodeOperations({
       addSubtree(nodeId);
     }
 
+    const removedNodeIds = [...removedIds];
     const removedNodes = nodes.filter((node) => removedIds.has(node.id));
     const updatedNodes = nodes.filter((node) => !removedIds.has(node.id));
 
-    await saveFns.archiveAndRemoveNodes(removedNodes);
+    let updatedLibrary = state?.rsipPolicyLibrary ?? [];
+    for (const removedNode of removedNodes) {
+      updatedLibrary = await archiveToLibrary(removedNode, updatedLibrary);
+    }
+
+    await saveFns.removeNodes(removedNodeIds, updatedNodes);
     await ignoreLoggedPostCommitFailure(
       saveFns.appendExecutionRecord(
         buildExecutionRecord(nodeId, 'violated', notes, options),

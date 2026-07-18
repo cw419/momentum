@@ -18,14 +18,6 @@ export abstract class SupabaseStorageRsip
     rsipIntentApi.upsertRSIPNode(this.ctx, node);
   removeRSIPNodes: RsipStore['removeRSIPNodes'] = (nodeIds) =>
     rsipIntentApi.removeRSIPNodes(this.ctx, nodeIds);
-  createRSIPNodesWithMeta: RsipStore['createRSIPNodesWithMeta'] = (
-    newNodes,
-    nextMeta,
-  ) => rsipIntentApi.createRSIPNodesWithMeta(this.ctx, newNodes, nextMeta);
-  archiveRSIPNodesAndRemove: RsipStore['archiveRSIPNodesAndRemove'] = (
-    nodeIds,
-    nextLibrary,
-  ) => rsipIntentApi.archiveRSIPNodesAndRemove(this.ctx, nodeIds, nextLibrary);
   getRSIPMeta() {
     return this.deduplicatedRequest('getRSIPMeta', () =>
       rsipApi.getRSIPMeta(this.ctx),

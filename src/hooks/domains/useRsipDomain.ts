@@ -4,10 +4,7 @@ import { toError } from '../../utils/errorHandling';
 import { rsipTaskIntegrationService } from '../../services/rsip-integration/RSIPTaskIntegrationService';
 import { ensureDate } from './rsip/helpers';
 import { createGroupOperations } from './rsip/groupOperations';
-import {
-  buildLibraryArchive,
-  createLibraryOperations,
-} from './rsip/libraryOperations';
+import { createLibraryOperations } from './rsip/libraryOperations';
 import { createNodeOperations } from './rsip/nodeOperations';
 import { createRunOperations } from './rsip/runOperations';
 import { createTaskLinkOperations } from './rsip/taskLinkOperations';
@@ -24,93 +21,6 @@ function logPersistenceError(
   error: unknown,
 ) {
   logger.error('RSIP', message, context, toError(error));
-}
-
-function expandNodeIdsFromLatestTree(
-  nodes: AppState['rsipNodes'],
-  initialIds: Set<string>,
-): Set<string> {
-  const expandedIds = new Set(initialIds);
-  let addedDescendant = true;
-  while (addedDescendant) {
-    addedDescendant = false;
-    for (const node of nodes) {
-      if (
-        node.parentId &&
-        expandedIds.has(node.parentId) &&
-        !expandedIds.has(node.id)
-      ) {
-        expandedIds.add(node.id);
-        addedDescendant = true;
-      }
-    }
-  }
-  return expandedIds;
-}
-
-function latestOptionalDate(
-  left: Date | undefined,
-  right: Date | undefined,
-): Date | undefined {
-  if (!left) return right;
-  if (!right) return left;
-  return left.getTime() >= right.getTime() ? left : right;
-}
-
-function mergeQueuedMeta(current: AppState['rsipMeta'], requested: AppState['rsipMeta']) {
-  const currentRunNumber = current.currentRunNumber ?? 0;
-  const requestedRunNumber = requested.currentRunNumber ?? 0;
-  const keepCurrentRun = currentRunNumber > requestedRunNumber;
-  const currentTreeOpenedAt = current.lastTreeOpenedAt;
-  const requestedTreeOpenedAt = requested.lastTreeOpenedAt;
-  const keepCurrentTreeOpen =
-    !!currentTreeOpenedAt &&
-    (!requestedTreeOpenedAt ||
-      currentTreeOpenedAt.getTime() > requestedTreeOpenedAt.getTime());
-
-  return {
-    ...current,
-    ...requested,
-    lastAddedAt: latestOptionalDate(
-      current.lastAddedAt,
-      requested.lastAddedAt,
-    ),
-    currentRunNumber: keepCurrentRun
-      ? current.currentRunNumber
-      : (requested.currentRunNumber ?? current.currentRunNumber),
-    currentRunStartedAt: keepCurrentRun
-      ? current.currentRunStartedAt
-      : latestOptionalDate(
-          current.currentRunStartedAt,
-          requested.currentRunStartedAt,
-        ),
-    lastTreeOpenedAt: keepCurrentTreeOpen
-      ? currentTreeOpenedAt
-      : (requestedTreeOpenedAt ?? currentTreeOpenedAt),
-    treeOpenStreak: keepCurrentTreeOpen
-      ? current.treeOpenStreak
-      : (requested.treeOpenStreak ?? current.treeOpenStreak),
-  };
-}
-
-function mergeAuthoritativeLibrary(
-  current: AppState['rsipPolicyLibrary'],
-  removedIds: Set<string>,
-  authoritativeEntries: AppState['rsipPolicyLibrary'],
-) {
-  const authoritativeById = new Map(
-    authoritativeEntries.map((entry) => [entry.id, entry]),
-  );
-  const merged = current
-    .filter(
-      (entry) => !removedIds.has(entry.id) || authoritativeById.has(entry.id),
-    )
-    .map((entry) => authoritativeById.get(entry.id) ?? entry);
-  const existingIds = new Set(merged.map((entry) => entry.id));
-  return [
-    ...merged,
-    ...authoritativeEntries.filter((entry) => !existingIds.has(entry.id)),
-  ];
 }
 
 async function ignoreLoggedPostCommitFailure(
@@ -135,39 +45,6 @@ export function useRsipDomain({
     sliceWriteQueues = new Map();
     sliceWriteQueuesBySetter.set(setState, sliceWriteQueues);
   }
-
-  const persistThenCommitSlices = async (
-    keys: (keyof AppState)[],
-    persist: () => Promise<void>,
-    commit: (current: AppState) => AppState,
-  ) => {
-    const previousWrites = [
-      ...new Set(
-        keys
-          .map((key) => sliceWriteQueues.get(key))
-          .filter((write): write is Promise<void> => write !== undefined),
-      ),
-    ];
-    const currentWrite = Promise.all(
-      previousWrites.map((write) => write.catch(() => undefined)),
-    ).then(async () => {
-      await persist();
-      setState(commit);
-    });
-    for (const key of keys) {
-      sliceWriteQueues.set(key, currentWrite);
-    }
-
-    try {
-      await currentWrite;
-    } finally {
-      for (const key of keys) {
-        if (sliceWriteQueues.get(key) === currentWrite) {
-          sliceWriteQueues.delete(key);
-        }
-      }
-    }
-  };
 
   const persistThenCommitSlice = async <K extends keyof AppState>(
     key: K,
@@ -239,88 +116,12 @@ export function useRsipDomain({
   };
 
   const saveMeta: SaveFns['saveMeta'] = async (meta) => {
-    let committedMeta = meta;
     try {
-      await persistThenCommitSlices(
-        ['rsipMeta'],
-        async () => {
-          committedMeta = mergeQueuedMeta(readState()?.rsipMeta ?? {}, meta);
-          await storage.saveRSIPMeta(committedMeta);
-        },
-        (current) => ({ ...current, rsipMeta: committedMeta }),
+      await persistThenCommitSlice('rsipMeta', meta, () =>
+        storage.saveRSIPMeta(meta),
       );
     } catch (error) {
       logPersistenceError('Failed to save RSIP meta', { meta }, error);
-      throw error;
-    }
-  };
-
-  const createNodes = async (
-    nodes: Parameters<typeof storage.createRSIPNodesWithMeta>[0],
-    addedAt: Date,
-  ): Promise<void> => {
-    let committedMeta = readState()?.rsipMeta ?? {};
-    let authoritativeNodes = nodes;
-    try {
-      await persistThenCommitSlices(
-        ['rsipNodes', 'rsipMeta'],
-        async () => {
-          const current = readState();
-          const isFirstCreation =
-            (current?.rsipNodes.length ?? 0) === 0 && nodes.length > 0;
-          committedMeta = {
-            ...(current?.rsipMeta ?? {}),
-            lastAddedAt: addedAt,
-            ...(isFirstCreation
-              ? {
-                  currentRunNumber: current?.rsipMeta.currentRunNumber ?? 1,
-                  currentRunStartedAt:
-                    current?.rsipMeta.currentRunStartedAt ?? addedAt,
-                }
-              : {}),
-          };
-          const result = await storage.createRSIPNodesWithMeta(
-            nodes,
-            committedMeta,
-          );
-          if (result) {
-            authoritativeNodes = result.nodes;
-            committedMeta = result.meta;
-          }
-        },
-        (current) => {
-          const requestedIds = new Set(nodes.map((node) => node.id));
-          const authoritativeIds = new Set(
-            authoritativeNodes.map((node) => node.id),
-          );
-          const nodesById = new Map(
-            current.rsipNodes
-              .filter(
-                (node) =>
-                  !requestedIds.has(node.id) || authoritativeIds.has(node.id),
-              )
-              .map((node) => [node.id, node]),
-          );
-          for (const node of authoritativeNodes) {
-            if (!nodesById.has(node.id)) {
-              nodesById.set(node.id, node);
-            }
-          }
-          return {
-            ...current,
-            rsipNodes: [...nodesById.values()].sort(
-              (left, right) => left.sortOrder - right.sortOrder,
-            ),
-            rsipMeta: committedMeta,
-          };
-        },
-      );
-    } catch (error) {
-      logPersistenceError(
-        'Failed to create RSIP nodes with meta',
-        { nodeIds: nodes.map((node) => node.id), addedAt },
-        error,
-      );
       throw error;
     }
   };
@@ -454,62 +255,6 @@ export function useRsipDomain({
     }
   };
 
-  const archiveAndRemoveNodes: SaveFns['archiveAndRemoveNodes'] = async (
-    removedNodes,
-  ) => {
-    const removedIds = new Set(removedNodes.map((node) => node.id));
-    let committedRemovedIds = removedIds;
-    let persistedNodeIds = [...removedIds];
-    let nextLibrary = readState()?.rsipPolicyLibrary ?? [];
-    try {
-      await persistThenCommitSlices(
-        ['rsipNodes', 'rsipPolicyLibrary'],
-        async () => {
-          const current = readState();
-          committedRemovedIds = current
-            ? expandNodeIdsFromLatestTree(current.rsipNodes, removedIds)
-            : removedIds;
-          const liveRemovedNodes = current
-            ? current.rsipNodes.filter((node) =>
-                committedRemovedIds.has(node.id),
-              )
-            : removedNodes;
-          persistedNodeIds = liveRemovedNodes.map((node) => node.id);
-          nextLibrary = liveRemovedNodes.reduce(
-            (library, node) => buildLibraryArchive(node, library).nextLibrary,
-            current?.rsipPolicyLibrary ?? [],
-          );
-          const result = await storage.archiveRSIPNodesAndRemove(
-            persistedNodeIds,
-            nextLibrary,
-          );
-          if (result) {
-            committedRemovedIds = new Set(result.removedNodeIds);
-            nextLibrary = mergeAuthoritativeLibrary(
-              current?.rsipPolicyLibrary ?? [],
-              committedRemovedIds,
-              result.libraryEntries,
-            );
-          }
-        },
-        (current) => ({
-          ...current,
-          rsipNodes: current.rsipNodes.filter(
-            (node) => !committedRemovedIds.has(node.id),
-          ),
-          rsipPolicyLibrary: nextLibrary,
-        }),
-      );
-    } catch (error) {
-      logPersistenceError(
-        'Failed to archive and remove violated RSIP nodes',
-        { nodeIds: [...removedIds] },
-        error,
-      );
-      throw error;
-    }
-  };
-
   const saveNodes: SaveFns['saveNodes'] = async (nodes) => {
     const writeContext: { previousState: AppState | null } = {
       previousState: null,
@@ -539,7 +284,6 @@ export function useRsipDomain({
   const saveFns: SaveFns = {
     appendExecutionRecord,
     appendRunRecord,
-    archiveAndRemoveNodes,
     removeNodes,
     saveGroups,
     saveMeta,
@@ -569,6 +313,7 @@ export function useRsipDomain({
   const nodeOperations = createNodeOperations({
     readState,
     saveFns,
+    archiveToLibrary: libraryOperations.archiveToLibrary,
     recordCollapse: runOperations.recordCollapse,
   });
 
@@ -581,7 +326,6 @@ export function useRsipDomain({
 
   return {
     openRSIP,
-    createNodes,
     saveNodes,
     saveMeta,
     saveGroups,

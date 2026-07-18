@@ -25,10 +25,8 @@ import {
   type SerializedRSIPTaskLink,
 } from '../../serialization';
 import { STORAGE_KEYS } from './keys';
-import { recoverRSIPAtomicJournal } from './rsipAtomicJournal';
 
 export function getRSIPNodes(): RSIPNode[] {
-  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_NODES);
   if (!data) return [];
 
@@ -36,7 +34,6 @@ export function getRSIPNodes(): RSIPNode[] {
 }
 
 export function saveRSIPNodes(nodes: RSIPNode[]): void {
-  recoverRSIPAtomicJournal();
   localStorage.setItem(STORAGE_KEYS.RSIP_NODES, JSON.stringify(nodes));
 }
 
@@ -57,34 +54,30 @@ export function removeRSIPNodes(nodeIds: string[]): void {
 }
 
 export function getRSIPMeta(): RSIPMeta {
-  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_META);
   if (!data) return {};
 
   return decodeRSIPMeta(JSON.parse(data) as SerializedRSIPMeta);
 }
 
-export function serializeRSIPMeta(meta: RSIPMeta): string {
-  return JSON.stringify({
-    ...meta,
-    lastAddedAt: meta.lastAddedAt ? toIsoString(meta.lastAddedAt) : undefined,
-    lastTreeOpenedAt: meta.lastTreeOpenedAt
-      ? toIsoString(meta.lastTreeOpenedAt)
-      : undefined,
-    currentRunStartedAt: meta.currentRunStartedAt
-      ? toIsoString(meta.currentRunStartedAt)
-      : undefined,
-    allowMultiplePerDay: !!meta.allowMultiplePerDay,
-  });
-}
-
 export function saveRSIPMeta(meta: RSIPMeta): void {
-  recoverRSIPAtomicJournal();
-  localStorage.setItem(STORAGE_KEYS.RSIP_META, serializeRSIPMeta(meta));
+  localStorage.setItem(
+    STORAGE_KEYS.RSIP_META,
+    JSON.stringify({
+      ...meta,
+      lastAddedAt: meta.lastAddedAt ? toIsoString(meta.lastAddedAt) : undefined,
+      lastTreeOpenedAt: meta.lastTreeOpenedAt
+        ? toIsoString(meta.lastTreeOpenedAt)
+        : undefined,
+      currentRunStartedAt: meta.currentRunStartedAt
+        ? toIsoString(meta.currentRunStartedAt)
+        : undefined,
+      allowMultiplePerDay: !!meta.allowMultiplePerDay,
+    }),
+  );
 }
 
 export function getRSIPGroups(): RSIPNodeGroup[] {
-  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_GROUPS);
   if (!data) return [];
 
@@ -94,12 +87,10 @@ export function getRSIPGroups(): RSIPNodeGroup[] {
 }
 
 export function saveRSIPGroups(groups: RSIPNodeGroup[]): void {
-  recoverRSIPAtomicJournal();
   localStorage.setItem(STORAGE_KEYS.RSIP_GROUPS, JSON.stringify(groups));
 }
 
 export function getRSIPPolicyLibrary(): RSIPLibraryEntry[] {
-  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_POLICY_LIBRARY);
   if (!data) return [];
 
@@ -109,7 +100,6 @@ export function getRSIPPolicyLibrary(): RSIPLibraryEntry[] {
 }
 
 export function saveRSIPPolicyLibrary(entries: RSIPLibraryEntry[]): void {
-  recoverRSIPAtomicJournal();
   localStorage.setItem(
     STORAGE_KEYS.RSIP_POLICY_LIBRARY,
     JSON.stringify(entries),
@@ -124,7 +114,6 @@ export function upsertRSIPLibraryEntry(entry: RSIPLibraryEntry): void {
 }
 
 export function getRSIPRunHistory(): RSIPRunRecord[] {
-  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_RUN_HISTORY);
   if (!data) return [];
 
@@ -134,7 +123,6 @@ export function getRSIPRunHistory(): RSIPRunRecord[] {
 }
 
 export function saveRSIPRunHistory(records: RSIPRunRecord[]): void {
-  recoverRSIPAtomicJournal();
   localStorage.setItem(STORAGE_KEYS.RSIP_RUN_HISTORY, JSON.stringify(records));
 }
 
@@ -143,7 +131,6 @@ export function appendRSIPRunRecord(record: RSIPRunRecord): void {
 }
 
 export function getRSIPTaskLinks(): RSIPTaskLink[] {
-  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_TASK_LINKS);
   if (!data) return [];
 
@@ -151,12 +138,10 @@ export function getRSIPTaskLinks(): RSIPTaskLink[] {
 }
 
 export function saveRSIPTaskLinks(links: RSIPTaskLink[]): void {
-  recoverRSIPAtomicJournal();
   localStorage.setItem(STORAGE_KEYS.RSIP_TASK_LINKS, JSON.stringify(links));
 }
 
 export function getRSIPExecutionRecords(): RSIPExecutionRecord[] {
-  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_EXECUTION_RECORDS);
   if (!data) return [];
 
@@ -166,7 +151,6 @@ export function getRSIPExecutionRecords(): RSIPExecutionRecord[] {
 }
 
 export function appendRSIPExecutionRecord(record: RSIPExecutionRecord): void {
-  recoverRSIPAtomicJournal();
   const current = getRSIPExecutionRecords();
   current.push(record);
   localStorage.setItem(

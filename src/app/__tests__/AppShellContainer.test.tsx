@@ -51,7 +51,6 @@ const handlers = vi.hoisted(() => ({
   handleRestoreChains: vi.fn(),
   handlePermanentDeleteChains: vi.fn(),
   openRSIP: vi.fn(),
-  createRSIPNodes: vi.fn(),
   saveRSIPNodes: vi.fn(),
   saveRSIPMeta: vi.fn(),
   saveRSIPGroups: vi.fn(),
@@ -226,7 +225,6 @@ describe('AppShellContainer', () => {
     });
     useRsipDomainMock.mockReturnValue({
       openRSIP: handlers.openRSIP,
-      createNodes: handlers.createRSIPNodes,
       saveNodes: handlers.saveRSIPNodes,
       saveMeta: handlers.saveRSIPMeta,
       saveGroups: handlers.saveRSIPGroups,

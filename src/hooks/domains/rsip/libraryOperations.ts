@@ -17,68 +17,6 @@ async function ignoreLoggedPostCommitFailure(
   }
 }
 
-export function buildLibraryArchive(
-  node: RSIPNode,
-  library: RSIPLibraryEntry[],
-  now = new Date(),
-): { entry: RSIPLibraryEntry; nextLibrary: RSIPLibraryEntry[] } {
-  const cumulativeExecutionDays = Math.max(
-    0,
-    node.cumulativeExecutionDays ?? 0,
-    node.totalExecutions ?? 0,
-  );
-  const existingIndex = library.findIndex((entry) => entry.id === node.id);
-
-  if (existingIndex >= 0) {
-    const current = library[existingIndex];
-    const nextCumulativeExecutionDays = Math.max(
-      current.cumulativeExecutionDays,
-      cumulativeExecutionDays,
-    );
-    const entry: RSIPLibraryEntry = {
-      ...current,
-      title: node.title,
-      rule: node.rule,
-      type: node.type ?? current.type,
-      emoji: node.emoji ?? current.emoji,
-      useTimer: node.useTimer ?? current.useTimer,
-      timerMinutes: node.timerMinutes ?? current.timerMinutes,
-      isPassive: node.isPassive ?? current.isPassive,
-      cumulativeExecutionDays: nextCumulativeExecutionDays,
-      internalizationProgress: Math.max(
-        current.internalizationProgress,
-        computeInternalizationProgress(nextCumulativeExecutionDays),
-      ),
-      lastActiveAt:
-        current.lastActiveAt.getTime() >= now.getTime()
-          ? current.lastActiveAt
-          : now,
-      timesUsed: current.timesUsed,
-    };
-    const nextLibrary = [...library];
-    nextLibrary.splice(existingIndex, 1, entry);
-    return { entry, nextLibrary };
-  }
-
-  const entry: RSIPLibraryEntry = {
-    id: node.id,
-    title: node.title,
-    rule: node.rule,
-    type: node.type,
-    emoji: node.emoji,
-    useTimer: node.useTimer,
-    timerMinutes: node.timerMinutes,
-    isPassive: node.isPassive,
-    cumulativeExecutionDays,
-    internalizationProgress: computeInternalizationProgress(
-      cumulativeExecutionDays,
-    ),
-    lastActiveAt: now,
-    timesUsed: 1,
-  };
-  return { entry, nextLibrary: [...library, entry] };
-}
-
 export function createLibraryOperations({
   readState,
   saveFns,
@@ -89,9 +27,60 @@ export function createLibraryOperations({
   ): Promise<RSIPLibraryEntry[]> => {
     const state = readState();
     const library = existingLibrary ?? state?.rsipPolicyLibrary ?? [];
-    const { entry, nextLibrary } = buildLibraryArchive(node, library);
-    await saveFns.upsertLibraryEntry(entry, nextLibrary);
-    return nextLibrary;
+    const now = new Date();
+    const cumulativeDelta = Math.max(
+      0,
+      node.cumulativeExecutionDays ?? node.totalExecutions ?? 0,
+    );
+
+    const existingIndex = library.findIndex((entry) => entry.id === node.id);
+    if (existingIndex >= 0) {
+      const current = library[existingIndex];
+      const cumulativeExecutionDays =
+        current.cumulativeExecutionDays + cumulativeDelta;
+      const updated: RSIPLibraryEntry = {
+        ...current,
+        title: node.title,
+        rule: node.rule,
+        type: node.type ?? current.type,
+        emoji: node.emoji ?? current.emoji,
+        useTimer: node.useTimer ?? current.useTimer,
+        timerMinutes: node.timerMinutes ?? current.timerMinutes,
+        isPassive: node.isPassive ?? current.isPassive,
+        cumulativeExecutionDays,
+        internalizationProgress: computeInternalizationProgress(
+          cumulativeExecutionDays,
+        ),
+        lastActiveAt: now,
+        timesUsed: current.timesUsed + 1,
+      };
+
+      const next = [...library];
+      next.splice(existingIndex, 1, updated);
+      await saveFns.upsertLibraryEntry(updated, next);
+      return next;
+    }
+
+    const cumulativeExecutionDays = cumulativeDelta;
+    const created: RSIPLibraryEntry = {
+      id: node.id,
+      title: node.title,
+      rule: node.rule,
+      type: node.type,
+      emoji: node.emoji,
+      useTimer: node.useTimer,
+      timerMinutes: node.timerMinutes,
+      isPassive: node.isPassive,
+      cumulativeExecutionDays,
+      internalizationProgress: computeInternalizationProgress(
+        cumulativeExecutionDays,
+      ),
+      lastActiveAt: now,
+      timesUsed: 1,
+    };
+    const next = [...library, created];
+    await saveFns.upsertLibraryEntry(created, next);
+    return next;
   };
 
   const restoreFromLibrary = async (

@@ -4,8 +4,6 @@ import type {
   CompletionHistory,
   DeletedChain,
   RSIPExecutionRecord,
-  RSIPArchiveNodesResult,
-  RSIPCreateNodesResult,
   RSIPLibraryEntry,
   RSIPMeta,
   RSIPNode,
@@ -66,14 +64,6 @@ export interface RsipStore {
   saveRSIPNodes(nodes: RSIPNode[]): Promise<void>;
   upsertRSIPNode(node: RSIPNode): Promise<void>;
   removeRSIPNodes(nodeIds: string[]): Promise<void>;
-  createRSIPNodesWithMeta(
-    newNodes: RSIPNode[],
-    nextMeta: RSIPMeta,
-  ): Promise<RSIPCreateNodesResult>;
-  archiveRSIPNodesAndRemove(
-    nodeIds: string[],
-    nextLibrary: RSIPLibraryEntry[],
-  ): Promise<RSIPArchiveNodesResult>;
   getRSIPMeta(): Promise<RSIPMeta>;
   saveRSIPMeta(meta: RSIPMeta): Promise<void>;
   getRSIPGroups(): Promise<RSIPNodeGroup[]>;

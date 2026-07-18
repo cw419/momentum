@@ -107,16 +107,6 @@ export interface RSIPLibraryEntry {
   isPassive?: boolean;
 }
 
-export interface RSIPCreateNodesResult {
-  nodes: RSIPNode[];
-  meta: RSIPMeta;
-}
-
-export interface RSIPArchiveNodesResult {
-  removedNodeIds: string[];
-  libraryEntries: RSIPLibraryEntry[];
-}
-
 export interface RSIPRunRecord {
   runNumber: number;
   startedAt: Date;

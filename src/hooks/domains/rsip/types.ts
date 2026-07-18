@@ -38,7 +38,6 @@ export interface UseRsipDomainParams {
 }
 
 export interface SaveFns {
-  archiveAndRemoveNodes: (removedNodes: RSIPNode[]) => Promise<void>;
   saveNodes: (nodes: RSIPNode[]) => Promise<void>;
   saveMeta: (meta: RSIPMeta) => Promise<void>;
   saveGroups: (groups: RSIPNodeGroup[]) => Promise<void>;

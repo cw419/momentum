@@ -148,7 +148,6 @@ function createProps(overrides: AppShellViewOverrides = {}): AppShellViewProps {
     taskLinks: [],
     chains: dashboard.chains,
     onBack: dashboard.handleBackToDashboard,
-    createNodes: vi.fn(),
     saveNodes: vi.fn(),
     saveMeta: vi.fn(),
     saveGroups: vi.fn(),

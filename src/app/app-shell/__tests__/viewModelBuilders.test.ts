@@ -131,7 +131,6 @@ describe('viewModelBuilders', () => {
   it('builds the rsip model and preserves shared session handlers', () => {
     const handleStartChain = vi.fn(async () => undefined);
     const handleScheduleChain = vi.fn();
-    const createNodes = vi.fn();
     const saveNodes = vi.fn();
     const getTaskActions = vi.fn(() => []);
 
@@ -145,7 +144,6 @@ describe('viewModelBuilders', () => {
       taskLinks: [],
       chains: [createUnitChain({ id: 'unit-1' })],
       onBack: vi.fn(),
-      createNodes,
       saveNodes,
       saveMeta: vi.fn(),
       saveGroups: vi.fn(),
@@ -167,7 +165,6 @@ describe('viewModelBuilders', () => {
       handleScheduleChain,
     });
 
-    expect(rsip.createNodes).toBe(createNodes);
     expect(rsip.saveNodes).toBe(saveNodes);
     expect(rsip.getTaskActions).toBe(getTaskActions);
     expect(rsip.handleStartChain).toBe(handleStartChain);

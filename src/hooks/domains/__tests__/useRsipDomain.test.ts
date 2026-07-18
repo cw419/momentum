@@ -303,151 +303,6 @@ describe('useRsipDomain', () => {
     );
   });
 
-  it('commits created nodes and strict-day metadata together after an ambiguous retry', async () => {
-    const existing = createNode({ id: 'existing-node', sortOrder: 1 });
-    const created = createNode({ id: 'created-node', sortOrder: 2 });
-    const originalMeta: RSIPMeta = {
-      allowMultiplePerDay: false,
-      treeOpenStreak: 3,
-    };
-    const addedAt = new Date('2026-07-16T08:00:00.000Z');
-    const stateRef = createStateContainer(
-      createBaseState({ rsipNodes: [existing], rsipMeta: originalMeta }),
-    );
-    const atomicFailure = new Error('atomic response unavailable');
-    const createRSIPNodesWithMeta = vi
-      .fn()
-      .mockRejectedValueOnce(atomicFailure)
-      .mockResolvedValueOnce(undefined);
-    const storage = createLocalStorageMock({ createRSIPNodesWithMeta });
-    const domain = useRsipDomain({
-      setState: stateRef.setState,
-      storage,
-      getState: stateRef.getState,
-    });
-
-    await expect(domain.createNodes([created], addedAt)).rejects.toBe(
-      atomicFailure,
-    );
-    expect(stateRef.getState().rsipNodes).toEqual([existing]);
-    expect(stateRef.getState().rsipMeta).toBe(originalMeta);
-    expect(storage.saveRSIPNodes).not.toHaveBeenCalled();
-    expect(storage.saveRSIPMeta).not.toHaveBeenCalled();
-
-    await expect(
-      domain.createNodes([created], addedAt),
-    ).resolves.toBeUndefined();
-
-    expect(stateRef.getState().rsipNodes).toEqual([existing, created]);
-    expect(stateRef.getState().rsipMeta).toEqual({
-      ...originalMeta,
-      lastAddedAt: addedAt,
-    });
-    expect(createRSIPNodesWithMeta).toHaveBeenCalledTimes(2);
-    expect(createRSIPNodesWithMeta.mock.calls[1]).toEqual(
-      createRSIPNodesWithMeta.mock.calls[0],
-    );
-  });
-
-  it('preserves an edited same-id node synchronized before an ambiguous creation retry', async () => {
-    const created = createNode({
-      id: 'ambiguous-created-node',
-      title: 'Original title',
-      totalExecutions: 0,
-      sortOrder: 2,
-    });
-    const originalMeta: RSIPMeta = {
-      allowMultiplePerDay: true,
-      treeOpenStreak: 2,
-    };
-    const addedAt = new Date('2026-07-16T08:30:00.000Z');
-    const stateRef = createStateContainer(
-      createBaseState({ rsipNodes: [], rsipMeta: originalMeta }),
-    );
-    const atomicFailure = new Error('atomic response unavailable');
-    const createRSIPNodesWithMeta = vi
-      .fn()
-      .mockRejectedValueOnce(atomicFailure)
-      .mockResolvedValueOnce(undefined);
-    const storage = createLocalStorageMock({ createRSIPNodesWithMeta });
-    const domain = useRsipDomain({
-      setState: stateRef.setState,
-      storage,
-      getState: stateRef.getState,
-    });
-
-    await expect(domain.createNodes([created], addedAt)).rejects.toBe(
-      atomicFailure,
-    );
-
-    const synchronizedNode = {
-      ...created,
-      title: 'Edited after the first commit',
-      totalExecutions: 9,
-      lastExecutedAt: new Date('2026-07-16T08:45:00.000Z'),
-    };
-    stateRef.setState((current) => ({
-      ...current,
-      rsipNodes: [synchronizedNode],
-    }));
-
-    await expect(
-      domain.createNodes([created], addedAt),
-    ).resolves.toBeUndefined();
-
-    expect(stateRef.getState().rsipNodes).toEqual([synchronizedNode]);
-    expect(stateRef.getState().rsipNodes[0]).toBe(synchronizedNode);
-    expect(stateRef.getState().rsipMeta).toEqual({
-      ...originalMeta,
-      lastAddedAt: addedAt,
-    });
-    expect(createRSIPNodesWithMeta).toHaveBeenCalledTimes(2);
-  });
-
-  it('serializes atomic creation behind an earlier meta write and preserves the latest mode', async () => {
-    const existing = createNode({ id: 'existing-node', sortOrder: 1 });
-    const created = createNode({ id: 'created-node', sortOrder: 2 });
-    const stateRef = createStateContainer(
-      createBaseState({
-        rsipNodes: [existing],
-        rsipMeta: { allowMultiplePerDay: false },
-      }),
-    );
-    const metaSave = createDeferred();
-    const createRSIPNodesWithMeta = vi.fn(async () => undefined);
-    const storage = createLocalStorageMock({
-      saveRSIPMeta: vi.fn(() => metaSave.promise),
-      createRSIPNodesWithMeta,
-    });
-    const domain = useRsipDomain({
-      setState: stateRef.setState,
-      storage,
-      getState: stateRef.getState,
-    });
-    const nextMeta: RSIPMeta = {
-      allowMultiplePerDay: true,
-      treeOpenStreak: 5,
-    };
-    const addedAt = new Date('2026-07-16T09:00:00.000Z');
-
-    const modeWrite = domain.saveMeta(nextMeta);
-    const creation = domain.createNodes([created], addedAt);
-    await Promise.resolve();
-
-    expect(createRSIPNodesWithMeta).not.toHaveBeenCalled();
-    metaSave.resolve();
-    await Promise.all([modeWrite, creation]);
-
-    expect(createRSIPNodesWithMeta).toHaveBeenCalledWith([created], {
-      ...nextMeta,
-      lastAddedAt: addedAt,
-    });
-    expect(stateRef.getState().rsipMeta).toEqual({
-      ...nextMeta,
-      lastAddedAt: addedAt,
-    });
-  });
-
   it('should provide strict/free mode helpers and opened-today check', () => {
     const domain = useRsipDomain({
       setState: vi.fn(),
@@ -660,182 +515,6 @@ describe('useRsipDomain', () => {
       keep,
     ]);
     expect(updated).toEqual([keep]);
-  });
-
-  it('keeps violation slices unchanged after an ambiguous atomic failure and retries idempotently', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-07-16T08:00:00.000Z'));
-    const root = createNode({
-      id: 'retry-root',
-      cumulativeExecutionDays: 70,
-    });
-    const child = createNode({
-      id: 'retry-child',
-      parentId: root.id,
-      cumulativeExecutionDays: 5,
-    });
-    const keep = createNode({ id: 'retry-keep' });
-    const existingEntry = createLibraryEntry({
-      id: root.id,
-      cumulativeExecutionDays: 50,
-      timesUsed: 2,
-    });
-    const originalNodes = [root, child, keep];
-    const originalLibrary = [existingEntry];
-    const stateRef = createStateContainer(
-      createBaseState({
-        rsipNodes: originalNodes,
-        rsipPolicyLibrary: originalLibrary,
-      }),
-    );
-    const atomicFailure = new Error('atomic response unavailable');
-    const archiveRSIPNodesAndRemove = vi
-      .fn()
-      .mockRejectedValueOnce(atomicFailure)
-      .mockResolvedValueOnce(undefined);
-    const storage = createLocalStorageMock({
-      archiveRSIPNodesAndRemove,
-    });
-    const domain = useRsipDomain({
-      setState: stateRef.setState,
-      storage,
-      getState: stateRef.getState,
-    });
-
-    await expect(domain.markViolated(root.id, originalNodes)).rejects.toBe(
-      atomicFailure,
-    );
-
-    expect(stateRef.getState().rsipNodes).toBe(originalNodes);
-    expect(stateRef.getState().rsipPolicyLibrary).toBe(originalLibrary);
-    expect(storage.upsertRSIPLibraryEntry).not.toHaveBeenCalled();
-    expect(storage.removeRSIPNodes).not.toHaveBeenCalled();
-
-    const updated = await domain.markViolated(root.id, originalNodes);
-
-    expect(updated).toEqual([keep]);
-    expect(stateRef.getState().rsipNodes).toEqual([keep]);
-    expect(stateRef.getState().rsipPolicyLibrary).toHaveLength(2);
-    expect(
-      stateRef
-        .getState()
-        .rsipPolicyLibrary.find((entry) => entry.id === root.id),
-    ).toMatchObject({
-      cumulativeExecutionDays: 70,
-      timesUsed: 2,
-    });
-    expect(
-      stateRef
-        .getState()
-        .rsipPolicyLibrary.filter((entry) => entry.id === child.id),
-    ).toHaveLength(1);
-    expect(archiveRSIPNodesAndRemove).toHaveBeenCalledTimes(2);
-    expect(archiveRSIPNodesAndRemove.mock.calls[1]).toEqual(
-      archiveRSIPNodesAndRemove.mock.calls[0],
-    );
-  });
-
-  it('archives the latest synchronized node after an ambiguous violation retry', async () => {
-    const original = createNode({
-      id: 'ambiguous-violation',
-      title: 'Original title',
-      cumulativeExecutionDays: 2,
-    });
-    const stateRef = createStateContainer(
-      createBaseState({ rsipNodes: [original], rsipPolicyLibrary: [] }),
-    );
-    const failure = new Error('archive response unavailable');
-    const archiveRSIPNodesAndRemove = vi
-      .fn()
-      .mockRejectedValueOnce(failure)
-      .mockResolvedValueOnce(undefined);
-    const domain = useRsipDomain({
-      setState: stateRef.setState,
-      getState: stateRef.getState,
-      storage: createLocalStorageMock({ archiveRSIPNodesAndRemove }),
-    });
-
-    await expect(domain.markViolated(original.id, [original])).rejects.toBe(
-      failure,
-    );
-    const synchronized = {
-      ...original,
-      title: 'Edited after remote commit',
-      cumulativeExecutionDays: 11,
-    };
-    stateRef.setState((current) => ({
-      ...current,
-      rsipNodes: [synchronized],
-    }));
-
-    await expect(domain.markViolated(original.id, [original])).resolves.toEqual(
-      [],
-    );
-
-    expect(archiveRSIPNodesAndRemove).toHaveBeenLastCalledWith(
-      [original.id],
-      [
-        expect.objectContaining({
-          id: original.id,
-          title: 'Edited after remote commit',
-          cumulativeExecutionDays: 11,
-        }),
-      ],
-    );
-    expect(stateRef.getState().rsipPolicyLibrary).toEqual([
-      expect.objectContaining({
-        title: 'Edited after remote commit',
-        cumulativeExecutionDays: 11,
-      }),
-    ]);
-  });
-
-  it('re-expands descendants after an earlier queued creation commits', async () => {
-    const root = createNode({ id: 'queued-root', sortOrder: 0 });
-    const queuedChild = createNode({
-      id: 'queued-child',
-      parentId: root.id,
-      sortOrder: 1,
-    });
-    const stateRef = createStateContainer(
-      createBaseState({ rsipNodes: [root], rsipPolicyLibrary: [] }),
-    );
-    const creationSave = createDeferred();
-    const archiveRSIPNodesAndRemove = vi.fn(async () => undefined);
-    const domain = useRsipDomain({
-      setState: stateRef.setState,
-      getState: stateRef.getState,
-      storage: createLocalStorageMock({
-        createRSIPNodesWithMeta: vi.fn(() => creationSave.promise),
-        archiveRSIPNodesAndRemove,
-      }),
-    });
-
-    const creation = domain.createNodes(
-      [queuedChild],
-      new Date('2026-07-16T10:00:00.000Z'),
-    );
-    const violation = domain.markViolated(root.id, [root]);
-    await Promise.resolve();
-
-    expect(archiveRSIPNodesAndRemove).not.toHaveBeenCalled();
-    creationSave.resolve();
-    await Promise.all([creation, violation]);
-
-    expect(archiveRSIPNodesAndRemove).toHaveBeenCalledWith(
-      [root.id, queuedChild.id],
-      expect.arrayContaining([
-        expect.objectContaining({ id: root.id }),
-        expect.objectContaining({ id: queuedChild.id }),
-      ]),
-    );
-    expect(stateRef.getState().rsipNodes).toEqual([]);
-    expect(stateRef.getState().rsipPolicyLibrary).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: root.id }),
-        expect.objectContaining({ id: queuedChild.id }),
-      ]),
-    );
   });
 
   it('should record tree opened streak with increment and reset behavior', async () => {
@@ -1328,7 +1007,7 @@ describe('useRsipDomain', () => {
     expect(domain.isGroupAlive('missing-group', nodes, groups)).toBe(false);
   });
 
-  it('archives new and existing library entries with monotonic progress', async () => {
+  it('archives new and existing library entries with accumulated progress', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-07T16:00:00.000Z'));
     const stateRef = createStateContainer(
@@ -1357,7 +1036,7 @@ describe('useRsipDomain', () => {
         id: 'archived-node',
         title: 'Updated Title',
         rule: 'Updated Rule',
-        cumulativeExecutionDays: 70,
+        cumulativeExecutionDays: 20,
         emoji: '🧠',
       }),
     );
@@ -1376,7 +1055,7 @@ describe('useRsipDomain', () => {
       rule: 'Updated Rule',
       cumulativeExecutionDays: 70,
       internalizationProgress: 100,
-      timesUsed: 2,
+      timesUsed: 3,
       lastActiveAt: new Date('2026-03-07T16:00:00.000Z'),
     });
     expect(
@@ -1412,8 +1091,7 @@ describe('useRsipDomain', () => {
         id: 'preserve-entry',
         title: 'Preserved Title',
         rule: 'Preserved Rule',
-        cumulativeExecutionDays: 4,
-        totalExecutions: 15,
+        totalExecutions: 5,
         type: undefined,
         emoji: undefined,
         useTimer: undefined,
@@ -1433,7 +1111,7 @@ describe('useRsipDomain', () => {
       timerMinutes: 45,
       isPassive: true,
       cumulativeExecutionDays: 15,
-      timesUsed: 1,
+      timesUsed: 2,
     });
   });
 
