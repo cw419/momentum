@@ -41,6 +41,26 @@ Notes:
 - This repo intentionally avoids pre-commit hooks; all checks are explicit `npm run ...` commands.
 - ESLint forbids `console.*` in `src/` (use `logger` from `src/utils/logger.ts`).
 
+## Completion, Documentation, and Push
+
+Before committing a completed change:
+
+1. Review and update `CHANGELOG.md` for every user-visible change.
+2. Review the relevant detailed design document when behavior, domain logic,
+   data/storage/API contracts, schema, architecture, or interaction changes.
+3. Stage the intended code and documentation, then run:
+
+```bash
+npm run ship -- --design-reviewed "feat: concise summary"
+```
+
+This versioned command checks staged-file formatting and, for application code
+or migrations, runs lint, type, and smoke-test checks. It then commits the
+staged change and pushes the current feature branch. It refuses to run without
+a staged `CHANGELOG.md`; `--design-reviewed` confirms that the detailed design
+documentation was assessed. See `docs/guides/change-management.md` for the
+documentation routing rules.
+
 ## PR Template (Perf + Smell Campaign)
 
 If your PR is driven by performance or static-analysis “smell” reports, include these 3 items in the PR description:

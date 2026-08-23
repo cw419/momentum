@@ -84,6 +84,26 @@ Services with explicit lifecycle should be managed centrally (in `AppShellContai
 
 All tooling is available via explicit `npm run ...` scripts (no pre-commit hooks). Run what you need while iterating.
 
+## Completion, Documentation, and Git Workflow
+
+For every completed code task, before committing:
+
+1. Update `CHANGELOG.md` under `Unreleased` for any user-visible change.
+2. Review detailed design documentation. Update the relevant document in
+   `docs/features/`, `docs/api/`, or `docs/guides/` when the task changes a
+   user flow, domain rule, state transition, data/storage/API contract,
+   database schema or migration, architecture boundary, or interaction model.
+   Update `docs/FEATURES_OVERVIEW.md` when the visible feature list changes.
+3. Stage only intended files. Do not stage `.env*`, generated files, or
+   `supabase/.temp/` state.
+4. Run `npm run ship -- --design-reviewed "type: concise summary"`. It checks
+   staged-file formatting and, when application code or migrations are staged,
+   linting, types, and the smoke test suite. It then commits the staged change
+   and pushes the current feature branch. The flag records that the
+   detailed-design review was performed, even when no document needed a change.
+
+See `docs/guides/change-management.md` for documentation routing.
+
 ### Formatting
 
 - Format (write): `npm run format`

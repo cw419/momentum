@@ -67,7 +67,8 @@
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --features desktop",
     "test:mutation": "npm run quality:test:mutation-scope && node tools/quality/run-mutation.mjs --mode nightly",
     "test:mutation:critical": "npm run quality:test:mutation-scope && node tools/quality/run-mutation.mjs --mode critical && node tools/quality/mutation-hotspots.mjs --mode critical --required",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "ship": "bash scripts/ship.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.91.0",

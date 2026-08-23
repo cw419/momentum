@@ -106,6 +106,7 @@ E0 (新建) ──[连续7天执行]──> E1 (稳定) ──[连续21天执行
 | `src/components/rsip/RSIPInsightsPanel.tsx`                   | 分析与推荐面板                                   |
 | `src/components/rsip/RSIPPolicyLibrary.tsx`                   | 国策库面板                                       |
 | `src/components/rsip/RSIPRunHistory.tsx`                      | 轮次历史面板                                     |
+| `src/components/rsip/RSIPNodeEditorDialog.tsx`                | RSIP 节点编辑对话框                              |
 | `src/services/rsip-insights/RSIPInsightsService.ts`           | 分析与推荐引擎                                   |
 | `src/services/rsip-integration/RSIPTaskIntegrationService.ts` | 任务联动核心服务                                 |
 | `src/types/rsipIntegration.ts`                                | 联动类型定义                                     |
@@ -226,6 +227,12 @@ notes: text
 ---
 
 ## 树结构操作
+
+### 编辑节点
+
+用户可从规则树直接打开节点编辑对话框，修订标题、规则、图标、父节点及计时配置。
+保存后会重新计算树布局和连接线，并将更新后的节点集合持久化。编辑不得改变节点
+的执行、违规或稳态阶段统计；这些状态只能通过对应的 RSIP 操作更新。
 
 ### 构建树结构
 
