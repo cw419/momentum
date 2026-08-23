@@ -67,6 +67,7 @@ const handlers = vi.hoisted(() => ({
   handleImportUnits: vi.fn(),
   handleUpdateTaskRepeatCount: vi.fn(),
   handleReorderUnit: vi.fn(),
+  updateCompletionHistory: vi.fn(),
 }));
 
 vi.mock('../../storage/useStorage', () => ({
@@ -245,6 +246,7 @@ describe('AppShellContainer', () => {
       handleImportUnits: handlers.handleImportUnits,
       handleUpdateTaskRepeatCount: handlers.handleUpdateTaskRepeatCount,
       handleReorderUnit: handlers.handleReorderUnit,
+      updateCompletionHistory: handlers.updateCompletionHistory,
     });
 
     useServiceLifecycleMock.mockReturnValue({ isInitialized: true });

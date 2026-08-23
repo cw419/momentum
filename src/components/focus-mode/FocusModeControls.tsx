@@ -7,6 +7,7 @@ interface FocusModeControlsProps {
   chain: Chain;
   isDurationless: boolean;
   hasReachedMinimum: boolean;
+  hasTimeExpired: boolean;
   onPauseClick: () => void;
   onEarlyCompleteClick: () => void;
 
@@ -22,6 +23,7 @@ export function FocusModeControls({
   chain,
   isDurationless,
   hasReachedMinimum,
+  hasTimeExpired,
   onPauseClick,
   onEarlyCompleteClick,
   autoResumeAt,
@@ -93,10 +95,18 @@ export function FocusModeControls({
               <button
                 type="button"
                 onClick={onEarlyCompleteClick}
-                className="focus-ring flex min-h-12 items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-chinese font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
+                className={`focus-ring flex min-h-12 items-center gap-2 rounded-xl px-5 py-3 font-chinese font-medium transition-colors ${
+                  hasTimeExpired
+                    ? 'bg-gray-950 text-white hover:bg-green-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-green-300'
+                    : 'border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200'
+                }`}
               >
                 <CheckCircle size={16} />
-                <span>{tr('提前完成', 'Complete early')}</span>
+                <span>
+                  {hasTimeExpired
+                    ? tr('完成任务', 'Complete')
+                    : tr('提前完成', 'Complete early')}
+                </span>
               </button>
             </>
           )}

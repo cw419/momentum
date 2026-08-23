@@ -22,6 +22,7 @@ export function useChainDetail({
 
   // 状态
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [visibleHistoryCount, setVisibleHistoryCount] = useState(10);
 
   // 计算值
   const chainHistory = useMemo(
@@ -29,9 +30,14 @@ export function useChainDetail({
     [history, chain.id],
   );
 
-  const recentHistory = useMemo(
-    () => chainHistory.slice(-10).reverse(),
-    [chainHistory],
+  const visibleHistory = useMemo(
+    () => chainHistory.slice().reverse().slice(0, visibleHistoryCount),
+    [chainHistory, visibleHistoryCount],
+  );
+  const hasMoreHistory = visibleHistoryCount < chainHistory.length;
+  const handleLoadMore = useCallback(
+    () => setVisibleHistoryCount((count) => count + 20),
+    [],
   );
 
   const successRate = useMemo(() => {
@@ -75,7 +81,8 @@ export function useChainDetail({
 
     // 计算值
     chainHistory,
-    recentHistory,
+    visibleHistory,
+    hasMoreHistory,
     successRate,
     chainHistoryCount: chainHistory.length,
 
@@ -91,5 +98,6 @@ export function useChainDetail({
     handleDeleteClick,
     handleDeleteConfirm,
     handleDeleteCancel,
+    handleLoadMore,
   };
 }

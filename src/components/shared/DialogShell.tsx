@@ -82,6 +82,11 @@ export function DialogShell({
   const reactId = useId();
   const stackIdRef = useRef(`dialog-${reactId}`);
   const internalRef = useRef<HTMLDivElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   const setDialogRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -124,7 +129,7 @@ export function DialogShell({
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -168,7 +173,7 @@ export function DialogShell({
       unlockPage();
       previouslyFocused?.focus();
     };
-  }, [initialFocusDelayMs, initialFocusRef, onClose]);
+  }, [initialFocusDelayMs, initialFocusRef]);
 
   return (
     <Portal>

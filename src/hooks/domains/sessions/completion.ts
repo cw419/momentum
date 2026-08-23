@@ -13,6 +13,7 @@ import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 import type { TaskLifecycleEvent } from '../../../types';
 import type { TaskLifecycleEventPublisher } from '../../../services/task-lifecycle/TaskLifecycleEventBus';
 import { notifyTaskCompleted } from './sessionNotifications';
+import { createCompletionHistoryId } from '../../../utils/storage/history';
 import {
   computeActualDuration,
   maybeIncrementGroupCycleCompletion,
@@ -158,6 +159,7 @@ export function createCompletionHandlers({
     notifyTaskCompleted(chain.name, newStreak);
 
     const completionRecord: CompletionHistory = {
+      id: createCompletionHistoryId(),
       chainId: chain.id,
       completedAt,
       duration: activeSession.duration,
@@ -248,6 +250,7 @@ export function createCompletionHandlers({
     }
 
     const completionRecord: CompletionHistory = {
+      id: createCompletionHistoryId(),
       chainId: chain.id,
       completedAt: new Date(),
       duration: activeSession.duration,

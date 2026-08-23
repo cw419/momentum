@@ -78,6 +78,9 @@ function createProps(
     onDeleteClick: vi.fn(),
     onDeleteConfirm: vi.fn(),
     onDeleteCancel: vi.fn(),
+    onEditHistoryRecord: vi.fn(),
+    onLoadMoreHistory: vi.fn(),
+    hasMoreHistory: false,
     ...overrides,
   };
 }

@@ -1,15 +1,42 @@
-\n\n-- 添加新字段到 chains 表\nDO $$\nBEGIN\n  -- 添加 parent_id 字段（自引用外键）\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns\n    WHERE table_name = 'chains' AND column_name = 'parent_id'\n  ) THEN\n    ALTER TABLE chains ADD COLUMN parent_id uuid REFERENCES chains(id) ON DELETE SET NULL;
-\n  END IF;
-\n\n  -- 添加 type 字段（任务类型/兵种）\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns\n    WHERE table_name = 'chains' AND column_name = 'type'\n  ) THEN\n    ALTER TABLE chains ADD COLUMN "type" text NOT NULL DEFAULT 'unit';
-\n  END IF;
-\n\n  -- 添加 sort_order 字段（排序）\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.columns\n    WHERE table_name = 'chains' AND column_name = 'sort_order'\n  ) THEN\n    ALTER TABLE chains ADD COLUMN sort_order integer NOT NULL DEFAULT 0;
-\n  END IF;
-\nEND $$;
-\n\n-- 创建索引提升查询性能\nCREATE INDEX IF NOT EXISTS idx_chains_parent_id ON chains(parent_id);
-\nCREATE INDEX IF NOT EXISTS idx_chains_type ON chains("type");
-\nCREATE INDEX IF NOT EXISTS idx_chains_parent_sort ON chains(parent_id, sort_order);
-\n\n-- 添加类型约束确保数据完整性\nDO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM information_schema.check_constraints\n    WHERE constraint_name = 'chains_type_check'\n  ) THEN\n    ALTER TABLE chains ADD CONSTRAINT chains_type_check \n    CHECK ("type" IN ('unit', 'group', 'assault', 'recon', 'command', 'special_ops', 'engineering', 'quartermaster'));
-\n  END IF;
-\nEND $$;
-\n\n-- 确保现有数据的兼容性（所有现有链默认为 unit 类型）\nUPDATE chains SET "type" = 'unit' WHERE "type" IS NULL;
-;
+-- Add chain hierarchy and type metadata.
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'chains' AND column_name = 'parent_id'
+  ) THEN
+    ALTER TABLE chains ADD COLUMN parent_id uuid REFERENCES chains(id) ON DELETE SET NULL;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'chains' AND column_name = 'type'
+  ) THEN
+    ALTER TABLE chains ADD COLUMN "type" text NOT NULL DEFAULT 'unit';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'chains' AND column_name = 'sort_order'
+  ) THEN
+    ALTER TABLE chains ADD COLUMN sort_order integer NOT NULL DEFAULT 0;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_chains_parent_id ON chains(parent_id);
+CREATE INDEX IF NOT EXISTS idx_chains_type ON chains("type");
+CREATE INDEX IF NOT EXISTS idx_chains_parent_sort ON chains(parent_id, sort_order);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.check_constraints
+    WHERE constraint_name = 'chains_type_check'
+  ) THEN
+    ALTER TABLE chains ADD CONSTRAINT chains_type_check
+      CHECK ("type" IN ('unit', 'group', 'assault', 'recon', 'command', 'special_ops', 'engineering', 'quartermaster'));
+  END IF;
+END $$;
+
+UPDATE chains SET "type" = 'unit' WHERE "type" IS NULL;

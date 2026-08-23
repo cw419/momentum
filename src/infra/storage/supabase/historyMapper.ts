@@ -12,6 +12,7 @@ type CompletionHistoryInsert =
 
 export type CompletionHistorySelectRow = Pick<
   CompletionHistoryRow,
+  | 'id'
   | 'chain_id'
   | 'completed_at'
   | 'duration'
@@ -25,6 +26,7 @@ export type CompletionHistorySelectRow = Pick<
 
 export type CompletionHistoryBasicRow = Pick<
   CompletionHistoryRow,
+  | 'id'
   | 'chain_id'
   | 'completed_at'
   | 'duration'
@@ -38,6 +40,7 @@ function toSerializedCompletionHistory(
   row: CompletionHistorySelectRow | CompletionHistoryBasicRow,
 ): SerializedCompletionHistory {
   return {
+    id: row.id,
     chainId: row.chain_id,
     completedAt: row.completed_at,
     duration: row.duration,
@@ -71,6 +74,7 @@ export function buildCompletionHistoryRowsWithNewFields(
   items: CompletionHistory[],
 ): CompletionHistoryInsert[] {
   return items.map((history) => ({
+    id: history.id,
     chain_id: history.chainId,
     completed_at: history.completedAt.toISOString(),
     duration: history.duration,
@@ -89,6 +93,7 @@ export function buildCompletionHistoryRowsBasic(
   items: CompletionHistory[],
 ): CompletionHistoryInsert[] {
   return items.map((history) => ({
+    id: history.id,
     chain_id: history.chainId,
     completed_at: history.completedAt.toISOString(),
     duration: history.duration,

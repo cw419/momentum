@@ -96,6 +96,7 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
       <RSIPCanvas
         nodes={model.nodes}
         tree={model.tree}
+        groups={model.groups}
         onSaveNodes={model.onSaveNodes}
         onMarkFailedNode={(nodeId: string) => {
           const target = model.nodes.find((item) => item.id === nodeId);

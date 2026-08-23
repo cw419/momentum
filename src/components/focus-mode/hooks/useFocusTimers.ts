@@ -30,6 +30,7 @@ export function useFocusTimers({
   );
   const [hasReachedMinimum, setHasReachedMinimum] = useState(false);
   const [minimumCountdown, setMinimumCountdown] = useState(0);
+  const [hasTimeExpired, setHasTimeExpired] = useState(false);
 
   const hasShownWarningRef = useRef(false);
   const hasPlayedSoundRef = useRef(false);
@@ -39,6 +40,7 @@ export function useFocusTimers({
     hasShownWarningRef.current = false;
     hasPlayedSoundRef.current = false;
     hasTriggeredTimeUpRef.current = false;
+    setHasTimeExpired(false);
   }, [session.startedAt, session.chainId]);
 
   useEffect(() => {
@@ -140,6 +142,7 @@ export function useFocusTimers({
       }
 
       if (remaining <= 0) {
+        setHasTimeExpired(true);
         if (!hasTriggeredTimeUpRef.current) {
           hasTriggeredTimeUpRef.current = true;
           onTimeUp();
@@ -162,5 +165,6 @@ export function useFocusTimers({
     lastCompletionTime,
     hasReachedMinimum,
     minimumCountdown,
+    hasTimeExpired,
   };
 }

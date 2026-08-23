@@ -8,6 +8,7 @@ import {
 import type { RSIPTreeNode } from '../../types';
 import { RSIPNodeCard } from './RSIPNodeCard';
 import { RSIPControls } from './RSIPControls';
+import type { RSIPGroupFrame } from './hooks/useRSIPLayout';
 
 export type RSIPConnector = { id: string; d: string; isHovered: boolean };
 
@@ -17,6 +18,7 @@ interface RSIPTreeProps {
     string,
     { node: RSIPTreeNode; style: React.CSSProperties }
   >;
+  groupFrames: RSIPGroupFrame[];
   connectors: RSIPConnector[];
   containerHeight: number;
   contentBounds: {
@@ -49,6 +51,7 @@ interface RSIPTreeProps {
   onCommitReparent: (childId: string, parentId?: string) => void;
   onCancelReparent: () => void;
   onSetRelationError: (next: string | null) => void;
+  onEditNode: (node: RSIPTreeNode) => void;
   onMarkFailed: (nodeId: string) => void;
   onStartTimer: (nodeId: string, minutes: number) => void;
   onStopTimer: (nodeId: string) => void;
@@ -61,6 +64,7 @@ interface RSIPTreeProps {
 export const RSIPTree: React.FC<RSIPTreeProps> = ({
   tree,
   nodePositions,
+  groupFrames,
   connectors,
   containerHeight,
   contentBounds,
@@ -84,6 +88,7 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
   onCommitReparent,
   onCancelReparent,
   onSetRelationError,
+  onEditNode,
   onMarkFailed,
   onStartTimer,
   onStopTimer,
@@ -134,6 +139,22 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                     ),
                   }}
                 >
+                  {groupFrames.map((group) => (
+                    <div
+                      key={group.id}
+                      aria-label={tr(
+                        `国策组：${group.title}`,
+                        `Policy group: ${group.title}`,
+                      )}
+                      className="pointer-events-none absolute rounded-2xl border-2 border-dashed border-emerald-500/70 bg-emerald-500/[0.04] dark:border-emerald-400/60 dark:bg-emerald-400/[0.08]"
+                      style={group.style}
+                    >
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-emerald-600/70 bg-emerald-600 px-3 py-1 text-center font-chinese text-xs font-semibold text-white shadow-sm dark:border-emerald-400/70 dark:bg-emerald-500">
+                        {group.emoji ? `${group.emoji} ` : ''}
+                        {group.title}
+                      </div>
+                    </div>
+                  ))}
                   <svg
                     className="pointer-events-none absolute inset-0 h-full w-full"
                     xmlns="http://www.w3.org/2000/svg"
@@ -203,6 +224,7 @@ export const RSIPTree: React.FC<RSIPTreeProps> = ({
                         onHoverStart={() => onHoverStart(node.id)}
                         onHoverEnd={onHoverEnd}
                         onToggleReparent={() => onToggleReparent(node.id)}
+                        onEdit={() => onEditNode(node)}
                         onMarkFailed={() => onMarkFailed(node.id)}
                         timer={{
                           isRunning,

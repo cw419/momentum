@@ -90,9 +90,9 @@ export async function getCompletionHistory(
   const client = ctx.getClient();
 
   const selectFull =
-    'chain_id, completed_at, duration, was_successful, reason_for_failure, actual_duration, is_forward_timed, description, notes';
+    'id, chain_id, completed_at, duration, was_successful, reason_for_failure, actual_duration, is_forward_timed, description, notes';
   const selectBasic =
-    'chain_id, completed_at, duration, was_successful, reason_for_failure, description, notes';
+    'id, chain_id, completed_at, duration, was_successful, reason_for_failure, description, notes';
 
   const { data, error } = await client
     .from('completion_history')
@@ -189,4 +189,24 @@ export async function appendCompletionHistory(
   const user = await ctx.getCurrentUser();
   if (!user) return;
   await persistCompletionHistory(ctx, user.id, [record]);
+}
+
+export async function updateCompletionHistory(
+  ctx: SupabaseStorageContext,
+  id: string,
+  updates: Pick<CompletionHistory, 'description' | 'notes'>,
+): Promise<void> {
+  const user = await ctx.getCurrentUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await ctx
+    .getClient()
+    .from('completion_history')
+    .update({
+      description: updates.description ?? null,
+      notes: updates.notes ?? null,
+    })
+    .eq('id', id)
+    .eq('user_id', user.id);
+  if (error) throw error;
 }

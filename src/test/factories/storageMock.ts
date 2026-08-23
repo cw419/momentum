@@ -38,6 +38,7 @@ function createBaseStorageMock(kind: Kind): MomentumStorage {
     getCompletionHistory: vi.fn(async () => []),
     saveCompletionHistory: vi.fn(async () => undefined),
     appendCompletionHistory: vi.fn(async () => undefined),
+    updateCompletionHistory: vi.fn(async () => undefined),
 
     // RSIP
     getRSIPNodes: vi.fn(async () => []),

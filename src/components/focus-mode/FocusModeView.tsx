@@ -23,6 +23,7 @@ interface FocusModeViewProps {
   lastCompletionTime: number | null;
   hasReachedMinimum: boolean;
   minimumCountdown: number;
+  hasTimeExpired: boolean;
   isFullscreen: boolean;
   onEnterFullscreen: () => void;
   onExitFullscreen: () => void;
@@ -74,6 +75,7 @@ export function FocusModeView(props: FocusModeViewProps) {
           progress={props.progress}
           lastCompletionTime={props.lastCompletionTime}
           hasReachedMinimum={props.hasReachedMinimum}
+          hasTimeExpired={props.hasTimeExpired}
           minimumCountdown={props.minimumCountdown}
           language={language}
           tr={tr}

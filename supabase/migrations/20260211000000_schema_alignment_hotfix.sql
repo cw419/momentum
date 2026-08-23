@@ -237,49 +237,40 @@ CREATE INDEX IF NOT EXISTS idx_rsip_nodes_reinforcement
 CREATE INDEX IF NOT EXISTS idx_rsip_nodes_is_passive
   ON public.rsip_nodes(is_passive);
 
--- 10) Deduplicate before adding unique indexes for upsert conflict targets.
--- Keep the latest row by id for each conflict key.
+-- 10) Prepare unique indexes for upsert conflict targets without deleting data.
+-- Existing duplicates are preserved; the index is created only when the
+-- corresponding conflict key is already unique.
 CREATE INDEX IF NOT EXISTS idx_scheduled_sessions_dedupe_support
   ON public.scheduled_sessions(user_id, chain_id, id DESC);
 CREATE INDEX IF NOT EXISTS idx_completion_history_dedupe_support
   ON public.completion_history(user_id, chain_id, completed_at, id DESC);
 
-WITH duplicates AS (
-  SELECT
-    user_id,
-    chain_id,
-    MAX(id) AS keep_id
-  FROM public.scheduled_sessions
-  GROUP BY user_id, chain_id
-  HAVING COUNT(*) > 1
-)
-DELETE FROM public.scheduled_sessions s
-USING duplicates d
-WHERE s.user_id = d.user_id
-  AND s.chain_id = d.chain_id
-  AND s.id <> d.keep_id;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.scheduled_sessions
+    GROUP BY user_id, chain_id
+    HAVING COUNT(*) > 1
+  ) THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_scheduled_sessions_user_chain_unique
+      ON public.scheduled_sessions(user_id, chain_id);
+  ELSE
+    RAISE WARNING 'Skipping scheduled_sessions unique index because duplicate rows exist; no data was deleted';
+  END IF;
 
-WITH duplicates AS (
-  SELECT
-    user_id,
-    chain_id,
-    completed_at,
-    MAX(id) AS keep_id
-  FROM public.completion_history
-  GROUP BY user_id, chain_id, completed_at
-  HAVING COUNT(*) > 1
-)
-DELETE FROM public.completion_history h
-USING duplicates d
-WHERE h.user_id = d.user_id
-  AND h.chain_id = d.chain_id
-  AND h.completed_at = d.completed_at
-  AND h.id <> d.keep_id;
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_scheduled_sessions_user_chain_unique
-  ON public.scheduled_sessions(user_id, chain_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_completion_history_user_chain_completed_unique
-  ON public.completion_history(user_id, chain_id, completed_at);
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.completion_history
+    GROUP BY user_id, chain_id, completed_at
+    HAVING COUNT(*) > 1
+  ) THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_completion_history_user_chain_completed_unique
+      ON public.completion_history(user_id, chain_id, completed_at);
+  ELSE
+    RAISE WARNING 'Skipping completion_history unique index because duplicate rows exist; no data was deleted';
+  END IF;
+END $$;
 
 ANALYZE public.scheduled_sessions;
 ANALYZE public.completion_history;

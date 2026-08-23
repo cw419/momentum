@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { DialogShell } from '../DialogShell';
@@ -31,6 +31,36 @@ function DialogHarness({ onClose = vi.fn() }: { onClose?: () => void }) {
 }
 
 describe('DialogShell', () => {
+  it('keeps the current field focused when its parent rerenders', () => {
+    function RerenderingDialog() {
+      const [rule, setRule] = useState('Initial rule');
+      const titleInputRef = useRef<HTMLInputElement>(null);
+
+      return (
+        <DialogShell
+          titleId="rerendering-dialog-title"
+          onClose={() => undefined}
+          initialFocusRef={titleInputRef}
+        >
+          <h2 id="rerendering-dialog-title">Edit policy</h2>
+          <input ref={titleInputRef} aria-label="Policy title" />
+          <textarea
+            aria-label="Rule"
+            value={rule}
+            onChange={(event) => setRule(event.target.value)}
+          />
+        </DialogShell>
+      );
+    }
+
+    render(<RerenderingDialog />);
+    const ruleInput = screen.getByRole('textbox', { name: 'Rule' });
+    ruleInput.focus();
+    fireEvent.change(ruleInput, { target: { value: 'Updated rule' } });
+
+    expect(ruleInput).toHaveFocus();
+  });
+
   it('does not steal focus after the user selects another dialog control', () => {
     vi.useFakeTimers();
     try {

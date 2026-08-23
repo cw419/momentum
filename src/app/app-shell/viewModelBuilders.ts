@@ -73,6 +73,10 @@ interface BuildDashboardViewModelInputs {
     unitId: string,
     direction: 'up' | 'down',
   ) => Promise<void>;
+  updateCompletionHistory: (
+    id: string,
+    updates: Pick<CompletionHistory, 'description' | 'notes'>,
+  ) => Promise<void>;
 }
 
 interface BuildRsipViewModelInputs {
@@ -201,6 +205,7 @@ export function buildDashboardViewModel(
     handleImportUnits: inputs.handleImportUnits,
     handleUpdateTaskRepeatCount: inputs.handleUpdateTaskRepeatCount,
     handleReorderUnit: inputs.handleReorderUnit,
+    updateCompletionHistory: inputs.updateCompletionHistory,
   };
 }
 

@@ -57,6 +57,10 @@ export interface HistoryStore {
   getCompletionHistory(): Promise<CompletionHistory[]>;
   saveCompletionHistory(history: CompletionHistory[]): Promise<void>;
   appendCompletionHistory(record: CompletionHistory): Promise<void>;
+  updateCompletionHistory(
+    id: string,
+    updates: Pick<CompletionHistory, 'description' | 'notes'>,
+  ): Promise<void>;
 }
 
 export interface RsipStore {

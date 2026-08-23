@@ -14,7 +14,7 @@
 */
 
 -- 添加 deleted_at 字段到 chains 表
-DO $
+DO $$
 BEGIN
   -- 添加 deleted_at 字段（软删除时间戳）
   IF NOT EXISTS (
@@ -23,7 +23,7 @@ BEGIN
   ) THEN
     ALTER TABLE chains ADD COLUMN deleted_at timestamp with time zone DEFAULT NULL;
   END IF;
-END $;
+END $$;
 
 -- 创建索引提升查询性能
 CREATE INDEX IF NOT EXISTS idx_chains_deleted_at ON chains(deleted_at);
@@ -37,7 +37,7 @@ COMMENT ON COLUMN chains.deleted_at IS '软删除时间戳，NULL表示未删除
 
 -- 如果需要，可以添加专门的策略来处理已删除的链条
 -- 例如：允许用户查看自己已删除的链条（用于回收箱功能）
-DO $
+DO $$
 BEGIN
   -- 检查是否已存在策略，如果不存在则创建
   IF NOT EXISTS (
@@ -56,4 +56,4 @@ BEGIN
     CREATE POLICY "Users can soft delete their chains" ON chains
       FOR UPDATE USING (auth.uid() = user_id);
   END IF;
-END $;
+END $$;

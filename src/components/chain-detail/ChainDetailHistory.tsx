@@ -12,6 +12,7 @@ import {
   HistoryRecordProps,
   TranslationFn,
 } from './types';
+import { Pencil } from 'lucide-react';
 import { formatTime, formatActualDuration } from '../../utils/time';
 
 const EmptyHistory: React.FC<{ tr: TranslationFn }> = ({ tr }) => (
@@ -34,6 +35,7 @@ const HistoryRecord: React.FC<HistoryRecordProps> = ({
   language,
   tr,
   formatFailureReason,
+  onEditRecord,
 }) => (
   <div className="rounded-2xl bg-gray-50 p-6 transition-colors duration-200 hover:bg-gray-100 dark:bg-slate-700/50 dark:hover:bg-slate-700">
     <div className="mb-4 flex items-start justify-between">
@@ -82,6 +84,19 @@ const HistoryRecord: React.FC<HistoryRecordProps> = ({
         </div>
       </div>
     </div>
+
+    {record.wasSuccessful && (
+      <button
+        type="button"
+        onClick={() => onEditRecord(record)}
+        className="focus-ring rounded-lg px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-slate-600"
+      >
+        <span className="flex items-center gap-1">
+          <Pencil size={14} />
+          {tr('编辑记录', 'Edit record')}
+        </span>
+      </button>
+    )}
 
     {(record.description || record.notes) && (
       <HistoryRecordDetails record={record} tr={tr} />
@@ -134,6 +149,9 @@ export const ChainDetailHistory: React.FC<HistorySectionProps> = ({
   language,
   tr,
   formatFailureReason,
+  onEditRecord,
+  onLoadMore,
+  hasMore,
 }) => (
   <div className="bento-card animate-scale-in">
     <h3 className="mb-6 flex items-center space-x-3 font-chinese text-xl font-bold text-[#161615] dark:text-slate-100">
@@ -154,14 +172,24 @@ export const ChainDetailHistory: React.FC<HistorySectionProps> = ({
       <div className="space-y-4">
         {recentHistory.map((record, index) => (
           <HistoryRecord
-            key={index}
+            key={record.id ?? index}
             record={record}
             locale={locale}
             language={language}
             tr={tr}
             formatFailureReason={formatFailureReason}
+            onEditRecord={onEditRecord}
           />
         ))}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={onLoadMore}
+            className="focus-ring w-full rounded-xl border border-gray-300 px-4 py-3 font-chinese text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            {tr('加载更多', 'Load more')}
+          </button>
+        )}
       </div>
     )}
   </div>

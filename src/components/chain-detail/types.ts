@@ -23,6 +23,9 @@ export interface ChainDetailViewProps {
   onDeleteClick: () => void;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
+  onEditHistoryRecord: (record: CompletionHistory) => void;
+  onLoadMoreHistory: () => void;
+  hasMoreHistory: boolean;
 }
 
 export interface HeaderProps {
@@ -65,6 +68,9 @@ export interface HistorySectionProps {
   language: 'zh' | 'en';
   tr: TranslationFn;
   formatFailureReason: (reason: string) => string;
+  onEditRecord: (record: CompletionHistory) => void;
+  onLoadMore: () => void;
+  hasMore: boolean;
 }
 
 export interface HistoryRecordProps {
@@ -73,6 +79,7 @@ export interface HistoryRecordProps {
   language: 'zh' | 'en';
   tr: TranslationFn;
   formatFailureReason: (reason: string) => string;
+  onEditRecord: (record: CompletionHistory) => void;
 }
 
 export interface DeleteConfirmModalProps {

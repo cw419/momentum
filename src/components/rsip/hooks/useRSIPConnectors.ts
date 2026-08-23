@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { RSIPTreeNode } from '../../../types';
+import type { CanvasState } from '../../../hooks/useCanvasState';
 import type { RSIPConnector } from '../RSIPTree';
 import type { NodePosition } from './useRSIPLayout';
-import type { CanvasState } from '../../../hooks/useCanvasState';
 
+const RSIP_NODE_WIDTH = 256;
 const RSIP_NODE_SPACING_PADDING_Y = 40;
+
+type AnchorSide = 'left' | 'right' | 'top' | 'bottom';
+type Point = { x: number; y: number };
 
 interface UseRSIPConnectorsParams {
   filteredTree: RSIPTreeNode[];
@@ -14,6 +18,42 @@ interface UseRSIPConnectorsParams {
   containerRef: React.RefObject<HTMLDivElement>;
   nodeRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   latestTransformRef: React.MutableRefObject<CanvasState>;
+}
+
+function getAnchorPoint(
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  side: AnchorSide,
+): Point {
+  switch (side) {
+    case 'left':
+      return { x: left, y: top + height / 2 };
+    case 'right':
+      return { x: left + width, y: top + height / 2 };
+    case 'top':
+      return { x: left + width / 2, y: top };
+    case 'bottom':
+      return { x: left + width / 2, y: top + height };
+  }
+}
+
+function isVerticalConnector(parent: RSIPTreeNode, child: RSIPTreeNode) {
+  return Boolean(parent.groupId && parent.groupId === child.groupId);
+}
+
+function createConnectorPath(
+  start: Point,
+  end: Point,
+  isVertical: boolean,
+): string {
+  const distance = isVertical ? end.y - start.y : end.x - start.x;
+  const bend = Math.max(40, Math.abs(distance) * 0.5);
+
+  return isVertical
+    ? `M ${start.x} ${start.y} C ${start.x} ${start.y + bend} ${end.x} ${end.y - bend} ${end.x} ${end.y}`
+    : `M ${start.x} ${start.y} C ${start.x + bend} ${start.y} ${end.x - bend} ${end.y} ${end.x} ${end.y}`;
 }
 
 export function useRSIPConnectors({
@@ -33,75 +73,63 @@ export function useRSIPConnectors({
       if (!container) return;
       const newConnectors: RSIPConnector[] = [];
 
-      const getAnchor = (nodeId: string, side: 'left' | 'right') => {
-        const pos = nodePositions[nodeId];
-        if (!pos) return { x: 0, y: 0 };
+      const getAnchor = (nodeId: string, side: AnchorSide): Point => {
+        const position = nodePositions[nodeId];
+        if (!position) return { x: 0, y: 0 };
 
-        const el = nodeRefs.current[nodeId];
-        if (el) {
-          const elRect = el.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          const scale = latestTransformRef.current.scale || 1;
-
-          const x =
-            side === 'left'
-              ? (elRect.left - containerRect.left) / scale
-              : (elRect.right - containerRect.left) / scale;
-          const y =
-            (elRect.top - containerRect.top + elRect.height / 2) / scale;
-          return { x, y };
+        const element = nodeRefs.current[nodeId];
+        if (!element) {
+          return getAnchorPoint(
+            Number(position.style.left) || 0,
+            Number(position.style.top) || 0,
+            RSIP_NODE_WIDTH,
+            Math.max(120, layoutNodeHeight - RSIP_NODE_SPACING_PADDING_Y),
+            side,
+          );
         }
 
-        const styleLeft = Number(pos.style.left);
-        const styleTop = Number(pos.style.top);
-        const width = 256;
-        const height = Math.max(
-          120,
-          layoutNodeHeight - RSIP_NODE_SPACING_PADDING_Y,
+        const nodeRect = element.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const scale = latestTransformRef.current.scale || 1;
+        return getAnchorPoint(
+          (nodeRect.left - containerRect.left) / scale,
+          (nodeRect.top - containerRect.top) / scale,
+          nodeRect.width / scale,
+          nodeRect.height / scale,
+          side,
         );
+      };
 
-        const x = side === 'left' ? styleLeft : styleLeft + width;
-        const y = styleTop + height / 2;
-        return { x, y };
+      const addConnector = (node: RSIPTreeNode, child: RSIPTreeNode) => {
+        if (!nodePositions[node.id] || !nodePositions[child.id]) return;
+
+        const isVertical = isVerticalConnector(node, child);
+        const start = getAnchor(node.id, isVertical ? 'bottom' : 'right');
+        const end = getAnchor(child.id, isVertical ? 'top' : 'left');
+        newConnectors.push({
+          id: `${node.id}_${child.id}`,
+          d: createConnectorPath(start, end, isVertical),
+          isHovered:
+            hoveredChainIds.has(node.id) && hoveredChainIds.has(child.id),
+        });
       };
 
       const walk = (node: RSIPTreeNode) => {
-        for (const child of node.children) {
-          if (nodePositions[node.id] && nodePositions[child.id]) {
-            const p1 = getAnchor(node.id, 'right');
-            const p2 = getAnchor(child.id, 'left');
-
-            const dx = p2.x - p1.x;
-            const base = Math.max(40, Math.abs(dx) * 0.5);
-            const cx1 = p1.x + base;
-            const cy1 = p1.y;
-            const cx2 = p2.x - base;
-            const cy2 = p2.y;
-
-            const d = `M ${p1.x} ${p1.y} C ${cx1} ${cy1} ${cx2} ${cy2} ${p2.x} ${p2.y}`;
-            const id = `${node.id}_${child.id}`;
-            const isHovered =
-              hoveredChainIds.has(node.id) && hoveredChainIds.has(child.id);
-            newConnectors.push({ id, d, isHovered });
-          }
-        }
-
-        for (const child of node.children) {
+        node.children.forEach((child) => {
+          addConnector(node, child);
           walk(child);
-        }
+        });
       };
 
-      for (const root of filteredTree) {
-        walk(root);
-      }
+      filteredTree.forEach(walk);
       setConnectors(newConnectors);
     };
 
     compute();
-    const t = setTimeout(compute, 50);
+    const timer = setTimeout(compute, 50);
     window.addEventListener('resize', compute);
     return () => {
-      clearTimeout(t);
+      clearTimeout(timer);
       window.removeEventListener('resize', compute);
     };
   }, [

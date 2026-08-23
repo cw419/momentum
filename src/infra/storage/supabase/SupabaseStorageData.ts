@@ -78,6 +78,10 @@ export abstract class SupabaseStorageData
     historyApi.saveCompletionHistory(this.ctx, history);
   appendCompletionHistory: HistoryStore['appendCompletionHistory'] = (record) =>
     historyApi.appendCompletionHistory(this.ctx, record);
+  updateCompletionHistory: HistoryStore['updateCompletionHistory'] = (
+    id,
+    updates,
+  ) => historyApi.updateCompletionHistory(this.ctx, id, updates);
 
   getTaskTimeStats: TaskTimeStatsStore['getTaskTimeStats'] = () =>
     taskTimeApi.getTaskTimeStats();

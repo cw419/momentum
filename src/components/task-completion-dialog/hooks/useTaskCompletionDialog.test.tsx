@@ -281,7 +281,7 @@ describe('useTaskCompletionDialog', () => {
     notesTextarea.remove();
   });
 
-  it('resets state and calls the cancel boundary exactly once', () => {
+  it('keeps the draft and calls the cancel boundary exactly once', () => {
     const onCancel = vi.fn();
     const { result } = renderDialogHook(createStorage(), { onCancel });
 
@@ -294,10 +294,10 @@ describe('useTaskCompletionDialog', () => {
     act(() => result.current.handleCancel());
 
     expect(onCancel).toHaveBeenCalledTimes(1);
-    expect(result.current.description).toBe('');
-    expect(result.current.notes).toBe('');
-    expect(result.current.isNotesVisible).toBe(false);
-    expect(result.current.showQuickFill).toBe(false);
+    expect(result.current.description).toBe('draft');
+    expect(result.current.notes).toBe('draft note');
+    expect(result.current.isNotesVisible).toBe(true);
+    expect(result.current.showQuickFill).toBe(true);
   });
 
   it('logs a history failure and retries when the dialog is reopened', async () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Link2, Play, Trash2, X } from 'lucide-react';
+import { Clock, Link2, Pencil, Play, Trash2, X } from 'lucide-react';
 import type { RSIPTreeNode } from '../../types';
 import { rsipTypeColorMap } from './rsipUi';
 
@@ -15,6 +15,7 @@ interface RSIPNodeCardProps {
   onHoverStart: () => void;
   onHoverEnd: () => void;
   onToggleReparent: () => void;
+  onEdit: () => void;
   onMarkFailed: () => void;
   timer: {
     isRunning: boolean;
@@ -40,6 +41,7 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
   onHoverStart,
   onHoverEnd,
   onToggleReparent,
+  onEdit,
   onMarkFailed,
   timer,
   formatRemaining,
@@ -127,6 +129,18 @@ export const RSIPNodeCard: React.FC<RSIPNodeCardProps> = ({
           )}
         </div>
         <div className="flex items-center space-x-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+            title={tr('编辑国策', 'Edit policy')}
+            aria-label={tr('编辑国策', 'Edit policy')}
+          >
+            <Pencil size={14} />
+          </button>
           <button
             type="button"
             onClick={(e) => {

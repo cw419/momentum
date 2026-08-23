@@ -66,6 +66,7 @@ function createProps(
     lastCompletionTime: null,
     hasReachedMinimum: true,
     minimumCountdown: 0,
+    hasTimeExpired: false,
     isFullscreen: false,
     onEnterFullscreen: vi.fn(),
     onExitFullscreen: vi.fn(),

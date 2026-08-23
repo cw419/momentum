@@ -130,6 +130,7 @@ export function AppShellView({
               onBack={dashboard.handleBackToDashboard}
               onEdit={() => dashboard.handleEditChain(viewingChain.id)}
               onDelete={() => runAsync(handleDeleteChain(viewingChain.id))}
+              onUpdateCompletionHistory={dashboard.updateCompletionHistory}
             />
             {renderAuxiliaryJudgment()}
           </Suspense>

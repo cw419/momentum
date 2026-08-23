@@ -61,6 +61,7 @@ export function FocusMode({
     lastCompletionTime,
     hasReachedMinimum,
     minimumCountdown,
+    hasTimeExpired,
   } = useFocusTimers({
     session,
     chain,
@@ -108,6 +109,10 @@ export function FocusMode({
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen();
 
   const handleEarlyCompleteClick = () => {
+    if (hasTimeExpired) {
+      setShowCompletionDialog(true);
+      return;
+    }
     if (isDurationless) {
       setShowCompletionDialog(true);
       return;
@@ -141,6 +146,7 @@ export function FocusMode({
       lastCompletionTime={lastCompletionTime}
       hasReachedMinimum={hasReachedMinimum}
       minimumCountdown={minimumCountdown}
+      hasTimeExpired={hasTimeExpired}
       isFullscreen={isFullscreen}
       onEnterFullscreen={enterFullscreen}
       onExitFullscreen={exitFullscreen}

@@ -19,6 +19,8 @@ export interface ActiveSession {
 }
 
 export interface CompletionHistory {
+  /** Stable identity for editing a single completion record. */
+  id?: string;
   chainId: string;
   completedAt: Date;
   duration: number;

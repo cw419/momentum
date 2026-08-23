@@ -117,9 +117,8 @@ export function useTaskCompletionDialog(params: {
   ]);
 
   const handleCancel = useCallback(() => {
-    resetForm();
     onCancel();
-  }, [onCancel, resetForm]);
+  }, [onCancel]);
 
   const showNotes = useCallback(() => {
     setIsNotesVisible(true);

@@ -56,16 +56,14 @@ export function FocusModeDialogs({
           onCancel={onRuleSelectionCancel}
         />
       )}
-      {showCompletionDialog && (
-        <TaskCompletionDialog
-          isOpen
-          chainName={chainName}
-          chainId={chainId}
-          isDurationless={isDurationless}
-          onComplete={onDirectComplete}
-          onCancel={onCompletionCancel}
-        />
-      )}
+      <TaskCompletionDialog
+        isOpen={showCompletionDialog}
+        chainName={chainName}
+        chainId={chainId}
+        isDurationless={isDurationless}
+        onComplete={onDirectComplete}
+        onCancel={onCompletionCancel}
+      />
       <InterruptConfirmDialog
         isOpen={showInterruptDialog}
         onCancel={onCancelInterrupt}

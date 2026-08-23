@@ -7,6 +7,7 @@ import {
 } from './primitives';
 
 export interface SerializedCompletionHistory {
+  id?: string;
   chainId: string;
   completedAt?: string | null;
   duration: number;
@@ -24,6 +25,7 @@ export function decodeCompletionHistory(
   const duration = toNumber(raw.duration, 0);
 
   return {
+    id: raw.id,
     chainId: raw.chainId,
     completedAt: parseTruthyDateOrNow(raw.completedAt),
     duration,

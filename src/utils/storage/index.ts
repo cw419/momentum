@@ -13,6 +13,7 @@ import {
   appendCompletionHistory,
   getCompletionHistory,
   saveCompletionHistory,
+  updateCompletionHistory,
 } from './history';
 import { getPetState, savePetState } from './pet';
 import {
@@ -74,6 +75,7 @@ export const storage = {
   getCompletionHistory,
   saveCompletionHistory,
   appendCompletionHistory,
+  updateCompletionHistory,
 
   // RSIP nodes
   getRSIPNodes,

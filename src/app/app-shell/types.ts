@@ -97,6 +97,10 @@ export interface AppShellDashboardViewModel {
     unitId: string,
     direction: 'up' | 'down',
   ) => Promise<void>;
+  updateCompletionHistory: (
+    id: string,
+    updates: Pick<CompletionHistory, 'description' | 'notes'>,
+  ) => Promise<void>;
 }
 
 export interface AppShellRsipViewModel {

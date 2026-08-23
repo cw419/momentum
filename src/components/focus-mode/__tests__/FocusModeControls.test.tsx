@@ -9,6 +9,7 @@ function renderControls(options: {
   session?: Partial<ActiveSession>;
   isDurationless?: boolean;
   hasReachedMinimum?: boolean;
+  hasTimeExpired?: boolean;
   autoResumeAt?: number | null;
 }) {
   localStorage.setItem('language', 'en');
@@ -36,6 +37,7 @@ function renderControls(options: {
         chain={createUnitChain({ minimumDuration: 0 })}
         isDurationless={options.isDurationless ?? true}
         hasReachedMinimum={options.hasReachedMinimum ?? false}
+        hasTimeExpired={options.hasTimeExpired ?? false}
         autoResumeAt={options.autoResumeAt ?? null}
         resumeCountdown={75}
         elapsedPauseTime={130}
@@ -79,6 +81,7 @@ describe('FocusModeControls', () => {
           chain={createUnitChain({ minimumDuration: 10 })}
           isDurationless
           hasReachedMinimum={false}
+          hasTimeExpired={false}
           onPauseClick={vi.fn()}
           onEarlyCompleteClick={onEarlyCompleteClick}
           autoResumeAt={null}
@@ -92,6 +95,16 @@ describe('FocusModeControls', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete early' }));
     expect(onEarlyCompleteClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows normal completion after a timed session expires', () => {
+    const callbacks = renderControls({
+      isDurationless: false,
+      hasTimeExpired: true,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete' }));
+    expect(callbacks.onEarlyCompleteClick).toHaveBeenCalledTimes(1);
   });
 
   it('shows paused controls with auto-resume actions', () => {

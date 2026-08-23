@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import type { CanvasState } from '../../../hooks/useCanvasState';
-import type { NodePosition } from './useRSIPLayout';
+import type { NodePosition, RSIPGroupFrame } from './useRSIPLayout';
 
 interface UseRSIPCameraParams {
   nodePositions: Record<string, NodePosition>;
+  groupFrames: RSIPGroupFrame[];
   layoutNodeHeight: number;
   savedState: CanvasState | null;
   isLoaded: boolean;
@@ -32,6 +33,7 @@ interface UseRSIPCameraResult {
 
 export function useRSIPCamera({
   nodePositions,
+  groupFrames,
   layoutNodeHeight,
   savedState,
   isLoaded,
@@ -68,13 +70,24 @@ export function useRSIPCamera({
       maxY = Math.max(maxY, y + NODE_HEIGHT);
     }
 
+    for (const { style } of groupFrames) {
+      const x = Number(style.left) || 0;
+      const y = Number(style.top) || 0;
+      const width = Number(style.width) || 0;
+      const height = Number(style.height) || 0;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + width);
+      maxY = Math.max(maxY, y + height);
+    }
+
     return {
       minX,
       minY,
       width: Math.max(1, maxX - minX),
       height: Math.max(1, maxY - minY),
     };
-  }, [nodePositions, layoutNodeHeight]);
+  }, [groupFrames, nodePositions, layoutNodeHeight]);
 
   const handleTransformed = useCallback(
     (state: { scale: number; positionX: number; positionY: number }) => {

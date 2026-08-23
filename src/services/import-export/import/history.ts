@@ -5,6 +5,7 @@ import {
   toNumber,
   toOptionalStringFromTruthy,
 } from '../../../serialization/primitives';
+import { createCompletionHistoryId } from '../../../utils/storage/history';
 
 function mapImportedCompletionHistoryEntry(
   raw: unknown,
@@ -19,6 +20,10 @@ function mapImportedCompletionHistoryEntry(
   const duration = Math.max(0, toNumber(raw.duration, 0));
 
   return {
+    id:
+      typeof raw.id === 'string' && raw.id.trim()
+        ? raw.id
+        : createCompletionHistoryId(),
     chainId: mappedChainId,
     completedAt: parseTruthyDateOrNow(raw.completedAt),
     duration,

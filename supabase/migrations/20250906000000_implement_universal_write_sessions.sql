@@ -5,31 +5,35 @@
 --          to support betting, import, and other write operations
 -- ========================================
 
--- Step 1: Create backup table for existing import_sessions
-CREATE TABLE import_sessions_backup AS 
-SELECT * FROM import_sessions;
+-- This repository does not contain the legacy import_sessions table, so create
+-- the universal write-session table directly for fresh Supabase projects.
+CREATE TABLE IF NOT EXISTS write_sessions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  session_token uuid DEFAULT gen_random_uuid() NOT NULL UNIQUE,
+  session_type text NOT NULL DEFAULT 'import',
+  started_at timestamptz DEFAULT now() NOT NULL,
+  expires_at timestamptz DEFAULT (now() + interval '30 minutes') NOT NULL,
+  max_duration interval NOT NULL DEFAULT '30 minutes',
+  allowed_operations jsonb NOT NULL DEFAULT '[]'::jsonb,
+  operation_count integer NOT NULL DEFAULT 0,
+  max_operations integer NOT NULL DEFAULT 1000,
+  status text DEFAULT 'active' NOT NULL CHECK (status IN ('active', 'completed', 'expired')),
+  imported_chains_count integer DEFAULT 0,
+  imported_history_count integer DEFAULT 0,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  CONSTRAINT check_session_type CHECK (session_type IN ('import', 'betting', 'maintenance', 'migration'))
+);
 
--- Step 2: Extend import_sessions to become write_sessions
-ALTER TABLE import_sessions RENAME TO write_sessions;
+ALTER TABLE write_sessions ENABLE ROW LEVEL SECURITY;
 
--- Step 3: Add new columns for universal write session functionality
-ALTER TABLE write_sessions 
-ADD COLUMN session_type text NOT NULL DEFAULT 'import',
-ADD COLUMN max_duration interval NOT NULL DEFAULT '30 minutes',
-ADD COLUMN allowed_operations jsonb NOT NULL DEFAULT '[]'::jsonb,
-ADD COLUMN operation_count integer NOT NULL DEFAULT 0,
-ADD COLUMN max_operations integer NOT NULL DEFAULT 1000;
-
--- Step 4: Add constraints
-ALTER TABLE write_sessions 
-ADD CONSTRAINT check_session_type 
-CHECK (session_type IN ('import', 'betting', 'maintenance', 'migration'));
-
--- Step 5: Update existing import session records
-UPDATE write_sessions 
-SET session_type = 'import',
-    allowed_operations = '["INSERT:chains", "INSERT:completion_history", "UPDATE:chains"]'::jsonb,
-    max_operations = 1000;
+CREATE INDEX IF NOT EXISTS idx_write_sessions_user_type_status
+  ON write_sessions(user_id, session_type, status);
+CREATE INDEX IF NOT EXISTS idx_write_sessions_token
+  ON write_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_write_sessions_expires
+  ON write_sessions(expires_at) WHERE status = 'active';
 
 -- Step 6: Create universal write session function
 CREATE OR REPLACE FUNCTION create_write_session(
@@ -686,9 +690,9 @@ COMMENT ON COLUMN write_sessions.allowed_operations IS 'JSON array of allowed op
 COMMENT ON COLUMN write_sessions.operation_count IS 'Number of operations performed in this session';
 COMMENT ON COLUMN write_sessions.max_operations IS 'Maximum number of operations allowed in this session';
 
-COMMENT ON FUNCTION create_write_session IS 'Creates a new write session with specific permissions and time limits based on session type';
-COMMENT ON FUNCTION verify_write_permission IS 'Verifies if a write session has permission to perform a specific operation';
-COMMENT ON FUNCTION place_task_bet IS 'Places a bet on a task session - now requires a valid write session token';
+COMMENT ON FUNCTION create_write_session(text, integer) IS 'Creates a new write session with specific permissions and time limits based on session type';
+COMMENT ON FUNCTION verify_write_permission(uuid, text, text) IS 'Verifies if a write session has permission to perform a specific operation';
+COMMENT ON FUNCTION place_task_bet(uuid, uuid, integer, uuid) IS 'Places a bet on a task session - now requires a valid write session token';
 
 -- Step 15: Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_write_sessions_user_type_status 

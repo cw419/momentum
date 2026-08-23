@@ -1,6 +1,7 @@
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { useAppShellPrimaryDomains } from './useAppShellPrimaryDomains';
 import { useAppShellSecondaryDomains } from './useAppShellSecondaryDomains';
+import { useCompletionHistoryDomain } from '../../hooks/domains/useCompletionHistoryDomain';
 import type { AppShellStateController } from './useAppShellState';
 
 export function useAppShellDomains(
@@ -9,7 +10,8 @@ export function useAppShellDomains(
 ) {
   const primary = useAppShellPrimaryDomains(storage, state);
   const secondary = useAppShellSecondaryDomains(storage, state, primary);
-  return { ...primary, ...secondary };
+  const completionHistory = useCompletionHistoryDomain(storage, state);
+  return { ...primary, ...secondary, ...completionHistory };
 }
 
 export type AppShellDomains = ReturnType<typeof useAppShellDomains>;

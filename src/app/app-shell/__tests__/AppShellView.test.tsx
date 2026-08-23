@@ -135,6 +135,7 @@ function createProps(overrides: AppShellViewOverrides = {}): AppShellViewProps {
     handleImportUnits: vi.fn(async () => undefined),
     handleUpdateTaskRepeatCount: vi.fn(async () => undefined),
     handleReorderUnit: vi.fn(async () => undefined),
+    updateCompletionHistory: vi.fn(async () => undefined),
     ...overrides.dashboard,
   };
 

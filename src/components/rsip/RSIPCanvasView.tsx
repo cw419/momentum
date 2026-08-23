@@ -1,9 +1,11 @@
 import React from 'react';
-import type { RSIPTreeNode } from '../../types';
+import type { RSIPNode, RSIPNodeGroup, RSIPTreeNode } from '../../types';
 import type { RSIPConnector } from './RSIPTree';
-import type { NodePosition } from './hooks/useRSIPLayout';
+import type { NodePosition, RSIPGroupFrame } from './hooks/useRSIPLayout';
 import { ConfirmationDialog } from '../ConfirmationDialog';
 import { RSIPFilters } from './RSIPFilters';
+import { RSIPNodeEditorDialog } from './RSIPNodeEditorDialog';
+import type { RSIPNodeDetails } from './RSIPNodeEditorDialog';
 import { RSIPTree } from './RSIPTree';
 import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 
@@ -19,6 +21,7 @@ export type ConfirmAction =
 interface RSIPCanvasViewProps {
   tree: RSIPTreeNode[];
   nodePositions: Record<string, NodePosition>;
+  groupFrames: RSIPGroupFrame[];
   connectors: RSIPConnector[];
   containerHeight: number;
   contentBounds: {
@@ -37,6 +40,8 @@ interface RSIPCanvasViewProps {
   invalidParentIds: Set<string>;
   reparentingTitle: string | null;
   relationError: string | null;
+  editingNode: RSIPNode | null;
+  groups: RSIPNodeGroup[];
   language: string;
   tr: (zh: string, en: string) => string;
   viewportRef: React.RefObject<HTMLDivElement>;
@@ -58,6 +63,9 @@ interface RSIPCanvasViewProps {
   onCommitReparent: (childId: string, parentId?: string) => void;
   onCancelReparent: () => void;
   onSetRelationError: (next: string | null) => void;
+  onEditNode: (node: RSIPTreeNode) => void;
+  onCloseNodeEditor: () => void;
+  onSaveNodeDetails: (details: RSIPNodeDetails) => Promise<void>;
   onMarkFailed: (nodeId: string) => void;
   onStartTimer: (nodeId: string, minutes: number) => void;
   onStopTimer: (nodeId: string) => void;
@@ -69,6 +77,7 @@ interface RSIPCanvasViewProps {
 export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   tree,
   nodePositions,
+  groupFrames,
   connectors,
   containerHeight,
   contentBounds,
@@ -82,6 +91,8 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   invalidParentIds,
   reparentingTitle,
   relationError,
+  editingNode,
+  groups,
   language,
   tr,
   viewportRef,
@@ -99,6 +110,9 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   onCommitReparent,
   onCancelReparent,
   onSetRelationError,
+  onEditNode,
+  onCloseNodeEditor,
+  onSaveNodeDetails,
   onMarkFailed,
   onStartTimer,
   onStopTimer,
@@ -139,6 +153,17 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
         onCancel={onCancelConfirm}
       />
 
+      {editingNode && (
+        <RSIPNodeEditorDialog
+          node={editingNode}
+          groups={groups}
+          language={language}
+          onClose={onCloseNodeEditor}
+          onSave={onSaveNodeDetails}
+          tr={tr}
+        />
+      )}
+
       <RSIPFilters
         filterType={filterType}
         onFilterTypeChange={onFilterTypeChange}
@@ -149,6 +174,7 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
       <RSIPTree
         tree={tree}
         nodePositions={nodePositions}
+        groupFrames={groupFrames}
         connectors={connectors}
         containerHeight={containerHeight}
         contentBounds={contentBounds}
@@ -172,6 +198,7 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
         onCommitReparent={onCommitReparent}
         onCancelReparent={onCancelReparent}
         onSetRelationError={onSetRelationError}
+        onEditNode={onEditNode}
         onMarkFailed={onMarkFailed}
         onStartTimer={onStartTimer}
         onStopTimer={onStopTimer}

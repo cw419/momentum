@@ -82,6 +82,7 @@ describe('viewModelBuilders', () => {
       handleImportUnits: vi.fn(async () => undefined),
       handleUpdateTaskRepeatCount: vi.fn(async () => undefined),
       handleReorderUnit: vi.fn(async () => undefined),
+      updateCompletionHistory: vi.fn(async () => undefined),
     });
 
     expect(dashboard.viewingChain).toBe(group);
@@ -121,6 +122,7 @@ describe('viewModelBuilders', () => {
       handleImportUnits: vi.fn(async () => undefined),
       handleUpdateTaskRepeatCount: vi.fn(async () => undefined),
       handleReorderUnit: vi.fn(async () => undefined),
+      updateCompletionHistory: vi.fn(async () => undefined),
     });
 
     expect(dashboard.viewingChain).toBe(unit);

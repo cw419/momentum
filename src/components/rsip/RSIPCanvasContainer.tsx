@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import type { RSIPNode, RSIPTreeNode } from '../../types';
+import type { RSIPNode, RSIPNodeGroup, RSIPTreeNode } from '../../types';
 import {
   buildRSIPTree,
   countDescendants,
@@ -12,11 +12,16 @@ import { useRSIPConnectors } from './hooks/useRSIPConnectors';
 import { useRSIPReparent } from './hooks/useRSIPReparent';
 import { useRSIPCamera } from './hooks/useRSIPCamera';
 import { RSIPCanvasView, type ConfirmAction } from './RSIPCanvasView';
+import type { RSIPNodeDetails } from './RSIPNodeEditorDialog';
+import { rsipTypeEmojiMap } from './rsipUi';
+
+const EMPTY_GROUPS: RSIPNodeGroup[] = [];
 
 interface RSIPCanvasContainerProps {
   nodes: RSIPNode[];
   tree: RSIPTreeNode[];
-  onSaveNodes: (nodes: RSIPNode[]) => void;
+  groups?: RSIPNodeGroup[];
+  onSaveNodes: (nodes: RSIPNode[]) => void | Promise<void>;
   onMarkFailedNode?: (nodeId: string) => void;
   language: string;
   tr: (zh: string, en: string) => string;
@@ -25,26 +30,30 @@ interface RSIPCanvasContainerProps {
 export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
   nodes,
   tree,
+  groups,
   onSaveNodes,
   onMarkFailedNode,
   language,
   tr,
 }) => {
+  const availableGroups = groups ?? EMPTY_GROUPS;
   const { savedState, isLoaded, saveCanvasState } = useCanvasState();
   const [filterType, setFilterType] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
+  const [editingNode, setEditingNode] = useState<RSIPNode | null>(null);
 
   const {
     nodePositions,
     containerHeight,
     layoutNodeHeight,
+    groupFrames,
     filteredTree,
     nodesById,
     nodeRefs,
     setNodeRef,
-  } = useRSIPLayout(nodes, tree, filterType);
+  } = useRSIPLayout(nodes, tree, filterType, availableGroups);
 
   const {
     now,
@@ -82,6 +91,7 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
   } = useRSIPCamera({
     nodePositions,
     layoutNodeHeight,
+    groupFrames,
     savedState,
     isLoaded,
     saveCanvasState,
@@ -145,10 +155,34 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
     setConfirmAction(null);
   }, []);
 
+  const handleSaveNodeDetails = useCallback(
+    async ({ title, rule, type, groupId }: RSIPNodeDetails) => {
+      const node = editingNode;
+      if (!node) return;
+
+      await onSaveNodes(
+        nodes.map((item) =>
+          item.id === node.id
+            ? {
+                ...item,
+                title,
+                rule,
+                type,
+                groupId,
+                emoji: rsipTypeEmojiMap[type] || item.emoji,
+              }
+            : item,
+        ),
+      );
+    },
+    [editingNode, nodes, onSaveNodes],
+  );
+
   return (
     <RSIPCanvasView
       tree={tree}
       nodePositions={nodePositions}
+      groupFrames={groupFrames}
       connectors={connectors}
       containerHeight={containerHeight}
       contentBounds={contentBounds}
@@ -162,6 +196,8 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
       invalidParentIds={invalidParentIds}
       reparentingTitle={reparentingTitle}
       relationError={relationError}
+      editingNode={editingNode}
+      groups={availableGroups}
       language={language}
       tr={tr}
       viewportRef={viewportRef}
@@ -179,6 +215,9 @@ export const RSIPCanvasContainer: React.FC<RSIPCanvasContainerProps> = ({
       onCommitReparent={commitReparent}
       onCancelReparent={cancelReparent}
       onSetRelationError={setRelationError}
+      onEditNode={setEditingNode}
+      onCloseNodeEditor={() => setEditingNode(null)}
+      onSaveNodeDetails={handleSaveNodeDetails}
       onMarkFailed={handleFailure}
       onStartTimer={handleStartTimer}
       onStopTimer={handleStopTimer}

@@ -161,7 +161,7 @@ describe('useFocusTimers', () => {
       duration: 1,
     });
 
-    const { rerender } = renderHook(
+    const { rerender, result } = renderHook(
       () =>
         useFocusTimers({
           session,
@@ -179,6 +179,7 @@ describe('useFocusTimers', () => {
 
     expect(onTimeUp).toHaveBeenCalledTimes(1);
     expect(soundBoundary.playTimerFinished).toHaveBeenCalledTimes(1);
+    expect(result.current.hasTimeExpired).toBe(true);
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(3_000);

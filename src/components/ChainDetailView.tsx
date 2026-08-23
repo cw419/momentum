@@ -24,6 +24,9 @@ const ChainDetailViewComponent: React.FC<ChainDetailViewProps> = ({
   onDeleteClick,
   onDeleteConfirm,
   onDeleteCancel,
+  onEditHistoryRecord,
+  onLoadMoreHistory,
+  hasMoreHistory,
 }) => {
   return (
     <div className="bg-background min-h-screen p-4 md:p-6">
@@ -57,6 +60,9 @@ const ChainDetailViewComponent: React.FC<ChainDetailViewProps> = ({
               language={language}
               tr={tr}
               formatFailureReason={formatFailureReason}
+              onEditRecord={onEditHistoryRecord}
+              onLoadMore={onLoadMoreHistory}
+              hasMore={hasMoreHistory}
             />
           </div>
         </div>

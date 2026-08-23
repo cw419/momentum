@@ -3,8 +3,9 @@
  * 负责状态管理和业务逻辑，将展示委托给 ChainDetailView
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ChainDetailView } from './ChainDetailView';
+import { CompletionRecordEditorDialog } from './chain-detail/CompletionRecordEditorDialog';
 import { useChainDetail } from './useChainDetail';
 import type { Chain, CompletionHistory } from '../types';
 
@@ -14,13 +15,17 @@ interface ChainDetailProps {
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onUpdateCompletionHistory: (
+    id: string,
+    updates: Pick<CompletionHistory, 'description' | 'notes'>,
+  ) => Promise<void>;
 }
 
 export const ChainDetailContainer: React.FC<ChainDetailProps> = React.memo(
-  ({ chain, history, onBack, onEdit, onDelete }) => {
+  ({ chain, history, onBack, onEdit, onDelete, onUpdateCompletionHistory }) => {
+    const [editingRecord, setEditingRecord] = useState<CompletionHistory | null>(null);
     const {
       showDeleteConfirm,
-      recentHistory,
       successRate,
       chainHistoryCount,
       language,
@@ -30,12 +35,16 @@ export const ChainDetailContainer: React.FC<ChainDetailProps> = React.memo(
       handleDeleteClick,
       handleDeleteConfirm,
       handleDeleteCancel,
+      visibleHistory,
+      hasMoreHistory,
+      handleLoadMore,
     } = useChainDetail({ chain, history, onDelete });
 
     return (
+      <>
       <ChainDetailView
         chain={chain}
-        recentHistory={recentHistory}
+        recentHistory={visibleHistory}
         chainHistoryCount={chainHistoryCount}
         successRate={successRate}
         showDeleteConfirm={showDeleteConfirm}
@@ -48,7 +57,19 @@ export const ChainDetailContainer: React.FC<ChainDetailProps> = React.memo(
         onDeleteClick={handleDeleteClick}
         onDeleteConfirm={handleDeleteConfirm}
         onDeleteCancel={handleDeleteCancel}
+        onEditHistoryRecord={setEditingRecord}
+        onLoadMoreHistory={handleLoadMore}
+        hasMoreHistory={hasMoreHistory}
       />
+      <CompletionRecordEditorDialog
+        record={editingRecord}
+        onClose={() => setEditingRecord(null)}
+        onSave={async (record, updates) => {
+          if (!record.id) throw new Error('Completion record is missing an ID');
+          await onUpdateCompletionHistory(record.id, updates);
+        }}
+      />
+      </>
     );
   },
 );

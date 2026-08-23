@@ -70,6 +70,7 @@ export function useAppShellViewModels(
     handleImportUnits: domains.handleImportUnits,
     handleUpdateTaskRepeatCount: domains.handleUpdateTaskRepeatCount,
     handleReorderUnit: domains.handleReorderUnit,
+    updateCompletionHistory: domains.updateCompletionHistory,
   });
   const rsip = buildRsipViewModel({
     nodes: state.rsipNodes,

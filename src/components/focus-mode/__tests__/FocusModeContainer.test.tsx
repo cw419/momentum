@@ -51,6 +51,7 @@ vi.mock('../../../i18n', () => ({
 vi.mock('../FocusModeView', () => ({
   FocusModeView: (props: {
     showCompletionDialog: boolean;
+    hasTimeExpired: boolean;
     showInterruptDialog: boolean;
     onEarlyCompleteClick: () => void;
     onConfirmInterrupt: () => void;
@@ -61,6 +62,7 @@ vi.mock('../FocusModeView', () => ({
       <div data-testid="completion-open">
         {String(props.showCompletionDialog)}
       </div>
+      <div data-testid="time-expired">{String(props.hasTimeExpired)}</div>
       <div data-testid="interrupt-open">
         {String(props.showInterruptDialog)}
       </div>
@@ -129,6 +131,7 @@ describe('FocusModeContainer', () => {
       lastCompletionTime: null,
       hasReachedMinimum: false,
       minimumCountdown: 0,
+      hasTimeExpired: false,
     });
     useFullscreenMock.mockReturnValue({
       isFullscreen: false,
@@ -182,5 +185,31 @@ describe('FocusModeContainer', () => {
     fireEvent.click(screen.getByText('early-complete'));
     expect(flowActions.openEarlyCompletionSelection).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('completion-open').textContent).toBe('false');
+  });
+
+  it('reopens normal completion after a timed session has expired', () => {
+    useFocusTimersMock.mockReturnValue({
+      timeRemaining: 0,
+      forwardElapsedSeconds: 0,
+      lastCompletionTime: null,
+      hasReachedMinimum: false,
+      minimumCountdown: 0,
+      hasTimeExpired: true,
+    });
+
+    render(
+      <FocusMode
+        session={createSession({ duration: 30 })}
+        chain={createChain({ isDurationless: false })}
+        onComplete={vi.fn()}
+        onInterrupt={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('early-complete'));
+    expect(screen.getByTestId('completion-open').textContent).toBe('true');
+    expect(flowActions.openEarlyCompletionSelection).not.toHaveBeenCalled();
   });
 });

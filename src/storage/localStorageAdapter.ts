@@ -49,11 +49,13 @@ export const localStorageAdapter: MomentumStorage = {
     localStorageUtils.saveActiveSession(session),
 
   // Completion history
-  getCompletionHistory: async () => localStorageUtils.getCompletionHistory(),
+  getCompletionHistory: async () => localStorageUtils.getCompletionHistory(true),
   saveCompletionHistory: async (history) =>
     localStorageUtils.saveCompletionHistory(history),
   appendCompletionHistory: async (record) =>
     localStorageUtils.appendCompletionHistory(record),
+  updateCompletionHistory: async (id, updates) =>
+    localStorageUtils.updateCompletionHistory(id, updates),
 
   // RSIP
   getRSIPNodes: async () => localStorageUtils.getRSIPNodes(),

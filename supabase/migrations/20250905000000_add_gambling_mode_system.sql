@@ -31,7 +31,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create audit logs table for security and compliance
 CREATE TABLE IF NOT EXISTS audit_logs (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   action TEXT NOT NULL,
   details JSONB DEFAULT '{}',

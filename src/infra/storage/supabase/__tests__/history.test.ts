@@ -3,6 +3,7 @@ import {
   appendCompletionHistory,
   getCompletionHistory,
   saveCompletionHistory,
+  updateCompletionHistory,
 } from '../history';
 import {
   createMockContext,
@@ -83,6 +84,7 @@ describe('history.ts', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].chainId).toBe('chain-1');
+      expect(result[0].id).toBe('history-1');
       expect(result[0].duration).toBe(30);
       expect(result[0].wasSuccessful).toBe(true);
       expect(result[0].actualDuration).toBe(28);
@@ -365,6 +367,28 @@ describe('history.ts', () => {
       expect(record.description).toBeNull();
       expect(record.notes).toBeNull();
       expect(record.reason_for_failure).toBeNull();
+    });
+  });
+
+  describe('updateCompletionHistory', () => {
+    it('updates only the requested record for the current user', async () => {
+      const update = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      });
+      const ctx = createMockContext();
+      ctx.mockClient.from = vi.fn().mockReturnValue({ update });
+
+      await updateCompletionHistory(ctx, 'history-1', {
+        description: 'Added later',
+        notes: undefined,
+      });
+
+      expect(update).toHaveBeenCalledWith({
+        description: 'Added later',
+        notes: null,
+      });
     });
   });
 
