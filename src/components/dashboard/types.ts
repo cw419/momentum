@@ -10,6 +10,7 @@ import type {
   RSIPRunRecord,
   RSIPTaskLink,
   ScheduledSession,
+  DailyPlan,
 } from '../../types';
 import type { PetState } from '../../types/pet';
 
@@ -29,12 +30,17 @@ interface DashboardImportOptions {
 export interface DashboardProps {
   chains: Chain[];
   chainsRevision: number;
+  dailyPlans: DailyPlan[];
   scheduledSessions: ScheduledSession[];
   isLoading?: boolean;
   onCreateChain: () => void;
+  onCreateChainForToday: () => void;
   onCreateTaskGroup?: () => void;
   onOpenRSIP?: () => void;
   onStartChain: (chainId: string) => void;
+  onAddPlanUnits: (chainId: string, count: number) => Promise<void>;
+  onRemovePlanUnits: (chainId: string, count: number) => Promise<void>;
+  onStartPlanItem: (chainId: string, itemId: string) => Promise<void>;
   onScheduleChain: (chainId: string) => void;
   onViewChainDetail: (chainId: string) => void;
   onCancelScheduledSession?: (chainId: string) => void;

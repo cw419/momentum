@@ -16,6 +16,7 @@ export function useAppShellState() {
     useShallow((state) => ({
       chains: state.chains,
       chainsRevision: state.chainsRevision,
+      dailyPlans: state.dailyPlans,
       scheduledSessions: state.scheduledSessions,
       activeSession: state.activeSession,
       completionHistory: state.completionHistory,

@@ -13,6 +13,8 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          task_direction: string;
+          goal_completed_at: string | null;
           parent_id: string | null;
           type: string;
           sort_order: number;
@@ -46,6 +48,8 @@ export interface Database {
         Insert: {
           id?: string;
           name: string;
+          task_direction?: string;
+          goal_completed_at?: string | null;
           parent_id?: string | null;
           type?: string;
           sort_order?: number;
@@ -79,6 +83,8 @@ export interface Database {
         Update: {
           id?: string;
           name?: string;
+          task_direction?: string;
+          goal_completed_at?: string | null;
           parent_id?: string | null;
           type?: string;
           sort_order?: number;
@@ -108,6 +114,33 @@ export interface Database {
           created_at?: string | null;
           last_completed_at?: string | null;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      daily_plans: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_date: string;
+          created_at: string;
+          closed_at: string | null;
+          items: Json;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan_date: string;
+          created_at?: string;
+          closed_at?: string | null;
+          items?: Json;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          plan_date?: string;
+          created_at?: string;
+          closed_at?: string | null;
+          items?: Json;
         };
         Relationships: [];
       };

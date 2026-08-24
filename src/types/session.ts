@@ -8,6 +8,8 @@ export interface ScheduledSession {
 export interface ActiveSession {
   id?: string;
   chainId: string;
+  /** Present only when the session was launched from a daily-plan unit. */
+  dailyPlanItemId?: string;
   startedAt: Date;
   duration: number;
   isPaused: boolean;

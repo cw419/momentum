@@ -12,6 +12,7 @@ import type {
   RSIPTaskLink,
   ScheduledSession,
   TaskTimeStats,
+  DailyPlan,
 } from '../types';
 import type { PetState } from '../types/pet';
 import type {
@@ -42,6 +43,11 @@ export interface ChainStore {
   restoreChain(chainId: string): Promise<void>;
   permanentlyDeleteChain(chainId: string): Promise<void>;
   cleanupExpiredDeletedChains(olderThanDays?: number): Promise<number>;
+}
+
+export interface DailyPlanStore {
+  getDailyPlans(): Promise<DailyPlan[]>;
+  saveDailyPlans(plans: DailyPlan[]): Promise<void>;
 }
 
 export interface SessionStore {

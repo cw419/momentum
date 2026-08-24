@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { isDev } from '../../utils/env';
 import { lazyWithChunkRecovery } from '../../utils/lazyWithChunkRecovery';
 import { ChainCardSkeleton } from './ChainCardSkeleton';
@@ -7,6 +7,8 @@ import { DashboardEmptyState } from './DashboardEmptyState';
 import { DashboardHero } from './DashboardHero';
 import { DashboardRecommendSection } from './DashboardRecommendSection';
 import { DashboardTopBar } from './DashboardTopBar';
+import { TodayPlanSection } from './TodayPlanSection';
+import { DialogShell } from '../shared/DialogShell';
 import type { DashboardProps } from './types';
 import type { DashboardController } from './useDashboardController';
 
@@ -75,11 +77,16 @@ export function DashboardView({
   chains,
   scheduledSessions: _scheduledSessions,
   chainsRevision: _chainsRevision,
+  dailyPlans,
   isLoading = false,
   onCreateChain,
+  onCreateChainForToday,
   onCreateTaskGroup,
   onOpenRSIP,
   onStartChain,
+  onAddPlanUnits,
+  onRemovePlanUnits,
+  onStartPlanItem,
   onScheduleChain,
   onViewChainDetail,
   onCancelScheduledSession,
@@ -124,6 +131,25 @@ export function DashboardView({
   enableCloudMode,
   keepLocalMode,
 }: DashboardViewProps) {
+  const [pendingStart, setPendingStart] = useState<{
+    chainId: string;
+    planItemId?: string;
+  } | null>(null);
+  const pendingChain = pendingStart
+    ? chains.find((chain) => chain.id === pendingStart.chainId)
+    : null;
+
+  const confirmStart = () => {
+    if (!pendingStart) return;
+    const request = pendingStart;
+    setPendingStart(null);
+    if (request.planItemId) {
+      void onStartPlanItem(request.chainId, request.planItemId);
+      return;
+    }
+    onStartChain(request.chainId);
+  };
+
   return (
     <div className="bg-background min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-7xl">
@@ -137,7 +163,6 @@ export function DashboardView({
           nextStepLabel={t('dashboard.hero.nextStep')}
           tr={tr}
         />
-
         {isChoicePending && (
           <section className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-6 shadow-sm dark:border-blue-800/60 dark:bg-blue-900/20">
             <h3 className="mb-2 font-chinese text-lg font-semibold text-blue-900 dark:text-blue-100">
@@ -179,6 +204,19 @@ export function DashboardView({
           </Suspense>
         </div>
 
+        <TodayPlanSection
+          plans={dailyPlans}
+          chains={chains}
+          onAddUnits={onAddPlanUnits}
+          onRemoveUnits={onRemovePlanUnits}
+          onCreateChainForToday={onCreateChainForToday}
+          onStartItem={(chainId, itemId) => {
+            setPendingStart({ chainId, planItemId: itemId });
+            return Promise.resolve();
+          }}
+          tr={tr}
+        />
+
         {isLoading && (
           <div className="animate-slide-up py-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -202,14 +240,14 @@ export function DashboardView({
           <>
             <DashboardRecommendSection
               chains={topLevelChains}
-              onStartChain={onStartChain}
+              onStartChain={(chainId) => setPendingStart({ chainId })}
               tr={tr}
             />
             <DashboardChainsSection
               topLevelChains={topLevelChains}
               recycleBinCount={recycleBinCount}
               getScheduledSession={getScheduledSession}
-              onStartChain={onStartChain}
+              onStartChain={(chainId) => setPendingStart({ chainId })}
               onScheduleChain={onScheduleChain}
               onViewChainDetail={onViewChainDetail}
               onCancelScheduledSession={onCancelScheduledSession}
@@ -244,6 +282,55 @@ export function DashboardView({
             onClose={hideImportExportModal}
           />
         </Suspense>
+      )}
+
+      {pendingStart && pendingChain && (
+        <DialogShell
+          titleId="start-task-confirm-title"
+          descriptionId="start-task-confirm-description"
+          role="alertdialog"
+          onClose={() => setPendingStart(null)}
+          className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-slate-600 dark:bg-slate-800"
+        >
+          <h2
+            id="start-task-confirm-title"
+            className="font-chinese text-xl font-bold text-gray-950 dark:text-slate-100"
+          >
+            {tr('确认开启任务？', 'Start this task?')}
+          </h2>
+          <p
+            id="start-task-confirm-description"
+            className="mt-3 font-chinese text-gray-600 dark:text-slate-300"
+          >
+            {tr('即将开启：', 'About to start: ')}
+            <span className="font-semibold text-gray-950 dark:text-white">
+              {pendingChain.name}
+            </span>
+          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
+            {tr(
+              '确认后将进入该任务的专注流程。',
+              'Confirming opens this task’s focus session.',
+            )}
+          </p>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              data-dialog-initial-focus
+              onClick={() => setPendingStart(null)}
+              className="rounded-xl bg-gray-100 px-4 py-2.5 font-chinese font-medium text-gray-700 transition hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+            >
+              {tr('取消', 'Cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={confirmStart}
+              className="rounded-xl bg-primary-600 px-4 py-2.5 font-chinese font-medium text-white transition hover:bg-primary-700"
+            >
+              {tr('确认开启', 'Start task')}
+            </button>
+          </div>
+        </DialogShell>
       )}
       {showRecycleBin && (
         <Suspense fallback={null}>

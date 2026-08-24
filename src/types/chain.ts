@@ -4,6 +4,10 @@ export interface ChainRecord {
   type: ChainType; // 任务类型/兵种
   sortOrder: number; // 在同一父任务下的排序
   name: string;
+  /** Periodic chains remain active; goal chains can be explicitly completed. */
+  taskDirection?: 'periodic' | 'goal';
+  /** Set only after a goal chain is explicitly completed and archived. */
+  goalCompletedAt?: Date;
   trigger: string;
   duration: number; // in minutes
   description: string;

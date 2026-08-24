@@ -24,6 +24,8 @@ export const localStorageAdapter: MomentumStorage = {
   getChains: async () => localStorageUtils.getChains(),
   saveChains: async (chains) => localStorageUtils.saveChains(chains),
   upsertChain: async (chain) => localStorageUtils.upsertChain(chain),
+  getDailyPlans: async () => localStorageUtils.getDailyPlans(),
+  saveDailyPlans: async (plans) => localStorageUtils.saveDailyPlans(plans),
   getActiveChains: async () => localStorageUtils.getActiveChains(),
   getDeletedChains: async () => localStorageUtils.getDeletedChains(),
   softDeleteChain: async (chainId) =>
@@ -49,7 +51,8 @@ export const localStorageAdapter: MomentumStorage = {
     localStorageUtils.saveActiveSession(session),
 
   // Completion history
-  getCompletionHistory: async () => localStorageUtils.getCompletionHistory(true),
+  getCompletionHistory: async () =>
+    localStorageUtils.getCompletionHistory(true),
   saveCompletionHistory: async (history) =>
     localStorageUtils.saveCompletionHistory(history),
   appendCompletionHistory: async (record) =>

@@ -21,6 +21,7 @@ export interface ChainDetailViewProps {
   onBack: () => void;
   onEdit: () => void;
   onDeleteClick: () => void;
+  onCompleteGoal?: () => void;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
   onEditHistoryRecord: (record: CompletionHistory) => void;
@@ -34,6 +35,7 @@ export interface HeaderProps {
   onBack: () => void;
   onEdit: () => void;
   onDeleteClick: () => void;
+  onCompleteGoal?: () => void;
 }
 
 export interface MainStatsProps {

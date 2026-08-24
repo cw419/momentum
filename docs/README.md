@@ -38,6 +38,7 @@
 ## 功能文档
 
 - 每日打卡：`docs/features/DAILY_CHECKIN_SUMMARY.md`
+- 今日计划：`docs/features/DAILY_PLANS.md`
 - 宠物系统：`docs/features/PET_FEATURE.md`
 - 计时器：`docs/features/TIMER_FEATURE_SUMMARY.md`
 - 分组视图增强：`docs/features/GROUP_VIEW_ENHANCEMENTS.md`

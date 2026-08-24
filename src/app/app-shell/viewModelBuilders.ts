@@ -2,6 +2,7 @@ import type {
   ActiveSession,
   Chain,
   ChainDraft,
+  DailyPlan,
   CompletionHistory,
   RSIPExecutionRecord,
   RSIPLibraryEntry,
@@ -37,11 +38,13 @@ interface BuildDashboardViewModelInputs {
   currentView: ViewState;
   chains: Chain[];
   chainsRevision: number;
+  dailyPlans: DailyPlan[];
   scheduledSessions: ScheduledSession[];
   editingChainId: string | null;
   viewingChainId: string | null;
   completionHistory: CompletionHistory[];
   handleCreateChain: (parentId?: string | null) => void;
+  handleCreateChainForToday: () => void;
   handleCreateTaskGroup: () => void;
   handleEditChain: (chainId: string) => void;
   handleSaveChain: (chainData: ChainDraft, isCopy?: boolean) => void;
@@ -50,6 +53,10 @@ interface BuildDashboardViewModelInputs {
   openRSIP: () => void;
   handleScheduleChain: (chainId: string) => void;
   handleStartChain: (chainId: string) => Promise<void>;
+  handleCompleteGoalChain: (chainId: string) => Promise<void>;
+  addUnits: (chainId: string, count: number) => Promise<void>;
+  removeUnits: (chainId: string, count: number) => Promise<void>;
+  startPlanItem: (chainId: string, itemId: string) => Promise<void>;
   handleCancelScheduledSession: (chainId: string) => void;
   handleCompleteBooking: (chainId: string) => void;
   handleDeleteChain: (chainId: string) => Promise<void>;
@@ -177,10 +184,14 @@ export function buildDashboardViewModel(
           .memoizedBuildChainTree(inputs.chains, inputs.chainsRevision)
           .find((node) => node.id === inputs.viewingChainId) ?? null)
       : null;
+  const visibleChains = inputs.chains.filter(
+    (chain) => chain.type === 'group' || !chain.goalCompletedAt,
+  );
 
   return {
-    chains: inputs.chains,
+    chains: visibleChains,
     chainsRevision: inputs.chainsRevision,
+    dailyPlans: inputs.dailyPlans,
     scheduledSessions: inputs.scheduledSessions,
     editingChain: editingChain,
     editorParentId: inputs.viewingChainId,
@@ -188,6 +199,7 @@ export function buildDashboardViewModel(
     viewingGroupNode,
     completionHistory: inputs.completionHistory,
     handleCreateChain: inputs.handleCreateChain,
+    handleCreateChainForToday: inputs.handleCreateChainForToday,
     handleCreateTaskGroup: inputs.handleCreateTaskGroup,
     handleEditChain: inputs.handleEditChain,
     handleSaveChain: inputs.handleSaveChain,
@@ -196,6 +208,10 @@ export function buildDashboardViewModel(
     openRSIP: inputs.openRSIP,
     handleScheduleChain: inputs.handleScheduleChain,
     handleStartChain: inputs.handleStartChain,
+    handleCompleteGoalChain: inputs.handleCompleteGoalChain,
+    addUnits: inputs.addUnits,
+    removeUnits: inputs.removeUnits,
+    startPlanItem: inputs.startPlanItem,
     handleCancelScheduledSession: inputs.handleCancelScheduledSession,
     handleCompleteBooking: inputs.handleCompleteBooking,
     handleDeleteChain: inputs.handleDeleteChain,

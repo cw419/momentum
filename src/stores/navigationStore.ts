@@ -11,6 +11,7 @@ interface NavigationState {
   currentView: ViewState;
   editingChainId: string | null;
   viewingChainId: string | null;
+  createChainForToday: boolean;
 }
 
 interface NavigationActions {
@@ -21,6 +22,7 @@ interface NavigationActions {
   setActiveSessionId: (sessionId: string | null) => void;
   setEditingChainId: (id: string | null) => void;
   setViewingChainId: (chainId: string | null) => void;
+  setCreateChainForToday: (value: boolean) => void;
   navigateToView: (view: ViewState) => void;
   navigateToDashboard: () => void;
   openBettingFlow: (chainId: string, sessionId: string) => void;
@@ -41,6 +43,7 @@ export function createInitialNavigationState(): NavigationState {
     currentView: 'dashboard',
     editingChainId: null,
     viewingChainId: null,
+    createChainForToday: false,
   };
 }
 
@@ -60,11 +63,16 @@ export function createNavigationStore(initialState?: Partial<NavigationState>) {
     setActiveSessionId: (sessionId) => set({ activeSessionId: sessionId }),
     setEditingChainId: (id) => set({ editingChainId: id }),
     setViewingChainId: (chainId) => set({ viewingChainId: chainId }),
+    setCreateChainForToday: (value) => set({ createChainForToday: value }),
     navigateToView: (view) =>
       set({
         currentView: view,
         ...(view === 'dashboard'
-          ? { editingChainId: null, viewingChainId: null }
+          ? {
+              editingChainId: null,
+              viewingChainId: null,
+              createChainForToday: false,
+            }
           : {}),
       }),
     navigateToDashboard: () =>
@@ -72,6 +80,7 @@ export function createNavigationStore(initialState?: Partial<NavigationState>) {
         currentView: 'dashboard',
         editingChainId: null,
         viewingChainId: null,
+        createChainForToday: false,
       }),
     openBettingFlow: (chainId, sessionId) =>
       set({

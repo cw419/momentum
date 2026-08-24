@@ -1,6 +1,11 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { useState } from 'react';
-import type { Chain, ChainDraft, UnitChainType } from '../../../types';
+import type {
+  Chain,
+  ChainDraft,
+  TaskDirection,
+  UnitChainType,
+} from '../../../types';
 import { logger } from '../../../utils/logger';
 import { isDev } from '../../../utils/env';
 import {
@@ -17,6 +22,9 @@ export interface ChainEditorFormModel {
   setName: Dispatch<SetStateAction<string>>;
   type: UnitChainType;
   setType: Dispatch<SetStateAction<UnitChainType>>;
+  taskDirection: TaskDirection;
+  setTaskDirection: Dispatch<SetStateAction<TaskDirection>>;
+  isDirectionLocked: boolean;
   parentId: string | undefined;
   setParentId: Dispatch<SetStateAction<string | undefined>>;
   sortOrder: number;
@@ -74,6 +82,9 @@ export function useChainEditorForm({
   const [name, setName] = useState(chain?.name || '');
   const [type, setType] = useState<UnitChainType>(
     chain && chain.type !== 'group' ? chain.type : 'unit',
+  );
+  const [taskDirection, setTaskDirection] = useState<TaskDirection>(
+    chain?.taskDirection === 'goal' ? 'goal' : 'periodic',
   );
 
   const [parentId, setParentId] = useState<string | undefined>(
@@ -159,6 +170,7 @@ export function useChainEditorForm({
       logger.debug('CHAIN_EDITOR', 'Submitting form', {
         name: name.trim(),
         type,
+        taskDirection,
         parentId,
         sortOrder,
         trigger,
@@ -202,6 +214,7 @@ export function useChainEditorForm({
     const chainData: ChainDraft = {
       name: name.trim(),
       type,
+      taskDirection,
       parentId: finalParentId,
       sortOrder,
       trigger:
@@ -239,6 +252,9 @@ export function useChainEditorForm({
     setName,
     type,
     setType,
+    taskDirection,
+    setTaskDirection,
+    isDirectionLocked: isEditing,
     parentId,
     setParentId,
     sortOrder,

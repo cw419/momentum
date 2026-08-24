@@ -32,6 +32,8 @@ export function mapChainRowToChain(row: ChainRow): Chain {
   return decodeChain({
     id: row.id,
     name: row.name,
+    taskDirection: row.task_direction === 'goal' ? 'goal' : 'periodic',
+    goalCompletedAt: row.goal_completed_at,
     parentId: row.parent_id || undefined,
     type: (row.type as ChainType | null | undefined) ?? undefined,
     sortOrder: row.sort_order,
@@ -84,6 +86,8 @@ export function buildChainRow(
   const base: ChainInsert = {
     id: sanitizeString(chain.id),
     name: sanitizeString(chain.name),
+    task_direction: chain.taskDirection === 'goal' ? 'goal' : 'periodic',
+    goal_completed_at: sanitizeIsoDate(chain.goalCompletedAt),
     parent_id:
       typeof parentId === 'string' && parentId.trim() ? parentId : null,
     type: sanitizeString(chain.type || 'unit', 'unit'),

@@ -12,6 +12,7 @@ erDiagram
     auth_users ||--o{ scheduled_sessions : "owns"
     auth_users ||--o{ active_sessions : "owns"
     auth_users ||--o{ completion_history : "owns"
+    auth_users ||--o{ daily_plans : "owns"
     auth_users ||--o{ rsip_nodes : "owns"
     auth_users ||--|| rsip_meta : "has"
     auth_users ||--o{ rsip_groups : "owns"
@@ -80,6 +81,8 @@ erDiagram
 | `deleted_at`                   | timestamptz | DEFAULT NULL                  | 软删除时间戳                      |
 | `created_at`                   | timestamptz | DEFAULT now()                 | 创建时间                          |
 | `last_completed_at`            | timestamptz |                               | 最后完成时间                      |
+| `task_direction`               | text        | NOT NULL, DEFAULT 'periodic'  | 任务方向：periodic 或 goal        |
+| `goal_completed_at`            | timestamptz |                               | 目标任务归档时间                  |
 
 **索引**：
 
@@ -158,6 +161,23 @@ erDiagram
 - `idx_completion_history_chain_id` (chain_id)
 - `idx_completion_history_completed_at` (completed_at DESC)
 - `idx_completion_history_user_chain_completed_unique` (user_id, chain_id, completed_at) UNIQUE
+
+---
+
+### daily_plans（今日计划）
+
+每个用户每个自然日一条，保存当天的计划单元配额；它不替代 `completion_history`。
+
+| 字段         | 类型        | 约束                                 | 说明             |
+| ------------ | ----------- | ------------------------------------ | ---------------- |
+| `id`         | uuid        | PK                                   | 今日计划 ID      |
+| `user_id`    | uuid        | FK → auth.users, NOT NULL            | 所属用户         |
+| `plan_date`  | date        | NOT NULL, UNIQUE(user_id, plan_date) | 本地自然日       |
+| `created_at` | timestamptz | NOT NULL, DEFAULT now()              | 创建时间         |
+| `closed_at`  | timestamptz |                                      | 跨日自动关闭时间 |
+| `items`      | jsonb       | NOT NULL, DEFAULT '[]'               | 计划单元数组     |
+
+`items` 中的单元包含 `chainId`、状态、实际开始/完成时间，以及可选的 `completionHistoryId`，用于关联对应的实际完成会话。
 
 ---
 
@@ -548,6 +568,7 @@ CREATE POLICY "Users can manage their own [table]"
 | `20250906000006_fix_create_write_session_type_mismatch.sql`    | 2025-09-06 | 写入会话类型不匹配修复                 |
 | `20260114000000_add_chain_repeat_and_minimum_duration.sql`     | 2026-01-14 | 任务重复次数与最小时长字段             |
 | `20260123000000_optimize_rls_policy_auth_uid.sql`              | 2026-01-23 | RLS 性能与安全增强                     |
+| `20260824000000_add_daily_plans.sql`                           | 2026-08-24 | 今日计划表与任务方向字段               |
 | `20260124000000_rsip_execution_tracking.sql`                   | 2026-01-24 | RSIP 稳态阶段与执行追踪字段            |
 | `20260127000000_dedupe_and_add_unique_indexes.sql`             | 2026-01-27 | scheduled/completion 去重与唯一索引    |
 | `20260208000000_rsip_process_integration.sql`                  | 2026-02-08 | RSIP 分组、策略库、运行历史、任务联动  |

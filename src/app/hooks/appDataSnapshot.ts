@@ -24,6 +24,7 @@ async function loadWithFallback<T>(params: {
 export async function loadAppDataSnapshot(storage: MomentumStorage) {
   const [
     chains,
+    dailyPlans,
     scheduledSessions,
     activeSession,
     completionHistory,
@@ -41,6 +42,12 @@ export async function loadAppDataSnapshot(storage: MomentumStorage) {
       fallback: [],
       message: 'Failed to load chain data',
       level: 'error',
+    }),
+    loadWithFallback({
+      load: () => storage.getDailyPlans(),
+      fallback: [],
+      message: 'Failed to load daily plans',
+      level: 'warn',
     }),
     loadWithFallback({
       load: () => storage.getScheduledSessions(),
@@ -112,6 +119,7 @@ export async function loadAppDataSnapshot(storage: MomentumStorage) {
 
   return {
     chains,
+    dailyPlans,
     scheduledSessions,
     activeSession,
     completionHistory,

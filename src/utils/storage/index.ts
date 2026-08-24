@@ -9,6 +9,7 @@ import {
   softDeleteChain,
   upsertChain,
 } from './chains';
+import { getDailyPlans, saveDailyPlans } from './dailyPlans';
 import {
   appendCompletionHistory,
   getCompletionHistory,
@@ -63,6 +64,8 @@ export const storage = {
   getChains,
   saveChains,
   upsertChain,
+  getDailyPlans,
+  saveDailyPlans,
 
   getScheduledSessions,
   saveScheduledSessions,

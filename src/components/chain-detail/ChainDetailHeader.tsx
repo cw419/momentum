@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Archive, Edit, Trash2 } from 'lucide-react';
 import { HeaderProps } from './types';
 import { BackButton } from '../BackButton';
 
@@ -9,6 +9,7 @@ export const ChainDetailHeader: React.FC<HeaderProps> = ({
   onBack,
   onEdit,
   onDeleteClick,
+  onCompleteGoal,
 }) => (
   <header className="mb-12 flex animate-fade-in items-center justify-between">
     <div className="flex items-center space-x-4">
@@ -27,6 +28,16 @@ export const ChainDetailHeader: React.FC<HeaderProps> = ({
       </div>
     </div>
     <div className="flex space-x-3">
+      {onCompleteGoal && (
+        <button
+          type="button"
+          onClick={onCompleteGoal}
+          className="flex items-center space-x-2 rounded-2xl bg-emerald-600 px-5 py-3 font-chinese font-medium text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-emerald-700"
+        >
+          <Archive size={16} />
+          <span>{tr('完成并归档', 'Complete & archive')}</span>
+        </button>
+      )}
       <button
         onClick={onEdit}
         className="flex items-center space-x-2 rounded-2xl bg-primary-500 px-6 py-3 font-chinese font-medium text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-primary-600"

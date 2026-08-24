@@ -15,6 +15,7 @@ interface ChainDetailProps {
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onCompleteGoal?: () => void;
   onUpdateCompletionHistory: (
     id: string,
     updates: Pick<CompletionHistory, 'description' | 'notes'>,
@@ -22,8 +23,17 @@ interface ChainDetailProps {
 }
 
 export const ChainDetailContainer: React.FC<ChainDetailProps> = React.memo(
-  ({ chain, history, onBack, onEdit, onDelete, onUpdateCompletionHistory }) => {
-    const [editingRecord, setEditingRecord] = useState<CompletionHistory | null>(null);
+  ({
+    chain,
+    history,
+    onBack,
+    onEdit,
+    onDelete,
+    onCompleteGoal,
+    onUpdateCompletionHistory,
+  }) => {
+    const [editingRecord, setEditingRecord] =
+      useState<CompletionHistory | null>(null);
     const {
       showDeleteConfirm,
       successRate,
@@ -42,33 +52,37 @@ export const ChainDetailContainer: React.FC<ChainDetailProps> = React.memo(
 
     return (
       <>
-      <ChainDetailView
-        chain={chain}
-        recentHistory={visibleHistory}
-        chainHistoryCount={chainHistoryCount}
-        successRate={successRate}
-        showDeleteConfirm={showDeleteConfirm}
-        language={language}
-        locale={locale}
-        tr={tr}
-        formatFailureReason={formatFailureReason}
-        onBack={onBack}
-        onEdit={onEdit}
-        onDeleteClick={handleDeleteClick}
-        onDeleteConfirm={handleDeleteConfirm}
-        onDeleteCancel={handleDeleteCancel}
-        onEditHistoryRecord={setEditingRecord}
-        onLoadMoreHistory={handleLoadMore}
-        hasMoreHistory={hasMoreHistory}
-      />
-      <CompletionRecordEditorDialog
-        record={editingRecord}
-        onClose={() => setEditingRecord(null)}
-        onSave={async (record, updates) => {
-          if (!record.id) throw new Error('Completion record is missing an ID');
-          await onUpdateCompletionHistory(record.id, updates);
-        }}
-      />
+        <ChainDetailView
+          chain={chain}
+          recentHistory={visibleHistory}
+          chainHistoryCount={chainHistoryCount}
+          successRate={successRate}
+          showDeleteConfirm={showDeleteConfirm}
+          language={language}
+          locale={locale}
+          tr={tr}
+          formatFailureReason={formatFailureReason}
+          onBack={onBack}
+          onEdit={onEdit}
+          onDeleteClick={handleDeleteClick}
+          onCompleteGoal={
+            chain.taskDirection === 'goal' ? onCompleteGoal : undefined
+          }
+          onDeleteConfirm={handleDeleteConfirm}
+          onDeleteCancel={handleDeleteCancel}
+          onEditHistoryRecord={setEditingRecord}
+          onLoadMoreHistory={handleLoadMore}
+          hasMoreHistory={hasMoreHistory}
+        />
+        <CompletionRecordEditorDialog
+          record={editingRecord}
+          onClose={() => setEditingRecord(null)}
+          onSave={async (record, updates) => {
+            if (!record.id)
+              throw new Error('Completion record is missing an ID');
+            await onUpdateCompletionHistory(record.id, updates);
+          }}
+        />
       </>
     );
   },

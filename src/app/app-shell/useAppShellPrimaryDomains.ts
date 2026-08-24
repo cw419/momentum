@@ -6,6 +6,12 @@ import { useSessionsDomain } from '../../hooks/domains/useSessionsDomain';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { getAppStateSnapshot } from '../../stores/appShellStore';
 import { navigationStore } from '../../stores/navigationStore';
+import {
+  addPlanUnits,
+  closeOverdueDailyPlans,
+  createTodayPlan,
+  getTodayPlan,
+} from '../../utils/dailyPlans';
 import { useTaskLifecycleIntegration } from '../hooks/useTaskLifecycleIntegration';
 import type { AppShellStateController } from './useAppShellState';
 
@@ -20,12 +26,28 @@ export function useAppShellPrimaryDomains(
     editingChainId: state.editingChainId,
     storage,
     safelySaveChains,
-    onNavigateToEditor: (parentId) => {
+    onNavigateToEditor: (parentId, addToToday = false) => {
       navigationStore.setState({
         currentView: 'editor',
         editingChainId: null,
         viewingChainId: parentId,
+        createChainForToday: addToToday,
       });
+    },
+    onNewChainCreated: async (chainId) => {
+      const navigation = navigationStore.getState();
+      if (!navigation.createChainForToday) return;
+
+      const current = getAppStateSnapshot();
+      const closedPlans = closeOverdueDailyPlans(current.dailyPlans);
+      const plan = getTodayPlan(closedPlans) ?? createTodayPlan();
+      const updatedPlan = addPlanUnits(plan, chainId, 1);
+      const updatedPlans = [
+        ...closedPlans.filter((candidate) => candidate.id !== plan.id),
+        updatedPlan,
+      ];
+      await storage.saveDailyPlans(updatedPlans);
+      state.setState((previous) => ({ ...previous, dailyPlans: updatedPlans }));
     },
     onNavigateToTaskGroupEditor: () => {
       navigationStore.setState({

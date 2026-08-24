@@ -1,10 +1,13 @@
 import type {
   ChainStore,
+  DailyPlanStore,
   HistoryStore,
   MaintenanceStore,
   SessionStore,
   TaskTimeStatsStore,
 } from '../../../storage/ports';
+import type { DailyPlan } from '../../../types';
+import { decodeDailyPlan } from '../../../serialization';
 import { migrateCompletionHistoryForTiming } from '../../../utils/completionHistoryTimingMigration';
 import * as chainsApi from './chains';
 import * as historyApi from './history';
@@ -16,11 +19,59 @@ export abstract class SupabaseStorageData
   extends SupabaseStorageCore
   implements
     ChainStore,
+    DailyPlanStore,
     SessionStore,
     HistoryStore,
     TaskTimeStatsStore,
     MaintenanceStore
 {
+  async getDailyPlans(): Promise<DailyPlan[]> {
+    const user = await this.ctx.getCurrentUser();
+    if (!user) return [];
+    const client = this.ctx.getClient();
+    const { data, error } = await (client.from('daily_plans') as any)
+      .select('*')
+      .eq('user_id', user.id)
+      .order('plan_date', { ascending: false });
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist'))
+        return [];
+      throw new Error(`Failed to fetch daily plans: ${error.message}`);
+    }
+    return (data ?? []).map((row: any) =>
+      decodeDailyPlan({
+        id: row.id,
+        planDate: row.plan_date,
+        createdAt: row.created_at,
+        closedAt: row.closed_at,
+        items: row.items,
+      }),
+    );
+  }
+
+  async saveDailyPlans(plans: DailyPlan[]): Promise<void> {
+    const user = await this.ctx.getCurrentUser();
+    if (!user) return;
+    const client = this.ctx.getClient();
+    const rows = plans.map((plan) => ({
+      id: plan.id,
+      plan_date: plan.planDate,
+      created_at: plan.createdAt.toISOString(),
+      closed_at: plan.closedAt?.toISOString() ?? null,
+      items: plan.items.map((item) => ({
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+        startedAt: item.startedAt?.toISOString() ?? null,
+        completedAt: item.completedAt?.toISOString() ?? null,
+      })),
+      user_id: user.id,
+    }));
+    const { error } = await (client.from('daily_plans') as any).upsert(rows, {
+      onConflict: 'id',
+    });
+    if (error) throw new Error(`Failed to save daily plans: ${error.message}`);
+  }
+
   getChains() {
     return this.deduplicatedRequest('getChains', () =>
       chainsApi.getChains(this.ctx),

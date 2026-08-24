@@ -56,6 +56,8 @@ interface ChainRecord {
   parentId?: string; // 父任务组 ID
   sortOrder?: number; // 排序
   deletedAt?: Date; // 软删除时间戳
+  taskDirection?: 'periodic' | 'goal'; // 周期性或目标性任务
+  goalCompletedAt?: Date; // 目标任务手动完成并归档的时间
 
   // 任务组相关
   timeLimitHours?: number;
@@ -175,13 +177,15 @@ sequenceDiagram
 
 ### useChainsDomain Hook
 
-| 方法                    | 参数               | 说明                 |
-| ----------------------- | ------------------ | -------------------- |
-| `handleCreateChain`     | `(parentId?)`      | 打开创建链条编辑器   |
-| `handleCreateTaskGroup` | -                  | 打开创建任务组编辑器 |
-| `handleEditChain`       | `(chainId)`        | 打开编辑链条编辑器   |
-| `handleSaveChain`       | `(draft, isCopy?)` | 保存链条             |
-| `handleCopyChain`       | `(chainId)`        | 复制链条             |
+| 方法                        | 参数               | 说明                                         |
+| --------------------------- | ------------------ | -------------------------------------------- |
+| `handleCreateChain`         | `(parentId?)`      | 打开创建链条编辑器                           |
+| `handleCreateChainForToday` | -                  | 新建链条并在保存后加入今日计划               |
+| `handleCreateTaskGroup`     | -                  | 打开创建任务组编辑器                         |
+| `handleEditChain`           | `(chainId)`        | 打开编辑链条编辑器                           |
+| `handleSaveChain`           | `(draft, isCopy?)` | 保存链条                                     |
+| `handleCompleteGoalChain`   | `(chainId)`        | 归档目标任务；若今日计划仍有未完成单元则拒绝 |
+| `handleCopyChain`           | `(chainId)`        | 复制链条                                     |
 
 ### SafelySaveChains
 

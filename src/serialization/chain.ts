@@ -1,4 +1,10 @@
-import type { Chain, ChainType, GroupChain, UnitChain } from '../types';
+import type {
+  Chain,
+  ChainType,
+  GroupChain,
+  TaskDirection,
+  UnitChain,
+} from '../types';
 import {
   parseDateOrUndefined,
   parseTruthyDateOrNow,
@@ -25,6 +31,8 @@ type SerializedChainBase = {
   type?: ChainType | null;
   sortOrder: number;
   name: string;
+  taskDirection?: unknown;
+  goalCompletedAt?: string | null;
   trigger: string;
   duration: number;
   description: string;
@@ -66,6 +74,11 @@ function getCommonChainFields(raw: SerializedChainBase) {
   return {
     id: raw.id,
     name: raw.name,
+    taskDirection: (raw.taskDirection === 'goal' ||
+    raw.taskDirection === 'periodic'
+      ? raw.taskDirection
+      : 'periodic') as TaskDirection,
+    goalCompletedAt: parseDateOrUndefined(raw.goalCompletedAt),
     parentId: raw.parentId,
     sortOrder: toNumber(raw.sortOrder, 0),
     trigger: toStringWithDefault(raw.trigger, ''),

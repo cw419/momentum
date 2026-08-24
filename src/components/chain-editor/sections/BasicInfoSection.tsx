@@ -1,4 +1,4 @@
-import type { UnitChainType } from '../../../types';
+import type { TaskDirection, UnitChainType } from '../../../types';
 import { Copy, Layers, Tag } from 'lucide-react';
 import { SettingSection } from '../../SettingSection';
 import type { ChainEditorFormModel } from '../hooks/useChainEditorForm';
@@ -48,6 +48,36 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
           className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-6 py-4 font-chinese text-gray-900 placeholder-gray-400 transition duration-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
           required
         />
+      </div>
+
+      <div className="bento-card animate-scale-in">
+        <div className="mb-4">
+          <label
+            htmlFor="chain-direction"
+            className="mb-2 block font-chinese text-lg font-semibold text-gray-900 dark:text-slate-100"
+          >
+            {tr('任务方向', 'Task direction')}
+          </label>
+          <p className="mb-4 font-chinese text-sm text-gray-500 dark:text-slate-400">
+            {tr(
+              '周期向任务会持续保留；目标向任务可在完成项目后归档。创建后不可转换。',
+              'Periodic tasks stay active; goal tasks can be archived when the project is complete. This cannot be changed after creation.',
+            )}
+          </p>
+        </div>
+        <select
+          id="chain-direction"
+          name="chainDirection"
+          value={form.taskDirection}
+          disabled={form.isDirectionLocked}
+          onChange={(e) =>
+            form.setTaskDirection(e.target.value as TaskDirection)
+          }
+          className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 font-chinese text-gray-900 transition duration-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+        >
+          <option value="periodic">{tr('周期向任务', 'Periodic task')}</option>
+          <option value="goal">{tr('目标向任务', 'Goal task')}</option>
+        </select>
       </div>
 
       <div className="bento-card animate-scale-in">

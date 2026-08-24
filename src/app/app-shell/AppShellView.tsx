@@ -130,6 +130,9 @@ export function AppShellView({
               onBack={dashboard.handleBackToDashboard}
               onEdit={() => dashboard.handleEditChain(viewingChain.id)}
               onDelete={() => runAsync(handleDeleteChain(viewingChain.id))}
+              onCompleteGoal={() =>
+                runAsync(dashboard.handleCompleteGoalChain(viewingChain.id))
+              }
               onUpdateCompletionHistory={dashboard.updateCompletionHistory}
             />
             {renderAuxiliaryJudgment()}
@@ -203,12 +206,17 @@ export function AppShellView({
               <Dashboard
                 chains={dashboard.chains}
                 chainsRevision={dashboard.chainsRevision}
+                dailyPlans={dashboard.dailyPlans}
                 scheduledSessions={dashboard.scheduledSessions}
                 isLoading={app.isLoadingData}
                 onCreateChain={dashboard.handleCreateChain}
+                onCreateChainForToday={dashboard.handleCreateChainForToday}
                 onCreateTaskGroup={dashboard.handleCreateTaskGroup}
                 onOpenRSIP={dashboard.openRSIP}
                 onStartChain={dashboard.handleStartChain}
+                onAddPlanUnits={dashboard.addUnits}
+                onRemovePlanUnits={dashboard.removeUnits}
+                onStartPlanItem={dashboard.startPlanItem}
                 onScheduleChain={dashboard.handleScheduleChain}
                 onViewChainDetail={dashboard.handleViewChainDetail}
                 onCancelScheduledSession={

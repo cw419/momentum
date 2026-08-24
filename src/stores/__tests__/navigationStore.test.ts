@@ -38,6 +38,7 @@ describe('navigationStore', () => {
       currentView: 'detail',
       editingChainId: 'e1',
       viewingChainId: 'v1',
+      createChainForToday: true,
     });
 
     store.getState().navigateToView('dashboard');
@@ -45,6 +46,7 @@ describe('navigationStore', () => {
     expect(store.getState().currentView).toBe('dashboard');
     expect(store.getState().editingChainId).toBeNull();
     expect(store.getState().viewingChainId).toBeNull();
+    expect(store.getState().createChainForToday).toBe(false);
   });
 
   it('navigateToView preserves chain IDs for non-dashboard views', () => {

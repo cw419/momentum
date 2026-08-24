@@ -3,6 +3,7 @@ import { useGroupDomain } from '../../hooks/domains/useGroupDomain';
 import { useImportExportDomain } from '../../hooks/domains/useImportExportDomain';
 import { useRecycleBinDomain } from '../../hooks/domains/useRecycleBinDomain';
 import { useRulesDomain } from '../../hooks/domains/useRulesDomain';
+import { useDailyPlanDomain } from '../../hooks/domains/useDailyPlanDomain';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { getAppStateSnapshot } from '../../stores/appShellStore';
 import { navigationStore } from '../../stores/navigationStore';
@@ -64,6 +65,12 @@ export function useAppShellSecondaryDomains(
     storage,
     safelySaveChains: primary.safelySaveChains,
   });
+  const dailyPlanDomain = useDailyPlanDomain({
+    getState: getAppStateSnapshot,
+    setState: state.setState,
+    storage,
+    startChain: primary.handleStartChain,
+  });
 
   return {
     ...bettingDomain,
@@ -71,5 +78,6 @@ export function useAppShellSecondaryDomains(
     ...recycleBinDomain,
     ...importExportDomain,
     ...groupDomain,
+    ...dailyPlanDomain,
   };
 }

@@ -3,6 +3,7 @@ import type {
   BettingGateway,
   ChainStore,
   CheckinGateway,
+  DailyPlanStore,
   HistoryStore,
   MaintenanceStore,
   PetStore,
@@ -25,6 +26,7 @@ export interface MomentumStorage
     UserSettingsGateway,
     BettingGateway,
     CheckinGateway,
+    DailyPlanStore,
     PetStore {
   readonly kind: 'local' | 'supabase';
   readonly capabilities?: StorageCapabilities;

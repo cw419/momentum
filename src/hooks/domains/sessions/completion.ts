@@ -20,6 +20,7 @@ import {
   updateChainsForFailure,
   updateChainsForSuccess,
 } from './completionState';
+import { setPlanItemStatus } from '../../../utils/dailyPlans';
 
 async function persistCompletionHistoryAndCleanupSupabase(
   storage: MomentumStorage,
@@ -188,7 +189,31 @@ export function createCompletionHandlers({
     );
     updatedChains = groupCycleResult.updatedChains;
 
+    const updatedDailyPlans = activeSession.dailyPlanItemId
+      ? currentState.dailyPlans.map((plan) =>
+          plan.items.some((item) => item.id === activeSession.dailyPlanItemId)
+            ? setPlanItemStatus(
+                plan,
+                activeSession.dailyPlanItemId!,
+                'completed',
+                completedAt,
+                completionRecord.id,
+              )
+            : plan,
+        )
+      : currentState.dailyPlans;
+
     persistChains(updatedChains, '完成任务时保存链条数据失败');
+    if (updatedDailyPlans !== currentState.dailyPlans) {
+      storage.saveDailyPlans(updatedDailyPlans).catch((error) => {
+        logger.error(
+          'SESSIONS',
+          '完成任务时保存今日计划失败',
+          undefined,
+          normalizeUnknownError(error),
+        );
+      });
+    }
     persistCompletionHistoryAndCleanup(completionRecord, 'completion');
 
     if (completionRecord.actualDuration) {
@@ -228,6 +253,7 @@ export function createCompletionHandlers({
       ...prev,
       chains: updatedChains,
       chainsRevision: prev.chainsRevision + 1,
+      dailyPlans: updatedDailyPlans,
       activeSession: null,
       completionHistory: updatedHistory,
     }));

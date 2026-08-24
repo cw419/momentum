@@ -15,6 +15,7 @@ import type {
   ScheduledSession,
 } from './session';
 import type { TaskTimeStats } from './taskTimeStats';
+import type { DailyPlan } from './daily-plan';
 
 export type ViewState =
   | 'dashboard'
@@ -28,6 +29,7 @@ export type ViewState =
 export interface TaskRuntimeState {
   chains: Chain[];
   chainsRevision: number;
+  dailyPlans: DailyPlan[];
   scheduledSessions: ScheduledSession[];
   activeSession: ActiveSession | null;
   completionHistory: CompletionHistory[];

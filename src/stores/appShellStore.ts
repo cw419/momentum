@@ -21,6 +21,7 @@ export function createInitialAppState(): AppState {
   return {
     chains: [],
     chainsRevision: 0,
+    dailyPlans: [],
     scheduledSessions: [],
     activeSession: null,
     completionHistory: [],
@@ -41,6 +42,7 @@ function extractTaskRuntimeState(state: AppState): TaskRuntimeState {
   return {
     chains: state.chains,
     chainsRevision: state.chainsRevision,
+    dailyPlans: state.dailyPlans,
     scheduledSessions: state.scheduledSessions,
     activeSession: state.activeSession,
     completionHistory: state.completionHistory,

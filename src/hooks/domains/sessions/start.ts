@@ -15,6 +15,7 @@ import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 import type { TaskLifecycleEventPublisher } from '../../../services/task-lifecycle/TaskLifecycleEventBus';
 import { notifyTaskCompleted } from './sessionNotifications';
 import { createGroupStartFlow } from './groupStartFlow';
+import { setPlanItemStarted } from '../../../utils/dailyPlans';
 
 type Chain = AppState['chains'][number];
 type ScheduledSession = AppState['scheduledSessions'][number];
@@ -39,10 +40,12 @@ function buildActiveSession(params: {
   chainId: string;
   chain: Chain;
   bettingSessionId: string | null;
+  dailyPlanItemId?: string;
 }): ActiveSession {
   return {
     ...(params.bettingSessionId ? { id: params.bettingSessionId } : {}),
     chainId: params.chainId,
+    dailyPlanItemId: params.dailyPlanItemId,
     startedAt: new Date(),
     duration: params.chain.isDurationless ? 0 : params.chain.duration,
     isPaused: false,
@@ -167,7 +170,7 @@ export function createStartChainHandler({
     }
   }
 
-  function startSingleChain(chain: Chain): void {
+  function startSingleChain(chain: Chain, dailyPlanItemId?: string): void {
     const currentState = readState();
     const existingScheduledSession = findScheduledSession(chain.id);
     const bettingSessionId =
@@ -177,10 +180,18 @@ export function createStartChainHandler({
       chainId: chain.id,
       chain,
       bettingSessionId,
+      dailyPlanItemId,
     });
     const updatedScheduledSessions = currentState.scheduledSessions.filter(
       (session) => session.chainId !== chain.id,
     );
+    const updatedDailyPlans = dailyPlanItemId
+      ? currentState.dailyPlans.map((plan) =>
+          plan.items.some((item) => item.id === dailyPlanItemId)
+            ? setPlanItemStarted(plan, dailyPlanItemId, activeSession.startedAt)
+            : plan,
+        )
+      : currentState.dailyPlans;
 
     const updatedChains = existingScheduledSession
       ? currentState.chains.map((item) =>
@@ -199,6 +210,16 @@ export function createStartChainHandler({
     }
 
     persistActiveSession(chain.id, activeSession);
+    if (updatedDailyPlans !== currentState.dailyPlans) {
+      storage.saveDailyPlans(updatedDailyPlans).catch((error) => {
+        logger.error(
+          'SESSIONS',
+          '开始任务时保存今日计划失败',
+          undefined,
+          normalizeUnknownError(error),
+        );
+      });
+    }
     if (existingScheduledSession) {
       persistScheduledSessionRemoval(chain.id);
       persistChains(chain.id, updatedChains);
@@ -208,6 +229,7 @@ export function createStartChainHandler({
       ...prev,
       activeSession,
       scheduledSessions: updatedScheduledSessions,
+      dailyPlans: updatedDailyPlans,
       chains: updatedChains,
       chainsRevision: prev.chainsRevision + 1,
     }));
@@ -224,7 +246,10 @@ export function createStartChainHandler({
     tr,
   });
 
-  async function handleStartChain(chainId: string): Promise<void> {
+  async function handleStartChain(
+    chainId: string,
+    dailyPlanItemId?: string,
+  ): Promise<void> {
     if (await maybeStartBettingSession(chainId)) return;
 
     const chain = findChain(chainId);
@@ -235,7 +260,7 @@ export function createStartChainHandler({
       return;
     }
 
-    startSingleChain(chain);
+    startSingleChain(chain, dailyPlanItemId);
   }
 
   return handleStartChain;

@@ -105,7 +105,8 @@ interface UseChainsDomainParams {
   editingChainId: string | null;
   storage: MomentumStorage;
   safelySaveChains: SafelySaveChains;
-  onNavigateToEditor?: (parentId: string | null) => void;
+  onNavigateToEditor?: (parentId: string | null, addToToday?: boolean) => void;
+  onNewChainCreated?: (chainId: string) => Promise<void>;
   onNavigateToTaskGroupEditor?: () => void;
   onEditChain?: (chain: Chain, isTaskGroup: boolean) => void;
   onNavigateToDashboard?: () => void;
@@ -119,6 +120,7 @@ export function useChainsDomain({
   storage,
   safelySaveChains,
   onNavigateToEditor = () => undefined,
+  onNewChainCreated = async () => undefined,
   onNavigateToTaskGroupEditor = () => undefined,
   onEditChain = () => undefined,
   onNavigateToDashboard = () => undefined,
@@ -131,6 +133,10 @@ export function useChainsDomain({
     const normalizedParentId = typeof parentId === 'string' ? parentId : null;
 
     onNavigateToEditor(normalizedParentId);
+  };
+
+  const handleCreateChainForToday = () => {
+    onNavigateToEditor(null, true);
   };
 
   const handleCreateTaskGroup = () => {
@@ -175,6 +181,7 @@ export function useChainsDomain({
       });
 
       let updatedActiveChains: Chain[];
+      let createdChainId: string | null = null;
       const normalizedParentId = normalizeOptionalParentId(chainData.parentId);
 
       if (editingChainId && !isCopy) {
@@ -215,6 +222,7 @@ export function useChainsDomain({
         });
 
         updatedActiveChains = [...readState().chains, newChain];
+        createdChainId = newChain.id;
         logger.debug('CHAINS', 'Added chain; updated active chains', {
           count: updatedActiveChains.length,
         });
@@ -230,6 +238,24 @@ export function useChainsDomain({
         chains: updatedActiveChains,
         chainsRevision: prev.chainsRevision + 1,
       }));
+      if (createdChainId) {
+        try {
+          await onNewChainCreated(createdChainId);
+        } catch (error) {
+          logger.error(
+            'CHAINS',
+            'Created chain but failed to add it to today’s plan',
+            { chainId: createdChainId },
+            normalizeUnknownError(error),
+          );
+          toast.error(
+            tr(
+              '任务链已创建，但未能加入今日计划。请从“添加任务”中手动加入。',
+              'The chain was created but could not be added to today’s plan. Add it manually from Today.',
+            ),
+          );
+        }
+      }
       onNavigateToDashboard();
     } catch (error) {
       logger.error(
@@ -267,10 +293,43 @@ export function useChainsDomain({
     }
   };
 
+  const handleCompleteGoalChain = async (chainId: string) => {
+    const current = readState();
+    const chain = current.chains.find((candidate) => candidate.id === chainId);
+    if (!chain || chain.taskDirection !== 'goal') return;
+    const pendingToday = current.dailyPlans
+      .filter((plan) => !plan.closedAt)
+      .flatMap((plan) => plan.items)
+      .some((item) => item.chainId === chainId && item.status === 'pending');
+    if (pendingToday) {
+      toast.error(
+        tr(
+          '今日任务群中仍有该目标的未完成计划单元，请先完成或移除它们。',
+          'This goal still has unfinished units in today’s plan. Complete or remove them first.',
+        ),
+      );
+      return;
+    }
+    const updatedChains = current.chains.map((candidate) =>
+      candidate.id === chainId
+        ? { ...candidate, goalCompletedAt: new Date() }
+        : candidate,
+    );
+    await safelySaveChains(updatedChains);
+    setState((previous) => ({
+      ...previous,
+      chains: updatedChains,
+      chainsRevision: previous.chainsRevision + 1,
+    }));
+    onNavigateToDashboard();
+  };
+
   return {
     handleCreateChain,
+    handleCreateChainForToday,
     handleCreateTaskGroup,
     handleEditChain,
     handleSaveChain,
+    handleCompleteGoalChain,
   };
 }

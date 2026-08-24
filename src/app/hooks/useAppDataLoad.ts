@@ -16,6 +16,7 @@ import {
   runDevDataMigration,
 } from './appDataLoadHelpers';
 import { navigationStore } from '../../stores/navigationStore';
+import { closeOverdueDailyPlans } from '../../utils/dailyPlans';
 import { loadAppDataSnapshot } from './appDataSnapshot';
 
 interface UseAppDataLoadParams {
@@ -69,6 +70,7 @@ export function useAppDataLoad({
 
         const {
           chains,
+          dailyPlans,
           scheduledSessions: allScheduledSessions,
           activeSession,
           completionHistory,
@@ -157,6 +159,15 @@ export function useAppDataLoad({
           }, 5000);
         }
 
+        const closedDailyPlans = closeOverdueDailyPlans(dailyPlans);
+        if (
+          closedDailyPlans.some(
+            (plan, index) => plan.closedAt !== dailyPlans[index]?.closedAt,
+          )
+        ) {
+          await storage.saveDailyPlans(closedDailyPlans);
+        }
+
         logger.debug('APP_SHELL', 'Setting app state', {
           chainCount: chains.length,
         });
@@ -164,6 +175,7 @@ export function useAppDataLoad({
           ...prev,
           chains,
           chainsRevision: prev.chainsRevision + 1,
+          dailyPlans: closedDailyPlans,
           scheduledSessions,
           activeSession,
           completionHistory: migratedCompletionHistory,

@@ -5,6 +5,7 @@ import type {
   Chain,
   ChainDraft,
   ChainTreeNode,
+  DailyPlan,
   CompletionHistory,
   ExceptionRule,
   RSIPExecutionRecord,
@@ -59,6 +60,7 @@ export interface AppShellAppViewModel {
 export interface AppShellDashboardViewModel {
   chains: Chain[];
   chainsRevision: number;
+  dailyPlans: DailyPlan[];
   scheduledSessions: ScheduledSession[];
   editingChain: Chain | null;
   editorParentId: string | null;
@@ -66,6 +68,7 @@ export interface AppShellDashboardViewModel {
   viewingGroupNode: ChainTreeNode | null;
   completionHistory: CompletionHistory[];
   handleCreateChain: (parentId?: string | null) => void;
+  handleCreateChainForToday: () => void;
   handleCreateTaskGroup: () => void;
   handleEditChain: (chainId: string) => void;
   handleSaveChain: (chainData: ChainDraft, isCopy?: boolean) => void;
@@ -74,6 +77,10 @@ export interface AppShellDashboardViewModel {
   openRSIP: () => void;
   handleScheduleChain: (chainId: string) => void;
   handleStartChain: (chainId: string) => Promise<void>;
+  handleCompleteGoalChain: (chainId: string) => Promise<void>;
+  addUnits: (chainId: string, count: number) => Promise<void>;
+  removeUnits: (chainId: string, count: number) => Promise<void>;
+  startPlanItem: (chainId: string, itemId: string) => Promise<void>;
   handleCancelScheduledSession: (chainId: string) => void;
   handleCompleteBooking: (chainId: string) => void;
   handleDeleteChain: (chainId: string) => Promise<void>;

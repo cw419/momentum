@@ -21,11 +21,17 @@ describe('Dashboard sections', () => {
         <StorageProvider storage={mockStorage as any}>
           <Dashboard
             chains={[]}
+            chainsRevision={0}
+            dailyPlans={[]}
             scheduledSessions={[]}
             onCreateChain={vi.fn()}
+            onCreateChainForToday={vi.fn()}
             onCreateTaskGroup={vi.fn()}
             onOpenRSIP={vi.fn()}
             onStartChain={vi.fn()}
+            onAddPlanUnits={vi.fn().mockResolvedValue(undefined)}
+            onRemovePlanUnits={vi.fn().mockResolvedValue(undefined)}
+            onStartPlanItem={vi.fn().mockResolvedValue(undefined)}
             onScheduleChain={vi.fn()}
             onViewChainDetail={vi.fn()}
             onCancelScheduledSession={vi.fn()}
