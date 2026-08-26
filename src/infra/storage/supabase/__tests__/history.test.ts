@@ -25,6 +25,7 @@ const createMockHistoryRow = (
 ) => ({
   id: 'history-1',
   chain_id: 'chain-1',
+  started_at: '2024-01-15T09:30:00Z',
   completed_at: '2024-01-15T10:00:00Z',
   duration: 30,
   was_successful: true,
@@ -92,6 +93,7 @@ describe('history.ts', () => {
       expect(result[0].description).toBe('Completed task');
       expect(result[0].notes).toBe('Good progress');
       expect(result[0].completedAt).toBeInstanceOf(Date);
+      expect(result[0].startedAt).toEqual(new Date('2024-01-15T09:30:00Z'));
     });
 
     it('should handle failure records correctly', async () => {
@@ -220,6 +222,7 @@ describe('history.ts', () => {
       const history: CompletionHistory[] = [
         {
           chainId: 'chain-1',
+          startedAt: new Date('2024-01-15T09:30:00.000Z'),
           completedAt: new Date('2024-01-15T10:00:00.000Z'),
           duration: 30,
           wasSuccessful: false,
@@ -240,6 +243,7 @@ describe('history.ts', () => {
       expect(upsertedData).toHaveLength(1);
       const record = upsertedData[0] as Record<string, unknown>;
       expect(record.chain_id).toBe('chain-1');
+      expect(record.started_at).toBe('2024-01-15T09:30:00.000Z');
       expect(record.user_id).toBe('test-user-123');
       expect(record.duration).toBe(30);
       expect(record.was_successful).toBe(false);

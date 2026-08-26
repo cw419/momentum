@@ -14,6 +14,7 @@ export type CompletionHistorySelectRow = Pick<
   CompletionHistoryRow,
   | 'id'
   | 'chain_id'
+  | 'started_at'
   | 'completed_at'
   | 'duration'
   | 'was_successful'
@@ -42,6 +43,7 @@ function toSerializedCompletionHistory(
   return {
     id: row.id,
     chainId: row.chain_id,
+    startedAt: 'started_at' in row ? row.started_at : undefined,
     completedAt: row.completed_at,
     duration: row.duration,
     wasSuccessful: row.was_successful,
@@ -76,6 +78,7 @@ export function buildCompletionHistoryRowsWithNewFields(
   return items.map((history) => ({
     id: history.id,
     chain_id: history.chainId,
+    started_at: history.startedAt?.toISOString() ?? null,
     completed_at: history.completedAt.toISOString(),
     duration: history.duration,
     was_successful: history.wasSuccessful,

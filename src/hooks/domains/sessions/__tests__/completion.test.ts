@@ -84,6 +84,62 @@ describe('createCompletionHandlers', () => {
     vi.clearAllMocks();
   });
 
+  it('completes a started plan item restored without its session link', async () => {
+    const chain = createUnitChain({ id: 'chain-1', duration: 25 });
+    const startedAt = new Date('2026-02-01T10:00:00.000Z');
+    const initialState = createAppState({
+      chains: [chain],
+      dailyPlans: [
+        {
+          id: 'plan-1',
+          planDate: '2026-02-01',
+          createdAt: startedAt,
+          items: [
+            {
+              id: 'plan-item-1',
+              dailyPlanId: 'plan-1',
+              chainId: chain.id,
+              status: 'pending',
+              createdAt: startedAt,
+              startedAt,
+            },
+          ],
+        },
+      ],
+      activeSession: {
+        chainId: chain.id,
+        startedAt,
+        duration: 25,
+        isPaused: false,
+        totalPausedTime: 0,
+      },
+    });
+    const stateRef = createStateContainer(initialState);
+    const storage = createLocalStorageMock({
+      appendCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+      saveDailyPlans: vi.fn(async () => undefined),
+      updateTaskTimeStats: vi.fn(async () => undefined),
+    });
+    const { handleCompleteSession } = createCompletionHandlers({
+      state: stateRef.getState(),
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: null,
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleCompleteSession();
+    await flushPromises();
+
+    expect(stateRef.getState().dailyPlans[0]?.items[0]).toMatchObject({
+      status: 'completed',
+      completionHistoryId: expect.any(String),
+    });
+  });
+
   it('should update local state and persist completion when session completes', async () => {
     const group = createGroupChain({
       id: 'group-1',
@@ -160,6 +216,7 @@ describe('createCompletionHandlers', () => {
     expect(nextState.completionHistory).toHaveLength(1);
     expect(nextState.completionHistory[0]).toMatchObject({
       chainId: chain.id,
+      startedAt: expect.any(Date),
       wasSuccessful: true,
       description: 'desc',
       notes: 'notes',
@@ -171,6 +228,7 @@ describe('createCompletionHandlers', () => {
     expect(storage.appendCompletionHistory).toHaveBeenCalledWith(
       expect.objectContaining({
         chainId: chain.id,
+        startedAt: expect.any(Date),
         wasSuccessful: true,
         description: 'desc',
         notes: 'notes',

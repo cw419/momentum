@@ -71,7 +71,7 @@ describe('useRecycleBinDomain', () => {
     trMock.mockClear();
   });
 
-  it('should delete chain, clean session state, and persist session cleanup', async () => {
+  it('does not delete the task that has an active timed session', async () => {
     const chain = createUnitChain({ id: 'chain-1' });
     const otherChain = createUnitChain({ id: 'chain-2' });
     const stateRef = createStateContainer(
@@ -106,10 +106,6 @@ describe('useRecycleBinDomain', () => {
       saveActiveSession: vi.fn(async () => undefined),
     });
     const onChainDeleted = vi.fn();
-    vi.mocked(realTimeSyncService.deleteWithSync).mockResolvedValue([
-      otherChain,
-    ]);
-
     const { result } = renderHook(() =>
       useRecycleBinDomain({
         state: stateRef.getState(),
@@ -123,19 +119,15 @@ describe('useRecycleBinDomain', () => {
       await result.current.handleDeleteChain(chain.id);
     });
 
-    expect(realTimeSyncService.deleteWithSync).toHaveBeenCalledWith(
-      storage,
-      chain.id,
+    expect(realTimeSyncService.deleteWithSync).not.toHaveBeenCalled();
+    expect(storage.removeScheduledSession).not.toHaveBeenCalled();
+    expect(storage.saveActiveSession).not.toHaveBeenCalled();
+    expect(stateRef.getState().chains).toEqual([chain, otherChain]);
+    expect(stateRef.getState().activeSession?.chainId).toBe(chain.id);
+    expect(onChainDeleted).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith(
+      'An active timed task cannot be deleted. Complete or interrupt the session first.',
     );
-    expect(storage.removeScheduledSession).toHaveBeenCalledWith(chain.id);
-    expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
-    expect(stateRef.getState().chains).toEqual([otherChain]);
-    expect(stateRef.getState().activeSession).toBeNull();
-    expect(onChainDeleted).toHaveBeenCalledWith(chain.id, false);
-    expect(stateRef.getState().scheduledSessions).toEqual([
-      expect.objectContaining({ chainId: otherChain.id }),
-    ]);
-    expect(stateRef.getState().chainsRevision).toBe(1);
   });
 
   it('should keep active session and current view when deleting a different chain', async () => {

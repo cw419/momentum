@@ -63,6 +63,24 @@ function updateChainFromDraft(
   return updated;
 }
 
+function protectActiveSessionFields(
+  existing: Chain,
+  chainData: ChainDraft,
+): ChainDraft {
+  return {
+    ...existing,
+    name: chainData.name,
+    trigger: chainData.trigger,
+    description: chainData.description,
+    auxiliarySignal: chainData.auxiliarySignal,
+    auxiliaryDuration: chainData.auxiliaryDuration,
+    auxiliaryCompletionTrigger: chainData.auxiliaryCompletionTrigger,
+    exceptions: chainData.exceptions,
+    auxiliaryExceptions: chainData.auxiliaryExceptions,
+    timeLimitExceptions: chainData.timeLimitExceptions,
+  } as ChainDraft;
+}
+
 function createNewChain(params: {
   chainData: ChainDraft;
   id: string;
@@ -189,11 +207,19 @@ export function useChainsDomain({
           chainId: editingChainId,
         });
 
-        updatedActiveChains = readState().chains.map((chain) =>
-          chain.id === editingChainId
-            ? updateChainFromDraft(chain, chainData, normalizedParentId)
-            : chain,
-        );
+        const currentState = readState();
+        const isEditingActiveSession =
+          currentState.activeSession?.chainId === editingChainId;
+        updatedActiveChains = currentState.chains.map((chain) => {
+          if (chain.id !== editingChainId) return chain;
+          const safeDraft = isEditingActiveSession
+            ? protectActiveSessionFields(chain, chainData)
+            : chainData;
+          const safeParentId = isEditingActiveSession
+            ? chain.parentId
+            : normalizedParentId;
+          return updateChainFromDraft(chain, safeDraft, safeParentId);
+        });
 
         logger.debug('CHAINS', 'Edited chain; updated active chains', {
           count: updatedActiveChains.length,

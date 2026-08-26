@@ -7,8 +7,10 @@ import { TaskDurationSettings } from './main-chain-settings/TaskDurationSettings
 
 export function MainChainSettingsSection({
   form,
+  isActiveSession = false,
 }: {
   form: ChainEditorFormModel;
+  isActiveSession?: boolean;
 }) {
   const { language, tr } = useI18n();
 
@@ -23,7 +25,11 @@ export function MainChainSettingsSection({
     >
       <div className="grid grid-cols-1 divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 bg-white/90 shadow-sm dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800/80 md:grid-cols-2 md:divide-x md:divide-y-0">
         <SacredSeatSettings form={form} language={language} tr={tr} />
-        <TaskDurationSettings form={form} tr={tr} />
+        <TaskDurationSettings
+          form={form}
+          tr={tr}
+          isActiveSession={isActiveSession}
+        />
       </div>
     </SettingSection>
   );

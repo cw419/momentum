@@ -101,6 +101,24 @@ export function createCompletionHandlers({
     });
   }
 
+  function resolveDailyPlanItemId(
+    currentState: AppState,
+    activeSession: NonNullable<AppState['activeSession']>,
+  ): string | undefined {
+    if (activeSession.dailyPlanItemId) return activeSession.dailyPlanItemId;
+
+    // Compatibility for sessions restored from storage created before
+    // dailyPlanItemId was persisted on the active session.
+    return (currentState.dailyPlans ?? [])
+      .flatMap((plan) => plan.items)
+      .find(
+        (item) =>
+          item.chainId === activeSession.chainId &&
+          item.status === 'pending' &&
+          item.startedAt?.getTime() === activeSession.startedAt.getTime(),
+      )?.id;
+  }
+
   function persistCompletionHistoryAndCleanup(
     record: CompletionHistory,
     context: 'completion' | 'interrupt',
@@ -162,6 +180,7 @@ export function createCompletionHandlers({
     const completionRecord: CompletionHistory = {
       id: createCompletionHistoryId(),
       chainId: chain.id,
+      startedAt: activeSession.startedAt,
       completedAt,
       duration: activeSession.duration,
       wasSuccessful: true,
@@ -189,12 +208,13 @@ export function createCompletionHandlers({
     );
     updatedChains = groupCycleResult.updatedChains;
 
-    const updatedDailyPlans = activeSession.dailyPlanItemId
+    const dailyPlanItemId = resolveDailyPlanItemId(currentState, activeSession);
+    const updatedDailyPlans = dailyPlanItemId
       ? currentState.dailyPlans.map((plan) =>
-          plan.items.some((item) => item.id === activeSession.dailyPlanItemId)
+          plan.items.some((item) => item.id === dailyPlanItemId)
             ? setPlanItemStatus(
                 plan,
-                activeSession.dailyPlanItemId!,
+                dailyPlanItemId,
                 'completed',
                 completedAt,
                 completionRecord.id,
@@ -278,6 +298,7 @@ export function createCompletionHandlers({
     const completionRecord: CompletionHistory = {
       id: createCompletionHistoryId(),
       chainId: chain.id,
+      startedAt: activeSession.startedAt,
       completedAt: new Date(),
       duration: activeSession.duration,
       wasSuccessful: false,

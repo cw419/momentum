@@ -1,0 +1,4 @@
+interface:
+  display_name: "Momentum Dev"
+  short_description: "Start, stop, and check the local Momentum development server."
+  default_prompt: "Start the Momentum local development server and report its URL."

@@ -7,12 +7,17 @@ import { MinimumDurationSettings } from './MinimumDurationSettings';
 export function TaskDurationSettings({
   form,
   tr: translate,
+  isActiveSession = false,
 }: {
   form: ChainEditorFormModel;
   tr: (zh: string, en: string) => string;
+  isActiveSession?: boolean;
 }) {
   return (
-    <div className="animate-scale-in p-5 md:p-6">
+    <fieldset
+      disabled={isActiveSession}
+      className="animate-scale-in p-5 disabled:cursor-not-allowed md:p-6"
+    >
       <div className="mb-3 flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <Clock className="text-primary-500" size={20} aria-hidden="true" />
@@ -46,6 +51,7 @@ export function TaskDurationSettings({
             <input
               type="checkbox"
               checked={form.isDurationless}
+              disabled={isActiveSession}
               onChange={(event) => form.setIsDurationless(event.target.checked)}
               className="peer sr-only"
             />
@@ -61,6 +67,7 @@ export function TaskDurationSettings({
             id="task-duration"
             name="taskDuration"
             value={form.isCustomDuration ? 'custom' : form.duration}
+            disabled={isActiveSession}
             onChange={(event) => {
               if (event.target.value === 'custom') {
                 form.setIsCustomDuration(true);
@@ -108,6 +115,6 @@ export function TaskDurationSettings({
           )}
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }

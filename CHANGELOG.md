@@ -9,6 +9,9 @@ and versions use [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Active timer sessions can return from Focus Mode to the workspace without
+  stopping; a persistent timer bar provides the current task, countdown or
+  elapsed time, and pause/resume controls on other pages.
 - Completion records can be edited from chain history, including their
   description and notes.
 - RSIP nodes can be edited directly from the tree, with layout and connector
@@ -18,5 +21,8 @@ and versions use [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- A task with an active timer cannot be deleted or have its type, timer mode,
+  duration, minimum duration, or group membership changed until its session
+  ends. Other task details and unrelated tasks remain editable.
 - Completion-history data flows consistently through local storage, Supabase,
   import/export, and serialization.

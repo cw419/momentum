@@ -16,6 +16,7 @@ type EditorSurfaceStyle = CSSProperties & { '--keyboard-height': string };
 interface ChainEditorViewProps {
   chain?: Chain;
   isEditing: boolean;
+  isActiveSession: boolean;
   onCancel: () => void;
   form: ChainEditorFormModel;
   keyboardHeight: number;
@@ -27,6 +28,7 @@ interface ChainEditorViewProps {
 export function ChainEditorView({
   chain,
   isEditing,
+  isActiveSession,
   onCancel,
   form,
   keyboardHeight,
@@ -59,8 +61,19 @@ export function ChainEditorView({
           onSubmit={form.handleSubmit}
           className="performance-layer animate-slide-up space-y-8"
         >
-          <BasicInfoSection form={form} />
-          <MainChainSettingsSection form={form} />
+          {isActiveSession && (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 font-chinese text-sm text-amber-900 dark:border-amber-700/70 dark:bg-amber-950/30 dark:text-amber-200">
+              {tr(
+                '该任务正在计时。任务类型和计时设置将在完成或中断后才能修改；其他内容仍可编辑。',
+                'This task is currently timed. Its type and timer settings can be changed after it is completed or interrupted; other details remain editable.',
+              )}
+            </div>
+          )}
+          <BasicInfoSection form={form} isActiveSession={isActiveSession} />
+          <MainChainSettingsSection
+            form={form}
+            isActiveSession={isActiveSession}
+          />
           <AuxiliaryChainSettingsSection form={form} />
           <TaskDescriptionSection form={form} />
           <section className="space-y-3" data-testid="chain-editor-rsip-links">

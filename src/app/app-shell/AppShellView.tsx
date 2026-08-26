@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { ActiveSessionBar } from '../../components/ActiveSessionBar';
 import { Dashboard } from '../../components/Dashboard';
 import { MobileBottomNav } from '../../components/mobile/MobileBottomNav';
 import { useI18n } from '../../i18n';
@@ -77,8 +78,8 @@ export function AppShellView({
       isEditing: !!dashboard.editingChain,
       isActiveSession: Boolean(
         dashboard.editingChain &&
-          session.activeSession &&
-          dashboard.editingChain.id === session.activeSession.chainId,
+        session.activeSession &&
+        dashboard.editingChain.id === session.activeSession.chainId,
       ),
       initialParentId: dashboard.editorParentId ?? undefined,
       onSave: dashboard.handleSaveChain,
@@ -117,6 +118,7 @@ export function AppShellView({
                 onInterrupt={session.handleInterruptSession}
                 onPause={session.handlePauseSession}
                 onResume={session.handleResumeSession}
+                onReturnToWorkspace={() => app.onNavigateToView('dashboard')}
               />
             </AppShellProfiler>
             {renderAuxiliaryJudgment()}
@@ -271,6 +273,19 @@ export function AppShellView({
       <main id="main" tabIndex={-1}>
         {renderCurrentView()}
       </main>
+
+      {app.currentView !== 'focus' &&
+        session.activeSession &&
+        session.activeChain && (
+          <ActiveSessionBar
+            session={session.activeSession}
+            chain={session.activeChain}
+            onOpenFocus={() => app.onNavigateToView('focus')}
+            onPause={session.handlePauseSession}
+            onResume={session.handleResumeSession}
+            isMobile={isTauriMobile}
+          />
+        )}
 
       {shouldShowPetWidget && (
         <Suspense fallback={null}>

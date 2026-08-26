@@ -509,6 +509,69 @@ describe('useChainsDomain', () => {
     );
   });
 
+  it('preserves timer-critical fields when editing the active timed task', async () => {
+    const editing = createUnitChain({
+      id: 'active-editing',
+      name: 'Plan today',
+      type: 'command',
+      duration: 30,
+      isDurationless: false,
+      minimumDuration: undefined,
+      parentId: 'group-1',
+    });
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [editing],
+        activeSession: {
+          chainId: editing.id,
+          startedAt: new Date(),
+          duration: 30,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      }),
+    );
+    const storage = createLocalStorageMock({
+      getChains: vi.fn(async () => [editing]),
+    });
+    const safelySaveChains = vi.fn(async () => undefined);
+
+    const { result } = renderHook(() =>
+      useChainsDomain({
+        state: stateRef.getState(),
+        setState: stateRef.setState,
+        editingChainId: editing.id,
+        storage,
+        safelySaveChains,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSaveChain(
+        createUnitDraft({
+          name: 'Plan today (revised)',
+          type: 'assault',
+          duration: 90,
+          isDurationless: true,
+          minimumDuration: 15,
+          parentId: undefined,
+        }),
+      );
+    });
+
+    expect(safelySaveChains).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: editing.id,
+        name: 'Plan today (revised)',
+        type: 'command',
+        duration: 30,
+        isDurationless: false,
+        minimumDuration: undefined,
+        parentId: 'group-1',
+      }),
+    ]);
+  });
+
   it('should default isCopy to false when omitted and preserve a valid string parent id', async () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('implicit-copy-flag-id');
     const stateRef = createStateContainer(createAppState({ chains: [] }));

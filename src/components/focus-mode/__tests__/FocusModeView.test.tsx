@@ -70,6 +70,7 @@ function createProps(
     isFullscreen: false,
     onEnterFullscreen: vi.fn(),
     onExitFullscreen: vi.fn(),
+    onReturnToWorkspace: vi.fn(),
     onPauseClick: vi.fn(),
     onEarlyCompleteClick: vi.fn(),
     onInterruptClick: vi.fn(),
@@ -129,6 +130,16 @@ describe('FocusModeView', () => {
 
     expect(props.onEnterFullscreen).toHaveBeenCalledTimes(1);
     expect(props.onInterruptClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns to the workspace without changing the active session', async () => {
+    const user = userEvent.setup();
+    const props = createProps();
+
+    renderView(props);
+    await user.click(screen.getByRole('button', { name: 'Workspace' }));
+
+    expect(props.onReturnToWorkspace).toHaveBeenCalledTimes(1);
   });
 
   it('should render optional dialogs when related flags are enabled', () => {

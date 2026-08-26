@@ -242,7 +242,8 @@ describe('AppShellView', () => {
   });
 
   it('renders dashboard and supports skip-to-content focus', async () => {
-    render(<AppShellView {...createProps()} />);
+    const props = createProps();
+    render(<AppShellView {...props} />);
 
     expect(await screen.findByTestId('dashboard')).toBeInTheDocument();
     expect(await screen.findByTestId('pet-widget')).toBeInTheDocument();
@@ -253,6 +254,12 @@ describe('AppShellView', () => {
 
     fireEvent.click(link);
     expect(main).toHaveFocus();
+
+    expect(screen.getByTestId('active-session-bar')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Pause timer' }));
+    expect(props.session.handlePauseSession).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText('Focus'));
+    expect(props.app.onNavigateToView).toHaveBeenCalledWith('focus');
   });
 
   it('renders auxiliary judgment and betting modal branches', async () => {

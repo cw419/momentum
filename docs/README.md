@@ -66,6 +66,10 @@
 - `docs/history/TOUCH_FIX_SUMMARY.md`
 - `docs/history/CRITICAL_FIXES_APPLIED.md`
 
+## 未来改动备忘录
+
+- `docs/plans/FUTURE_APP_CHANGES.md` - 尚未排期的产品改动记录
+
 ### 复盘（Postmortem）
 
 - `docs/history/postmortem/README.md`

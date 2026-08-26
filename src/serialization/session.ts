@@ -17,6 +17,7 @@ export interface SerializedScheduledSession {
 export interface SerializedActiveSession {
   id?: string;
   chainId: string;
+  dailyPlanItemId?: unknown;
   startedAt?: string | null;
   duration: number;
   isPaused: boolean;
@@ -43,6 +44,8 @@ export function decodeActiveSession(
   return {
     id: raw.id,
     chainId: raw.chainId,
+    dailyPlanItemId:
+      typeof raw.dailyPlanItemId === 'string' ? raw.dailyPlanItemId : undefined,
     startedAt: parseTruthyDateOrNow(raw.startedAt),
     duration: toNumber(raw.duration, 0),
     isPaused: toBooleanWithDefault(raw.isPaused, false),

@@ -30,6 +30,7 @@ function isMissingTimingColumns(error: {
   return (
     error.code === '42703' ||
     error.code === 'PGRST204' ||
+    error.message?.includes('started_at') === true ||
     error.message?.includes('actual_duration') === true ||
     error.message?.includes('is_forward_timed') === true
   );
@@ -90,7 +91,7 @@ export async function getCompletionHistory(
   const client = ctx.getClient();
 
   const selectFull =
-    'id, chain_id, completed_at, duration, was_successful, reason_for_failure, actual_duration, is_forward_timed, description, notes';
+    'id, chain_id, started_at, completed_at, duration, was_successful, reason_for_failure, actual_duration, is_forward_timed, description, notes';
   const selectBasic =
     'id, chain_id, completed_at, duration, was_successful, reason_for_failure, description, notes';
 

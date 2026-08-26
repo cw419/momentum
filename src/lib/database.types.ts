@@ -175,6 +175,7 @@ export interface Database {
         Row: {
           id: string;
           chain_id: string;
+          daily_plan_item_id: string | null;
           started_at: string;
           duration: number;
           is_paused: boolean;
@@ -187,6 +188,7 @@ export interface Database {
         Insert: {
           id?: string;
           chain_id: string;
+          daily_plan_item_id?: string | null;
           started_at?: string;
           duration: number;
           is_paused?: boolean;
@@ -199,6 +201,7 @@ export interface Database {
         Update: {
           id?: string;
           chain_id?: string;
+          daily_plan_item_id?: string | null;
           started_at?: string;
           duration?: number;
           is_paused?: boolean;
@@ -214,6 +217,7 @@ export interface Database {
         Row: {
           id: string;
           chain_id: string;
+          started_at: string | null;
           completed_at: string;
           duration: number;
           was_successful: boolean;
@@ -227,6 +231,7 @@ export interface Database {
         Insert: {
           id?: string;
           chain_id: string;
+          started_at?: string | null;
           completed_at?: string;
           duration: number;
           was_successful: boolean;
@@ -240,6 +245,7 @@ export interface Database {
         Update: {
           id?: string;
           chain_id?: string;
+          started_at?: string | null;
           completed_at?: string;
           duration?: number;
           was_successful?: boolean;

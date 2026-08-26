@@ -6,6 +6,7 @@ import {
 
 const baseRow = {
   chain_id: 'chain-1',
+  started_at: '2026-01-01T09:35:00Z',
   completed_at: '2026-01-01T10:00:00Z',
   duration: 25,
   was_successful: true,

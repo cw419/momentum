@@ -12,6 +12,7 @@ import { FocusModeDialogs } from './FocusModeDialogs';
 import { FocusSessionHeader } from './FocusSessionHeader';
 import { FocusTimerPanel } from './FocusTimerPanel';
 import { LongPressInterruptButton } from './LongPressInterruptButton';
+import { LayoutDashboard } from 'lucide-react';
 
 interface FocusModeViewProps {
   session: ActiveSession;
@@ -27,6 +28,7 @@ interface FocusModeViewProps {
   isFullscreen: boolean;
   onEnterFullscreen: () => void;
   onExitFullscreen: () => void;
+  onReturnToWorkspace: () => void;
   onPauseClick: () => void;
   onEarlyCompleteClick: () => void;
   onInterruptClick: () => void;
@@ -57,7 +59,15 @@ export function FocusModeView(props: FocusModeViewProps) {
     <main
       className={`relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--surface-canvas)] px-4 py-20 sm:px-6 ${session.isPaused ? 'focus-paused' : 'focus-running'}`}
     >
-      <div className="relative z-10 w-full max-w-5xl animate-fade-in">
+      <div className="relative z-10 w-full max-w-5xl animate-fade-in pt-14">
+        <button
+          type="button"
+          onClick={props.onReturnToWorkspace}
+          className="focus-ring absolute left-0 top-0 flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        >
+          <LayoutDashboard size={16} aria-hidden="true" />
+          {tr('返回工作台', 'Workspace')}
+        </button>
         <FocusSessionHeader
           chain={chain}
           language={language}

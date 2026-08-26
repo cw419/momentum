@@ -6,6 +6,7 @@ import { ChainEditorView } from './ChainEditorView';
 interface ChainEditorProps {
   chain?: Chain;
   isEditing: boolean;
+  isActiveSession?: boolean;
   initialParentId?: string;
   onSave: (chain: ChainDraft, isCopy?: boolean) => void;
   onCancel: () => void;
@@ -17,6 +18,7 @@ interface ChainEditorProps {
 export function ChainEditor({
   chain,
   isEditing,
+  isActiveSession = false,
   initialParentId,
   onSave,
   onCancel,
@@ -37,6 +39,7 @@ export function ChainEditor({
     <ChainEditorView
       chain={chain}
       isEditing={isEditing}
+      isActiveSession={isActiveSession}
       onCancel={onCancel}
       form={form}
       keyboardHeight={keyboardHeight}

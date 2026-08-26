@@ -1,9 +1,11 @@
-import { CheckCircle2, Minus, Play, Plus, Sun } from 'lucide-react';
-import type { Chain, DailyPlan } from '../../types';
+import { Minus, Play, Plus, Sun } from 'lucide-react';
+import type { Chain, CompletionHistory, DailyPlan } from '../../types';
+import { CompletedPlanTimeline } from './CompletedPlanTimeline';
 
 interface Props {
   plans: DailyPlan[];
   chains: Chain[];
+  history?: CompletionHistory[];
   onAddUnits: (chainId: string, count: number) => Promise<void>;
   onRemoveUnits: (chainId: string, count: number) => Promise<void>;
   onCreateChainForToday: () => void;
@@ -19,6 +21,7 @@ function localDate() {
 export function TodayPlanSection({
   plans = [],
   chains,
+  history = [],
   onAddUnits,
   onRemoveUnits,
   onCreateChainForToday,
@@ -30,15 +33,25 @@ export function TodayPlanSection({
   );
   const chainById = new Map(chains.map((chain) => [chain.id, chain]));
   const pending = new Map<string, string[]>();
-  const completed = new Map<string, number>();
+  const completedPlanItems = (plan?.items ?? []).filter(
+    (item) => item.status === 'completed',
+  );
+  const hasCompletedHistoryToday = history.some((item) => {
+    const completedAt = item.completedAt;
+    const now = new Date();
+    return (
+      item.wasSuccessful &&
+      completedAt.getFullYear() === now.getFullYear() &&
+      completedAt.getMonth() === now.getMonth() &&
+      completedAt.getDate() === now.getDate()
+    );
+  });
   for (const item of plan?.items ?? []) {
     if (item.status === 'pending') {
       pending.set(item.chainId, [
         ...(pending.get(item.chainId) ?? []),
         item.id,
       ]);
-    } else if (item.status === 'completed') {
-      completed.set(item.chainId, (completed.get(item.chainId) ?? 0) + 1);
     }
   }
   const available = chains.filter(
@@ -141,44 +154,21 @@ export function TodayPlanSection({
         </div>
       </div>
 
-      {completed.size > 0 && (
+      {(hasCompletedHistoryToday || completedPlanItems.length > 0) && (
         <div className="mt-4 border-t border-amber-200 pt-4 dark:border-amber-900/50">
           <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
             {tr('已完成', 'Completed')}
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {[...(plan?.items ?? [])]
-              .filter((item) => item.status === 'completed')
-              .sort(
-                (left, right) =>
-                  (right.completedAt?.getTime() ?? 0) -
-                  (left.completedAt?.getTime() ?? 0),
-              )
-              .map((item) => {
-                const formatTime = (time?: Date) =>
-                  time
-                    ? time.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : '--';
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-xl bg-emerald-100 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
-                  >
-                    <div className="font-medium">
-                      <CheckCircle2 className="mr-1 inline" size={14} />
-                      {chainById.get(item.chainId)?.name ??
-                        tr('已删除任务', 'Deleted task')}
-                    </div>
-                    <div className="mt-1 text-xs text-emerald-700/80 dark:text-emerald-300/80">
-                      {tr('开始', 'Started')} {formatTime(item.startedAt)} ·{' '}
-                      {tr('结束', 'Finished')} {formatTime(item.completedAt)}
-                    </div>
-                  </div>
-                );
-              })}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-300/80">
+              {tr('时间表', 'Timeline')}
+            </p>
+            <CompletedPlanTimeline
+              history={history}
+              completedPlanItems={completedPlanItems}
+              chainById={chainById}
+              tr={tr}
+            />
           </div>
         </div>
       )}

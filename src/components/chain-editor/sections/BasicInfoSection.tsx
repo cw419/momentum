@@ -6,9 +6,13 @@ import { useI18n } from '../../../i18n';
 
 interface BasicInfoSectionProps {
   form: ChainEditorFormModel;
+  isActiveSession?: boolean;
 }
 
-export function BasicInfoSection({ form }: BasicInfoSectionProps) {
+export function BasicInfoSection({
+  form,
+  isActiveSession = false,
+}: BasicInfoSectionProps) {
   const { tr } = useI18n();
 
   return (
@@ -96,8 +100,9 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
           id="chain-type"
           name="chainType"
           value={form.type}
+          disabled={isActiveSession}
           onChange={(e) => form.setType(e.target.value as UnitChainType)}
-          className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 font-chinese text-gray-900 transition duration-300 hover:border-primary-300 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-primary-400"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 font-chinese text-gray-900 transition duration-300 hover:border-primary-300 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-primary-400"
         >
           <option value="unit">{tr('基础单元', 'Unit')}</option>
           <option value="assault">
@@ -144,35 +149,41 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={() => {
-                  form.setParentId(undefined);
-                  form.setIsCopyMode(true);
-                }}
-                className="flex items-center space-x-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-indigo-500 shadow-sm transition-colors hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800"
-                title={tr(
-                  '复制此任务并移出任务群（原任务保留）',
-                  'Duplicate this task and remove it from the group (original stays)',
-                )}
-              >
-                <Copy size={14} />
-                <span>{tr('复制出群', 'Copy out')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => form.setParentId(undefined)}
-                className="flex items-center space-x-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-red-500 shadow-sm transition-colors hover:text-red-600 dark:border-slate-700 dark:bg-slate-800"
-                title={tr(
-                  '将此任务移出任务群',
-                  'Remove this task from the group',
-                )}
-              >
-                <Layers size={14} className="rotate-180" />
-                <span>{tr('移出', 'Remove')}</span>
-              </button>
-            </div>
+            {isActiveSession ? (
+              <span className="font-chinese text-sm text-amber-700 dark:text-amber-300">
+                {tr('计时期间不可调整归属', 'Locked while timing')}
+              </span>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    form.setParentId(undefined);
+                    form.setIsCopyMode(true);
+                  }}
+                  className="flex items-center space-x-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-indigo-500 shadow-sm transition-colors hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800"
+                  title={tr(
+                    '复制此任务并移出任务群（原任务保留）',
+                    'Duplicate this task and remove it from the group (original stays)',
+                  )}
+                >
+                  <Copy size={14} />
+                  <span>{tr('复制出群', 'Copy out')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setParentId(undefined)}
+                  className="flex items-center space-x-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-red-500 shadow-sm transition-colors hover:text-red-600 dark:border-slate-700 dark:bg-slate-800"
+                  title={tr(
+                    '将此任务移出任务群',
+                    'Remove this task from the group',
+                  )}
+                >
+                  <Layers size={14} className="rotate-180" />
+                  <span>{tr('移出', 'Remove')}</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -26,7 +26,11 @@ type ExportedChain = DistributiveOmit<Chain, ChainDateFields> & {
   deletedAt?: string | null;
 };
 
-type ExportedCompletionHistory = Omit<CompletionHistory, 'completedAt'> & {
+type ExportedCompletionHistory = Omit<
+  CompletionHistory,
+  'startedAt' | 'completedAt'
+> & {
+  startedAt?: string;
   completedAt: string;
 };
 
@@ -133,10 +137,11 @@ export function toExportedChain(chain: Chain): ExportedChain {
 export function toExportedCompletionHistory(
   entry: CompletionHistory,
 ): ExportedCompletionHistory {
-  const { completedAt, ...rest } = entry;
+  const { startedAt, completedAt, ...rest } = entry;
 
   return {
     ...rest,
+    startedAt: startedAt?.toISOString(),
     completedAt: completedAt.toISOString(),
   };
 }

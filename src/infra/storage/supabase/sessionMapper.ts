@@ -14,6 +14,7 @@ type ScheduledSessionRowLike = {
 type ActiveSessionRowLike = {
   id: string;
   chain_id: string;
+  daily_plan_item_id?: string | null;
   started_at: string;
   duration: number;
   is_paused: boolean;
@@ -36,6 +37,7 @@ export function mapActiveSessionRow(row: ActiveSessionRowLike): ActiveSession {
   return decodeActiveSession({
     id: row.id,
     chainId: row.chain_id,
+    dailyPlanItemId: row.daily_plan_item_id ?? undefined,
     startedAt: row.started_at,
     duration: row.duration,
     isPaused: row.is_paused,

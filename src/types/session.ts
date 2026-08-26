@@ -24,6 +24,8 @@ export interface CompletionHistory {
   /** Stable identity for editing a single completion record. */
   id?: string;
   chainId: string;
+  /** Actual focus-session start, recorded for new timeline events. */
+  startedAt?: Date;
   completedAt: Date;
   duration: number;
   wasSuccessful: boolean;

@@ -1,6 +1,7 @@
 import type { CompletionHistory } from '../../../types';
 import {
   isRecord,
+  parseDateOrUndefined,
   parseTruthyDateOrNow,
   toNumber,
   toOptionalStringFromTruthy,
@@ -25,6 +26,7 @@ function mapImportedCompletionHistoryEntry(
         ? raw.id
         : createCompletionHistoryId(),
     chainId: mappedChainId,
+    startedAt: parseDateOrUndefined(raw.startedAt),
     completedAt: parseTruthyDateOrNow(raw.completedAt),
     duration,
     wasSuccessful: Boolean(raw.wasSuccessful),

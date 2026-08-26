@@ -21,6 +21,7 @@ interface FocusModeProps {
   onInterrupt: (reason?: string) => void;
   onPause: (duration?: number) => void;
   onResume: () => void;
+  onReturnToWorkspace: () => void;
   onRuleUsed?: (
     rule: ExceptionRule,
     actionType: 'pause' | 'early_completion',
@@ -35,6 +36,7 @@ export function FocusMode({
   onInterrupt,
   onPause,
   onResume,
+  onReturnToWorkspace,
   onRuleUsed,
 }: FocusModeProps) {
   const { tr } = useI18n();
@@ -150,6 +152,7 @@ export function FocusMode({
       isFullscreen={isFullscreen}
       onEnterFullscreen={enterFullscreen}
       onExitFullscreen={exitFullscreen}
+      onReturnToWorkspace={onReturnToWorkspace}
       onPauseClick={exceptionRuleFlow.openPauseSelection}
       onEarlyCompleteClick={handleEarlyCompleteClick}
       onInterruptClick={() => setShowInterruptDialog(true)}

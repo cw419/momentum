@@ -28,4 +28,17 @@ describe('serialization/session', () => {
     expect(session.isForwardTimer).toBe(false);
     expect(session.forwardElapsedTime).toBe(0);
   });
+
+  it('preserves the originating daily-plan item for an active session', () => {
+    const session = decodeActiveSession({
+      chainId: 'chain-1',
+      dailyPlanItemId: 'plan-item-1',
+      startedAt: '2026-02-01T00:00:00.000Z',
+      duration: 25,
+      isPaused: false,
+      totalPausedTime: 0,
+    });
+
+    expect(session.dailyPlanItemId).toBe('plan-item-1');
+  });
 });

@@ -38,6 +38,7 @@ const createMockActiveSessionRow = (
 ) => ({
   id: 'session-1',
   chain_id: 'chain-1',
+  daily_plan_item_id: null,
   started_at: '2024-01-15T10:00:00Z',
   duration: 30,
   is_paused: false,
@@ -532,6 +533,28 @@ describe('sessions.ts', () => {
       await saveActiveSession(ctx, session);
 
       expect(ctx.mockClient.from).toHaveBeenCalledWith('active_sessions');
+    });
+
+    it('persists a daily-plan item ID when the session started from today plan', async () => {
+      const session: ActiveSession = {
+        id: 'session-1',
+        chainId: 'chain-1',
+        dailyPlanItemId: 'plan-item-1',
+        startedAt: new Date('2024-01-15T10:00:00Z'),
+        duration: 30,
+        isPaused: false,
+        totalPausedTime: 0,
+      };
+      const upsert = vi.fn().mockReturnValue({ data: null, error: null });
+      const ctx = createMockContext();
+      ctx.mockClient.from = vi.fn().mockReturnValue({ upsert });
+
+      await saveActiveSession(ctx, session);
+
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ daily_plan_item_id: 'plan-item-1' }),
+        { onConflict: 'id' },
+      );
     });
 
     it('should include forward timer fields when isForwardTimer is true', async () => {

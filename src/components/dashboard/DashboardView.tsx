@@ -207,6 +207,7 @@ export function DashboardView({
         <TodayPlanSection
           plans={dailyPlans}
           chains={chains}
+          history={history}
           onAddUnits={onAddPlanUnits}
           onRemoveUnits={onRemovePlanUnits}
           onCreateChainForToday={onCreateChainForToday}

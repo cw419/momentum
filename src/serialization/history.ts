@@ -1,5 +1,6 @@
 import type { CompletionHistory } from '../types';
 import {
+  parseDateOrUndefined,
   parseTruthyDateOrNow,
   toBooleanWithDefault,
   toNumber,
@@ -9,6 +10,7 @@ import {
 export interface SerializedCompletionHistory {
   id?: string;
   chainId: string;
+  startedAt?: string | null;
   completedAt?: string | null;
   duration: number;
   wasSuccessful: boolean;
@@ -27,6 +29,7 @@ export function decodeCompletionHistory(
   return {
     id: raw.id,
     chainId: raw.chainId,
+    startedAt: parseDateOrUndefined(raw.startedAt),
     completedAt: parseTruthyDateOrNow(raw.completedAt),
     duration,
     wasSuccessful: toBooleanWithDefault(raw.wasSuccessful, false),

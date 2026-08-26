@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const completionHistoryBase = z.object({
   chain_id: z.string(),
+  started_at: z.string().nullable(),
   completed_at: z.string(),
   duration: z.number(),
   was_successful: z.boolean(),
@@ -15,4 +16,6 @@ export const completionHistorySelectRowSchema = completionHistoryBase.extend({
   is_forward_timed: z.boolean().nullable(),
 });
 
-export const completionHistoryBasicRowSchema = completionHistoryBase;
+export const completionHistoryBasicRowSchema = completionHistoryBase.omit({
+  started_at: true,
+});

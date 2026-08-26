@@ -102,6 +102,7 @@ erDiagram
 | `id`                   | uuid        | PK                        | 主键                   |
 | `user_id`              | uuid        | FK → auth.users, NOT NULL | 所属用户               |
 | `chain_id`             | uuid        | FK → chains(id), NOT NULL | 关联任务               |
+| `daily_plan_item_id`   | text        |                           | 启动来源的今日计划单元 |
 | `started_at`           | timestamptz | NOT NULL, DEFAULT now()   | 开始时间               |
 | `duration`             | integer     | NOT NULL                  | 会话时长（分钟）       |
 | `is_paused`            | boolean     | NOT NULL, DEFAULT false   | 是否暂停               |
@@ -146,6 +147,7 @@ erDiagram
 | `id`                 | uuid        | PK                        | 主键             |
 | `user_id`            | uuid        | FK → auth.users, NOT NULL | 所属用户         |
 | `chain_id`           | uuid        | FK → chains(id), NOT NULL | 关联任务         |
+| `started_at`         | timestamptz |                           | 实际开始时间     |
 | `completed_at`       | timestamptz | NOT NULL, DEFAULT now()   | 完成时间         |
 | `duration`           | integer     | NOT NULL                  | 计划时长（分钟） |
 | `was_successful`     | boolean     | NOT NULL                  | 是否成功         |

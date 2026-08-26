@@ -14,21 +14,23 @@ type ActiveSessionRow = Database['public']['Tables']['active_sessions']['Row'];
 type ActiveSessionInsert =
   Database['public']['Tables']['active_sessions']['Insert'];
 const TABLE = 'active_sessions';
-const FORWARD_TIMER_CAPABILITIES = [
+const OPTIONAL_SESSION_CAPABILITIES = [
   'is_forward_timer',
   'forward_elapsed_time',
+  'daily_plan_item_id',
 ] as const;
 
-function hasMissingForwardTimerFields(ctx: SupabaseStorageContext): boolean {
-  return hasKnownMissingCapabilities(ctx, TABLE, FORWARD_TIMER_CAPABILITIES);
+function hasMissingOptionalSessionFields(ctx: SupabaseStorageContext): boolean {
+  return hasKnownMissingCapabilities(ctx, TABLE, OPTIONAL_SESSION_CAPABILITIES);
 }
 
-function isMissingForwardTimerFieldError(error: unknown): boolean {
+function isMissingOptionalSessionFieldError(error: unknown): boolean {
   if (!isMissingSchemaCapabilityError(error)) return false;
   const message = formatSupabaseError(error, '').toLowerCase();
   return (
     message.includes('is_forward_timer') ||
-    message.includes('forward_elapsed_time')
+    message.includes('forward_elapsed_time') ||
+    message.includes('daily_plan_item_id')
   );
 }
 
@@ -50,13 +52,13 @@ function buildBasicPayload(
 
 function shouldFallbackToBasicPayload(params: {
   error: unknown;
-  includeForwardFields: boolean;
-  skipForwardFields: boolean;
+  includeOptionalFields: boolean;
+  skipOptionalFields: boolean;
 }): boolean {
   return (
-    params.includeForwardFields &&
-    !params.skipForwardFields &&
-    isMissingForwardTimerFieldError(params.error)
+    params.includeOptionalFields &&
+    !params.skipOptionalFields &&
+    isMissingOptionalSessionFieldError(params.error)
   );
 }
 
@@ -67,11 +69,11 @@ export async function getActiveSession(
   if (!user) return null;
   const client = ctx.getClient();
   const fullSelect =
-    'id, chain_id, started_at, duration, is_paused, paused_at, total_paused_time, is_forward_timer, forward_elapsed_time';
+    'id, chain_id, daily_plan_item_id, started_at, duration, is_paused, paused_at, total_paused_time, is_forward_timer, forward_elapsed_time';
   const basicSelect =
     'id, chain_id, started_at, duration, is_paused, paused_at, total_paused_time';
 
-  if (!hasMissingForwardTimerFields(ctx)) {
+  if (!hasMissingOptionalSessionFields(ctx)) {
     const { data, error } = await client
       .from(TABLE)
       .select(fullSelect)
@@ -79,11 +81,11 @@ export async function getActiveSession(
       .order('started_at', { ascending: false })
       .limit(1);
     if (!error && data?.length) {
-      markCapabilitiesAvailable(ctx, TABLE, FORWARD_TIMER_CAPABILITIES);
+      markCapabilitiesAvailable(ctx, TABLE, OPTIONAL_SESSION_CAPABILITIES);
       return mapActiveSessionRow(data[0] as ActiveSessionRow);
     }
-    if (!error || !isMissingForwardTimerFieldError(error)) return null;
-    markCapabilitiesMissing(ctx, TABLE, FORWARD_TIMER_CAPABILITIES);
+    if (!error || !isMissingOptionalSessionFieldError(error)) return null;
+    markCapabilitiesMissing(ctx, TABLE, OPTIONAL_SESSION_CAPABILITIES);
   }
 
   const { data, error } = await client
@@ -115,16 +117,18 @@ export async function saveActiveSession(
   }
 
   const basicPayload = buildBasicPayload(session, user.id);
-  const includeForwardFields =
+  const includeOptionalFields =
     session.isForwardTimer === true ||
     (typeof session.forwardElapsedTime === 'number' &&
-      session.forwardElapsedTime > 0);
-  const skipForwardFields =
-    includeForwardFields && hasMissingForwardTimerFields(ctx);
+      session.forwardElapsedTime > 0) ||
+    Boolean(session.dailyPlanItemId);
+  const skipOptionalFields =
+    includeOptionalFields && hasMissingOptionalSessionFields(ctx);
   const payload =
-    includeForwardFields && !skipForwardFields
+    includeOptionalFields && !skipOptionalFields
       ? {
           ...basicPayload,
+          daily_plan_item_id: session.dailyPlanItemId ?? null,
           is_forward_timer: session.isForwardTimer ?? false,
           forward_elapsed_time: session.forwardElapsedTime ?? 0,
         }
@@ -133,8 +137,8 @@ export async function saveActiveSession(
     .from(TABLE)
     .upsert(payload, { onConflict: 'id' });
   if (!error) {
-    if (includeForwardFields && !skipForwardFields) {
-      markCapabilitiesAvailable(ctx, TABLE, FORWARD_TIMER_CAPABILITIES);
+    if (includeOptionalFields && !skipOptionalFields) {
+      markCapabilitiesAvailable(ctx, TABLE, OPTIONAL_SESSION_CAPABILITIES);
     }
     return;
   }
@@ -142,11 +146,11 @@ export async function saveActiveSession(
   if (
     shouldFallbackToBasicPayload({
       error,
-      includeForwardFields,
-      skipForwardFields,
+      includeOptionalFields,
+      skipOptionalFields,
     })
   ) {
-    markCapabilitiesMissing(ctx, TABLE, FORWARD_TIMER_CAPABILITIES);
+    markCapabilitiesMissing(ctx, TABLE, OPTIONAL_SESSION_CAPABILITIES);
     const { error: fallbackError } = await client
       .from(TABLE)
       .upsert(basicPayload, { onConflict: 'id' });

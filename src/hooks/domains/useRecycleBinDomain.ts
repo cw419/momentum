@@ -40,6 +40,15 @@ export function useRecycleBinDomain({
   const readState = resolveAppStateReader({ state, getState });
   const { language, tr } = useI18n();
   const handleDeleteChain = async (chainId: string) => {
+    if (readState().activeSession?.chainId === chainId) {
+      toast.warning(
+        tr(
+          '正在计时的任务不能删除。请先完成或中断本次计时。',
+          'An active timed task cannot be deleted. Complete or interrupt the session first.',
+        ),
+      );
+      return;
+    }
     try {
       const updatedChains = await realTimeSyncService.deleteWithSync(
         storage,
