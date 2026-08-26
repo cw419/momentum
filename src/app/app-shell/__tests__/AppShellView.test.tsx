@@ -30,7 +30,11 @@ vi.mock('../../../components/RSIPView', () => ({
 }));
 
 vi.mock('../../../components/ChainEditor', () => ({
-  ChainEditor: () => <div data-testid="chain-editor">editor</div>,
+  ChainEditor: ({ isActiveSession }: { isActiveSession: boolean }) => (
+    <div data-testid="chain-editor" data-active-session={isActiveSession}>
+      editor
+    </div>
+  ),
 }));
 
 vi.mock('../../../components/FocusMode', () => ({
@@ -303,6 +307,43 @@ describe('AppShellView', () => {
     );
     expect(await screen.findByTestId('taskgroup-editor')).toBeInTheDocument();
     expect(screen.queryByTestId('pet-widget')).not.toBeInTheDocument();
+  });
+
+  it('does not mark a new chain as timed when no session exists', async () => {
+    render(
+      <AppShellView
+        {...createProps({
+          app: { currentView: 'editor' },
+          dashboard: { editingChain: null },
+          session: { activeSession: null },
+        })}
+      />,
+    );
+
+    expect(await screen.findByTestId('chain-editor')).toHaveAttribute(
+      'data-active-session',
+      'false',
+    );
+  });
+
+  it('marks only the matching existing chain as timed', async () => {
+    const props = createProps({ app: { currentView: 'editor' } });
+    render(
+      <AppShellView
+        {...{
+          ...props,
+          dashboard: {
+            ...props.dashboard,
+            editingChain: props.dashboard.chains[0],
+          },
+        }}
+      />,
+    );
+
+    expect(await screen.findByTestId('chain-editor')).toHaveAttribute(
+      'data-active-session',
+      'true',
+    );
   });
 
   it('renders focus/detail/group/rsip views when required state is available', async () => {

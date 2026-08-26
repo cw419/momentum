@@ -75,6 +75,11 @@ export function AppShellView({
     const editorProps = {
       chain: dashboard.editingChain ?? undefined,
       isEditing: !!dashboard.editingChain,
+      isActiveSession: Boolean(
+        dashboard.editingChain &&
+          session.activeSession &&
+          dashboard.editingChain.id === session.activeSession.chainId,
+      ),
       initialParentId: dashboard.editorParentId ?? undefined,
       onSave: dashboard.handleSaveChain,
       onCancel: dashboard.handleBackToDashboard,

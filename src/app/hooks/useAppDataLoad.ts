@@ -18,6 +18,7 @@ import {
 import { navigationStore } from '../../stores/navigationStore';
 import { closeOverdueDailyPlans } from '../../utils/dailyPlans';
 import { loadAppDataSnapshot } from './appDataSnapshot';
+import { recoverPersistedActiveSession } from './activeSessionRecovery';
 
 interface UseAppDataLoadParams {
   storage: MomentumStorage;
@@ -83,6 +84,13 @@ export function useAppDataLoad({
           rsipExecutionRecords,
           taskTimeStats,
         } = await loadAppDataSnapshot(storage);
+
+        const recoveredActiveSession = await recoverPersistedActiveSession({
+          session: activeSession,
+          chains,
+          completionHistory,
+          clearPersistedSession: () => storage.saveActiveSession(null),
+        });
 
         const scheduledSessions = allScheduledSessions.filter(
           (session) => !isSessionExpired(session.expiresAt),
@@ -177,7 +185,7 @@ export function useAppDataLoad({
           chainsRevision: prev.chainsRevision + 1,
           dailyPlans: closedDailyPlans,
           scheduledSessions,
-          activeSession,
+          activeSession: recoveredActiveSession,
           completionHistory: migratedCompletionHistory,
           rsipNodes,
           rsipMeta,
@@ -190,7 +198,7 @@ export function useAppDataLoad({
         }));
         navigationStore
           .getState()
-          .navigateToView(activeSession ? 'focus' : 'dashboard');
+          .navigateToView(recoveredActiveSession ? 'focus' : 'dashboard');
 
         // Clean up expired sessions.
         if (scheduledSessions.length !== allScheduledSessions.length) {

@@ -199,6 +199,46 @@ describe('useAppDataLoad', () => {
     expect(setState).not.toHaveBeenCalled();
   });
 
+  it('clears a ghost active session that already has a completion record', async () => {
+    const chain = createUnitChain({ id: 'chain-1' });
+    const activeSession = {
+      chainId: chain.id,
+      startedAt: new Date('2026-08-26T09:00:00.000Z'),
+      duration: 25,
+      isPaused: false,
+      totalPausedTime: 0,
+    };
+    const storage = createLocalStorageMock({
+      getActiveChains: vi.fn(async () => [chain]),
+      getActiveSession: vi.fn(async () => activeSession),
+      getCompletionHistory: vi.fn(async () => [
+        {
+          chainId: chain.id,
+          startedAt: activeSession.startedAt,
+          completedAt: new Date('2026-08-26T09:25:00.000Z'),
+          duration: 25,
+          wasSuccessful: true,
+        },
+      ]),
+    });
+    const setState = vi.fn();
+
+    const { result } = renderHook(() =>
+      useAppDataLoad({ storage, isInitialized: true, setState }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.isLoadingData).toBe(false);
+    });
+
+    expect(storage.saveActiveSession).toHaveBeenCalledWith(null);
+    const stateUpdater = setState.mock.calls.at(-1)?.[0] as (
+      prev: ReturnType<typeof createAppState>,
+    ) => ReturnType<typeof createAppState>;
+    expect(stateUpdater(createAppState()).activeSession).toBeNull();
+    expect(navigationStore.getState().currentView).toBe('dashboard');
+  });
+
   it('should fix circular parent references and persist repaired chains', async () => {
     const circular = createUnitChain({
       id: 'circular-1',
