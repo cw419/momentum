@@ -571,6 +571,8 @@ CREATE POLICY "Users can manage their own [table]"
 | `20260114000000_add_chain_repeat_and_minimum_duration.sql`     | 2026-01-14 | 任务重复次数与最小时长字段             |
 | `20260123000000_optimize_rls_policy_auth_uid.sql`              | 2026-01-23 | RLS 性能与安全增强                     |
 | `20260824000000_add_daily_plans.sql`                           | 2026-08-24 | 今日计划表与任务方向字段               |
+| `20260825000000_add_completion_history_started_at.sql`         | 2026-08-25 | 记录会话实际开始时间，用于完成时间表   |
+| `20260825010000_add_active_session_daily_plan_item_id.sql`     | 2026-08-25 | 保存活动会话来源的今日计划单元         |
 | `20260124000000_rsip_execution_tracking.sql`                   | 2026-01-24 | RSIP 稳态阶段与执行追踪字段            |
 | `20260127000000_dedupe_and_add_unique_indexes.sql`             | 2026-01-27 | scheduled/completion 去重与唯一索引    |
 | `20260208000000_rsip_process_integration.sql`                  | 2026-02-08 | RSIP 分组、策略库、运行历史、任务联动  |

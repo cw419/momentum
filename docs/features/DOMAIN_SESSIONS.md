@@ -53,6 +53,7 @@ interface ScheduledSession {
 interface ActiveSession {
   id: string;
   chainId: string; // 关联链条 ID
+  dailyPlanItemId?: string; // 若从今日计划启动，关联的计划单元 ID
   startedAt: Date; // 开始时间
   duration: number; // 任务时长（分钟）
   isPaused: boolean; // 是否暂停
@@ -82,6 +83,7 @@ auxiliary_signal: text NOT NULL
 id: uuid PRIMARY KEY
 user_id: uuid NOT NULL
 chain_id: uuid NOT NULL
+daily_plan_item_id: text
 started_at: timestamptz DEFAULT now()
 duration: integer NOT NULL
 is_paused: boolean DEFAULT false
@@ -136,6 +138,10 @@ sequenceDiagram
         useSessionsDomain->>useSessionsDomain: getNextUnitInGroup()
     end
 
+    opt 从今日计划单元启动
+        useSessionsDomain->>useSessionsDomain: 写入 dailyPlanItemId 并标记单元已开始
+    end
+
     useSessionsDomain->>useSessionsDomain: 创建 ActiveSession
     useSessionsDomain->>Storage: saveActiveSession()
     useSessionsDomain->>FocusMode: 进入专注模式
@@ -150,6 +156,18 @@ sequenceDiagram
 计时期间可以创建、编辑和排序其他任务，以及调整当天计划。当前正在计时的任务
 不能删除，也不能变更任务类型、所属任务组、固定/无时长模式、时长或最小时长。
 这些约束同时在编辑界面和领域写入层执行，以避免过期界面或并发写入破坏结算依据。
+
+创建全新的任务链不会被视为正在计时；只有正在编辑的既有链条与活动会话的
+`chainId` 相同，才会启用上述限制。
+
+### 启动恢复与残留会话清理
+
+应用启动时会读取持久化的活动会话。若会话数据损坏、对应链条已不存在，或完成历史
+已包含同一链条和同一实际开始时间的完成/中断记录，应用会将其视为残留会话：不恢复到
+界面，并尝试删除持久化记录。这样可避免已结束会话在重启后错误进入专注模式或锁定编辑器。
+
+仍能关联到有效链条、且尚无对应完成记录的会话会照常恢复；系统不会仅因用户返回工作台
+而中断计时。
 
 ### 完成任务流程
 

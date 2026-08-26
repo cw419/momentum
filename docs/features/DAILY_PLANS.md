@@ -67,6 +67,7 @@ interface DailyPlanItem {
 
 ```text
 supabase/migrations/20260824000000_add_daily_plans.sql
+supabase/migrations/20260825000000_add_completion_history_started_at.sql
 supabase/migrations/20260825010000_add_active_session_daily_plan_item_id.sql
 ```
 
