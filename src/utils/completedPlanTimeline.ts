@@ -10,6 +10,8 @@ interface TimelineRecord {
   chainId: string;
   startedAt: Date;
   completedAt: Date;
+  description?: string;
+  notes?: string;
 }
 
 function toTimelineEvent(
@@ -38,6 +40,8 @@ function toTimelineEvent(
         1,
         Math.round((end.getTime() - start.getTime()) / 60000),
       ),
+      description: record.description,
+      notes: record.notes,
     },
   } satisfies EventInput;
 }
@@ -66,6 +70,8 @@ export function completedHistoryToEvents(
       chainId: item.chainId,
       startedAt: item.startedAt!,
       completedAt: item.completedAt,
+      description: item.description,
+      notes: item.notes,
     }));
   const timedHistoryIds = new Set(timedHistory.map((item) => item.id));
   const legacyPlannedRecords = completedPlanItems

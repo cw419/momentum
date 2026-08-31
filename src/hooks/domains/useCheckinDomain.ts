@@ -24,6 +24,7 @@ import {
   toError,
 } from '../../utils/errorMessage';
 import { POINTS_CHANGED_EVENT } from '../../utils/pointsEvents';
+import { getNewYorkCheckinDate } from '../../utils/checkinSchedule';
 
 export function useCheckinDomain() {
   const { language, tr } = useI18n();
@@ -39,6 +40,7 @@ export function useCheckinDomain() {
   const isCheckingInRef = useRef(isCheckingIn);
   const languageRef = useRef(language);
   const trRef = useRef(tr);
+  const checkinDateRef = useRef(getNewYorkCheckinDate());
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -200,6 +202,21 @@ export function useCheckinDomain() {
     return () => {
       window.removeEventListener(POINTS_CHANGED_EVENT, handler);
     };
+  }, [canUseCheckin, loadStats]);
+
+  useEffect(() => {
+    if (!canUseCheckin) return;
+
+    checkinDateRef.current = getNewYorkCheckinDate();
+    const intervalId = window.setInterval(() => {
+      const nextCheckinDate = getNewYorkCheckinDate();
+      if (nextCheckinDate === checkinDateRef.current) return;
+
+      checkinDateRef.current = nextCheckinDate;
+      void loadStats();
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
   }, [canUseCheckin, loadStats]);
 
   return {

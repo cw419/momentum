@@ -9,6 +9,8 @@ and versions use [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- The completed-task timeline can browse any calendar date and now shows
+  completion descriptions and notes for each timed task.
 - Active timer sessions can return from Focus Mode to the workspace without
   stopping; a persistent timer bar provides the current task, countdown or
   elapsed time, and pause/resume controls on other pages.
@@ -21,6 +23,8 @@ and versions use [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Daily check-in eligibility now resets at 08:00 in New York time, including
+  daylight-saving transitions, instead of at the database server's UTC midnight.
 - A task with an active timer cannot be deleted or have its type, timer mode,
   duration, minimum duration, or group membership changed until its session
   ends. Other task details and unrelated tasks remain editable.

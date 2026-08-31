@@ -71,6 +71,18 @@ describe('MainChainSettingsSection', () => {
     expect(form.setDuration).toHaveBeenCalledWith(60);
   });
 
+  it('offers only the configured task duration presets and custom duration', () => {
+    render(<MainChainSettingsSection form={createForm()} />);
+
+    const durationSelect = document.getElementById(
+      'task-duration',
+    ) as HTMLSelectElement;
+
+    expect(Array.from(durationSelect.options, (option) => option.value)).toEqual(
+      ['15', '30', '50', 'custom'],
+    );
+  });
+
   it('toggles durationless mode and clears minimum duration', async () => {
     const user = userEvent.setup();
     const form = createForm({

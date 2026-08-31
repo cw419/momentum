@@ -13,7 +13,7 @@
 
 - `id`: UUID主键
 - `user_id`: 用户ID（外键）
-- `checkin_date`: 签到日期（date类型）
+- `checkin_date`: 签到业务日（date类型）；业务日固定从纽约时间早上 08:00 开始，到次日 07:59 结束
 - `points_earned`: 获得积分（默认10）
 - `consecutive_days`: 连续签到天数
 - `created_at`: 签到时间戳
@@ -98,7 +98,7 @@ SELECT get_user_checkin_history(auth.uid(), 20, 0);
 
 ### 业务约束
 
-- 每用户每天只能签到一次（数据库唯一约束）
+- 每用户每个纽约时间 08:00 开始的签到周期只能签到一次（数据库唯一约束）
 - 积分总数不能为负数
 - 连续签到天数逻辑自动计算
 - 所有积分变化都记录在交易表中

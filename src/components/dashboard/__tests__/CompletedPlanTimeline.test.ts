@@ -42,6 +42,7 @@ describe('completedHistoryToEvents', () => {
       [],
       new Map([['chain-1', chain]]),
       tr,
+      '2026-08-25',
     );
 
     expect(events).toHaveLength(1);
@@ -50,7 +51,11 @@ describe('completedHistoryToEvents', () => {
       title: '论文代码',
       start,
       end,
-      extendedProps: { durationMinutes: 35 },
+      extendedProps: {
+        durationMinutes: 35,
+        description: undefined,
+        notes: undefined,
+      },
     });
   });
 
@@ -87,6 +92,21 @@ describe('completedHistoryToEvents', () => {
 
     expect(event?.extendedProps).toMatchObject({ durationMinutes: 1 });
     expect(event?.end).toEqual(new Date('2026-08-25T09:11:00'));
+  });
+
+  it('keeps completion descriptions and notes for calendar display', () => {
+    const [event] = completedHistoryToEvents(
+      [makeHistory({ description: '完成初稿', notes: '明天校对' })],
+      [],
+      new Map(),
+      tr,
+      '2026-08-25',
+    );
+
+    expect(event?.extendedProps).toMatchObject({
+      description: '完成初稿',
+      notes: '明天校对',
+    });
   });
 
   it('keeps pre-migration planned completions without duplicating new history', () => {

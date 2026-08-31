@@ -375,16 +375,16 @@ erDiagram
 
 签到记录。
 
-| 字段               | 类型        | 约束                            | 说明     |
-| ------------------ | ----------- | ------------------------------- | -------- |
-| `id`               | uuid        | PK                              | 主键     |
-| `user_id`          | uuid        | FK → auth.users, NOT NULL       | 所属用户 |
-| `checkin_date`     | date        | NOT NULL, DEFAULT CURRENT_DATE  | 签到日期 |
-| `points_earned`    | integer     | NOT NULL, DEFAULT 10, CHECK > 0 | 获得积分 |
-| `consecutive_days` | integer     | NOT NULL, DEFAULT 1, CHECK > 0  | 连续天数 |
-| `created_at`       | timestamptz | NOT NULL, DEFAULT now()         | 创建时间 |
+| 字段               | 类型        | 约束                            | 说明                            |
+| ------------------ | ----------- | ------------------------------- | ------------------------------- |
+| `id`               | uuid        | PK                              | 主键                            |
+| `user_id`          | uuid        | FK → auth.users, NOT NULL       | 所属用户                        |
+| `checkin_date`     | date        | NOT NULL, DEFAULT CURRENT_DATE  | 签到业务日（纽约时间 08:00 起） |
+| `points_earned`    | integer     | NOT NULL, DEFAULT 10, CHECK > 0 | 获得积分                        |
+| `consecutive_days` | integer     | NOT NULL, DEFAULT 1, CHECK > 0  | 连续天数                        |
+| `created_at`       | timestamptz | NOT NULL, DEFAULT now()         | 创建时间                        |
 
-**约束**：`UNIQUE(user_id, checkin_date)` - 每用户每天仅一条
+**约束**：`UNIQUE(user_id, checkin_date)` - 每用户每个纽约时间 08:00 开始的签到周期仅一条
 
 **索引**：
 
@@ -573,6 +573,7 @@ CREATE POLICY "Users can manage their own [table]"
 | `20260824000000_add_daily_plans.sql`                           | 2026-08-24 | 今日计划表与任务方向字段               |
 | `20260825000000_add_completion_history_started_at.sql`         | 2026-08-25 | 记录会话实际开始时间，用于完成时间表   |
 | `20260825010000_add_active_session_daily_plan_item_id.sql`     | 2026-08-25 | 保存活动会话来源的今日计划单元         |
+| `20260826000000_set_new_york_8am_checkin_boundary.sql`         | 2026-08-26 | 签到刷新时间改为纽约时间早上 08:00     |
 | `20260124000000_rsip_execution_tracking.sql`                   | 2026-01-24 | RSIP 稳态阶段与执行追踪字段            |
 | `20260127000000_dedupe_and_add_unique_indexes.sql`             | 2026-01-27 | scheduled/completion 去重与唯一索引    |
 | `20260208000000_rsip_process_integration.sql`                  | 2026-02-08 | RSIP 分组、策略库、运行历史、任务联动  |
@@ -608,7 +609,8 @@ ORDER BY deleted_at DESC;
 SELECT EXISTS (
   SELECT 1 FROM daily_checkins
   WHERE user_id = auth.uid()
-    AND checkin_date = CURRENT_DATE
+    AND checkin_date =
+      ((now() AT TIME ZONE 'America/New_York') - INTERVAL '8 hours')::date
 ) AS has_checked_in_today;
 ```
 

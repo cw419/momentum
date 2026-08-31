@@ -95,7 +95,7 @@ export const AUXILIARY_SIGNAL_TEMPLATES: PresetTemplate[] = [
 ];
 
 export const AUXILIARY_DURATION_PRESETS = [5, 10, 15, 20, 30, 45];
-export const DURATION_PRESETS = [25, 30, 45, 60, 90, 120];
+export const DURATION_PRESETS = [15, 30, 50];
 
 export const getTriggerLabel = (
   value: string,

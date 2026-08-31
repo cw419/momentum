@@ -33,19 +33,9 @@ export function TodayPlanSection({
   );
   const chainById = new Map(chains.map((chain) => [chain.id, chain]));
   const pending = new Map<string, string[]>();
-  const completedPlanItems = (plan?.items ?? []).filter(
-    (item) => item.status === 'completed',
+  const completedPlanItems = plans.flatMap((dailyPlan) =>
+    dailyPlan.items.filter((item) => item.status === 'completed'),
   );
-  const hasCompletedHistoryToday = history.some((item) => {
-    const completedAt = item.completedAt;
-    const now = new Date();
-    return (
-      item.wasSuccessful &&
-      completedAt.getFullYear() === now.getFullYear() &&
-      completedAt.getMonth() === now.getMonth() &&
-      completedAt.getDate() === now.getDate()
-    );
-  });
   for (const item of plan?.items ?? []) {
     if (item.status === 'pending') {
       pending.set(item.chainId, [
@@ -154,24 +144,22 @@ export function TodayPlanSection({
         </div>
       </div>
 
-      {(hasCompletedHistoryToday || completedPlanItems.length > 0) && (
-        <div className="mt-4 border-t border-amber-200 pt-4 dark:border-amber-900/50">
-          <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
-            {tr('已完成', 'Completed')}
+      <div className="mt-4 border-t border-amber-200 pt-4 dark:border-amber-900/50">
+        <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
+          {tr('已完成', 'Completed')}
+        </p>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-300/80">
+            {tr('时间表', 'Timeline')}
           </p>
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-300/80">
-              {tr('时间表', 'Timeline')}
-            </p>
-            <CompletedPlanTimeline
-              history={history}
-              completedPlanItems={completedPlanItems}
-              chainById={chainById}
-              tr={tr}
-            />
-          </div>
+          <CompletedPlanTimeline
+            history={history}
+            completedPlanItems={completedPlanItems}
+            chainById={chainById}
+            tr={tr}
+          />
         </div>
-      )}
+      </div>
     </section>
   );
 }
