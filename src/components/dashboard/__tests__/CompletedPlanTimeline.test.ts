@@ -48,13 +48,15 @@ describe('completedHistoryToEvents', () => {
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
       id: 'history-1',
-      title: '论文代码',
+      title: '✓ [周期项] 论文代码',
       start,
       end,
       extendedProps: {
         durationMinutes: 35,
         description: undefined,
         notes: undefined,
+        taskDirection: 'periodic',
+        completionStatus: 'completed',
       },
     });
   });
@@ -82,10 +84,11 @@ describe('completedHistoryToEvents', () => {
 
   it('normalizes an accidentally zero-length interval to one minute', () => {
     const timestamp = new Date('2026-08-25T09:10:00');
+    const chain = { name: '论文代码' } as Chain;
     const [event] = completedHistoryToEvents(
       [makeHistory({ startedAt: timestamp, completedAt: timestamp })],
       [],
-      new Map(),
+      new Map([['chain-1', chain]]),
       tr,
       '2026-08-25',
     );
@@ -95,10 +98,11 @@ describe('completedHistoryToEvents', () => {
   });
 
   it('keeps completion descriptions and notes for calendar display', () => {
+    const chain = { name: '论文代码' } as Chain;
     const [event] = completedHistoryToEvents(
       [makeHistory({ description: '完成初稿', notes: '明天校对' })],
       [],
-      new Map(),
+      new Map([['chain-1', chain]]),
       tr,
       '2026-08-25',
     );
@@ -127,10 +131,11 @@ describe('completedHistoryToEvents', () => {
       }),
     ];
 
+    const chain = { name: '论文代码' } as Chain;
     const events = completedHistoryToEvents(
       history,
       planItems,
-      new Map(),
+      new Map([['chain-1', chain]]),
       tr,
       '2026-08-25',
     );
@@ -140,5 +145,55 @@ describe('completedHistoryToEvents', () => {
       'new-history',
       'plan-old-plan-item',
     ]);
+  });
+
+  it('keeps archived goal tasks in the timeline and labels them completed', () => {
+    const chain = {
+      name: '完成论文',
+      taskDirection: 'goal',
+      goalCompletedAt: new Date('2026-08-25T09:45:00'),
+    } as Chain;
+
+    const [event] = completedHistoryToEvents(
+      [makeHistory()],
+      [],
+      new Map([['chain-1', chain]]),
+      tr,
+      '2026-08-25',
+    );
+
+    expect(event).toMatchObject({
+      title: '✓ [目标项] 完成论文',
+      extendedProps: {
+        taskDirection: 'goal',
+        completionStatus: 'completed',
+      },
+    });
+  });
+
+  it('does not show records for deleted or missing tasks', () => {
+    const deletedChain = {
+      name: '已删除任务',
+      deletedAt: new Date('2026-08-25T10:00:00'),
+    } as Chain;
+
+    expect(
+      completedHistoryToEvents(
+        [makeHistory()],
+        [],
+        new Map([['chain-1', deletedChain]]),
+        tr,
+        '2026-08-25',
+      ),
+    ).toEqual([]);
+    expect(
+      completedHistoryToEvents(
+        [makeHistory()],
+        [],
+        new Map(),
+        tr,
+        '2026-08-25',
+      ),
+    ).toEqual([]);
   });
 });

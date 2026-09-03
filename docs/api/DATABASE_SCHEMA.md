@@ -36,6 +36,7 @@ erDiagram
 
     rsip_nodes ||--o{ rsip_nodes : "parent-child"
     rsip_groups ||--o{ rsip_nodes : "groups"
+    rsip_groups ||--o{ rsip_groups : "parent-child"
     rsip_nodes ||--o{ rsip_execution_records : "records"
     rsip_nodes ||--o{ rsip_task_links : "links"
     chains ||--o{ rsip_task_links : "linked from"
@@ -253,6 +254,7 @@ erDiagram
 | ----------------- | ----------- | ------------------------------- | -------- |
 | `id`              | uuid        | PK, DEFAULT gen_random_uuid()   | 主键     |
 | `user_id`         | uuid        | FK → auth.users, NOT NULL       | 所属用户 |
+| `parent_group_id` | uuid        | FK → rsip_groups(id), 可空      | 父国策组 |
 | `title`           | text        | NOT NULL                        | 组名称   |
 | `fault_tolerance` | integer     | NOT NULL, DEFAULT 0, CHECK >= 0 | 容错值   |
 | `emoji`           | text        |                                 | 组图标   |
@@ -263,6 +265,7 @@ erDiagram
 
 - `idx_rsip_groups_user` (user_id)
 - `idx_rsip_groups_created` (user_id, created_at DESC)
+- `idx_rsip_groups_parent` (user_id, parent_group_id)
 
 ### rsip_policy_library（RSIP 策略库）
 
@@ -578,6 +581,7 @@ CREATE POLICY "Users can manage their own [table]"
 | `20260127000000_dedupe_and_add_unique_indexes.sql`             | 2026-01-27 | scheduled/completion 去重与唯一索引    |
 | `20260208000000_rsip_process_integration.sql`                  | 2026-02-08 | RSIP 分组、策略库、运行历史、任务联动  |
 | `20260211000000_schema_alignment_hotfix.sql`                   | 2026-02-11 | schema 对齐热修复                      |
+| `20260902000000_add_rsip_group_hierarchy.sql`                  | 2026-09-02 | RSIP 国策组从属关系                    |
 | `20260223000000_migrate_points_columns_to_bigint.sql`          | 2026-02-23 | 积分字段迁移到 bigint                  |
 | `20260225000000_fix_settle_task_bet_loss_noop_transaction.sql` | 2026-02-25 | 修复输掉赌注的 0 分事务问题            |
 

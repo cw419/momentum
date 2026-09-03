@@ -42,16 +42,24 @@ describe('import/rsip parser', () => {
       [
         {
           id: 'source-group',
+          parentGroupId: 'source-parent',
           title: 'new-group',
           faultTolerance: 2,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'source-parent',
+          title: 'parent-group',
+          faultTolerance: 0,
           createdAt: '2026-01-01T00:00:00.000Z',
         },
       ],
       existingGroups,
     );
-    expect(groups).toHaveLength(1);
+    expect(groups).toHaveLength(2);
     expect(groups[0]?.id).not.toBe('source-group');
     expect(groupIdMap.get('source-group')).toBe(groups[0]?.id);
+    expect(groups[0]?.parentGroupId).toBe(groupIdMap.get('source-parent'));
 
     const { nodes } = parseImportRsipNodes(
       [

@@ -17,13 +17,26 @@ type SerializedDailyPlanItem = Partial<DailyPlanItem> & {
   completionHistoryId?: string | null;
 };
 
-type SerializedDailyPlan = Partial<DailyPlan> & {
+type SerializedDailyPlan = {
   id: string;
   planDate: string;
   createdAt?: string | Date | null;
   closedAt?: string | Date | null;
-  items?: SerializedDailyPlanItem[];
+  items?: unknown;
 };
+
+function isSerializedDailyPlanItem(
+  value: unknown,
+): value is SerializedDailyPlanItem {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'string' &&
+    'chainId' in value &&
+    typeof value.chainId === 'string'
+  );
+}
 
 function decodeItem(
   raw: SerializedDailyPlanItem,
@@ -54,12 +67,7 @@ export function decodeDailyPlan(raw: SerializedDailyPlan): DailyPlan {
     closedAt: parseDateOrUndefined(raw.closedAt),
     items: Array.isArray(raw.items)
       ? raw.items
-          .filter(
-            (item) =>
-              item &&
-              typeof item.id === 'string' &&
-              typeof item.chainId === 'string',
-          )
+          .filter(isSerializedDailyPlanItem)
           .map((item) => decodeItem(item, raw.id))
       : [],
   };

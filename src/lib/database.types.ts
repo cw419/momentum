@@ -421,6 +421,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          parent_group_id: string | null;
           title: string;
           fault_tolerance: number;
           emoji: string | null;
@@ -430,6 +431,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          parent_group_id?: string | null;
           title: string;
           fault_tolerance?: number;
           emoji?: string | null;
@@ -439,6 +441,7 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
+          parent_group_id?: string | null;
           title?: string;
           fault_tolerance?: number;
           emoji?: string | null;

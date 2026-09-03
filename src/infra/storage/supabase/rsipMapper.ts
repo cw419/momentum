@@ -65,6 +65,7 @@ export function mapRSIPMetaRow(row: RSIPMetaRow): RSIPMeta {
 export function mapRSIPGroupRow(row: Record<string, unknown>): RSIPNodeGroup {
   return decodeRSIPNodeGroup({
     id: String(row.id),
+    parentGroupId: row.parent_group_id,
     title: String(row.title ?? ''),
     faultTolerance: Number(row.fault_tolerance ?? 0),
     emoji: row.emoji,

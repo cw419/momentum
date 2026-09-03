@@ -1,71 +1,53 @@
 import { useRef, useState } from 'react';
 import { Pencil, X } from 'lucide-react';
-import type { RSIPNode, RSIPNodeGroup } from '../../types';
+import type { RSIPNodeGroup } from '../../types';
 import { ConfirmationDialog } from '../ConfirmationDialog';
 import { DialogShell } from '../shared/DialogShell';
-import { getRsipTypeLabel, rsipTypeEmojiMap } from './rsipUi';
 
-export interface RSIPNodeDetails {
+export interface RSIPGroupDetails {
   title: string;
-  rule: string;
-  type: string;
-  groupId?: string;
+  emoji?: string;
+  faultTolerance: number;
 }
 
-interface RSIPNodeEditorDialogProps {
-  node: RSIPNode;
-  groups: RSIPNodeGroup[];
-  language: string;
+interface RSIPGroupEditorDialogProps {
+  group: RSIPNodeGroup;
   onClose: () => void;
-  onSave: (details: RSIPNodeDetails) => Promise<boolean | void>;
+  onSave: (details: RSIPGroupDetails) => Promise<boolean | void>;
   tr: (zh: string, en: string) => string;
 }
 
-export function RSIPNodeEditorDialog({
-  node,
-  groups,
-  language,
+export function RSIPGroupEditorDialog({
+  group,
   onClose,
   onSave,
   tr,
-}: RSIPNodeEditorDialogProps) {
-  const [title, setTitle] = useState(node.title);
-  const [rule, setRule] = useState(node.rule);
-  const [type, setType] = useState(node.type || 'policy');
-  const [groupId, setGroupId] = useState(node.groupId || '');
-  const [pendingDetails, setPendingDetails] = useState<RSIPNodeDetails>();
+}: RSIPGroupEditorDialogProps) {
+  const [title, setTitle] = useState(group.title);
+  const [emoji, setEmoji] = useState(group.emoji ?? '');
+  const [faultTolerance, setFaultTolerance] = useState(group.faultTolerance);
+  const [pendingDetails, setPendingDetails] = useState<RSIPGroupDetails>();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string>();
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  const canSave = title.trim().length > 0 && rule.trim().length > 0;
-  const hasChanges =
-    title.trim() !== node.title ||
-    rule.trim() !== node.rule ||
-    type !== (node.type || 'policy') ||
-    groupId !== (node.groupId || '');
-
-  const handleSave = () => {
-    if (!canSave || isSaving) return;
-    if (!hasChanges) return;
-
-    setPendingDetails({
-      title: title.trim(),
-      rule: rule.trim(),
-      type,
-      groupId: groupId || undefined,
-    });
+  const normalizedTolerance = Math.max(0, Math.floor(faultTolerance || 0));
+  const details: RSIPGroupDetails = {
+    title: title.trim(),
+    emoji: emoji.trim() || undefined,
+    faultTolerance: normalizedTolerance,
   };
+  const hasChanges =
+    details.title !== group.title ||
+    details.emoji !== group.emoji ||
+    details.faultTolerance !== group.faultTolerance;
 
   const handleConfirmSave = async () => {
-    const details = pendingDetails;
-    if (!details || isSaving) return;
-
-    setPendingDetails(undefined);
+    if (!pendingDetails || isSaving) return;
     setIsSaving(true);
     setSaveError(undefined);
     try {
-      const didSave = await onSave(details);
+      const didSave = await onSave(pendingDetails);
       if (didSave !== false) onClose();
     } catch {
       setSaveError(
@@ -73,12 +55,13 @@ export function RSIPNodeEditorDialog({
       );
     } finally {
       setIsSaving(false);
+      setPendingDetails(undefined);
     }
   };
 
   return (
     <DialogShell
-      titleId="rsip-node-editor-title"
+      titleId="rsip-group-editor-title"
       onClose={onClose}
       initialFocusRef={titleInputRef}
       className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-800"
@@ -92,10 +75,10 @@ export function RSIPNodeEditorDialog({
             />
           </div>
           <h2
-            id="rsip-node-editor-title"
+            id="rsip-group-editor-title"
             className="font-chinese text-xl font-bold text-gray-900 dark:text-slate-100"
           >
-            {tr('编辑国策', 'Edit policy')}
+            {tr('编辑国策组', 'Edit policy group')}
           </h2>
         </div>
         <button
@@ -109,15 +92,16 @@ export function RSIPNodeEditorDialog({
       </div>
 
       <form
+        className="space-y-5 p-6"
         onSubmit={(event) => {
           event.preventDefault();
-          handleSave();
+          if (details.title && hasChanges && !isSaving)
+            setPendingDetails(details);
         }}
-        className="space-y-5 p-6"
       >
         <label className="block">
           <span className="mb-2 block font-chinese text-sm font-medium text-gray-700 dark:text-slate-200">
-            {tr('国策标题', 'Policy title')}
+            {tr('组名称', 'Group name')}
           </span>
           <input
             ref={titleInputRef}
@@ -126,63 +110,38 @@ export function RSIPNodeEditorDialog({
             className="focus-ring w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
           />
         </label>
-
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="block">
             <span className="mb-2 block font-chinese text-sm font-medium text-gray-700 dark:text-slate-200">
-              {tr('节点类型', 'Node type')}
+              Emoji
             </span>
-            <select
-              value={type}
-              onChange={(event) => setType(event.target.value)}
+            <input
+              value={emoji}
+              onChange={(event) => setEmoji(event.target.value)}
               className="focus-ring w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-            >
-              {Object.entries(rsipTypeEmojiMap).map(([itemType, emoji]) => (
-                <option key={itemType} value={itemType}>
-                  {emoji} {getRsipTypeLabel(language, itemType)}
-                </option>
-              ))}
-            </select>
+            />
           </label>
-
           <label className="block">
             <span className="mb-2 block font-chinese text-sm font-medium text-gray-700 dark:text-slate-200">
-              {tr('所属国策组', 'Policy group')}
+              {tr('容错值', 'Fault tolerance')}
             </span>
-            <select
-              value={groupId}
-              onChange={(event) => setGroupId(event.target.value)}
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={faultTolerance}
+              onChange={(event) =>
+                setFaultTolerance(Number(event.target.value))
+              }
               className="focus-ring w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-            >
-              <option value="">{tr('不分组', 'No group')}</option>
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.emoji ? `${group.emoji} ` : ''}
-                  {group.title}
-                </option>
-              ))}
-            </select>
+            />
           </label>
         </div>
-
-        <label className="block">
-          <span className="mb-2 block font-chinese text-sm font-medium text-gray-700 dark:text-slate-200">
-            {tr('精准规则', 'Rule')}
-          </span>
-          <textarea
-            value={rule}
-            onChange={(event) => setRule(event.target.value)}
-            rows={5}
-            className="focus-ring w-full resize-y rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </label>
-
         {saveError && (
           <p role="alert" className="text-sm text-red-600 dark:text-red-300">
             {saveError}
           </p>
         )}
-
         <div className="flex gap-3 pt-1">
           <button
             type="button"
@@ -194,20 +153,19 @@ export function RSIPNodeEditorDialog({
           </button>
           <button
             type="submit"
-            disabled={!canSave || !hasChanges || isSaving}
+            disabled={!details.title || !hasChanges || isSaving}
             className="focus-ring flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? tr('保存中…', 'Saving…') : tr('保存', 'Save')}
           </button>
         </div>
       </form>
-
       <ConfirmationDialog
         isOpen={pendingDetails !== undefined}
-        title={tr('确认修改国策', 'Confirm policy changes')}
+        title={tr('确认修改国策组', 'Confirm group changes')}
         message={tr(
-          `将修改国策「${node.title}」的信息。确认保存吗？`,
-          `Save the changes to "${node.title}"?`,
+          `将修改国策组「${group.title}」。确认保存吗？`,
+          `Save the changes to group "${group.title}"?`,
         )}
         confirmText={tr('确认修改', 'Confirm changes')}
         cancelText={tr('继续编辑', 'Keep editing')}

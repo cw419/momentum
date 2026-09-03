@@ -72,13 +72,26 @@ export function useRSIPViewState({
     if (meta.allowMultiplePerDay) {
       return true;
     }
-    if (!meta.lastAddedAt) {
+    const mostRecentNode = nodes.reduce<Date | undefined>(
+      (latest, node) =>
+        !latest || node.createdAt.getTime() > latest.getTime()
+          ? node.createdAt
+          : latest,
+      undefined,
+    );
+    const lastAddedAt =
+      meta.lastAddedAt && mostRecentNode
+        ? meta.lastAddedAt.getTime() >= mostRecentNode.getTime()
+          ? meta.lastAddedAt
+          : mostRecentNode
+        : (meta.lastAddedAt ?? mostRecentNode);
+    if (!lastAddedAt) {
       return true;
     }
 
-    const last = new Date(meta.lastAddedAt);
+    const last = new Date(lastAddedAt);
     return last.toDateString() !== new Date().toDateString();
-  }, [meta.allowMultiplePerDay, meta.lastAddedAt]);
+  }, [meta.allowMultiplePerDay, meta.lastAddedAt, nodes]);
 
   const insights = useMemo(
     () =>

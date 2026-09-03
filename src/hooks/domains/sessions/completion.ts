@@ -68,6 +68,11 @@ interface CreateCompletionHandlersParams {
   tr: (zh: string, en: string) => string;
 }
 
+interface CompletionOverrides {
+  completedAt: Date;
+  actualDuration: number;
+}
+
 export function createCompletionHandlers({
   state,
   getState,
@@ -161,7 +166,11 @@ export function createCompletionHandlers({
     });
   }
 
-  const handleCompleteSession = (description?: string, notes?: string) => {
+  const completeSession = (
+    description?: string,
+    notes?: string,
+    overrides?: CompletionOverrides,
+  ) => {
     const currentState = readState();
     const activeSession = currentState.activeSession;
     if (!activeSession) return;
@@ -171,9 +180,10 @@ export function createCompletionHandlers({
     );
     if (!chain) return;
 
-    const actualDuration = computeActualDuration(activeSession, chain);
+    const actualDuration =
+      overrides?.actualDuration ?? computeActualDuration(activeSession, chain);
 
-    const completedAt = new Date();
+    const completedAt = overrides?.completedAt ?? new Date();
     const newStreak = chain.currentStreak + 1;
     notifyTaskCompleted(chain.name, newStreak);
 
@@ -280,6 +290,17 @@ export function createCompletionHandlers({
     onNavigateToDashboard?.();
   };
 
+  const handleCompleteSession = (description?: string, notes?: string) => {
+    completeSession(description, notes);
+  };
+
+  const handleAutoCompleteSession = (
+    completedAt: Date,
+    actualDuration: number,
+  ) => {
+    completeSession(undefined, undefined, { completedAt, actualDuration });
+  };
+
   const handleInterruptSession = (reason?: string) => {
     const currentState = readState();
     const activeSession = currentState.activeSession;
@@ -341,5 +362,9 @@ export function createCompletionHandlers({
     onNavigateToDashboard?.();
   };
 
-  return { handleCompleteSession, handleInterruptSession };
+  return {
+    handleCompleteSession,
+    handleAutoCompleteSession,
+    handleInterruptSession,
+  };
 }

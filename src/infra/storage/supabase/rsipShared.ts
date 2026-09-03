@@ -87,3 +87,28 @@ export async function getUserScopedOrderedRows(
   }
   return { userId: user.id, rows: data ?? [] };
 }
+
+export async function hasUserScopedColumn(
+  ctx: SupabaseStorageContext,
+  options: {
+    table: string;
+    column: string;
+    orderBy: string;
+    ascending: boolean;
+    errorLabel: string;
+  },
+): Promise<boolean> {
+  const user = await ctx.getCurrentUser();
+  if (!user) return false;
+
+  const client = ctx.getClient() as unknown as OrderedRowsClient;
+  const { error } = await client
+    .from(options.table)
+    .select(options.column)
+    .eq('user_id', user.id)
+    .order(options.orderBy, { ascending: options.ascending });
+
+  if (!error) return true;
+  if (isSchemaMissing(error)) return false;
+  throw new Error(`Failed to verify ${options.errorLabel}: ${error.message}`);
+}

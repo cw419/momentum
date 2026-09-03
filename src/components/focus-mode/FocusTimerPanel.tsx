@@ -17,6 +17,7 @@ interface FocusTimerPanelProps {
   progress: number;
   lastCompletionTime: number | null;
   hasReachedMinimum: boolean;
+  hasTimeExpired: boolean;
   minimumCountdown: number;
   language: 'zh' | 'en';
   tr: (zh: string, en: string) => string;

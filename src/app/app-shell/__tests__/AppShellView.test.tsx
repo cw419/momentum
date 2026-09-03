@@ -114,6 +114,7 @@ function createProps(overrides: AppShellViewOverrides = {}): AppShellViewProps {
 
   const dashboard: AppShellDashboardViewModel = {
     chains: [chain, groupChain],
+    timelineChains: [chain, groupChain],
     chainsRevision: 1,
     scheduledSessions: [],
     editingChain: null,

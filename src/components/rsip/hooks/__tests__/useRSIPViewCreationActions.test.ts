@@ -232,7 +232,7 @@ describe('useRSIPViewCreationActions', () => {
 
   it('creates one trimmed node with its hierarchy, timer, type, and passive fields', async () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue(UUID_1);
-    const existing = createNode({ id: 'existing' });
+    const existing = createNode({ id: 'parent-1', groupId: 'group-1' });
     const onSaveNodes = vi.fn(async () => undefined);
     const onSaveMeta = vi.fn(async () => undefined);
     const setTitle = vi.fn();
@@ -240,6 +240,7 @@ describe('useRSIPViewCreationActions', () => {
     const { result } = renderCreationActions(
       {
         nodes: [existing],
+        groups: [createGroup()],
         meta: { allowMultiplePerDay: true },
         title: '  Morning policy  ',
         rule: '  Start by 08:00  ',
@@ -527,7 +528,7 @@ describe('useRSIPViewCreationActions', () => {
     vi.spyOn(crypto, 'randomUUID')
       .mockReturnValueOnce(UUID_1)
       .mockReturnValueOnce(UUID_2);
-    const existing = createNode({ id: 'existing' });
+    const existing = createNode({ id: 'parent-1', groupId: 'group-1' });
     const onSaveNodes = vi.fn(async () => undefined);
     const onSaveMeta = vi.fn(async () => undefined);
     const setSplitItems = vi.fn();
@@ -535,6 +536,7 @@ describe('useRSIPViewCreationActions', () => {
     const { result } = renderCreationActions(
       {
         nodes: [existing],
+        groups: [createGroup()],
         meta: { allowMultiplePerDay: true },
         selectedParentId: 'parent-1',
         selectedGroupId: 'group-1',

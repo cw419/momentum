@@ -19,6 +19,7 @@ function toTimelineEvent(
   chainById: Map<string, Chain>,
   tr: (zh: string, en: string) => string,
 ): EventInput {
+  const chain = chainById.get(record.chainId);
   const start = record.startedAt;
   const completed = record.completedAt;
   // FullCalendar requires a positive interval. Normal sessions are longer.
@@ -29,8 +30,10 @@ function toTimelineEvent(
 
   return {
     id: record.id,
-    title:
-      chainById.get(record.chainId)?.name ?? tr('已删除任务', 'Deleted task'),
+    title: `✓ [${tr(
+      chain?.taskDirection === 'goal' ? '目标项' : '周期项',
+      chain?.taskDirection === 'goal' ? 'Goal' : 'Periodic',
+    )}] ${chain?.name ?? ''}`,
     start,
     end,
     backgroundColor: '#059669',
@@ -42,6 +45,8 @@ function toTimelineEvent(
       ),
       description: record.description,
       notes: record.notes,
+      taskDirection: chain?.taskDirection ?? 'periodic',
+      completionStatus: 'completed',
     },
   } satisfies EventInput;
 }
@@ -91,7 +96,10 @@ export function completedHistoryToEvents(
       completedAt: item.completedAt!,
     }));
 
-  return [...timedHistory, ...legacyPlannedRecords].map((item) =>
-    toTimelineEvent(item, chainById, tr),
-  );
+  return [...timedHistory, ...legacyPlannedRecords]
+    .filter((item) => {
+      const chain = chainById.get(item.chainId);
+      return chain != null && chain.deletedAt == null;
+    })
+    .map((item) => toTimelineEvent(item, chainById, tr));
 }

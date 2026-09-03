@@ -29,7 +29,8 @@ export abstract class SupabaseStorageData
     const user = await this.ctx.getCurrentUser();
     if (!user) return [];
     const client = this.ctx.getClient();
-    const { data, error } = await (client.from('daily_plans') as any)
+    const { data, error } = await client
+      .from('daily_plans')
       .select('*')
       .eq('user_id', user.id)
       .order('plan_date', { ascending: false });
@@ -38,7 +39,7 @@ export abstract class SupabaseStorageData
         return [];
       throw new Error(`Failed to fetch daily plans: ${error.message}`);
     }
-    return (data ?? []).map((row: any) =>
+    return (data ?? []).map((row) =>
       decodeDailyPlan({
         id: row.id,
         planDate: row.plan_date,
@@ -66,7 +67,7 @@ export abstract class SupabaseStorageData
       })),
       user_id: user.id,
     }));
-    const { error } = await (client.from('daily_plans') as any).upsert(rows, {
+    const { error } = await client.from('daily_plans').upsert(rows, {
       onConflict: 'id',
     });
     if (error) throw new Error(`Failed to save daily plans: ${error.message}`);

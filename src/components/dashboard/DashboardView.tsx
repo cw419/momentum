@@ -75,6 +75,7 @@ type DashboardViewProps = DashboardProps & DashboardController;
 
 export function DashboardView({
   chains,
+  timelineChains = chains,
   scheduledSessions: _scheduledSessions,
   chainsRevision: _chainsRevision,
   dailyPlans,
@@ -207,6 +208,7 @@ export function DashboardView({
         <TodayPlanSection
           plans={dailyPlans}
           chains={chains}
+          timelineChains={timelineChains}
           history={history}
           onAddUnits={onAddPlanUnits}
           onRemoveUnits={onRemovePlanUnits}

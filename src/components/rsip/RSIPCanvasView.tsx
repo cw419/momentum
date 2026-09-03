@@ -6,11 +6,16 @@ import { ConfirmationDialog } from '../ConfirmationDialog';
 import { RSIPFilters } from './RSIPFilters';
 import { RSIPNodeEditorDialog } from './RSIPNodeEditorDialog';
 import type { RSIPNodeDetails } from './RSIPNodeEditorDialog';
+import { RSIPGroupEditorDialog } from './RSIPGroupEditorDialog';
+import type { RSIPGroupDetails } from './RSIPGroupEditorDialog';
+import { RSIPNodeGroupMoveDialog } from './RSIPNodeGroupMoveDialog';
 import { RSIPTree } from './RSIPTree';
 import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import type { RSIPGroupConnector } from './hooks/useRSIPGroupConnectors';
 
 export type ConfirmAction =
   | { kind: 'stopTimer'; nodeId: string }
+  | { kind: 'reparentGroupMigration'; childId: string; parentId: string }
   | {
       kind: 'rollbackFailure';
       nodeId: string;
@@ -20,8 +25,10 @@ export type ConfirmAction =
 
 interface RSIPCanvasViewProps {
   tree: RSIPTreeNode[];
+  nodes: RSIPNode[];
   nodePositions: Record<string, NodePosition>;
   groupFrames: RSIPGroupFrame[];
+  groupConnectors: RSIPGroupConnector[];
   connectors: RSIPConnector[];
   containerHeight: number;
   contentBounds: {
@@ -41,6 +48,14 @@ interface RSIPCanvasViewProps {
   reparentingTitle: string | null;
   relationError: string | null;
   editingNode: RSIPNode | null;
+  editingGroup: RSIPNodeGroup | null;
+  pendingNodeGroupMove: {
+    nodeId: string;
+    parentId: string;
+    targetGroupId?: string;
+    details: RSIPNodeDetails;
+  } | null;
+  canLinkPendingGroupRelation: boolean;
   groups: RSIPNodeGroup[];
   language: string;
   tr: (zh: string, en: string) => string;
@@ -60,12 +75,29 @@ interface RSIPCanvasViewProps {
   onHoverStart: (nodeId: string) => void;
   onHoverEnd: () => void;
   onToggleReparent: (nodeId: string) => void;
-  onCommitReparent: (childId: string, parentId?: string) => void;
+  onCommitReparent: (
+    childId: string,
+    parentId?: string,
+    confirmedGroupMigration?: boolean,
+  ) => void;
   onCancelReparent: () => void;
   onSetRelationError: (next: string | null) => void;
   onEditNode: (node: RSIPTreeNode) => void;
+  onEditGroup: (groupId: string) => void;
+  onCloseGroupEditor: () => void;
+  onSaveGroupDetails: (details: RSIPGroupDetails) => Promise<boolean | void>;
+  groupReparentingId: string | null;
+  invalidParentGroupIds: Set<string>;
+  groupRelationError: string | null;
+  onToggleGroupReparent: (groupId: string) => void;
+  onCommitGroupReparent: (groupId: string, parentGroupId?: string) => void;
+  onCancelGroupReparent: () => void;
+  onSetGroupRelationError: (next: string | null) => void;
+  onCancelNodeGroupMove: () => void;
+  onMoveNodeGroupOnly: () => void;
+  onMoveNodeGroupAndLink: () => void;
   onCloseNodeEditor: () => void;
-  onSaveNodeDetails: (details: RSIPNodeDetails) => Promise<void>;
+  onSaveNodeDetails: (details: RSIPNodeDetails) => Promise<boolean | void>;
   onMarkFailed: (nodeId: string) => void;
   onStartTimer: (nodeId: string, minutes: number) => void;
   onStopTimer: (nodeId: string) => void;
@@ -76,8 +108,10 @@ interface RSIPCanvasViewProps {
 
 export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   tree,
+  nodes,
   nodePositions,
   groupFrames,
+  groupConnectors,
   connectors,
   containerHeight,
   contentBounds,
@@ -92,6 +126,9 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   reparentingTitle,
   relationError,
   editingNode,
+  editingGroup,
+  pendingNodeGroupMove,
+  canLinkPendingGroupRelation,
   groups,
   language,
   tr,
@@ -111,6 +148,19 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   onCancelReparent,
   onSetRelationError,
   onEditNode,
+  onEditGroup,
+  onCloseGroupEditor,
+  onSaveGroupDetails,
+  groupReparentingId,
+  invalidParentGroupIds,
+  groupRelationError,
+  onToggleGroupReparent,
+  onCommitGroupReparent,
+  onCancelGroupReparent,
+  onSetGroupRelationError,
+  onCancelNodeGroupMove,
+  onMoveNodeGroupOnly,
+  onMoveNodeGroupAndLink,
   onCloseNodeEditor,
   onSaveNodeDetails,
   onMarkFailed,
@@ -121,6 +171,8 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
   formatMinutesLabel,
 }) => {
   const isRollbackFailure = confirmAction?.kind === 'rollbackFailure';
+  const isReparentGroupMigration =
+    confirmAction?.kind === 'reparentGroupMigration';
 
   let confirmationTitle = tr('停止计时', 'Stop timer');
   let confirmationMessage = tr('确定要停止计时吗？', 'Stop the timer?');
@@ -138,6 +190,15 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
     );
     confirmationConfirmText = tr('回溯', 'Roll back');
     confirmationConfirmButtonClass = 'bg-red-500 hover:bg-red-600';
+  }
+  if (isReparentGroupMigration && confirmAction) {
+    confirmationTitle = tr('确认迁移国策组', 'Confirm policy group migration');
+    confirmationMessage = tr(
+      '父子节点必须属于同一国策组。继续后，该节点及其全部子节点会迁入新父节点所在组。',
+      "Parent and child nodes must belong to the same policy group. Continuing moves this node and all descendants to the new parent's group.",
+    );
+    confirmationConfirmText = tr('迁移并继续', 'Move and continue');
+    confirmationConfirmButtonClass = 'bg-emerald-600 hover:bg-emerald-700';
   }
 
   return (
@@ -164,6 +225,46 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
         />
       )}
 
+      {editingGroup && (
+        <RSIPGroupEditorDialog
+          group={editingGroup}
+          onClose={onCloseGroupEditor}
+          onSave={onSaveGroupDetails}
+          tr={tr}
+        />
+      )}
+
+      {pendingNodeGroupMove && (
+        <RSIPNodeGroupMoveDialog
+          nodeTitle={
+            nodes.find((node) => node.id === pendingNodeGroupMove.nodeId)
+              ?.title ?? pendingNodeGroupMove.nodeId
+          }
+          parentTitle={
+            nodes.find((node) => node.id === pendingNodeGroupMove.parentId)
+              ?.title ?? pendingNodeGroupMove.parentId
+          }
+          sourceGroupTitle={
+            groups.find(
+              (group) =>
+                group.id ===
+                nodes.find((node) => node.id === pendingNodeGroupMove.parentId)
+                  ?.groupId,
+            )?.title
+          }
+          targetGroupTitle={
+            groups.find(
+              (group) => group.id === pendingNodeGroupMove.targetGroupId,
+            )?.title
+          }
+          canCreateGroupRelation={canLinkPendingGroupRelation}
+          onCancel={onCancelNodeGroupMove}
+          onMoveOnly={onMoveNodeGroupOnly}
+          onMoveAndLinkGroups={onMoveNodeGroupAndLink}
+          tr={tr}
+        />
+      )}
+
       <RSIPFilters
         filterType={filterType}
         onFilterTypeChange={onFilterTypeChange}
@@ -175,6 +276,7 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
         tree={tree}
         nodePositions={nodePositions}
         groupFrames={groupFrames}
+        groupConnectors={groupConnectors}
         connectors={connectors}
         containerHeight={containerHeight}
         contentBounds={contentBounds}
@@ -199,6 +301,14 @@ export const RSIPCanvasView: React.FC<RSIPCanvasViewProps> = ({
         onCancelReparent={onCancelReparent}
         onSetRelationError={onSetRelationError}
         onEditNode={onEditNode}
+        groupReparentingId={groupReparentingId}
+        invalidParentGroupIds={invalidParentGroupIds}
+        groupRelationError={groupRelationError}
+        onEditGroup={onEditGroup}
+        onToggleGroupReparent={onToggleGroupReparent}
+        onCommitGroupReparent={onCommitGroupReparent}
+        onCancelGroupReparent={onCancelGroupReparent}
+        onSetGroupRelationError={onSetGroupRelationError}
         onMarkFailed={onMarkFailed}
         onStartTimer={onStartTimer}
         onStopTimer={onStopTimer}

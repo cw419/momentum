@@ -20,6 +20,7 @@ export interface NodePosition {
 
 export interface RSIPGroupFrame {
   id: string;
+  parentGroupId?: string;
   title: string;
   emoji?: string;
   style: React.CSSProperties;
@@ -275,6 +276,7 @@ export function useRSIPLayout(
 
       return {
         id: group.id,
+        parentGroupId: group.parentGroupId,
         title: group.title,
         emoji: group.emoji,
         style: {

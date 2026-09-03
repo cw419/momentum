@@ -67,6 +67,7 @@ export interface SerializedRSIPMeta {
 
 export interface SerializedRSIPNodeGroup {
   id: string;
+  parentGroupId?: unknown;
   title: string;
   faultTolerance: number;
   createdAt?: unknown;
@@ -183,6 +184,7 @@ export function decodeRSIPNodeGroup(
 ): RSIPNodeGroup {
   return {
     id: raw.id,
+    parentGroupId: toOptionalString(raw.parentGroupId),
     title: raw.title,
     faultTolerance: toNumber(raw.faultTolerance, 0),
     createdAt: parseTruthyDateOrNow(raw.createdAt),

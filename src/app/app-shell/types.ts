@@ -59,6 +59,8 @@ export interface AppShellAppViewModel {
 
 export interface AppShellDashboardViewModel {
   chains: Chain[];
+  /** Includes archived goal chains so their completed sessions remain identifiable. */
+  timelineChains: Chain[];
   chainsRevision: number;
   dailyPlans: DailyPlan[];
   scheduledSessions: ScheduledSession[];
@@ -120,6 +122,7 @@ export interface AppShellRsipViewModel {
   taskLinks: RSIPTaskLink[];
   chains: Chain[];
   onBack: () => void;
+  createNodes: (nodes: RSIPNode[], meta: RSIPMeta) => Promise<void>;
   saveNodes: (nodes: RSIPNode[]) => Promise<void>;
   saveMeta: (meta: RSIPMeta) => Promise<void>;
   saveGroups: (groups: RSIPNodeGroup[]) => Promise<void>;

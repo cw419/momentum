@@ -141,6 +141,48 @@ describe('useRSIPReparent', () => {
     expect(result.current.relationError).toBeNull();
   });
 
+  it('requires confirmation before moving a reparented subtree across groups', () => {
+    const onSaveNodes = vi.fn<SaveNodes>();
+    const nodes = [
+      node({ id: 'root-a', groupId: 'group-a' }),
+      node({ id: 'child', parentId: 'root-a', groupId: 'group-a' }),
+      node({ id: 'grandchild', parentId: 'child', groupId: 'group-a' }),
+      node({ id: 'root-b', groupId: 'group-b' }),
+    ];
+    const tree = buildRSIPTree(nodes);
+    const nodesById = new Map(nodes.map((item) => [item.id, item]));
+    const onRequireGroupMigration = vi.fn(() => true);
+    const { result } = renderHook(() =>
+      useRSIPReparent({
+        nodes,
+        tree,
+        nodesById,
+        onSaveNodes,
+        onRequireGroupMigration,
+        tr: (_zh, en) => en,
+      }),
+    );
+
+    act(() => result.current.commitReparent('child', 'root-b'));
+
+    expect(onRequireGroupMigration).toHaveBeenCalledWith({
+      childId: 'child',
+      parentId: 'root-b',
+      sourceGroupId: 'group-a',
+      targetGroupId: 'group-b',
+    });
+    expect(onSaveNodes).not.toHaveBeenCalled();
+
+    act(() => result.current.commitReparent('child', 'root-b', true));
+
+    expect(onSaveNodes).toHaveBeenCalledWith([
+      nodes[0],
+      { ...nodes[1], parentId: 'root-b', groupId: 'group-b' },
+      { ...nodes[2], groupId: 'group-b' },
+      nodes[3],
+    ]);
+  });
+
   it('makes a node a root while preserving its sort order', () => {
     const onSaveNodes = vi.fn<SaveNodes>();
     const { result } = renderReparent(onSaveNodes);

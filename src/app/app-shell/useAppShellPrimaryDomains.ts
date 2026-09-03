@@ -3,6 +3,7 @@ import { usePetDomain } from '../../hooks/domains/usePetDomain';
 import { useRsipDomain } from '../../hooks/domains/useRsipDomain';
 import { useSafeSaveChains } from '../../hooks/domains/useSafeSaveChains';
 import { useSessionsDomain } from '../../hooks/domains/useSessionsDomain';
+import { useSessionAutoCompletion } from '../../hooks/domains/sessions/useSessionAutoCompletion';
 import type { MomentumStorage } from '../../storage/MomentumStorage';
 import { getAppStateSnapshot } from '../../stores/appShellStore';
 import { navigationStore } from '../../stores/navigationStore';
@@ -96,6 +97,16 @@ export function useAppShellPrimaryDomains(
     onNavigateToDashboard: () =>
       navigationStore.getState().navigateToDashboard(),
     onPetTaskCompleted: petDomain.onTaskCompleted,
+  });
+  const activeSessionChain = state.activeSession
+    ? state.chains.find((chain) => chain.id === state.activeSession?.chainId)
+    : undefined;
+  useSessionAutoCompletion({
+    session: state.activeSession,
+    isDurationless: Boolean(
+      activeSessionChain?.isDurationless || state.activeSession?.duration === 0,
+    ),
+    onAutoComplete: sessionsDomain.handleAutoCompleteSession,
   });
 
   return {

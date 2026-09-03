@@ -104,20 +104,23 @@ export function useSessionsDomain({
     tr,
   });
 
-  const { handleCompleteSession, handleInterruptSession } =
-    createCompletionHandlers({
-      state,
-      getState: readState,
-      setState,
-      storage,
-      safelySaveChains,
-      activeSessionId,
-      setActiveSessionId,
-      onNavigateToDashboard,
-      onPetTaskCompleted,
-      taskLifecycleEvents,
-      tr,
-    });
+  const {
+    handleCompleteSession,
+    handleAutoCompleteSession,
+    handleInterruptSession,
+  } = createCompletionHandlers({
+    state,
+    getState: readState,
+    setState,
+    storage,
+    safelySaveChains,
+    activeSessionId,
+    setActiveSessionId,
+    onNavigateToDashboard,
+    onPetTaskCompleted,
+    taskLifecycleEvents,
+    tr,
+  });
 
   const { handlePauseSession, handleResumeSession } = createPauseResumeHandlers(
     { state, getState: readState, setState, storage },
@@ -127,6 +130,7 @@ export function useSessionsDomain({
     handleScheduleChain,
     handleStartChain,
     handleCompleteSession,
+    handleAutoCompleteSession,
     handleInterruptSession,
     handlePauseSession,
     handleResumeSession,

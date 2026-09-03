@@ -86,6 +86,7 @@ describe('viewModelBuilders', () => {
     });
 
     expect(dashboard.viewingChain).toBe(group);
+    expect(dashboard.timelineChains).toEqual([unit, group]);
     expect(dashboard.viewingGroupNode).toEqual(groupNode);
     expect(queryOptimizerMock.memoizedBuildChainTree).toHaveBeenCalledWith(
       [unit, group],

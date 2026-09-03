@@ -95,6 +95,7 @@ export function FocusModeView(props: FocusModeViewProps) {
           chain={chain}
           isDurationless={props.isDurationless}
           hasReachedMinimum={props.hasReachedMinimum}
+          hasTimeExpired={props.hasTimeExpired}
           onPauseClick={props.onPauseClick}
           onEarlyCompleteClick={props.onEarlyCompleteClick}
           autoResumeAt={props.autoResumeAt}

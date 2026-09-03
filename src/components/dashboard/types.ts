@@ -29,6 +29,8 @@ interface DashboardImportOptions {
 
 export interface DashboardProps {
   chains: Chain[];
+  /** Includes archived goal chains for the completed-task timeline only. */
+  timelineChains?: Chain[];
   chainsRevision: number;
   dailyPlans: DailyPlan[];
   scheduledSessions: ScheduledSession[];

@@ -282,6 +282,50 @@ describe('createCompletionHandlers', () => {
     );
   });
 
+  it('caps an automatic completion at the supplied deadline and duration', async () => {
+    const chain = createUnitChain({ id: 'chain-1', duration: 25 });
+    const startedAt = new Date('2026-09-02T14:00:00.000Z');
+    const completedAt = new Date('2026-09-02T14:55:00.000Z');
+    const stateRef = createStateContainer(
+      createAppState({
+        chains: [chain],
+        activeSession: {
+          chainId: chain.id,
+          startedAt,
+          duration: 25,
+          isPaused: false,
+          totalPausedTime: 0,
+        },
+      }),
+    );
+    const storage = createLocalStorageMock({
+      appendCompletionHistory: vi.fn(async () => undefined),
+      saveActiveSession: vi.fn(async () => undefined),
+      updateTaskTimeStats: vi.fn(async () => undefined),
+    });
+    const { handleAutoCompleteSession } = createCompletionHandlers({
+      getState: stateRef.getState,
+      setState: stateRef.setState,
+      storage,
+      safelySaveChains: vi.fn(async () => undefined),
+      activeSessionId: null,
+      setActiveSessionId: vi.fn(),
+      tr,
+    });
+
+    handleAutoCompleteSession(completedAt, 55);
+    await flushPromises();
+
+    expect(stateRef.getState().completionHistory.at(-1)).toMatchObject({
+      chainId: chain.id,
+      startedAt,
+      completedAt,
+      actualDuration: 55,
+      wasSuccessful: true,
+    });
+    expect(storage.updateTaskTimeStats).toHaveBeenCalledWith(chain.id, 55);
+  });
+
   it('should skip group cycle checks when completed chain has no parent group', async () => {
     const chain = createUnitChain({
       id: 'no-parent-chain',

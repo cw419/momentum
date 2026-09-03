@@ -70,6 +70,7 @@ export interface HistoryStore {
 }
 
 export interface RsipStore {
+  createRSIPNodesWithMeta?(nodes: RSIPNode[], meta: RSIPMeta): Promise<void>;
   getRSIPNodes(): Promise<RSIPNode[]>;
   saveRSIPNodes(nodes: RSIPNode[]): Promise<void>;
   upsertRSIPNode(node: RSIPNode): Promise<void>;

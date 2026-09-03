@@ -25,8 +25,18 @@ import {
   type SerializedRSIPTaskLink,
 } from '../../serialization';
 import { STORAGE_KEYS } from './keys';
+import { recoverRSIPAtomicJournal } from './rsipAtomicJournal';
+import { createRSIPNodesWithMeta as persistRSIPNodesWithMeta } from './rsipAtomicIntents';
+
+export function createRSIPNodesWithMeta(
+  nodes: RSIPNode[],
+  meta: RSIPMeta,
+): void {
+  persistRSIPNodesWithMeta(nodes, meta);
+}
 
 export function getRSIPNodes(): RSIPNode[] {
+  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_NODES);
   if (!data) return [];
 
@@ -54,6 +64,7 @@ export function removeRSIPNodes(nodeIds: string[]): void {
 }
 
 export function getRSIPMeta(): RSIPMeta {
+  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_META);
   if (!data) return {};
 
@@ -61,20 +72,21 @@ export function getRSIPMeta(): RSIPMeta {
 }
 
 export function saveRSIPMeta(meta: RSIPMeta): void {
-  localStorage.setItem(
-    STORAGE_KEYS.RSIP_META,
-    JSON.stringify({
-      ...meta,
-      lastAddedAt: meta.lastAddedAt ? toIsoString(meta.lastAddedAt) : undefined,
-      lastTreeOpenedAt: meta.lastTreeOpenedAt
-        ? toIsoString(meta.lastTreeOpenedAt)
-        : undefined,
-      currentRunStartedAt: meta.currentRunStartedAt
-        ? toIsoString(meta.currentRunStartedAt)
-        : undefined,
-      allowMultiplePerDay: !!meta.allowMultiplePerDay,
-    }),
-  );
+  localStorage.setItem(STORAGE_KEYS.RSIP_META, serializeRSIPMeta(meta));
+}
+
+export function serializeRSIPMeta(meta: RSIPMeta): string {
+  return JSON.stringify({
+    ...meta,
+    lastAddedAt: meta.lastAddedAt ? toIsoString(meta.lastAddedAt) : undefined,
+    lastTreeOpenedAt: meta.lastTreeOpenedAt
+      ? toIsoString(meta.lastTreeOpenedAt)
+      : undefined,
+    currentRunStartedAt: meta.currentRunStartedAt
+      ? toIsoString(meta.currentRunStartedAt)
+      : undefined,
+    allowMultiplePerDay: !!meta.allowMultiplePerDay,
+  });
 }
 
 export function getRSIPGroups(): RSIPNodeGroup[] {
@@ -87,10 +99,19 @@ export function getRSIPGroups(): RSIPNodeGroup[] {
 }
 
 export function saveRSIPGroups(groups: RSIPNodeGroup[]): void {
-  localStorage.setItem(STORAGE_KEYS.RSIP_GROUPS, JSON.stringify(groups));
+  localStorage.setItem(
+    STORAGE_KEYS.RSIP_GROUPS,
+    JSON.stringify(
+      groups.map((group) => ({
+        ...group,
+        createdAt: toIsoString(group.createdAt),
+      })),
+    ),
+  );
 }
 
 export function getRSIPPolicyLibrary(): RSIPLibraryEntry[] {
+  recoverRSIPAtomicJournal();
   const data = localStorage.getItem(STORAGE_KEYS.RSIP_POLICY_LIBRARY);
   if (!data) return [];
 

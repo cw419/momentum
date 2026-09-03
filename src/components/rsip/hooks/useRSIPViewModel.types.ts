@@ -85,6 +85,7 @@ export interface RSIPViewActionSlice {
   }) => Promise<void>;
   closeViolationDialog: () => void;
   onSaveNodes: RSIPViewProps['onSaveNodes'];
+  onSaveGroups: NonNullable<RSIPViewProps['onSaveGroups']>;
   onReinforceNode: RSIPViewProps['onReinforceNode'];
 }
 

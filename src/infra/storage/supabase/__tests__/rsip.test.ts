@@ -5,6 +5,7 @@ import {
   getRSIPMeta,
   saveRSIPMeta,
   getRSIPGroups,
+  saveRSIPGroups,
   getRSIPExecutionRecords,
 } from '../rsip';
 import {
@@ -12,7 +13,7 @@ import {
   createMockQueryBuilder,
   createSupabaseError,
 } from './testHelpers';
-import type { RSIPNode, RSIPMeta } from '../../../../types';
+import type { RSIPNode, RSIPMeta, RSIPNodeGroup } from '../../../../types';
 
 vi.mock('../../../../utils/logger', () => ({
   logger: {
@@ -704,6 +705,78 @@ describe('rsip.ts', () => {
           emoji: '🧭',
           createdAt: new Date('2024-02-01T00:00:00Z'),
         },
+      ]);
+    });
+  });
+
+  describe('saveRSIPGroups', () => {
+    const group: RSIPNodeGroup = {
+      id: 'group-1',
+      parentGroupId: 'parent-group',
+      title: 'Group A',
+      faultTolerance: 2,
+      emoji: '🧭',
+      createdAt: new Date('2024-02-01T00:00:00Z'),
+    };
+
+    it('does not delete groups with a hierarchy when the migration is missing', async () => {
+      const queryBuilder = createMockQueryBuilder({
+        data: null,
+        error: createSupabaseError(
+          '42703',
+          'column rsip_groups.parent_group_id does not exist',
+        ),
+      });
+      const ctx = createMockContext({ queryBuilder });
+
+      await expect(saveRSIPGroups(ctx, [group])).rejects.toThrow(
+        'Group hierarchy requires the pending database migration',
+      );
+
+      expect(queryBuilder.delete).not.toHaveBeenCalled();
+      expect(queryBuilder.insert).not.toHaveBeenCalled();
+    });
+
+    it('saves standalone groups without a hierarchy column', async () => {
+      const hierarchyQuery = createMockQueryBuilder({
+        data: null,
+        error: createSupabaseError(
+          '42703',
+          'column rsip_groups.parent_group_id does not exist',
+        ),
+      });
+      const persistenceQuery = createMockQueryBuilder({
+        data: [],
+        error: null,
+      });
+      const ctx = createMockContext();
+      ctx.mockClient.from = vi
+        .fn()
+        .mockReturnValueOnce(hierarchyQuery)
+        .mockReturnValue(persistenceQuery);
+
+      await saveRSIPGroups(ctx, [{ ...group, parentGroupId: undefined }]);
+
+      expect(persistenceQuery.delete).toHaveBeenCalledTimes(1);
+      expect(persistenceQuery.insert).toHaveBeenCalledWith([
+        expect.not.objectContaining({ parent_group_id: expect.anything() }),
+      ]);
+    });
+
+    it('writes the group hierarchy after a successful schema preflight', async () => {
+      const queryBuilder = createMockQueryBuilder({ data: [], error: null });
+      const ctx = createMockContext({ queryBuilder });
+
+      await saveRSIPGroups(ctx, [group]);
+
+      expect(queryBuilder.select).toHaveBeenCalledWith('parent_group_id');
+      expect(queryBuilder.delete).toHaveBeenCalledTimes(1);
+      expect(queryBuilder.insert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'group-1',
+          parent_group_id: 'parent-group',
+          title: 'Group A',
+        }),
       ]);
     });
   });

@@ -1,4 +1,4 @@
-import type { AppState } from '../../types';
+import type { AppState, RSIPMeta, RSIPNode } from '../../types';
 import { logger } from '../../utils/logger';
 import { toError } from '../../utils/errorHandling';
 import { rsipTaskIntegrationService } from '../../services/rsip-integration/RSIPTaskIntegrationService';
@@ -281,6 +281,20 @@ export function useRsipDomain({
     }
   };
 
+  const createNodes = async (nodes: RSIPNode[], meta: RSIPMeta) => {
+    if (storage.createRSIPNodesWithMeta) {
+      await storage.createRSIPNodesWithMeta(nodes, meta);
+    } else {
+      await storage.saveRSIPNodes(nodes);
+      await storage.saveRSIPMeta(meta);
+    }
+    setState((current) => ({
+      ...current,
+      rsipNodes: nodes,
+      rsipMeta: meta,
+    }));
+  };
+
   const saveFns: SaveFns = {
     appendExecutionRecord,
     appendRunRecord,
@@ -326,6 +340,7 @@ export function useRsipDomain({
 
   return {
     openRSIP,
+    createNodes,
     saveNodes,
     saveMeta,
     saveGroups,

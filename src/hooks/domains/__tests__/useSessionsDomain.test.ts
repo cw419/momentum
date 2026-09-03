@@ -24,6 +24,7 @@ vi.mock('../sessions/start', () => ({
 vi.mock('../sessions/completion', () => ({
   createCompletionHandlers: vi.fn(() => ({
     handleCompleteSession: vi.fn(),
+    handleAutoCompleteSession: vi.fn(),
     handleInterruptSession: vi.fn(),
   })),
 }));
@@ -128,6 +129,7 @@ describe('useSessionsDomain', () => {
         handleScheduleChain: expect.any(Function),
         handleStartChain: expect.any(Function),
         handleCompleteSession: expect.any(Function),
+        handleAutoCompleteSession: expect.any(Function),
         handleInterruptSession: expect.any(Function),
         handlePauseSession: expect.any(Function),
         handleResumeSession: expect.any(Function),

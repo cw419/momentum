@@ -98,6 +98,7 @@ export function RSIPTreeTab({ model }: RSIPTreeTabProps) {
         tree={model.tree}
         groups={model.groups}
         onSaveNodes={model.onSaveNodes}
+        onSaveGroups={model.onSaveGroups}
         onMarkFailedNode={(nodeId: string) => {
           const target = model.nodes.find((item) => item.id === nodeId);
           if (target) {

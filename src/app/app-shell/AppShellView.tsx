@@ -188,6 +188,7 @@ export function AppShellView({
                 taskLinks={rsip.taskLinks}
                 chains={rsip.chains}
                 onBack={rsip.onBack}
+                onCreateNodes={rsip.createNodes}
                 onSaveNodes={rsip.saveNodes}
                 onSaveMeta={rsip.saveMeta}
                 onSaveGroups={rsip.saveGroups}
@@ -212,6 +213,7 @@ export function AppShellView({
             <AppShellProfiler id="dashboard-view">
               <Dashboard
                 chains={dashboard.chains}
+                timelineChains={dashboard.timelineChains}
                 chainsRevision={dashboard.chainsRevision}
                 dailyPlans={dashboard.dailyPlans}
                 scheduledSessions={dashboard.scheduledSessions}

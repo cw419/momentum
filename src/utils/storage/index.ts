@@ -20,6 +20,7 @@ import { getPetState, savePetState } from './pet';
 import {
   appendRSIPExecutionRecord,
   appendRSIPRunRecord,
+  createRSIPNodesWithMeta,
   getRSIPExecutionRecords,
   getRSIPGroups,
   getRSIPMeta,
@@ -81,6 +82,7 @@ export const storage = {
   updateCompletionHistory,
 
   // RSIP nodes
+  createRSIPNodesWithMeta,
   getRSIPNodes,
   saveRSIPNodes,
   upsertRSIPNode,

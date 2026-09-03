@@ -10,7 +10,11 @@ import {
   mapRSIPRunRecordRow,
   mapRSIPTaskLinkRow,
 } from './rsipMapper';
-import { getUserScopedOrderedRows, replaceUserScopedRows } from './rsipShared';
+import {
+  getUserScopedOrderedRows,
+  hasUserScopedColumn,
+  replaceUserScopedRows,
+} from './rsipShared';
 import type { SupabaseStorageContext } from './types';
 
 export async function getRSIPGroups(
@@ -31,12 +35,30 @@ export async function saveRSIPGroups(
 ): Promise<void> {
   const user = await ctx.getCurrentUser();
   if (!user) return;
+
+  const hasGroupHierarchy = await hasUserScopedColumn(ctx, {
+    table: 'rsip_groups',
+    column: 'parent_group_id',
+    orderBy: 'created_at',
+    ascending: true,
+    errorLabel: 'rsip group hierarchy',
+  });
+
+  if (!hasGroupHierarchy && groups.some((group) => group.parentGroupId)) {
+    throw new Error(
+      'Group hierarchy requires the pending database migration before it can be saved.',
+    );
+  }
+
   await replaceUserScopedRows(
     ctx,
     'rsip_groups',
     groups.map((group) => ({
       id: group.id,
       user_id: user.id,
+      ...(hasGroupHierarchy
+        ? { parent_group_id: group.parentGroupId ?? null }
+        : {}),
       title: group.title,
       fault_tolerance: group.faultTolerance,
       emoji: group.emoji ?? null,

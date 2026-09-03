@@ -96,6 +96,7 @@ interface BuildRsipViewModelInputs {
   taskLinks: RSIPTaskLink[];
   chains: Chain[];
   onBack: () => void;
+  createNodes: (nodes: RSIPNode[], meta: RSIPMeta) => Promise<void>;
   saveNodes: (nodes: RSIPNode[]) => Promise<void>;
   saveMeta: (meta: RSIPMeta) => Promise<void>;
   saveGroups: (groups: RSIPNodeGroup[]) => Promise<void>;
@@ -190,6 +191,7 @@ export function buildDashboardViewModel(
 
   return {
     chains: visibleChains,
+    timelineChains: inputs.chains,
     chainsRevision: inputs.chainsRevision,
     dailyPlans: inputs.dailyPlans,
     scheduledSessions: inputs.scheduledSessions,
@@ -238,6 +240,7 @@ export function buildRsipViewModel(
     taskLinks: inputs.taskLinks,
     chains: inputs.chains,
     onBack: inputs.onBack,
+    createNodes: inputs.createNodes,
     saveNodes: inputs.saveNodes,
     saveMeta: inputs.saveMeta,
     saveGroups: inputs.saveGroups,

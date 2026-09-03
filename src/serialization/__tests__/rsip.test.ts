@@ -93,4 +93,15 @@ describe('serialization/rsip', () => {
     expect(link.updatedAt).toBeInstanceOf(Date);
     expect(record.executedAt).toBeInstanceOf(Date);
   });
+
+  it('decodes a group parent relationship', () => {
+    expect(
+      decodeRSIPNodeGroup({
+        id: 'group-child',
+        parentGroupId: 'group-parent',
+        title: 'Child group',
+        faultTolerance: 0,
+      }),
+    ).toMatchObject({ parentGroupId: 'group-parent' });
+  });
 });

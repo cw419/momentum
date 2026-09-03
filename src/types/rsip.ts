@@ -86,6 +86,7 @@ export interface RSIPExecutionRecord {
 
 export interface RSIPNodeGroup {
   id: string;
+  parentGroupId?: string; // 父国策组ID
   title: string;
   faultTolerance: number;
   createdAt: Date;

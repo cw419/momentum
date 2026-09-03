@@ -5,6 +5,7 @@ import { CompletedPlanTimeline } from './CompletedPlanTimeline';
 interface Props {
   plans: DailyPlan[];
   chains: Chain[];
+  timelineChains: Chain[];
   history?: CompletionHistory[];
   onAddUnits: (chainId: string, count: number) => Promise<void>;
   onRemoveUnits: (chainId: string, count: number) => Promise<void>;
@@ -21,6 +22,7 @@ function localDate() {
 export function TodayPlanSection({
   plans = [],
   chains,
+  timelineChains,
   history = [],
   onAddUnits,
   onRemoveUnits,
@@ -32,6 +34,9 @@ export function TodayPlanSection({
     (candidate) => candidate.planDate === localDate() && !candidate.closedAt,
   );
   const chainById = new Map(chains.map((chain) => [chain.id, chain]));
+  const timelineChainById = new Map(
+    timelineChains.map((chain) => [chain.id, chain]),
+  );
   const pending = new Map<string, string[]>();
   const completedPlanItems = plans.flatMap((dailyPlan) =>
     dailyPlan.items.filter((item) => item.status === 'completed'),
@@ -155,7 +160,7 @@ export function TodayPlanSection({
           <CompletedPlanTimeline
             history={history}
             completedPlanItems={completedPlanItems}
-            chainById={chainById}
+            chainById={timelineChainById}
             tr={tr}
           />
         </div>

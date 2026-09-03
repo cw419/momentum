@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { RSIPMeta, RSIPNode, RSIPNodeGroup } from '../../../types';
+import { getInheritedGroupId } from '../../../utils/rsipGroupRelations';
 import type { RSIPViewProps } from '../../RSIPView.types';
 import type {
   RSIPViewActionSlice,
@@ -10,7 +11,11 @@ interface UseRSIPViewCreationActionsParams {
   state: RSIPViewStateSlice;
   props: Pick<
     RSIPViewProps,
-    'onSaveMeta' | 'onSaveNodes' | 'onSaveGroups' | 'onCreateGroup'
+    | 'onSaveMeta'
+    | 'onSaveNodes'
+    | 'onSaveGroups'
+    | 'onCreateGroup'
+    | 'onCreateNodes'
   >;
 }
 
@@ -51,7 +56,13 @@ export function useRSIPViewCreationActions({
     setSplitItems,
     tr,
   } = state;
-  const { onSaveMeta, onSaveNodes, onSaveGroups, onCreateGroup } = props;
+  const {
+    onSaveMeta,
+    onSaveNodes,
+    onSaveGroups,
+    onCreateGroup,
+    onCreateNodes,
+  } = props;
   const nodeCreationInFlightRef = useRef(false);
   const groupCreationInFlightRef = useRef(false);
   const metaSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -188,7 +199,7 @@ export function useRSIPViewCreationActions({
     const newNode: RSIPNode = {
       id: crypto.randomUUID(),
       parentId: selectedParentId || undefined,
-      groupId: selectedGroupId || undefined,
+      groupId: getInheritedGroupId(nodes, selectedParentId, selectedGroupId),
       title: title.trim(),
       rule: rule.trim(),
       sortOrder: Math.floor(Date.now() / 1000),
@@ -201,6 +212,18 @@ export function useRSIPViewCreationActions({
     };
     nodeCreationInFlightRef.current = true;
     try {
+      if (onCreateNodes) {
+        const now = new Date();
+        await onCreateNodes([newNode], {
+          ...meta,
+          lastAddedAt: now,
+          currentRunNumber: meta.currentRunNumber ?? 1,
+          currentRunStartedAt: meta.currentRunStartedAt ?? now,
+        });
+        setTitle('');
+        setRule('');
+        return;
+      }
       await onSaveNodes([...nodes, newNode]);
       setTitle('');
       setRule('');
@@ -221,6 +244,7 @@ export function useRSIPViewCreationActions({
     enqueueMetaUpdate,
     nodes,
     onSaveNodes,
+    onCreateNodes,
     rule,
     selectedGroupId,
     selectedParentId,
@@ -268,10 +292,15 @@ export function useRSIPViewCreationActions({
 
     const baseSort = Math.floor(Date.now() / 1000);
     const createdAt = new Date();
+    const inheritedGroupId = getInheritedGroupId(
+      nodes,
+      selectedParentId,
+      selectedGroupId,
+    );
     const newNodes = validItems.map((item, index) => ({
       id: crypto.randomUUID(),
       parentId: selectedParentId || undefined,
-      groupId: selectedGroupId || undefined,
+      groupId: inheritedGroupId,
       title: item.title.trim(),
       rule: item.rule.trim(),
       sortOrder: baseSort + index,

@@ -33,11 +33,25 @@ export function parseImportRsipGroups(
         groupIdMap,
         'rsip-group',
       ),
+      parentGroupId: undefined as string | undefined,
       title: String(raw.title ?? ''),
       faultTolerance: Math.max(0, toNumber(raw.faultTolerance, 0)),
       createdAt: parseTruthyDateOrNow(raw.createdAt),
       emoji: toOptionalString(raw.emoji),
     }));
+  const sourceGroups = rsipGroups.filter(
+    (raw): raw is Record<string, unknown> => isRecord(raw),
+  );
+  groups.forEach((group, index) => {
+    const raw = sourceGroups[index];
+    if (!raw) return;
+    const sourceParentId = getTrimmedNonEmptyString(
+      raw.parentGroupId ?? raw.parent_group_id,
+    );
+    group.parentGroupId = sourceParentId
+      ? groupIdMap.get(sourceParentId)
+      : undefined;
+  });
   return { groups, groupIdMap };
 }
 

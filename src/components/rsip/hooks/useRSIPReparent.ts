@@ -2,12 +2,44 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RSIPNode, RSIPTreeNode } from '../../../types';
 import { normalizeUnknownError } from '../../../utils/errors/normalizeError';
 import { logger } from '../../../utils/logger';
+import { moveNodeSubtreeToGroup } from '../../../utils/rsipGroupRelations';
+
+type GroupMigration = {
+  childId: string;
+  parentId: string;
+  sourceGroupId?: string;
+  targetGroupId?: string;
+};
+
+function getGroupMigration(
+  child: RSIPNode | undefined,
+  parent: RSIPNode | undefined,
+): GroupMigration | undefined {
+  if (!child || !parent || child.groupId === parent.groupId) return undefined;
+  return {
+    childId: child.id,
+    parentId: parent.id,
+    sourceGroupId: child.groupId,
+    targetGroupId: parent.groupId,
+  };
+}
+
+function shouldPauseForGroupMigration(
+  migration: GroupMigration | undefined,
+  confirmed: boolean,
+  onRequireGroupMigration: ((params: GroupMigration) => boolean) | undefined,
+): boolean {
+  return Boolean(
+    migration && !confirmed && onRequireGroupMigration?.(migration),
+  );
+}
 
 interface UseRSIPReparentParams {
   nodes: RSIPNode[];
   tree: RSIPTreeNode[];
   nodesById: Map<string, RSIPNode>;
   onSaveNodes: (nodes: RSIPNode[]) => void | Promise<void>;
+  onRequireGroupMigration?: (params: GroupMigration) => boolean;
   tr: (zh: string, en: string) => string;
 }
 
@@ -23,7 +55,11 @@ interface UseRSIPReparentResult {
   handleHoverStart: (nodeId: string) => void;
   handleHoverEnd: () => void;
   toggleReparenting: (nodeId: string) => void;
-  commitReparent: (childId: string, parentId?: string) => void;
+  commitReparent: (
+    childId: string,
+    parentId?: string,
+    confirmedGroupMigration?: boolean,
+  ) => void;
   cancelReparent: () => void;
   setRelationError: (error: string | null) => void;
 }
@@ -33,6 +69,7 @@ export function useRSIPReparent({
   tree,
   nodesById,
   onSaveNodes,
+  onRequireGroupMigration,
   tr,
 }: UseRSIPReparentParams): UseRSIPReparentResult {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -116,7 +153,7 @@ export function useRSIPReparent({
   }, [getDescendantsFromTree, reparentingId]);
 
   const commitReparent = useCallback(
-    (childId: string, parentId?: string) => {
+    (childId: string, parentId?: string, confirmedGroupMigration = false) => {
       const pendingSaveError = tr(
         '上一次父子关系保存仍在进行，请稍后重试。',
         'A previous reparent save is still in progress. Try again when it finishes.',
@@ -165,9 +202,25 @@ export function useRSIPReparent({
         return;
       }
 
-      const updated = nodes.map((n) =>
+      const child = nodesById.get(childId);
+      const parent = parentId ? nodesById.get(parentId) : undefined;
+      const groupMigration = getGroupMigration(child, parent);
+      if (
+        shouldPauseForGroupMigration(
+          groupMigration,
+          confirmedGroupMigration,
+          onRequireGroupMigration,
+        )
+      ) {
+        return;
+      }
+
+      let updated = nodes.map((n) =>
         n.id === childId ? { ...n, parentId: parentId || undefined } : n,
       );
+      updated = groupMigration
+        ? moveNodeSubtreeToGroup(updated, childId, groupMigration.targetGroupId)
+        : updated;
       const saveAttemptId = ++saveAttemptIdRef.current;
       const finishPendingSave = () => {
         saveInFlightRef.current = false;
@@ -220,7 +273,14 @@ export function useRSIPReparent({
         handleSaveError(error);
       }
     },
-    [getDescendantsFromTree, nodes, nodesById, onSaveNodes, tr],
+    [
+      getDescendantsFromTree,
+      nodes,
+      nodesById,
+      onRequireGroupMigration,
+      onSaveNodes,
+      tr,
+    ],
   );
 
   const cancelReparent = useCallback(() => {

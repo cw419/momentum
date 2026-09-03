@@ -21,5 +21,6 @@ export function useRSIPViewModel(props: RSIPViewProps): RSIPViewModel {
     ...state,
     ...creationActions,
     ...interactionActions,
+    onSaveGroups: props.onSaveGroups ?? (async () => undefined),
   };
 }
